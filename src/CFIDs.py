@@ -73,7 +73,7 @@ class CFIDs():
     #Check any given file for certain specific features that would mean it does need patching
     def scanFile(master, file):
         formIdPattern0x = re.compile(r'0x([0-9a-fA-F]+){1,}')
-        formIdPatternLeadingBar = re.compile((r'\|([0-9a-fA-F]+){1,}'))
+        formIdPatternPipe = re.compile((r'\|([0-9a-fA-F]+){1,}'))
         if '.seq' in file:
             return True
         if not '.pex' in file.lower():
@@ -87,7 +87,7 @@ class CFIDs():
                 if '.ini' in file.lower() or '_conditions.txt' in file.lower() or '.json' in file.lower(): #PO3's mods, DAR, OAR, MCM helper
                     for line in data:
                         s = re.search(formIdPattern0x, line.lower()) #for 0x form ids
-                        s2 = re.search(formIdPatternLeadingBar, line.lower()) #for some_mod.esp|form ids
+                        s2 = re.search(formIdPatternPipe, line.lower()) #for some_mod.esp|form ids
                         if s and os.path.basename(master).lower() in line.lower(): #PO3's mods, 
                             return True
                         elif 'formid' in line.lower() or ('form_id' in line.lower() and os.path.basename(master).lower() in line.lower()): #OAR and 
@@ -97,7 +97,7 @@ class CFIDs():
                     return False
                 if  '_srd.' in file.lower(): #Sound Record Distributor
                     for line in data:
-                        s = re.search(formIdPatternLeadingBar, line.lower())
+                        s = re.search(formIdPatternPipe, line.lower())
                         if s and os.path.basename(master).lower() in line.lower():
                             return True
                     return False
