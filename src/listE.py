@@ -10,36 +10,32 @@ class ListEslify(QTableWidget):
         super().__init__()
         #TODO: get modlist from file
         modList = ['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5']
-        dependencyList = [['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5'],
-                          ['C:\\mods\\Mod2','C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5', 'C:\\mods\\Mod6', 'C:\\mods\\Mod2','C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5', 'C:\\mods\\Mod6'],
-                          ['C:\\mods\\Mod3','C:\\mods\\Mod4', 'C:\\mods\\Mod5', 'C:\\mods\\Mod6', 'C:\\mods\\Mod7'],
-                          ['C:\\mods\\Mod4','C:\\mods\\Mod5', 'C:\\mods\\Mod6', 'C:\\mods\\Mod7', 'C:\\mods\\Mod8'],
-                          ['C:\\mods\\Mod5','C:\\mods\\Mod6', 'C:\\mods\\Mod7', 'C:\\mods\\Mod8', 'C:\\mods\\Mod9']]
         cellFlags = [True, False, False, True, True]
         self.setRowCount(len(modList))
         self.setColumnCount(3)
-        self.setHorizontalHeaderLabels(['Mod', 'CELL Records', 'Dependencies'])#TODO: Remove dependencies from this file
+        self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', ''])#TODO: Remove dependencies from this file
+        self.horizontalHeaderItem(0).setToolTip('This is the plugin name. Select which plugins you wish to flag as light.')
+        self.horizontalHeaderItem(1).setToolTip('This is the CELL Record Flag. If an ESL plugin creates a new CELL\n and another mod changes that CELL then it\nmay not work due to an engine bug.')
+        self.verticalHeader().setHidden(True)
         self.setSortingEnabled(True)
 
         self.setStyleSheet("""
-            QListWidget::item::selected{
+            QTableWidget::item::selected{
                 background-color: rgb(150,150,150);
             }
-            QListWidget::item::hover{
+            QTableWidget::item::hover{
                 background-color: rgb(200,200,200);
             }
-            QListWidget::indicator:checked{
-                image: url(./images/checked.png)
+            QTableWidget::indicator:checked{
+                image: url(./images/checked.png);
             }
-            QListWidget::indicator:unchecked{
-                image: url(./images/unchecked.png)
+            QTableWidget::indicator:unchecked{
+                image: url(./images/unchecked.png);
             }
         """)
 
-        def button():
-            print("test")
-
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.horizontalHeader().setStretchLastSection(True)
 
         for i in range(len(modList)):
             item = QTableWidgetItem(os.path.basename(modList[i]))
@@ -48,15 +44,9 @@ class ListEslify(QTableWidget):
             item.setToolTip(modList[i])
             self.setItem(i, 0, item)
             if cellFlags[i]:
-                itemC = QTableWidgetItem('Has CELL')
+                itemC = QTableWidgetItem('New CELL')
                 self.setItem(i, 1, itemC)
-            if len(dependencyList[i]) > 0:
-                dL = QPushButton("Test")
-                dL.clicked.connect(button)
-                #itemD = QTableWidgetItem('')
-                #self.setItem(i, 2, itemD)
-                self.setCellWidget(i,2,dL) #TODO: remove this and depency stuff from this file, implement in listC
-            
+            self.resizeRowToContents(i)
 
 
         def somethingChanged(itemChanged):
@@ -69,6 +59,7 @@ class ListEslify(QTableWidget):
                     x.setCheckState(Qt.CheckState.Unchecked)
             self.blockSignals(False)
 
+        self.resizeColumnsToContents()
         self.itemChanged.connect(somethingChanged)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenu)

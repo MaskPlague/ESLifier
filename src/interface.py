@@ -68,8 +68,8 @@ class MainWindow(QMainWindow):
         self.infoC.setToolTip("List of plugins that can be compacted to fit ESL conditions." +
                          "\nThe \'Compact Selected\' button will also ESL the selected plugin(s).")
 
-        self.box1 = ListEslify()
-        self.box2 = ListCompactable()
+        self.listE = ListEslify()
+        self.listC = ListCompactable()
 
         self.buttonEslify = QPushButton()
         self.buttonEslify.setText("ESLify Selected")
@@ -82,16 +82,20 @@ class MainWindow(QMainWindow):
 
         self.filterE = QLineEdit()
         self.filterE.setPlaceholderText("Filter")
-        self.filterE.setToolTip("Filtertip")
+        self.filterE.setToolTip("Search Bar")
         self.filterE.setMinimumWidth(50)
         self.filterE.setMaximumWidth(150)
         self.filterE.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.filterE.setClearButtonEnabled(True)
+        self.filterE.textChanged.connect(self.searchE)
 
         self.filterC = QLineEdit()
         self.filterC.setPlaceholderText("Filter")
         self.filterC.setMinimumWidth(50)
         self.filterC.setMaximumWidth(150)
         self.filterC.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.filterC.setClearButtonEnabled(True)
+        self.filterC.textChanged.connect(self.searchC)
 
         self.mainLayout = QVBoxLayout()
         self.settingsLayout = QVBoxLayout()
@@ -128,7 +132,7 @@ class MainWindow(QMainWindow):
         #Left Column
         self.hLayout1.addLayout(self.vLayout1)
         self.vLayout1.addLayout(self.hLayout2)
-        self.vLayout1.addWidget(self.box1)
+        self.vLayout1.addWidget(self.listE)
         self.vLayout1.addLayout(self.hLayout3)
 
         spacer = QSpacerItem(20, self.height())
@@ -137,7 +141,7 @@ class MainWindow(QMainWindow):
         #Right Column
         self.hLayout1.addLayout(self.vLayout2)
         self.vLayout2.addLayout(self.hLayout4)
-        self.vLayout2.addWidget(self.box2)
+        self.vLayout2.addWidget(self.listC)
         self.vLayout2.addLayout(self.hLayout5)
 
         self.mainLayout.addWidget(self.buttonSearch)
@@ -151,7 +155,6 @@ class MainWindow(QMainWindow):
         self.mainWidget.setLayout(self.mainLayout)
 
     def createSettingsMenu(self):
-
         self.settingsWidget = QWidget()
         self.settingsWidget.setLayout(self.settingsLayout)
 
@@ -161,7 +164,27 @@ class MainWindow(QMainWindow):
     def settingsSelected(self):
         self.tabs.setCurrentIndex(1)
 
+    def searchE(self):
+        if len(self.filterE.text()) > 0:
+            items = self.listE.findItems(self.filterE.text(), Qt.MatchFlag.MatchContains)
+            if len(items) > 0:
+                for i in range(self.listE.rowCount()):
+                    self.listE.setRowHidden(i, False if (self.listE.item(i,0) in items) else True)
+        else:
+            for i in range(self.listE.rowCount()):
+                self.listE.setRowHidden(i, False)
+
+    def searchC(self):
+        if len(self.filterC.text()) > 0:
+            items = self.listC.findItems(self.filterC.text(), Qt.MatchFlag.MatchContains)
+            if len(items) > 0:
+                for i in range(self.listC.rowCount()):
+                    self.listC.setRowHidden(i, False if (self.listC.item(i,0) in items) else True)
+        else:
+            for i in range(self.listC.rowCount()):
+                self.listC.setRowHidden(i, False)
         
+
 
 
 
