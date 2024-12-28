@@ -13,13 +13,18 @@ class ListEslify(QTableWidget):
         cellFlags = [True, False, False, True, True]
         self.setRowCount(len(modList))
         self.setColumnCount(3)
-        self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', ''])#TODO: Remove dependencies from this file
+        self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', ''])
         self.horizontalHeaderItem(0).setToolTip('This is the plugin name. Select which plugins you wish to flag as light.')
         self.horizontalHeaderItem(1).setToolTip('This is the CELL Record Flag. If an ESL plugin creates a new CELL\n and another mod changes that CELL then it\nmay not work due to an engine bug.')
         self.verticalHeader().setHidden(True)
+        self.setShowGrid(False)
+        self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.setSortingEnabled(True)
 
         self.setStyleSheet("""
+            QTableWidget::item{
+                border-top: 1px solid gray
+            }
             QTableWidget::item::selected{
                 background-color: rgb(150,150,150);
             }

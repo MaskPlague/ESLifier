@@ -16,12 +16,13 @@ class ListCompactable(QTableWidget):
         cellFlags = [True, False, False, True, True]
         self.setRowCount(len(modList))
         self.setColumnCount(4)
-        self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'Dependencies', ''])#TODO: Remove dependencies from this file
+        self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'Dependencies', ''])
         self.horizontalHeaderItem(0).setToolTip('This is the plugin name. Select which plugins you wish to compact.')
         self.horizontalHeaderItem(1).setToolTip('This is the CELL Record Flag. If an ESL plugin creates a new CELL\nand another mod changes that CELL then it\nmay not work due to an engine bug.')
         self.horizontalHeaderItem(2).setToolTip('If a plugin has other plugins with it as a master, they\nwill appear when the button is clicked. These will also have their\nForm IDs patched to reflect the Master plugin\'s changes.')
         self.verticalHeader().setHidden(True)
         self.setShowGrid(False)
+        self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.setSortingEnabled(True)
 
         self.setStyleSheet("""
@@ -51,7 +52,8 @@ class ListCompactable(QTableWidget):
             index = self.currentRow()
             if self.cellWidget(index, 3):
                 self.item(index, 0).setTextAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
-                self.item(index, 1).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignVCenter)
+                if self.item(index, 1):
+                    self.item(index, 1).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignVCenter)
                 self.sender().setText('Show')
                 self.sender().setStyleSheet("""
                     QPushButton{
@@ -62,7 +64,8 @@ class ListCompactable(QTableWidget):
                 self.removeCellWidget(index, 3)
             else:
                 self.item(index, 0).setTextAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
-                self.item(index, 1).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignTop)
+                if self.item(index, 1):
+                    self.item(index, 1).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignTop)
                 self.sender().setText('Hide')
                 self.sender().setStyleSheet("""
                     QPushButton{
