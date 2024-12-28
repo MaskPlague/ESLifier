@@ -1,9 +1,8 @@
 import sys
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction, QIcon, QPalette, QColor
-from PyQt6.QtWidgets import (QMainWindow, QApplication, QHBoxLayout, QVBoxLayout, QLabel, 
-                             QWidget, QPushButton, QLineEdit, QMenuBar, QSpacerItem, QStackedLayout,)
+from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, 
+                             QWidget, QPushButton, QLineEdit, QSpacerItem,)
 
 from listE import ListEslify
 from listC import ListCompactable
