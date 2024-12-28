@@ -2,7 +2,6 @@ import os
 import subprocess
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPalette, QColor, QAction
 from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QPushButton, QButtonGroup, QListWidget, QListWidgetItem
 class ListCompactable(QTableWidget):
     def __init__(self):
