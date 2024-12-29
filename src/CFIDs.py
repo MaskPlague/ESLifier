@@ -23,7 +23,9 @@ class CFIDs():
         #TODO: make 1.71 header change optional + setting for starting from 0 or 0x800 (I think it is 0x800)
         #TODO: Start front end probably in a separate file.\
             #TODO: probably change file path via ui
-        
+        #TODO: When compacting multiple masters, there is a chance that a file (an ini for example) may need to be patched twice for two different masters
+            # and I need to make sure that the file is NOT overwritten by the original from the SSE folder as that would diregard prior changes.
+            # this means that the output folder will need to be emptied and patched every time or an option...
         #TODO: Far in the future, consider actively scanning files for previous compacted files. Maybe a UI option to do a scan or directly select relevant folder/files.
         return
 
