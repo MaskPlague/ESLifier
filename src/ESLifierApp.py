@@ -14,6 +14,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         #TODO: Make settings Page
         #TODO: Make a scanner Page?
+        #TODO: REALLY need to decide if i'm going to ONLY scan mod folders in the mod manager mods folder or scan the whole sse directory... I think i need to scan sse...
         self.setWindowTitle("ESLifier")
 
         mainMenuAction = QAction("Main", self)
