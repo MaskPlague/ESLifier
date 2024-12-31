@@ -1,19 +1,30 @@
 import os
 import re
+import json
 
 class dependecyGetter():    
     def __init__(self, path):
         plugins = self.getListOfPlugins(path)
-        self.createDependecyDictionary(plugins)
-        self.addDependantFiles(path)
+        self.dictionary = self.createDependecyDictionary(plugins)
+
 
     def getListOfPlugins(path):
         plugins = []
         for root, dirs, files in os.walk(path):
             for file in files:
-                if re.search(r'\.es[pml]', file):
-                    plugins.append(os.path.join(root,file))
+                if re.search(r'\.es[pml]$', file):
+                    plugins.append(os.path.join(root,file).lower())
         return plugins
+    
+    def dumpToFile(self, file):
+        with open(file, 'w+', encoding='utf-8') as f:
+            json.dump(self.dictionary, f, ensure_ascii=False, indent=4)
+    
+    def getFromFile(self,file):
+        data = {}
+        with open(file, 'r') as f:
+            data = json.load(f)
+        return data
     
     def createDependecyDictionary(plugins):
         pluginNames = []
@@ -21,7 +32,7 @@ class dependecyGetter():
             pluginNames.append(os.path.basename(plugin))
             pluginNames.append(os.path.basename(plugin) + '_path')
 
-        dictionary = dict.fromkeys(pluginNames, [])
+        dictionary = {plugin: [] for plugin in pluginNames}
         for plugin in plugins:
             dictionary[os.path.basename(plugin) + '_path'] = plugin
             masters = dependecyGetter.getMasters(plugin)

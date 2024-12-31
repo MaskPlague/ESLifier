@@ -1,112 +1,203 @@
 import os
 import re
 import threading
+import dependencyGetter as dG
+import timeit
+import json
 
 class scanner():
     def __init__(self, path):
+        #TODO: for each compacted file, make a file with a list of patched files. Compare patched vs unpatched to get new files.
+        #TODO: file.lower() everything, skyrim is NOT case sensitive
+        #TODO: check for bsa file
+        startTime = timeit.default_timer()
         self.path = path
-        self.path = 'fakemodsfolder/'
+        #self.path = 'fakemodsfolder/'
+        self.path = 'D:/Modding/MO2/mods'
+        self.file_count = 0
+        self.all_files = []
+        self.lock = threading.Lock()
+        for root, _, files in os.walk(self.path):
+            self.file_count += len(files)
+            for file in files:
+                self.all_files.append(os.path.join(root, file).lower())
+
         self.getFileMasters()
 
-    def getFileMasters(self):
-        pattern = re.compile(r'(?:~|: *|\||")([^\n\r~|"]+\.es[pml])"?\s*\|?')
-        pattern2 = re.compile(rb'GetFormFromFile[^\n\r]*?([A-Za-z0-9_]+\.esp)')
-        matchers = ['.pex', '.psc', '.ini', '_conditions.txt', '.json', '_srd.', '.seq', 'facegeom', 'voice', 'facetint']
-        self.fileDict = dict()
-        threads =[]
-        seqFiles = []
-        for file in self.getAllFiles():
-            if any(match in file.lower() for match in matchers):
-                if not 'meta.ini' in file.lower() and ('.ini' in file.lower() or '.json' in file.lower() or '_conditions.txt' in file.lower() or '_srd.' in file.lower() or '.psc' in file.lower()):
-                    thread = threading.Thread(target=self.fileReader,args=(pattern, file, 'r'))
-                    threads.append(thread)
-                    thread.start()
-                if '.pex' in file.lower():
-                    thread = threading.Thread(target=self.fileReader,args=(pattern2, file, 'rb'))
-                    threads.append(thread)
-                    thread.start()
-                if '.seq' in file.lower():
-                    plugin, _ = os.path.splitext(os.path.basename(file))
-                    seqFiles.append([plugin, file])
-                if ('facegeom' in file.lower() and '.nif' in file.lower()) or ('facetint' in file.lower() and '.dds' in file.lower()):
-                    head, _ = os.path.split(file)
-                    _, plugin = os.path.split(head)
-                    with threading.Lock():
-                        if plugin not in self.fileDict.keys():
-                            self.fileDict.update({plugin: []})
-                        fl = self.fileDict[plugin]
-                        if file not in fl:
-                            fl.append(file)
-                            self.fileDict[plugin] = fl
-                if 'sound' in file.lower() and 'voice' in file.lower():
-                    head, _ = os.path.split(file)
-                    head, _ = os.path.split(head)
-                    _, plugin = os.path.split(head)
-                    with threading.Lock():
-                        if plugin not in self.fileDict.keys():
-                            self.fileDict.update({plugin: []})
-                        fl = self.fileDict[plugin]
-                        if file not in fl:
-                            fl.append(file)
-                            self.fileDict[plugin] = fl
-                
-        self.fileNameWithoutExtProcessor(seqFiles)
+        self.dumpToFile(file="C:/Users/s34ke/Desktop/qual checker/dict.json")
 
-        for thread in threads:
+        endTime = timeit.default_timer()
+        timeTaken = endTime - startTime
+        print('Time taken: ' + str(timeTaken))
+
+    def dumpToFile(self, file):
+        with open(file, 'w+', encoding='utf-8') as f:
+            json.dump(self.fileDict, f, ensure_ascii=False, indent=4)
+    
+    def getFromFile(self,file):
+        data = {}
+        with open(file, 'r') as f:
+            data = json.load(f)
+        return data
+        
+
+    def getFileMasters(self):
+        plugins = dG.dependecyGetter.getListOfPlugins(self.path)
+        pluginNames = []
+        for plugin in plugins:
+            pluginNames.append(os.path.basename(plugin).lower())
+        #pattern = re.compile(r'(?:~|: *|\||=|,|-)\s*\(?([A-Za-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\s*\)?(?:\||,|$)')
+        pattern = re.compile(r'(?:~|: *|\||=|,|-)\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\)?)(?:\||,|$)')
+        pattern2 = re.compile(rb'\x00.([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\x00')
+        #pattern3 = re.compile(r'[a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml](?=\\)')
+        pattern3 = re.compile(r'\\facegeom\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
+        #pattern4 = re.compile(r'\_[a-z0-9]{8}\_')
+        pattern4 = re.compile(r'\\facetint\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
+        pattern5 = re.compile(r'\\sound\\voice\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
+        self.fileDict = {plugin: [] for plugin in pluginNames}
+        self.threads = []
+        self.seqFiles = []
+        self.pexFiles = []
+        self.count = 0
+        
+        if len(self.all_files) > 500000:
+            split = 500
+        elif len(self.all_files) > 50000:
+            split = 50
+        else:
+            split = 5
+            
+        chunk_size = len(self.all_files) // split
+        chunks = [
+            self.all_files[i * chunk_size:(i + 1) * chunk_size]
+            for i in range(split)
+        ]
+        
+        for chunk in chunks:
+            thread = threading.Thread(
+                target=self.fileProcessor,
+                args=(chunk, pattern, pattern3, pattern4, pattern5)
+            )
+            self.threads.append(thread)
+            thread.start()
+                
+        
+        
+        for thread in self.threads:
             thread.join()
 
-        print(self.fileDict.keys())
+        self.fileNameWithoutExtProcessor(self.seqFiles)
+        
+        self.threads = []
+
+        for file in self.pexFiles:
+            thread = threading.Thread(target=self.fileReader,args=(pattern2, file, 'rb'))
+            self.threads.append(thread)
+            thread.start()
+
+        for thread in self.threads:
+            thread.join()
+
+    def fileProcessor(self, files, pattern, pattern3, pattern4, pattern5):
+        local_dict = {}
+        for file in files:
+            self.count += 1
+            self.percentage = (self.count / self.file_count) * 100
+            print('Processed: ' + str(round(self.percentage, 1)) + '%' + ' counter: ' + str(self.count) + '/' + str(self.file_count), end='\r')
+            if (not 'meta.ini' in file) and ('.ini' in file or '.json' in file or '_conditions.txt' in file or '_srd.' in file or '.psc' in file):
+                thread = threading.Thread(target=self.fileReader,args=(pattern, file, 'r'))
+                self.threads.append(thread)
+                thread.start()
+            elif '.pex' in file:
+                self.pexFiles.append(file)
+            elif '.seq' in file:
+                plugin, _ = os.path.splitext(os.path.basename(file))
+                self.seqFiles.append([plugin, file])
+            elif ('\\facegeom\\' in file and '.nif' in file):# or ('\\facetint\\' in file and '.dds' in file):# or ('\\sound\\' in file and '\\voice\\' in file):# and re.search(pattern4, os.path.basename(file))):
+                if '.esp' in file or '.esm' in file or '.esl' in file:
+                    try: 
+                        plugin = re.search(pattern3, file).group(1)
+                        if plugin not in local_dict.keys():
+                            local_dict.update({plugin: []})
+                        if file not in local_dict[plugin]:
+                            local_dict[plugin].append(file)
+                    except:
+                        print(file)
+            elif '\\facetint\\' in file and '.dds' in file:
+                if '.esp' in file or '.esm' in file or '.esl' in file:
+                    try: 
+                        plugin = re.search(pattern4, file).group(1)
+                        if plugin not in local_dict.keys():
+                            local_dict.update({plugin: []})
+                        if file not in local_dict[plugin]:
+                            local_dict[plugin].append(file)
+                    except:
+                        print(file)
+            elif '\\sound\\' in file and '\\voice\\' in file:
+                if '.esp' in file or '.esm' in file or '.esl' in file:
+                    try: 
+                        plugin = re.search(pattern5, file).group(1)
+                        if plugin not in local_dict.keys():
+                            local_dict.update({plugin: []})
+                        if file not in local_dict[plugin]:
+                            local_dict[plugin].append(file)
+                    except:
+                        print(file)
+                        
+        for key, valuesList in local_dict.items():
+            with self.lock:
+                if key not in self.fileDict:
+                    self.fileDict.update({key: []})
+                self.fileDict[key].extend(valuesList)
+    
+    def searchFileName(self, file, pattern):
+        try: 
+            plugin = re.search(pattern, file).group()
+            with self.lock:
+                if plugin not in self.fileDict.keys():
+                    self.fileDict.update({plugin: []})
+                if file not in self.fileDict[plugin]:
+                    self.fileDict[plugin].append(file)
+        except:
+            print(file)
 
     def fileNameWithoutExtProcessor(self, files):
         for file in files:
-            esp = file[0] + '.esp'
-            esl = file[0] + '.esl'
-            esm = file[0] + '.esm'
+            esp, esl, esm = file[0] + '.esp', file[0] + '.esl', file[0] + '.esm'
             if esp in self.fileDict.keys():
-                fl = self.fileDict[esp]
-                if file not in fl:
-                    fl.append(file[1])
-                    self.fileDict[esp] = fl
+                if file[1] not in self.fileDict[esp]:
+                    self.fileDict[esp].append(file[1])
             elif esl in self.fileDict.keys():
-                fl = self.fileDict[esl]
-                if file not in fl:
-                    fl.append(file[1])
-                    self.fileDict[esl] = fl
+                if file[1] not in self.fileDict[esl]:
+                    self.fileDict[esl].append(file[1])
             elif esm in self.fileDict.keys():
-                fl = self.fileDict[esm]
-                if file not in fl:
-                    fl.append(file[1])
-                    self.fileDict[esm] = fl
+                if file[1] not in self.fileDict[esm]:
+                    self.fileDict[esm].append(file[1])
 
     def fileReader(self, pattern, file, readerType):
         if readerType == 'r':
             with open(file, 'r', errors='ignore') as f:
-                r = re.findall(pattern,f.read())
+                r = re.findall(pattern,f.read().lower())
                 if r != []:
                     for plugin in r:
-                        with threading.Lock():
-                            if plugin not in self.fileDict.keys():
-                                self.fileDict.update({plugin: []})
-                            fl = self.fileDict[plugin]
-                            if file not in fl:
-                                fl.append(file)
-                                self.fileDict[plugin] = fl
+                        if 'NOT Is' not in plugin:
+                            with self.lock:
+                                if plugin not in self.fileDict.keys():
+                                    self.fileDict.update({plugin: []})
+                                if file not in self.fileDict[plugin]:
+                                    self.fileDict[plugin].append(file)
+
         if readerType == 'rb':
             with open(file, 'rb') as f:
-                data = f.read()
-                r = re.findall(pattern,data)
-                if r == [] and b'GetFormFromFile' in data: #catches when a file may have GetFormFromFile but with variables instead of string of the plugin name.
-                    r = re.findall(b'([A-Za-z0-9_\'\\- ]+\\.es[pml])\x00', data)
+                r = re.findall(pattern,f.read().lower())
                 if r != []:
                     for plugin in r:
                         plugin = plugin.decode('utf-8')
-                        with threading.Lock():
+                        with self.lock:
                             if plugin not in self.fileDict.keys():
                                 self.fileDict.update({plugin: []})
-                            fl = self.fileDict[plugin]
-                            if file not in fl:
-                                fl.append(file)
-                                self.fileDict[plugin] = fl
+                            if file not in self.fileDict[plugin]:
+                                self.fileDict[plugin].append(file)
 
     def getAllFiles(self):
         for root, dirs, files in os.walk(self.path):
