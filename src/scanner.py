@@ -5,10 +5,10 @@ import dependencyGetter as dG
 import timeit
 import json
 
+
 class scanner():
     def __init__(self, path):
         #TODO: for each compacted file, make a file with a list of patched files. Compare patched vs unpatched to get new files.
-        #TODO: file.lower() everything, skyrim is NOT case sensitive
         #TODO: check for bsa file
         startTime = timeit.default_timer()
         self.path = path
@@ -22,13 +22,14 @@ class scanner():
             for file in files:
                 self.all_files.append(os.path.join(root, file).lower())
 
+        print('')
         self.getFileMasters()
 
         self.dumpToFile(file="C:/Users/s34ke/Desktop/qual checker/dict.json")
 
         endTime = timeit.default_timer()
         timeTaken = endTime - startTime
-        print('Time taken: ' + str(timeTaken))
+        print('\nTime taken: ' + str(round(timeTaken,2)) + ' seconds')
 
     def dumpToFile(self, file):
         with open(file, 'w+', encoding='utf-8') as f:
@@ -39,25 +40,21 @@ class scanner():
         with open(file, 'r') as f:
             data = json.load(f)
         return data
-        
 
     def getFileMasters(self):
         plugins = dG.dependecyGetter.getListOfPlugins(self.path)
         pluginNames = []
-        for plugin in plugins:
-            pluginNames.append(os.path.basename(plugin).lower())
-        #pattern = re.compile(r'(?:~|: *|\||=|,|-)\s*\(?([A-Za-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\s*\)?(?:\||,|$)')
+        for plugin in plugins: pluginNames.append(os.path.basename(plugin).lower())
         pattern = re.compile(r'(?:~|: *|\||=|,|-)\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\)?)(?:\||,|$)')
         pattern2 = re.compile(rb'\x00.([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\x00')
-        #pattern3 = re.compile(r'[a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml](?=\\)')
         pattern3 = re.compile(r'\\facegeom\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
-        #pattern4 = re.compile(r'\_[a-z0-9]{8}\_')
         pattern4 = re.compile(r'\\facetint\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
         pattern5 = re.compile(r'\\sound\\voice\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
         self.fileDict = {plugin: [] for plugin in pluginNames}
         self.threads = []
         self.seqFiles = []
         self.pexFiles = []
+        self.bsaList = []
         self.count = 0
         
         if len(self.all_files) > 500000:
@@ -66,25 +63,17 @@ class scanner():
             split = 50
         else:
             split = 5
-            
+
         chunk_size = len(self.all_files) // split
-        chunks = [
-            self.all_files[i * chunk_size:(i + 1) * chunk_size]
-            for i in range(split)
-        ]
+        chunks = [self.all_files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
+        chunks.append(self.all_files[(split) * chunk_size:])
         
         for chunk in chunks:
-            thread = threading.Thread(
-                target=self.fileProcessor,
-                args=(chunk, pattern, pattern3, pattern4, pattern5)
-            )
+            thread = threading.Thread(target=self.fileProcessor, args=(chunk, pattern, pattern3, pattern4, pattern5))
             self.threads.append(thread)
             thread.start()
-                
         
-        
-        for thread in self.threads:
-            thread.join()
+        for thread in self.threads: thread.join()
 
         self.fileNameWithoutExtProcessor(self.seqFiles)
         
@@ -95,16 +84,18 @@ class scanner():
             self.threads.append(thread)
             thread.start()
 
-        for thread in self.threads:
-            thread.join()
+        for thread in self.threads: thread.join()
 
     def fileProcessor(self, files, pattern, pattern3, pattern4, pattern5):
         local_dict = {}
         for file in files:
             self.count += 1
             self.percentage = (self.count / self.file_count) * 100
-            print('Processed: ' + str(round(self.percentage, 1)) + '%' + ' counter: ' + str(self.count) + '/' + str(self.file_count), end='\r')
-            if (not 'meta.ini' in file) and ('.ini' in file or '.json' in file or '_conditions.txt' in file or '_srd.' in file or '.psc' in file):
+            print("\033[F\033[K", end="")
+            print('Processed: ' + str(round(self.percentage, 1)) + '%' + '\nFiles: ' + str(self.count) + '/' + str(self.file_count), end='\r')
+            if '.bsa' in file:
+                self.bsaList.append(file)
+            elif (not 'meta.ini' in file) and ('.ini' in file or '.json' in file or '_conditions.txt' in file or '_srd.' in file or '.psc' in file):
                 thread = threading.Thread(target=self.fileReader,args=(pattern, file, 'r'))
                 self.threads.append(thread)
                 thread.start()
@@ -113,7 +104,7 @@ class scanner():
             elif '.seq' in file:
                 plugin, _ = os.path.splitext(os.path.basename(file))
                 self.seqFiles.append([plugin, file])
-            elif ('\\facegeom\\' in file and '.nif' in file):# or ('\\facetint\\' in file and '.dds' in file):# or ('\\sound\\' in file and '\\voice\\' in file):# and re.search(pattern4, os.path.basename(file))):
+            elif ('\\facegeom\\' in file and '.nif' in file):
                 if '.esp' in file or '.esm' in file or '.esl' in file:
                     try: 
                         plugin = re.search(pattern3, file).group(1)
