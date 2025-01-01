@@ -3,17 +3,20 @@ import subprocess
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QPushButton, QButtonGroup, QListWidget, QListWidgetItem
-class ListCompactable(QTableWidget):
+
+#TODO: add bsa_flag into table
+class list_compactable(QTableWidget):
     def __init__(self):
         super().__init__()
-        modList = ['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5']
-        dependencyList = [['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5'],
+        mod_list = ['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5']
+        dependency_list = [['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5'],
                           ['C:\\mods\\Mod2','C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5', 'C:\\mods\\Mod6', 'C:\\mods\\Mod2','C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5', 'C:\\mods\\Mod6'],
                           ['C:\\mods\\Mod3','C:\\mods\\Mod4', 'C:\\mods\\Mod5', 'C:\\mods\\Mod6', 'C:\\mods\\Mod7'],
                           [],
                           ['C:\\mods\\Mod5','C:\\mods\\Mod6', 'C:\\mods\\Mod7', 'C:\\mods\\Mod8', 'C:\\mods\\Mod9']]
-        cellFlags = [True, False, False, True, True]
-        self.setRowCount(len(modList))
+        cell_flags = [True, False, False, True, True]
+        bsa_flag = [True, False, False, False, True]
+        self.setRowCount(len(mod_list))
         self.setColumnCount(4)
         self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'Dependencies', ''])
         self.horizontalHeaderItem(0).setToolTip('This is the plugin name. Select which plugins you wish to compact.')
@@ -45,9 +48,9 @@ class ListCompactable(QTableWidget):
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.horizontalHeader().setStretchLastSection(True)
 
-        self.buttonGroup = QButtonGroup()
+        self.button_group = QButtonGroup()
 
-        def displayDependencies(modIndex):
+        def display_dependencies(modIndex):
             index = self.currentRow()
             if self.cellWidget(index, 3):
                 self.item(index, 0).setTextAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
@@ -73,29 +76,29 @@ class ListCompactable(QTableWidget):
                     border: none;
                     border-bottom: 1px solid gray
                     }""")
-                listWidgetDependencyList = QListWidget()
-                for dependency in dependencyList[modIndex]:
+                list_widget_dependency_list = QListWidget()
+                for dependency in dependency_list[modIndex]:
                     item = QListWidgetItem(os.path.basename(dependency))
                     item.setToolTip(dependency)
-                    listWidgetDependencyList.addItem(item)
-                listWidgetDependencyList.setSizeAdjustPolicy(QTableWidget.SizeAdjustPolicy.AdjustToContents)
-                self.setCellWidget(index, 3, listWidgetDependencyList)
+                    list_widget_dependency_list.addItem(item)
+                list_widget_dependency_list.setSizeAdjustPolicy(QTableWidget.SizeAdjustPolicy.AdjustToContents)
+                self.setCellWidget(index, 3, list_widget_dependency_list)
             self.resizeRowToContents(index)
 
-        for i in range(len(modList)):
-            item = QTableWidgetItem(os.path.basename(modList[i]))
+        for i in range(len(mod_list)):
+            item = QTableWidgetItem(os.path.basename(mod_list[i]))
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
             item.setCheckState(Qt.CheckState.Unchecked)
-            item.setToolTip(modList[i])
+            item.setToolTip(mod_list[i])
             item.setTextAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
             self.setItem(i, 0, item)
-            if cellFlags[i]:
-                itemC = QTableWidgetItem('New CELL')
-                itemC.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                self.setItem(i, 1, itemC)
-            if len(dependencyList[i]) > 0:
+            if cell_flags[i]:
+                item_compactible = QTableWidgetItem('New CELL')
+                item_compactible.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                self.setItem(i, 1, item_compactible)
+            if len(dependency_list[i]) > 0:
                 dL = QPushButton("Show")
-                dL.clicked.connect(lambda _, index=i: displayDependencies(index))
+                dL.clicked.connect(lambda _, index=i: display_dependencies(index))
                 dL.setMaximumSize(90,22)
                 dL.setMinimumSize(90,22)
                 dL.setStyleSheet("""
@@ -104,13 +107,13 @@ class ListCompactable(QTableWidget):
                     background-color: transparent;
                     border: none;
                     }""")
-                self.buttonGroup.addButton(dL)
+                self.button_group.addButton(dL)
                 self.setCellWidget(i,2,dL)
             self.resizeRowToContents(i)
 
-        def somethingChanged(itemChanged):
+        def somethingChanged(item_changed):
             self.blockSignals(True)
-            if itemChanged.checkState() == Qt.CheckState.Checked:
+            if item_changed.checkState() == Qt.CheckState.Checked:
                 for x in self.selectedItems():
                     x.setCheckState(Qt.CheckState.Checked)
             else:
@@ -132,8 +135,8 @@ class ListCompactable(QTableWidget):
             if action == open_explorer_action:
                 self.open_in_explorer(selectedItem)
 
-    def open_in_explorer(self, selectedItem):
-        file_path = selectedItem.toolTip()#.replace('       - ','').replace('\nDouble click to show/hide dependencies.','')
+    def open_in_explorer(self, selected_item):
+        file_path = selected_item.toolTip()#.replace('       - ','').replace('\nDouble click to show/hide dependencies.','')
         if file_path:
             try:
                 if os.name == 'nt':

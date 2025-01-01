@@ -4,8 +4,7 @@ import subprocess
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem
 
-
-class ListEslify(QTableWidget):
+class list_eslable(QTableWidget):
     def __init__(self):
         super().__init__()
         #TODO: get modlist from file

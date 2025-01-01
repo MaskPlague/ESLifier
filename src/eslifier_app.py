@@ -1,32 +1,34 @@
 import sys
+import dependency_getter as dGetter
 
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QPalette, QColor
 from PyQt6.QtWidgets import (QMainWindow, QApplication, QWidget, QMenuBar, QStackedLayout,)
 
-from settingsPage import Settings
-from mainPage import main
+from settings_page import settings
+from main_page import main
 
-class MainWindow(QMainWindow):
-
+class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
-        #TODO: Make settings Page
-        #TODO: Make a scanner Page?
-        #TODO: REALLY need to decide if i'm going to ONLY scan mod folders in the mod manager mods folder or scan the whole sse directory... I think i need to scan sse...
+        #TODO: Make a scanner Page
+        #TODO: Make exclusions window/page
+        #TODO: list_compact and list_eslify need to get actual data from scanner
+        #TODO: hook up scanner
+        #TODO: create scanner dialog
         self.setWindowTitle("ESLifier")
 
-        mainMenuAction = QAction("Main", self)
-        mainMenuAction.triggered.connect(self.mainSelected)
+        main_menu_action = QAction("Main", self)
+        main_menu_action.triggered.connect(self.main_selected)
 
-        settingMenuAction = QAction("Settings", self)
-        settingMenuAction.triggered.connect(self.settingsSelected)
+        setting_menu_action = QAction("Settings", self)
+        setting_menu_action.triggered.connect(self.settings_selected)
 
-        topMenu = QMenuBar()
-        topMenu.addAction(mainMenuAction)
-        topMenu.addAction(settingMenuAction)
-        topMenu.setStyleSheet("""
+        top_menu = QMenuBar()
+        top_menu.addAction(main_menu_action)
+        top_menu.addAction(setting_menu_action)
+        top_menu.setStyleSheet("""
             QMenuBar {
                 background-color: rgb(70,70,70);
                 color: rgb(255,255,255);
@@ -41,15 +43,15 @@ class MainWindow(QMainWindow):
             }
             """)
         
-        self.mainWidget = main()
-        self.settingsWidget = Settings()
+        self.main_widget = main()
+        self.settings_widget = settings()
         self.tabs = QStackedLayout()
-        self.tabs.addWidget(self.mainWidget)
-        self.tabs.addWidget(self.settingsWidget)
+        self.tabs.addWidget(self.main_widget)
+        self.tabs.addWidget(self.settings_widget)
         self.tabs.setCurrentIndex(0)
 
-        displayWidget = QWidget()
-        displayWidget.setLayout(self.tabs)
+        display_widget = QWidget()
+        display_widget.setLayout(self.tabs)
         palette = QPalette()
         palette.setColor(QPalette.ColorRole.Window, QColor("Gray"))
         palette.setColor(QPalette.ColorRole.ButtonText, QColor("Black"))
@@ -57,17 +59,18 @@ class MainWindow(QMainWindow):
         palette.setColor(QPalette.ColorRole.WindowText, QColor("White"))
         self.setPalette(palette)
 
-        self.setCentralWidget(displayWidget)
-        self.setMenuBar(topMenu)
+        self.setCentralWidget(display_widget)
+        self.setMenuBar(top_menu)
 
-    def mainSelected(self):
+    def main_selected(self):
+        self.settings_widget.update_settings()
         self.tabs.setCurrentIndex(0)
 
-    def settingsSelected(self):
+    def settings_selected(self):
         self.tabs.setCurrentIndex(1)
 
 
 app = QApplication(sys.argv)
-w = MainWindow()
+w = main_window()
 w.show()
 app.exec()
