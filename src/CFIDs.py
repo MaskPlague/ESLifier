@@ -16,7 +16,7 @@ class CFIDs():
         formIdMap = CFIDs.getFormIdMap(file)
         CFIDs.patchFiles(file, toPatch, formIdMap, modsFolder, True)
         CFIDs.renameFiles(file, toRename, formIdMap, modsFolder)
-        #TODO: Check if voice files need to be changed in esp too
+        #TODO: Change this file to format of scanner.py
         #TODO: update next object in TES4 header?
         #TODO: SkyPatcher, MCM Helper, possible others to check
         #TODO: add regex to certain replacements in patch files for safety
