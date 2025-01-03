@@ -8,15 +8,6 @@ from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidget
 class list_compactable(QTableWidget):
     def __init__(self):
         super().__init__()
-        mod_list = ['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5']
-        dependency_list = [['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5'],
-                          ['C:\\mods\\Mod2','C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5', 'C:\\mods\\Mod6', 'C:\\mods\\Mod2','C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5', 'C:\\mods\\Mod6'],
-                          ['C:\\mods\\Mod3','C:\\mods\\Mod4', 'C:\\mods\\Mod5', 'C:\\mods\\Mod6', 'C:\\mods\\Mod7'],
-                          [],
-                          ['C:\\mods\\Mod5','C:\\mods\\Mod6', 'C:\\mods\\Mod7', 'C:\\mods\\Mod8', 'C:\\mods\\Mod9']]
-        cell_flags = [True, False, False, True, True]
-        bsa_flag = [True, False, False, False, True]
-        self.setRowCount(len(mod_list))
         self.setColumnCount(4)
         self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'Dependencies', ''])
         self.horizontalHeaderItem(0).setToolTip('This is the plugin name. Select which plugins you wish to compact.')
@@ -47,7 +38,20 @@ class list_compactable(QTableWidget):
 
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.horizontalHeader().setStretchLastSection(True)
+        
+        self.create()
 
+    def create(self):
+        mod_list = ['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5']
+        dependency_list = [['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5'],
+                          ['C:\\mods\\Mod2','C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5', 'C:\\mods\\Mod6', 'C:\\mods\\Mod2','C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5', 'C:\\mods\\Mod6'],
+                          ['C:\\mods\\Mod3','C:\\mods\\Mod4', 'C:\\mods\\Mod5', 'C:\\mods\\Mod6', 'C:\\mods\\Mod7'],
+                          [],
+                          ['C:\\mods\\Mod5','C:\\mods\\Mod6', 'C:\\mods\\Mod7', 'C:\\mods\\Mod8', 'C:\\mods\\Mod9']]
+        cell_flags = [True, False, False, True, True]
+        bsa_flag = [True, False, False, False, True]
+        self.setRowCount(len(mod_list))
+    
         self.button_group = QButtonGroup()
 
         def display_dependencies(modIndex):
@@ -59,9 +63,9 @@ class list_compactable(QTableWidget):
                 self.sender().setText('Show')
                 self.sender().setStyleSheet("""
                     QPushButton{
-                    padding: 0px, 0px, 20px, 0px;
-                    background-color: transparent;
-                    border: none;
+                        padding: 0px, 0px, 20px, 0px;
+                        background-color: transparent;
+                        border: none;
                     }""")
                 self.removeCellWidget(index, 3)
             else:
@@ -71,10 +75,11 @@ class list_compactable(QTableWidget):
                 self.sender().setText('Hide')
                 self.sender().setStyleSheet("""
                     QPushButton{
-                    padding: 0px, 0px, 20px, 0px;
-                    background-color: transparent;
-                    border: none;
-                    border-bottom: 1px solid gray
+                        padding: 0px, 0px, 20px, 0px;
+                        background-color: transparent;
+                        border: none;
+                        border-bottom: 1px solid gray;
+                        border-radius: none;
                     }""")
                 list_widget_dependency_list = QListWidget()
                 for dependency in dependency_list[modIndex]:
@@ -147,4 +152,5 @@ class list_compactable(QTableWidget):
                     subprocess.Popen(['open', os.path.dirname(file_path)])
             except Exception as e:
                 print(f"Error opening file explorer: {e}")
+
 

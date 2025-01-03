@@ -7,10 +7,6 @@ from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidget
 class list_eslable(QTableWidget):
     def __init__(self):
         super().__init__()
-        #TODO: get modlist from file
-        modList = ['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5']
-        cellFlags = [True, False, False, True, True]
-        self.setRowCount(len(modList))
         self.setColumnCount(3)
         self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', ''])
         self.horizontalHeaderItem(0).setToolTip('This is the plugin name. Select which plugins you wish to flag as light.')
@@ -40,6 +36,13 @@ class list_eslable(QTableWidget):
 
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.horizontalHeader().setStretchLastSection(True)
+        
+        self.create()
+
+    def create(self):
+        modList = ['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5']
+        cellFlags = [True, False, False, True, True]
+        self.setRowCount(len(modList))
 
         for i in range(len(modList)):
             item = QTableWidgetItem(os.path.basename(modList[i]))
