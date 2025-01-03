@@ -6,6 +6,7 @@ class dependecy_getter():
     def __init__(self, path):
         self.plugins = self.get_list_of_plugins(path)
         self.create_dependecy_dictionary()
+        self.dump_to_file("ESLifier_Data/dependency_dictionary.json")
 
     def get_list_of_plugins(path):
         plugins = []
