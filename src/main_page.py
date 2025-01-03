@@ -6,10 +6,15 @@ from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel,
 
 from list_eslify import list_eslable
 from list_compact import list_compactable
+from scanner import scanner
 
 class main(QWidget):
     def __init__(self):
         super().__init__()
+        self.create()
+        self.skyrim_folder_path = ''
+
+    def create(self):
         self.eslify = QLabel("ESLify")
         self.compact = QLabel("Compact + ESLify")
         self.info_eslify = QLabel("i")
@@ -27,9 +32,11 @@ class main(QWidget):
         self.button_compact = QPushButton()
         self.button_compact.setText("Compact/ESLify Selected")
 
-        self.button_search = QPushButton()
-        self.button_search.setText("Search Mods")
-
+        self.button_scan = QPushButton()
+        self.button_scan.setText("Scan Mod Files")
+        self.button_scan.setToolTip("This will scan the entire Skyrim Special Edition folder.\nThe time taken depends on how many files are present.\nScanning 800k files takes approximately a minute.")
+        self.button_scan.clicked.connect(self.scan)
+        
         self.filter_eslify = QLineEdit()
         self.filter_eslify.setPlaceholderText("Filter")
         self.filter_eslify.setToolTip("Search Bar")
@@ -92,7 +99,7 @@ class main(QWidget):
         self.v_layout2.addWidget(self.list_compact)
         self.v_layout2.addLayout(self.h_layout5)
 
-        self.main_layout.addWidget(self.button_search)
+        self.main_layout.addWidget(self.button_scan)
         self.main_layout.addLayout(self.h_layout1)
 
         self.h_layout1.setContentsMargins(0,20,0,20)
@@ -120,3 +127,11 @@ class main(QWidget):
         else:
             for i in range(self.list_compact.rowCount()):
                 self.list_compact.setRowHidden(i, False)
+
+    def scan(self):
+        self.button_scan.setEnabled(False)
+        print('Scanning All Files:')
+        scanner.start_scan(self.skyrim_folder_path)
+        print('Scanning Plugins:')
+        
+        self.button_scan.setEnabled(True)
