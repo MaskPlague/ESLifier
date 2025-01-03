@@ -19,11 +19,6 @@ class QtToggle(QCheckBox):
         self._circle_color = circle_color
         self._active_color = active_color
 
-        self.stateChanged.connect(self.debug)
-
-    def debug(self):
-        print(f"Status: {self.isChecked()}")
-
     def hitButton(self, pos: QPoint):
         return self.contentsRect().contains(pos)
 
