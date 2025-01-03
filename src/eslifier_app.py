@@ -68,6 +68,7 @@ class main_window(QMainWindow):
             """)
         self.settings_widget = settings()
         self.main_widget = main()
+        self.update_settings()
         self.update_shown()
         self.tabs = QStackedLayout()
         self.tabs.addWidget(self.main_widget)
@@ -95,13 +96,9 @@ class main_window(QMainWindow):
         self.tabs.setCurrentIndex(1)
 
     def update_settings(self):
-        self.settings_widget.settings['skyrim_folder_path'] = self.settings_widget.skyrim_folder_path.text()
-        self.settings_widget.settings['output_folder_path'] = self.settings_widget.output_folder_path.text()
-        self.settings_widget.settings['update_header'] = self.settings_widget.update_header_toggle.isChecked()
-        self.settings_widget.settings['show_cells'] = self.settings_widget.show_plugins_with_cells_toggle.isChecked()
+        self.settings_widget.update_settings()
+        self.main_widget.skyrim_folder_path = self.settings_widget.settings['skyrim_folder_path']
         self.update_shown()
-        print(self.settings_widget.settings)
-        pass
 
     def update_shown(self):
         show_cells = self.settings_widget.settings['show_cells']
