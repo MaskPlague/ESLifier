@@ -8,6 +8,7 @@ class dependecy_getter():
         dependecy_getter.plugins = dependecy_getter.get_list_of_plugins(path)
         dependecy_getter.create_dependency_dictionary()
         dependecy_getter.dump_to_file("ESLifier_Data/dependency_dictionary.json")
+        return dependecy_getter.dependency_dictionary
 
     def get_list_of_plugins(path):
         plugins = []
