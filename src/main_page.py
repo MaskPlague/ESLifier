@@ -142,4 +142,5 @@ class main(QWidget):
             if self.list_compact.item(row,0).checkState() == Qt.CheckState.Checked:
                 checked.append(self.list_compact.item(row,0).toolTip())
         for file in checked:
-            CFIDs.compact_and_patch(file, self.output_folder_path, self.update_header)
+            CFIDs.compact_and_patch(file, self.dependency_dictionary[os.path.basename(file).lower()], self.skyrim_folder_path, self.output_folder_path, self.update_header)
+        print("Compacted and Patched")
