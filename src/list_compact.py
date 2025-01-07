@@ -1,5 +1,6 @@
 import os
 import subprocess
+import json
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QPushButton, QButtonGroup, QListWidget, QListWidgetItem
@@ -17,7 +18,8 @@ class list_compactable(QTableWidget):
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.setSortingEnabled(True)
-
+        self.mod_list = []
+        self.cell_flags = []
         self.setStyleSheet("""
             QTableWidget::item{
                 border-top: 1px solid gray
@@ -38,23 +40,18 @@ class list_compactable(QTableWidget):
 
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.horizontalHeader().setStretchLastSection(True)
-        
+        self.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignLeft)
+
         self.create()
 
     def create(self):
-        mod_list = ['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5']
-        dependency_list = [['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5'],
-                          ['C:\\mods\\Mod2','C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5', 'C:\\mods\\Mod6', 'C:\\mods\\Mod2','C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5', 'C:\\mods\\Mod6'],
-                          ['C:\\mods\\Mod3','C:\\mods\\Mod4', 'C:\\mods\\Mod5', 'C:\\mods\\Mod6', 'C:\\mods\\Mod7'],
-                          [],
-                          ['C:\\mods\\Mod5','C:\\mods\\Mod6', 'C:\\mods\\Mod7', 'C:\\mods\\Mod8', 'C:\\mods\\Mod9']]
-        cell_flags = [True, False, False, True, True]
-        bsa_flag = [True, False, False, False, True]
-        self.setRowCount(len(mod_list))
+        self.dependency_list = self.get_dependency_list_from_file()
+        self.bsa_flags = [True, False, False, False, True]
+        self.setRowCount(len(self.mod_list))
     
         self.button_group = QButtonGroup()
 
-        def display_dependencies(modIndex):
+        def display_dependencies(mod_key):
             index = self.currentRow()
             if self.cellWidget(index, 3):
                 self.item(index, 0).setTextAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
@@ -82,7 +79,7 @@ class list_compactable(QTableWidget):
                         border-radius: none;
                     }""")
                 list_widget_dependency_list = QListWidget()
-                for dependency in dependency_list[modIndex]:
+                for dependency in self.dependency_list[mod_key]:
                     item = QListWidgetItem(os.path.basename(dependency))
                     item.setToolTip(dependency)
                     list_widget_dependency_list.addItem(item)
@@ -90,20 +87,20 @@ class list_compactable(QTableWidget):
                 self.setCellWidget(index, 3, list_widget_dependency_list)
             self.resizeRowToContents(index)
 
-        for i in range(len(mod_list)):
-            item = QTableWidgetItem(os.path.basename(mod_list[i]))
+        for i in range(len(self.mod_list)):
+            item = QTableWidgetItem(os.path.basename(self.mod_list[i]))
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
             item.setCheckState(Qt.CheckState.Unchecked)
-            item.setToolTip(mod_list[i])
+            item.setToolTip(self.mod_list[i])
             item.setTextAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
             self.setItem(i, 0, item)
-            if cell_flags[i]:
+            if self.cell_flags[i]:
                 item_compactible = QTableWidgetItem('New CELL')
                 item_compactible.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.setItem(i, 1, item_compactible)
-            if len(dependency_list[i]) > 0:
+            if self.dependency_list[os.path.basename(self.mod_list[i]).lower()] != []:
                 dL = QPushButton("Show")
-                dL.clicked.connect(lambda _, index=i: display_dependencies(index))
+                dL.clicked.connect(lambda _, mod_key=os.path.basename(self.mod_list[i]).lower(): display_dependencies(mod_key))
                 dL.setMaximumSize(90,22)
                 dL.setMinimumSize(90,22)
                 dL.setStyleSheet("""
@@ -131,6 +128,14 @@ class list_compactable(QTableWidget):
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenu)
 
+    def get_dependency_list_from_file(self):
+        try:
+            with open("ESLifier_Data/dependency_dictionary.json", 'r') as f:
+                data = json.load(f)
+        except:
+            data = {}
+        return data
+
     def contextMenu(self, position):
         selectedItem = self.itemAt(position)
         if selectedItem:
@@ -141,7 +146,7 @@ class list_compactable(QTableWidget):
                 self.open_in_explorer(selectedItem)
 
     def open_in_explorer(self, selected_item):
-        file_path = selected_item.toolTip()#.replace('       - ','').replace('\nDouble click to show/hide dependencies.','')
+        file_path = selected_item.toolTip()
         if file_path:
             try:
                 if os.name == 'nt':
