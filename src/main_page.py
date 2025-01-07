@@ -1,4 +1,4 @@
-import sys
+import os
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, 
@@ -7,20 +7,26 @@ from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel,
 from list_eslify import list_eslable
 from list_compact import list_compactable
 from scanner import scanner
+from plugin_qualification_checker import qualification_checker
+from dependency_getter import dependecy_getter
+from compact_form_ids import CFIDs
 
 class main(QWidget):
     def __init__(self):
         super().__init__()
         self.create()
         self.skyrim_folder_path = ''
+        self.output_folder_path = ''
+        self.update_header = True
+        self.show_cells = True
+        self.eslify_dictionary = {}
+        self.dependency_dictionary = {}
 
     def create(self):
         self.eslify = QLabel("ESLify")
+        self.eslify.setToolTip("List of plugins that meet ESL conditions.")
         self.compact = QLabel("Compact + ESLify")
-        self.info_eslify = QLabel("i")
-        self.info_eslify.setToolTip("List of plugins that meet ESL conditions.")
-        self.info_compact = QLabel("i")
-        self.info_compact.setToolTip("List of plugins that can be compacted to fit ESL conditions." +
+        self.compact.setToolTip("List of plugins that can be compacted to fit ESL conditions." +
                          "\nThe \'Compact Selected\' button will also ESL the selected plugin(s).")
 
         self.list_eslify = list_eslable()
@@ -31,6 +37,7 @@ class main(QWidget):
 
         self.button_compact = QPushButton()
         self.button_compact.setText("Compact/ESLify Selected")
+        self.button_compact.clicked.connect(self.compact_selected_clicked)
 
         self.button_scan = QPushButton()
         self.button_scan.setText("Scan Mod Files")
@@ -62,23 +69,10 @@ class main(QWidget):
         
         self.h_layout1 = QHBoxLayout()
 
-        #Top of left Column
-        self.h_layout2 = QHBoxLayout()
-        self.h_layout2.addWidget(self.eslify)
-        self.h_layout2.addWidget(self.info_eslify)
-        self.h_layout2.setAlignment(Qt.AlignmentFlag.AlignLeft)
-
         #Bottom of left Column
         self.h_layout3 = QHBoxLayout()
         self.h_layout3.addWidget(self.button_eslify)
         self.h_layout3.addWidget(self.filter_eslify)
-
-
-        #Top of right Column
-        self.h_layout4 = QHBoxLayout()
-        self.h_layout4.addWidget(self.compact)
-        self.h_layout4.addWidget(self.info_compact)
-        self.h_layout4.setAlignment(Qt.AlignmentFlag.AlignLeft)
 
         #Bottom of right Column
         self.h_layout5 = QHBoxLayout()
@@ -87,7 +81,7 @@ class main(QWidget):
 
         #Left Column
         self.h_layout1.addLayout(self.v_layout1)
-        self.v_layout1.addLayout(self.h_layout2)
+        self.v_layout1.addWidget(self.eslify)
         self.v_layout1.addWidget(self.list_eslify)
         self.v_layout1.addLayout(self.h_layout3)
 
@@ -95,7 +89,7 @@ class main(QWidget):
 
         #Right Column
         self.h_layout1.addLayout(self.v_layout2)
-        self.v_layout2.addLayout(self.h_layout4)
+        self.v_layout2.addWidget(self.compact)
         self.v_layout2.addWidget(self.list_compact)
         self.v_layout2.addLayout(self.h_layout5)
 
@@ -131,7 +125,21 @@ class main(QWidget):
     def scan(self):
         self.button_scan.setEnabled(False)
         print('Scanning All Files:')
-        scanner.start_scan(self.skyrim_folder_path)
+        scanner(self.skyrim_folder_path)
+        print('Gettings Dependencies')
+        self.dependency_dictionary = dependecy_getter.scan(self.skyrim_folder_path)
         print('Scanning Plugins:')
-        
+        self.list_eslify.mod_list, self.list_eslify.cell_flags, self.list_compact.mod_list, self.list_compact.cell_flags = qualification_checker.scan(self.skyrim_folder_path, self.update_header,self.show_cells)
+        print('Populating Tables')
+        self.list_eslify.create()
+        self.list_compact.create()
         self.button_scan.setEnabled(True)
+        print('Done Scanning')
+
+    def compact_selected_clicked(self):
+        checked = []
+        for row in range(self.list_compact.rowCount()):
+            if self.list_compact.item(row,0).checkState() == Qt.CheckState.Checked:
+                checked.append(self.list_compact.item(row,0).toolTip())
+        for file in checked:
+            CFIDs.compact_and_patch(file, self.output_folder_path, self.update_header)
