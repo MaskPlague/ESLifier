@@ -1,5 +1,6 @@
 import os
 import subprocess
+import json
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem
@@ -35,12 +36,12 @@ class list_unpatched(QTableWidget):
 
     def create(self):
         self.file_list = ['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5']
+        self.compacted_and_patched = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json")
+        self.filtered_file_list()
         self.setRowCount(len(self.file_list))
 
         for i in range(len(self.file_list)):
             item = QTableWidgetItem(os.path.basename(self.file_list[i]))
-            #item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-            #item.setCheckState(Qt.CheckState.Unchecked)
             item.setToolTip(self.file_list[i])
             self.setItem(i, 0, item)
             self.resizeRowToContents(i)
@@ -58,17 +59,33 @@ class list_unpatched(QTableWidget):
         self.resizeColumnsToContents()
         self.itemChanged.connect(somethingChanged)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.contextMenu)
+        self.customContextMenuRequested.connect(self.context_menu)
 
+    
+    def get_data_from_file(self, file):
+        try:
+            with open(file, 'r') as f:
+                data = json.load(f)
+        except:
+            data = {}
+        return data
 
-    def contextMenu(self, position):
-        selectedItem = self.itemAt(position)
-        if selectedItem:
+    def filtered_file_list(self):
+        if self.compacted_and_patched != {}:
+            new_list = []
+            for file in self.file_list:
+                if file.lower() not in self.compacted_and_patched.values():
+                    new_list.append(file)
+            self.file_list = new_list
+
+    def context_menu(self, position):
+        selected_item = self.itemAt(position)
+        if selected_item:
             menu = QMenu(self)
             open_explorer_action = menu.addAction("Open in File Explorer")
             action = menu.exec(self.viewport().mapToGlobal(position))
             if action == open_explorer_action:
-                self.open_in_explorer(selectedItem)
+                self.open_in_explorer(selected_item)
 
     def open_in_explorer(self, selectedItem):
         file_path = selectedItem.toolTip()
