@@ -7,18 +7,6 @@ import json
 
 
 class scanner():
-    '''def __init__(self):
-        #TODO: for each compacted file, make a file with a list of patched files. Compare patched vs unpatched to get new files.
-        #TODO: maybe convert to PyQt threading if necessary? plz no.
-        scanner.path = ''
-        scanner.all_files = []
-        scanner.file_dict = {}
-        scanner.threads = []
-        scanner.seq_files = []
-        scanner.pex_files = []
-        scanner.bsa_list = []
-        scanner.count = 0'''
-
     def __init__(self, path):
         scanner.path = path
         start_time = timeit.default_timer()
@@ -40,12 +28,12 @@ class scanner():
         print('\nTime taken: ' + str(round(time_taken,2)) + ' seconds')
 
     def dump_to_file(file):
-        with open(file, 'w+', encoding='utf-8') as f:
+        with open(file, 'w', encoding='utf-8') as f:
             json.dump(scanner.file_dict, f, ensure_ascii=False, indent=4)
     
     def get_from_file(file):
         data = {} #TODO: Some form of verification?
-        with open(file, 'r') as f:
+        with open(file, 'r', encoding='utf-8') as f:
             data = json.load(f)
         return data
 
@@ -53,7 +41,7 @@ class scanner():
         plugins = dep_getter.dependecy_getter.get_list_of_plugins(scanner.path)
         plugin_names = []
         for plugin in plugins: plugin_names.append(os.path.basename(plugin).lower())
-        pattern = re.compile(r'(?:~|: *|\||=|,|-)\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\)?)(?:\||,|$)')
+        pattern = re.compile(r'(?:~|: *|\||=|,|-|")\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\)?)(?:\||,|"|$)')
         pattern2 = re.compile(rb'\x00.([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\x00')
         pattern3 = re.compile(r'\\facegeom\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
         pattern4 = re.compile(r'\\facetint\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
