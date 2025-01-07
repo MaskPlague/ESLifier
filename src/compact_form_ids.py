@@ -6,13 +6,14 @@ import fileinput
 import zlib
 
 class CFIDs():
-    allInOneSetting = True
-    
     #TODO: Consider adding an new warning to ESLifierWarn that detects if a master has no _ESLifierBackup/_FormIdMap.txt but its dependents do then they may be the wrong version.
-    def main(file, dependents):
-        modsFolder = CFIDs.compactFile(file)
-        CFIDs.correctDependents(file, dependents, modsFolder)
-        toPatch, toRename = CFIDs.getFilesToCorrect(file, CFIDs.getModFolders(file, dependents)) #function to get files that need to be edited in some way to function correctly.
+    def compact_and_patch(file_to_compact, output_folder, update_header):
+        CFIDs.compacted_and_patched = {}
+        CFIDs.compact_file(file_to_compact, output_folder, update_header)
+        print(CFIDs.compacted_and_patched)
+        #CFIDs.correctDependents(file, dependents)
+        return
+        toPatch, toRename = CFIDs.getFilesToCorrect(file, CFIDs.get_mod_folders(file, dependents)) #function to get files that need to be edited in some way to function correctly.
         formIdMap = CFIDs.getFormIdMap(file)
         CFIDs.patchFiles(file, toPatch, formIdMap, modsFolder, True)
         CFIDs.renameFiles(file, toRename, formIdMap, modsFolder)
@@ -28,22 +29,26 @@ class CFIDs():
             # this means that the output folder will need to be emptied and patched every time or an option...
         #TODO: Far in the future, consider actively scanning files for previous compacted files. Maybe a UI option to do a scan or directly select relevant folder/files.
         return
+    
+    def set_flag(file, output_folder):
+        new_file = CFIDs.copy_file_to_output(file, output_folder)
+        with open(new_file, 'rb+') as f:
+            f.seek(9)
+            f.write(b'\x02')
 
     #Create a copy of the mod plugin we're compacting
-    def copyFileToNewMod(file, modsFolder):
-        endPath = file[len(modsFolder) + 1:]
-        if CFIDs.allInOneSetting:
-            newFile = os.path.join(os.path.join(modsFolder,'ESLifier Compactor Output'), re.sub(r'(.*?)(/|\\)', '', endPath, 1))
-        else:
-            newModName = re.findall(r'(.*?)(/|\\)', endPath)[0][0] + ' - ESLifier Compacted'
-            newFile = os.path.join(os.path.join(modsFolder, newModName), re.sub(r'(.*?)(/|\\)', '', endPath, 1))
-        if not os.path.exists(os.path.dirname(newFile)):
-            os.makedirs(os.path.dirname(newFile))
-        shutil.copy(file, newFile)
-        return newFile
+    def copy_file_to_output(file, output_folder):
+        head, _ = os.path.split(file)
+        end_path = file[len(head) + 1:]
+        new_file = os.path.join(os.path.join(output_folder,'ESLifier Compactor Output'), re.sub(r'(.*?)(/|\\)', '', end_path, 1))
+        if not os.path.exists(os.path.dirname(new_file)):
+            os.makedirs(os.path.dirname(new_file))
+        shutil.copy(file, new_file)
+        return new_file
 
     #get the list of folders for both the master and dependents
-    def getModFolders(file, dependents):
+    
+    def get_mod_folders(file, dependents):
         modFolders = []
         modFolders.append(os.path.dirname(file))
         for dependent in dependents:
@@ -125,7 +130,7 @@ class CFIDs():
         for file in files:
             for formIds in formIdMap:
                 if formIds[1].upper() in file.upper():
-                    newFile = CFIDs.copyFileToNewMod(file, modsFolder)
+                    newFile = CFIDs.copy_file_to_output(file, modsFolder)
                     os.replace(newFile, newFile.replace(formIds[1].upper(), formIds[3].upper()))
                     if 'facegeom' in newFile.lower() and os.path.basename(master).lower() in newFile.lower():
                         faceGeomMeshes.append(newFile.replace(formIds[1].upper(), formIds[3].upper()))
@@ -158,7 +163,7 @@ class CFIDs():
     def patchFiles(master, files, formIdMap, modsFolder, flag):
         for file in files:
             if flag:
-                newFile = CFIDs.copyFileToNewMod(file, modsFolder)
+                newFile = CFIDs.copy_file_to_output(file, modsFolder)
             else:
                 newFile = file
             if '.ini' in newFile.lower() or '.json' in newFile.lower() or '_conditions.txt' in newFile.lower() or '_srd.' in newFile.lower() or '.psc' in newFile.lower():
@@ -239,86 +244,88 @@ class CFIDs():
         print("Files Patched")
 
     #Compacts master file and returns the new mod folder
-    def compactFile(file):
-        formIDFileName = os.path.basename(file) + "_FormIdMap.txt"
-        modsFolder = os.path.dirname(os.path.dirname(file))
-        newFile = CFIDs.copyFileToNewMod(file, modsFolder)
+    def compact_file(file, output_folder, update_header):
+        print(file)
+        form_id_file_name = 'ESLifier_Data/Form_ID_Maps/' + os.path.basename(file) + "_FormIdMap.txt"
+        new_file = CFIDs.copy_file_to_output(file, output_folder)
 
         #Set ESL flag, update to header 1.71 for new Form IDs, and get data from mod plugin
         data = b''
-        with open(newFile, 'rb+') as f:
+        with open(new_file, 'rb+') as f:
             f.seek(9)
             f.write(b'\x02')
-            f.seek(0)
-            f.seek(30)
-            f.write(b'\x48\xE1\xDA\x3F')
+            if update_header:
+                f.seek(0)
+                f.seek(30)
+                f.write(b'\x48\xE1\xDA\x3F')
             f.seek(0)
             data = f.read()
             f.close()
 
-        print('initial data size:           ' + str(len(data)))
+        #print('initial data size:           ' + str(len(data)))
         data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z|_]................\x2c\x00.\x00)|(?=GRUP....................)', data, flags=re.DOTALL) if x]
 
-        masterCount = data_list[0].count(b'MAST')
-        formIdList = []
+        master_count = data_list[0].count(b'MAST')
+        form_id_list = []
 
-        if masterCount <= 15:
-            mC = '0' + str(masterCount)
+        if master_count <= 15:
+            mC = '0' + str(master_count)
         else:
-            mC = str(masterCount)
+            mC = str(master_count)
 
-        newId = binascii.unhexlify(mC + '000000')
-        newIdL = len(newId)
-        counter = int.from_bytes(newId, 'big')
-        sizesList = [[]] * len(data_list)
+        new_id = binascii.unhexlify(mC + '000000')
+        new_id_len = len(new_id)
+        counter = int.from_bytes(new_id, 'big')
+        sizes_list = [[]] * len(data_list)
 
         #Decompress any compressed form ids in the plugin
         for i in range(len(data_list)):
             #flag for compressed forms is at byte 10 and is b'04'
-            if len(data_list[i]) > 16 and data_list[i][10] == 0x4 and (0 <= data_list[i][15] <= masterCount):
+            if len(data_list[i]) > 24 and data_list[i][10] == 0x4 and (0 <= data_list[i][15] <= master_count):
+                print(data_list[i])
                 size = int.from_bytes(data_list[i][4:8][::-1])
                 #Decompress the compressed form
                 decompressed = zlib.decompress(data_list[i][28:size + 24]) #24 is the size of the form header in every kind except GRUP
-                sizesList[i] = [len(data_list[i]), len(decompressed), size]
-                newForm = data_list[i].replace(data_list[i][28:size+24], decompressed)
+                sizes_list[i] = [len(data_list[i]), len(decompressed), size]
+                new_form = data_list[i].replace(data_list[i][28:size+24], decompressed)
 
                 #get the form ids that were hiding in compressed data
-                newForms = re.split(b'(?=....................\x2c\x00.\x00)', newForm, flags=re.DOTALL)
-                if len(newForms) > 0:
-                    for nF in newForms:
-                        if nF != b'' and nF[15] == masterCount and nF[12:16] not in formIdList:
-                            formIdList.append(nF[12:16])
+                new_forms = re.split(b'(?=....................\x2c\x00.\x00)', new_form, flags=re.DOTALL)
+                if len(new_forms) > 0:
+                    for form in new_forms:
+                        if form != b'' and len(form) > 16 and form[15] == master_count and form[12:16] not in form_id_list:
+                            form_id_list.append(form[12:16])
 
-                data_list[i] = newForm
+                data_list[i] = new_form
         
         #recreate data from data that has been altered when decompressed, but with an identifier of the previous split
         data = b'-||+||-'.join(data_list)
 
         #Get all other form ids in plugin
         for form in data_list:
-            if len(form) > 16 and form[15] == masterCount and form[12:16] not in formIdList:
-                formIdList.append(form[12:16])
+            if len(form) > 24 and form[15] == master_count and form[12:16] not in form_id_list:
+                form_id_list.append(form[12:16])
         
 
-        formIdList.sort()
+        form_id_list.sort()
 
         #Replace current Form IDs with the new Form IDs
-        with open(formIDFileName, 'w') as fidf:
-            print('decompacted size before:     ' + str(len(data)))
-            for formId in formIdList:
-                newId = counter.to_bytes(newIdL, 'little')
+        with open(form_id_file_name, 'w') as form_id_file:
+            #print('decompacted size before:     ' + str(len(data)))
+            for form_id in form_id_list:
+                new_id = counter.to_bytes(new_id_len, 'little')
                 #print("From: " + str(formId.hex()) + " to -> " + str(newId.hex()))
                 counter += 1
-                fidf.write(str(formId.hex()) + '|' + str(newId.hex()) + '\n')
+                form_id_file.write(str(form_id.hex()) + '|' + str(new_id.hex()) + '\n')
 
-                if formId[:2] != b'\xFF\xFF':
-                    data = data.replace(formId, newId)
+                if form_id[:2] != b'\xFF\xFF':
+                    data = data.replace(form_id, new_id)
                 else: #Prevent issues with replacing VMAD info with its \xFF\xFF structure
-                    data = re.sub(re.escape(formId) + b'(?!.' + int.to_bytes(masterCount) + b')', newId, data, flags=re.DOTALL)
+                    data = re.sub(re.escape(form_id) + b'(?!.' + int.to_bytes(master_count) + b')', new_id, data, flags=re.DOTALL)
 
                 '''#Extemely slow and missing \xFF\xFF that is above
-                newIdReplacement1 = newId + bytes(r"\g<2>", 'utf-8')
-                newIdReplacement2 = bytes(r"\g<1>", 'utf-8') + newId + bytes(r"\g<3>", 'utf-8')
+                #newIdReplacement1 = newId + bytes(r"\g<2>", 'utf-8')
+                #newIdReplacement2 = bytes(r"\g<1>", 'utf-8') + newId + bytes(r"\g<3>", 'utf-8')
                 newIdReplacement3 = bytes(r"\g<1>", 'utf-8') + newId
                 pattern1 = re.compile(b'(' + re.escape(formId) + b')(....\x2c[\x00-\x7F]{4})') #form id in non grup, form header replacement
                 pattern2 = re.compile(b'(\x04\x00)(' + re.escape(formId) + b')([\x00-\x7F]{4}\x2c)') #form id in
@@ -332,28 +339,29 @@ class CFIDs():
                 data = re.sub(pattern4, newIdReplacement1, data)
                 data = re.sub(pattern5, newIdReplacement2, data)'''
 
-            print('decompacted size after:      ' + str(len(data)))
+            #print('decompacted size after:      ' + str(len(data)))
 
 
         data_list = data.split(b'-||+||-')
 
         for i in range(len(data_list)):
-            if len(data_list[i]) > 16 and data_list[i][10] == 0x4 and (0 <= data_list[i][15] <= masterCount): #and data_list[i][15] == masterCount and data_list[i][10] == 0x4:
+            if len(data_list[i]) > 16 and data_list[i][10] == 0x4 and (0 <= data_list[i][15] <= master_count): #and data_list[i][15] == masterCount and data_list[i][10] == 0x4:
                 #compressed = zlib.compress(data_list[i][28:sizesList[i][2] + 24])
                 compressed = zlib.compress(data_list[i][28:len(data_list[i])-1], 9)
-                formatted = [0] * (sizesList[i][0] - 28)
+                formatted = [0] * (sizes_list[i][0] - 28)
                 formatted[:28] = data_list[i][:28]
                 formatted[28:len(compressed)] = compressed
                 data_list[i] = bytes(formatted)
 
         data = b''.join(data_list)
-        print('final data size:             ' + str(len(data)))
+        #print('final data size:             ' + str(len(data)))
 
-        with open(newFile, 'wb') as f:
+        with open(new_file, 'wb') as f:
             f.write(data)
             f.close()
+
+        CFIDs.compacted_and_patched[os.path.basename(new_file)] = []
         print('file compacted')
-        return modsFolder
         
 
     #replaced the old form ids with the new ones in all files that have the comapacted file as a master
@@ -365,7 +373,7 @@ class CFIDs():
 
         for dependent in dependents:
             #TODO: consider if a dependent has compressed forms... please no
-            newFile = CFIDs.copyFileToNewMod(dependent, modsFolder)
+            newFile = CFIDs.copy_file_to_output(dependent, modsFolder)
             dependentData = b''
             with open(newFile, 'rb+') as df:
                 #Update header to 1.71 to fit new records
@@ -440,9 +448,9 @@ class CFIDs():
 #file = 'fakemodsfolder/Kangmina SE/Kangmina.esp'
 #dependents = []
 #CFIDs.main(file, dependents)
-file = 'fakemodsfolder/EAS/TaberuAnimation.esp'
-dependents = ['fakemodsfolder/EAS Patches/Taberu Animation - BSBruma Patch.esp','fakemodsfolder/EAS Patches/Taberu Animation - CACO Patch.esp', 'fakemodsfolder/EAS Patches/Taberu Animation - Dawn of Skyrim Patch.esp', 'fakemodsfolder/EAS Patches/Taberu Animation - LotD Patch.esp', 'fakemodsfolder/EAS Patches/Taberu Animation - USSEP Patch.esp', 'fakemodsfolder/EAS Patches/Taberu Animation - Wyrmstooth Patch.esp']
-CFIDs.main(file, dependents)
+#file = 'fakemodsfolder/EAS/TaberuAnimation.esp'
+#dependents = ['fakemodsfolder/EAS Patches/Taberu Animation - BSBruma Patch.esp','fakemodsfolder/EAS Patches/Taberu Animation - CACO Patch.esp', 'fakemodsfolder/EAS Patches/Taberu Animation - Dawn of Skyrim Patch.esp', 'fakemodsfolder/EAS Patches/Taberu Animation - LotD Patch.esp', 'fakemodsfolder/EAS Patches/Taberu Animation - USSEP Patch.esp', 'fakemodsfolder/EAS Patches/Taberu Animation - Wyrmstooth Patch.esp']
+#CFIDs.run(file, dependents)
 #file = 'fakemodsfolder/AOS/Audio Overhaul Skyrim.esp'
 #dependents = []
 #CFIDs.main(file, dependents)
