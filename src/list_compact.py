@@ -45,8 +45,9 @@ class list_compactable(QTableWidget):
         self.create()
 
     def create(self):
-        self.dependency_list = self.get_dependency_list_from_file()
+        self.dependency_list = self.get_data_from_file("ESLifier_Data/dependency_dictionary.json")
         self.bsa_flags = [True, False, False, False, True]
+        
         self.setRowCount(len(self.mod_list))
     
         self.button_group = QButtonGroup()
@@ -128,9 +129,9 @@ class list_compactable(QTableWidget):
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenu)
 
-    def get_dependency_list_from_file(self):
+    def get_data_from_file(self, file):
         try:
-            with open("ESLifier_Data/dependency_dictionary.json", 'r') as f:
+            with open(file, 'r') as f:
                 data = json.load(f)
         except:
             data = {}
