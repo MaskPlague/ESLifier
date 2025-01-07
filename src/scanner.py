@@ -7,7 +7,7 @@ import json
 
 
 class scanner():
-    def __init__(self):
+    '''def __init__(self):
         #TODO: for each compacted file, make a file with a list of patched files. Compare patched vs unpatched to get new files.
         #TODO: maybe convert to PyQt threading if necessary? plz no.
         scanner.path = ''
@@ -17,9 +17,9 @@ class scanner():
         scanner.seq_files = []
         scanner.pex_files = []
         scanner.bsa_list = []
-        scanner.count = 0
+        scanner.count = 0'''
 
-    def start_scan(path):
+    def __init__(self, path):
         scanner.path = path
         start_time = timeit.default_timer()
         scanner.file_count = 0
