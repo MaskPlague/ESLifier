@@ -17,7 +17,7 @@ class scanner():
         for root, _, files in os.walk(scanner.path):
             scanner.file_count += len(files)
             for file in files:
-                scanner.all_files.append(os.path.join(root, file).lower())
+                scanner.all_files.append(os.path.join(root, file))
 
         scanner.get_file_masters()
 
@@ -43,9 +43,9 @@ class scanner():
         for plugin in plugins: plugin_names.append(os.path.basename(plugin).lower())
         pattern = re.compile(r'(?:~|: *|\||=|,|-|")\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\)?)(?:\||,|"|$)')
         pattern2 = re.compile(rb'\x00.([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\x00')
-        pattern3 = re.compile(r'\\facegeom\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
-        pattern4 = re.compile(r'\\facetint\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
-        pattern5 = re.compile(r'\\sound\\voice\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
+        pattern3 = re.compile(r'\\facegeom\\([a-zA-Z0-9_\-\'\?\!\(\)\[\]\, \u0080-\uffff]+\.es[pml])\\')
+        pattern4 = re.compile(r'\\facetint\\([a-z0-9\_\'\-\?\!\(\)\[\]\, \u0080-\uffff]+\.es[pml])\\')
+        pattern5 = re.compile(r'\\sound\\voice\\([a-z0-9\_\'\-\?\!\(\)\[\]\, \u0080-\uffff]+\.es[pml])\\')
         scanner.file_dict = {plugin: [] for plugin in plugin_names}
         scanner.threads = []
         scanner.seq_files = []
@@ -104,26 +104,38 @@ class scanner():
                 if '.esp' in file or '.esm' in file or '.esl' in file:
                     try: 
                         plugin = re.search(pattern3, file).group(1)
-                        if plugin not in local_dict.keys(): local_dict.update({plugin: []})
-                        if file not in local_dict[plugin]: local_dict[plugin].append(file)
-                    except:
+                        if plugin.lower() not in local_dict.keys(): 
+                            local_dict.update({plugin.lower(): []})
+                        if file not in local_dict[plugin.lower()]: 
+                            local_dict[plugin.lower()].append(file)
+                    except Exception as e:
+                        print(e)
                         print(file)
+                        print('\n')
             elif '\\facetint\\' in file and '.dds' in file:
                 if '.esp' in file or '.esm' in file or '.esl' in file:
                     try: 
                         plugin = re.search(pattern4, file).group(1)
-                        if plugin not in local_dict.keys(): local_dict.update({plugin: []})
-                        if file not in local_dict[plugin]: local_dict[plugin].append(file)
-                    except:
+                        if plugin.lower() not in local_dict.keys(): 
+                            local_dict.update({plugin.lower(): []})
+                        if file not in local_dict[plugin.lower()]: 
+                            local_dict[plugin.lower()].append(file)
+                    except Exception as e:
+                        print(e)
                         print(file)
+                        print('\n')
             elif '\\sound\\' in file and '\\voice\\' in file:
                 if '.esp' in file or '.esm' in file or '.esl' in file:
                     try: 
                         plugin = re.search(pattern5, file).group(1)
-                        if plugin not in local_dict.keys(): local_dict.update({plugin: []})
-                        if file not in local_dict[plugin]: local_dict[plugin].append(file)
-                    except:
+                        if plugin.lower() not in local_dict.keys(): 
+                            local_dict.update({plugin.lower(): []})
+                        if file not in local_dict[plugin.lower()]: 
+                            local_dict[plugin.lower()].append(file)
+                    except Exception as e:
+                        print(e)
                         print(file)
+                        print('\n')
                         
         for key, values_list in local_dict.items():
             with scanner.lock:
