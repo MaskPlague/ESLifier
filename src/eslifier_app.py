@@ -107,8 +107,10 @@ class main_window(QMainWindow):
     def update_settings(self):
         self.settings_widget.update_settings()
         self.main_widget.skyrim_folder_path = self.settings_widget.settings['skyrim_folder_path']
+        self.main_widget.output_folder_path = self.settings_widget.settings['output_folder_path']
         self.main_widget.update_header = self.settings_widget.settings['update_header']
         self.main_widget.show_cells = self.settings_widget.settings['show_cells']
+        self.patch_new_widget.skyrim_folder_path = self.settings_widget.settings['skyrim_folder_path']
         self.update_shown()
 
     def update_shown(self):
