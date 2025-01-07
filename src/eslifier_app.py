@@ -8,18 +8,15 @@ from PyQt6.QtWidgets import (QMainWindow, QApplication, QWidget, QMenuBar, QStac
 
 from settings_page import settings
 from main_page import main
+from patch_new_page import patch_new
 
 class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
-        #TODO: Make a scanner Page
+        #TODO: Make a patch files page which will only use the esp name and pull the form id map to patch dependent files
         #TODO: Make exclusions window/page
-        #TODO: list_compact and list_eslify need to get actual data from scanner
-        #TODO: hook up scanner
         #TODO: create scanner dialog
         self.setWindowTitle("ESLifier")
-        main_menu_action = QAction("Main", self)
-        main_menu_action.triggered.connect(self.main_selected)
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.setFocus()
         self.setStyleSheet("""
@@ -46,11 +43,16 @@ class main_window(QMainWindow):
             }
             """)
 
+        main_menu_action = QAction("Main", self)
+        main_menu_action.triggered.connect(self.main_selected)
         setting_menu_action = QAction("Settings", self)
         setting_menu_action.triggered.connect(self.settings_selected)
+        patch_new_menu_action = QAction("Patch New Plugins/Files", self)
+        patch_new_menu_action.triggered.connect(self.patch_new_selected)
 
         top_menu = QMenuBar()
         top_menu.addAction(main_menu_action)
+        top_menu.addAction(patch_new_menu_action)
         top_menu.addAction(setting_menu_action)
         top_menu.setStyleSheet("""
             QMenuBar {
@@ -68,10 +70,14 @@ class main_window(QMainWindow):
             """)
         self.settings_widget = settings()
         self.main_widget = main()
+        self.patch_new_widget = patch_new()
+        self.main_widget.setMinimumWidth(1000)
+        self.main_widget.setMinimumHeight(500)
         self.update_settings()
         self.update_shown()
         self.tabs = QStackedLayout()
         self.tabs.addWidget(self.main_widget)
+        self.tabs.addWidget(self.patch_new_widget)
         self.tabs.addWidget(self.settings_widget)
         self.tabs.setCurrentIndex(0)
         self.layout().setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -92,12 +98,17 @@ class main_window(QMainWindow):
         self.update_settings()
         self.tabs.setCurrentIndex(0)
 
-    def settings_selected(self):
+    def patch_new_selected(self):
         self.tabs.setCurrentIndex(1)
+
+    def settings_selected(self):
+        self.tabs.setCurrentIndex(2)
 
     def update_settings(self):
         self.settings_widget.update_settings()
         self.main_widget.skyrim_folder_path = self.settings_widget.settings['skyrim_folder_path']
+        self.main_widget.update_header = self.settings_widget.settings['update_header']
+        self.main_widget.show_cells = self.settings_widget.settings['show_cells']
         self.update_shown()
 
     def update_shown(self):
