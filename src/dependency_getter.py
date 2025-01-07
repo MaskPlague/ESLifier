@@ -2,46 +2,49 @@ import os
 import re
 import json
 
-class dependecy_getter():    
-    def __init__(self, path):
-        self.plugins = self.get_list_of_plugins(path)
-        self.create_dependecy_dictionary()
-        self.dump_to_file("ESLifier_Data/dependency_dictionary.json")
+class dependecy_getter():
+    def scan(path):
+        dependecy_getter.dependency_dictionary = {}
+        dependecy_getter.plugins = dependecy_getter.get_list_of_plugins(path)
+        dependecy_getter.create_dependency_dictionary()
+        dependecy_getter.dump_to_file("ESLifier_Data/dependency_dictionary.json")
 
     def get_list_of_plugins(path):
         plugins = []
         for root, dirs, files in os.walk(path):
             for file in files:
                 if re.search(r'\.es[pml]$', file):
-                    plugins.append(os.path.join(root,file).lower())
+                    plugins.append(os.path.join(root,file))
         return plugins
     
-    def dump_to_file(self, file):
+    def dump_to_file(file):
         with open(file, 'w+', encoding='utf-8') as f:
-            json.dump(self.dictionary, f, ensure_ascii=False, indent=4)
+            json.dump(dependecy_getter.dependency_dictionary, f, ensure_ascii=False, indent=4)
     
-    def get_from_file(self, file):
+    def get_from_file(file):
         data = {}
         with open(file, 'r') as f:
             data = json.load(f)
         return data
     
-    def create_dependecy_dictionary(self):
+    def create_dependency_dictionary():
         plugin_names = []
-        for plugin in self.plugins:
-            plugin_names.append(os.path.basename(plugin))
-            plugin_names.append(os.path.basename(plugin) + '_path')
+        for plugin in dependecy_getter.plugins:
+            plugin_names.append(os.path.basename(plugin).lower())
+            plugin_names.append(os.path.basename(plugin).lower() + '_path')
 
-        self.dependency_dictionary = {plugin: [] for plugin in plugin_names}
-        for plugin in self.plugins:
-            self.dependency_dictionary[os.path.basename(plugin) + '_path'] = plugin
-            masters = self.getMasters(plugin)
+        dependecy_getter.dependency_dictionary = {plugin: [] for plugin in plugin_names}
+        for plugin in dependecy_getter.plugins:
+            dependecy_getter.dependency_dictionary[os.path.basename(plugin).lower() + '_path'] = plugin
+            masters = dependecy_getter.getMasters(plugin)
             if len(masters) > 0:
                 for master in masters:
-                    if plugin not in self.dependency_dictionary[master]:
-                        self.dependency_dictionary[master].append(plugin)
+                    if master.lower() not in dependecy_getter.dependency_dictionary.keys():
+                        dependecy_getter.dependency_dictionary[master.lower()] = []
+                    if plugin not in dependecy_getter.dependency_dictionary[master.lower()]:
+                        dependecy_getter.dependency_dictionary[master.lower()].append(plugin.lower())
 
-    def getMasters(self, file):
+    def getMasters(file):
         masterList = []
         with open(file, 'rb') as f:
             f.seek(4)
