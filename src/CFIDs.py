@@ -288,11 +288,6 @@ class CFIDs():
                     for nF in newForms:
                         if nF != b'' and nF[15] == masterCount and nF[12:16] not in formIdList:
                             formIdList.append(nF[12:16])
-                '''else:
-                    #Untested, should work in theory
-                    print('newForm length == 1')
-                    if newForms[0] != b'' and newForms[0][15] == masterCount and newForms[0][12:16] not in formIdList:
-                        formIdList.append(newForms[0][12:16])#'''
 
                 data_list[i] = newForm
         
