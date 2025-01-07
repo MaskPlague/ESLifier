@@ -5,7 +5,7 @@ from PyQt6.QtGui import QAction, QIcon, QPalette, QColor
 from PyQt6.QtWidgets import (QMainWindow, QApplication, QHBoxLayout, QVBoxLayout, QLabel, 
                              QWidget, QPushButton, QLineEdit, QMenuBar, QSpacerItem, QStackedLayout, QDialog, QFileDialog)
 
-from QtToggle import QtToggle
+from QToggle import QtToggle
 
 #TODO: fix scaling on width of widgets
 class settings(QWidget):
@@ -54,13 +54,13 @@ class settings(QWidget):
         return button
     
     def skyrim_folder_path_clicked(self):
-        path = self.file_dialog.getExistingDirectory(self, "Select the Skyrim Special Edition folder")
+        path = self.file_dialog.getExistingDirectory(self, "Select the Skyrim Special Edition folder", self.settings['skyrim_folder_path'])
         if path != '':
             self.skyrim_folder_path.setText(path)
         self.update_settings()
 
     def output_folder_path_clicked(self):
-        path = self.file_dialog.getExistingDirectory(self, "Select where you want the ouput folder")
+        path = self.file_dialog.getExistingDirectory(self, "Select where you want the ouput folder", self.settings['output_folder_path'])
         if path != '':
             self.output_folder_path.setText(path)
         self.update_settings()
@@ -119,7 +119,7 @@ class settings(QWidget):
     def show_plugins_with_cells_widget_init(self):
         show_plugins_with_cells_layout = QHBoxLayout()
         self.show_plugins_with_cells_widget = QWidget()
-        self.show_plugins_with_cells_widget.setToolTip('Show or hide plugins with CELL records.')
+        self.show_plugins_with_cells_widget.setToolTip('Show or hide plugins with CELL records.\nEnabling this setting will require a re-scan if you scanned with it off.')
         show_plugins_with_cells_label = QLabel("Show plugins with CELL records")
         self.show_plugins_with_cells_toggle = QtToggle()
         self.show_plugins_with_cells_toggle.clicked.connect(self.update_settings)
