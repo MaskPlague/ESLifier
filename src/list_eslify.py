@@ -15,6 +15,8 @@ class list_eslable(QTableWidget):
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.setSortingEnabled(True)
+        self.mod_list = []
+        self.cell_flags = []
 
         self.setStyleSheet("""
             QTableWidget::item{
@@ -40,19 +42,19 @@ class list_eslable(QTableWidget):
         self.create()
 
     def create(self):
-        modList = ['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5']
-        cellFlags = [True, False, False, True, True]
-        self.setRowCount(len(modList))
+        self.mod_list = ['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5']
+        self.cell_flags = [True, False, False, True, True]
+        self.setRowCount(len(self.mod_list))
 
-        for i in range(len(modList)):
-            item = QTableWidgetItem(os.path.basename(modList[i]))
+        for i in range(len(self.mod_list)):
+            item = QTableWidgetItem(os.path.basename(self.mod_list[i]))
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
             item.setCheckState(Qt.CheckState.Unchecked)
-            item.setToolTip(modList[i])
+            item.setToolTip(self.mod_list[i])
             self.setItem(i, 0, item)
-            if cellFlags[i]:
-                itemC = QTableWidgetItem('New CELL')
-                self.setItem(i, 1, itemC)
+            if self.cell_flags[i]:
+                item_cell_flag = QTableWidgetItem('New CELL')
+                self.setItem(i, 1, item_cell_flag)
             self.resizeRowToContents(i)
 
 
@@ -66,6 +68,7 @@ class list_eslable(QTableWidget):
                     x.setCheckState(Qt.CheckState.Unchecked)
             self.blockSignals(False)
 
+        #self.resizeRowsToContents()
         self.resizeColumnsToContents()
         self.itemChanged.connect(somethingChanged)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -82,15 +85,17 @@ class list_eslable(QTableWidget):
                 self.open_in_explorer(selectedItem)
 
     def open_in_explorer(self, selectedItem):
-        file_path = selectedItem.toolTip().replace('       - ','').replace('\nDouble click to show/hide dependencies.','')
+        file_path = selectedItem.toolTip()
+        
         if file_path:
+            file_directory, _ = os.path.split(file_path)
             try:
                 if os.name == 'nt':
-                    os.startfile(file_path)
+                    os.startfile(file_directory)
                 elif os.name == 'posix':
-                    subprocess.Popen(['xdg-open', os.path.dirname(file_path)])
+                    subprocess.Popen(['xdg-open', os.path.dirname(file_directory)])
                 else:
-                    subprocess.Popen(['open', os.path.dirname(file_path)])
+                    subprocess.Popen(['open', os.path.dirname(file_directory)])
             except Exception as e:
                 print(f"Error opening file explorer: {e}")
         
