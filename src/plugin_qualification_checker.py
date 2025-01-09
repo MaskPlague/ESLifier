@@ -22,7 +22,7 @@ class qualification_checker():
         else:
             qualification_checker.num_max_records = 2048
 
-        print('')
+        print('\n')
         count = 0
         plugin_count = len(plugins)
         for plugin in plugins:
