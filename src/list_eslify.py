@@ -38,12 +38,11 @@ class list_eslable(QTableWidget):
 
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.horizontalHeader().setStretchLastSection(True)
+        self.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignLeft)
         
         self.create()
 
     def create(self):
-        self.mod_list = ['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5']
-        self.cell_flags = [True, False, False, True, True]
         self.setRowCount(len(self.mod_list))
 
         for i in range(len(self.mod_list)):
