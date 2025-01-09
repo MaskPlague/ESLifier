@@ -19,7 +19,7 @@ class scanner():
             for file in files:
                 scanner.all_files.append(os.path.join(root, file))
 
-        print('-  Gathered ' + str(len(scanner.all_files)) +' files.\n')
+        print('-  Gathered ' + str(len(scanner.all_files)) +' files.\n\n')
         scanner.get_file_masters()
 
         scanner.dump_to_file(file="ESLifier_Data/file_masters.json")
@@ -51,7 +51,6 @@ class scanner():
         scanner.threads = []
         scanner.seq_files = []
         scanner.pex_files = []
-        scanner.bsa_list = []
         scanner.count = 0
         
         if len(scanner.all_files) > 500000:
@@ -76,7 +75,7 @@ class scanner():
         
         scanner.threads = []
 
-        print("\n-  Scanning .pex files")
+        print("-  Scanning .pex files")
         for file in scanner.pex_files:
             thread = threading.Thread(target=scanner.file_reader,args=(pattern2, file, 'rb'))
             scanner.threads.append(thread)
@@ -92,9 +91,7 @@ class scanner():
             file_lower = file.lower()
             if (scanner.count % round(scanner.file_count * 0.001)) >= (round(scanner.file_count * 0.001)-1) or scanner.count >= scanner.file_count:
                 print('\033[F\033[K-  Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-  Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
-            if '.bsa' in file_lower:
-                scanner.bsa_list.append(os.path.basename(file).lower())
-            elif (not 'meta.ini' in file_lower) and ('.ini' in file_lower or '.json' in file_lower or '_conditions.txt' in file_lower or '_srd.' in file_lower or '.psc' in file_lower):
+            if (not 'meta.ini' in file_lower) and ('.ini' in file_lower or '.json' in file_lower or '_conditions.txt' in file_lower or '_srd.' in file_lower or '.psc' in file_lower):
                 thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
                 scanner.threads.append(thread)
                 thread.start()
