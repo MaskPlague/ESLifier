@@ -12,28 +12,28 @@ class CFIDs():
     def compact_and_patch(file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header):
         CFIDs.lock = threading.Lock()
         CFIDs.compacted_and_patched = {}
+        print("Compacting Plugin: " + os.path.basename(file_to_compact) + '...')
         CFIDs.compact_file(file_to_compact, skyrim_folder_path, output_folder_path, update_header)
-
+        print("-  Correcting Dependent Files...")
         CFIDs.correct_dependents(file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header)
         
         files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
         to_patch, to_rename = CFIDs.get_files_to_correct(file_to_compact, files_to_patch[os.path.basename(file_to_compact).lower()]) #function to get files that need to be edited in some way to function correctly.
         form_id_map = CFIDs.get_form_id_map(file_to_compact)
+        print("-  Patching Dependent Files...")
         CFIDs.patch_files_threader(file_to_compact, to_patch, form_id_map, skyrim_folder_path, output_folder_path, True)
+        print("-  Renaming Dependent Files...")
         CFIDs.rename_files_threader(file_to_compact, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
         CFIDs.dump_to_file('ESLifier_Data/compacted_and_patched.json')
         return
         #TODO: Add threading
-        #TODO: Create setting to change output folder name, with a notification that it requires to reset output
         
         #TODO: update next object in TES4 header?
         #TODO: SkyPatcher, MCM Helper, possible others to check
         #TODO: add regex to certain replacements in patch files for safety
-        #TODO: make 1.71 header change optional + setting for starting from 0 or 0x800 (I think it is 0x800)
         #TODO: When compacting multiple masters, there is a chance that a file (an ini for example) may need to be patched twice for two different masters
             # and I need to make sure that the file is NOT overwritten by the original from the SSE folder as that would diregard prior changes.
             # this means that the output folder will need to be emptied and patched every time or an option...
-        #TODO: Far in the future, consider actively scanning files for previous compacted files. Maybe a UI option to do a scan or directly select relevant folder/files.
     
     def dump_to_file(file):
         try:
@@ -61,6 +61,18 @@ class CFIDs():
         with open(new_file, 'rb+') as f:
             f.seek(9)
             f.write(b'\x02')
+
+    def patch_new(compacted_file, dependents, skyrim_folder_path, output_folder_path, update_header):
+        CFIDs.lock = threading.Lock()
+        CFIDs.compacted_and_patched = {}
+
+        CFIDs.correct_dependents(compacted_file, dependents, skyrim_folder_path, output_folder_path, update_header)
+        files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
+        to_patch, to_rename = CFIDs.get_files_to_correct(compacted_file, files_to_patch[os.path.basename(compacted_file).lower()]) #function to get files that need to be edited in some way to function correctly.
+        form_id_map = CFIDs.get_form_id_map(compacted_file)
+        CFIDs.patch_files_threader(compacted_file, to_patch, form_id_map, skyrim_folder_path, output_folder_path, True)
+        CFIDs.rename_files_threader(compacted_file, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
+        CFIDs.dump_to_file('ESLifier_Data/compacted_and_patched.json')
 
     #Create a copy of the mod plugin we're compacting
     def copy_file_to_output(file, skyrim_folder_path, output_folder):
@@ -175,8 +187,8 @@ class CFIDs():
                         if 'facegeom' in new_file.lower() and os.path.basename(master).lower() in new_file.lower():
                             facegeom_meshes.append(new_file.replace(form_ids[1].upper(), form_ids[3].upper()))
         if facegeom_meshes != []:
+            print('-  Patching Renamed Files...')
             CFIDs.patch_files(master, facegeom_meshes, form_id_map, skyrim_folder_path, output_folder_path, False)
-        print('Files Renamed')
         return
 
     #Create the Form ID map which is a list of tuples that holds four Form Ids that are in \xMASTER\x00\x00\x00 order:
@@ -244,25 +256,25 @@ class CFIDs():
                             for line in f:
                                 if 'formid' in line.lower():
                                     for formIds in formIdMap:
-                                        line = line.replace(formIds[0], formIds[2]).replace(formIds[1], formIds[3]).replace(formIds[0].lower(), formIds[2].lower()).replace(formIds[1].lower(), formIds[3].lower())
+                                        line = line.replace(formIds[1], formIds[3]).replace(formIds[0], formIds[2]).replace(formIds[1].lower(), formIds[3].lower()).replace(formIds[0].lower(), formIds[2].lower())
                                 print(line.strip('\n'))
                         elif '_conditions.txt' in new_file.lower(): #Dynamic Animation Replacer Patching
                             for line in f:
                                 for formIds in formIdMap:
                                     line = line.replace('0x00' + formIds[1], '0x00' + formIds[3]).replace('0x' + formIds[1], '0x' + formIds[3]).replace('0x00' + formIds[1].lower(), '0x00' + formIds[3].lower()).replace('0x' + formIds[1].lower(), '0x' + formIds[3].lower()).replace('0X00' + formIds[1], '0X00' + formIds[3]).replace('0X' + formIds[1], '0X' + formIds[3]).replace('0X00' + formIds[1].lower(), '0X00' + formIds[3].lower()).replace('0X' + formIds[1].lower(), '0X' + formIds[3].lower())
                                 print(line.strip('\n'))
-                        elif '_SRD.' in new_file.lower(): #Sound record distributor patching
+                        elif '_srd.' in new_file.lower(): #Sound record distributor patching
                             #TODO: check if regex is necessary
                             for line in f:
                                 if os.path.basename(master).lower() in line.lower():
                                     for formIds in formIdMap:
-                                        line = line.replace(formIds[0], formIds[2]).replace(formIds[1], formIds[3]).replace(formIds[0].lower(), formIds[2].lower()).replace(formIds[1].lower(), formIds[3].lower())
+                                        line = line.replace(formIds[1], formIds[3]).replace(formIds[0], formIds[2]).replace(formIds[1].lower(), formIds[3].lower()).replace(formIds[0].lower(), formIds[2].lower())
                                 print(line.strip('\n'))
                         elif '.psc' in new_file.lower(): #Script source file patching
                             for line in f:
                                 if os.path.basename(master).lower() in line.lower() and 'getformfromfile' in line.lower():
                                     for formIds in formIdMap:
-                                        line = line.replace('0x' + formIds[0], '0x' + formIds[2]).replace('0x' + formIds[1], '0x' + formIds[3]).replace('0x' + formIds[0].lower(), '0x' + formIds[2].lower()).replace('0x' + formIds[1].lower(), '0x' + formIds[3].lower()).replace('0X' + formIds[0], '0X' + formIds[2]).replace('0X' + formIds[1], '0X' + formIds[3]).replace('0X' + formIds[0].lower(), '0X' + formIds[2].lower()).replace('0X' + formIds[1].lower(), '0X' + formIds[3].lower())
+                                        line = line.replace('0x' + formIds[1], '0x' + formIds[3]).replace('0x' + formIds[0], '0x' + formIds[2]).replace('0x' + formIds[1].lower(), '0x' + formIds[3].lower()).replace('0x' + formIds[0].lower(), '0x' + formIds[2].lower()).replace('0X' + formIds[1], '0X' + formIds[3]).replace('0X' + formIds[0], '0X' + formIds[2]).replace('0X' + formIds[1].lower(), '0X' + formIds[3].lower()).replace('0X' + formIds[0].lower(), '0X' + formIds[2].lower())
                                 print(line.strip('\n'))
                         elif '.json' in new_file.lower(): #Dynamic Key Activation Framework NG, Smart Harvest Auto NG AutoLoot and whatever else may be using .json?
                             #TODO: check for other json mods
@@ -311,7 +323,6 @@ class CFIDs():
                         f.close()
             with CFIDs.lock:
                 CFIDs.compacted_and_patched[os.path.basename(master).lower()].append(file)
-        print("Files Patched")
 
     #Compacts master file and returns the new mod folder
     def compact_file(file, skyrim_folder_path, output_folder, update_header):
