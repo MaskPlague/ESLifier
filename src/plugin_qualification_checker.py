@@ -1,5 +1,6 @@
 import re
-import os
+#import os
+import timeit
 
 from dependency_getter import dependecy_getter as dep_getter
 
@@ -7,7 +8,9 @@ from dependency_getter import dependecy_getter as dep_getter
 class qualification_checker():
     #def __init__(self, path, update_header, show_cells):
     def scan(path, update_header, show_cells):
-        plugins = dep_getter.get_list_of_plugins(path)
+        start_time = timeit.default_timer()
+        all_plugins = dep_getter.get_list_of_plugins(path)
+        plugins = [plugin for plugin in all_plugins if not plugin.lower().endswith('.esl')]
         need_flag_list = []
         need_flag_cell_flag_list = []
         need_compacting_list = []
@@ -19,7 +22,13 @@ class qualification_checker():
         else:
             qualification_checker.num_max_records = 2048
 
+        print('')
+        count = 0
+        plugin_count = len(plugins)
         for plugin in plugins:
+            count += 1
+            percentage = (count / plugin_count) * 100
+            print('\033[F\033[K-  Processed: ' + str(round(percentage, 1)) + '%' + '\n-  Plugins: ' + str(count) + '/' + str(plugin_count), end='\r')
             if not qualification_checker.already_esl(plugin):
                 esl_allowed, need_compacting, new_cell = qualification_checker.file_reader(plugin)
                 if esl_allowed:
@@ -29,6 +38,10 @@ class qualification_checker():
                     else:
                         need_compacting_list.append(plugin)
                         need_compacting_cell_flag_list.append(new_cell)
+
+        end_time = timeit.default_timer()
+        time_taken = end_time - start_time
+        print('\n-  Time taken: ' + str(round(time_taken,2)) + ' seconds')
         return need_flag_list, need_flag_cell_flag_list, need_compacting_list, need_compacting_cell_flag_list
 
     def file_reader(file):
@@ -42,7 +55,7 @@ class qualification_checker():
         
         count = 0
         for form in data_list:
-            if form[:4] != 'TES4' and form[15] == masterCount:
+            if form[:4] != 'TES4' and len(form) > 24 and form[15] == masterCount:
                 count += 1
                 if count > qualification_checker.num_max_records:
                     return False, False, False
