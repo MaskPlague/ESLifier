@@ -2,7 +2,7 @@ import os
 import re
 import threading
 import dependency_getter as dep_getter
-import timeit #TODO: Remove
+import timeit
 import json
 
 
@@ -13,19 +13,20 @@ class scanner():
         scanner.file_count = 0
         scanner.all_files = []
         scanner.lock = threading.Lock()
-        print('Gathering Files...')
+        print('-  Gathering Files...')
         for root, _, files in os.walk(scanner.path):
             scanner.file_count += len(files)
             for file in files:
                 scanner.all_files.append(os.path.join(root, file))
 
+        print('-  Gathered ' + str(len(scanner.all_files)) +' files.\n')
         scanner.get_file_masters()
 
         scanner.dump_to_file(file="ESLifier_Data/file_masters.json")
 
         end_time = timeit.default_timer()
         time_taken = end_time - start_time
-        print('\nTime taken: ' + str(round(time_taken,2)) + ' seconds')
+        print('-  Time taken: ' + str(round(time_taken,2)) + ' seconds')
 
     def dump_to_file(file):
         with open(file, 'w', encoding='utf-8') as f:
@@ -43,9 +44,9 @@ class scanner():
         for plugin in plugins: plugin_names.append(os.path.basename(plugin).lower())
         pattern = re.compile(r'(?:~|: *|\||=|,|-|")\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\)?)(?:\||,|"|$)')
         pattern2 = re.compile(rb'\x00.([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\x00')
-        pattern3 = re.compile(r'\\facegeom\\([a-zA-Z0-9_\-\'\?\!\(\)\[\]\, \u0080-\uffff]+\.es[pml])\\')
-        pattern4 = re.compile(r'\\facetint\\([a-z0-9\_\'\-\?\!\(\)\[\]\, \u0080-\uffff]+\.es[pml])\\')
-        pattern5 = re.compile(r'\\sound\\voice\\([a-z0-9\_\'\-\?\!\(\)\[\]\, \u0080-\uffff]+\.es[pml])\\')
+        pattern3 = re.compile(r'\\facegeom\\([a-zA-Z0-9_\-\'\?\!\(\)\[\]\, ]+\.es[pml])\\')
+        pattern4 = re.compile(r'\\facetint\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
+        pattern5 = re.compile(r'\\sound\\voice\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
         scanner.file_dict = {plugin: [] for plugin in plugin_names}
         scanner.threads = []
         scanner.seq_files = []
@@ -63,7 +64,7 @@ class scanner():
         chunk_size = len(scanner.all_files) // split
         chunks = [scanner.all_files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
         chunks.append(scanner.all_files[(split) * chunk_size:])
-        
+
         for chunk in chunks:
             thread = threading.Thread(target=scanner.file_processor, args=(chunk, pattern, pattern3, pattern4, pattern5))
             scanner.threads.append(thread)
@@ -75,6 +76,7 @@ class scanner():
         
         scanner.threads = []
 
+        print("\n-  Scanning .pex files")
         for file in scanner.pex_files:
             thread = threading.Thread(target=scanner.file_reader,args=(pattern2, file, 'rb'))
             scanner.threads.append(thread)
@@ -87,55 +89,56 @@ class scanner():
         for file in files:
             scanner.count += 1
             scanner.percentage = (scanner.count / scanner.file_count) * 100
-            print("\033[F\033[K", end="")
-            print('Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\nFiles: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
-            if '.bsa' in file:
-                scanner.bsa_list.append(file)
-            elif (not 'meta.ini' in file) and ('.ini' in file or '.json' in file or '_conditions.txt' in file or '_srd.' in file or '.psc' in file):
+            file_lower = file.lower()
+            if (scanner.count % round(scanner.file_count * 0.001)) >= (round(scanner.file_count * 0.001)-1) or scanner.count >= scanner.file_count:
+                print('\033[F\033[K-  Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-  Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
+            if '.bsa' in file_lower:
+                scanner.bsa_list.append(os.path.basename(file).lower())
+            elif (not 'meta.ini' in file_lower) and ('.ini' in file_lower or '.json' in file_lower or '_conditions.txt' in file_lower or '_srd.' in file_lower or '.psc' in file_lower):
                 thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
                 scanner.threads.append(thread)
                 thread.start()
-            elif '.pex' in file:
+            elif '.pex' in file_lower:
                 scanner.pex_files.append(file)
-            elif '.seq' in file:
+            elif '.seq' in file_lower:
                 plugin, _ = os.path.splitext(os.path.basename(file))
                 scanner.seq_files.append([plugin, file])
-            elif ('\\facegeom\\' in file and '.nif' in file):
-                if '.esp' in file or '.esm' in file or '.esl' in file:
+            elif ('\\facegeom\\' in file_lower and '.nif' in file_lower):
+                if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
-                        plugin = re.search(pattern3, file).group(1)
-                        if plugin.lower() not in local_dict.keys(): 
-                            local_dict.update({plugin.lower(): []})
-                        if file not in local_dict[plugin.lower()]: 
-                            local_dict[plugin.lower()].append(file)
+                        plugin = re.search(pattern3, file_lower).group(1)
+                        if plugin not in local_dict.keys(): 
+                            local_dict.update({plugin: []})
+                        if file not in local_dict[plugin]: 
+                            local_dict[plugin].append(file)
                     except Exception as e:
                         print(e)
                         print(file)
-                        print('\n')
-            elif '\\facetint\\' in file and '.dds' in file:
-                if '.esp' in file or '.esm' in file or '.esl' in file:
+                        print('\n\n')
+            elif '\\facetint\\' in file_lower and '.dds' in file_lower:
+                if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
-                        plugin = re.search(pattern4, file).group(1)
-                        if plugin.lower() not in local_dict.keys(): 
-                            local_dict.update({plugin.lower(): []})
-                        if file not in local_dict[plugin.lower()]: 
-                            local_dict[plugin.lower()].append(file)
+                        plugin = re.search(pattern4, file_lower).group(1)
+                        if plugin not in local_dict.keys(): 
+                            local_dict.update({plugin: []})
+                        if file not in local_dict[plugin]: 
+                            local_dict[plugin].append(file)
                     except Exception as e:
                         print(e)
                         print(file)
-                        print('\n')
-            elif '\\sound\\' in file and '\\voice\\' in file:
-                if '.esp' in file or '.esm' in file or '.esl' in file:
+                        print('\n\n')
+            elif '\\sound\\' in file_lower and '\\voice\\' in file_lower:
+                if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
-                        plugin = re.search(pattern5, file).group(1)
-                        if plugin.lower() not in local_dict.keys(): 
-                            local_dict.update({plugin.lower(): []})
-                        if file not in local_dict[plugin.lower()]: 
-                            local_dict[plugin.lower()].append(file)
+                        plugin = re.search(pattern5, file_lower).group(1)
+                        if plugin not in local_dict.keys(): 
+                            local_dict.update({plugin: []})
+                        if file not in local_dict[plugin]: 
+                            local_dict[plugin].append(file)
                     except Exception as e:
                         print(e)
                         print(file)
-                        print('\n')
+                        print('\n\n')
                         
         for key, values_list in local_dict.items():
             with scanner.lock:
