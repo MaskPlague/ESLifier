@@ -119,7 +119,6 @@ class list_compactable(QTableWidget):
                     }""")
                 self.button_group.addButton(dL)
                 self.setCellWidget(i,3,dL)
-            self.resizeRowToContents(i)
 
         def somethingChanged(item_changed):
             self.blockSignals(True)
@@ -135,6 +134,7 @@ class list_compactable(QTableWidget):
         self.itemChanged.connect(somethingChanged)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenu)
+        self.resizeRowsToContents()
 
     def get_data_from_file(self, file):
         try:
