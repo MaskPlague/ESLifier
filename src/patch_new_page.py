@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel,
 from scanner import scanner
 from dependency_getter import dependecy_getter
 from list_compacted_unpatched import list_compacted_unpatched
+from list_unpatched_files import list_unpatched
 
 #patched dict - hold key patched name, values patched files do a scan and compare old dict to new dict
 class patch_new(QWidget):
@@ -25,9 +26,10 @@ class patch_new(QWidget):
 
 
         eslifier_compacted_label = QLabel("ESLifier Compacted With Unpatched Files")
-        unpatched_label = QLabel("Unpatched Files")
+        unpatched_files_label = QLabel("Unpatched Files")
 
         eslifier_compacted_list = list_compacted_unpatched()
+        unpacted_files_list = list_unpatched()
 
         h_layout = QHBoxLayout()
         h_widget = QWidget()
@@ -50,7 +52,8 @@ class patch_new(QWidget):
         v_layout_3 = QVBoxLayout()
         v_widget_3 = QWidget()
         v_widget_3.setLayout(v_layout_3)
-        v_layout_3.addWidget(unpatched_label)
+        v_layout_3.addWidget(unpatched_files_label)
+        v_layout_3.addWidget(unpacted_files_list)
 
         h_layout.addWidget(v_widget_2)
         h_layout.addWidget(v_widget_3)
