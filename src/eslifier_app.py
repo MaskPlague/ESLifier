@@ -1,10 +1,7 @@
 import sys
-import dependency_getter as dGetter
-
-
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QPalette, QColor
-from PyQt6.QtWidgets import (QMainWindow, QApplication, QWidget, QMenuBar, QStackedLayout, QHBoxLayout)
+from PyQt6.QtWidgets import (QMainWindow, QApplication, QWidget, QMenuBar, QStackedLayout)
 
 from settings_page import settings
 from main_page import main
@@ -15,7 +12,6 @@ class main_window(QMainWindow):
         super().__init__()
         #TODO: Make a patch files page which will only use the esp name and pull the form id map to patch dependent files
         #TODO: Make exclusions window/page
-        #TODO: create scanner dialog
         self.setWindowTitle("ESLifier")
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.setFocus()
@@ -115,15 +111,27 @@ class main_window(QMainWindow):
 
     def update_shown(self):
         show_cells = self.settings_widget.settings['show_cells']
+        show_bsa = self.settings_widget.settings['show_bsas']
         self.main_widget.list_compact.setColumnHidden(1, not show_cells)
+        self.main_widget.list_compact.setColumnHidden(2, not show_bsa)
         self.main_widget.list_eslify.setColumnHidden(1, not show_cells)
         for i in range(self.main_widget.list_compact.rowCount()):
-            if self.main_widget.list_compact.item(i,1):
-                self.main_widget.list_compact.setRowHidden(i, not show_cells)
+            if self.main_widget.list_compact.item(i,1) and not show_cells:
+                self.main_widget.list_compact.setRowHidden(i, True)
+            elif self.main_widget.list_compact.item(i,2) and not show_bsa:
+                self.main_widget.list_compact.setRowHidden(i, True)
+            else:
+                self.main_widget.list_compact.setRowHidden(i, False)
 
         for i in range(self.main_widget.list_eslify.rowCount()):
             if self.main_widget.list_eslify.item(i,1):
                 self.main_widget.list_eslify.setRowHidden(i, not show_cells)
+
+    def closeEvent(self, a0):
+        sys.stdout = sys.__stdout__
+        for window in QApplication.topLevelWidgets():
+            window.close()
+
 
 
 app = QApplication(sys.argv)
