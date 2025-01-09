@@ -48,7 +48,7 @@ class dependecy_getter():
                     if master.lower() not in dependecy_getter.dependency_dictionary.keys():
                         dependecy_getter.dependency_dictionary[master.lower()] = []
                     if plugin not in dependecy_getter.dependency_dictionary[master.lower()]:
-                        dependecy_getter.dependency_dictionary[master.lower()].append(plugin.lower())
+                        dependecy_getter.dependency_dictionary[master.lower()].append(plugin)
 
     def getMasters(file):
         masterList = []
