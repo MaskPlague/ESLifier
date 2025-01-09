@@ -32,6 +32,7 @@ class settings(QWidget):
         self.output_folder_path_widget_init()
         self.update_header_widget_init()
         self.show_plugins_with_cells_widget_init()
+        self.show_plugins_with_bsas_widget_init()
 
         self.set_init_widget_values()
         
@@ -41,6 +42,7 @@ class settings(QWidget):
         settings_layout.addWidget(self.output_folder_path_widget)
         settings_layout.addWidget(self.update_header_widget)
         settings_layout.addWidget(self.show_plugins_with_cells_widget)
+        settings_layout.addWidget(self.show_plugins_with_bsas_widget)
         settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.exclusions_layout = QHBoxLayout()
@@ -127,6 +129,18 @@ class settings(QWidget):
         show_plugins_with_cells_layout.addWidget(show_plugins_with_cells_label)
         show_plugins_with_cells_layout.addSpacing(30)
         show_plugins_with_cells_layout.addWidget(self.show_plugins_with_cells_toggle)
+
+    def show_plugins_with_bsas_widget_init(self):
+        show_plugins_with_bsas_layout = QHBoxLayout()
+        self.show_plugins_with_bsas_widget = QWidget()
+        self.show_plugins_with_bsas_widget.setToolTip('Show or hide plugins that have a BSA file.')
+        show_plugins_with_bsas_label = QLabel("Show plugins with BSA files")
+        self.show_plugins_with_bsas_toggle = QtToggle()
+        self.show_plugins_with_bsas_toggle.clicked.connect(self.update_settings)
+        self.show_plugins_with_bsas_widget.setLayout(show_plugins_with_bsas_layout)
+        show_plugins_with_bsas_layout.addWidget(show_plugins_with_bsas_label)
+        show_plugins_with_bsas_layout.addSpacing(30)
+        show_plugins_with_bsas_layout.addWidget(self.show_plugins_with_bsas_toggle)
         
 
     def set_init_widget_values(self):
@@ -141,6 +155,9 @@ class settings(QWidget):
 
         if 'show_cells' in self.settings.keys(): self.show_plugins_with_cells_toggle.setChecked(self.settings['show_cells'])
         else: self.show_plugins_with_cells_toggle.setChecked(True)
+
+        if 'show_bsas' in self.settings.keys(): self.show_plugins_with_bsas_toggle.setChecked(self.settings['show_bsas'])
+        else: self.show_plugins_with_bsas_toggle.setChecked(True)
         
 
     def save_settings_to_file(self):
@@ -152,6 +169,7 @@ class settings(QWidget):
         self.settings['output_folder_path'] = self.output_folder_path.text()
         self.settings['update_header'] = self.update_header_toggle.isChecked()
         self.settings['show_cells'] = self.show_plugins_with_cells_toggle.isChecked()
+        self.settings['show_bsas'] = self.show_plugins_with_bsas_toggle.isChecked()
         self.save_settings_to_file()
         
     def get_settings_from_file(self):
