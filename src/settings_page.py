@@ -1,13 +1,14 @@
 import json
+import os
+import subprocess
+import shutil
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QIcon, QPalette, QColor
-from PyQt6.QtWidgets import (QMainWindow, QApplication, QHBoxLayout, QVBoxLayout, QLabel, 
-                             QWidget, QPushButton, QLineEdit, QMenuBar, QSpacerItem, QStackedLayout, QDialog, QFileDialog)
+from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QFileDialog)
 
 from QToggle import QtToggle
 
-#TODO: fix scaling on width of widgets
 class settings(QWidget):
     def __init__(self):
         super().__init__()
@@ -33,6 +34,9 @@ class settings(QWidget):
         self.update_header_widget_init()
         self.show_plugins_with_cells_widget_init()
         self.show_plugins_with_bsas_widget_init()
+        self.open_eslifier_data_button_init()
+        self.clear_form_id_maps_and_compacted_and_patched_button_init()
+        self.reset_settings_button_init()
 
         self.set_init_widget_values()
         
@@ -43,6 +47,11 @@ class settings(QWidget):
         settings_layout.addWidget(self.update_header_widget)
         settings_layout.addWidget(self.show_plugins_with_cells_widget)
         settings_layout.addWidget(self.show_plugins_with_bsas_widget)
+        settings_layout.addSpacing(20)
+        settings_layout.addWidget(self.open_eslifier_data_button)
+        settings_layout.addSpacing(40)
+        settings_layout.addWidget(self.clear_form_id_maps_and_compacted_and_patched_button)
+        settings_layout.addWidget(self.reset_settings_button)
         settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.exclusions_layout = QHBoxLayout()
@@ -108,7 +117,10 @@ class settings(QWidget):
     def update_header_widget_init(self):
         update_header_layout = QHBoxLayout()
         self.update_header_widget = QWidget()
-        self.update_header_widget.setToolTip("Allow scanning and patching to use the new 1.71 header.\nRequires Backported Extended ESL Support on Skyrim versions below 1.6.1130.\nChanging this settings requires a re-scan.") #TODO: decide this description
+        self.update_header_widget.setToolTip(
+            "Allow scanning and patching to use the new 1.71 header.\n"+
+            "Requires Backported Extended ESL Support on Skyrim versions below 1.6.1130.\n"+
+            "Changing this settings requires a re-scan.")
         update_header_label = QLabel("Allow Form IDs below 0x000800 + Update plugin headers to 1.71")
         self.update_header_toggle = QtToggle()
         self.update_header_toggle.clicked.connect(self.update_settings)
@@ -121,7 +133,9 @@ class settings(QWidget):
     def show_plugins_with_cells_widget_init(self):
         show_plugins_with_cells_layout = QHBoxLayout()
         self.show_plugins_with_cells_widget = QWidget()
-        self.show_plugins_with_cells_widget.setToolTip('Show or hide plugins with CELL records.\nEnabling this setting will require a re-scan if you scanned with it off.')
+        self.show_plugins_with_cells_widget.setToolTip(
+            "Show or hide plugins with CELL records.\n"+
+            "Enabling this setting will require a re-scan if you scanned with it off.")
         show_plugins_with_cells_label = QLabel("Show plugins with CELL records")
         self.show_plugins_with_cells_toggle = QtToggle()
         self.show_plugins_with_cells_toggle.clicked.connect(self.update_settings)
@@ -141,6 +155,79 @@ class settings(QWidget):
         show_plugins_with_bsas_layout.addWidget(show_plugins_with_bsas_label)
         show_plugins_with_bsas_layout.addSpacing(30)
         show_plugins_with_bsas_layout.addWidget(self.show_plugins_with_bsas_toggle)
+
+    def open_eslifier_data_button_init(self):
+        self.open_eslifier_data_button = QPushButton("Open ESLifier's Data Folder")
+        self.open_eslifier_data_button.setToolTip("This opens the folder where all of the dictionaries and Form ID maps are stored.")
+        self.open_eslifier_data_button.setMinimumWidth(160)
+        self.open_eslifier_data_button.setMaximumWidth(160)
+        def open_eslifier_data():
+            directory = os.path.join(os.getcwd(), 'ESLifier_data')
+            try:
+                if os.name == 'nt':
+                    os.startfile(directory)
+                elif os.name == 'posix':
+                    subprocess.Popen(['xdg-open', os.path.dirname(directory)])
+                else:
+                    subprocess.Popen(['open', os.path.dirname(directory)])
+            except Exception as e:
+                print(f"Error opening file explorer: {e}")
+
+        self.open_eslifier_data_button.clicked.connect(open_eslifier_data)
+
+    def clear_form_id_maps_and_compacted_and_patched_button_init(self):
+        self.clear_form_id_maps_and_compacted_and_patched_button = QPushButton("Delete All Form ID Maps and\nThe Compacted and Patched History")
+        self.clear_form_id_maps_and_compacted_and_patched_button.setToolTip(
+            "The Form ID Maps are used for patching any new files and plugins.\n" +
+            "The Compacted and Patched History is for getting what files and plugins\n" +
+            "are newly added since a mod was compacted and its dependents patched.\n\n" +
+            "This should be done when you have updated a mod or deleted the ESLifier Ouput.")
+        self.clear_form_id_maps_and_compacted_and_patched_button.setMinimumWidth(160)
+        self.clear_form_id_maps_and_compacted_and_patched_button.setMaximumWidth(160)
+        def button_pushed():
+            confirm = QMessageBox()
+            confirm.setText(
+                "Are you sure you want to delete all of the Form ID Maps and the Compacted and Patched History?\n" +
+                "This will prevent the 'Patch New' functionality from working and will require you to manually " +
+                "delete the ESLifier Ouput to continue using the program without issue.\n")
+            confirm.setWindowTitle("Confirmation")
+            confirm.addButton(QMessageBox.StandardButton.Yes)
+            confirm.addButton(QMessageBox.StandardButton.Cancel)
+            def accepted():
+                confirm.hide()
+                if os.path.exists('ESLifier_Data/Form_ID_Maps'):
+                    shutil.rmtree('ESLifier_Data/Form_ID_Maps')
+
+            confirm.accepted.connect(accepted)
+            confirm.show()
+
+        self.clear_form_id_maps_and_compacted_and_patched_button.clicked.connect(button_pushed)
+    
+    def reset_settings_button_init(self):
+        self.reset_settings_button = QPushButton("Reset All Settings")
+        self.reset_settings_button.setMinimumWidth(160)
+        self.reset_settings_button.setMaximumWidth(160)
+        def button_pushed():
+            confirm = QMessageBox()
+            confirm.setText("Are you sure you want to reset all settings?")
+            confirm.setWindowTitle("Confirmation")
+            confirm.addButton(QMessageBox.StandardButton.Yes)
+            confirm.addButton(QMessageBox.StandardButton.Cancel)
+            def acccepted():
+                confirm.hide()
+                if os.path.exists('ESLifier_Data/settings.json'):
+                    os.remove('ESLifier_Data/settings.json')
+                self.skyrim_folder_path.clear()
+                self.output_folder_path.clear()
+                self.update_header_toggle.setChecked(True)
+                self.show_plugins_with_cells_toggle.setChecked(True)
+                self.show_plugins_with_bsas_toggle.setChecked(True)
+                self.update_settings()
+
+            confirm.accepted.connect(acccepted)
+            confirm.show()
+            
+        self.reset_settings_button.clicked.connect(button_pushed)
         
 
     def set_init_widget_values(self):
@@ -161,7 +248,10 @@ class settings(QWidget):
         
 
     def save_settings_to_file(self):
-        with open('ESLifier_Data/settings.json', 'w+', encoding='utf-8') as f:
+        settings_file = 'ESLifier_Data/settings.json'
+        if not os.path.exists(os.path.dirname(settings_file)):
+            os.makedirs(os.path.dirname(settings_file))
+        with open(settings_file, 'w+', encoding='utf-8') as f:
             json.dump(self.settings, f, ensure_ascii=False, indent=4)
 
     def update_settings(self):
