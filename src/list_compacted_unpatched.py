@@ -66,8 +66,6 @@ class list_compacted_unpatched(QTableWidget):
             self.parentWidget().parentWidget().parentWidget().unpatched_files_list.mods_selected = mods_selected
             self.parentWidget().parentWidget().parentWidget().unpatched_files_list.create()
 
-
-        self.resizeColumnsToContents()
         self.itemChanged.connect(something_changed)
         self.itemSelectionChanged.connect(item_selected)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)

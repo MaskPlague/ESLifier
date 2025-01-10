@@ -68,7 +68,6 @@ class list_unpatched(QTableWidget):
                     x.setCheckState(Qt.CheckState.Unchecked)
             self.blockSignals(False)
 
-        self.resizeColumnsToContents()
         self.itemChanged.connect(somethingChanged)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.context_menu)
