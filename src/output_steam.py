@@ -14,8 +14,10 @@ class output_stream(QMainWindow):
         self.text_edit.setReadOnly(True)
         self.setCentralWidget(self.text_edit)
         self.list = []
+        self.log_file = open("ESLifier_Data/ESLifier.log", 'w')
 
         sys.stdout = self
+        #sys.stderr = self
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.process_queue)
@@ -26,6 +28,14 @@ class output_stream(QMainWindow):
 
     def write(self, text):
         self.list.append(text)
+        text = text.strip()
+        if 'Process' not in text and text != '':
+            self.log_file.write(text + '\n')
+
+    def closeEvent(self, a0):
+        super().closeEvent(a0)
+        self.log_file.flush()
+        self.log_file.close()
 
     def process_queue(self):
         self.timer.stop()
