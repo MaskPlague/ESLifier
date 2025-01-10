@@ -4,6 +4,7 @@ import json
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem
+from PyQt6.QtGui import QFontMetrics, QFont
 
 class list_unpatched(QTableWidget):
     def __init__(self):
@@ -11,11 +12,13 @@ class list_unpatched(QTableWidget):
         self.setColumnCount(1)
         self.setHorizontalHeaderLabels(['Files'])
         self.horizontalHeaderItem(0).setToolTip('These are the unpatched files.')
+        self.verticalHeader().setHidden(True)
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.setSortingEnabled(True)
-        self.file_list = []
+        self.file_dictionary = {}
         self.cell_flags = []
+        self.mods_selected = []
 
         self.setStyleSheet("""
             QTableWidget::item{
@@ -35,16 +38,25 @@ class list_unpatched(QTableWidget):
         self.create()
 
     def create(self):
-        self.file_list = ['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5']
+        self.clearContents()
         self.compacted_and_patched = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json")
-        self.filtered_file_list()
-        self.setRowCount(len(self.file_list))
-
-        for i in range(len(self.file_list)):
-            item = QTableWidgetItem(os.path.basename(self.file_list[i]))
-            item.setToolTip(self.file_list[i])
-            self.setItem(i, 0, item)
-            self.resizeRowToContents(i)
+        size = 0
+        for mod in self.mods_selected:
+            size += len(self.file_dictionary[mod.lower()])
+        self.setRowCount(size)
+        i = 0
+        font = QFont()
+        metric = QFontMetrics(font)
+        while i in range(size):
+            for mod in self.mods_selected:
+                x = 0
+                while x in range(len(self.file_dictionary[mod.lower()])):
+                    file = metric.elidedText(self.file_dictionary[mod.lower()][i], Qt.TextElideMode.ElideLeft, 400)
+                    item = QTableWidgetItem(file)
+                    self.setItem(i, 0, item)
+                    i += 1
+                    x += 1
+            i += 1
 
         def somethingChanged(itemChanged):
             self.blockSignals(True)
@@ -60,6 +72,7 @@ class list_unpatched(QTableWidget):
         self.itemChanged.connect(somethingChanged)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.context_menu)
+        self.resizeRowsToContents()
 
     
     def get_data_from_file(self, file):
@@ -69,14 +82,6 @@ class list_unpatched(QTableWidget):
         except:
             data = {}
         return data
-
-    def filtered_file_list(self):
-        if self.compacted_and_patched != {}:
-            new_list = []
-            for file in self.file_list:
-                if file.lower() not in self.compacted_and_patched.values():
-                    new_list.append(file)
-            self.file_list = new_list
 
     def context_menu(self, position):
         selected_item = self.itemAt(position)
