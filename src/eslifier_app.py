@@ -1,7 +1,7 @@
 import sys
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QPalette, QColor
-from PyQt6.QtWidgets import (QMainWindow, QApplication, QWidget, QMenuBar, QStackedLayout)
+from PyQt6.QtWidgets import (QMainWindow, QApplication, QWidget, QMenuBar, QStackedLayout, QMessageBox)
 
 from settings_page import settings
 from main_page import main
@@ -10,7 +10,7 @@ from patch_new_page import patch_new
 class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
-        #TODO: Make a patch files page which will only use the esp name and pull the form id map to patch dependent files
+        #TODO: Make a patch files page
         #TODO: Make exclusions window/page
         self.setWindowTitle("ESLifier")
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
@@ -45,11 +45,14 @@ class main_window(QMainWindow):
         setting_menu_action.triggered.connect(self.settings_selected)
         patch_new_menu_action = QAction("Patch New Plugins/Files", self)
         patch_new_menu_action.triggered.connect(self.patch_new_selected)
+        help_menu_action = QAction("Help?", self)
+        help_menu_action.triggered.connect(self.help_selected)
 
         top_menu = QMenuBar()
         top_menu.addAction(main_menu_action)
         top_menu.addAction(patch_new_menu_action)
         top_menu.addAction(setting_menu_action)
+        top_menu.addAction(help_menu_action)
         top_menu.setStyleSheet("""
             QMenuBar {
                 background-color: rgb(70,70,70);
@@ -76,6 +79,8 @@ class main_window(QMainWindow):
         self.tabs.addWidget(self.patch_new_widget)
         self.tabs.addWidget(self.settings_widget)
         self.tabs.setCurrentIndex(0)
+        if self.settings_widget.settings['output_folder_path'] == '' or self.settings_widget.settings['skyrim_folder_path'] == '':
+            self.tabs.setCurrentIndex(2)
         self.layout().setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         display_widget = QWidget()
@@ -93,12 +98,42 @@ class main_window(QMainWindow):
     def main_selected(self):
         self.update_settings()
         self.tabs.setCurrentIndex(0)
+        if self.settings_widget.settings['output_folder_path'] == '' or self.settings_widget.settings['skyrim_folder_path'] == '':
+            self.tabs.setCurrentIndex(2)
+            self.no_path_set()
 
     def patch_new_selected(self):
         self.tabs.setCurrentIndex(1)
+        if self.settings_widget.settings['output_folder_path'] == '' or self.settings_widget.settings['skyrim_folder_path'] == '':
+            self.tabs.setCurrentIndex(2)
+            self.no_path_set()
 
     def settings_selected(self):
         self.tabs.setCurrentIndex(2)
+
+    def help_selected(self):
+        help = QMessageBox()
+        help.setWindowTitle("Help")
+        help.setText(
+            "Almost every element in the program has a tool tip that\n"+
+            "can be seen by hovering over it which explains the element.")
+        help.addButton(QMessageBox.StandardButton.Ok)
+        def shown():
+            help.close()
+        help.accepted.connect(shown)
+        help.show()
+
+    def no_path_set(self):
+        message = QMessageBox()
+        message.setWindowTitle("Missing Paths Error")
+        message.setText(
+            "Both the Skyrim Folder Path and Output Folder Path\n"+
+            "must be set to leave the settings page!")
+        message.addButton(QMessageBox.StandardButton.Ok)
+        def shown():
+            message.close()
+        message.accepted.connect(shown)
+        message.show()
 
     def update_settings(self):
         self.settings_widget.update_settings()
@@ -131,8 +166,6 @@ class main_window(QMainWindow):
         sys.stdout = sys.__stdout__
         for window in QApplication.topLevelWidgets():
             window.close()
-
-
 
 app = QApplication(sys.argv)
 w = main_window()
