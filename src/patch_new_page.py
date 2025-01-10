@@ -1,8 +1,7 @@
 import json
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, 
-                             QWidget, QPushButton, QLineEdit, QSpacerItem,)
+from PyQt6.QtCore import Qt, pyqtSignal, QThread, QObject
+from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QApplication)
 
 from scanner import scanner
 from dependency_getter import dependecy_getter
@@ -19,6 +18,7 @@ class patch_new(QWidget):
     def create(self):
         find_button = QPushButton("Find Unpatched Files")
         find_button.clicked.connect(self.scan_and_find)
+        find_button.setToolTip("Scan plugin files")
         patch_button = QPushButton("Patch Selected")
 
         eslifier_compacted_label = QLabel("ESLifier Compacted With Unpatched Files")
@@ -55,23 +55,35 @@ class patch_new(QWidget):
         h_layout.addSpacing(20)
         h_layout.addWidget(v_widget_3)
 
-
         h_layout.setContentsMargins(0,0,0,0)
         v_layout_2.setContentsMargins(0,11,0,1)
         v_layout_3.setContentsMargins(0,11,0,1)
 
         v_layout_1.setContentsMargins(21,11,21,1)
 
-    def scan_and_find(self):
-        print('Scanning All Files:')
-        scanner(self.skyrim_folder_path)
-        print('Gettings Dependencies')
-        dependecy_getter.scan(self.skyrim_folder_path)
-        print('Gettings New Dependencies and Files')
-        self.find()
+        for window in QApplication.topLevelWidgets():
+            if window.windowTitle() == 'Log Stream':
+                self.log_stream = window
 
+    def scan_and_find(self):
+        self.setEnabled(False)
+        self.log_stream.show()
+        self.thread_new = QThread()
+        self.worker = Worker(self.skyrim_folder_path)
+        self.worker.moveToThread(self.thread_new)
+        self.thread_new.started.connect(self.worker.scan_run)
+        self.worker.finished_signal.connect(self.completed_scan)
+        self.worker.finished_signal.connect(self.thread_new.quit)
+        self.worker.finished_signal.connect(self.thread_new.deleteLater)
+        self.thread_new.start()
+    
+    def completed_scan(self):
+        print('Getting New Dependencies and Files')
+        self.find()
+        print('CLEAR')
         self.unpatched_files_list.create()
         self.eslifier_compacted_list.create()
+        self.setEnabled(True)
 
     def find(self):
         try:
@@ -108,10 +120,18 @@ class patch_new(QWidget):
         self.unpatched_files_list.file_dictionary = new_files
 
 
-            
+class Worker(QObject):
+    finished_signal = pyqtSignal()
+    def __init__(self, path):
+        super().__init__()
+        self.skyrim_folder_path = path
 
-
-        
+    def scan_run(self):
+        print('Scanning All Files:')
+        scanner(self.skyrim_folder_path)
+        print('Getting Dependencies')
+        dependecy_getter.scan(self.skyrim_folder_path)
+        self.finished_signal.emit()
 
         
 
