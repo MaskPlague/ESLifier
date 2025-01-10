@@ -176,7 +176,7 @@ class settings(QWidget):
         self.open_eslifier_data_button.clicked.connect(open_eslifier_data)
 
     def clear_form_id_maps_and_compacted_and_patched_button_init(self):
-        self.clear_form_id_maps_and_compacted_and_patched_button = QPushButton("Delete All Form ID Maps and\nThe Compacted and Patched History")
+        self.clear_form_id_maps_and_compacted_and_patched_button = QPushButton("Delete All Form ID Maps and\nCompacted/Patched History")
         self.clear_form_id_maps_and_compacted_and_patched_button.setToolTip(
             "The Form ID Maps are used for patching any new files and plugins.\n" +
             "The Compacted and Patched History is for getting what files and plugins\n" +
