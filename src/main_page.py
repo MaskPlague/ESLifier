@@ -1,9 +1,8 @@
 import os
-import multiprocessing
 
 from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal
-from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, 
-                             QWidget, QPushButton, QLineEdit)
+from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox)
+from PyQt6.QtGui import QColor
 
 from list_eslify import list_eslable
 from list_compact import list_compactable
@@ -11,7 +10,7 @@ from scanner import scanner
 from plugin_qualification_checker import qualification_checker
 from dependency_getter import dependecy_getter
 from compact_form_ids import CFIDs
-from output_steam import output_stream
+from log_stream import log_stream
 
 class main(QWidget):
     def __init__(self):
@@ -23,30 +22,37 @@ class main(QWidget):
         self.show_cells = True
         self.eslify_dictionary = {}
         self.dependency_dictionary = {}
-        self.output_stream = output_stream()
+        self.output_stream = log_stream()
 
     def create(self):
         self.eslify = QLabel("ESLify")
         self.eslify.setToolTip("List of plugins that meet ESL conditions.")
         self.compact = QLabel("Compact + ESLify")
-        self.compact.setToolTip("List of plugins that can be compacted to fit ESL conditions." +
-                         "\nThe \'Compact Selected\' button will also ESL the selected plugin(s).")
+        self.compact.setToolTip(
+            "List of plugins that can be compacted to fit ESL conditions.\n" +
+            "The \'Compact/ESLify Selected\' button will also ESL the selected plugin(s).")
 
         self.list_eslify = list_eslable()
         self.list_compact = list_compactable()
 
         self.button_eslify = QPushButton("ESLify Selected")
+        self.button_eslify.setToolTip(
+            "This button wil ESL flag all selected files. If the update plugin headers setting\n"+
+            "is on then it will also update the plugin headers to 1.71.")
         self.button_eslify.clicked.connect(self.eslify_selected_clicked)
 
         self.button_compact = QPushButton("Compact/ESLify Selected")
         self.button_compact.clicked.connect(self.compact_selected_clicked)
 
         self.button_scan = QPushButton("Scan Mod Files")
-        self.button_scan.setToolTip("This will scan the entire Skyrim Special Edition folder.\nThe time taken depends on how many files are present.\nScanning 800k files takes approximately a minute.")
+        self.button_scan.setToolTip(
+            "This will scan the entire Skyrim Special Edition folder.\n"+
+            "Depending on the cell, bsa, and header settings, what is displayed\n" +
+            "in the below lists will change.")
         self.button_scan.clicked.connect(self.scan)
         
         self.filter_eslify = QLineEdit()
-        self.filter_eslify.setPlaceholderText("Filter")
+        self.filter_eslify.setPlaceholderText("Filter ")
         self.filter_eslify.setToolTip("Search Bar")
         self.filter_eslify.setMinimumWidth(50)
         self.filter_eslify.setMaximumWidth(150)
@@ -55,7 +61,7 @@ class main(QWidget):
         self.filter_eslify.textChanged.connect(self.searchE)
 
         self.filter_compact = QLineEdit()
-        self.filter_compact.setPlaceholderText("Filter")
+        self.filter_compact.setPlaceholderText("Filter ")
         self.filter_compact.setMinimumWidth(50)
         self.filter_compact.setMaximumWidth(150)
         self.filter_compact.setAlignment(Qt.AlignmentFlag.AlignRight)
@@ -96,13 +102,15 @@ class main(QWidget):
 
         self.main_layout.addWidget(self.button_scan)
         self.main_layout.addLayout(self.h_layout1)
+        
+        #self.h_layout1.setContentsMargins(0,20,0,20)
+        self.v_layout1.setContentsMargins(0,11,0,11)
+        self.v_layout2.setContentsMargins(0,11,0,11)
 
-        self.h_layout1.setContentsMargins(0,20,0,20)
-        self.v_layout1.setContentsMargins(10,0,10,0)
-        self.v_layout2.setContentsMargins(10,0,10,0)
+        self.main_layout.setContentsMargins(21,11,21,11)
 
         self.setLayout(self.main_layout)
-
+        
     def searchE(self):
         if len(self.filter_eslify.text()) > 0:
             items = self.list_eslify.findItems(self.filter_eslify.text(), Qt.MatchFlag.MatchContains)
@@ -128,9 +136,12 @@ class main(QWidget):
         self.output_stream.show()
         for row in range(self.list_compact.rowCount()):
             if self.list_compact.item(row,0).checkState() == Qt.CheckState.Checked:
-                self.list_compact.hideRow(row)
+                self.list_compact.item(row,0).setCheckState(Qt.CheckState.Unchecked)
+                self.list_compact.item(row,0).setFlags(self.list_compact.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
+                self.list_compact.item(row,0).background().setColor(QColor('gray'))
                 checked.append(self.list_compact.item(row,0).toolTip())
-        #self.setEnabled(False)
+
+        self.setEnabled(False)
         self.thread_new = QThread()
         self.worker = Worker2(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, self.update_header)
         self.worker.moveToThread(self.thread_new)
@@ -138,21 +149,37 @@ class main(QWidget):
         self.worker.finished_signal.connect(self.thread_new.quit)
         self.worker.finished_signal.connect(self.thread_new.deleteLater)
         self.worker.finished_signal.connect(self.worker.deleteLater)
-        self.worker.finished_signal.connect(lambda x = True: self.setEnabled(x))
+        self.worker.finished_signal.connect(self.finished_button_action)
+
         self.thread_new.start()
-        #for file in checked:
-        #    CFIDs.compact_and_patch(file, self.dependency_dictionary[os.path.basename(file).lower()], self.skyrim_folder_path, self.output_folder_path, self.update_header)
-        
-    
+
     def eslify_selected_clicked(self):
+        self.setEnabled(False)
         checked = []
         for row in range(self.list_eslify.rowCount()):
             if self.list_eslify.item(row,0).checkState() == Qt.CheckState.Checked:
-                self.list_eslify.hideRow(row)
+                self.list_eslify.item(row,0).setCheckState(Qt.CheckState.Unchecked)
+                self.list_eslify.item(row,0).setFlags(self.list_eslify.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
+                self.list_eslify.item(row,0).background().setColor(QColor('gray'))
                 checked.append(self.list_eslify.item(row,0).toolTip())
         for file in checked:
-            CFIDs.set_flag(file)
+            CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path)
         print("Flag(s) Changed")
+        self.finished_button_action()
+
+    def finished_button_action(self):
+        self.setEnabled(True)
+        message = QMessageBox()
+        message.setWindowTitle("Finished")
+        message.setText(
+            "If you're using MO2 or Vortex then make sure the ESLifier Output is installed as a mod (let it win any file conflicts) "+
+            "and restart ESLifier. Continuing to use the program without restarting will cause inconsistencies if you use the 'Scan Mod Files' "+
+            "button or the 'Find Unpatched Files' button as it will not get the newly patched files.")
+        def shown():
+            message.hide()
+        message.accepted.connect(shown)
+        message.show()
+        
 
     def scan(self):
         self.button_scan.setEnabled(False)
