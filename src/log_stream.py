@@ -1,13 +1,13 @@
 import sys
+
 from PyQt6.QtWidgets import QMainWindow, QTextEdit
 from PyQt6.QtCore import Qt, QTimer
 
-from queue import Queue
 
-
-class output_stream(QMainWindow):
+class log_stream(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle('Log Stream')
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowCloseButtonHint)
         self.text_edit = QTextEdit()
@@ -17,7 +17,7 @@ class output_stream(QMainWindow):
         self.log_file = open("ESLifier_Data/ESLifier.log", 'w')
 
         sys.stdout = self
-        #sys.stderr = self
+        sys.stderr = self
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.process_queue)
@@ -31,6 +31,9 @@ class output_stream(QMainWindow):
         text = text.strip()
         if 'Process' not in text and text != '':
             self.log_file.write(text + '\n')
+    
+    def flush():
+        pass
 
     def closeEvent(self, a0):
         super().closeEvent(a0)
