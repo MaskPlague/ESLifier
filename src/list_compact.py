@@ -95,6 +95,7 @@ class list_compactable(QTableWidget):
             item.setToolTip(self.mod_list[i])
             item.setTextAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
             self.setItem(i, 0, item)
+            self.setRowHidden(i, False)
             if self.cell_flags[i]:
                 item_compactible = QTableWidgetItem('New CELL')
                 item_compactible.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -128,7 +129,10 @@ class list_compactable(QTableWidget):
                     x.setCheckState(Qt.CheckState.Unchecked)
             self.blockSignals(False)
 
-        self.resizeColumnsToContents()
+        self.resizeColumnToContents(0)
+        self.resizeColumnToContents(1)
+        self.resizeColumnToContents(2)
+        self.resizeColumnToContents(3)
         self.itemChanged.connect(somethingChanged)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenu)
