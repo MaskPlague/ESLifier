@@ -43,6 +43,7 @@ class list_eslable(QTableWidget):
         self.create()
 
     def create(self):
+        self.clearContents()
         self.setRowCount(len(self.mod_list))
 
         for i in range(len(self.mod_list)):
