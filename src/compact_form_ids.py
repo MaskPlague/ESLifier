@@ -56,8 +56,8 @@ class CFIDs():
             data = json.load(f)
         return data
     
-    def set_flag(file, output_folder):
-        new_file = CFIDs.copy_file_to_output(file, output_folder)
+    def set_flag(file, skyrim_folder, output_folder):
+        new_file = CFIDs.copy_file_to_output(file, skyrim_folder, output_folder)
         with open(new_file, 'rb+') as f:
             f.seek(9)
             f.write(b'\x02')
@@ -327,6 +327,8 @@ class CFIDs():
     #Compacts master file and returns the new mod folder
     def compact_file(file, skyrim_folder_path, output_folder, update_header):
         form_id_file_name = 'ESLifier_Data/Form_ID_Maps/' + os.path.basename(file).lower() + "_FormIdMap.txt"
+        if not os.path.exists(os.path.dirname(form_id_file_name)):
+            os.makedirs(os.path.dirname(form_id_file_name))
         new_file = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder)
 
         #Set ESL flag, update to header 1.71 for new Form IDs, and get data from mod plugin
