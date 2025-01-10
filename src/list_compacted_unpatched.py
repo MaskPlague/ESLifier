@@ -8,14 +8,13 @@ class list_compacted_unpatched(QTableWidget):
     def __init__(self):
         super().__init__()
         self.setColumnCount(1)
-        self.setHorizontalHeaderLabels(['*   Mod'])
+        self.setHorizontalHeaderLabels(['Mod'])
         self.horizontalHeaderItem(0).setToolTip('These are plugins which this program has compacted.\nTick the plugin for which you want to patch new files.\nSelect for which plugin you want to show the unpatched files.')
         self.verticalHeader().setHidden(True)
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.setSortingEnabled(True)
         self.mod_list = []
-        self.cell_flags = []
 
         self.setStyleSheet("""
             QTableWidget::item{
@@ -41,7 +40,7 @@ class list_compacted_unpatched(QTableWidget):
         self.create()
 
     def create(self):
-        self.mod_list = ['C:\\mods\\Mod1','C:\\mods\\Mod2', 'C:\\mods\\Mod3', 'C:\\mods\\Mod4', 'C:\\mods\\Mod5']
+        self.clearContents()
         self.setRowCount(len(self.mod_list))
 
         for i in range(len(self.mod_list)):
@@ -50,7 +49,6 @@ class list_compacted_unpatched(QTableWidget):
             item.setCheckState(Qt.CheckState.Unchecked)
             item.setToolTip(self.mod_list[i])
             self.setItem(i, 0, item)
-            self.resizeRowToContents(i)
 
         def something_changed(itemChanged):
             self.blockSignals(True)
@@ -64,9 +62,9 @@ class list_compacted_unpatched(QTableWidget):
 
         def item_selected():
             selected_items = self.selectedItems()
-            #TODO: send new items to list_unpatched
-            for item in selected_items:
-                print(item.text())
+            mods_selected = [item.toolTip() for item in selected_items]
+            self.parentWidget().parentWidget().parentWidget().unpatched_files_list.mods_selected = mods_selected
+            self.parentWidget().parentWidget().parentWidget().unpatched_files_list.create()
 
 
         self.resizeColumnsToContents()
@@ -74,6 +72,7 @@ class list_compacted_unpatched(QTableWidget):
         self.itemSelectionChanged.connect(item_selected)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenu)
+        self.resizeRowsToContents()
 
 
     def contextMenu(self, position):
