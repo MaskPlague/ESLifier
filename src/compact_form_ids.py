@@ -14,8 +14,8 @@ class CFIDs():
         CFIDs.compacted_and_patched = {}
         print("Compacting Plugin: " + os.path.basename(file_to_compact) + '...')
         CFIDs.compact_file(file_to_compact, skyrim_folder_path, output_folder_path, update_header)
-        print("-  Correcting Dependent Files...")
-        CFIDs.correct_dependents(file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header)
+        print("-  Patching Dependent Plugins...")
+        CFIDs.patch_dependent_plugins(file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header)
         
         files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
         to_patch, to_rename = CFIDs.get_files_to_correct(file_to_compact, files_to_patch[os.path.basename(file_to_compact).lower()]) #function to get files that need to be edited in some way to function correctly.
@@ -26,8 +26,6 @@ class CFIDs():
         CFIDs.rename_files_threader(file_to_compact, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
         CFIDs.dump_to_file('ESLifier_Data/compacted_and_patched.json')
         return
-        #TODO: Add threading
-        
         #TODO: update next object in TES4 header?
         #TODO: SkyPatcher, MCM Helper, possible others to check
         #TODO: add regex to certain replacements in patch files for safety
@@ -57,6 +55,7 @@ class CFIDs():
         return data
     
     def set_flag(file, skyrim_folder, output_folder):
+        print("-  Changing ESL flag in: " + os.path.basename(file))
         new_file = CFIDs.copy_file_to_output(file, skyrim_folder, output_folder)
         with open(new_file, 'rb+') as f:
             f.seek(9)
@@ -66,7 +65,7 @@ class CFIDs():
         CFIDs.lock = threading.Lock()
         CFIDs.compacted_and_patched = {}
 
-        CFIDs.correct_dependents(compacted_file, dependents, skyrim_folder_path, output_folder_path, update_header)
+        CFIDs.patch_dependent_plugins(compacted_file, dependents, skyrim_folder_path, output_folder_path, update_header)
         files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
         to_patch, to_rename = CFIDs.get_files_to_correct(compacted_file, files_to_patch[os.path.basename(compacted_file).lower()]) #function to get files that need to be edited in some way to function correctly.
         form_id_map = CFIDs.get_form_id_map(compacted_file)
@@ -166,7 +165,8 @@ class CFIDs():
         chunk_size = len(files) // split
         chunks = [files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
         chunks.append(files[(split) * chunk_size:])
-        
+        CFIDs.count = 0
+        CFIDs.file_count = len(files)
         for chunk in chunks:
             thread = threading.Thread(target=CFIDs.rename_files, args=(master, chunk, form_id_map, skyrim_folder_path, output_folder_path))
             threads.append(thread)
@@ -177,13 +177,19 @@ class CFIDs():
     def rename_files(master, files, form_id_map, skyrim_folder_path, output_folder_path):
         facegeom_meshes = []
         for file in files:
+            CFIDs.count += 1
+            percent = CFIDs.count / CFIDs.file_count * 100
+            if (CFIDs.count % round(CFIDs.file_count * 0.001)) >= (round(CFIDs.file_count * 0.001)-1) or CFIDs.count >= CFIDs.file_count:
+                print('\033[F\033[K-  Percentage: ' + str(round(percent,1)) +'%\n-  Files: ' + str(CFIDs.count) + '/' + str(CFIDs.file_count), end='\r')
             for form_ids in form_id_map:
                 if form_ids[1].upper() in file.upper():
                     with CFIDs.lock:
                         new_file = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
                         os.replace(new_file, new_file.replace(form_ids[1].upper(), form_ids[3].upper()))
                         CFIDs.compacted_and_patched[os.path.basename(master).lower()].append(file)
-                        CFIDs.compacted_and_patched[os.path.basename(master).lower()].append(new_file)
+                        end_path = file[len(skyrim_folder_path) + 1:]
+                        new_file_but_skyrim_pathed = os.path.join(skyrim_folder_path, re.sub(r'(.*?)(/|\\)', '', end_path, 1))
+                        CFIDs.compacted_and_patched[os.path.basename(master).lower()].append(new_file_but_skyrim_pathed)
                         if 'facegeom' in new_file.lower() and os.path.basename(master).lower() in new_file.lower():
                             facegeom_meshes.append(new_file.replace(form_ids[1].upper(), form_ids[3].upper()))
         if facegeom_meshes != []:
@@ -345,7 +351,7 @@ class CFIDs():
             f.close()
 
         #print('initial data size:           ' + str(len(data)))
-        data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z|_]................\x2c\x00.\x00)|(?=GRUP....................)', data, flags=re.DOTALL) if x]
+        data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z|_]................[\x2c|\x2b]\x00.\x00)|(?=GRUP....................)', data, flags=re.DOTALL) if x]
 
         master_count = data_list[0].count(b'MAST')
         form_id_list = []
@@ -373,12 +379,13 @@ class CFIDs():
                 sizes_list[i] = [len(data_list[i]), len(decompressed), size]
                 new_form = data_list[i].replace(data_list[i][28:size+24], decompressed)
 
-                #get the form ids that were hiding in compressed data
-                new_forms = re.split(b'(?=....................\x2c\x00.\x00)', new_form, flags=re.DOTALL)
+                '''#get the form ids that were hiding in compressed data
+                new_forms = re.split(b'(?=....................[\x2c|\x2b]\x00.\x00)', new_form, flags=re.DOTALL)
+                
                 if len(new_forms) > 0:
                     for form in new_forms:
                         if form != b'' and len(form) > 16 and form[15] == master_count and form[12:16] not in form_id_list:
-                            form_id_list.append(form[12:16])
+                            form_id_list.append(form[12:16])'''
 
                 data_list[i] = new_form
         
@@ -448,7 +455,7 @@ class CFIDs():
         
 
     #replaced the old form ids with the new ones in all files that have the comapacted file as a master
-    def correct_dependents(file, dependents, skyrim_folder_path, output_folder_path, update_header):
+    def patch_dependent_plugins(file, dependents, skyrim_folder_path, output_folder_path, update_header):
         form_if_file_name = "ESLifier_Data/Form_ID_Maps/" + os.path.basename(file).lower() + "_FormIdMap.txt"
         form_id_file_data = ''
         with open(form_if_file_name, 'r') as form_id_file:
@@ -468,7 +475,7 @@ class CFIDs():
 
                 dependent_data = dependent_file.read()
                 #print('initial data size:           ' + str(len(dependentData)))
-                data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z|_]................\x2c\x00.\x00)|(?=GRUP....................)', dependent_data, flags=re.DOTALL) if x]
+                data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z|_]................[\x2c|\x2b]\x00.\x00)|(?=GRUP....................)', dependent_data, flags=re.DOTALL) if x]
                 
                 master_count = data_list[0].count(b'MAST')
                 sizes_list = [[]] * len(data_list)
