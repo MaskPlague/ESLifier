@@ -12,6 +12,8 @@ class main_window(QMainWindow):
         super().__init__()
         #TODO: Make a patch files page
         #TODO: Make exclusions window/page
+        #TODO: Check for each plugin with cell if there is a dependent that edits the new cell
+        #       Will need to store form id of new cell records during plugin_qualificaiton_checker scan
         self.setWindowTitle("ESLifier")
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.setFocus()
@@ -73,7 +75,6 @@ class main_window(QMainWindow):
         self.main_widget.setMinimumWidth(1000)
         self.main_widget.setMinimumHeight(500)
         self.update_settings()
-        self.update_shown()
         self.tabs = QStackedLayout()
         self.tabs.addWidget(self.main_widget)
         self.tabs.addWidget(self.patch_new_widget)
