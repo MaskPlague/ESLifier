@@ -52,8 +52,10 @@ class list_eslable(QTableWidget):
             item.setCheckState(Qt.CheckState.Unchecked)
             item.setToolTip(self.mod_list[i])
             self.setItem(i, 0, item)
+            self.setRowHidden(i, False)
             if self.cell_flags[i]:
                 item_cell_flag = QTableWidgetItem('New CELL')
+                item_cell_flag.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.setItem(i, 1, item_cell_flag)
 
         def somethingChanged(itemChanged):
@@ -66,8 +68,8 @@ class list_eslable(QTableWidget):
                     x.setCheckState(Qt.CheckState.Unchecked)
             self.blockSignals(False)
 
-        
-        self.resizeColumnsToContents()
+        self.resizeColumnToContents(0)
+        self.resizeColumnToContents(1)
         self.itemChanged.connect(somethingChanged)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenu)
