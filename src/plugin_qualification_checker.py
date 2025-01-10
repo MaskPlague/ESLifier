@@ -1,12 +1,11 @@
 import re
-#import os
+import zlib
 import timeit
 
 from dependency_getter import dependecy_getter as dep_getter
 
 
 class qualification_checker():
-    #def __init__(self, path, update_header, show_cells):
     def scan(path, update_header, show_cells):
         start_time = timeit.default_timer()
         all_plugins = dep_getter.get_list_of_plugins(path)
@@ -50,9 +49,8 @@ class qualification_checker():
         need_compacting = False
         with open(file, 'rb') as f:
                 data = f.read()
-                data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z|_]................\x2c\x00.\x00)|(?=GRUP....................)', data, flags=re.DOTALL) if x]
+                data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z|_]................[\x2c|\x2b]\x00.\x00)|(?=GRUP....................)', data, flags=re.DOTALL) if x]
         masterCount = data_list[0].count(b'MAST')
-        
         count = 0
         for form in data_list:
             if form[:4] != 'TES4' and len(form) > 24 and form[15] == masterCount:
