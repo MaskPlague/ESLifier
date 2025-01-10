@@ -5,7 +5,6 @@ import json
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QPushButton, QButtonGroup, QListWidget, QListWidgetItem
 
-#TODO: add bsa_flag into table
 class list_compactable(QTableWidget):
     def __init__(self):
         super().__init__()
@@ -13,15 +12,14 @@ class list_compactable(QTableWidget):
         self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'BSA', 'Dependencies', ''])
         self.horizontalHeaderItem(0).setToolTip('This is the plugin name. Select which plugins you wish to compact.')
         self.horizontalHeaderItem(1).setToolTip('This is the CELL Record Flag. If an ESL plugin creates a new CELL\nand another mod changes that CELL then it\nmay not work due to an engine bug.')
-        self.horizontalHeaderItem(2).setToolTip('This is the BSA Flag. If a Bethesda Archive holds files that need patching, this program will not be able to detect or patch them.')
-        self.horizontalHeaderItem(3).setToolTip('If a plugin has other plugins with it as a master, they\nwill appear when the button is clicked. These will also have their\nForm IDs patched to reflect the Master plugin\'s changes.')
+        self.horizontalHeaderItem(2).setToolTip('This is the BSA Flag. If a Bethesda Archive holds files that need\npatching, this program will not be able to detect or patch them.')
+        self.horizontalHeaderItem(3).setToolTip('If a plugin has other plugins with it as a master, they will appear\nwhen the button is clicked. These will also have their\nForm IDs patched to reflect the Master plugin\'s changes.')
         self.verticalHeader().setHidden(True)
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.setSortingEnabled(True)
         self.mod_list = []
         self.cell_flags = []
-        self.bsa_flags = []
         self.setStyleSheet("""
             QTableWidget::item{
                 border-top: 1px solid gray
@@ -47,8 +45,8 @@ class list_compactable(QTableWidget):
         self.create()
 
     def create(self):
+        self.clearContents()
         self.dependency_list = self.get_data_from_file("ESLifier_Data/dependency_dictionary.json")
-        self.bsa_flags = [True, False, False, False, True]
         
         self.setRowCount(len(self.mod_list))
     
@@ -161,9 +159,9 @@ class list_compactable(QTableWidget):
                 if os.name == 'nt':
                     os.startfile(file_directory)
                 elif os.name == 'posix':
-                    subprocess.Popen(['xdg-open', os.path.dirname(file_path)])
+                    subprocess.Popen(['xdg-open', os.path.dirname(file_directory)])
                 else:
-                    subprocess.Popen(['open', os.path.dirname(file_path)])
+                    subprocess.Popen(['open', os.path.dirname(file_directory)])
             except Exception as e:
                 print(f"Error opening file explorer: {e}")
 
