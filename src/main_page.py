@@ -103,7 +103,6 @@ class main(QWidget):
         self.main_layout.addWidget(self.button_scan)
         self.main_layout.addLayout(self.h_layout1)
         
-        #self.h_layout1.setContentsMargins(0,20,0,20)
         self.v_layout1.setContentsMargins(0,11,0,11)
         self.v_layout2.setContentsMargins(0,11,0,11)
 
@@ -132,7 +131,7 @@ class main(QWidget):
                 self.list_compact.setRowHidden(i, False)
 
     def compact_selected_clicked(self):
-        #self.setEnabled(False)
+        self.setEnabled(False)
         checked = []
         self.list_compact.clearSelection()
         for row in range(self.list_compact.rowCount()):
@@ -149,7 +148,7 @@ class main(QWidget):
             self.worker.finished_signal.connect(self.thread_new.quit)
             self.worker.finished_signal.connect(self.thread_new.deleteLater)
             self.worker.finished_signal.connect(self.worker.deleteLater)
-            self.worker.finished_signal.connect(self.finished_button_action)
+            self.worker.finished_signal.connect(lambda sender = 'compact', checked_list = checked: self.finished_button_action(sender, checked_list))
             self.thread_new.start()
         else:
             self.setEnabled(True)
@@ -169,12 +168,11 @@ class main(QWidget):
                 CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path)
             print("Flag(s) Changed")
             print("CLEAR")
-            self.finished_button_action()
+            self.finished_button_action('eslify', checked)
         else:
             self.setEnabled(True)
 
-    def finished_button_action(self):
-        self.setEnabled(True)
+    def finished_button_action(self, sender, checked_list):
         message = QMessageBox()
         message.setWindowTitle("Finished")
         message.setText(
@@ -185,6 +183,19 @@ class main(QWidget):
             message.hide()
         message.accepted.connect(shown)
         message.show()
+        if sender == 'compact':
+            for mod in checked_list:
+                i = self.list_compact.mod_list.index(mod)
+                self.list_compact.mod_list.remove(mod)
+                self.list_compact.cell_flags.pop(i)
+            self.list_compact.create()
+        elif sender == 'eslify':
+            for mod in checked_list:
+                i = self.list_eslify.mod_list.index(mod)
+                self.list_eslify.mod_list.remove(mod)
+                self.list_eslify.cell_flags.pop(i)
+            self.list_eslify.create()
+        self.setEnabled(True)
         
 
     def scan(self):
