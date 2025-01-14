@@ -1,8 +1,8 @@
 import os
 
-from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal
+from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal, QCoreApplication
 from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox)
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QPalette
 
 from list_eslify import list_eslable
 from list_compact import list_compactable
@@ -22,7 +22,7 @@ class main(QWidget):
         self.show_cells = True
         self.eslify_dictionary = {}
         self.dependency_dictionary = {}
-        self.output_stream = log_stream()
+        self.log_stream = log_stream()
 
     def create(self):
         self.eslify = QLabel("ESLify")
@@ -132,40 +132,46 @@ class main(QWidget):
                 self.list_compact.setRowHidden(i, False)
 
     def compact_selected_clicked(self):
+        #self.setEnabled(False)
         checked = []
-        self.output_stream.show()
+        self.list_compact.clearSelection()
         for row in range(self.list_compact.rowCount()):
             if self.list_compact.item(row,0).checkState() == Qt.CheckState.Checked:
-                self.list_compact.item(row,0).setCheckState(Qt.CheckState.Unchecked)
+                self.list_compact.item(row,0).setCheckState(Qt.CheckState.PartiallyChecked)
                 self.list_compact.item(row,0).setFlags(self.list_compact.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
-                self.list_compact.item(row,0).background().setColor(QColor('gray'))
                 checked.append(self.list_compact.item(row,0).toolTip())
-
-        self.setEnabled(False)
-        self.thread_new = QThread()
-        self.worker = Worker2(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, self.update_header)
-        self.worker.moveToThread(self.thread_new)
-        self.thread_new.started.connect(self.worker.run)
-        self.worker.finished_signal.connect(self.thread_new.quit)
-        self.worker.finished_signal.connect(self.thread_new.deleteLater)
-        self.worker.finished_signal.connect(self.worker.deleteLater)
-        self.worker.finished_signal.connect(self.finished_button_action)
-
-        self.thread_new.start()
+        if checked != []:
+            self.log_stream.show()
+            self.thread_new = QThread()
+            self.worker = Worker2(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, self.update_header)
+            self.worker.moveToThread(self.thread_new)
+            self.thread_new.started.connect(self.worker.run)
+            self.worker.finished_signal.connect(self.thread_new.quit)
+            self.worker.finished_signal.connect(self.thread_new.deleteLater)
+            self.worker.finished_signal.connect(self.worker.deleteLater)
+            self.worker.finished_signal.connect(self.finished_button_action)
+            self.thread_new.start()
+        else:
+            self.setEnabled(True)
 
     def eslify_selected_clicked(self):
         self.setEnabled(False)
         checked = []
+        self.list_eslify.clearSelection()
         for row in range(self.list_eslify.rowCount()):
             if self.list_eslify.item(row,0).checkState() == Qt.CheckState.Checked:
-                self.list_eslify.item(row,0).setCheckState(Qt.CheckState.Unchecked)
+                self.list_eslify.item(row,0).setCheckState(Qt.CheckState.PartiallyChecked)
                 self.list_eslify.item(row,0).setFlags(self.list_eslify.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
-                self.list_eslify.item(row,0).background().setColor(QColor('gray'))
                 checked.append(self.list_eslify.item(row,0).toolTip())
-        for file in checked:
-            CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path)
-        print("Flag(s) Changed")
-        self.finished_button_action()
+        if checked != []:
+            self.log_stream.show()
+            for file in checked:
+                CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path)
+            print("Flag(s) Changed")
+            print("CLEAR")
+            self.finished_button_action()
+        else:
+            self.setEnabled(True)
 
     def finished_button_action(self):
         self.setEnabled(True)
@@ -183,7 +189,7 @@ class main(QWidget):
 
     def scan(self):
         self.button_scan.setEnabled(False)
-        self.output_stream.show()
+        self.log_stream.show()
         self.thread_new = QThread()
         self.worker = Worker(self.skyrim_folder_path, self.update_header, self.show_cells)
         self.worker.moveToThread(self.thread_new)
@@ -242,6 +248,5 @@ class Worker2(QObject):
         for file in self.checked:
             CFIDs.compact_and_patch(file, self.dependency_dictionary[os.path.basename(file).lower()], self.skyrim_folder_path, self.output_folder_path, self.update_header)
         print("Compacted and Patched")
-        print('')
         print('CLEAR')
         self.finished_signal.emit()
