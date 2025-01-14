@@ -7,25 +7,31 @@ from scanner import scanner
 from dependency_getter import dependecy_getter
 from list_compacted_unpatched import list_compacted_unpatched
 from list_unpatched_files import list_unpatched
+from compact_form_ids import CFIDs
 
 #patched dict - hold key patched name, values patched files do a scan and compare old dict to new dict
 class patch_new(QWidget):
     def __init__(self):
         super().__init__()
         self.skyrim_folder_path = ''
+        self.output_folder_path = ''
+        self.update_header = True
         self.create()
 
     def create(self):
         find_button = QPushButton("Find Unpatched Files")
         find_button.clicked.connect(self.scan_and_find)
-        find_button.setToolTip("Scan plugin files")
+        find_button.setToolTip("Scan for new plugins and files that were not\n"+
+                               "present during intial compacting and patching.")
         patch_button = QPushButton("Patch Selected")
+        patch_button.clicked.connect(self.patch_new_plugins_and_files)
+        patch_button.setToolTip("Patch the files that are dependent on the selected plugin(s).")
 
         eslifier_compacted_label = QLabel("ESLifier Compacted With Unpatched Files")
         unpatched_files_label = QLabel("Unpatched Files")
 
-        self.eslifier_compacted_list = list_compacted_unpatched()
-        self.unpatched_files_list = list_unpatched()
+        self.list_compacted_unpatched = list_compacted_unpatched()
+        self.list_unpatched_files = list_unpatched()
 
         h_layout = QHBoxLayout()
         h_widget = QWidget()
@@ -43,13 +49,13 @@ class patch_new(QWidget):
         v_widget_2 = QWidget()
         v_widget_2.setLayout(v_layout_2)
         v_layout_2.addWidget(eslifier_compacted_label)
-        v_layout_2.addWidget(self.eslifier_compacted_list)
+        v_layout_2.addWidget(self.list_compacted_unpatched)
         
         v_layout_3 = QVBoxLayout()
         v_widget_3 = QWidget()
         v_widget_3.setLayout(v_layout_3)
         v_layout_3.addWidget(unpatched_files_label)
-        v_layout_3.addWidget(self.unpatched_files_list)
+        v_layout_3.addWidget(self.list_unpatched_files)
 
         h_layout.addWidget(v_widget_2)
         h_layout.addSpacing(20)
@@ -81,8 +87,8 @@ class patch_new(QWidget):
         print('Getting New Dependencies and Files')
         self.find()
         print('CLEAR')
-        self.unpatched_files_list.create()
-        self.eslifier_compacted_list.create()
+        self.list_unpatched_files.create()
+        self.list_compacted_unpatched.create()
         self.setEnabled(True)
 
     def find(self):
@@ -100,24 +106,60 @@ class patch_new(QWidget):
         new_dependencies = {}
 
         for key, values in compacted_and_patched.items():
-            if key in file_masters.keys(): 
-                file_masters_list = file_masters[key]
-            if key in dependencies.keys(): 
-                dependencies_list = dependencies[key]
-            if file_masters_list: 
-                new_files[key] = []
-            if dependencies_list: 
-                new_dependencies[key] = []
+            file_masters_list = []
+            dependencies_list = []
+            if key.lower() in file_masters.keys(): 
+                file_masters_list = file_masters[key.lower()]
+            if key.lower() in dependencies.keys(): 
+                dependencies_list = dependencies[key.lower()]
             
             for value in file_masters_list: 
-                if value.lower() not in values: new_files[key].append(value)
+                if value not in values: 
+                    if key not in new_files.keys():
+                        new_files[key] = []
+                    new_files[key].append(value)
 
             for value in dependencies_list: 
-                if value.lower() not in values: new_dependencies[key].append(value)
+                if value not in values: 
+                    if key not in new_dependencies.keys():
+                        new_dependencies[key] = []
+                    new_dependencies[key].append(value)
 
         mod_list = [key for key in new_dependencies.keys()]
-        self.eslifier_compacted_list.mod_list = mod_list
-        self.unpatched_files_list.file_dictionary = new_files
+        self.list_compacted_unpatched.mod_list = mod_list
+        self.list_unpatched_files.dependencies_dictionary = new_dependencies
+        self.list_unpatched_files.file_dictionary = new_files
+
+    def patch_new_plugins_and_files(self):
+        checked  = []
+        self.list_compacted_unpatched.clearSelection()
+        for row in range(self.list_compacted_unpatched.rowCount()):
+            if self.list_compacted_unpatched.item(row,0).checkState() == Qt.CheckState.Checked:
+                self.list_compacted_unpatched.item(row,0).setCheckState(Qt.CheckState.Unchecked)
+                self.list_compacted_unpatched.item(row,0).setFlags(self.list_compacted_unpatched.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
+                checked.append(self.list_compacted_unpatched.item(row,0).toolTip())
+        if checked != []:
+            self.setEnabled(False)
+            self.log_stream.show()
+            self.thread_new = QThread()
+            self.worker = Worker2(checked, self.list_unpatched_files.dependencies_dictionary, self.list_unpatched_files.file_dictionary ,self.skyrim_folder_path, self.output_folder_path, self.update_header)
+            self.worker.moveToThread(self.thread_new)
+            self.thread_new.started.connect(self.worker.patch)
+            self.worker.finished_signal.connect(lambda x = checked: self.finished_patching(x))
+            self.worker.finished_signal.connect(self.thread_new.quit)
+            self.worker.finished_signal.connect(self.thread_new.deleteLater)
+            self.thread_new.start()
+    
+    def finished_patching(self, checked):
+        #TODO: maybe do this for main_page too
+        print('Finished Patching New Dependencies and Files')
+        mod_list = self.list_compacted_unpatched.mod_list
+        for mod in checked:
+            mod_list.remove(mod)
+        self.list_compacted_unpatched.mod_list = mod_list
+        self.list_compacted_unpatched.create()
+        print('CLEAR')
+        self.setEnabled(True)
 
 
 class Worker(QObject):
@@ -132,6 +174,23 @@ class Worker(QObject):
         print('Getting Dependencies')
         dependecy_getter.scan(self.skyrim_folder_path)
         self.finished_signal.emit()
+
+class Worker2(QObject):
+    finished_signal = pyqtSignal()
+    def __init__(self, files, dependencies_dictionary, file_dictionary, skyrim_folder_path, output_folder_path, update_header):
+        super().__init__()
+        self.files = files
+        self.dependencies_dictionary = dependencies_dictionary
+        self.file_dictionary = file_dictionary
+        self.skyrim_folder_path = skyrim_folder_path
+        self.output_folder_path = output_folder_path
+        self.update_header = update_header
+
+    def patch(self):
+        for file in self.files:
+            CFIDs.patch_new(file, self.dependencies_dictionary[file], self.file_dictionary, self.skyrim_folder_path, self.output_folder_path, self.update_header)
+        self.finished_signal.emit()
+
 
         
 
