@@ -37,11 +37,9 @@ class dependecy_getter():
         plugin_names = []
         for plugin in dependecy_getter.plugins:
             plugin_names.append(os.path.basename(plugin).lower())
-            #plugin_names.append(os.path.basename(plugin).lower() + '_path')
 
         dependecy_getter.dependency_dictionary = {plugin: [] for plugin in plugin_names}
         for plugin in dependecy_getter.plugins:
-            #dependecy_getter.dependency_dictionary[os.path.basename(plugin).lower() + '_path'] = plugin
             masters = dependecy_getter.getMasters(plugin)
             if len(masters) > 0:
                 for master in masters:
