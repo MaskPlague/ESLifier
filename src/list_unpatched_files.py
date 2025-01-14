@@ -16,7 +16,12 @@ class list_unpatched(QTableWidget):
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.setSortingEnabled(True)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.horizontalHeader().setStretchLastSection(True)
+        self.customContextMenuRequested.connect(self.context_menu)
         self.file_dictionary = {}
+        self.dependencies_dictionary = {}
         self.cell_flags = []
         self.mods_selected = []
 
@@ -31,9 +36,6 @@ class list_unpatched(QTableWidget):
                 background-color: rgb(200,200,200);
             }
         """)
-
-        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-        self.horizontalHeader().setStretchLastSection(True)
         
         self.create()
 
@@ -42,38 +44,34 @@ class list_unpatched(QTableWidget):
         self.compacted_and_patched = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json")
         size = 0
         for mod in self.mods_selected:
-            size += len(self.file_dictionary[mod.lower()])
+            if mod in self.file_dictionary.keys():
+                size += len(self.file_dictionary[mod])
+            if mod in self.dependencies_dictionary:
+                size += len(self.dependencies_dictionary[mod])
+
         self.setRowCount(size)
         i = 0
         font = QFont()
         metric = QFontMetrics(font)
-        while i in range(size):
-            for mod in self.mods_selected:
-                x = 0
-                while x in range(len(self.file_dictionary[mod.lower()])):
-                    file = metric.elidedText(self.file_dictionary[mod.lower()][i], Qt.TextElideMode.ElideLeft, 400)
+        for mod in self.mods_selected:
+            x = 0
+            if mod in self.dependencies_dictionary.keys():
+                while x in range(len(self.dependencies_dictionary[mod])):
+                    file = metric.elidedText(self.dependencies_dictionary[mod][x], Qt.TextElideMode.ElideLeft, 400)
                     item = QTableWidgetItem(file)
                     self.setItem(i, 0, item)
                     i += 1
                     x += 1
-            i += 1
+            if mod in self.file_dictionary.keys():
+                while x in range(len(self.file_dictionary[mod.lower()])):
+                    file = metric.elidedText(self.file_dictionary[mod][x], Qt.TextElideMode.ElideLeft, 400)
+                    item = QTableWidgetItem(file)
+                    self.setItem(i, 0, item)
+                    i += 1
+                    x += 1
 
-        def somethingChanged(itemChanged):
-            self.blockSignals(True)
-            if itemChanged.checkState() == Qt.CheckState.Checked:
-                for x in self.selectedItems():
-                    x.setCheckState(Qt.CheckState.Checked)
-            else:
-                for x in self.selectedItems():
-                    x.setCheckState(Qt.CheckState.Unchecked)
-            self.blockSignals(False)
-
-        self.itemChanged.connect(somethingChanged)
-        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.context_menu)
         self.resizeRowsToContents()
 
-    
     def get_data_from_file(self, file):
         try:
             with open(file, 'r') as f:
