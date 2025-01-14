@@ -89,7 +89,10 @@ class scanner():
             scanner.count += 1
             scanner.percentage = (scanner.count / scanner.file_count) * 100
             file_lower = file.lower()
-            if (scanner.count % round(scanner.file_count * 0.001)) >= (round(scanner.file_count * 0.001)-1) or scanner.count >= scanner.file_count:
+            factor = round(scanner.file_count * 0.001)
+            if factor == 0:
+                factor = 1
+            if (scanner.count % factor) >= (factor-1) or scanner.count >= scanner.file_count:
                 print('\033[F\033[K-  Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-  Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
             if (not 'meta.ini' in file_lower) and ('.ini' in file_lower or '.json' in file_lower or '_conditions.txt' in file_lower or '_srd.' in file_lower or '.psc' in file_lower):
                 thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
