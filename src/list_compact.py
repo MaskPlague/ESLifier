@@ -199,7 +199,7 @@ class list_compactable(QTableWidget):
             if item.checkState() == Qt.CheckState.Checked:
                 if item.column() == 0:
                     item.setCheckState(Qt.CheckState.Unchecked)
-            else:
+            elif item.checkState() == Qt.CheckState.Unchecked:
                 if item.column() == 0:
                     item.setCheckState(Qt.CheckState.Checked)
         self.blockSignals(False)
