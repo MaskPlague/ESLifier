@@ -49,8 +49,9 @@ class settings(QWidget):
         settings_layout.addWidget(self.show_plugins_with_bsas_widget)
         settings_layout.addSpacing(20)
         settings_layout.addWidget(self.open_eslifier_data_button)
-        settings_layout.addSpacing(40)
+        settings_layout.addSpacing(20)
         settings_layout.addWidget(self.clear_form_id_maps_and_compacted_and_patched_button)
+        settings_layout.addSpacing(20)
         settings_layout.addWidget(self.reset_settings_button)
         settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -180,7 +181,7 @@ class settings(QWidget):
         self.clear_form_id_maps_and_compacted_and_patched_button.setToolTip(
             "The Form ID Maps are used for patching any new files and plugins.\n" +
             "The Compacted and Patched History is for getting what files and plugins\n" +
-            "are newly added since a mod was compacted and its dependents patched.\n\n" +
+            "are newly added after a mod was compacted and its dependents patched.\n\n" +
             "This should be done when you have updated a mod or deleted the ESLifier Ouput.")
         self.clear_form_id_maps_and_compacted_and_patched_button.setMinimumWidth(160)
         self.clear_form_id_maps_and_compacted_and_patched_button.setMaximumWidth(160)
@@ -197,6 +198,8 @@ class settings(QWidget):
                 confirm.hide()
                 if os.path.exists('ESLifier_Data/Form_ID_Maps'):
                     shutil.rmtree('ESLifier_Data/Form_ID_Maps')
+                if os.path.exists('ESLifier_Data/compacted_and_patched.json'):
+                    os.remove('ESLifier_Data/compacted_and_patched.json')
 
             confirm.accepted.connect(accepted)
             confirm.show()
