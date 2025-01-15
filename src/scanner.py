@@ -33,9 +33,11 @@ class scanner():
             json.dump(scanner.file_dict, f, ensure_ascii=False, indent=4)
     
     def get_from_file(file):
-        data = {} #TODO: Some form of verification?
-        with open(file, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+        try:
+            with open(file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        except:
+            data = {}
         return data
 
     def get_file_masters():
@@ -102,7 +104,7 @@ class scanner():
                 scanner.pex_files.append(file)
             elif '.seq' in file_lower:
                 plugin, _ = os.path.splitext(os.path.basename(file))
-                scanner.seq_files.append([plugin, file])
+                scanner.seq_files.append([plugin.lower(), file])
             elif ('\\facegeom\\' in file_lower and '.nif' in file_lower):
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
