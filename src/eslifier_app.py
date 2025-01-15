@@ -10,7 +10,6 @@ from patch_new_page import patch_new
 class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
-        #TODO: Make a patch files page
         #TODO: Make exclusions window/page
         #TODO: Check for each plugin with cell if there is a dependent that edits the new cell
         #       Will need to store form id of new cell records during plugin_qualificaiton_checker scan
@@ -43,12 +42,21 @@ class main_window(QMainWindow):
 
         main_menu_action = QAction("Main", self)
         main_menu_action.triggered.connect(self.main_selected)
+        main_menu_action.setToolTip(
+            "This is the Main Page, scan your skyrim folder and select plugins to flag or compress.")
         setting_menu_action = QAction("Settings", self)
         setting_menu_action.triggered.connect(self.settings_selected)
+        setting_menu_action.setToolTip(
+            "This is the settings page. Certain settings will effect what plugins will display after scanning.")
         patch_new_menu_action = QAction("Patch New Plugins/Files", self)
         patch_new_menu_action.triggered.connect(self.patch_new_selected)
+        patch_new_menu_action.setToolTip(
+            "This is the Patch New Files Page, scan for new files that were not present when you\n"+
+            "initially compressed plugins and patched dependent plugins and files, then select the\n"+
+            "master of the new files you want to patch.")
         help_menu_action = QAction("Help?", self)
         help_menu_action.triggered.connect(self.help_selected)
+        help_menu_action.setToolTip("Help Button, displays help message.")
 
         top_menu = QMenuBar()
         top_menu.addAction(main_menu_action)
@@ -67,6 +75,9 @@ class main_window(QMainWindow):
             }
             QMenuBar::item::selected {
                 background-color: rgb(100,100,100);
+            }
+            QMenuBar::item::pressed{
+                background-color: rgb(50,50,50);
             }
             """)
         self.settings_widget = settings()
