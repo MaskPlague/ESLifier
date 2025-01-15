@@ -20,7 +20,7 @@ class CFIDs():
         
         files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
         if os.path.basename(file_to_compact).lower() in files_to_patch.keys():
-            to_patch, to_rename = CFIDs.get_files_to_correct(file_to_compact, files_to_patch[os.path.basename(file_to_compact).lower()]) #function to get files that need to be edited in some way to function correctly.
+            to_patch, to_rename = CFIDs.sort_files_to_patch_or_rename(file_to_compact, files_to_patch[os.path.basename(file_to_compact).lower()]) #function to get files that need to be edited in some way to function correctly.
             form_id_map = CFIDs.get_form_id_map(file_to_compact)
             print("-  Patching Dependent Files...")
             CFIDs.patch_files_threader(file_to_compact, to_patch, form_id_map, skyrim_folder_path, output_folder_path, True)
@@ -69,7 +69,7 @@ class CFIDs():
             print("-  Patching New Dependent Plugins...")
             CFIDs.patch_dependent_plugins(compacted_file, dependents, skyrim_folder_path, output_folder_path, update_header)
         if os.path.basename(compacted_file) in files_to_patch.keys():
-            to_patch, to_rename = CFIDs.get_files_to_correct(compacted_file, files_to_patch[os.path.basename(compacted_file)])
+            to_patch, to_rename = CFIDs.sort_files_to_patch_or_rename(compacted_file, files_to_patch[os.path.basename(compacted_file)])
             form_id_map = CFIDs.get_form_id_map(compacted_file)
             print("-  Patching New Dependent Files...")
             CFIDs.patch_files_threader(compacted_file, to_patch, form_id_map, skyrim_folder_path, output_folder_path, True)
@@ -95,67 +95,17 @@ class CFIDs():
                     yield os.path.join(root,file)
     
     #Get files (not including plugins) that may/will need old Form IDs replaced with the new Form IDs
-    def get_files_to_correct(master, files):
+    def sort_files_to_patch_or_rename(master, files):
         #hexaPattern = re.compile(r'([0-9a-fA-F]+){6,}[.](?!p)')
         files_to_patch = []
         files_to_rename = []
         matchers = ['.pex', '.psc', '.ini', '_conditions.txt', '.json', '_srd.', os.path.splitext(os.path.basename(master))[0].lower() + '.seq']
         for file in files:
             if any(match in file.lower() for match in matchers):
-                #if CFIDs.scan_file(master, file):
                 files_to_patch.append(file)
             elif os.path.basename(master).lower() in file.lower() and ('facegeom' in file.lower() or 'voice' in file.lower() or 'facetint' in file.lower()):
                 files_to_rename.append(file)
         return files_to_patch, files_to_rename
-    
-    @DeprecationWarning
-    #Check any given file for certain specific features that would mean it does need patching
-    def scan_file(master, file):
-        formIdPattern0x = re.compile(r'0x([0-9a-fA-F]+){1,}')
-        formIdPatternPipe = re.compile((r'\|([0-9a-fA-F]+){1,}'))
-        if '.seq' in file:
-            return True
-        if not '.pex' in file.lower():
-            with open(file, 'r', encoding='utf-8') as f:
-                data = f.readlines()
-                #if 'config.json' in file.lower():
-                #    for line in data:
-                #        if 'formid' in line.lower():
-                #            return True
-                #    return False
-                if '.ini' in file.lower() or '_conditions.txt' in file.lower() or '.json' in file.lower(): #PO3's mods, DAR, OAR, MCM helper
-                    return True
-                    for line in data:
-                        s = re.search(formIdPattern0x, line.lower()) #for 0x form ids
-                        s2 = re.search(formIdPatternPipe, line.lower()) #for some_mod.esp|form ids
-                        if s and os.path.basename(master).lower() in line.lower(): #PO3's mods
-                            return True
-                        elif 'formid' in line.lower() or ('form_id' in line.lower() and os.path.basename(master).lower() in line.lower()): #OAR and 
-                            return True
-                        elif s2 and os.path.basename(master).lower() in line.lower(): #MCM helper
-                            return True
-                    return False
-                if  '_srd.' in file.lower(): #Sound Record Distributor
-                    for line in data:
-                        s = re.search(formIdPatternPipe, line.lower())
-                        if s and os.path.basename(master).lower() in line.lower():
-                            return True
-                    return False
-                if '.psc' in file.lower(): #Papyrus Script Sources
-                    for line in data:
-                        if 'getformfromfile(' in line.lower():
-                            return True
-                f.close()
-        elif '.pex' in file.lower(): #Papyrus Script compiled
-            with open(file, 'rb') as f:
-                data = f.read()
-                if b'getformfromfile' in data.lower():
-                    data_list = re.split(b'getformfromfile',data.lower())
-                    for dataChunk in data_list:
-                        if os.path.basename(master.lower()) in str(re.findall(b'..(.*?)\x00', dataChunk)[0].lower()):
-                            return True
-                f.close()
-        return False
 
     def rename_files_threader(master, files, form_id_map, skyrim_folder_path, output_folder_path):
         threads = []
@@ -176,7 +126,9 @@ class CFIDs():
             threads.append(thread)
             thread.start()
         
-        for thread in threads: thread.join()
+        for thread in threads: 
+            thread.join()
+
     #Rename each file in the list of files from the old Form IDs to the new Form IDs
     def rename_files(master, files, form_id_map, skyrim_folder_path, output_folder_path):
         facegeom_meshes = []
@@ -224,7 +176,7 @@ class CFIDs():
             form_id_map.append([from_id, from_id_with_leading_0s, to_id, to_id_with_leading_0s, from_id_little_endian, to_id_little_endian])
         return form_id_map
 
-    def patch_files_threader(master, files, formIdMap, skyrim_folder_path, output_folder_path, flag):
+    def patch_files_threader(master, files, form_id_map, skyrim_folder_path, output_folder_path, flag):
         threads = []
         if len(files) > 50:
             split = 50
@@ -238,14 +190,15 @@ class CFIDs():
         chunks.append(files[(split) * chunk_size:])
         
         for chunk in chunks:
-            thread = threading.Thread(target=CFIDs.patch_files, args=(master, chunk, formIdMap, skyrim_folder_path, output_folder_path, flag))
+            thread = threading.Thread(target=CFIDs.patch_files, args=(master, chunk, form_id_map, skyrim_folder_path, output_folder_path, flag))
             threads.append(thread)
             thread.start()
         
-        for thread in threads: thread.join()
+        for thread in threads:
+            thread.join()
 
     #Patches each file type in a different way as each has Form IDs present in a different format
-    def patch_files(master, files, formIdMap, skyrim_folder_path, output_folder_path, flag):
+    def patch_files(master, files, form_id_map, skyrim_folder_path, output_folder_path, flag):
         for file in files:
             if flag:
                 new_file = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
@@ -258,9 +211,9 @@ class CFIDs():
                             #TODO: probably need to add more conditions to this and search for | or ~ before/after plugin name, consider SkyPatcher Format
                             for line in f:
                                 if os.path.basename(master).lower() in line.lower():
-                                    for formIds in formIdMap:
+                                    for form_ids in form_id_map:
                                         #this is faster than re.sub by a lot ;_;
-                                        line = line.replace('0x' + formIds[0], '0x' + formIds[2]).replace('0x' + formIds[1], '0x' + formIds[3]).replace('0x' + formIds[0].lower(), '0x' + formIds[2].lower()).replace('0x' + formIds[1].lower(), '0x' + formIds[3].lower()).replace('0X' + formIds[0], '0X' + formIds[2]).replace('0X' + formIds[1], '0X' + formIds[3]).replace('0X' + formIds[0].lower(), '0X' + formIds[2].lower()).replace('0X' + formIds[1].lower(), '0X' + formIds[3].lower())
+                                        line = line.replace('0x' + form_ids[0], '0x' + form_ids[2]).replace('0x' + form_ids[1], '0x' + form_ids[3]).replace('0x' + form_ids[0].lower(), '0x' + form_ids[2].lower()).replace('0x' + form_ids[1].lower(), '0x' + form_ids[3].lower()).replace('0X' + form_ids[0], '0X' + form_ids[2]).replace('0X' + form_ids[1], '0X' + form_ids[3]).replace('0X' + form_ids[0].lower(), '0X' + form_ids[2].lower()).replace('0X' + form_ids[1].lower(), '0X' + form_ids[3].lower())
                                 print(line.strip('\n'))
                         elif 'config.json' in new_file.lower(): #Open Animation Replacer Patching and MCM helper
                             #TODO: Redo this to look for plugin name on preceeding line (use for i in range()) for OAR
@@ -268,38 +221,40 @@ class CFIDs():
                             # gets compacted to something else, it won't break the json formatting i.e. "formid" -> "3ormi2" or "form:" -> "3orm"
                             for line in f:
                                 if 'formid' in line.lower():
-                                    for formIds in formIdMap:
-                                        line = line.replace(formIds[1], formIds[3]).replace(formIds[0], formIds[2]).replace(formIds[1].lower(), formIds[3].lower()).replace(formIds[0].lower(), formIds[2].lower())
+                                    for form_ids in form_id_map:
+                                        line = line.replace(form_ids[1], form_ids[3]).replace(form_ids[0], form_ids[2]).replace(form_ids[1].lower(), form_ids[3].lower()).replace(form_ids[0].lower(), form_ids[2].lower())
                                 print(line.strip('\n'))
                         elif '_conditions.txt' in new_file.lower(): #Dynamic Animation Replacer Patching
                             for line in f:
-                                for formIds in formIdMap:
-                                    line = line.replace('0x00' + formIds[1], '0x00' + formIds[3]).replace('0x' + formIds[1], '0x' + formIds[3]).replace('0x00' + formIds[1].lower(), '0x00' + formIds[3].lower()).replace('0x' + formIds[1].lower(), '0x' + formIds[3].lower()).replace('0X00' + formIds[1], '0X00' + formIds[3]).replace('0X' + formIds[1], '0X' + formIds[3]).replace('0X00' + formIds[1].lower(), '0X00' + formIds[3].lower()).replace('0X' + formIds[1].lower(), '0X' + formIds[3].lower())
+                                for form_ids in form_id_map:
+                                    line = line.replace('0x00' + form_ids[1], '0x00[][][][]' + form_ids[3]).replace('0x' + form_ids[1], '0x[][][][]' + form_ids[3]).replace('0x00' + form_ids[1].lower(), '0x00[][][][]' + form_ids[3].lower()).replace('0x' + form_ids[1].lower(), '0x[][][][]' + form_ids[3].lower()).replace('0X00' + form_ids[1], '0X00[][][][]' + form_ids[3]).replace('0X' + form_ids[1], '0X[][][][]' + form_ids[3]).replace('0X00' + form_ids[1].lower(), '0X00[][][][]' + form_ids[3].lower()).replace('0X' + form_ids[1].lower(), '0X[][][][]' + form_ids[3].lower())
+                                line = line.replace('[][][][]', '') #this is to prevent the event where a form id is in old ids and new ids.
                                 print(line.strip('\n'))
                         elif '_srd.' in new_file.lower(): #Sound record distributor patching
-                            #TODO: check if regex is necessary
                             for line in f:
                                 if os.path.basename(master).lower() in line.lower():
-                                    for formIds in formIdMap:
-                                        line = line.replace(formIds[1], formIds[3]).replace(formIds[0], formIds[2]).replace(formIds[1].lower(), formIds[3].lower()).replace(formIds[0].lower(), formIds[2].lower())
+                                    for form_ids in form_id_map:
+                                        line = line.replace('|' + form_ids[1], '|[][][][]' + form_ids[3]).replace('|' + form_ids[0], '|[][][][]' + form_ids[2]).replace('|' + form_ids[1].lower(), '|[][][][]' + form_ids[3].lower()).replace('|' + form_ids[0].lower(), '|[][][][]' + form_ids[2].lower())
+                                    line = line.replace('[][][][]', '') #this is to prevent the event where a form id is in old ids and new ids.
                                 print(line.strip('\n'))
                         elif '.psc' in new_file.lower(): #Script source file patching
                             for line in f:
                                 if os.path.basename(master).lower() in line.lower() and 'getformfromfile' in line.lower():
-                                    for formIds in formIdMap:
-                                        line = line.replace('0x' + formIds[1], '0x' + formIds[3]).replace('0x' + formIds[0], '0x' + formIds[2]).replace('0x' + formIds[1].lower(), '0x' + formIds[3].lower()).replace('0x' + formIds[0].lower(), '0x' + formIds[2].lower()).replace('0X' + formIds[1], '0X' + formIds[3]).replace('0X' + formIds[0], '0X' + formIds[2]).replace('0X' + formIds[1].lower(), '0X' + formIds[3].lower()).replace('0X' + formIds[0].lower(), '0X' + formIds[2].lower())
+                                    for form_ids in form_id_map:
+                                        line = re.sub(r'(0x0{0,7})(' + re.escape(form_ids[0]) + r' *,)', r'\1' + '[][][][]' + form_ids[2] + ',', line, re.IGNORECASE)
+                                    line = line.replace('[][][][]', '') #this is to prevent the event where a form id is in old ids and new ids.
                                 print(line.strip('\n'))
                         elif '.json' in new_file.lower(): #Dynamic Key Activation Framework NG, Smart Harvest Auto NG AutoLoot and whatever else may be using .json?
                             #TODO: check for other json mods
                             prev_line = ''
                             for line in f:
                                 if os.path.basename(master).lower() in line.lower():
-                                    for formIds in formIdMap:
-                                        line = line.replace(formIds[0], formIds[2]).replace(formIds[1], formIds[3]).replace(formIds[0].lower(), formIds[2].lower()).replace(formIds[1].lower(), formIds[3].lower())
+                                    for form_ids in form_id_map:
+                                        line = line.replace(form_ids[0], form_ids[2]).replace(form_ids[1], form_ids[3]).replace(form_ids[0].lower(), form_ids[2].lower()).replace(form_ids[1].lower(), form_ids[3].lower())
                                 elif 'plugin' in prev_line.lower() and os.path.basename(master).lower() in prev_line.lower(): #Smart Harvest
                                     if 'form' in line.lower():
-                                        for formIds in formIdMap:
-                                            line = line.replace(formIds[1], formIds[3]).replace(formIds[0], formIds[2]).replace(formIds[1].lower(), formIds[3].lower()).replace(formIds[0].lower(), formIds[2].lower())
+                                        for form_ids in form_id_map:
+                                            line = line.replace(form_ids[1], form_ids[3]).replace(form_ids[0], form_ids[2]).replace(form_ids[1].lower(), form_ids[3].lower()).replace(form_ids[0].lower(), form_ids[2].lower())
                                 prev_line = line
                                 print(line.strip('\n'))
                         fileinput.close()
@@ -312,25 +267,34 @@ class CFIDs():
                             data = f.readlines()
                             for i in range(len(data)):
                                 if bytes(os.path.basename(master).upper(), 'utf-8') in data[i].upper(): #check for plugin name, in file path, in line of nif file.
-                                    for formIds in formIdMap:
-                                        data[i] = data[i].replace(formIds[1].encode(), formIds[3].encode()).replace(formIds[1].encode().lower(), formIds[3].encode().lower())
+                                    for form_ids in form_id_map:
+                                        data[i] = data[i].replace(form_ids[1].encode(), form_ids[3].encode()).replace(form_ids[1].encode().lower(), form_ids[3].encode().lower())
                             f.seek(0)
                             f.writelines(data)
 
-            elif '.seq' in new_file or '.pex' in new_file.lower():
+            elif '.seq' in new_file.lower() or '.pex' in new_file.lower():
                 with CFIDs.lock:
                     with open(new_file,'rb+') as f:
                         data = f.read()
-                        if '.seq' in new_file: #SEQ file patching
-                            for formIds in formIdMap:
-                                data = data.replace(formIds[4], formIds[5])
+                        if '.seq' in new_file.lower(): #SEQ file patching
+                            seq_form_id_list = [data[i:i+4] for i in range(0, len(data), 4)]
+                            for form_ids in form_id_map:
+                                for i in range(len(seq_form_id_list)):
+                                    if form_ids[4] == seq_form_id_list[i]:
+                                        seq_form_id_list[i] = b'-||+||-' + form_ids[5]+ b'-||+||-'
+                            data = b''.join(seq_form_id_list)
+                            data = data.replace(b'-||+||-', b'')
                             f.seek(0)
                             f.write(data)
-                        elif '.pex' in new_file: #Compiled script patching
-                            #TODO: replace with regex, check for b'\x03\x00\x ?? \xFORM ID
-                            #      03 should be saying that this is an integer 00 is spacing since it is a form id without master byte and following bytes are big endian form id i.e 0x800 without 0x
-                            for formIds in formIdMap:
-                                data = data.replace(formIds[4][::-1][1:], formIds[5][::-1][1:])
+                        elif '.pex' in new_file.lower(): #Compiled script patching
+                            #TODO: Perhaps implement a method to get a list of form id's that need to be replaced if a .psc exists as that would
+                            #lessen the chance that an incorrect integer is replaced as perhaps a random int that matches a form id is in the file
+                            #or another mod is present in the file with a similar form id that would also be replaced. 
+                            for form_ids in form_id_map:
+                                #\x03 indicates a integer in compiled .pex files. \x00 will always be present instead of the master byte
+                                data = data.replace(b'\x03\x00' + form_ids[4][::-1][1:], b'\x03\x00-||+||-' + form_ids[5][::-1][1:])
+                                #data = re.sub(rb'(?<=\x03\x00)' + form_ids[4][::-1][1:], form_ids[5][::-1][1:], data)
+                            data = data.replace(b'-||+||-', b'')
                             f.seek(0)
                             f.write(data)
                         f.close()
