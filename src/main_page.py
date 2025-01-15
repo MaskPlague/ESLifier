@@ -37,11 +37,16 @@ class main(QWidget):
 
         self.button_eslify = QPushButton("ESLify Selected")
         self.button_eslify.setToolTip(
-            "This button wil ESL flag all selected files. If the update plugin headers setting\n"+
+            "This button will ESL flag all selected files. If the update plugin headers setting\n"+
             "is on then it will also update the plugin headers to 1.71.")
         self.button_eslify.clicked.connect(self.eslify_selected_clicked)
 
         self.button_compact = QPushButton("Compact/ESLify Selected")
+        self.button_compact.setToolTip(
+            "This button will first compact a selected file, patch the plugins that have it as a\n"+
+            "master, then patch and rename loose files that are dependent on the compacted plugin.\n"+
+            "If the update plugin headers setting is enabled then it will also update the plugin\n"+
+            "headers of the compacted and dependent plugins to 1.71.")
         self.button_compact.clicked.connect(self.compact_selected_clicked)
 
         self.button_scan = QPushButton("Scan Mod Files")
@@ -62,6 +67,7 @@ class main(QWidget):
 
         self.filter_compact = QLineEdit()
         self.filter_compact.setPlaceholderText("Filter ")
+        self.filter_compact.setToolTip("Search Bar")
         self.filter_compact.setMinimumWidth(50)
         self.filter_compact.setMaximumWidth(150)
         self.filter_compact.setAlignment(Qt.AlignmentFlag.AlignRight)
