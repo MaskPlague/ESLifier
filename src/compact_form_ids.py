@@ -394,7 +394,7 @@ class CFIDs():
                 }
 
                 # Determine if this is a top-level GRUP
-                if re.match(rb'[A-Z]{3}[A-Z|_]', grup_type):
+                if re.match(rb'[A-Z]{3}[A-Z_]', grup_type):
                     # It's a top-level GRUP; add it to the top-level list
                     top_level_grups.append(grup)
                     current_grup = grup  # Track the current top-level GRUP
@@ -497,7 +497,24 @@ class CFIDs():
         # Combine the updated chunks into a single byte sequence
         return b''.join(result_data)
     
+    def save_nvpp_data(data):
+        nvpp_offset = data.index(b'NVPP')
+        end_of_nvpp_offset = data.index(b'GRUP', nvpp_offset)
+        nvpp_form_ids = [data[i:i + 4] for i in range(nvpp_offset+10, end_of_nvpp_offset, 4)]
+        nvpp_start = data[nvpp_offset:nvpp_offset+10]
+        data = data.replace(data[nvpp_offset:end_of_nvpp_offset+1], b'=||+||~NVPP_PLACEHOLDER~||+||=')
+        return data, nvpp_form_ids, nvpp_start
     
+    def fix_nvpp_data(data, nvpp_form_ids, nvpp_start, form_id_replacements):
+        for form_id, new_id in form_id_replacements:
+            for i in range(len(nvpp_form_ids)):
+                if nvpp_form_ids[i] == form_id:
+                    nvpp_form_ids[i] = new_id
+        new_nvpp = nvpp_start
+        new_nvpp += b''.join(nvpp_form_ids)
+        data = data.replace(b'=||+||~NVPP_PLACEHOLDER~||+||=', new_nvpp)
+        return data
+
     #Compacts master file and returns the new mod folder
     def compact_file(file, skyrim_folder_path, output_folder, update_header):
         form_id_file_name = 'ESLifier_Data/Form_ID_Maps/' + os.path.basename(file).lower() + "_FormIdMap.txt"
@@ -518,7 +535,7 @@ class CFIDs():
             data = f.read()
             f.close()
 
-        data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z|_]................[\x2C\x2B]\x00.\x00)|(?=GRUP....................)', data, flags=re.DOTALL) if x]
+        data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z_]................[\x2C\x2B]\x00.\x00)|(?=GRUP....................)', data, flags=re.DOTALL) if x]
 
         # Calculate the byte offsets of each chunk in data_list
         offsets = []
@@ -539,6 +556,10 @@ class CFIDs():
         grup_hierarchy = CFIDs.parse_grups(data)
 
         data = b'-||+||-'.join(data_list)
+        nvpp_present = False
+        if b'NVPP' in data:
+            nvpp_present = True
+            data, nvpp_form_ids, nvpp_start = CFIDs.save_nvpp_data(data)
 
         form_id_list = []
         #Get all form ids in plugin
@@ -562,6 +583,7 @@ class CFIDs():
             new_form_ids.append([new_decimal, new_id])
             counter += 1
 
+        form_id_replacements = []
         with open(form_id_file_name, 'w') as fidf:
             for form_id, type in form_id_list:
                 if type == b'CELL':
@@ -572,44 +594,59 @@ class CFIDs():
                         if new_last_two_digits == last_two_digits:
                             new_form_ids.remove([new_decimal, new_id])
                             form_id_list.remove([form_id, type])
+                            form_id_replacements.append([form_id, new_id])
                             fidf.write(str(form_id.hex()) + '|' + str(new_id.hex()) + '\n')
                             if form_id[:2] == b'\x00\x00':
-                                data = re.sub(b'(?<![\x2c\x2b].)' + re.escape(form_id), b'~||+||~' + new_id + b'~||+||~', data, flags=re.DOTALL)
+                                data = re.sub(b'(?<![\x2c\x2b].)' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
                             elif form_id[:1] == b'\x00':
-                                data = re.sub(b'(?<![\x2c\x2b]..)' + re.escape(form_id), b'~||+||~' + new_id + b'~||+||~', data, flags=re.DOTALL)
+                                data = re.sub(b'(?<![\x2c\x2b]..)' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
                             elif form_id[:2] == b'\xFF\xFF':
-                                data = re.sub(re.escape(form_id) + b'(?!.' + int.to_bytes(master_count) + b')', b'~||+||~' + new_id + b'~||+||~', data, flags=re.DOTALL)
+                                data = re.sub(re.escape(form_id) + b'(?!.' + int.to_bytes(master_count) + b')', b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
                             elif form_id[:1] == b'\xFF':
-                                data = re.sub(re.escape(form_id) + b'(?!..' + int.to_bytes(master_count) + b')', b'~||+||~' + new_id + b'~||+||~', data, flags=re.DOTALL)
+                                data = re.sub(re.escape(form_id) + b'(?!..' + int.to_bytes(master_count) + b')', b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
                             elif form_id[:1] == b'~':
-                                data = re.sub(b'(?<!~\|\|\+\|\|)' + re.escape(form_id), b'~||+||~' + new_id + b'~||+||~', data, flags=re.DOTALL)
+                                data = re.sub(b'(?<!' + re.escape(b'=||+||') + b')' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
+                            elif form_id[:1] == b'=':
+                                data = re.sub(b'(?<!' + re.escape(b'~||+||') + b')' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
                             elif form_id[:1] == B'\x20':
-                                data = re.sub(b'(?<![A-Z]{3}[A-Z|_]{1})' + re.escape(form_id), b'~||+||~' + new_id + b'~||+||~', data, flags=re.DOTALL)
+                                data = re.sub(b'(?<![A-Z]{3}[A-Z_]{1})' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
+                            elif re.match(b'[A-Z_]', form_id[:1]):
+                                data = re.sub(b'(?<![A-Z]{2})' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
                             else:
-                                data = re.sub(re.escape(form_id) + b'(?!..' + re.escape(b'~||+||~') + b')', b'~||+||~' + new_id + b'~||+||~', data, flags=re.DOTALL)
+                                #data = re.sub(re.escape(form_id) + b'(?!..' + re.escape(b'~||+||~') + b')', b'~||+||~' + new_id + b'~||+||~', data, flags=re.DOTALL)
+                                data = re.sub(re.escape(form_id) + b'(?!..' + re.escape(b'=||+||~') + b')(?!' + re.escape(b'~||+||=') + b')', b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
                                 #data = data.replace(form_id,  b'~||+||~' + new_id + b'~||+||~')
                             break
                         
             for form_id, _ in form_id_list:
-                _, new_id = new_form_ids.pop()
+                _, new_id = new_form_ids.pop(0)
                 fidf.write(str(form_id.hex()) + '|' + str(new_id.hex()) + '\n')
+                form_id_replacements.append([form_id, new_id])
                 if form_id[:2] == b'\x00\x00':
-                    data = re.sub(b'(?<![\x2C\x2B].)' + re.escape(form_id) + b'(?!.{0,2}' + int.to_bytes(master_count) + b')', b'~||+||~' + new_id + b'~||+||~' , data, flags=re.DOTALL)
+                    data = re.sub(b'(?<![\x2C\x2B].)' + re.escape(form_id) + b'(?!.{0,2}' + int.to_bytes(master_count) + b')', b'=||+||~' + new_id + b'~||+||=' , data, flags=re.DOTALL)
                 elif form_id[:1] == b'\x00':
-                    data = re.sub(b'(?<![\x2C\x2B]..)' + re.escape(form_id) + b'(?!.{0,2}' + int.to_bytes(master_count) + b')', b'~||+||~' + new_id + b'~||+||~', data, flags=re.DOTALL)
+                    data = re.sub(b'(?<![\x2C\x2B]..)' + re.escape(form_id) + b'(?!.{0,2}' + int.to_bytes(master_count) + b')', b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
                 elif form_id[:2] == b'\xFF\xFF':
-                    data = re.sub(re.escape(form_id) + b'(?!.' + int.to_bytes(master_count) + b')',  b'~||+||~' + new_id + b'~||+||~', data, flags=re.DOTALL)
+                    data = re.sub(re.escape(form_id) + b'(?!.' + int.to_bytes(master_count) + b')',  b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
                 elif form_id[:1] == b'\xFF':
-                    data = re.sub(re.escape(form_id) + b'(?!..' + int.to_bytes(master_count) + b')',  b'~||+||~' + new_id + b'~||+||~', data, flags=re.DOTALL)
+                    data = re.sub(re.escape(form_id) + b'(?!..' + int.to_bytes(master_count) + b')',  b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
                 elif form_id[:1] == b'~':
-                    data = re.sub(b'(?<!~\|\|\+\|\|)' + re.escape(form_id), b'~||+||~' + new_id + b'~||+||~', data, flags=re.DOTALL)
+                    data = re.sub(b'(?<!' + re.escape(b'=||+||') + b')' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
+                elif form_id[:1] == b'=':
+                    data = re.sub(b'(?<!' + re.escape(b'~||+||') + b')' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
                 elif form_id[:1] == B'\x20':
-                    data = re.sub(b'(?<![A-Z]{3}[A-Z|_]{1})' + re.escape(form_id), b'~||+||~' + new_id + b'~||+||~', data, flags=re.DOTALL)
+                    data = re.sub(b'(?<![A-Z]{3}[A-Z_]{1})' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
+                elif re.match(b'[A-Z_]', form_id[:1]):
+                    data = re.sub(b'(?<![A-Z]{2})' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
                 else:
-                    data = re.sub(re.escape(form_id) + b'(?!..' + re.escape(b'~||+||~') + b')', b'~||+||~' + new_id + b'~||+||~', data, flags=re.DOTALL)
+                    data = re.sub(re.escape(form_id) + b'(?!..' + re.escape(b'=||+||~') + b')(?!' + re.escape(b'~||+||=') + b')', b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
                     #data = data.replace(form_id,  b'~||+||~' + new_id + b'~||+||~')
-            
-            data = data.replace(b'~||+||~', b'')
+        
+        if nvpp_present:
+            data = CFIDs.fix_nvpp_data(data,nvpp_form_ids,nvpp_start,form_id_replacements)
+
+        data = data.replace(b'~||+||=', b'')
+        data = data.replace(b'=||+||~', b'')
 
         data_list = data.split(b'-||+||-')
 
@@ -639,6 +676,7 @@ class CFIDs():
             #TODO: consider if a dependent has compressed forms... please no
             new_file = CFIDs.copy_file_to_output(dependent, skyrim_folder_path, output_folder_path)
             dependent_data = b''
+            print('-    ' + new_file)
             with open(new_file, 'rb+') as dependent_file:
                 #Update header to 1.71 to fit new records
                 if update_header:
@@ -661,36 +699,48 @@ class CFIDs():
                 data_list, sizes_list = CFIDs.decompress_data(data_list, master_count)
                 
                 grup_hierarchy = CFIDs.parse_grups(dependent_data)
-                
-                dependent_data = b'-||+||-'.join(data_list)
 
-                master_leading_byte = CFIDs.get_master_index(file, dependent_data)
-                if master_leading_byte <= 15:
-                    mC = '0' + str(master_leading_byte)
-                else:
-                    mC = str(master_leading_byte)
+                dependent_data = b'-||+||-'.join(data_list)
+                nvpp_present = False
+                if b'NVPP' in dependent_data:
+                    nvpp_present = True
+                    dependent_data, nvpp_form_ids, nvpp_start = CFIDs.save_nvpp_data(dependent_data)
                 
+                master_leading_byte = CFIDs.get_master_index(file, dependent_data)
+                #if master_leading_byte <= 15:
+                #    mC = '0' + str(master_leading_byte)
+                #else:
+                #    mC = str(master_leading_byte)
+                form_id_replacements = []
                 for form_id_history in form_id_file_data:
                     form_id_conversion = form_id_history.split('|')
                     from_id = bytes.fromhex(form_id_conversion[0])[:3] + int.to_bytes(master_leading_byte)#bytes.fromhex(mC)
                     to_id = bytes.fromhex(form_id_conversion[1])[:3] + int.to_bytes(master_leading_byte)#bytes.fromhex(mC)
+                    form_id_replacements.append([from_id, to_id])
                     if from_id[:2] == b'\x00\x00':
-                        dependent_data = re.sub(b'(?<![\x2C\x2B].)' + re.escape(from_id) + b'(?!.{0,2}' + int.to_bytes(master_leading_byte) + b')', b'~||+||~' + to_id + b'~||+||~' , dependent_data, flags=re.DOTALL)
+                        dependent_data = re.sub(b'(?<![\x2C\x2B].)' + re.escape(from_id) + b'(?!.{0,2}' + int.to_bytes(master_count) + b')', b'=||+||~' + to_id + b'~||+||=' , dependent_data, flags=re.DOTALL)
                     elif from_id[:1] == b'\x00':
-                        dependent_data = re.sub(b'(?<![\x2C\x2B]..)' + re.escape(from_id) + b'(?!.{0,2}' + int.to_bytes(master_leading_byte) + b')', b'~||+||~' + to_id + b'~||+||~', dependent_data, flags=re.DOTALL)
+                        dependent_data = re.sub(b'(?<![\x2C\x2B]..)' + re.escape(from_id) + b'(?!.{0,2}' + int.to_bytes(master_count) + b')', b'=||+||~' + to_id + b'~||+||=', dependent_data, flags=re.DOTALL)
                     elif from_id[:2] == b'\xFF\xFF':
-                        dependent_data = re.sub(re.escape(from_id) + b'(?!.' + int.to_bytes(master_leading_byte) + b')',  b'~||+||~' + to_id + b'~||+||~', dependent_data, flags=re.DOTALL)
+                        dependent_data = re.sub(re.escape(from_id) + b'(?!.' + int.to_bytes(master_count) + b')',  b'=||+||~' + to_id + b'~||+||=', dependent_data, flags=re.DOTALL)
                     elif from_id[:1] == b'\xFF':
-                        dependent_data = re.sub(re.escape(from_id) + b'(?!..' + int.to_bytes(master_leading_byte) + b')',  b'~||+||~' + to_id + b'~||+||~', dependent_data, flags=re.DOTALL)
+                        dependent_data = re.sub(re.escape(from_id) + b'(?!..' + int.to_bytes(master_count) + b')',  b'=||+||~' + to_id + b'~||+||=', dependent_data, flags=re.DOTALL)
                     elif from_id[:1] == b'~':
-                        dependent_data = re.sub(b'(?<!~\|\|\+\|\|)' + re.escape(from_id), b'~||+||~' + to_id + b'~||+||~', dependent_data, flags=re.DOTALL)
+                        dependent_data = re.sub(b'(?<!' + re.escape(b'=||+||') + b')' + re.escape(from_id), b'=||+||~' + to_id + b'~||+||=', dependent_data, flags=re.DOTALL)
+                    elif from_id[:1] == b'=':
+                        dependent_data = re.sub(b'(?<!' + re.escape(b'~||+||') + b')' + re.escape(from_id), b'=||+||~' + to_id + b'~||+||=', dependent_data, flags=re.DOTALL)
                     elif from_id[:1] == B'\x20':
-                        dependent_data = re.sub(b'(?<![A-Z]{3}[A-Z|_]{1})' + re.escape(from_id), b'~||+||~' + to_id + b'~||+||~', dependent_data, flags=re.DOTALL)
+                        dependent_data = re.sub(b'(?<![A-Z]{3}[A-Z_]{1})' + re.escape(from_id), b'=||+||~' + to_id + b'~||+||=', dependent_data, flags=re.DOTALL)
+                    elif re.match(b'[A-Z_]', from_id[:1]):
+                        dependent_data = re.sub(b'(?<![A-Z]{2})' + re.escape(from_id), b'=||+||~' + to_id + b'~||+||=', dependent_data, flags=re.DOTALL)
                     else:
-                        dependent_data = re.sub(re.escape(from_id) + b'(?!..' + re.escape(b'~||+||~') + b')', b'~||+||~' + to_id + b'~||+||~', dependent_data, flags=re.DOTALL)
-                        #dependent_data = dependent_data.replace(from_id,  b'~||+||~' + to_id + b'~||+||~')
+                        dependent_data = re.sub(re.escape(from_id) + b'(?!..' + re.escape(b'=||+||~') + b')(?!' + re.escape(b'~||+||=') + b')', b'=||+||~' + to_id + b'~||+||=', dependent_data, flags=re.DOTALL)
                     
-                dependent_data = dependent_data.replace(b'~||+||~', b'')
+                if nvpp_present:
+                    dependent_data = CFIDs.fix_nvpp_data(dependent_data,nvpp_form_ids,nvpp_start,form_id_replacements)
+
+                dependent_data = dependent_data.replace(b'~||+||=', b'')
+                dependent_data = dependent_data.replace(b'=||+||~', b'')
 
                 data_list = dependent_data.split(b'-||+||-')
 
