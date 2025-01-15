@@ -182,7 +182,7 @@ class settings(QWidget):
             "The Form ID Maps are used for patching any new files and plugins.\n" +
             "The Compacted and Patched History is for getting what files and plugins\n" +
             "are newly added after a mod was compacted and its dependents patched.\n\n" +
-            "This should be done when you have updated a mod or deleted the ESLifier Ouput.")
+            "Only use this button when you have updated a mod and/or deleted the ESLifier Ouput.")
         self.clear_form_id_maps_and_compacted_and_patched_button.setMinimumWidth(160)
         self.clear_form_id_maps_and_compacted_and_patched_button.setMaximumWidth(160)
         def button_pushed():
