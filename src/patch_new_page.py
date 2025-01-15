@@ -151,7 +151,6 @@ class patch_new(QWidget):
             self.thread_new.start()
     
     def finished_patching(self, checked):
-        #TODO: maybe do this for main_page too
         print('Finished Patching New Dependencies and Files')
         mod_list = self.list_compacted_unpatched.mod_list
         for mod in checked:
