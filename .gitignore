@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# ESLifier-specific files
+/ESLifier_Data
+
 # User-specific files
 *.rsuser
 *.suo
@@ -398,4 +401,4 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
-/ESLifier_Data
+
