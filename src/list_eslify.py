@@ -5,6 +5,8 @@ import json
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem
 
+from blacklist import blacklist
+
 class list_eslable(QTableWidget):
     def __init__(self):
         super().__init__()
@@ -23,6 +25,8 @@ class list_eslable(QTableWidget):
         self.customContextMenuRequested.connect(self.contextMenu)
         self.mod_list = []
         self.cell_flags = []
+
+        self.blacklist = blacklist()
 
         self.setStyleSheet("""
             QTableWidget::item{
@@ -49,6 +53,18 @@ class list_eslable(QTableWidget):
     def create(self):
         self.clearContents()
         self.compacted = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json")
+        blacklist = self.get_data_from_file('ESLifier_Data/blacklist.json')
+        if blacklist == {}:
+            blacklist = []
+
+        to_remove = []
+        for mod in self.mod_list:
+            if os.path.basename(mod) in blacklist:
+                to_remove.append(mod)
+                
+        for mod in to_remove:
+            self.mod_list.remove(mod)
+
         self.setRowCount(len(self.mod_list))
 
         for i in range(len(self.mod_list)):
@@ -94,17 +110,18 @@ class list_eslable(QTableWidget):
 
     
     def contextMenu(self, position):
-        selectedItem = self.itemAt(position)
-        if selectedItem:
+        selected_item = self.itemAt(position)
+        if selected_item:
             menu = QMenu(self)
             select_all_action = menu.addAction("Select All")
             check_all_action = menu.addAction("Check All")
             uncheck_all_action = menu.addAction("Uncheck All")
             invert_selection_action = menu.addAction("Invert Selection")
             open_explorer_action = menu.addAction("Open in File Explorer")
+            add_to_blacklist_action = menu.addAction("Add Mod to Blacklist")
             action = menu.exec(self.viewport().mapToGlobal(position))
             if action == open_explorer_action:
-                self.open_in_explorer(selectedItem)
+                self.open_in_explorer(selected_item)
             if action == check_all_action:
                 self.check_all()
             if action == uncheck_all_action:
@@ -114,6 +131,8 @@ class list_eslable(QTableWidget):
             if action == invert_selection_action:
                 selected_items = self.selectedItems()
                 self.invert_selection(selected_items)
+            if action == add_to_blacklist_action:
+                self.add_to_blacklist(selected_item)
 
     def check_all(self):
         self.blockSignals(True)
@@ -154,4 +173,7 @@ class list_eslable(QTableWidget):
                     subprocess.Popen(['open', os.path.dirname(file_directory)])
             except Exception as e:
                 print(f"Error opening file explorer: {e}")
-        
+
+    def add_to_blacklist(self, selected_item):
+        self.blacklist.add_to_blacklist(selected_item.text())
+        self.create()
