@@ -13,6 +13,9 @@ class main_window(QMainWindow):
         #TODO: Make exclusions window/page
         #TODO: Check for each plugin with cell if there is a dependent that edits the new cell
         #       Will need to store form id of new cell records during plugin_qualificaiton_checker scan
+        #TODO: perhaps add script flag as the current compact_form_ids patching implementation for .pex/.psc is not foolproof.
+        #TODO: consider checking what form ids already fit in the esl range and only change the ones that do not, this will
+        #       reduce the risk of new form ids replacing new form ids, also less replaces called are less chances of making mistakes.
         self.setWindowTitle("ESLifier")
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.setFocus()
@@ -130,21 +133,26 @@ class main_window(QMainWindow):
             "Almost every element in the program has a tool tip that\n"+
             "can be seen by hovering over it which explains the element.")
         help.addButton(QMessageBox.StandardButton.Ok)
-        def shown():
+        def close():
             help.close()
-        help.accepted.connect(shown)
+        help.accepted.connect(close)
         help.show()
 
     def no_path_set(self):
         message = QMessageBox()
         message.setWindowTitle("Missing Paths Error")
+        message.setIcon(QMessageBox.Icon.Warning)
+        message.setStyleSheet("""
+            QMessageBox {
+                background-color: lightcoral;
+            }""")
         message.setText(
             "Both the Skyrim Folder Path and Output Folder Path\n"+
             "must be set to leave the settings page!")
         message.addButton(QMessageBox.StandardButton.Ok)
-        def shown():
+        def close():
             message.close()
-        message.accepted.connect(shown)
+        message.accepted.connect(close)
         message.show()
 
     def update_settings(self):
