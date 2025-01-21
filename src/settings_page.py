@@ -36,9 +36,10 @@ class settings(QWidget):
         self.update_header_widget_init()
         self.show_plugins_with_cells_widget_init()
         self.show_plugins_with_bsas_widget_init()
-        self.open_eslifier_data_button_init()
-        self.clear_form_id_maps_and_compacted_and_patched_button_init()
-        self.reset_settings_button_init()
+        self.edit_blacklist_button_widget_init()
+        self.open_eslifier_data_widget_init()
+        self.clear_form_id_maps_and_compacted_and_patched_widget_init()
+        self.reset_settings_widget_init()
 
         self.set_init_widget_values()
         
@@ -49,12 +50,10 @@ class settings(QWidget):
         settings_layout.addWidget(self.update_header_widget)
         settings_layout.addWidget(self.show_plugins_with_cells_widget)
         settings_layout.addWidget(self.show_plugins_with_bsas_widget)
-        settings_layout.addSpacing(20)
-        settings_layout.addWidget(self.open_eslifier_data_button)
-        settings_layout.addSpacing(20)
-        settings_layout.addWidget(self.clear_form_id_maps_and_compacted_and_patched_button)
-        settings_layout.addSpacing(20)
-        settings_layout.addWidget(self.reset_settings_button)
+        settings_layout.addWidget(self.edit_blacklist_widget)
+        settings_layout.addWidget(self.open_eslifier_data_widget)
+        settings_layout.addWidget(self.clear_form_id_maps_and_compacted_and_patched_widget)
+        settings_layout.addWidget(self.reset_settings_widget)
         settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.exclusions_layout = QHBoxLayout()
@@ -193,19 +192,30 @@ class settings(QWidget):
             except Exception as e:
                 print(f"Error opening file explorer: {e}")
 
-        self.open_eslifier_data_button.clicked.connect(open_eslifier_data)
+        open_eslifier_data_button.clicked.connect(open_eslifier_data)
 
-    def clear_form_id_maps_and_compacted_and_patched_button_init(self):
-        self.clear_form_id_maps_and_compacted_and_patched_button = QPushButton("Delete All Form ID Maps and\nCompacted/Patched History")
-        self.clear_form_id_maps_and_compacted_and_patched_button.setToolTip(
+    def clear_form_id_maps_and_compacted_and_patched_widget_init(self):
+        clear_form_id_maps_and_compacted_and_patched_layout = QHBoxLayout()
+        self.clear_form_id_maps_and_compacted_and_patched_widget = QWidget()
+        self.clear_form_id_maps_and_compacted_and_patched_widget.setLayout(clear_form_id_maps_and_compacted_and_patched_layout)
+        self.clear_form_id_maps_and_compacted_and_patched_widget.setToolTip(
             "The Form ID Maps are used for patching any new files and plugins.\n" +
             "The Compacted and Patched History is for getting what files and plugins\n" +
             "are newly added after a mod was compacted and its dependents patched.\n\n" +
             "Only use this button when you have updated a mod and/or deleted the ESLifier Ouput.")
-        self.clear_form_id_maps_and_compacted_and_patched_button.setMinimumWidth(160)
-        self.clear_form_id_maps_and_compacted_and_patched_button.setMaximumWidth(160)
+        clear_form_id_maps_and_compacted_and_patched_label = QLabel("Delete All Form ID Maps and Compacted/Patched History")
+        clear_form_id_maps_and_compacted_and_patched_button = QPushButton("Delete All")
+        clear_form_id_maps_and_compacted_and_patched_layout.addWidget(clear_form_id_maps_and_compacted_and_patched_label)
+        clear_form_id_maps_and_compacted_and_patched_layout.addWidget(clear_form_id_maps_and_compacted_and_patched_button)
+        clear_form_id_maps_and_compacted_and_patched_button.setMinimumWidth(100)
+        clear_form_id_maps_and_compacted_and_patched_button.setMaximumWidth(100)
         def button_pushed():
             confirm = QMessageBox()
+            confirm.setIcon(QMessageBox.Icon.Warning)
+            confirm.setStyleSheet("""
+                QMessageBox {
+                    background-color: lightcoral;
+                }""")
             confirm.setText(
                 "Are you sure you want to delete all of the Form ID Maps and the Compacted and Patched History?\n" +
                 "This will prevent the 'Patch New' functionality from working and will require you to manually " +
@@ -213,6 +223,7 @@ class settings(QWidget):
             confirm.setWindowTitle("Confirmation")
             confirm.addButton(QMessageBox.StandardButton.Yes)
             confirm.addButton(QMessageBox.StandardButton.Cancel)
+            confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
             def accepted():
                 confirm.hide()
                 if os.path.exists('ESLifier_Data/Form_ID_Maps'):
@@ -223,18 +234,30 @@ class settings(QWidget):
             confirm.accepted.connect(accepted)
             confirm.show()
 
-        self.clear_form_id_maps_and_compacted_and_patched_button.clicked.connect(button_pushed)
+        clear_form_id_maps_and_compacted_and_patched_button.clicked.connect(button_pushed)
     
-    def reset_settings_button_init(self):
-        self.reset_settings_button = QPushButton("Reset All Settings")
-        self.reset_settings_button.setMinimumWidth(160)
-        self.reset_settings_button.setMaximumWidth(160)
+    def reset_settings_widget_init(self):
+        reset_settings_layout = QHBoxLayout()
+        self.reset_settings_widget = QWidget()
+        self.reset_settings_widget.setLayout(reset_settings_layout)
+        reset_settings_label = QLabel("Reset All Settings")
+        reset_settings_button = QPushButton("Reset")
+        reset_settings_layout.addWidget(reset_settings_label)
+        reset_settings_layout.addWidget(reset_settings_button)
+        reset_settings_button.setMinimumWidth(100)
+        reset_settings_button.setMaximumWidth(100)
         def button_pushed():
             confirm = QMessageBox()
+            confirm.setIcon(QMessageBox.Icon.Warning)
+            confirm.setStyleSheet("""
+                QMessageBox {
+                    background-color: lightcoral;
+                }""")
             confirm.setText("Are you sure you want to reset all settings?")
             confirm.setWindowTitle("Confirmation")
             confirm.addButton(QMessageBox.StandardButton.Yes)
             confirm.addButton(QMessageBox.StandardButton.Cancel)
+            confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
             def acccepted():
                 confirm.hide()
                 if os.path.exists('ESLifier_Data/settings.json'):
@@ -249,7 +272,7 @@ class settings(QWidget):
             confirm.accepted.connect(acccepted)
             confirm.show()
             
-        self.reset_settings_button.clicked.connect(button_pushed)
+        reset_settings_button.clicked.connect(button_pushed)
         
 
     def set_init_widget_values(self):
