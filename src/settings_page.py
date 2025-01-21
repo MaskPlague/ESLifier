@@ -4,7 +4,6 @@ import subprocess
 import shutil
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction, QIcon, QPalette, QColor
 from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QFileDialog, QMainWindow)
 
 from blacklist import blacklist_window

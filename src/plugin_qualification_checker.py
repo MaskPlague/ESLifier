@@ -1,5 +1,4 @@
 import re
-import zlib
 import timeit
 
 from dependency_getter import dependecy_getter as dep_getter
@@ -40,7 +39,7 @@ class qualification_checker():
 
         end_time = timeit.default_timer()
         time_taken = end_time - start_time
-        print('\n-  Time taken: ' + str(round(time_taken,2)) + ' seconds')
+        print('-  Time taken: ' + str(round(time_taken,2)) + ' seconds')
         return need_flag_list, need_flag_cell_flag_list, need_compacting_list, need_compacting_cell_flag_list
 
     def file_reader(file):

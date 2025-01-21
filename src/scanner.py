@@ -181,5 +181,3 @@ class scanner():
         for root, dirs, files in os.walk(scanner.path):
             for file in files:
                 yield os.path.join(root,file)
-
-#s = scanner()

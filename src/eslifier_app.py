@@ -10,7 +10,6 @@ from patch_new_page import patch_new
 class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
-        #TODO: Make exclusions window/page
         #TODO: Check for each plugin with cell if there is a dependent that edits the new cell
         #       Will need to store form id of new cell records during plugin_qualificaiton_checker scan
         #TODO: perhaps add script flag as the current compact_form_ids patching implementation for .pex/.psc is not foolproof.
