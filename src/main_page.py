@@ -1,8 +1,7 @@
 import os
 
-from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal, QCoreApplication
+from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal
 from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox)
-from PyQt6.QtGui import QColor, QPalette
 
 from list_eslify import list_eslable
 from list_compact import list_compactable
