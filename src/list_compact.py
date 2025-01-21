@@ -180,7 +180,7 @@ class list_compactable(QTableWidget):
             uncheck_all_action = menu.addAction("Uncheck All")
             invert_selection_action = menu.addAction("Invert Selection")
             open_explorer_action = menu.addAction("Open in File Explorer")
-            add_to_blacklist_action = menu.addAction("Add Mod to Blacklist")
+            add_to_blacklist_action = menu.addAction("Add Mod(s) to Blacklist")
             action = menu.exec(self.viewport().mapToGlobal(position))
             if action == open_explorer_action:
                 self.open_in_explorer(selected_item)
@@ -194,7 +194,8 @@ class list_compactable(QTableWidget):
                 selected_items = self.selectedItems()
                 self.invert_selection(selected_items)
             if action == add_to_blacklist_action:
-                self.add_to_blacklist(selected_item)
+                selected_items = self.selectedItems()
+                self.add_to_blacklist(selected_items)
 
     def check_all(self):
         self.blockSignals(True)
@@ -235,8 +236,9 @@ class list_compactable(QTableWidget):
             except Exception as e:
                 print(f"Error opening file explorer: {e}")
 
-    def add_to_blacklist(self, selected_item):
-        self.blacklist.add_to_blacklist(selected_item.text())
+    def add_to_blacklist(self, selected_items):
+        mods = [item.text() for item in selected_items if item.column() == 0]
+        self.blacklist.add_to_blacklist(mods)
         self.create()
 
         
