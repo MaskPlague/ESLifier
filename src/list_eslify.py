@@ -24,7 +24,7 @@ class list_eslable(QTableWidget):
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenu)
         self.mod_list = []
-        self.has_cells = []
+        self.has_new_cells = []
         self.filter_changed_cells = True
 
         self.blacklist = blacklist()
@@ -55,14 +55,14 @@ class list_eslable(QTableWidget):
         self.clearContents()
         self.compacted = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json")
         blacklist = self.get_data_from_file('ESLifier_Data/blacklist.json')
+        self.cell_changed = self.get_data_from_file("ESLifier_Data/cell_changed.json")
         if blacklist == {}:
             blacklist = []
-            
+
         if self.filter_changed_cells:
-            cell_changed = self.get_data_from_file("ESLifier_Data/cell_changed.json")
-            if cell_changed == {}:
-                cell_changed = []
-            blacklist.extend(cell_changed)
+            if self.cell_changed == {}:
+                self.cell_changed = []
+            blacklist.extend(self.cell_changed)
 
         to_remove = []
         for mod in self.mod_list:
@@ -85,8 +85,10 @@ class list_eslable(QTableWidget):
             item.setToolTip(self.mod_list[i])
             self.setItem(i, 0, item)
             self.setRowHidden(i, False)
-            if os.path.basename(mod) in self.has_cells:
+            if os.path.basename(self.mod_list[i]) in self.has_new_cells:
                 item_cell_flag = QTableWidgetItem('New CELL')
+                if os.path.basename(self.mod_list[i]) in self.cell_changed:
+                    item_cell_flag.setText('New CELL Changed')
                 item_cell_flag.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.setItem(i, 1, item_cell_flag)
 
