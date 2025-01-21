@@ -5,7 +5,9 @@ import shutil
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QIcon, QPalette, QColor
-from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QFileDialog)
+from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QFileDialog, QMainWindow)
+
+from blacklist import blacklist_window
 
 from QToggle import QtToggle
 
@@ -113,7 +115,6 @@ class settings(QWidget):
 
         self.output_folder_path.setPlaceholderText('C:/Path/To/The/Output/Folder/')
         self.output_folder_path.setMinimumWidth(400)
-        
 
     def update_header_widget_init(self):
         update_header_layout = QHBoxLayout()
@@ -127,7 +128,6 @@ class settings(QWidget):
         self.update_header_toggle.clicked.connect(self.update_settings)
         self.update_header_widget.setLayout(update_header_layout)
         update_header_layout.addWidget(update_header_label)
-        update_header_layout.addSpacing(30)
         update_header_layout.addWidget(self.update_header_toggle)
         
 
@@ -142,7 +142,6 @@ class settings(QWidget):
         self.show_plugins_with_cells_toggle.clicked.connect(self.update_settings)
         self.show_plugins_with_cells_widget.setLayout(show_plugins_with_cells_layout)
         show_plugins_with_cells_layout.addWidget(show_plugins_with_cells_label)
-        show_plugins_with_cells_layout.addSpacing(30)
         show_plugins_with_cells_layout.addWidget(self.show_plugins_with_cells_toggle)
 
     def show_plugins_with_bsas_widget_init(self):
@@ -154,14 +153,34 @@ class settings(QWidget):
         self.show_plugins_with_bsas_toggle.clicked.connect(self.update_settings)
         self.show_plugins_with_bsas_widget.setLayout(show_plugins_with_bsas_layout)
         show_plugins_with_bsas_layout.addWidget(show_plugins_with_bsas_label)
-        show_plugins_with_bsas_layout.addSpacing(30)
         show_plugins_with_bsas_layout.addWidget(self.show_plugins_with_bsas_toggle)
 
-    def open_eslifier_data_button_init(self):
-        self.open_eslifier_data_button = QPushButton("Open ESLifier's Data Folder")
-        self.open_eslifier_data_button.setToolTip("This opens the folder where all of the dictionaries and Form ID maps are stored.")
-        self.open_eslifier_data_button.setMinimumWidth(160)
-        self.open_eslifier_data_button.setMaximumWidth(160)
+    def edit_blacklist_button_widget_init(self):
+        self.blacklist_window = blacklist_window()
+        edit_blacklist_layout = QHBoxLayout()
+        self.edit_blacklist_widget = QWidget()
+        self.edit_blacklist_widget.setToolTip('Show window to remove mods from the blacklist.\nYou can add mods to the blacklist by right clicking them.')
+        edit_blacklist_button = self.button_maker('Edit Blacklist', self.edit_blacklist_button_clicked, 100)
+        edit_blacklist_label = QLabel("Remove Mods From Blacklist")
+        self.edit_blacklist_widget.setLayout(edit_blacklist_layout)
+        edit_blacklist_layout.addWidget(edit_blacklist_label)
+        edit_blacklist_layout.addWidget(edit_blacklist_button)
+
+    def edit_blacklist_button_clicked(self):
+        self.blacklist_window.blacklist.create()
+        self.blacklist_window.show()
+
+    def open_eslifier_data_widget_init(self):
+        open_eslifier_data_layout = QHBoxLayout()
+        self.open_eslifier_data_widget = QWidget()
+        self.open_eslifier_data_widget.setLayout(open_eslifier_data_layout)
+        self.open_eslifier_data_widget.setToolTip("This opens the folder where all of the dictionaries and Form ID maps are stored.")
+        open_eslifier_data_label = QLabel("Open ESLifier's Data Folder")
+        open_eslifier_data_button = QPushButton("Open Folder")
+        open_eslifier_data_layout.addWidget(open_eslifier_data_label)
+        open_eslifier_data_layout.addWidget(open_eslifier_data_button)
+        open_eslifier_data_button.setMinimumWidth(100)
+        open_eslifier_data_button.setMaximumWidth(100)
         def open_eslifier_data():
             directory = os.path.join(os.getcwd(), 'ESLifier_data')
             try:

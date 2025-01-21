@@ -3,7 +3,7 @@ import subprocess
 import json
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem
+from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit
 
 class blacklist(QTableWidget):
     def __init__(self):
@@ -67,7 +67,6 @@ class blacklist(QTableWidget):
                     if x.column() == 0:
                         x.setCheckState(Qt.CheckState.Unchecked)
             self.blockSignals(False)
-
         self.resizeColumnToContents(0)
         self.resizeColumnToContents(1)
         self.itemChanged.connect(somethingChanged)
@@ -121,15 +120,21 @@ class blacklist(QTableWidget):
                     item.setCheckState(Qt.CheckState.Checked)
         self.blockSignals(False)
 
-    def add_to_blacklist(self, mod_to_add):
+    def add_to_blacklist(self, mods_to_add):
         self.blacklist = self.get_data_from_file('ESLifier_Data/blacklist.json')
-        if mod_to_add not in self.blacklist:
-            self.blacklist.append(mod_to_add)
-            self.dump_to_file('ESLifier_Data/blacklist.json')
-            self.create()
+        for mod in mods_to_add:
+            if mod not in self.blacklist:
+                self.blacklist.append(mod)
+        self.dump_to_file('ESLifier_Data/blacklist.json')
+        self.create()
 
-    def remove_from_blacklist(self, mods_to_remove):
+    def remove_from_blacklist(self):
         self.blacklist = self.get_data_from_file('ESLifier_Data/blacklist.json')
+        mods_to_remove = []
+        for i in range(self.rowCount()):
+            if self.item(i,0).checkState() == Qt.CheckState.Checked:
+                mods_to_remove.append(self.item(i,0).text())
+
         for mod in mods_to_remove:
             self.blacklist.remove(mod)
         self.dump_to_file('ESLifier_Data/blacklist.json')
@@ -140,4 +145,73 @@ class blacklist(QTableWidget):
             json.dump(self.blacklist, f, ensure_ascii=False, indent=4)
 
         
-        
+class blacklist_window(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Select Mods to Remove From the Blacklist")
+        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
+        self.setStyleSheet("""
+            QLineEdit {
+                border: none;
+                border-radius: 5px;
+            }
+            QLineEdit::focus {
+                border: 1px solid black;
+                border-radius: 5px;
+            }
+            QPushButton {
+                border: 1px solid LightGrey;
+                border-radius: 5px;
+                background-color: LightGrey;
+            }
+            QPushButton::hover{
+                border: 1px solid ghostwhite;
+                border-radius: 5px;
+                background-color: ghostwhite;
+            }
+            QLabel{
+                color: White
+            }
+            """)
+        self.blacklist = blacklist()
+        blacklist_window_buttons_layout = QHBoxLayout()
+        blacklist_window_buttons_widget = QWidget()
+        blacklist_window_buttons_widget.setLayout(blacklist_window_buttons_layout)
+
+        remove_selected_from_blacklist_button = QPushButton(' Remove Selected From Blacklist ')
+        remove_selected_from_blacklist_button.clicked.connect(self.blacklist.remove_from_blacklist)
+        cancel_button = QPushButton(' Cancel ')
+        def cancel():
+            self.hide()
+            self.blacklist.uncheck_all()
+            self.blacklist.clearSelection()
+        cancel_button.clicked.connect(cancel)
+
+        self.filter_blacklist = QLineEdit()
+        self.filter_blacklist.setPlaceholderText("Filter ")
+        self.filter_blacklist.setToolTip("Search Bar")
+        self.filter_blacklist.setMinimumWidth(50)
+        self.filter_blacklist.setMaximumWidth(150)
+        self.filter_blacklist.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.filter_blacklist.setClearButtonEnabled(True)
+        self.filter_blacklist.textChanged.connect(self.search)
+
+        blacklist_window_buttons_layout.addWidget(remove_selected_from_blacklist_button)
+        blacklist_window_buttons_layout.addWidget(self.filter_blacklist)
+        blacklist_window_buttons_layout.addWidget(cancel_button)
+        blacklist_window_layout = QVBoxLayout()
+        blacklist_window_layout.addWidget(self.blacklist)
+        blacklist_window_layout.addWidget(blacklist_window_buttons_widget)
+        blacklist_window_central_widget = QWidget()
+        blacklist_window_central_widget.setLayout(blacklist_window_layout)
+        self.setCentralWidget(blacklist_window_central_widget)
+
+    def search(self):
+        if len(self.filter_blacklist.text()) > 0:
+            items = self.blacklist.findItems(self.filter_blacklist.text(), Qt.MatchFlag.MatchContains)
+            if len(items) > 0:
+                for i in range(self.blacklist.rowCount()):
+                    self.blacklist.setRowHidden(i, False if (self.blacklist.item(i,0) in items) else True)
+        else:
+            for i in range(self.blacklist.rowCount()):
+                self.blacklist.setRowHidden(i, False)
