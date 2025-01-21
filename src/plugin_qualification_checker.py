@@ -1,5 +1,6 @@
 import re
 import timeit
+import os
 
 from dependency_getter import dependecy_getter as dep_getter
 
@@ -32,10 +33,12 @@ class qualification_checker():
                 if esl_allowed:
                     if not need_compacting:
                         need_flag_list.append(plugin)
-                        need_flag_cell_flag_list.append(new_cell)
+                        if new_cell:
+                            need_flag_cell_flag_list.append(os.path.basename(plugin))
                     else:
                         need_compacting_list.append(plugin)
-                        need_compacting_cell_flag_list.append(new_cell)
+                        if new_cell:
+                            need_compacting_cell_flag_list.append(os.path.basename(plugin))
 
         end_time = timeit.default_timer()
         time_taken = end_time - start_time

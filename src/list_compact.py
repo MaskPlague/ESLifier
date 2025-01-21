@@ -26,7 +26,8 @@ class list_compactable(QTableWidget):
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenu)
         self.mod_list = []
-        self.cell_flags = []
+        self.has_cells = []
+        self.filter_changed_cells = True
 
         self.blacklist = blacklist()
         
@@ -60,6 +61,12 @@ class list_compactable(QTableWidget):
         blacklist = self.get_data_from_file('ESLifier_Data/blacklist.json')
         if blacklist == {}:
             blacklist = []
+            
+        if self.filter_changed_cells:
+            cell_changed = self.get_data_from_file("ESLifier_Data/cell_changed.json")
+            if cell_changed == {}:
+                cell_changed = []
+            blacklist.extend(cell_changed)
 
         to_remove = []
         for mod in self.mod_list:
@@ -120,7 +127,7 @@ class list_compactable(QTableWidget):
             item.setTextAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
             self.setItem(i, 0, item)
             self.setRowHidden(i, False)
-            if self.cell_flags[i]:
+            if os.path.basename(mod) in self.has_cells:
                 item_compactible = QTableWidgetItem('New CELL')
                 item_compactible.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.setItem(i, 1, item_compactible)

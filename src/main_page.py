@@ -192,17 +192,16 @@ class main(QWidget):
             for mod in checked_list:
                 i = self.list_compact.mod_list.index(mod)
                 self.list_compact.mod_list.remove(mod)
-                self.list_compact.cell_flags.pop(i)
+                self.list_compact.has_cells.pop(i)
             self.list_compact.create()
         elif sender == 'eslify':
             for mod in checked_list:
                 i = self.list_eslify.mod_list.index(mod)
                 self.list_eslify.mod_list.remove(mod)
-                self.list_eslify.cell_flags.pop(i)
+                self.list_eslify.has_cells.pop(i)
             self.list_eslify.create()
         self.setEnabled(True)
         
-
     def scan(self):
         self.button_scan.setEnabled(False)
         self.log_stream.show()
@@ -217,9 +216,9 @@ class main(QWidget):
         
     def completed_scan(self, list_eslify_mod_list, list_eslify_cell_flags, list_compact_mod_list, list_compact_cell_flags, dependency_dictionary):
         self.list_eslify.mod_list = list_eslify_mod_list
-        self.list_eslify.cell_flags = list_eslify_cell_flags
+        self.list_eslify.has_cells = list_eslify_cell_flags
         self.list_compact.mod_list = list_compact_mod_list
-        self.list_compact.cell_flags = list_compact_cell_flags
+        self.list_compact.has_cells = list_compact_cell_flags
         self.dependency_dictionary = dependency_dictionary
         print('Populating Tables')
         self.list_eslify.create()
