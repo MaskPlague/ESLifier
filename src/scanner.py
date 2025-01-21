@@ -5,7 +5,6 @@ import dependency_getter as dep_getter
 import timeit
 import json
 
-
 class scanner():
     def __init__(self, path):
         scanner.path = path
