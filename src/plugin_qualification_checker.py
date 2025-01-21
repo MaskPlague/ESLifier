@@ -47,8 +47,8 @@ class qualification_checker():
         new_cell = False
         need_compacting = False
         with open(file, 'rb') as f:
-                data = f.read()
-                data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z|_]................[\x2c|\x2b]\x00.\x00)|(?=GRUP....................)', data, flags=re.DOTALL) if x]
+            data = f.read()
+            data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z|_]................[\x2c|\x2b]\x00.\x00)|(?=GRUP....................)', data, flags=re.DOTALL) if x]
         masterCount = data_list[0].count(b'MAST')
         count = 0
         for form in data_list:
