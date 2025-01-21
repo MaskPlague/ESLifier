@@ -34,6 +34,7 @@ class settings(QWidget):
         self.output_folder_path_widget_init()
         self.update_header_widget_init()
         self.show_plugins_with_cells_widget_init()
+        self.enable_cell_changed_filter_widget_init()
         self.show_plugins_with_bsas_widget_init()
         self.edit_blacklist_button_widget_init()
         self.open_eslifier_data_widget_init()
@@ -49,6 +50,7 @@ class settings(QWidget):
         settings_layout.addWidget(self.update_header_widget)
         settings_layout.addWidget(self.show_plugins_with_cells_widget)
         settings_layout.addWidget(self.show_plugins_with_bsas_widget)
+        settings_layout.addWidget(self.enable_cell_changed_filter_widget)
         settings_layout.addWidget(self.edit_blacklist_widget)
         settings_layout.addWidget(self.open_eslifier_data_widget)
         settings_layout.addWidget(self.clear_form_id_maps_and_compacted_and_patched_widget)
@@ -94,7 +96,6 @@ class settings(QWidget):
         
         self.skyrim_folder_path.setPlaceholderText('C:/Path/To/Skyrim Special Edition')
         self.skyrim_folder_path.setMinimumWidth(400)
-        
 
     def output_folder_path_widget_init(self):
         output_folder_path_layout = QHBoxLayout()
@@ -128,7 +129,6 @@ class settings(QWidget):
         update_header_layout.addWidget(update_header_label)
         update_header_layout.addWidget(self.update_header_toggle)
         
-
     def show_plugins_with_cells_widget_init(self):
         show_plugins_with_cells_layout = QHBoxLayout()
         self.show_plugins_with_cells_widget = QWidget()
@@ -141,6 +141,19 @@ class settings(QWidget):
         self.show_plugins_with_cells_widget.setLayout(show_plugins_with_cells_layout)
         show_plugins_with_cells_layout.addWidget(show_plugins_with_cells_label)
         show_plugins_with_cells_layout.addWidget(self.show_plugins_with_cells_toggle)
+
+    def enable_cell_changed_filter_widget_init(self):
+        enable_cell_changed_filter_layout = QHBoxLayout()
+        self.enable_cell_changed_filter_widget = QWidget()
+        self.enable_cell_changed_filter_widget.setToolTip(
+            "Hide plugins with CELL records that have been changed by a dependent plugin.\n"+
+            "Enabling this setting will require a re-scan.")
+        enable_cell_changed_filter_label = QLabel("Hide plugins with CELL overwrites")
+        self.enable_cell_changed_filter_toggle = QtToggle()
+        self.enable_cell_changed_filter_toggle.clicked.connect(self.update_settings)
+        self.enable_cell_changed_filter_widget.setLayout(enable_cell_changed_filter_layout)
+        enable_cell_changed_filter_layout.addWidget(enable_cell_changed_filter_label)
+        enable_cell_changed_filter_layout.addWidget(self.enable_cell_changed_filter_toggle)
 
     def show_plugins_with_bsas_widget_init(self):
         show_plugins_with_bsas_layout = QHBoxLayout()
@@ -287,6 +300,9 @@ class settings(QWidget):
         if 'show_cells' in self.settings.keys(): self.show_plugins_with_cells_toggle.setChecked(self.settings['show_cells'])
         else: self.show_plugins_with_cells_toggle.setChecked(True)
 
+        if 'enable_cell_changed_filter' in self.settings.keys(): self.enable_cell_changed_filter_toggle.setChecked(self.settings['enable_cell_changed_filter'])
+        else: self.enable_cell_changed_filter_toggle.setChecked(True)
+
         if 'show_bsas' in self.settings.keys(): self.show_plugins_with_bsas_toggle.setChecked(self.settings['show_bsas'])
         else: self.show_plugins_with_bsas_toggle.setChecked(True)
         
@@ -303,6 +319,7 @@ class settings(QWidget):
         self.settings['output_folder_path'] = self.output_folder_path.text()
         self.settings['update_header'] = self.update_header_toggle.isChecked()
         self.settings['show_cells'] = self.show_plugins_with_cells_toggle.isChecked()
+        self.settings['enable_cell_changed_filter'] = self.enable_cell_changed_filter_toggle.isChecked()
         self.settings['show_bsas'] = self.show_plugins_with_bsas_toggle.isChecked()
         self.save_settings_to_file()
         
