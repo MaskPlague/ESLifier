@@ -48,9 +48,11 @@ class CFIDs():
             json.dump(data, f, ensure_ascii=False, indent=4)
 
     def get_from_file(file):
-        data = {}
-        with open(file, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+        try:
+            with open(file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        except:
+            data = {}
         return data
     
     def set_flag(file, skyrim_folder, output_folder):
