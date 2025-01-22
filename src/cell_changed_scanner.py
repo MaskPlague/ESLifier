@@ -25,11 +25,18 @@ class cell_scanner():
 
     def scan_new_dependents(mods, dependency_dict):
         cell_scanner.dependency_dict = {}
+        cell_scanner.cell_changed_list = []
+        cell_scanner.plugin_count = 0
+        cell_scanner.count = 0
+        
         for key, value in dependency_dict.items():
             cell_scanner.dependency_dict[key.lower()] = value
-        cell_scanner.cell_changed_list = []
         for mod in mods:
-            cell_scanner.check_if_dependents_modify_new_cells(mod)
+            if mod in cell_scanner.dependency_dict.keys():
+                cell_scanner.plugin_count += len(cell_scanner.dependency_dict[os.path.basename(mod).lower()])
+        for mod in mods:
+            if mod in cell_scanner.dependency_dict.keys():
+                cell_scanner.check_if_dependents_modify_new_cells(mod)
 
         cell_scanner.dump_to_file('ESLifier_Data/cell_changed.json')
 
