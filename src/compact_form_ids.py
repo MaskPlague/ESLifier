@@ -502,7 +502,7 @@ class CFIDs():
             data = f.read()
             f.close()
 
-        data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z_]................[\x2C\x2B]\x00.\x00)|(?=GRUP....................)', data, flags=re.DOTALL) if x]
+        data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z_]................[\x2C\x2B]\x00)|(?=GRUP....................)', data, flags=re.DOTALL) if x]
 
         # Calculate the byte offsets of each chunk in data_list
         offsets = []
@@ -654,7 +654,7 @@ class CFIDs():
 
                 dependent_data = dependent_file.read()
 
-                data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z|_]................[\x2C\x2B]\x00.\x00)|(?=GRUP....................)', dependent_data, flags=re.DOTALL) if x]
+                data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z|_]................[\x2C\x2B]\x00)|(?=GRUP....................)', dependent_data, flags=re.DOTALL) if x]
                 
                 offsets = []
                 current_offset = 0
