@@ -51,11 +51,12 @@ class qualification_checker():
         need_compacting = False
         with open(file, 'rb') as f:
             data = f.read()
-            data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z|_]................[\x2c|\x2b]\x00.\x00)|(?=GRUP....................)', data, flags=re.DOTALL) if x]
-        masterCount = data_list[0].count(b'MAST')
+            data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z_]................[\x2C\x2B]\x00)|(?=GRUP....................)', data, flags=re.DOTALL) if x]
+        master_count = data_list[0].count(b'MAST')
         count = 0
+        cell_form_ids = []
         for form in data_list:
-            if form[:4] != 'TES4' and len(form) > 24 and form[15] == masterCount:
+            if form[:4] != 'TES4' and len(form) > 24 and form[15] == master_count:
                 count += 1
                 if count > qualification_checker.num_max_records:
                     return False, False, False
@@ -65,6 +66,17 @@ class qualification_checker():
                     if not qualification_checker.show_cells:
                         return False, False, True
                     new_cell = True
+            if len(form) >= 24 and form[:4] == b'CELL' and form[15] == master_count and str(form[12:15].hex()) not in cell_form_ids:
+                cell_form_ids.append(str(form[12:15].hex()))
+        cell_form_ids.sort()
+        if cell_form_ids != []:
+            cell_form_id_file = 'ESLifier_Data/Cell_IDs/' + os.path.basename(file) + '_CellFormIDs.txt'
+            if not os.path.exists(os.path.dirname(cell_form_id_file)):
+                os.makedirs(os.path.dirname(cell_form_id_file))
+            with open(cell_form_id_file, 'w') as f:
+                for form_id in cell_form_ids:
+                    f.write(form_id + '\n')
+
         return True, need_compacting, new_cell
 
     def already_esl(file):
