@@ -1,7 +1,7 @@
 import os
 
 from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal
-from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox)
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QApplication
 
 from list_eslify import list_eslable
 from list_compact import list_compactable
@@ -9,7 +9,7 @@ from scanner import scanner
 from plugin_qualification_checker import qualification_checker
 from dependency_getter import dependecy_getter
 from compact_form_ids import CFIDs
-from log_stream import log_stream
+#from log_stream import log_stream
 from cell_changed_scanner import cell_scanner
 
 class main(QWidget):
@@ -22,7 +22,10 @@ class main(QWidget):
         self.show_cells = True
         self.eslify_dictionary = {}
         self.dependency_dictionary = {}
-        self.log_stream = log_stream()
+        #self.log_stream = log_stream(self)
+        for window in QApplication.allWidgets():
+            if window.windowTitle() == 'Log Stream':
+                self.log_stream = window
 
     def create(self):
         self.eslify = QLabel("ESLify")

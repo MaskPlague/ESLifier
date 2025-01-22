@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMenuBar, QStack
 from settings_page import settings
 from main_page import main
 from patch_new_page import patch_new
+from log_stream import log_stream
 
 class main_window(QMainWindow):
     def __init__(self):
@@ -15,6 +16,7 @@ class main_window(QMainWindow):
         #       reduce the risk of new form ids replacing new form ids, also less replaces called are less chances of making mistakes.
         self.setWindowTitle("ESLifier")
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+        self.log_stream = log_stream(self)
         self.setFocus()
         self.setStyleSheet("""
             QLineEdit {
