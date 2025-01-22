@@ -191,15 +191,11 @@ class main(QWidget):
         message.show()
         if sender == 'compact':
             for mod in checked_list:
-                i = self.list_compact.mod_list.index(mod)
                 self.list_compact.mod_list.remove(mod)
-                self.list_compact.has_new_cells.pop(i)
             self.list_compact.create()
         elif sender == 'eslify':
             for mod in checked_list:
-                i = self.list_eslify.mod_list.index(mod)
                 self.list_eslify.mod_list.remove(mod)
-                self.list_eslify.has_new_cells.pop(i)
             self.list_eslify.create()
         self.setEnabled(True)
         
