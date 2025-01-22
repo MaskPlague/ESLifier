@@ -129,10 +129,10 @@ class list_compactable(QTableWidget):
             self.setRowHidden(i, False)
             if os.path.basename(self.mod_list[i]) in self.has_new_cells:
                 item_cell_flag = QTableWidgetItem('New CELL')
-                item_cell_flag.setToolTip('This mod has a new CELL record.')
+                item_cell_flag.setToolTip('This mod has a new CELL record and no mods currently modify it.\nIt is currently safe to ESL flag it.')
                 if os.path.basename(self.mod_list[i]) in self.cell_changed:
                     item_cell_flag.setText('New CELL Changed')
-                    item_cell_flag.setToolTip('This mod has a new CELL record\nand has a dependent plugin that modifies it.\nIt is NOT recommended to esl it.')
+                    item_cell_flag.setToolTip('This mod has a new CELL record\nand has a dependent plugin that modifies it.\nIt is NOT recommended to ESL flag it.')
                 item_cell_flag.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.setItem(i, 1, item_cell_flag)
             name, _ = os.path.splitext(os.path.basename(self.mod_list[i]).lower())
