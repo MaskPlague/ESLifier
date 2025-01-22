@@ -170,7 +170,7 @@ class settings(QWidget):
         self.blacklist_window = blacklist_window()
         edit_blacklist_layout = QHBoxLayout()
         self.edit_blacklist_widget = QWidget()
-        self.edit_blacklist_widget.setToolTip('Show window to remove mods from the blacklist.\nYou can add mods to the blacklist by right clicking them.')
+        self.edit_blacklist_widget.setToolTip('Show window to remove mods from the blacklist. You can add\nmods to the blacklist by right clicking them on the Main page.')
         edit_blacklist_button = self.button_maker('Edit Blacklist', self.edit_blacklist_button_clicked, 100)
         edit_blacklist_label = QLabel("Remove Mods From Blacklist")
         self.edit_blacklist_widget.setLayout(edit_blacklist_layout)
