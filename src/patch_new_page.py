@@ -68,7 +68,7 @@ class patch_new(QWidget):
 
         v_layout_1.setContentsMargins(21,11,21,1)
 
-        for window in QApplication.topLevelWidgets():
+        for window in QApplication.allWidgets():
             if window.windowTitle() == 'Log Stream':
                 self.log_stream = window
 
@@ -85,10 +85,11 @@ class patch_new(QWidget):
         self.thread_new.start()
     
     def completed_scan(self):
-        print('Getting New Dependencies and Files')
+        print('\nGetting New Dependencies and Files')
         self.find()
-        print('Checking if New Dependencies Modify Any Compacted Light Plugin\'s New CELLs')
-        cell_scanner.scan_new_dependents(self.list_compacted_unpatched.mod_list, self.list_unpatched_files.dependencies_dictionary)
+        if self.list_compacted_unpatched.mod_list != [] and self.list_unpatched_files.dependencies_dictionary != {}:
+            print('\nChecking if New CELLs are Changed:')
+            cell_scanner.scan_new_dependents(self.list_compacted_unpatched.mod_list, self.list_unpatched_files.dependencies_dictionary)
         print('CLEAR')
         self.list_unpatched_files.create()
         self.list_compacted_unpatched.create()
