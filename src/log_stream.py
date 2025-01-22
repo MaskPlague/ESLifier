@@ -5,11 +5,18 @@ from PyQt6.QtCore import Qt, QTimer
 
 
 class log_stream(QMainWindow):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setWindowTitle('Log Stream')
-        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowCloseButtonHint)
+        #self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowCloseButtonHint & ~Qt.WindowType.Dialog)
+        self.setFixedWidth(700)
+        self.setFixedHeight(300)
+        self.move(
+            parent.width() // 4,
+            parent.height() // 4
+        )
+        self.hide()
         self.text_edit = QTextEdit()
         self.text_edit.setReadOnly(True)
         self.setCentralWidget(self.text_edit)
@@ -17,7 +24,7 @@ class log_stream(QMainWindow):
         self.log_file = open("ESLifier_Data/ESLifier.log", 'w')
 
         sys.stdout = self
-        sys.stderr = self
+        #sys.stderr = self
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.process_queue)
@@ -25,6 +32,10 @@ class log_stream(QMainWindow):
 
         self.timer_clear = QTimer(self)
         self.timer_clear.timeout.connect(self.clean_up)
+
+    def show(self):
+        self.raise_()
+        return super().show()
 
     def write(self, text):
         self.list.append(text)
