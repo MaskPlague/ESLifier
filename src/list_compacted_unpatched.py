@@ -8,9 +8,11 @@ from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidget
 class list_compacted_unpatched(QTableWidget):
     def __init__(self):
         super().__init__()
-        self.setColumnCount(1)
-        self.setHorizontalHeaderLabels(['Mod'])
+        self.setColumnCount(2)
+        self.setHorizontalHeaderLabels(['Mod', 'New CELL Warning'])
         self.horizontalHeaderItem(0).setToolTip('These are plugins which this program has compacted.\nTick the plugin for which you want to patch new files.\nSelect for which plugin you want to show the unpatched files.')
+        self.horizontalHeaderItem(1).setToolTip('If you can see this column then one or more of the mods\nbelow have a new dependent plugin which modifies it\'s\nnew CELL record which may break because the master is ESL.')
+        self.horizontalHeaderItem(1).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
         self.verticalHeader().setHidden(True)
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
@@ -46,8 +48,14 @@ class list_compacted_unpatched(QTableWidget):
         self.create()
 
     def create(self):
+        cell_changed = self.get_data_from_file('ESLifier_Data/cell_changed.json')
         self.clearContents()
         self.setRowCount(len(self.mod_list))
+        self.setColumnHidden(1, True)
+        for mod in self.mod_list:
+            if os.path.basename(mod) in cell_changed:
+                self.setColumnHidden(1, False)
+                break
 
         for i in range(len(self.mod_list)):
             item = QTableWidgetItem(os.path.basename(self.mod_list[i]))
@@ -55,14 +63,20 @@ class list_compacted_unpatched(QTableWidget):
             item.setCheckState(Qt.CheckState.Unchecked)
             item.setToolTip(self.mod_list[i])
             self.setItem(i, 0, item)
+            if os.path.basename(self.mod_list[i]) in cell_changed:
+                item_error = QTableWidgetItem('Warning!')
+                item_error.setToolTip('This mod has a dependent plugin that changes a new CELL record.\nThis may break the mod\'s new CELL.')
+                self.setItem(i, 1, item_error)
 
         def something_changed(itemChanged):
             if itemChanged.checkState() == Qt.CheckState.Checked:
                 for x in self.selectedItems():
-                    x.setCheckState(Qt.CheckState.Checked)
+                    if x.checkState() == Qt.CheckState.Unchecked:
+                        x.setCheckState(Qt.CheckState.Checked)
             else:
                 for x in self.selectedItems():
-                    x.setCheckState(Qt.CheckState.Unchecked)
+                    if x.checkState() == Qt.CheckState.Checked:
+                        x.setCheckState(Qt.CheckState.Unchecked)
 
         def item_selected():
             selected_items = self.selectedItems()
@@ -72,6 +86,7 @@ class list_compacted_unpatched(QTableWidget):
 
         self.itemChanged.connect(something_changed)
         self.itemSelectionChanged.connect(item_selected)
+        self.resizeColumnToContents(0)
         self.resizeRowsToContents()
 
     def contextMenu(self, position):
