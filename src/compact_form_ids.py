@@ -147,12 +147,13 @@ class CFIDs():
                     with CFIDs.lock:
                         new_file = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
                         os.replace(new_file, new_file.replace(form_ids[1].upper(), form_ids[3].upper()))
-                        CFIDs.compacted_and_patched[os.path.basename(master)].append(file)
                         end_path = file[len(skyrim_folder_path) + 1:]
                         new_file_but_skyrim_pathed = os.path.join(skyrim_folder_path, re.sub(r'(.*?)(/|\\)', '', end_path, 1))
                         CFIDs.compacted_and_patched[os.path.basename(master)].append(new_file_but_skyrim_pathed)
                         if 'facegeom' in new_file.lower() and os.path.basename(master).lower() in new_file.lower():
                             facegeom_meshes.append(new_file.replace(form_ids[1].upper(), form_ids[3].upper()))
+                    break
+            CFIDs.compacted_and_patched[os.path.basename(master)].append(file)
         if facegeom_meshes != []:
             print('-  Patching Renamed Files...')
             CFIDs.patch_files(master, facegeom_meshes, form_id_map, skyrim_folder_path, output_folder_path, False)
