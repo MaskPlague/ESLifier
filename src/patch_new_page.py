@@ -8,6 +8,7 @@ from dependency_getter import dependecy_getter
 from list_compacted_unpatched import list_compacted_unpatched
 from list_unpatched_files import list_unpatched
 from compact_form_ids import CFIDs
+from cell_changed_scanner import cell_scanner
 
 #patched dict - hold key patched name, values patched files do a scan and compare old dict to new dict
 class patch_new(QWidget):
@@ -86,6 +87,8 @@ class patch_new(QWidget):
     def completed_scan(self):
         print('Getting New Dependencies and Files')
         self.find()
+        print('Checking if New Dependencies Modify Any Compacted Light Plugin\'s New CELLs')
+        cell_scanner.scan_new_dependents(self.list_compacted_unpatched.mod_list, self.list_unpatched_files.dependencies_dictionary)
         print('CLEAR')
         self.list_unpatched_files.create()
         self.list_compacted_unpatched.create()
@@ -126,6 +129,7 @@ class patch_new(QWidget):
                     new_dependencies[key].append(value)
 
         mod_list = [key for key in new_dependencies.keys()]
+        mod_list.extend([key for key in new_files.keys() if key not in mod_list])
         self.list_compacted_unpatched.mod_list = mod_list
         self.list_unpatched_files.dependencies_dictionary = new_dependencies
         self.list_unpatched_files.file_dictionary = new_files
@@ -187,7 +191,10 @@ class Worker2(QObject):
 
     def patch(self):
         for file in self.files:
-            CFIDs.patch_new(file, self.dependencies_dictionary[file], self.file_dictionary, self.skyrim_folder_path, self.output_folder_path, self.update_header)
+            dependents = []
+            if file in self.dependencies_dictionary.keys():
+                dependents = self.dependencies_dictionary[file]
+            CFIDs.patch_new(file, dependents, self.file_dictionary, self.skyrim_folder_path, self.output_folder_path, self.update_header)
         self.finished_signal.emit()
 
 
