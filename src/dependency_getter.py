@@ -40,7 +40,7 @@ class dependecy_getter():
 
         dependecy_getter.dependency_dictionary = {plugin: [] for plugin in plugin_names}
         for plugin in dependecy_getter.plugins:
-            masters = dependecy_getter.getMasters(plugin)
+            masters = dependecy_getter.get_masters(plugin)
             if len(masters) > 0:
                 for master in masters:
                     if master.lower() not in dependecy_getter.dependency_dictionary.keys():
@@ -48,16 +48,16 @@ class dependecy_getter():
                     if plugin not in dependecy_getter.dependency_dictionary[master.lower()]:
                         dependecy_getter.dependency_dictionary[master.lower()].append(plugin)
 
-    def getMasters(file):
-        masterList = []
+    def get_masters(file):
+        master_list = []
         with open(file, 'rb') as f:
             f.seek(4)
             size = int.from_bytes(f.read(4)[::-1])
             f.seek(0)
-            tes4Header = f.read(size + 24)
-            dataList = re.split(b'MAST..',tes4Header)
-            dataList.remove(dataList[0])
-            for master in dataList:
-                masterList.append(re.sub(b'.DATA.*', b'', master, flags=re.DOTALL).decode('utf-8'))
+            tes4_header = f.read(size + 24)
+            data_list = re.split(b'MAST..',tes4_header)
+            data_list.remove(data_list[0])
+            for master in data_list:
+                master_list.append(re.sub(b'.DATA.*', b'', master, flags=re.DOTALL).decode('utf-8'))
 
-        return masterList
+        return master_list
