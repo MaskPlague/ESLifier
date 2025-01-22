@@ -1,58 +1,35 @@
 import os
 import re
 import json
-import threading
+import timeit
 
 class cell_scanner():
     def scan(mods_with_new_cells):
+        start_time = timeit.default_timer()
         cell_scanner.cell_changed_list = []
         cell_scanner.dependency_dict = cell_scanner.get_from_file('ESLifier_Data/dependency_dictionary.json')
-        threads = []
+        cell_scanner.plugin_count = 0
+        cell_scanner.count = 0
         for mod in mods_with_new_cells:
-            thread = threading.Thread(target=cell_scanner.get_new_cell_form_ids, args=(mod,))
-            threads.append(thread)
-            thread.start()
+            cell_scanner.plugin_count += len(cell_scanner.dependency_dict[os.path.basename(mod).lower()])
 
-        for thread in threads: thread.join()
+        print('\n')
+        for mod in mods_with_new_cells:
+            cell_scanner.check_if_dependents_modify_new_cells(mod)
+
+        end_time = timeit.default_timer()
+        time_taken = end_time - start_time
+        print('-  Time taken: ' + str(round(time_taken,2)) + ' seconds')
 
         cell_scanner.dump_to_file('ESLifier_Data/cell_changed.json')
-
-    def get_new_cell_form_ids(mod):
-        data_list = []
-        with open(mod, 'rb') as f:
-            data = f.read()
-            data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z|_]................[\x2c|\x2b]\x00.\x00)|(?=GRUP....................)', data, flags=re.DOTALL) if x]
-
-        master_count = data_list[0].count(b'MAST')
-        cell_form_ids = []
-        for chunk in data_list:
-            if len(chunk) >= 24 and chunk[:4] == b'CELL' and chunk[15] == master_count and str(chunk[12:15].hex()) not in cell_form_ids:
-                    cell_form_ids.append(str(chunk[12:15].hex()))
-        
-        cell_form_ids.sort()
-
-        cell_form_id_file = 'ESLifier_Data/Cell_IDs/' + os.path.basename(mod) + '_CellFormIDs.txt'
-        if not os.path.exists(os.path.dirname(cell_form_id_file)):
-            os.makedirs(os.path.dirname(cell_form_id_file))
-
-        with open(cell_form_id_file, 'w') as f:
-            for form_id in cell_form_ids:
-                f.write(form_id + '\n')
-        
-        cell_scanner.check_if_dependents_modify_new_cells(mod)
 
     def scan_new_dependents(mods, dependency_dict):
         cell_scanner.dependency_dict = {}
         for key, value in dependency_dict.items():
             cell_scanner.dependency_dict[key.lower()] = value
         cell_scanner.cell_changed_list = []
-        threads = []
         for mod in mods:
-            thread = threading.Thread(target=cell_scanner.check_if_dependents_modify_new_cells, args=(mod,))
-            threads.append(thread)
-            thread.start()
-
-        for thread in threads: thread.join()
+            cell_scanner.check_if_dependents_modify_new_cells(mod)
 
         cell_scanner.dump_to_file('ESLifier_Data/cell_changed.json')
 
@@ -63,18 +40,34 @@ class cell_scanner():
         with open(cell_form_id_file, 'r') as f:
             cell_form_ids = [line.strip() for line in f.readlines()]
         if cell_form_ids:
-            for dependent in cell_scanner.dependency_dict[os.path.basename(mod).lower()]:
-                dependent_data_list = []
-                dependent_data = b''
-                with open(dependent, 'rb') as f:
-                    dependent_data = f.read()
-                    dependent_data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z|_]................[\x2c|\x2b]\x00.\x00)|(?=GRUP....................)', dependent_data, flags=re.DOTALL) if x]
-                master_index = cell_scanner.get_master_index(mod, dependent_data)
-                for chunk in dependent_data_list:
-                    if len(chunk) >= 24 and chunk[:4] == b'CELL' and chunk[15] == master_index and str(chunk[12:15].hex()) in cell_form_ids:
-                        #print(f'Mod: {os.path.basename(mod)}\'s new cell(s) are changed by dependent: {os.path.basename(dependent)}')
-                        cell_scanner.cell_changed_list.append(os.path.basename(mod))
-                        return
+            dependents = cell_scanner.dependency_dict[os.path.basename(mod).lower()]
+            for dependent in dependents:
+                cell_scanner.scan_dependent(mod, dependent, cell_form_ids)
+
+    def scan_dependent(mod, dependent, cell_form_ids):
+        cell_scanner.count += 1
+        cell_scanner.percentage = (cell_scanner.count / cell_scanner.plugin_count) * 100
+        factor = round(cell_scanner.plugin_count * 0.01)
+        if factor == 0:
+            factor = 1
+        if (cell_scanner.count % factor) >= (factor-1) or cell_scanner.count >= cell_scanner.plugin_count:
+            print('\033[F\033[K-  Processed: ' + str(round(cell_scanner.percentage, 1)) + '%' + '\n-  Plugins: ' + str(cell_scanner.count) + '/' + str(cell_scanner.plugin_count), end='\r')
+        
+        dependent_data = b''
+        with open(dependent, 'rb') as f:
+            dependent_data = f.read()
+        
+        master_index = cell_scanner.get_master_index(mod, dependent_data)
+        previous_offset = 0
+        count = dependent_data.count(b'CELL')
+        for i in range(count):
+            offset = dependent_data.index(b'CELL', previous_offset)
+            if dependent_data[offset+15] == master_index and str(dependent_data[offset+12:offset+15].hex()) in cell_form_ids:
+                if os.path.basename(mod) not in cell_scanner.cell_changed_list:
+                    cell_scanner.cell_changed_list.append(os.path.basename(mod))
+                return
+            previous_offset = offset+4
+            
                     
     def get_master_index(file, data):
         master_pattern = re.compile(b'MAST..(.*?).DATA')
