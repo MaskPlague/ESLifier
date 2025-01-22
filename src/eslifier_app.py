@@ -1,7 +1,7 @@
 import sys
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QPalette, QColor
-from PyQt6.QtWidgets import (QMainWindow, QApplication, QWidget, QMenuBar, QStackedLayout, QMessageBox)
+from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMenuBar, QStackedLayout, QMessageBox
 
 from settings_page import settings
 from main_page import main
@@ -10,8 +10,6 @@ from patch_new_page import patch_new
 class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
-        #TODO: Check for each plugin with cell if there is a dependent that edits the new cell
-        #       Will need to store form id of new cell records during plugin_qualificaiton_checker scan
         #TODO: perhaps add script flag as the current compact_form_ids patching implementation for .pex/.psc is not foolproof.
         #TODO: consider checking what form ids already fit in the esl range and only change the ones that do not, this will
         #       reduce the risk of new form ids replacing new form ids, also less replaces called are less chances of making mistakes.
@@ -82,6 +80,13 @@ class main_window(QMainWindow):
                 background-color: rgb(50,50,50);
             }
             """)
+        top_menu.setToolTip(
+            "Main Page: Scan your skyrim folder and select plugins to flag or compress.\n" +
+            "Patch New Files Page: Scan for new files and dependents that were not present when you\n"+
+                "\tinitially compressed plugins and patched dependent files/plugins.\n"+
+                "\tSelect the master of the new files you want to patch.\n" +
+            "Settings Page: Certain settings will effect what plugins will display after scanning.")
+            
         self.settings_widget = settings()
         self.main_widget = main()
         self.patch_new_widget = patch_new()
@@ -127,10 +132,12 @@ class main_window(QMainWindow):
 
     def help_selected(self):
         help = QMessageBox()
+        help.setIcon(QMessageBox.Icon.Information)
         help.setWindowTitle("Help")
         help.setText(
-            "Almost every element in the program has a tool tip that\n"+
-            "can be seen by hovering over it which explains the element.")
+            "Almost every element in the program has a tool tip that explains it.\n"+
+            "Tool tips can be seen by hovering over elements with the mouse.\n"+
+            "It is advised to read what everything does before doing anything.\n")
         help.addButton(QMessageBox.StandardButton.Ok)
         def close():
             help.close()
@@ -168,6 +175,8 @@ class main_window(QMainWindow):
         self.update_shown()
 
     def update_shown(self):
+        self.main_widget.list_compact.create()
+        self.main_widget.list_eslify.create()
         show_cells = self.settings_widget.settings['show_cells']
         show_bsa = self.settings_widget.settings['show_bsas']
         self.main_widget.list_compact.setColumnHidden(1, not show_cells)
