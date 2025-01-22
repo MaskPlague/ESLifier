@@ -240,7 +240,7 @@ class Worker(QObject):
         dependency_dictionary = dependecy_getter.scan(self.skyrim_folder_path)
         print('\nScanning Plugins:')
         list_eslify_mod_list, list_eslify_has_new_cells, list_compact_mod_list, list_compact_has_new_cells = qualification_checker.scan(self.skyrim_folder_path, self.update_header, self.show_cells)
-        print('\nChecking if New CELLs are Changed in Dependent Plugins')
+        print('\nChecking if New CELLs are Changed:')
         combined_list = [mod for mod in list_compact_mod_list if os.path.basename(mod) in list_compact_has_new_cells]
         combined_list.extend([mod for mod in list_eslify_mod_list if os.path.basename(mod) in list_eslify_has_new_cells])
         cell_scanner.scan(combined_list)
