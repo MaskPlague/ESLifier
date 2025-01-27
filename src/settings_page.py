@@ -304,7 +304,7 @@ class settings(QWidget):
         else: self.enable_cell_changed_filter_toggle.setChecked(True)
 
         if 'show_bsas' in self.settings.keys(): self.show_plugins_with_bsas_toggle.setChecked(self.settings['show_bsas'])
-        else: self.show_plugins_with_bsas_toggle.setChecked(True)
+        else: self.show_plugins_with_bsas_toggle.setChecked(False)
         
 
     def save_settings_to_file(self):
