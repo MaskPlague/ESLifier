@@ -21,15 +21,16 @@ class scanner():
         print('-  Gathered ' + str(len(scanner.all_files)) +' files.\n\n')
         scanner.get_file_masters()
 
-        scanner.dump_to_file(file="ESLifier_Data/file_masters.json")
+        scanner.dump_to_file(file="ESLifier_Data/file_masters.json", data=scanner.file_dict)
+        scanner.dump_to_file(file="ESLifier_Data/bsa_dict.json", data=scanner.bsa_dict)
 
         end_time = timeit.default_timer()
         time_taken = end_time - start_time
         print('-  Time taken: ' + str(round(time_taken,2)) + ' seconds')
 
-    def dump_to_file(file):
+    def dump_to_file(file, data):
         with open(file, 'w', encoding='utf-8') as f:
-            json.dump(scanner.file_dict, f, ensure_ascii=False, indent=4)
+            json.dump(data, f, ensure_ascii=False, indent=4)
     
     def get_from_file(file):
         try:
@@ -49,6 +50,7 @@ class scanner():
         pattern4 = re.compile(r'\\facetint\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
         pattern5 = re.compile(r'\\sound\\voice\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
         scanner.file_dict = {plugin: [] for plugin in plugin_names}
+        scanner.bsa_dict = {}
         scanner.threads = []
         scanner.seq_files = []
         scanner.pex_files = []
@@ -97,6 +99,10 @@ class scanner():
                 print('\033[F\033[K-  Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-  Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
             if (not 'meta.ini' in file_lower) and ('.ini' in file_lower or '.json' in file_lower or '_conditions.txt' in file_lower or '_srd.' in file_lower or '.psc' in file_lower):
                 thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
+                scanner.threads.append(thread)
+                thread.start()
+            elif '.bsa' in file_lower:
+                thread = threading.Thread(target=scanner.read_bsa,args=(file,))
                 scanner.threads.append(thread)
                 thread.start()
             elif '.pex' in file_lower:
@@ -176,6 +182,36 @@ class scanner():
                         with scanner.lock:
                             if plugin not in scanner.file_dict.keys(): scanner.file_dict.update({plugin: []})
                             if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+    
+    def read_bsa(bsa_file):
+        with open(bsa_file, 'rb') as f:
+            data = f.read()
+        plugins = []
+        types = [b'\\facetint\\', b'\\facegeom\\', b'\\voice\\', b'seq\\']
+        if 'textures' in bsa_file:
+            types = [b'\\facetint\\']
+        for type in types:
+            offset = 0
+            old_offset = 0
+            count = data.count(type)
+            for i in range(count):
+                type_offset = data.find(type, old_offset)
+                if type != b'seq\\':
+                    offset = data.find(b'.es', type_offset)
+                else:
+                    offset = data.find(b'.seq', type_offset)
+                start = data.rfind(b'\\', type_offset, offset)
+                name = data[start+1:offset+4]
+                if name.decode() not in plugins:
+                    plugins.append(name.decode())
+                old_offset = offset + 1
+        scripts = data.find(b'scripts')
+        if scripts != -1:
+            name, _ = os.path.splitext(os.path.basename(bsa_file.lower()))
+            plugins.insert(0, 'scripts_'+name)
+        if plugins != []:
+            scanner.bsa_dict[os.path.basename(bsa_file.lower())] = plugins
+        
 
     def get_all_files():
         for root, dirs, files in os.walk(scanner.path):
