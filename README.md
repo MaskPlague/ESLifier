@@ -43,7 +43,7 @@ The third page, _Settings_, mostly controls what is displayed in the _Main_ page
 ### ESLifier_Data Folder Files
 This folder and its contents are generated during program usage, the folder is generated in the same folder as the executable.
 - Cell_IDs folder: Holds \<plugin.es\[pml\]\>_CellFormIDs.txt files
-  - \<plugin.es\[pml\]\>_CellFormIDs.txt: A file holding the new CELL form IDs of the plugin.
+-   \<plugin.es\[pml\]\>_CellFormIDs.txt: A file holding the new CELL form IDs of the plugin.
 - Form_ID_Maps folder: Holds \<plugin.es\[pml\]\>_FormIdMap.txt files
   - \<plugin.es\[pml\]\>_FormIdMap.txt: A file holding the old and new form IDs in little endian separated by a pipe "\|" on each line.
 - bsa_dict.json: A dictionary whose keys are BSA names and the values are lists that hold all plugins that may rely on files present in the json. If index 0 is 'scripts\_\<BSA name without ext\>' then the BSA contains scripts which need to be extracted for scanning/patching.
