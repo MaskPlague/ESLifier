@@ -35,10 +35,10 @@ The third page, _Settings_, mostly controls what is displayed in the _Main_ page
 - \_srd.: Sound Record Distributor -Patched
 - .psc: Source Scripts -Patched (doesn't patch form ids that are passed as variables)
 - .json (not config.json): -Patched, Dynamic Key Activation Framework NG and Smart Harvest Auto NG AutoLoot Should work for MNC and Dynamic String Distributor ::SHSE needs more work for multiline form id lists.
-- facegeom\: -Renamed -Texture paths in face mesh files patched
-- facetint\: -Renamed
+- FaceGenData/FaceGeom/: -Renamed -Texture paths in face mesh files patched
+- FaceGenData/FaceTint/: -Renamed
 - .seq: SEQ files -Patched
-- .pex: integer form ids in compiled scripts -{atched
+- .pex: integer form ids in compiled scripts -Patched
 ## Files
 ### ESLifier_Data/ Files
 This folder and its contents are generated during program usage, the folder is generated in the same folder as the executable.
