@@ -1,7 +1,6 @@
 import os
 import re
 import threading
-import dependency_getter as dep_getter
 import timeit
 import json
 
@@ -11,18 +10,26 @@ class scanner():
         start_time = timeit.default_timer()
         scanner.file_count = 0
         scanner.all_files = []
+        scanner.plugins = []
         scanner.lock = threading.Lock()
         print('-  Gathering Files...')
+        path_level = len(path.split(os.sep))
         for root, _, files in os.walk(scanner.path):
+            root_level = len(root.split(os.sep))
             scanner.file_count += len(files)
             for file in files:
                 scanner.all_files.append(os.path.join(root, file))
+                #TODO: remove the + 1 as it is for testing only
+                if path_level + 1 == root_level and (file.lower().endswith('.esp') or file.lower().endswith('.esm') or file.lower().endswith('.esl')):
+                    scanner.plugins.append(os.path.join(root, file))
 
         print('-  Gathered ' + str(len(scanner.all_files)) +' files.\n\n')
         scanner.get_file_masters()
 
+        scanner.dump_to_file(file="ESLifier_Data/plugin_list.json", data=scanner.plugins)
         scanner.dump_to_file(file="ESLifier_Data/file_masters.json", data=scanner.file_dict)
         scanner.dump_to_file(file="ESLifier_Data/bsa_dict.json", data=scanner.bsa_dict)
+        
 
         end_time = timeit.default_timer()
         time_taken = end_time - start_time
@@ -41,9 +48,8 @@ class scanner():
         return data
 
     def get_file_masters():
-        plugins = dep_getter.dependecy_getter.get_list_of_plugins(scanner.path)
         plugin_names = []
-        for plugin in plugins: plugin_names.append(os.path.basename(plugin).lower())
+        for plugin in scanner.plugins: plugin_names.append(os.path.basename(plugin).lower())
         pattern = re.compile(r'(?:~|: *|\||=|,|-|")\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\)?)(?:\||,|"|$)')
         pattern2 = re.compile(rb'\x00.([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\x00')
         pattern3 = re.compile(r'\\facegeom\\([a-zA-Z0-9_\-\'\?\!\(\)\[\]\, ]+\.es[pml])\\')
@@ -51,6 +57,7 @@ class scanner():
         pattern5 = re.compile(r'\\sound\\voice\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
         scanner.file_dict = {plugin: [] for plugin in plugin_names}
         scanner.bsa_dict = {}
+        scanner.bsa_files = []
         scanner.threads = []
         scanner.seq_files = []
         scanner.pex_files = []
@@ -78,13 +85,38 @@ class scanner():
         
         scanner.threads = []
 
-        print("-  Scanning .pex files")
+        print("\n-  Scanning .pex files")
         for file in scanner.pex_files:
             thread = threading.Thread(target=scanner.file_reader,args=(pattern2, file, 'rb'))
             scanner.threads.append(thread)
             thread.start()
 
         for thread in scanner.threads: thread.join()
+
+        print("-  Scanning .bsa files\n\n")
+        scanner.file_count = len(scanner.bsa_files)
+        scanner.count = 0
+        if len(scanner.bsa_files) > 10:
+            split = 10
+        else:
+            split = 1
+        chunk_size = len(scanner.bsa_files) // split
+        chunks = [scanner.bsa_files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
+        chunks.append(scanner.bsa_files[(split) * chunk_size:])
+        threads = []
+        for chunk in chunks:
+            thread = threading.Thread(target=scanner.bsa_processor, args=(chunk,))
+            threads.append(thread)
+            thread.start()
+        
+        for thread in threads: thread.join()
+
+    def bsa_processor(files):
+        for file in files:
+            scanner.count += 1
+            scanner.percentage = (scanner.count/scanner.file_count) * 100
+            print('\033[F\033[K-  Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-  Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
+            scanner.bsa_reader(file)
 
     def file_processor(files, pattern, pattern3, pattern4, pattern5):
         local_dict = {}
@@ -102,9 +134,11 @@ class scanner():
                 scanner.threads.append(thread)
                 thread.start()
             elif '.bsa' in file_lower:
-                thread = threading.Thread(target=scanner.read_bsa,args=(file,))
-                scanner.threads.append(thread)
-                thread.start()
+                bsa_blacklist = ['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
+                    'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
+                    'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa']
+                if os.path.basename(file_lower) not in bsa_blacklist:
+                    scanner.bsa_files.append(file)
             elif '.pex' in file_lower:
                 scanner.pex_files.append(file)
             elif '.seq' in file_lower:
@@ -183,34 +217,55 @@ class scanner():
                             if plugin not in scanner.file_dict.keys(): scanner.file_dict.update({plugin: []})
                             if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
     
-    def read_bsa(bsa_file):
-        with open(bsa_file, 'rb') as f:
-            data = f.read()
+    def bsa_reader(bsa_file):
         plugins = []
-        types = [b'\\facetint\\', b'\\facegeom\\', b'\\voice\\', b'seq\\']
-        if 'textures' in bsa_file:
-            types = [b'\\facetint\\']
-        for type in types:
-            offset = 0
-            old_offset = 0
-            count = data.count(type)
-            for i in range(count):
-                type_offset = data.find(type, old_offset)
-                if type != b'seq\\':
-                    offset = data.find(b'.es', type_offset)
-                else:
-                    offset = data.find(b'.seq', type_offset)
-                start = data.rfind(b'\\', type_offset, offset)
-                name = data[start+1:offset+4]
-                if name.decode() not in plugins:
-                    plugins.append(name.decode())
-                old_offset = offset + 1
-        scripts = data.find(b'scripts')
-        if scripts != -1:
-            name, _ = os.path.splitext(os.path.basename(bsa_file.lower()))
-            plugins.insert(0, 'scripts_'+name)
+        with open(bsa_file, 'rb') as f:
+            f.seek(16)
+            folder_count = int.from_bytes(f.read(4)[::-1])
+            f.seek(8,1)
+            total_file_name_length = int.from_bytes(f.read(4)[::-1])
+            f.seek(0)
+            data = f.read()
+
+        end_of_folder_records = (folder_count * 24) + 36
+        offset = 36
+        count = 0
+        seq_search = False
+        pattern_1 = re.compile(r'([^\\]+\.es[pml])')
+
+        while offset < end_of_folder_records:
+            count += 1
+            location = int.from_bytes(data[offset+16:offset+20][::-1]) - total_file_name_length
+            folder_length = int.from_bytes(data[location:location+1])
+            folder_path = data[location+1:location+folder_length].decode(errors='ignore')
+            if ('facegeom\\' in folder_path or 'facetint\\' in folder_path or 'sound\\voice' in folder_path) and ('.esp' in folder_path or '.esl' in folder_path or '.esm' in folder_path):
+                plugin = re.search(pattern_1, folder_path).group(0)
+                if plugin not in plugins:
+                    plugins.append(plugin)
+            elif 'script' in folder_path:
+                name, _ = os.path.splitext(os.path.basename(bsa_file.lower()))
+                if 'scripts_'+name not in plugins:
+                    plugins.insert(0, 'scripts_'+name)
+            elif 'seq' == folder_path:
+                seq_search = True
+            if count == folder_count and seq_search:
+                file_count = int.from_bytes(data[offset+8:offset+12][::-1])
+                size = file_count * 16
+                files_offset = location + folder_length + size + 1
+                while seq_search:
+                    loc = data.find(b'\x00', files_offset)
+                    file_name = data[files_offset:loc]
+                    files_offset += loc - files_offset + 1
+                    if b'.seq' in file_name:
+                        if file_name.decode(errors='ignore') not in plugins:
+                            plugins.append(file_name.decode(errors='ignore'))
+                    else:
+                        seq_search = False
+
+            offset += 24
+
         if plugins != []:
-            scanner.bsa_dict[os.path.basename(bsa_file.lower())] = plugins
+            scanner.bsa_dict[os.path.basename(bsa_file)] = plugins
         
 
     def get_all_files():
