@@ -133,9 +133,9 @@ class settings(QWidget):
         show_plugins_with_cells_layout = QHBoxLayout()
         self.show_plugins_with_cells_widget = QWidget()
         self.show_plugins_with_cells_widget.setToolTip(
-            "Show or hide plugins with CELL records.\n"+
+            "Show or hide plugins with new CELL records.\n"+
             "Enabling this setting will require a re-scan if you scanned with it off.")
-        show_plugins_with_cells_label = QLabel("Show plugins with CELL records")
+        show_plugins_with_cells_label = QLabel("Show plugins with new CELL records")
         self.show_plugins_with_cells_toggle = QtToggle()
         self.show_plugins_with_cells_toggle.clicked.connect(self.update_settings)
         self.show_plugins_with_cells_widget.setLayout(show_plugins_with_cells_layout)
@@ -146,9 +146,9 @@ class settings(QWidget):
         enable_cell_changed_filter_layout = QHBoxLayout()
         self.enable_cell_changed_filter_widget = QWidget()
         self.enable_cell_changed_filter_widget.setToolTip(
-            "Hide plugins with CELL records that have been changed by a dependent plugin.\n"+
+            "Hide plugins with new CELL records that have been changed by a dependent plugin.\n"+
             "Enabling this setting will require a re-scan.")
-        enable_cell_changed_filter_label = QLabel("Hide plugins with CELL overwrites")
+        enable_cell_changed_filter_label = QLabel("Hide plugins with new CELL records that are overwriten")
         self.enable_cell_changed_filter_toggle = QtToggle()
         self.enable_cell_changed_filter_toggle.clicked.connect(self.update_settings)
         self.enable_cell_changed_filter_widget.setLayout(enable_cell_changed_filter_layout)
