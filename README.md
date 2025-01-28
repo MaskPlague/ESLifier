@@ -40,7 +40,7 @@ The third page, _Settings_, mostly controls what is displayed in the _Main_ page
 - .seq: SEQ files -Patched
 - .pex: integer form ids in compiled scripts -Patched
 ## Files
-### ESLifier_Data/ Files
+### ESLifier_Data Folder Files
 This folder and its contents are generated during program usage, the folder is generated in the same folder as the executable.
 - bsa_dict.json: A dictionary whose keys are BSA names and the values are lists that hold all plugins that may rely on files present in the json. If index 0 is 'scripts\_\<BSA name without ext\>' then the BSA contains scripts which need to be extracted for scanning/patching.
 - cell_changed.json: A list of plugins which are compactible but also have have at least one new CELL changed by a plugin that contains them as a master.
