@@ -318,7 +318,7 @@ class CFIDs():
     
     def recompress_data(data_list, sizes_list, master_count):
         for i in range(len(data_list)):
-            if len(data_list[i]) > 16 and data_list[i][10] == 0x4 and (0 <= data_list[i][15] <= master_count):
+            if len(data_list[i]) > 24 and data_list[i][10] == 0x4 and (0 <= data_list[i][15] <= master_count):
                 compressed = zlib.compress(data_list[i][28:], 9)
                 formatted = [0] * (sizes_list[i][0] - 28)
                 formatted[:28] = data_list[i][:28]
