@@ -538,13 +538,15 @@ class CFIDs():
 
         if update_header:
             new_id = binascii.unhexlify(mC + '000000')
+            new_range = 4096
         else:
             new_id = binascii.unhexlify(mC + '000800')
+            new_range = 2048
         new_id_len = len(new_id)
         counter = int.from_bytes(new_id, 'big')
 
         new_form_ids = []
-        for i in range(4096):
+        for i in range(new_range):
             new_id = counter.to_bytes(new_id_len, 'little')
             new_decimal = int.from_bytes(new_id[:3][::-1])
             new_form_ids.append([new_decimal, new_id])
