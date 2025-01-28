@@ -7,7 +7,6 @@ from settings_page import settings
 from main_page import main
 from patch_new_page import patch_new
 from log_stream import log_stream
-#pyinstaller command to create exe from ESLifier folder: pyinstaller "src/eslifier_app.py" -F -n "ESLifier" --noconsole --icon "images/ESLifier.ico"
 class main_window(QMainWindow):
     def __init__(self):
         super().__init__()

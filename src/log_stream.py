@@ -1,4 +1,5 @@
 import sys
+import os
 
 from PyQt6.QtWidgets import QMainWindow, QTextEdit
 from PyQt6.QtCore import Qt, QTimer
@@ -20,10 +21,12 @@ class log_stream(QMainWindow):
         self.text_edit.setReadOnly(True)
         self.setCentralWidget(self.text_edit)
         self.list = []
+        if not os.path.exists("ESLifier_Data/ESLifier.log"):
+            os.makedirs("ESLifier_Data/")
         self.log_file = open("ESLifier_Data/ESLifier.log", 'w')
 
         sys.stdout = self
-        #sys.stderr = self
+        sys.stderr = self
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.process_queue)
@@ -91,6 +94,7 @@ class log_stream(QMainWindow):
                     lines[-1] = text.strip()
             self.text_edit.setPlainText("\n".join(lines))
         elif 'CLEAR' == text:
+            self.log_file.flush()
             self.timer_clear.start(1500)
         else:
             # Simply append new text if no ANSI codes are found
