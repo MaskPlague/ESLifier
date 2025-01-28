@@ -11,9 +11,8 @@ from log_stream import log_stream
 class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
-        #TODO: perhaps add script flag as the current compact_form_ids patching implementation for .pex/.psc is not foolproof.
-        #TODO: consider checking what form ids already fit in the esl range and only change the ones that do not, this will
-        #       reduce the risk of new form ids replacing new form ids, also less replaces called are less chances of making mistakes.
+        #TODO: refine patching of files in compact_form_ids.py
+        #TODO: Consider creating MO2 integration in the form of a notification of esl flagable/new dependent files... no idea where to start with this...
         self.setWindowTitle("ESLifier")
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.log_stream = log_stream(self)
