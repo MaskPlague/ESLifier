@@ -27,6 +27,18 @@ The third page, _Settings_, mostly controls what is displayed in the _Main_ page
 - _Hide plugins with new CELL records that are overwriten_ hides plugins that have new CELLs that are also edited/overwitten by a dependent plugin that has it as a master. It is on by default. This should probably be left on as if the setting is disabled then you will see plugins that may have their new CELLs broken by ESL flagging them.
 
 # Documentation
+## Files that are patched by ESLifier
+- .esm/.esp/.esl: plugins that have the compacted plugin as master
+- .ini: PO3's distributors, SkyPatcher
+- config.json: OAR, MCM Helper
+- \_conditions.txt: DAR
+- \_srd.: Sound Record Distributor
+- .psc: Source Scripts
+- .json (not config.json): Dynamic Key Activation Framework NG, Smart Harvest Auto NG AutoLoot ::SHSE needs more work for multiline form id lists
+  Should work for MNC, Dynamic String Distributor
+\facegeom\: Texture paths in face mesh files
+.seq: SEQ files
+.pex: integer form ids in compiled scripts
 ## Files
 ### ESLifier_Data/ Files
 This folder and its contents are generated during program usage, the folder is generated in the same folder as the executable.
@@ -38,7 +50,24 @@ This folder and its contents are generated during program usage, the folder is g
 - plugin_list.json: A list of all plugin files present in the top level of the directory of Skyrim Special Edition.
 - settings.json: Where ESLifier stores the user's settings.
 ### Source Files
-## Specifics
-  
+TODO: description of python files
+- blacklist.py
+- cell_changed_scanner.py
+- compact_form_ids.py
+- dependency_getter.py
+- eslifier_app.py
+- list_compact.py
+- list_compacted_unpatched.py
+- list_eslify.py
+- list_unpactehd_files.py
+- log_stream.py
+- main_page.py
+- patch_new_page.py
+- plugin_qualificaiton_checker.py
+- QToggle.py
+- scanner.py
+- settigns_page.py
+## Program Flow Explanation
+TODO: Explanation of how the program works will go here eventually.
   
     
