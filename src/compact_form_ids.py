@@ -551,6 +551,16 @@ class CFIDs():
             new_decimal = int.from_bytes(new_id[:3][::-1])
             new_form_ids.append([new_decimal, new_id])
             counter += 1
+        
+        to_remove = []
+        for old_id in form_id_list:
+            if old_id in new_form_ids:
+                to_remove.append(old_id)
+        
+        #TODO: Untested, should remove ids that already fit in the new range
+        for id in to_remove:
+            form_id_list.remove(id)
+            new_form_ids.remove(id)
 
         form_id_replacements = []
         with open(form_id_file_name, 'w') as fidf:
