@@ -278,7 +278,8 @@ class settings(QWidget):
                 self.output_folder_path.clear()
                 self.update_header_toggle.setChecked(True)
                 self.show_plugins_with_cells_toggle.setChecked(True)
-                self.show_plugins_with_bsas_toggle.setChecked(True)
+                self.show_plugins_with_bsas_toggle.setChecked(False)
+                self.enable_cell_changed_filter_toggle.setChecked(True)
                 self.update_settings()
 
             confirm.accepted.connect(acccepted)
