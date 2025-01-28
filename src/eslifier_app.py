@@ -1,13 +1,13 @@
 import sys
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction, QPalette, QColor
+from PyQt6.QtGui import QAction, QPalette, QColor, QIcon
 from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMenuBar, QStackedLayout, QMessageBox
 
 from settings_page import settings
 from main_page import main
 from patch_new_page import patch_new
 from log_stream import log_stream
-
+#pyinstaller command to create exe from ESLifier folder: pyinstaller "src/eslifier_app.py" -F -n "ESLifier" --noconsole --icon "images/ESLifier.ico"
 class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -16,6 +16,7 @@ class main_window(QMainWindow):
         self.setWindowTitle("ESLifier")
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.log_stream = log_stream(self)
+        self.setWindowIcon(QIcon("images/ESLifier.png"))
         self.setFocus()
         self.setStyleSheet("""
             QLineEdit {
