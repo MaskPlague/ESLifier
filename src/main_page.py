@@ -26,6 +26,8 @@ class main(QWidget):
         for window in QApplication.allWidgets():
             if window.windowTitle() == 'Log Stream':
                 self.log_stream = window
+            if window.windowTitle() == 'ESLifier':
+                self.eslifier = window
 
     def create(self):
         self.eslify = QLabel("ESLify")
@@ -221,8 +223,9 @@ class main(QWidget):
         self.list_compact.has_new_cells = list_compact_has_new_cells
         self.dependency_dictionary = dependency_dictionary
         print('Populating Tables')
-        self.list_eslify.create()
-        self.list_compact.create()
+        self.eslifier.update_shown()
+        #self.list_eslify.create()
+        #self.list_compact.create()
         self.button_scan.setEnabled(True)
         print('Done Scanning')
         print('CLEAR')
