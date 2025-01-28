@@ -1,14 +1,13 @@
 import re
 import timeit
 import os
-
-from dependency_getter import dependecy_getter as dep_getter
+import json
 
 
 class qualification_checker():
     def scan(path, update_header, show_cells):
         start_time = timeit.default_timer()
-        all_plugins = dep_getter.get_list_of_plugins(path)
+        all_plugins = qualification_checker.get_from_file("ESLifier_Data/plugin_list.json")
         plugins = [plugin for plugin in all_plugins if not plugin.lower().endswith('.esl')]
         need_flag_list = []
         need_flag_cell_flag_list = []
@@ -86,3 +85,11 @@ class qualification_checker():
                 return True
             else:
                 return False
+            
+    def get_from_file(file):
+        try:
+            with open(file, 'r') as f:
+                data = json.load(f)
+        except:
+            data = []
+        return data
