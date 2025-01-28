@@ -37,7 +37,7 @@ The third page, _Settings_, mostly controls what is displayed in the _Main_ page
 - FaceGenData/FaceTint/\<texture\>.dds: -Renamed
 - .seq: SEQ files -Patched
 - .pex: integer form ids in compiled scripts -Patched
-## Files
+## File Descriptions
 ### ESLifier_Data Folder Files
 This folder and its contents are generated during program usage, the folder is generated in the same folder as the executable.
 - Cell_IDs folder: Holds \<plugin.es\[pml\]\>_CellFormIDs.txt files
