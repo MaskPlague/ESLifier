@@ -6,9 +6,9 @@ import fileinput
 import zlib
 import json
 import threading
-
+#TODO: SkyPatcher, MCM Helper, possible others to check
+#TODO: add regex to certain replacements in patch files for safety
 class CFIDs():
-    #TODO: Consider adding an new warning to ESLifierWarn that detects if a master has no _ESLifierBackup/_FormIdMap.txt but its dependents do then they may be the wrong version.
     def compact_and_patch(file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header):
         CFIDs.lock = threading.Lock()
         CFIDs.compacted_and_patched = {}
@@ -28,9 +28,6 @@ class CFIDs():
             CFIDs.rename_files_threader(file_to_compact, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
         CFIDs.dump_to_file('ESLifier_Data/compacted_and_patched.json')
         return
-        #TODO: update next object in TES4 header?
-        #TODO: SkyPatcher, MCM Helper, possible others to check
-        #TODO: add regex to certain replacements in patch files for safety
     
     def dump_to_file(file):
         try:

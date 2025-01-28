@@ -1,4 +1,5 @@
 import os
+import json
 
 from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QApplication
@@ -9,7 +10,6 @@ from scanner import scanner
 from plugin_qualification_checker import qualification_checker
 from dependency_getter import dependecy_getter
 from compact_form_ids import CFIDs
-#from log_stream import log_stream
 from cell_changed_scanner import cell_scanner
 
 class main(QWidget):
@@ -22,7 +22,6 @@ class main(QWidget):
         self.show_cells = True
         self.eslify_dictionary = {}
         self.dependency_dictionary = {}
-        #self.log_stream = log_stream(self)
         for window in QApplication.allWidgets():
             if window.windowTitle() == 'Log Stream':
                 self.log_stream = window
@@ -147,10 +146,55 @@ class main(QWidget):
         self.list_compact.clearSelection()
         for row in range(self.list_compact.rowCount()):
             if self.list_compact.item(row,0).checkState() == Qt.CheckState.Checked:
-                self.list_compact.item(row,0).setCheckState(Qt.CheckState.PartiallyChecked)
-                self.list_compact.item(row,0).setFlags(self.list_compact.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
+                #self.list_compact.item(row,0).setCheckState(Qt.CheckState.PartiallyChecked)
+                #self.list_compact.item(row,0).setFlags(self.list_compact.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
                 checked.append(self.list_compact.item(row,0).toolTip())
         if checked != []:
+            file_masters = main.get_from_file('ESLifier_Data/file_masters.json')
+            self.confirm = QMessageBox()
+            self.confirm.setIcon(QMessageBox.Icon.Information)
+            size = 0
+            counted = []
+            for mod in checked:
+                if mod not in counted:
+                    size += os.path.getsize(mod)
+                    counted.append(mod)
+                if os.path.basename(mod.lower()) in self.dependency_dictionary.keys():
+                    for dependent_mod in self.dependency_dictionary[os.path.basename(mod.lower())]:
+                        if dependent_mod not in counted:
+                            size += os.path.getsize(dependent_mod)
+                            counted.append(dependent_mod)
+                if os.path.basename(mod.lower()) in file_masters.keys():
+                    for file in file_masters[os.path.basename(mod.lower())]:
+                        if file not in counted:
+                            size += os.path.getsize(file)
+                            counted.append(file)
+            if size > 1024 ** 3:
+                calculated_size = round(size / (1024 ** 3),3)
+                self.confirm.setText(f"This may generate up to {calculated_size} GiBs of new files.\nAre you sure you want to continue?")
+            elif size > 1048576:
+                calculated_size = round(size / 1048576,2)
+                self.confirm.setText(f"This may generate up to {calculated_size} MiBs of new files.\nAre you sure you want to continue?")
+            else:
+                calculated_size = round(size / 1024,2)
+                self.confirm.setText(f"This may generate up to {calculated_size} KiBs of new files.\nAre you sure you want to continue?")
+            self.confirm.setWindowTitle("Confirmation")
+            self.confirm.addButton(QMessageBox.StandardButton.Yes)
+            self.confirm.addButton(QMessageBox.StandardButton.Cancel)
+            self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
+            self.confirm.accepted.connect(lambda x = checked: self.compact_confirmed(x))
+            self.confirm.rejected.connect(lambda:self.setEnabled(True))
+            self.confirm.show()
+        else:
+            self.setEnabled(True)
+
+    def compact_confirmed(self, checked):
+            self.confirm.hide()
+            self.confirm.deleteLater()
+            for row in range(self.list_compact.rowCount()):
+                if self.list_compact.item(row,0).checkState() == Qt.CheckState.Checked:
+                    self.list_compact.item(row,0).setCheckState(Qt.CheckState.PartiallyChecked)
+                    self.list_compact.item(row,0).setFlags(self.list_compact.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
             self.log_stream.show()
             self.thread_new = QThread()
             self.worker = Worker2(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, self.update_header)
@@ -161,27 +205,54 @@ class main(QWidget):
             self.worker.finished_signal.connect(self.worker.deleteLater)
             self.worker.finished_signal.connect(lambda sender = 'compact', checked_list = checked: self.finished_button_action(sender, checked_list))
             self.thread_new.start()
-        else:
-            self.setEnabled(True)
-
+        
     def eslify_selected_clicked(self):
         self.setEnabled(False)
         checked = []
         self.list_eslify.clearSelection()
         for row in range(self.list_eslify.rowCount()):
             if self.list_eslify.item(row,0).checkState() == Qt.CheckState.Checked:
-                self.list_eslify.item(row,0).setCheckState(Qt.CheckState.PartiallyChecked)
-                self.list_eslify.item(row,0).setFlags(self.list_eslify.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
+                #self.list_eslify.item(row,0).setCheckState(Qt.CheckState.PartiallyChecked)
+                #self.list_eslify.item(row,0).setFlags(self.list_eslify.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
                 checked.append(self.list_eslify.item(row,0).toolTip())
         if checked != []:
-            self.log_stream.show()
-            for file in checked:
-                CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path)
-            print("Flag(s) Changed")
-            print("CLEAR")
-            self.finished_button_action('eslify', checked)
+            self.confirm = QMessageBox()
+            self.confirm.setIcon(QMessageBox.Icon.Information)
+            size = 0
+            counted = []
+            for mod in checked:
+                if mod not in counted:
+                    size += os.path.getsize(mod)
+                    counted.append(mod)
+            if size > 1048576:
+                calculated_size = round(size / 1048576,2)
+                self.confirm.setText(f"This may generate up to {calculated_size} MiBs of new files.\nAre you sure you want to continue?")
+            else:
+                calculated_size = round(size / 1024,2)
+                self.confirm.setText(f"This may generate up to {calculated_size} KiBs of new files.\nAre you sure you want to continue?")
+            self.confirm.setWindowTitle("Confirmation")
+            self.confirm.addButton(QMessageBox.StandardButton.Yes)
+            self.confirm.addButton(QMessageBox.StandardButton.Cancel)
+            self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
+            self.confirm.accepted.connect(lambda x = checked: self.eslify_confirmed(x))
+            self.confirm.rejected.connect(lambda:self.setEnabled(True))
+            self.confirm.show()
         else:
             self.setEnabled(True)
+
+    def eslify_confirmed(self, checked):
+        self.confirm.hide()
+        self.confirm.deleteLater()
+        for row in range(self.list_eslify.rowCount()):
+            if self.list_eslify.item(row,0).checkState() == Qt.CheckState.Checked:
+                self.list_eslify.item(row,0).setCheckState(Qt.CheckState.PartiallyChecked)
+                self.list_eslify.item(row,0).setFlags(self.list_eslify.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
+        self.log_stream.show()
+        for file in checked:
+            CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path)
+        print("Flag(s) Changed")
+        print("CLEAR")
+        self.finished_button_action('eslify', checked)
 
     def finished_button_action(self, sender, checked_list):
         message = QMessageBox()
@@ -229,6 +300,14 @@ class main(QWidget):
         self.button_scan.setEnabled(True)
         print('Done Scanning')
         print('CLEAR')
+
+    def get_from_file(file):
+        try:
+            with open(file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        except:
+            data = {}
+        return data
 
 
 class Worker(QObject):
