@@ -28,17 +28,17 @@ The third page, _Settings_, mostly controls what is displayed in the _Main_ page
 
 # Documentation
 ## Files that are patched by ESLifier
-- .esm/.esp/.esl: plugins that have the compacted plugin as master
-- .ini: PO3's distributors, SkyPatcher
-- config.json: OAR, MCM Helper
-- \_conditions.txt: DAR
-- \_srd.: Sound Record Distributor
-- .psc: Source Scripts
-- .json (not config.json): Dynamic Key Activation Framework NG, Smart Harvest Auto NG AutoLoot ::SHSE needs more work for multiline form id lists
-  Should work for MNC, Dynamic String Distributor
-\facegeom\: Texture paths in face mesh files
-.seq: SEQ files
-.pex: integer form ids in compiled scripts
+- .esm/.esp/.esl: plugins that have the compacted plugin as master -Patched
+- .ini: PO3's distributors, SkyPatcher, others -Patched
+- config.json: OAR and MCM Helper -Patched
+- \_conditions.txt: Dynamic Animation Replacer -Patched
+- \_srd.: Sound Record Distributor -Patched
+- .psc: Source Scripts -Patched (doesn't patch form ids that are passed as variables)
+- .json (not config.json): -Patched, Dynamic Key Activation Framework NG and Smart Harvest Auto NG AutoLoot Should work for MNC and Dynamic String Distributor ::SHSE needs more work for multiline form id lists.
+- facegeom\: -Renamed -Texture paths in face mesh files patched
+- facetint\: -Renamed
+- .seq: SEQ files -Patched
+- .pex: integer form ids in compiled scripts -{atched
 ## Files
 ### ESLifier_Data/ Files
 This folder and its contents are generated during program usage, the folder is generated in the same folder as the executable.
