@@ -563,6 +563,7 @@ class CFIDs():
             new_form_ids.remove(id)
 
         form_id_replacements = []
+        to_remove = []
         with open(form_id_file_name, 'w') as fidf:
             for form_id, type in form_id_list:
                 if type == b'CELL':
@@ -572,7 +573,7 @@ class CFIDs():
                         new_last_two_digits = new_decimal % 100
                         if new_last_two_digits == last_two_digits:
                             new_form_ids.remove([new_decimal, new_id])
-                            form_id_list.remove([form_id, type])
+                            to_remove.append([form_id, type])
                             form_id_replacements.append([form_id, new_id])
                             fidf.write(str(form_id.hex()) + '|' + str(new_id.hex()) + '\n')
                             if form_id[:2] == b'\x00\x00':
@@ -596,7 +597,8 @@ class CFIDs():
                                 data = re.sub(re.escape(form_id) + b'(?!..' + re.escape(b'=||+||~') + b')(?!' + re.escape(b'~||+||=') + b')', b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
                                 #data = data.replace(form_id,  b'~||+||~' + new_id + b'~||+||~')
                             break
-                        
+            for item in to_remove:
+                form_id_list.remove(item)
             for form_id, _ in form_id_list:
                 _, new_id = new_form_ids.pop(0)
                 fidf.write(str(form_id.hex()) + '|' + str(new_id.hex()) + '\n')
