@@ -25,6 +25,12 @@ The third page, _Settings_, mostly controls what is displayed in the _Main_ page
 - _Hide plugins with new CELL records that are overwriten_ hides plugins that have new CELLs that are also edited/overwitten by a dependent plugin that has it as a master. It is on by default. This should probably be left on as if the setting is disabled then you will see plugins that may have their new CELLs broken by ESL flagging them.
 
 # Documentation
+## How to Build
+Fork this project, install python 3.11, and install _pyinstaller_ with pip.
+Open the console in the _ESLifier_ folder and run the command:
+```
+pyinstaller "src/eslifier_app.py" -F -n "ESLifier" --noconsole --icon "/images/ESLifier.ico"
+```
 ## Files that are patched by ESLifier
 - .esm/.esp/.esl: plugins that have the compacted plugin as master -Patched
 - .ini: PO3's distributors, SkyPatcher, others -Patched
