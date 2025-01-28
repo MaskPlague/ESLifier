@@ -402,3 +402,6 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
+/src/dist
+/src/build
+src/eslifier_app.spec
