@@ -1,11 +1,11 @@
 # ESLifier
 Purpose:
-  ESLifier allows users to scan their Skyrim Special Edition directories for plugins that can either be flagged as ESL or compacted to fit the ESL conditions. The user can then flag or compact the relevant plugins.
+  ESLifier allows users to scan their Skyrim Special Edition directory for plugins that can either be flagged as ESL or compacted to fit ESL conditions. The user can then flag or compact the relevant plugins.
   If the user compacts a plugin then ESLifier will also patch and rename all files that have that mod as a master (plugins and files that directly reference a form id present in the compacted plugin). The user can also
   scan for files and plugins that are added after compacting so that they can also be patched to fit the new form ids of the compacted master.
   
-## For Users
-### Quickstart
+# For Users
+## User Manual
 Notes:
 - If you use MO2 then, add ESLifier.exe as an executable and launch it through MO2. If you want to keep ESLifier's data separate per instance then it will need to be either installed as a mod or have the exe in separate folders per instance.
 - If you have put many of your mod files into BSAs then this program may be much less effective.
@@ -26,10 +26,19 @@ The third page, _Settings_, mostly controls what is displayed in the _Main_ page
 - _Show plugins with BSA files_ will show plugins that have .bsa files that may contain files that need patching. It is off by default. If enabled, it will display the BSA flag in _Main_'s Compact list. Hovering over the flag of each plugin will display what kinds of files ESLifier detected may be present in the .bsa that need extracting so that the program can scan and patch them. This program does not extract .bsas automatically and will require the user to do it manually. Compacting a plugin with the BSA flag will likely lead to various issues if you have not extracted the relevant files.
 - _Hide plugins with new CELL records that are overwriten_ hides plugins that have new CELLs that are also edited/overwitten by a dependent plugin that has it as a master. It is on by default. This should probably be left on as if the setting is disabled then you will see plugins that may have their new CELLs broken by ESL flagging them.
 
-### Simple Description of the Program
-## Documentation
-### Files
-### Specifics
+# Documentation
+## Files
+### ESLifier_Data/ Files
+This folder and its contents are generated during program usage, the folder is generated in the same folder as the executable.
+- bsa_dict.json: A dictionary whose keys are BSA names and the values are lists that hold all plugins that may rely on files present in the json. If index 0 is 'scripts\_\<BSA name without ext\>' then the BSA contains scripts which need to be extracted for scanning/patching.
+- cell_changed.json: A list of plugins which are compactible but also have have at least one new CELL changed by a plugin that contains them as a master.
+- dependency_dictionary.json: A dictionary whose keys are plugins and the values are lists of plugins who have the key as a master.
+- ESLifier.log: A record of the in program log window.
+- file_masters.json: A dictionary whose keys are plugins and the values are lists of files that will likely need to be patched/renamed if the key is compacted.
+- plugin_list.json: A list of all plugin files present in the top level of the directory of Skyrim Special Edition.
+- settings.json: Where ESLifier stores the user's settings.
+### Source Files
+## Specifics
   
   
     
