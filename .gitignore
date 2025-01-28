@@ -405,3 +405,6 @@ FodyWeavers.xsd
 /src/dist
 /src/build
 src/eslifier_app.spec
+/build
+ESLifier.spec
+/dist
