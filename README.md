@@ -76,6 +76,6 @@ TODO: description of python files
 - scanner.py
 - settigns_page.py
 ## Program Flow Explanation
-TODO: Indepth xxplanation of how the program works will go here eventually... maybe.
+TODO: Indepth explanation of how the program works will go here eventually... maybe.
   
     
