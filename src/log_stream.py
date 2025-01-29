@@ -42,7 +42,7 @@ class log_stream(QMainWindow):
     def write(self, text):
         self.list.append(text)
         text = text.strip()
-        if 'Process' not in text and text != '':
+        if 'Process' not in text and 'Percentage' not in text and text != '':
             self.log_file.write(text + '\n')
     
     def flush():
