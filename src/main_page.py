@@ -3,6 +3,7 @@ import json
 
 from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QApplication
+from PyQt6.QtGui import QIcon
 
 from list_eslify import list_eslable
 from list_compact import list_compactable
@@ -179,6 +180,7 @@ class main(QWidget):
                 calculated_size = round(size / 1024,2)
                 self.confirm.setText(f"This may generate up to {calculated_size} KiBs of new files.\nAre you sure you want to continue?")
             self.confirm.setWindowTitle("Confirmation")
+            self.confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
             self.confirm.addButton(QMessageBox.StandardButton.Yes)
             self.confirm.addButton(QMessageBox.StandardButton.Cancel)
             self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
@@ -231,6 +233,7 @@ class main(QWidget):
                 calculated_size = round(size / 1024,2)
                 self.confirm.setText(f"This may generate up to {calculated_size} KiBs of new files.\nAre you sure you want to continue?")
             self.confirm.setWindowTitle("Confirmation")
+            self.confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
             self.confirm.addButton(QMessageBox.StandardButton.Yes)
             self.confirm.addButton(QMessageBox.StandardButton.Cancel)
             self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
@@ -257,6 +260,7 @@ class main(QWidget):
     def finished_button_action(self, sender, checked_list):
         message = QMessageBox()
         message.setWindowTitle("Finished")
+        message.setWindowIcon(QIcon(":/images/ESLifier.png"))
         message.setText(
             "If you're using MO2 or Vortex then make sure the ESLifier Output is installed as a mod (let it win any file conflicts) "+
             "and restart ESLifier. Continuing to use the program without restarting will cause inconsistencies if you use the 'Scan Mod Files' "+
