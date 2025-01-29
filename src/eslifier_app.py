@@ -136,6 +136,7 @@ class main_window(QMainWindow):
         help = QMessageBox()
         help.setIcon(QMessageBox.Icon.Information)
         help.setWindowTitle("Help")
+        help.setWindowIcon(QIcon(":/images/ESLifier.png"))
         help.setText(
             "Almost every element in the program has a tool tip that explains it.\n"+
             "Tool tips can be seen by hovering over elements with the mouse.\n"+
@@ -150,6 +151,7 @@ class main_window(QMainWindow):
         message = QMessageBox()
         message.setWindowTitle("Missing Paths Error")
         message.setIcon(QMessageBox.Icon.Warning)
+        message.setWindowIcon(QIcon(":/images/ESLifier.png"))
         message.setStyleSheet("""
             QMessageBox {
                 background-color: lightcoral;
