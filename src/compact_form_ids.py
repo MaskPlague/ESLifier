@@ -425,10 +425,6 @@ class CFIDs():
         return top_level_grups
     
     def update_grup_sizes(grup, sizes_list, offsets):
-        """
-        Update the sizes of GRUPs based on decompressed forms and propagate size changes upwards.
-        Only update GRUP sizes if compression/decompression occurred.
-        """
         # Initialize the size with the original size
         original_size = grup['size']
         total_size = original_size# GRUP header size
@@ -463,10 +459,6 @@ class CFIDs():
         return total_size
     
     def reassemble_data(grup_hierarchy, data_list, offsets):
-        """
-        Reassemble the modified data from the updated GRUP hierarchy and the modified data_list.
-        Replace chunks of data_list where any GRUP (including child GRUPs) has been updated.
-        """
         # Convert offsets to a lookup for faster access
         offset_to_index = {offset: i for i, offset in enumerate(offsets)}
 
