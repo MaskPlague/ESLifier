@@ -5,6 +5,7 @@ import shutil
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QFileDialog)
+from PyQt6.QtGui import QIcon
 
 from blacklist import blacklist_window
 
@@ -224,6 +225,7 @@ class settings(QWidget):
         def button_pushed():
             confirm = QMessageBox()
             confirm.setIcon(QMessageBox.Icon.Warning)
+            confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
             confirm.setStyleSheet("""
                 QMessageBox {
                     background-color: lightcoral;
@@ -267,6 +269,7 @@ class settings(QWidget):
                 }""")
             confirm.setText("Are you sure you want to reset all settings?")
             confirm.setWindowTitle("Confirmation")
+            confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
             confirm.addButton(QMessageBox.StandardButton.Yes)
             confirm.addButton(QMessageBox.StandardButton.Cancel)
             confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
