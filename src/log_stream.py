@@ -45,7 +45,8 @@ class log_stream(QMainWindow):
         if 'Process' not in text and 'Percentage' not in text and text != '':
             self.log_file.write(text + '\n')
     
-    def flush():
+    def flush(self):
+        self.log_file.flush()
         pass
 
     def closeEvent(self, a0):
