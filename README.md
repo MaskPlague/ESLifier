@@ -6,7 +6,7 @@ scan for files and plugins that are added after compacting so that they can also
 # For Users
 ## User Manual
 Notes:
-- If you use MO2 then, add ESLifier.exe as an executable and launch it through MO2. If you want to keep ESLifier's data separate per instance then it will need to be either installed as a mod or have the exe in separate folders per instance.
+- If you use MO2 then, add ESLifier.exe as an executable and launch it through MO2. If you want to keep ESLifier's data separate per instance then you will need to have copies of the exe in separate folders per instance.
 - If you have put many of your mod files into BSAs then this program may be much less effective.
 - Almost every element in the program has a tooltip that is activated by hovering over it.
 - When the README says "select" it refers to directly clicking the text of the item, not clicking the check box.
