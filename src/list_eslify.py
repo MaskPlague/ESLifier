@@ -121,7 +121,7 @@ class list_eslable(QTableWidget):
 
     
     def contextMenu(self, position):
-        selected_item = self.itemAt(position)
+        selected_item = self.item(self.rowAt(position.y()), 0)
         if selected_item:
             menu = QMenu(self)
             select_all_action = menu.addAction("Select All")
