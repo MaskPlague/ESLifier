@@ -1,4 +1,5 @@
 import sys
+import images_qr
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QPalette, QColor, QIcon
 from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMenuBar, QStackedLayout, QMessageBox
@@ -15,7 +16,7 @@ class main_window(QMainWindow):
         self.setWindowTitle("ESLifier")
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.log_stream = log_stream(self)
-        self.setWindowIcon(QIcon("images/ESLifier.png"))
+        self.setWindowIcon(QIcon(":/images/ESLifier.png"))
         self.setFocus()
         self.setStyleSheet("""
             QLineEdit {
