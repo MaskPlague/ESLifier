@@ -81,7 +81,7 @@ class list_unpatched(QTableWidget):
         return data
 
     def context_menu(self, position):
-        selected_item = self.itemAt(position)
+        selected_item = self.item(self.rowAt(position.y()), 0)
         if selected_item:
             menu = QMenu(self)
             open_explorer_action = menu.addAction("Open in File Explorer")
