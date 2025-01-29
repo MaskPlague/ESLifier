@@ -26,10 +26,10 @@ The third page, _Settings_, mostly controls what is displayed in the _Main_ page
 
 # Documentation
 ## How to Build
-Fork this project, install python 3.11, and install _pyinstaller_ with pip.
+Fork this project, install python 3.13, and install _pyinstaller_ with pip.
 Open the console in the _ESLifier_ folder and run the command:
 ```
-pyinstaller "src/eslifier_app.py" -F -n "ESLifier" --noconsole --icon "/images/ESLifier.ico"
+pyinstaller "src/eslifier_app.py" --onefile -n "ESLifier" --noconsole --icon "src/images/ESLifier.ico"
 ```
 ## Files that are patched by ESLifier
 - .esm/.esp/.esl: plugins that have the compacted plugin as master -Patched
