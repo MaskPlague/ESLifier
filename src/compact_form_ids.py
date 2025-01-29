@@ -151,7 +151,6 @@ class CFIDs():
                     break
             CFIDs.compacted_and_patched[os.path.basename(master)].append(file)
         if facegeom_meshes != []:
-            print('-  Patching Renamed Files...')
             CFIDs.patch_files(master, facegeom_meshes, form_id_map, skyrim_folder_path, output_folder_path, False)
         return
 
