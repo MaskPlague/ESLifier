@@ -267,7 +267,7 @@ class CFIDs():
                             for line in f:
                                 if os.path.basename(master).lower() in line.lower() and 'getformfromfile' in line.lower():
                                     for form_ids in form_id_map:
-                                        line = re.sub(r'(0x0{0,7})(' + re.escape(form_ids[0]) + r' *,)', r'\1' + form_ids[2] + ',', line, re.IGNORECASE)
+                                        line = re.sub(r'(0x0{0,7})(' + re.escape(form_ids[0]) + r' *,)', r'\0' + form_ids[2] + ',', line, re.IGNORECASE)
                                 print(line.strip('\n'))
                         elif '.json' in new_file.lower(): #Dynamic Key Activation Framework NG, Smart Harvest Auto NG AutoLoot and whatever else may be using .json?
                             #TODO: check for other json mods
