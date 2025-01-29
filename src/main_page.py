@@ -273,6 +273,7 @@ class main(QWidget):
             for mod in checked_list:
                 self.list_eslify.mod_list.remove(mod)
             self.list_eslify.create()
+        self.eslifier.update_shown()
         self.setEnabled(True)
         
     def scan(self):
