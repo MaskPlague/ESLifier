@@ -3,6 +3,7 @@ import json
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit
+from PyQt6.QtGui import QIcon
 
 class blacklist(QTableWidget):
     def __init__(self):
@@ -32,13 +33,13 @@ class blacklist(QTableWidget):
                 background-color: rgb(200,200,200);
             }
             QTableWidget::indicator:checked{
-                image: url(./images/checked.png);
+                image: url(:/images/checked.png);
             }
             QTableWidget::indicator:unchecked{
-                image: url(./images/unchecked.png);
+                image: url(:/images/unchecked.png);
             }
             QTableWidget::indicator:indeterminate{
-                image:url(./images/partially_checked.png);
+                image:url(:/images/partially_checked.png);
             }
         """)
         self.create()
@@ -147,6 +148,7 @@ class blacklist(QTableWidget):
 class blacklist_window(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.setWindowIcon(QIcon(":/images/ESLifier.png"))
         self.setWindowTitle("Select Mods to Remove From the Blacklist")
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
         self.setStyleSheet("""

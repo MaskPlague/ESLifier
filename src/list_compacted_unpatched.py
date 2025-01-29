@@ -23,7 +23,7 @@ class list_compacted_unpatched(QTableWidget):
 
         self.setStyleSheet("""
             QTableWidget::item{
-                border-top: 1px solid gray
+                border-top: 1px solid gray;
             }
             QTableWidget::item::selected{
                 background-color: rgb(150,150,150);
@@ -32,13 +32,13 @@ class list_compacted_unpatched(QTableWidget):
                 background-color: rgb(200,200,200);
             }
             QTableWidget::indicator:checked{
-                image: url(./images/checked.png);
+                image: url(:/images/checked.png);
             }
             QTableWidget::indicator:unchecked{
-                image: url(./images/unchecked.png);
+                image: url(:/images/unchecked.png);
             }
             QTableWidget::indicator:indeterminate{
-                image:url(./images/partially_checked.png);
+                image:url(:/images/partially_checked.png);
             }
         """)
 

@@ -30,7 +30,7 @@ class list_compactable(QTableWidget):
         self.filter_changed_cells = True
 
         self.blacklist = blacklist()
-        
+
         self.setStyleSheet("""
             QTableWidget::item{
                 border-top: 1px solid gray;
@@ -42,13 +42,13 @@ class list_compactable(QTableWidget):
                 background-color: rgb(200,200,200);
             }
             QTableWidget::indicator:checked{
-                image: url(./images/checked.png);
+                image: url(:/images/checked.png);
             }
             QTableWidget::indicator:unchecked{
-                image: url(./images/unchecked.png);
+                image: url(:/images/unchecked.png);
             }
             QTableWidget::indicator:indeterminate{
-                image:url(./images/partially_checked.png);
+                image:url(:/images/partially_checked.png);
             }
         """)
 
