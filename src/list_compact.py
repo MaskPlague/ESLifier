@@ -199,7 +199,17 @@ class list_compactable(QTableWidget):
         return data
 
     def contextMenu(self, position):
-        selected_item = self.itemAt(position)
+        row = self.rowAt(position.y())
+        col = self.columnAt(position.x())
+
+        if col == 4 and self.cellWidget(row, 3) and self.cellWidget(row, 3).text() == 'Hide':
+            list_widget = self.cellWidget(row, 4)
+            selected_item = list_widget.itemAt(list_widget.mapFromGlobal(self.viewport().mapToGlobal(position)))
+            if not selected_item:
+                selected_item = self.item(row,0)
+        else:
+            selected_item = self.item(row, 0)
+
         if selected_item:
             menu = QMenu(self)
             select_all_action = menu.addAction("Select All")
