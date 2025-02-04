@@ -12,6 +12,7 @@ class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
         #TODO: refine patching of files in compact_form_ids.py
+        #TODO: thread patching dependents maybe?
         #TODO: Consider creating MO2 integration in the form of a notification of esl flagable/new dependent files... no idea where to start with this...
         self.setWindowTitle("ESLifier")
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
@@ -119,13 +120,15 @@ class main_window(QMainWindow):
     def main_selected(self):
         self.update_settings()
         self.tabs.setCurrentIndex(0)
-        if self.settings_widget.settings['output_folder_path'] == '' or self.settings_widget.settings['skyrim_folder_path'] == '':
+        if (self.settings_widget.settings['output_folder_path'] == '' or self.settings_widget.settings['skyrim_folder_path'] == '' or 
+            (self.settings_widget.settings['mo2_mode'] and self.settings_widget.settings['mo2_modlist_txt_path'] == '')):
             self.tabs.setCurrentIndex(2)
             self.no_path_set()
 
     def patch_new_selected(self):
         self.tabs.setCurrentIndex(1)
-        if self.settings_widget.settings['output_folder_path'] == '' or self.settings_widget.settings['skyrim_folder_path'] == '':
+        if (self.settings_widget.settings['output_folder_path'] == '' or self.settings_widget.settings['skyrim_folder_path'] == '' or 
+            (self.settings_widget.settings['mo2_mode'] and self.settings_widget.settings['mo2_modlist_txt_path'] == '')):
             self.tabs.setCurrentIndex(2)
             self.no_path_set()
 
@@ -159,6 +162,10 @@ class main_window(QMainWindow):
         message.setText(
             "Both the Skyrim Folder Path and Output Folder Path\n"+
             "must be set to leave the settings page!")
+        if self.settings_widget.settings['mo2_mode']:
+            message.setText(
+            "The Skyrim Folder Path, Output Folder Path, and the Modlist.txt Path\n"+
+            "must be set to leave the settings page!")
         message.addButton(QMessageBox.StandardButton.Ok)
         def close():
             message.close()
@@ -169,12 +176,16 @@ class main_window(QMainWindow):
         self.settings_widget.update_settings()
         self.main_widget.skyrim_folder_path = self.settings_widget.settings['skyrim_folder_path']
         self.main_widget.output_folder_path = self.settings_widget.settings['output_folder_path']
+        self.main_widget.mo2_mode = self.settings_widget.settings['mo2_mode']
+        self.main_widget.modlist_txt_path = self.settings_widget.settings['mo2_modlist_txt_path']
         self.main_widget.update_header = self.settings_widget.settings['update_header']
         self.main_widget.show_cells = self.settings_widget.settings['show_cells']
         self.main_widget.list_compact.filter_changed_cells = self.settings_widget.settings['enable_cell_changed_filter']
         self.main_widget.list_eslify.filter_changed_cells = self.settings_widget.settings['enable_cell_changed_filter']
         self.patch_new_widget.skyrim_folder_path = self.settings_widget.settings['skyrim_folder_path']
         self.patch_new_widget.output_folder_path = self.settings_widget.settings['output_folder_path']
+        self.patch_new_widget.modlist_txt_path = self.settings_widget.settings['mo2_modlist_txt_path']
+        self.patch_new_widget.mo2_mode = self.settings_widget.settings['mo2_mode']
         self.patch_new_widget.update_header = self.settings_widget.settings['update_header']
         self.update_shown()
 
