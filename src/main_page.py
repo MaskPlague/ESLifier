@@ -19,6 +19,8 @@ class main(QWidget):
         self.create()
         self.skyrim_folder_path = ''
         self.output_folder_path = ''
+        self.modlist_txt_path = ''
+        self.mo2_mode = False
         self.update_header = True
         self.show_cells = True
         self.eslify_dictionary = {}
@@ -172,13 +174,13 @@ class main(QWidget):
                             counted.append(file)
             if size > 1024 ** 3:
                 calculated_size = round(size / (1024 ** 3),3)
-                self.confirm.setText(f"This may generate up to {calculated_size} GiBs of new files.\nAre you sure you want to continue?")
+                self.confirm.setText(f"This may generate up to {calculated_size} GBs of new files.\nAre you sure you want to continue?")
             elif size > 1048576:
                 calculated_size = round(size / 1048576,2)
-                self.confirm.setText(f"This may generate up to {calculated_size} MiBs of new files.\nAre you sure you want to continue?")
+                self.confirm.setText(f"This may generate up to {calculated_size} MBs of new files.\nAre you sure you want to continue?")
             else:
                 calculated_size = round(size / 1024,2)
-                self.confirm.setText(f"This may generate up to {calculated_size} KiBs of new files.\nAre you sure you want to continue?")
+                self.confirm.setText(f"This may generate up to {calculated_size} KBs of new files.\nAre you sure you want to continue?")
             self.confirm.setWindowTitle("Confirmation")
             self.confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
             self.confirm.addButton(QMessageBox.StandardButton.Yes)
@@ -199,7 +201,7 @@ class main(QWidget):
                     self.list_compact.item(row,0).setFlags(self.list_compact.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
             self.log_stream.show()
             self.thread_new = QThread()
-            self.worker = Worker2(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, self.update_header)
+            self.worker = Worker2(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, self.update_header, self.mo2_mode)
             self.worker.moveToThread(self.thread_new)
             self.thread_new.started.connect(self.worker.run)
             self.worker.finished_signal.connect(self.thread_new.quit)
@@ -261,10 +263,10 @@ class main(QWidget):
         message = QMessageBox()
         message.setWindowTitle("Finished")
         message.setWindowIcon(QIcon(":/images/ESLifier.png"))
-        message.setText(
-            "If you're using MO2 or Vortex then make sure the ESLifier Output is installed as a mod (let it win any file conflicts) "+
-            "and restart ESLifier. Continuing to use the program without restarting will cause inconsistencies if you use the 'Scan Mod Files' "+
-            "button or the 'Find Unpatched Files' button as it will not get the newly patched files.")
+        message.setText("If you're using MO2 or Vortex then make sure the ESLifier Output is installed as a mod and let it win any file conflicts. "+
+                        "For MO2 users: If you generate the output folder in your mods folder for the first time, then make sure to hit "+
+                        "refresh in MO2.\n"+
+                        "For Vortex users: Make sure to redeploy before using this program again.")
         def shown():
             message.hide()
         message.accepted.connect(shown)
@@ -284,7 +286,7 @@ class main(QWidget):
         self.button_scan.setEnabled(False)
         self.log_stream.show()
         self.thread_new = QThread()
-        self.worker = Worker(self.skyrim_folder_path, self.update_header, self.show_cells)
+        self.worker = Worker(self.skyrim_folder_path, self.update_header, self.show_cells, self.mo2_mode, self.modlist_txt_path)
         self.worker.moveToThread(self.thread_new)
         self.thread_new.started.connect(self.worker.scan_run)
         self.worker.finished_signal.connect(self.completed_scan)
@@ -317,15 +319,17 @@ class main(QWidget):
 
 class Worker(QObject):
     finished_signal = pyqtSignal(list, list , list, list, dict)
-    def __init__(self, path, update, cell):
+    def __init__(self, path, update, cell, mo2_mode, modlist_txt_path):
         super().__init__()
         self.skyrim_folder_path = path
         self.update_header = update
         self.show_cells = cell
+        self.mo2_mode = mo2_mode
+        self.modlist_txt_path = modlist_txt_path
 
     def scan_run(self):
         print('Scanning All Files:')
-        scanner(self.skyrim_folder_path)
+        scanner(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path)
         print('\nGettings Dependencies')
         dependency_dictionary = dependecy_getter.scan(self.skyrim_folder_path)
         print('\nScanning Plugins:')
@@ -338,17 +342,18 @@ class Worker(QObject):
 
 class Worker2(QObject):
     finished_signal = pyqtSignal()
-    def __init__(self, checked, dependency_dictionary, skyrim_folder_path, output_folder_path, update_header):
+    def __init__(self, checked, dependency_dictionary, skyrim_folder_path, output_folder_path, update_header, mo2_mode):
         super().__init__()
         self.checked = checked
         self.dependency_dictionary = dependency_dictionary
         self.skyrim_folder_path = skyrim_folder_path
         self.output_folder_path = output_folder_path
         self.update_header = update_header
+        self.mo2_mode = mo2_mode
         
     def run(self):
         for file in self.checked:
-            CFIDs.compact_and_patch(file, self.dependency_dictionary[os.path.basename(file).lower()], self.skyrim_folder_path, self.output_folder_path, self.update_header)
+            CFIDs.compact_and_patch(file, self.dependency_dictionary[os.path.basename(file).lower()], self.skyrim_folder_path, self.output_folder_path, self.update_header, self.mo2_mode)
         print("Compacted and Patched")
         print('CLEAR')
         self.finished_signal.emit()
