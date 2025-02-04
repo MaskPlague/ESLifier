@@ -5,25 +5,41 @@ import timeit
 import json
 
 class scanner():
-    def __init__(self, path):
+    def __init__(self, path, mo2_mode, modlist_txt_path):
         scanner.path = path
         start_time = timeit.default_timer()
         scanner.file_count = 0
         scanner.all_files = []
         scanner.plugins = []
         scanner.lock = threading.Lock()
-        print('-  Gathering Files...')
+        print('-  Gathering Files...\n\n')
         path_level = len(path.split(os.sep))
-        for root, _, files in os.walk(scanner.path):
-            root_level = len(root.split(os.sep))
-            scanner.file_count += len(files)
-            for file in files:
-                scanner.all_files.append(os.path.join(root, file))
-                #TODO: remove the + 1 as it is for testing only
-                if path_level + 1 == root_level and (file.lower().endswith('.esp') or file.lower().endswith('.esm') or file.lower().endswith('.esl')):
-                    scanner.plugins.append(os.path.join(root, file))
+        loop = 0
+        plugin_extensions = ('.esp', '.esm', '.esl')
+        if mo2_mode:
+            load_order, enabled_mods = scanner.fix_modlist(modlist_txt_path)
+            scanner.all_files, scanner.plugins = scanner.get_winning_files(scanner.path, load_order, enabled_mods)
+            scanner.file_count = len(scanner.all_files)
+        else:
+            for root, _, files in os.walk(scanner.path):
+                if 'eslifier' not in root.lower():
+                    root_level = len(root.split(os.sep))
+                    scanner.file_count += len(files)
+                    if loop == 50: #prevent spamming stdout and slowing down the program
+                        loop = 0
+                        print(f'\033[F\033[K-  Gathered: {scanner.file_count}\n-', end='\r')
+                    else:
+                        loop += 1
+                    for file in files:
+                        scanner.all_files.append(os.path.join(root, file))
+                        #TODO: remove the + 1 from path_level + 1 as it is for testing only
+                        if path_level + 1 == root_level and file.lower().endswith(plugin_extensions) :
+                            scanner.plugins.append(os.path.join(root, file))
 
-        print('-  Gathered ' + str(len(scanner.all_files)) +' files.\n\n')
+        print('\033[F\033[K-  Gathered ' + str(len(scanner.all_files)) +' total files.\n', end='\r')
+        print(' ')
+        print(' ')
+        print(' ')
         scanner.get_file_masters()
 
         scanner.dump_to_file(file="ESLifier_Data/plugin_list.json", data=scanner.plugins)
@@ -34,6 +50,96 @@ class scanner():
         end_time = timeit.default_timer()
         time_taken = end_time - start_time
         print('-  Time taken: ' + str(round(time_taken,2)) + ' seconds')
+    
+    def get_files_from_mods(mods_folder, enabled_mods):
+        mod_files = {}
+        plugin_extensions = ('.esp', '.esl', '.esm')
+        plugin_names = []
+        loop = 0
+        file_count = 0
+        for mod_folder in os.listdir(mods_folder):
+            mod_path = os.path.join(mods_folder, mod_folder)
+            if os.path.isdir(mod_path) and mod_folder in enabled_mods:
+                for root, dirs, files in os.walk(mod_path):
+                    file_count += len(files)
+                    if loop == 50: #prevent spamming stdout and slowing down the program
+                        loop = 0
+                        print(f'\033[F\033[K-  Gathered: {file_count}\n-', end='\r')
+                    else:
+                        loop += 1
+                    for file in files:
+                        if file != 'meta.ini':
+                            # Get the relative file path
+                            full_path = os.path.join(root, file)
+                            relative_path = os.path.relpath(full_path, mods_folder).lower()
+                            part = relative_path.split('\\')
+                            relative_path = os.path.join(*part[1:])
+                            if '.mohidden' in relative_path: #if the file or containing folder is mod organizer hidden, skip it
+                                continue
+                            # Track the file paths by mod
+                            if relative_path not in mod_files:
+                                mod_files[relative_path] = []
+                            mod_files[relative_path].append(mod_folder)
+                            if file.endswith(plugin_extensions):
+                                plugin_names.append(file)
+
+        return mod_files, plugin_names
+
+    def fix_modlist(path):
+        lines = []
+        with open(path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+        enabled_mods = []
+        for i in range(len(lines)):
+            if lines[i].startswith(('+','*')) and not lines[i].endswith('_separator'):
+                enabled_mods.append(lines[i][1:].strip())
+
+        enabled_mods.reverse()
+
+        to_remove = []
+        for i in range(len(lines)):
+            lines[i] = lines[i][1:].strip()
+            if '_separator' in lines[i]:
+                to_remove.append(lines[i])
+        
+        for mod in to_remove:
+            lines.remove(mod)
+        lines.pop(0)
+        lines.reverse()
+
+        return lines, enabled_mods
+
+    def get_winning_files(mods_folder, load_order, enabled_mods):
+        mod_folder_level = len(mods_folder.split(os.sep))
+        mod_files, plugin_names = scanner.get_files_from_mods(mods_folder, enabled_mods)
+        winning_files = []
+        file_count = 0
+        loop = 0
+        for file, mods in mod_files.items():
+            file_count += 1
+            if loop == 500:
+                loop = 0
+                print(f'\033[F\033[K-  Winning Files Processed: {file_count}\n-', end='\r')
+            else:
+                loop += 1
+            if len(mods) == 1:
+                file_path = os.path.join(os.path.join(mods_folder, mods[0]), file)
+                winning_files.append(file_path)
+            else:
+                mods_sorted = sorted(mods, key=lambda mod: load_order.index(mod))
+                file_path = os.path.join(os.path.join(mods_folder, mods_sorted[-1]), file)
+                winning_files.append(file_path)
+
+        plugin_extensions = ('.esp', '.esl', '.esm')
+        plugins = []
+        plugin_names_lowered = [plugin.lower() for plugin in plugin_names]
+        for file in winning_files:
+            file_level = len(file.split(os.sep))
+            if file_level == mod_folder_level + 2 and file.lower().endswith(plugin_extensions):
+                plugin = os.path.join(os.path.dirname(file), plugin_names[plugin_names_lowered.index(os.path.basename(file))])
+                plugins.append(plugin)
+
+        return winning_files, plugins
 
     def dump_to_file(file, data):
         with open(file, 'w', encoding='utf-8') as f:
@@ -266,9 +372,3 @@ class scanner():
 
         if plugins != []:
             scanner.bsa_dict[os.path.basename(bsa_file)] = plugins
-        
-
-    def get_all_files():
-        for root, dirs, files in os.walk(scanner.path):
-            for file in files:
-                yield os.path.join(root,file)
