@@ -1,5 +1,6 @@
 import os
-import re
+import regex as re
+#import re
 import binascii
 import shutil
 import fileinput
@@ -8,9 +9,18 @@ import json
 import threading
 #TODO: Further refinement of file patching, additional research on files that need patching
 class CFIDs():
-    def compact_and_patch(file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header):
+    record_types = [b'GMST', b'KYWD', b'LCRT', b'AACT', b'TXST', b'GLOB', b'CLAS', b'FACT', b'HDPT', b'EYES', b'RACE', b'SOUN', b'ASPC', b'MGEF', b'LTEX', 
+                    b'ENCH', b'SPEL', b'SCRL', b'ACTI', b'TACT', b'ARMO', b'BOOK', b'CONT', b'DOOR', b'INGR', b'LIGH', b'MISC', b'APPA', b'STAT', b'MSTT', 
+                    b'GRAS', b'TREE', b'FLOR', b'FURN', b'WEAP', b'AMMO', b'NPC_', b'LVLN', b'KEYM', b'ALCH', b'IDLM', b'COBJ', b'PROJ', b'HAZD', b'SLGM', 
+                    b'LVLI', b'WTHR', b'CLMT', b'SPGD', b'RFCT', b'REGN', b'NAVI', b'CELL', b'WRLD', b'DIAL', b'QUST', b'IDLE', b'PACK', b'CSTY', b'LSCR', 
+                    b'LVSP', b'ANIO', b'WATR', b'EFSH', b'EXPL', b'DEBR', b'IMGS', b'IMAD', b'FLST', b'PERK', b'BPTD', b'ADDN', b'AVIF', b'CAMS', b'CPTH', 
+                    b'VTYP', b'MATT', b'IPCT', b'IPDS', b'ARMA', b'ECZN', b'LCTN', b'MESG', b'DOBJ', b'LGTM', b'MUSC', b'FSTP', b'FSTS', b'SMBN', b'SMQN',
+                    b'SMEN', b'DLBR', b'MUST', b'DLVW', b'WOOP', b'SHOU', b'EQUP', b'RELA', b'SCEN', b'ASTP', b'OTFT', b'ARTO', b'MATO', b'MOVT', b'HAZD', 
+                    b'SNDR', b'DUAL', b'SNCT', b'SOPM', b'COLL', b'CLFM', b'REVB', b'INFO', b'REFR', b'ACHR', b'NAVM', b'PGRE', b'PHZD', b'LAND']
+    def compact_and_patch(file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header, mo2_mode):
         CFIDs.lock = threading.Lock()
         CFIDs.compacted_and_patched = {}
+        CFIDs.mo2_mode = mo2_mode
         print("Compacting Plugin: " + os.path.basename(file_to_compact) + '...')
         CFIDs.compact_file(file_to_compact, skyrim_folder_path, output_folder_path, update_header)
         if dependents != []:
@@ -58,9 +68,10 @@ class CFIDs():
             f.seek(9)
             f.write(b'\x02')
 
-    def patch_new(compacted_file, dependents, files_to_patch, skyrim_folder_path, output_folder_path, update_header):
+    def patch_new(compacted_file, dependents, files_to_patch, skyrim_folder_path, output_folder_path, update_header, mo2_mode):
         CFIDs.lock = threading.Lock()
         CFIDs.compacted_and_patched = {}
+        CFIDs.mo2_mode = mo2_mode
         print('Patching new plugins and files for ' + compacted_file + '...')
         CFIDs.compacted_and_patched[compacted_file] = []
         if dependents != []:
@@ -77,7 +88,12 @@ class CFIDs():
 
     #Create a copy of the mod plugin we're compacting
     def copy_file_to_output(file, skyrim_folder_path, output_folder):
-        end_path = file[len(skyrim_folder_path) + 1:]
+        if CFIDs.mo2_mode:
+            end_path = os.path.relpath(file, skyrim_folder_path)
+            #part = relative_path.split('\\')
+            #end_path = os.path.join(*part[1:])
+        else:
+            end_path = file[len(skyrim_folder_path) + 1:]
         new_file = os.path.join(os.path.join(output_folder,'ESLifier Compactor Output'), re.sub(r'(.*?)(/|\\)', '', end_path, 1))
         if not os.path.exists(os.path.dirname(new_file)):
             os.makedirs(os.path.dirname(new_file))
@@ -145,7 +161,10 @@ class CFIDs():
                         os.replace(new_file, new_file.replace(form_ids[1].upper(), form_ids[3].upper()))
                         end_path = file[len(skyrim_folder_path) + 1:]
                         new_file_but_skyrim_pathed = os.path.join(skyrim_folder_path, re.sub(r'(.*?)(/|\\)', '', end_path, 1))
-                        CFIDs.compacted_and_patched[os.path.basename(master)].append(new_file_but_skyrim_pathed)
+                        if new_file_but_skyrim_pathed not in CFIDs.compacted_and_patched[os.path.basename(master)]:
+                            CFIDs.compacted_and_patched[os.path.basename(master)].append(new_file_but_skyrim_pathed)
+                        if new_file not in CFIDs.compacted_and_patched[os.path.basename(master)]:
+                            CFIDs.compacted_and_patched[os.path.basename(master)].append(new_file)
                         if 'facegeom' in new_file.lower() and os.path.basename(master).lower() in new_file.lower():
                             facegeom_meshes.append(new_file.replace(form_ids[1].upper(), form_ids[3].upper()))
                     break
@@ -339,9 +358,13 @@ class CFIDs():
         sizes_list = [[] for _ in range(len(data_list))]
 
         for i in range(len(data_list)):
-            if len(data_list[i]) > 24 and data_list[i][10] == 0x4 and (0 <= data_list[i][15] <= master_count):
+            if len(data_list[i]) > 24 and data_list[i][10] == 0x4 and (0 <= data_list[i][15] <= master_count) and data_list[i][:4] != b'GRUP':
                 size = int.from_bytes(data_list[i][4:8][::-1])
-                decompressed = zlib.decompress(data_list[i][28:size + 24])  # Decompress the form
+                try:
+                    decompressed = zlib.decompress(data_list[i][28:size + 24])  # Decompress the form
+                except Exception as e:
+                    print(f'Error: {e}\rHeader: {data_list[i][:24]}' )
+                    
                 sizes_list[i] = [len(data_list[i]), 0, i, len(data_list[i])]
                 data_list[i] = data_list[i][:28] + decompressed + data_list[i][size+24:]
 
@@ -349,7 +372,7 @@ class CFIDs():
     
     def recompress_data(data_list, sizes_list, master_count):
         for i in range(len(data_list)):
-            if len(data_list[i]) > 24 and data_list[i][10] == 0x4 and (0 <= data_list[i][15] <= master_count):
+            if len(data_list[i]) > 24 and data_list[i][10] == 0x4 and (0 <= data_list[i][15] <= master_count) and data_list[i][:4] != b'GRUP':
                 compressed = zlib.compress(data_list[i][28:], 9)
                 formatted = [0] * (sizes_list[i][0] - 28)
                 formatted[:28] = data_list[i][:28]
@@ -504,7 +527,46 @@ class CFIDs():
         new_nvpp += b''.join(nvpp_form_ids)
         data = data.replace(b'=||+||~NVPP_PLACEHOLDER~||+||=', new_nvpp)
         return data
+    
+    def get_land_data(data_list):
+        land_forms = []
+        for i, form in enumerate(data_list):
+            if b'LAND' == form[:4] or (form[:4] == b'GRUP' and len(form) > 24 and form[24:28] == b'LAND'):
+                land_form_id_offsets = [12]
+                offset = 24
+                while offset != -1:
+                    offset = form.find(b'ATXT', offset + 4)
+                    if offset != -1:
+                        land_form_id_offsets.append(offset + 6)
+                offset = 24
+                while offset != -1:
+                    offset = form.find(b'BTXT', offset + 4)
+                    if offset != -1:
+                        land_form_id_offsets.append(offset + 6)
+                land_forms.append([i, bytearray(form), land_form_id_offsets])
+                data_list[i] = form[:24]
+        return data_list, land_forms
 
+    def patch_land_data(data_list, land_forms, form_id_replacements):
+        for i, form, offsets in land_forms:
+            for offset in offsets:
+                for from_id, to_id in form_id_replacements:
+                    if form[offset:offset+4] == from_id:
+                        form[offset:offset+4] = to_id
+                        break
+            data_list[i] = bytes(form)
+        return data_list
+    
+    def get_possible_form_id_offsets(master_byte, data):
+        offset = 0
+        possible_form_id_offsets = []
+        while True:
+            offset = data.find(master_byte, offset+1)
+            if offset != -1:
+                possible_form_id_offsets.append(offset - 3)
+            else:
+                return possible_form_id_offsets
+            
     #Compacts master file and returns the new mod folder
     def compact_file(file, skyrim_folder_path, output_folder, update_header):
         form_id_file_name = 'ESLifier_Data/Form_ID_Maps/' + os.path.basename(file).lower() + "_FormIdMap.txt"
@@ -524,8 +586,10 @@ class CFIDs():
             f.seek(0)
             data = f.read()
             f.close()
-
-        data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z_]................[\x2C\x2B]\x00)|(?=GRUP....................)', data, flags=re.DOTALL) if x]
+        record_types_pattern = b'|'.join(CFIDs.record_types)
+        pattern = rb'(?=(?:' + record_types_pattern + rb')................[\x2c\x2b]\x00.\x00)|(?=GRUP....................)'
+        data_list = [x for x in re.split(pattern, data, flags=re.DOTALL) if x]
+        #data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z_]................[\x2C\x2B]\x00)|(?=GRUP....................)', data, flags=re.DOTALL) if x[:4] in CFIDs.record_types]
 
         # Calculate the byte offsets of each chunk in data_list
         offsets = []
@@ -545,17 +609,24 @@ class CFIDs():
 
         grup_hierarchy = CFIDs.parse_grups(data)
 
-        data = b'-||+||-'.join(data_list)
+        form_id_list = []
+        #Get all form ids in plugin
+        land_present = False
+        for form in data_list:
+            if len(form) > 24 and form[15] == master_count and form[12:16] not in form_id_list:
+                form_id_list.append([form[12:16], form[:4]])
+            if not land_present and (b'LAND' == form[:4] or (form[:4] == b'GRUP' and len(form) > 24 and form[24:28] == b'LAND')):
+                    land_present = True
+
+        if land_present:
+            data_list, land_forms = CFIDs.get_land_data(data_list)
+
+        data = bytearray(b'-||+||-'.join(data_list))
+        
         nvpp_present = False
         if b'NVPP' in data:
             nvpp_present = True
             data, nvpp_form_ids, nvpp_start = CFIDs.save_nvpp_data(data)
-
-        form_id_list = []
-        #Get all form ids in plugin
-        for form in data_list:
-            if len(form) > 24 and form[15] == master_count and form[12:16] not in form_id_list:
-                form_id_list.append([form[12:16], form[:4]])
 
         form_id_list.sort()
 
@@ -585,73 +656,90 @@ class CFIDs():
             form_id_list.remove(id)
             new_form_ids.remove(id)
 
+        master_byte = master_count.to_bytes()
+
+        possible_form_id_offsets = CFIDs.get_possible_form_id_offsets(master_byte, data)
+
+        matched_ids = []
+
         form_id_replacements = []
-        to_remove = []
-        with open(form_id_file_name, 'w') as fidf:
-            for form_id, type in form_id_list:
-                if type == b'CELL':
-                    decimal_form_id = int.from_bytes(form_id[:3][::-1])
-                    last_two_digits = decimal_form_id % 100
-                    for new_decimal, new_id in new_form_ids:
-                        new_last_two_digits = new_decimal % 100
-                        if new_last_two_digits == last_two_digits:
-                            new_form_ids.remove([new_decimal, new_id])
-                            to_remove.append([form_id, type])
-                            form_id_replacements.append([form_id, new_id])
-                            fidf.write(str(form_id.hex()) + '|' + str(new_id.hex()) + '\n')
-                            if form_id[:2] == b'\x00\x00':
-                                data = re.sub(b'(?<![\x2c\x2b].)' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
-                            elif form_id[:1] == b'\x00':
-                                data = re.sub(b'(?<![\x2c\x2b]..)' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
-                            elif form_id[:2] == b'\xFF\xFF':
-                                data = re.sub(re.escape(form_id) + b'(?!.' + int.to_bytes(master_count) + b')', b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
-                            elif form_id[:1] == b'\xFF':
-                                data = re.sub(re.escape(form_id) + b'(?!..' + int.to_bytes(master_count) + b')', b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
-                            elif form_id[:1] == b'~':
-                                data = re.sub(b'(?<!' + re.escape(b'=||+||') + b')' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
-                            elif form_id[:1] == b'=':
-                                data = re.sub(b'(?<!' + re.escape(b'~||+||') + b')' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
-                            elif form_id[:1] == B'\x20':
-                                data = re.sub(b'(?<![A-Z]{3}[A-Z_]{1})' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
-                            elif re.match(b'[A-Z_]', form_id[:1]):
-                                data = re.sub(b'(?<![A-Z]{2})' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
-                            else:
-                                #data = re.sub(re.escape(form_id) + b'(?!..' + re.escape(b'~||+||~') + b')', b'~||+||~' + new_id + b'~||+||~', data, flags=re.DOTALL)
-                                data = re.sub(re.escape(form_id) + b'(?!..' + re.escape(b'=||+||~') + b')(?!' + re.escape(b'~||+||=') + b')', b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
-                                #data = data.replace(form_id,  b'~||+||~' + new_id + b'~||+||~')
-                            break
-            for item in to_remove:
-                form_id_list.remove(item)
-            for form_id, _ in form_id_list:
+        #Make sure that if a cell form id follows the sub-block convention it keeps it
+        for form_id, type in form_id_list:
+            if type == b'CELL':
+                decimal_form_id = int.from_bytes(form_id[:3][::-1])
+                last_two_digits = decimal_form_id % 100
+                for new_decimal, new_id in new_form_ids:
+                    new_last_two_digits = new_decimal % 100
+                    if new_last_two_digits == last_two_digits:
+                        form_id_replacements.append([form_id, new_id])
+                        new_form_ids.remove([new_decimal, new_id])
+                        matched_ids.append(form_id)
+                        break
+
+        for form_id, _ in form_id_list:
+            if form_id not in matched_ids:
                 _, new_id = new_form_ids.pop(0)
-                fidf.write(str(form_id.hex()) + '|' + str(new_id.hex()) + '\n')
                 form_id_replacements.append([form_id, new_id])
-                if form_id[:2] == b'\x00\x00':
-                    data = re.sub(b'(?<![\x2C\x2B].)' + re.escape(form_id) + b'(?!.{0,2}' + int.to_bytes(master_count) + b')', b'=||+||~' + new_id + b'~||+||=' , data, flags=re.DOTALL)
-                elif form_id[:1] == b'\x00':
-                    data = re.sub(b'(?<![\x2C\x2B]..)' + re.escape(form_id) + b'(?!.{0,2}' + int.to_bytes(master_count) + b')', b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
-                elif form_id[:2] == b'\xFF\xFF':
-                    data = re.sub(re.escape(form_id) + b'(?!.' + int.to_bytes(master_count) + b')',  b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
-                elif form_id[:1] == b'\xFF':
-                    data = re.sub(re.escape(form_id) + b'(?!..' + int.to_bytes(master_count) + b')',  b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
-                elif form_id[:1] == b'~':
-                    data = re.sub(b'(?<!' + re.escape(b'=||+||') + b')' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
-                elif form_id[:1] == b'=':
-                    data = re.sub(b'(?<!' + re.escape(b'~||+||') + b')' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
-                elif form_id[:1] == B'\x20':
-                    data = re.sub(b'(?<![A-Z]{3}[A-Z_]{1})' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
-                elif re.match(b'[A-Z_]', form_id[:1]):
-                    data = re.sub(b'(?<![A-Z]{2})' + re.escape(form_id), b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
-                else:
-                    data = re.sub(re.escape(form_id) + b'(?!..' + re.escape(b'=||+||~') + b')(?!' + re.escape(b'~||+||=') + b')', b'=||+||~' + new_id + b'~||+||=', data, flags=re.DOTALL)
-                    #data = data.replace(form_id,  b'~||+||~' + new_id + b'~||+||~')
+
+        form_id_replacements.sort()
+
+        with open(form_id_file_name, 'w') as fidf:
+            for form_id, new_id in form_id_replacements:
+                fidf.write(str(form_id.hex()) + '|' + str(new_id.hex()) + '\n')
+                
+        possible_form_id_offsets.reverse()
+
+        previous_offset = len(data) + 4
+
+        for offset in possible_form_id_offsets:
+            for from_id, to_id in form_id_replacements:
+                if data[offset:offset+4] == from_id and offset < previous_offset - 4:
+                    if from_id[:2] == b'\x00\x00':
+                        if data[offset-2:offset-1] in (b'\x2C', b'\x2B'):
+                            continue
+                        if master_byte not in data[offset+4:offset+6]:
+                            data[offset:offset+4] = to_id
+                            previous_offset = offset
+                        elif data[offset+1:offset+5] not in form_id_list and data[offset+2:offset+6] not in form_id_list:
+                            data[offset:offset+4] = to_id
+                            previous_offset = offset
+                    elif from_id[:1] == b'\x00' or (from_id[1:2] == b'\x00' and not bool(re.match(b'[A-Z_]', from_id[:1]))):
+                        if data[offset-3:offset-2] in (b'\x2C', b'\x2B'):
+                            continue
+                        if master_byte not in data[offset+4:offset+6]:
+                            data[offset:offset+4] = to_id
+                            previous_offset = offset
+                        elif data[offset+1:offset+5] not in form_id_list and data[offset+2:offset+6] not in form_id_list:
+                            data[offset:offset+4] = to_id
+                            previous_offset = offset
+                    elif from_id[:2] == b'\xFF\xFF':
+                        if master_byte != data[offset+4:offset+7]:
+                            data[offset:offset+4] = to_id
+                            previous_offset = offset
+                    elif from_id[:1] == b'\xFF':
+                        if master_byte not in data[offset+4:offset+7]:
+                            data[offset:offset+4] = to_id
+                        previous_offset = offset
+                    elif from_id[:1] == B'\x20':
+                        if not re.match(b'[A-Z]{3}[A-Z_]{1}', data[offset-4:offset]):
+                            data[offset:offset+4] = to_id
+                            previous_offset = offset
+                    elif re.match(b'[A-Z_]', from_id[:1]):
+                        if not re.match(b'[A-Z]{2}', data[offset-2:offset]):
+                            data[offset:offset+4] = to_id
+                            previous_offset = offset
+                    else:
+                        data[offset:offset+4] = to_id
+                        previous_offset = offset
+                    break
         
         if nvpp_present:
             data = CFIDs.fix_nvpp_data(data,nvpp_form_ids,nvpp_start,form_id_replacements)
 
-        data = data.replace(b'~||+||=', b'')
-        data = data.replace(b'=||+||~', b'')
+        if land_present:
+            data_list = CFIDs.patch_land_data(data_list, land_forms, form_id_replacements)
 
+        data = bytes(data)
         data_list = data.split(b'-||+||-')
 
         data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list, master_count)
@@ -671,15 +759,27 @@ class CFIDs():
 
     #replaced the old form ids with the new ones in all files that have the comapacted file as a master
     def patch_dependent_plugins(file, dependents, skyrim_folder_path, output_folder_path, update_header):
-        form_if_file_name = "ESLifier_Data/Form_ID_Maps/" + os.path.basename(file).lower() + "_FormIdMap.txt"
+        form_id_file_name = "ESLifier_Data/Form_ID_Maps/" + os.path.basename(file).lower() + "_FormIdMap.txt"
         form_id_file_data = ''
-        with open(form_if_file_name, 'r') as form_id_file:
+
+        record_types_pattern = b'|'.join(CFIDs.record_types)
+        pattern = rb'(?=(?:' + record_types_pattern + rb')................[\x2c\x2b]\x00.\x00)|(?=GRUP....................)'
+        
+        with open(form_id_file_name, 'r') as form_id_file:
             form_id_file_data = form_id_file.readlines()
 
         for dependent in dependents:
             new_file = CFIDs.copy_file_to_output(dependent, skyrim_folder_path, output_folder_path)
             dependent_data = b''
-            print('-    ' + new_file)
+            print('-    ' + os.path.basename(new_file))
+            size = os.path.getsize(new_file)
+            calculated_size = round(size / 1048576,2)
+            print_progress = False
+            if calculated_size > 20:
+                print_progress = True
+                print(f'-    Size is {calculated_size} MBs which will take a longer time to patch.')
+                print(f'-    This program uses a dumb method that is slower than xEdit.')
+
             with open(new_file, 'rb+') as dependent_file:
                 #Update header to 1.71 to fit new records
                 if update_header:
@@ -689,8 +789,8 @@ class CFIDs():
                     dependent_file.seek(0)
 
                 dependent_data = dependent_file.read()
-
-                data_list = [x for x in re.split(b'(?=[A-Z]{3}[A-Z|_]................[\x2C\x2B]\x00)|(?=GRUP....................)', dependent_data, flags=re.DOTALL) if x]
+                
+                data_list = [x for x in re.split(pattern, dependent_data, flags=re.DOTALL) if x]
                 
                 offsets = []
                 current_offset = 0
@@ -703,49 +803,99 @@ class CFIDs():
                 
                 grup_hierarchy = CFIDs.parse_grups(dependent_data)
 
-                dependent_data = b'-||+||-'.join(data_list)
+                land_present = False
+                for form in data_list:
+                    if b'LAND' == form[:4] or (form[:4] == b'GRUP' and len(form) > 24 and form[24:28] == b'LAND'):
+                        land_present = True
+                        break
+
+                if land_present:
+                    data_list, land_forms = CFIDs.get_land_data(data_list)
+
+                dependent_data = bytearray(b'-||+||-'.join(data_list))
+
                 nvpp_present = False
                 if b'NVPP' in dependent_data:
                     nvpp_present = True
                     dependent_data, nvpp_form_ids, nvpp_start = CFIDs.save_nvpp_data(dependent_data)
+
+                master_index = CFIDs.get_master_index(file, dependent_data)
                 
-                master_leading_byte = CFIDs.get_master_index(file, dependent_data)
-                #if master_leading_byte <= 15:
-                #    mC = '0' + str(master_leading_byte)
-                #else:
-                #    mC = str(master_leading_byte)
                 form_id_replacements = []
-                for form_id_history in form_id_file_data:
-                    form_id_conversion = form_id_history.split('|')
-                    from_id = bytes.fromhex(form_id_conversion[0])[:3] + int.to_bytes(master_leading_byte)#bytes.fromhex(mC)
-                    to_id = bytes.fromhex(form_id_conversion[1])[:3] + int.to_bytes(master_leading_byte)#bytes.fromhex(mC)
+                loop = 0
+
+                master_byte = master_index.to_bytes()
+                possible_form_id_offsets = CFIDs.get_possible_form_id_offsets(master_byte, dependent_data)
+
+                for i in range(len(form_id_file_data)):
+                    form_id_conversion = form_id_file_data[i].split('|')
+                    from_id = bytes.fromhex(form_id_conversion[0])[:3] + master_byte
+                    to_id = bytes.fromhex(form_id_conversion[1])[:3] + master_byte
                     form_id_replacements.append([from_id, to_id])
-                    if from_id[:2] == b'\x00\x00':
-                        dependent_data = re.sub(b'(?<![\x2C\x2B].)' + re.escape(from_id) + b'(?!.{0,2}' + int.to_bytes(master_count) + b')', b'=||+||~' + to_id + b'~||+||=' , dependent_data, flags=re.DOTALL)
-                    elif from_id[:1] == b'\x00':
-                        dependent_data = re.sub(b'(?<![\x2C\x2B]..)' + re.escape(from_id) + b'(?!.{0,2}' + int.to_bytes(master_count) + b')', b'=||+||~' + to_id + b'~||+||=', dependent_data, flags=re.DOTALL)
-                    elif from_id[:2] == b'\xFF\xFF':
-                        dependent_data = re.sub(re.escape(from_id) + b'(?!.' + int.to_bytes(master_count) + b')',  b'=||+||~' + to_id + b'~||+||=', dependent_data, flags=re.DOTALL)
-                    elif from_id[:1] == b'\xFF':
-                        dependent_data = re.sub(re.escape(from_id) + b'(?!..' + int.to_bytes(master_count) + b')',  b'=||+||~' + to_id + b'~||+||=', dependent_data, flags=re.DOTALL)
-                    elif from_id[:1] == b'~':
-                        dependent_data = re.sub(b'(?<!' + re.escape(b'=||+||') + b')' + re.escape(from_id), b'=||+||~' + to_id + b'~||+||=', dependent_data, flags=re.DOTALL)
-                    elif from_id[:1] == b'=':
-                        dependent_data = re.sub(b'(?<!' + re.escape(b'~||+||') + b')' + re.escape(from_id), b'=||+||~' + to_id + b'~||+||=', dependent_data, flags=re.DOTALL)
-                    elif from_id[:1] == B'\x20':
-                        dependent_data = re.sub(b'(?<![A-Z]{3}[A-Z_]{1})' + re.escape(from_id), b'=||+||~' + to_id + b'~||+||=', dependent_data, flags=re.DOTALL)
-                    elif re.match(b'[A-Z_]', from_id[:1]):
-                        dependent_data = re.sub(b'(?<![A-Z]{2})' + re.escape(from_id), b'=||+||~' + to_id + b'~||+||=', dependent_data, flags=re.DOTALL)
-                    else:
-                        dependent_data = re.sub(re.escape(from_id) + b'(?!..' + re.escape(b'=||+||~') + b')(?!' + re.escape(b'~||+||=') + b')', b'=||+||~' + to_id + b'~||+||=', dependent_data, flags=re.DOTALL)
-                    
+
+                form_id_list = [id for id, _ in form_id_replacements]
+
+                previous_offset = len(dependent_data) + 4
+
+                possible_form_id_offsets.reverse()
+
+                for i in range(len(possible_form_id_offsets)):
+                    offset = possible_form_id_offsets[i]
+                    for from_id, to_id in form_id_replacements:
+                        if loop == 5000 and print_progress:
+                            loop = 0
+                            percent = round((i / len(possible_form_id_offsets)) * 100,2)
+                            print(f'-     Progress: {percent}%', end='\r')
+                        elif print_progress:
+                            loop +=1
+                        if dependent_data[offset:offset+4] == from_id and offset < previous_offset - 4:
+                            if from_id[:2] == b'\x00\x00':
+                                if dependent_data[offset-2:offset-1] in (b'\x2C', b'\x2B'):
+                                    continue
+                                if master_byte not in dependent_data[offset+4:offset+6]:
+                                    dependent_data[offset:offset+4] = to_id
+                                    previous_offset = offset
+                                elif dependent_data[offset+1:offset+5] not in form_id_list and dependent_data[offset+2:offset+6] not in form_id_list:
+                                    dependent_data[offset:offset+4] = to_id
+                                    previous_offset = offset
+                            elif from_id[:1] == b'\x00' or (from_id[1:2] == b'\x00' and not bool(re.match(b'[A-Z_]', from_id[:1]))):
+                                if dependent_data[offset-3:offset-2] in (b'\x2C', b'\x2B'):
+                                    continue
+                                if master_byte not in dependent_data[offset+4:offset+6]:
+                                    dependent_data[offset:offset+4] = to_id
+                                    previous_offset = offset
+                                elif dependent_data[offset+1:offset+5] not in form_id_list and dependent_data[offset+2:offset+6] not in form_id_list:
+                                    dependent_data[offset:offset+4] = to_id
+                                    previous_offset = offset
+                            elif from_id[:2] == b'\xFF\xFF':
+                                if master_byte != dependent_data[offset+4:offset+7]:
+                                    dependent_data[offset:offset+4] = to_id
+                                    previous_offset = offset
+                            elif from_id[:1] == b'\xFF':
+                                if master_byte not in dependent_data[offset+4:offset+7]:
+                                    dependent_data[offset:offset+4] = to_id
+                                previous_offset = offset
+                            elif from_id[:1] == B'\x20':
+                                if not re.match(b'[A-Z]{3}[A-Z_]{1}', dependent_data[offset-4:offset]):
+                                    dependent_data[offset:offset+4] = to_id
+                                    previous_offset = offset
+                            elif re.match(b'[A-Z_]', from_id[:1]):
+                                if not re.match(b'[A-Z]{2}', dependent_data[offset-2:offset]):
+                                    dependent_data[offset:offset+4] = to_id
+                                    previous_offset = offset
+                            else:
+                                dependent_data[offset:offset+4] = to_id
+                                previous_offset = offset
+                            break
+                dependent_data = bytes(dependent_data)
+                
                 if nvpp_present:
                     dependent_data = CFIDs.fix_nvpp_data(dependent_data,nvpp_form_ids,nvpp_start,form_id_replacements)
 
-                dependent_data = dependent_data.replace(b'~||+||=', b'')
-                dependent_data = dependent_data.replace(b'=||+||~', b'')
-
                 data_list = dependent_data.split(b'-||+||-')
+
+                if land_present:
+                    data_list = CFIDs.patch_land_data(data_list, land_forms, form_id_replacements)
 
                 data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list, master_count)
 
@@ -760,11 +910,12 @@ class CFIDs():
                 dependent_file.close()
 
             CFIDs.compacted_and_patched[os.path.basename(file)].append(dependent)
+            CFIDs.compacted_and_patched[os.path.basename(file)].append(new_file)
         return
 
     #gets what master index the file is in inside of the dependent's data
     def get_master_index(file, data):
-        master_pattern = re.compile(b'MAST..(.*?).DATA')
+        master_pattern = re.compile(b'MAST..(.*?).DATA', flags=re.DOTALL)
         matches = re.findall(master_pattern, data)
         master_index = 0
         for match in matches:
