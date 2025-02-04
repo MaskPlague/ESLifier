@@ -31,8 +31,13 @@ class settings(QWidget):
         self.file_dialog = QFileDialog()
         self.file_dialog.setFileMode(QFileDialog.FileMode.Directory)
 
+        self.file_dialog_2 = QFileDialog()
+        self.file_dialog_2.setFileMode(QFileDialog.FileMode.ExistingFile)
+
         self.skyrim_folder_path_widget_init()
         self.output_folder_path_widget_init()
+        self.mo2_modlist_txt_path_widget_init()
+        self.mo2_mode_widget_init()
         self.update_header_widget_init()
         self.show_plugins_with_cells_widget_init()
         self.enable_cell_changed_filter_widget_init()
@@ -48,6 +53,8 @@ class settings(QWidget):
 
         settings_layout.addWidget(self.skyrim_folder_path_widget)
         settings_layout.addWidget(self.output_folder_path_widget)
+        settings_layout.addWidget(self.mo2_modlist_txt_path_widget)
+        settings_layout.addWidget(self.mo2_mode_widget)
         settings_layout.addWidget(self.update_header_widget)
         settings_layout.addWidget(self.show_plugins_with_cells_widget)
         settings_layout.addWidget(self.show_plugins_with_bsas_widget)
@@ -80,16 +87,22 @@ class settings(QWidget):
             self.output_folder_path.setText(path)
         self.update_settings()
 
+    def mo2_modlist_txt_path_clicked(self):
+        path, _ = self.file_dialog_2.getOpenFileName(self, "Select your MO2 profile\'s modlist.txt", self.settings['mo2_modlist_txt_path'], "Modlist (modlist.txt)")
+        if path != '':
+            self.mo2_modlist_txt_path.setText(path)
+        self.update_settings()
+
     def skyrim_folder_path_widget_init(self):
         skyrim_folder_path_layout = QHBoxLayout()
         self.skyrim_folder_path_widget = QWidget()
         self.skyrim_folder_path_widget.setToolTip("Set this to your Skyrim Special Edition folder that holds SkyrimSE.exe.")
-        skyrim_folder_path_label = QLabel("Skyrim Folder Path")
+        self.skyrim_folder_path_label = QLabel("Skyrim Folder Path")
         self.skyrim_folder_path = QLineEdit()
         skyrim_folder_path_button = self.button_maker('Explore...', self.skyrim_folder_path_clicked, 60)
 
         self.skyrim_folder_path_widget.setLayout(skyrim_folder_path_layout)
-        skyrim_folder_path_layout.addWidget(skyrim_folder_path_label)
+        skyrim_folder_path_layout.addWidget(self.skyrim_folder_path_label)
         skyrim_folder_path_layout.addSpacing(30)
         skyrim_folder_path_layout.addWidget(self.skyrim_folder_path)
         skyrim_folder_path_layout.addSpacing(10)
@@ -115,6 +128,50 @@ class settings(QWidget):
 
         self.output_folder_path.setPlaceholderText('C:/Path/To/The/Output/Folder/')
         self.output_folder_path.setMinimumWidth(400)
+
+    def mo2_mode_widget_init(self):
+        mo2_mode_layout = QHBoxLayout()
+        self.mo2_mode_widget = QWidget()
+        self.mo2_mode_widget.setToolTip(
+            "MO2 users should not launch this executible through MO2 and\n"+
+            "instead enable this setting. This will change the paths and scanner\n"+
+            "method to scan the MO2 mods folder and get winning file conflicts.\n"+
+            "Launching this program through MO2 drastically slows down the scanner.")
+        mo2_mode_label = QLabel("Enabled MO2 Mode")
+        self.mo2_mode_toggle = QtToggle()
+        self.mo2_mode_toggle.clicked.connect(self.update_settings)
+        self.mo2_mode_toggle.clicked.connect(self.mo2_mode_clicked)
+        self.mo2_mode_widget.setLayout(mo2_mode_layout)
+        mo2_mode_layout.addWidget(mo2_mode_label)
+        mo2_mode_layout.addWidget(self.mo2_mode_toggle)
+
+    def mo2_mode_clicked(self):
+        if self.mo2_mode_toggle.checkState() == Qt.CheckState.Checked:
+            self.skyrim_folder_path_widget.setToolTip("Set this to your Mod Organizer 2 mod's folder that holds all of your installed mods.")
+            self.skyrim_folder_path_label.setText("MO2 Mod\'s Folder Path")
+            self.skyrim_folder_path.setPlaceholderText('C:/Path/To/MO2/mods')
+        else:
+            self.skyrim_folder_path_widget.setToolTip("Set this to your Skyrim Special Edition folder that holds SkyrimSE.exe.")
+            self.skyrim_folder_path_label.setText("Skyrim Folder Path")
+            self.skyrim_folder_path.setPlaceholderText('C:/Path/To/Skyrim Special Edition')
+
+    def mo2_modlist_txt_path_widget_init(self):
+        mo2_modlist_txt_path_layout = QHBoxLayout()
+        self.mo2_modlist_txt_path_widget = QWidget()
+        self.mo2_modlist_txt_path_widget.setToolTip("Set this to your profile\'s modlist.txt")
+        mo2_modlist_txt_path_label = QLabel("Modlist.txt Path")
+        self.mo2_modlist_txt_path = QLineEdit()
+        mo2_modlist_txt_path_button = self.button_maker('Explore...', self.mo2_modlist_txt_path_clicked, 60)
+
+        self.mo2_modlist_txt_path_widget.setLayout(mo2_modlist_txt_path_layout)
+        mo2_modlist_txt_path_layout.addWidget(mo2_modlist_txt_path_label)
+        mo2_modlist_txt_path_layout.addSpacing(30)
+        mo2_modlist_txt_path_layout.addWidget(self.mo2_modlist_txt_path)
+        mo2_modlist_txt_path_layout.addSpacing(10)
+        mo2_modlist_txt_path_layout.addWidget(mo2_modlist_txt_path_button)
+        
+        self.mo2_modlist_txt_path.setPlaceholderText('C:/Path/To/MO2/profiles/profile_name/modlist.txt')
+        self.mo2_modlist_txt_path.setMinimumWidth(400)
 
     def update_header_widget_init(self):
         update_header_layout = QHBoxLayout()
@@ -242,6 +299,8 @@ class settings(QWidget):
                 confirm.hide()
                 if os.path.exists('ESLifier_Data/Form_ID_Maps'):
                     shutil.rmtree('ESLifier_Data/Form_ID_Maps')
+                if os.path.exists('ESLifier_Data/Cell_IDs'):
+                    shutil.rmtree('ESLifier_Data/Cell_IDs')
                 if os.path.exists('ESLifier_Data/compacted_and_patched.json'):
                     os.remove('ESLifier_Data/compacted_and_patched.json')
 
@@ -277,8 +336,11 @@ class settings(QWidget):
                 confirm.hide()
                 if os.path.exists('ESLifier_Data/settings.json'):
                     os.remove('ESLifier_Data/settings.json')
+                self.settings.clear()
                 self.skyrim_folder_path.clear()
                 self.output_folder_path.clear()
+                self.mo2_modlist_txt_path.clear()
+                self.mo2_mode_toggle.setChecked(False)
                 self.update_header_toggle.setChecked(True)
                 self.show_plugins_with_cells_toggle.setChecked(True)
                 self.show_plugins_with_bsas_toggle.setChecked(False)
@@ -297,6 +359,12 @@ class settings(QWidget):
 
         if 'output_folder_path' in self.settings.keys(): self.output_folder_path.setText(self.settings['output_folder_path'])
         else: self.settings['output_folder_path'] = ''
+
+        if 'mo2_modlist_txt_path' in self.settings.keys(): self.mo2_modlist_txt_path.setText(self.settings['mo2_modlist_txt_path'])
+        else: self.settings['mo2_modlist_txt_path'] = ''
+
+        if 'mo2_mode' in self.settings.keys(): self.mo2_mode_toggle.setChecked(self.settings['mo2_mode'])
+        else: self.mo2_mode_toggle.setChecked(False)
 
         if 'update_header' in self.settings.keys(): self.update_header_toggle.setChecked(self.settings['update_header'])
         else: self.update_header_toggle.setChecked(True)
@@ -321,10 +389,17 @@ class settings(QWidget):
     def update_settings(self):
         self.settings['skyrim_folder_path'] = self.skyrim_folder_path.text()
         self.settings['output_folder_path'] = self.output_folder_path.text()
+        self.settings['mo2_modlist_txt_path'] = self.mo2_modlist_txt_path.text()
+        self.settings['mo2_mode'] = self.mo2_mode_toggle.isChecked()
         self.settings['update_header'] = self.update_header_toggle.isChecked()
         self.settings['show_cells'] = self.show_plugins_with_cells_toggle.isChecked()
         self.settings['enable_cell_changed_filter'] = self.enable_cell_changed_filter_toggle.isChecked()
         self.settings['show_bsas'] = self.show_plugins_with_bsas_toggle.isChecked()
+
+        if self.mo2_mode_toggle.isChecked():
+            self.mo2_modlist_txt_path_widget.show()
+        else:
+            self.mo2_modlist_txt_path_widget.hide()
         self.save_settings_to_file()
         
     def get_settings_from_file(self):
