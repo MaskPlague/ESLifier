@@ -522,310 +522,378 @@ class CFIDs():
         data = data.replace(b'=||+||~NVPP_PLACEHOLDER~||+||=', new_nvpp)
         return data
     
-    def get_kwda_offsets(in_field_offset, form):
+    def get_kwda_offsets(offset, form):
         offsets = []
-        ksiz_offset = form.find(b'KSIZ', 24)
-        ksiz = int.from_bytes(form[ksiz_offset+6:ksiz_offset+10][::-1])
-        in_field_offset += 6
+        #ksiz_offset = form.find(b'KSIZ', 24)
+        #ksiz = int.from_bytes(form[ksiz_offset+6:ksiz_offset+10][::-1])
+        ksiz = int.from_bytes(form[offset+4:offset+6][::-1]) // 4
+        offset += 6
         for _ in range(ksiz):
-            offsets.append(in_field_offset)
-            in_field_offset += 4
+            offsets.append(offset)
+            offset += 4
         return offsets
 
-    def get_alt_texture_offsets(in_field_offset, form):
+    def get_alt_texture_offsets(offset, form):
         offsets = []
-        alternate_texture_count = int.from_bytes(form[in_field_offset+6:in_field_offset+10][::-1])
-        in_field_offset += 10
+        alternate_texture_count = int.from_bytes(form[offset+6:offset+10][::-1])
+        offset += 10
         for _ in range(alternate_texture_count):
-            alt_tex_size = int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
-            offsets.append(in_field_offset+alt_tex_size+4)
-            in_field_offset += 8
+            alt_tex_size = int.from_bytes(form[offset:offset+4][::-1])
+            offsets.append(offset+alt_tex_size+4)
+            offset += 8
         return offsets
         
-    def patch_form_data(data_list, forms, form_id_replacements):
+    def patch_form_data(data_list, forms, form_id_replacements, master_byte):
         for i, form, offsets in forms:
             for offset in offsets:
-                for from_id, to_id in form_id_replacements:
-                    if form[offset:offset+4] == from_id:
-                        form[offset:offset+4] = to_id
-                        break
+                if form[offset+3:offset+4] == master_byte:
+                    for from_id, to_id in form_id_replacements:
+                        if form[offset:offset+4] == from_id:
+                            form[offset:offset+4] = to_id
+                            break
             data_list[i] = bytes(form)
         return data_list
     
+    #TODO: check for file names in any string in form
     def save_form_data(data_list, master_byte):
         saved_forms = []
         for i, form in enumerate(data_list):
-            if b'REFR' == form[:4]:
+            record_type = form[:4]
+            if b'REFR' == record_type:
                 saved_forms.append(CFIDs.save_refr_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'ACHR' == form[:4]: #TODO this needs something like LAND b'LAND' == form[:4] or (form[:4] == b'GRUP' and len(form) > 24 and form[24:28] == b'LAND'):
+            elif b'ACHR' == record_type: #TODO this needs something like LAND b'LAND' == record_type or (record_type == b'GRUP' and len(form) > 24 and form[24:28] == b'LAND'):
                 saved_forms.append(CFIDs.save_achr_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'ACTI' == form[:4]:
+            elif b'ACTI' == record_type:
                 saved_forms.append(CFIDs.save_acti_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'AACT' == form[:4]:
+            elif b'AACT' == record_type:
                 saved_forms.append([i, bytearray(form), [12]])
                 data_list[i] = form[:24]
-            elif b'ADDN' == form[:4]:
+            elif b'ADDN' == record_type:
                 saved_forms.append(CFIDs.save_addn_data(i, form))
                 data_list[i] = form[:24]
-            elif b'ALCH' == form[:4]:
+            elif b'ALCH' == record_type:
                 saved_forms.append(CFIDs.save_alch_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'AMMO' == form[:4]:
+            elif b'AMMO' == record_type:
                 saved_forms.append(CFIDs.save_ammo_data(i, form))
                 data_list[i] = form[:24]
-            elif b'ANIO' == form[:4]:
+            elif b'ANIO' == record_type:
                 saved_forms.append(CFIDs.save_anio_data(i, form))
                 data_list[i] = form[:24]
-            elif b'APPA' == form[:4]:
+            elif b'APPA' == record_type:
                 saved_forms.append(CFIDs.save_appa_data(i, form, master_byte))
                 data_list[i] == form[:24]
-            elif b'ARMA' == form[:4]:
+            elif b'ARMA' == record_type:
                 saved_forms.append(CFIDs.save_arma_data(i, form))
                 data_list[i] == form[:24]
-            elif b'ARMO' == form[:4]:
-                saved_forms.append(CFIDs.save_armo_data(i, form))
+            elif b'ARMO' == record_type:
+                saved_forms.append(CFIDs.save_armo_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'ARTO' == form[:4]:
+            elif b'ARTO' == record_type:
                 saved_forms.append(CFIDs.save_arto_data(i, form))
                 data_list[i] = form[:24]
-            elif b'ASPC' == form[:4]:
+            elif b'ASPC' == record_type:
                 saved_forms.append(CFIDs.save_aspc_data(i, form))
                 data_list[i] = form[:24]
-            elif b'ASTP' == form[:4]:
+            elif b'ASTP' == record_type:
                 saved_forms.append([i, bytearray(form), [12]])
                 data_list[i] = form[:24]
-            elif b'AVIF' == form[:4]:
+            elif b'AVIF' == record_type:
                 saved_forms.append(CFIDs.save_avif_data(i, form))
                 data_list[i] = form[:24]
-            elif b'BOOK' == form[:4]:
-                saved_forms.append(CFIDs.save_book_data(i, form))
+            elif b'BOOK' == record_type:
+                saved_forms.append(CFIDs.save_book_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'BPTD' == form[:4]:
+            elif b'BPTD' == record_type:
                 saved_forms.append(CFIDs.save_bptd_data(i, form))
                 data_list[i] = form[:24]
-            elif b'CAMS' == form[:4]:
+            elif b'CAMS' == record_type:
                 saved_forms.append(CFIDs.save_cams_data(i, form))
                 data_list[i] = form[:24]
-            elif b'CELL' == form[:4]:
+            elif b'CELL' == record_type:
                 saved_forms.append(CFIDs.save_cell_data(i, form))
                 data_list[i] = form[:24]
-            elif b'CLAS' == form[:4]:
+            elif b'CLAS' == record_type:
                 saved_forms.append([i, bytearray(form), [12]])
                 data_list[i] = form[:24]
-            elif b'CLFM' == form[:4]:
+            elif b'CLFM' == record_type:
                 saved_forms.append([i, bytearray(form), [12]])
                 data_list[i] = form[:24]
-            elif b'CLMT' == form[:4]:
+            elif b'CLMT' == record_type:
                 saved_forms.append(CFIDs.save_clmt_data(i, form))
                 data_list[i] = form[:24]
-            elif b'COBJ' == form[:4]:
-                saved_forms.append(CFIDs.save_cobj_data(i, form))
+            elif b'COBJ' == record_type:
+                saved_forms.append(CFIDs.save_cobj_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'COLL' == form[:4]:
+            elif b'COLL' == record_type:
                 saved_forms.append(CFIDs.save_coll_data(i, form))
                 data_list[i] = form[:24]
-            elif b'CONT' == form[:4]:
-                saved_forms.append(CFIDs.save_cont_data(i, form))
+            elif b'CONT' == record_type:
+                saved_forms.append(CFIDs.save_cont_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'CPTH' == form[:4]:
-                saved_forms.append(CFIDs.save_cpth_data(i, form))
+            elif b'CPTH' == record_type:
+                saved_forms.append(CFIDs.save_cpth_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'CSTY' == form[:4]:
+            elif b'CSTY' == record_type:
                 saved_forms.append([i, bytearray(form), [12]])
                 data_list[i] = form[:24]
-            elif b'DEBR' == form[:4]:
+            elif b'DEBR' == record_type:
                 saved_forms.append([i, bytearray(form), [12]])
                 data_list[i] = form[:24]
-            elif b'DIAL' == form[:4]:
+            elif b'DIAL' == record_type:
                 saved_forms.append(CFIDs.save_dial_data(i, form))
                 data_list[i] = form[:24]
-            elif b'DLBR' == form[:4]:
+            elif b'DLBR' == record_type:
                 saved_forms.append(CFIDs.save_dlbr_data(i, form))
                 data_list[i] = form[:24]
-            elif b'DLVW' == form[:4]:
+            elif b'DLVW' == record_type:
                 saved_forms.append(CFIDs.save_dlvw_data(i, form))
                 data_list[i] = form[:24]
-            elif b'DOBJ' == form[:4]:
+            elif b'DOBJ' == record_type:
                 saved_forms.append(CFIDs.save_dobj_data(i, form))
                 data_list[i] = form[:24]
-            elif b'DOOR' == form[:4]:
-                saved_forms.append(CFIDs.save_door_data(i, form))
+            elif b'DOOR' == record_type:
+                saved_forms.append(CFIDs.save_door_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'DUAL' == form[:4]:
+            elif b'DUAL' == record_type:
                 saved_forms.append(CFIDs.save_dual_data(i, form))
                 data_list[i] = form[:24]
-            elif b'ECZN' == form[:4]:
+            elif b'ECZN' == record_type:
                 saved_forms.append(CFIDs.save_eczn_data(i, form))
                 data_list[i] = form[:24]
-            elif b'EFSH' == form[:4]:
+            elif b'EFSH' == record_type:
                 saved_forms.append([i, bytearray(form), [12]])
                 data_list[i] = form[:24]
-            elif b'ENCH' == form[:4]:
-                saved_forms.append(CFIDs.save_ench_data(i, form))
+            elif b'ENCH' == record_type:
+                saved_forms.append(CFIDs.save_ench_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'EQUP' == form[:4]:
+            elif b'EQUP' == record_type:
                 saved_forms.append(CFIDs.save_equp_data(i, form))
                 data_list[i] = form[:24]
-            elif b'EXPL' == form[:4]:
+            elif b'EXPL' == record_type:
                 saved_forms.append(CFIDs.save_expl_data(i, form))
                 data_list[i] = form[:24]
-            elif b'EYES' == form[:4]:
+            elif b'EYES' == record_type:
                 saved_forms.append([i, bytearray(form), [12]])
                 data_list[i] = form[:24]
-            elif b'FACT' == form[:4]:
-                saved_forms.append(CFIDs.save_fact_data(i, form))
+            elif b'FACT' == record_type:
+                saved_forms.append(CFIDs.save_fact_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'FLOR' == form[:4]:
-                saved_forms.append(CFIDs.save_flor_data(i, form))
+            elif b'FLOR' == record_type:
+                saved_forms.append(CFIDs.save_flor_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'FLST' == form[:4]:
+            elif b'FLST' == record_type:
                 saved_forms.append(CFIDs.save_flst_data(i, form))
                 data_list[i] = form[:24]
-            elif b'FSTP' == form[:4]:
+            elif b'FSTP' == record_type:
                 saved_forms.append(CFIDs.save_fstp_data(i, form))
                 data_list[i] = form[:24]
-            elif b'FSTS' == form[:4]:
+            elif b'FSTS' == record_type:
                 saved_forms.append(CFIDs.save_fsts_data(i, form))
                 data_list[i] = form[:24]
-            elif b'FURN' == form[:4]:
-                saved_forms.append(CFIDs.save_furn_data(i, form))
+            elif b'FURN' == record_type:
+                saved_forms.append(CFIDs.save_furn_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'GLOB' == form[:4]:
-                saved_forms.append(CFIDs.save_glob_data(i, form))
+            elif b'GLOB' == record_type:
+                saved_forms.append(CFIDs.save_glob_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'GMST' == form[:4]:
+            elif b'GMST' == record_type:
                 saved_forms.append([i, bytearray(form), [12]])
                 data_list[i] = form[:24]
-            elif b'GRAS' == form[:4]:
+            elif b'GRAS' == record_type:
                 saved_forms.append([i, bytearray(form), [12]])
                 data_list[i] = form[:24]
-            elif b'GRUP' == form[:4]:
+            elif b'GRUP' == record_type:
                 saved_forms.append([i, bytearray(form), [12]])
-            elif b'HAZD' == form[:4]:
+            elif b'HAZD' == record_type:
                 saved_forms.append(CFIDs.save_hazd_data(i, form))
                 data_list[i] = form[:24]
-            elif b'HDPT' == form[:4]:
+            elif b'HDPT' == record_type:
                 saved_forms.append(CFIDs.save_hdpt_data(i, form))
                 data_list[i] = form[:24]
-            elif b'IDLE' == form[:4]:
-                saved_forms.append(CFIDs.save_idle_data(i, form))
+            elif b'IDLE' == record_type:
+                saved_forms.append(CFIDs.save_idle_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'IDLM' == form[:4]:
+            elif b'IDLM' == record_type:
                 saved_forms.append(CFIDs.save_idlm_data(i, form))
                 data_list[i] = form[:24]
-            elif b'IMAD' == form[:4]:
+            elif b'IMAD' == record_type:
                 saved_forms.append([i, bytearray(form), [12]])
                 data_list[i] = form[:24]
-            elif b'IMGS' == form[:4]:
+            elif b'IMGS' == record_type:
                 saved_forms.append([i, bytearray(form), [12]])
                 data_list[i] = form[:24]
-            elif b'INFO' == form[:4]:
-                saved_forms.append(CFIDs.save_info_data(i, form))
+            elif b'INFO' == record_type:
+                saved_forms.append(CFIDs.save_info_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'INGR' == form[:4]:
-                saved_forms.append(CFIDs.save_ingr_data(i, form))
+            elif b'INGR' == record_type:
+                saved_forms.append(CFIDs.save_ingr_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'IPCT' == form[:4]:
+            elif b'IPCT' == record_type:
                 saved_forms.append(CFIDs.save_ipct_data(i, form))
                 data_list[i] = form[:24]
-            elif b'IPDS' == form[:4]:
+            elif b'IPDS' == record_type:
                 saved_forms.append(CFIDs.save_ipds_data(i, form))
                 data_list[i] = form[:24]
-            elif b'KEYM' == form[:4]:
-                saved_forms.append(CFIDs.save_keym_data(i, form))
+            elif b'KEYM' == record_type:
+                saved_forms.append(CFIDs.save_keym_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'KYWD' == form[:4]:
+            elif b'KYWD' == record_type:
                 saved_forms.append([i, bytearray(form), [12]])
                 data_list[i] = form[:24]
-            elif b'LAND' == form[:4] or (form[:4] == b'GRUP' and len(form) > 24 and form[24:28] == b'LAND'):
+            elif b'LAND' == record_type or (record_type == b'GRUP' and len(form) > 24 and form[24:28] == b'LAND'):
                 saved_forms.append(CFIDs.save_land_data(i, form))
                 data_list[i] = form[:24]
-            elif b'LCRT' == form[:4]:
+            elif b'LCRT' == record_type:
                 saved_forms.append([i, bytearray(form), [12]])
                 data_list[i] = form[:24]
-
-
-            elif b'MGEF' == form[:4]:
+            elif b'LCTN' == record_type:
+                saved_forms.append(CFIDs.save_lctn_data(i, form))
+                data_list[i] = form[:24]
+            elif b'LGTM' == record_type:
+                saved_forms.append([i, bytearray(form), [12]])
+                data_list[i] = form[:24]
+            elif b'LIGH' == record_type:
+                saved_forms.append(CFIDs.save_ligh_data(i, form, master_byte))
+                data_list[i] = form[:24]
+            elif b'LSCR' == record_type:
+                saved_forms.append(CFIDs.save_lscr_data(i, form, master_byte))
+                data_list[i] = form[:24]
+            elif b'LTEX' == record_type:
+                saved_forms.append(CFIDs.save_ltex_data(i, form))
+                data_list[i] = form[:24]
+            elif b'LVLI' == record_type:
+                saved_forms.append(CFIDs.save_lvli_data(i, form))
+                data_list[i] = form[:24]
+            elif b'LVLN' == record_type:
+                saved_forms.append(CFIDs.save_lvln_data(i, form))
+                data_list[i] = form[:24]
+            elif b'LVSP' == record_type:
+                saved_forms.append(CFIDs.save_lvsp_data(i, form))
+                data_list[i] = form[:24]
+            elif b'MATO' == record_type:
+                saved_forms.append([i, bytearray(form), [12]])
+                data_list[i] = form[:24]
+            elif b'MATT' == record_type:
+                saved_forms.append(CFIDs.save_matt_data(i, form))
+                data_list[i] = form[:24]
+            elif b'MESG' == record_type:
+                saved_forms.append(CFIDs.save_mesg_data(i, form, master_byte))
+                data_list[i] = form[:24]
+            elif b'MGEF' == record_type:
                 saved_forms.append(CFIDs.save_mgef_data(i, form, master_byte))
                 data_list[i] = form[:24]
-            elif b'STAT' == form[:4]:
+            elif b'MISC' == record_type:
+                saved_forms.append(CFIDs.save_misc_data(i, form, master_byte))
+                data_list[i] = form[:24] 
+            elif b'MOVT' == record_type:
+                saved_forms.append([i, bytearray(form), [12]])
+                data_list[i] = form[:24]
+            elif b'MSTT' == record_type:
+                saved_forms.append(CFIDs.save_mstt_data(i, form))
+                data_list[i] = form[:24]
+            elif b'MUSC' == record_type:
+                saved_forms.append(CFIDs.save_musc_data(i, form))
+                data_list[i] = form[:24]
+            elif b'MUST' == record_type:
+                saved_forms.append(CFIDs.save_must_data(i, form, master_byte))
+                data_list[i] = form[:24] 
+            elif b'NAVI' == record_type:
+                saved_forms.append(CFIDs.save_navi_data(i, form))
+                data_list[i] = form[:24] 
+            elif b'NAVM' == record_type:
+                saved_forms.append(CFIDs.save_navm_data(i, form))
+                data_list[i] = form[:24]
+            elif b'NOTE' == record_type:
+                saved_forms.append(CFIDs.save_note_data(i, form, master_byte))
+                data_list[i] = form[:24]
+            elif b'NPC_' == record_type:
+                saved_forms.append(CFIDs.save_npc__data(i, form, master_byte))
+                data_list[i] = form[:24]
+            elif b'OTFT' == record_type:
+                saved_forms.append(CFIDs.save_otft_data(i, form))
+                data_list[i] = form[:24]
+            elif b'PACK' == record_type:
+                saved_forms.append(CFIDs.save_pack_data(i, form, master_byte))
+                data_list[i] = form[:24]
+            elif b'PERK' == record_type:
+                saved_forms.append(CFIDs.save_perk_data(i, form))
+                data_list[i] = form[:24]
+            elif b'PGRE' == record_type:
+                saved_forms.append(CFIDs.save_pgre_data(i, form))
+                data_list[i] = form[:24]
+            elif b'PHZD' == record_type:
+                saved_forms.append(CFIDs.save_phzd_data(i, form))
+                data_list[i] = form[:24]
+            elif b'PROJ' == record_type:
+                saved_forms.append(CFIDs.save_proj_data(i, form))
+                data_list[i] = form[:24]
+            elif b'QUST' == record_type:
+                saved_forms.append(CFIDs.save_qust_data(i, form, master_byte))
+                data_list[i] = form[:24]
+            elif b'RACE' == record_type:
+                saved_forms.append(CFIDs.save_race_data(i, form))
+                data_list[i] = form[:24]
+            #REFR at start of if else if statement since it is the most common.
+            elif b'REGN' == record_type:
+                saved_forms.append(CFIDs.save_regn_data(i, form))
+                data_list[i] = form[:24]
+            elif b'RELA' == record_type:
+                saved_forms.append(CFIDs.save_rela_data(i, form))
+                data_list[i] = form[:24]
+            elif b'REVB' == record_type:
+                saved_forms.append([i, bytearray(form), [12]])
+                data_list[i] = form[:24]
+            elif b'RFCT' == record_type:
+                saved_forms.append(CFIDs.save_rfct_data(i, form))
+                data_list[i] = form[:24]
+            elif b'SCEN' == record_type:
+                saved_forms.append(CFIDs.save_scen_data(i, form, master_byte))
+                data_list[i] = form[:24]
+            elif b'SCRL' == record_type:
+                saved_forms.append(CFIDs.save_scrl_data(i, form, master_byte))
+                data_list[i] = form[:24]
+            elif b'SHOU' == record_type:
+                saved_forms.append(CFIDs.save_shou_data(i, form))
+                data_list[i] = form[:24]
+            elif b'SLGM' == record_type:
+                saved_forms.append(CFIDs.save_slgm_data(i, form))
+                data_list[i] = form[:24]
+            elif b'SMBN' == record_type:
+                saved_forms.append(CFIDs.save_smbn_data(i, form, master_byte))
+                data_list[i] = form[:24]
+            elif b'SMEN' == record_type:
+                saved_forms.append(CFIDs.save_smen_data(i, form, master_byte))
+                data_list[i] = form[:24]
+            elif b'SMQN' == record_type:
+                saved_forms.append(CFIDs.save_smqn_data(i, form, master_byte))
+                data_list[i] = form[:24]
+            elif b'SNCT' == record_type:
+                saved_forms.append(CFIDs.save_snct_data(i, form))
+                data_list[i] = form[:24]
+            elif b'SNDR' == record_type:
+                saved_forms.append(CFIDs.save_sndr_data(i, form, master_byte))
+                data_list[i] = form[:24]
+            elif b'SOPM' == record_type:
+                saved_forms.append([i, bytearray(form), [12]])
+                data_list[i] = form[:24]
+            elif b'SOUN' == record_type:
+                saved_forms.append(CFIDs.save_soun_data(i, form))
+                data_list[i] = form[:24]
+            elif b'SPEL' == record_type:
+                saved_forms.append(CFIDs.save_spel_data(i, form, master_byte))
+                data_list[i] = form[:24]
+            elif b'STAT' == record_type:
                 saved_forms.append(CFIDs.save_stat_data(i, form))
                 data_list[i] == form[:24]
+
 
         
         return saved_forms
 
-    
-
-    def save_refr_data(i, form, master_byte):
-        refr_fields = [b'NAME', b'LNAM', b'INAM', b'XLRM', b'XEMI', b'XLIB', b'XLRT', b'XOWN', b'XEZN', b'XMBR', b'XPWR', b'XATR', b'INAM', b'XLRL', b'XAPR',  b'XTEL', b'XNDP', b'XESP']
-        special_refr_fields = [b'PDTO', b'XLOC', b'XLKR', b'XPOD', b'VMAD']
-
-        refr_offsets = [12]
-        offset = 24
-        while offset < len(form):
-            field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
-            if field in refr_fields:
-                refr_offsets.append(offset + 6)
-            elif field in special_refr_fields:
-                if field == b'PDTO' or field == b'XLOC':
-                    refr_offsets.append(offset + 10)
-                elif field == b'XLKR' or field == b'XPOD':
-                    refr_offsets.append(offset + 6)
-                    refr_offsets.append(offset + 10)
-                elif field == b'VMAD':
-                    refr_offsets.extend(CFIDs.vmad_reader(form, offset, master_byte))
-            offset += field_size + 6
-
-        return [i, bytearray(form), refr_offsets]
-
-    def save_mgef_data(i, form, master_byte):
-        mgef_fields = [b'MDOB', b'ESCE']
-        special_mgef_fields = [b'KWDA', b'SNDD', b'CTDA', b'VMAD', b'DATA']
-
-        mgef_offsets = [12]
-        offset = 24
-        while offset < len(form):
-            field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
-            if field in mgef_fields:
-                mgef_offsets.append(offset + 6)
-            elif field in special_mgef_fields:
-                if field == b'KWDA':
-                    mgef_offsets.extend(CFIDs.get_kwda_offsets(offset, form))
-                elif field == b'SNDD':
-                    list_size = field_size // 8
-                    in_field_offset = offset + 6
-                    for _ in range(list_size):
-                        mgef_offsets.append(in_field_offset+4)
-                        in_field_offset += 8
-                elif field == b'CTDA':
-                    mgef_offsets.extend(CFIDs.ctda_reader(form, offset, master_byte))
-                elif field == b'VMAD':
-                    mgef_offsets.extend(CFIDs.vmad_reader(form, offset, master_byte))
-                elif field == b'DATA':
-                    data_offset = offset + 6 #start of DATA's data
-                    mgef_offsets.append(data_offset + 8)    # 08:RelatedID
-                    mgef_offsets.append(data_offset + 24)   # 18:LightID
-                    mgef_offsets.append(data_offset + 32)   # 20:HitShader
-                    mgef_offsets.append(data_offset + 36)   # 24:EnchantShader
-                    mgef_offsets.append(data_offset + 72)   # 48:ProjectileID
-                    mgef_offsets.append(data_offset + 76)   # 4C:ExplosionID
-                    mgef_offsets.append(data_offset + 92)   # 5C:CastingArtID
-                    mgef_offsets.append(data_offset + 96)   # 60:HitEffectArtID
-                    mgef_offsets.append(data_offset + 100)  # 64:ImpactDataID
-                    mgef_offsets.append(data_offset + 108)  # 6C:DualCastID
-                    mgef_offsets.append(data_offset + 116)  # 74:EnchantArtID
-                    mgef_offsets.append(data_offset + 128)  # 80:EquipAbility
-                    mgef_offsets.append(data_offset + 132)  # 84:ImageSpaceModID
-                    mgef_offsets.append(data_offset + 136)  # 88:PerkID
-            offset += field_size + 6
-
-        return [i, bytearray(form), mgef_offsets]
     
     def save_achr_data(i, form, master_byte):
         #XESP and XAPR are structs but FormID is in same offset as others
@@ -1001,7 +1069,7 @@ class CFIDs():
                     armo_offsets.extend(CFIDs.get_kwda_offsets(offset, form))
                 elif field == b'VMAD':
                     armo_offsets.extend(CFIDs.vmad_reader(form, offset, master_byte))
-                elif field == b'MODS' or field == b'MO2S' or field == b'MO4S':
+                elif field in (b'MODS', b'MO2S', b'MO4S'):
                     armo_offsets.extend(CFIDs.get_alt_texture_offsets(offset, form))
                 elif field == b'DSTD':
                     armo_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
@@ -1743,9 +1811,9 @@ class CFIDs():
 
         return [i, bytearray(form), land_offsets]
 
-    def save_lctn_data(i, form): #TODO: THIS
+    def save_lctn_data(i, form):
         lctn_fields = [b'ACEC', b'LCEC', b'PNAM', b'NAM1', b'FNAM', b'MNAM', b'NAM0']
-        special_lctn_fields = [b'ACPR', b'LCPR', b'RCPR', b'ACUN', b'LCUN', b'ACSR', b'LCSR', b'ACID', b'LCID', b'KWDA']
+        special_lctn_fields = [b'ACPR', b'LCPR', b'RCPR', b'ACUN', b'LCUN', b'ACSR', b'LCSR', b'ACEP', b'LCEP', b'ACID', b'LCID', b'KWDA']
 
         lctn_offsets = [12]
         offset = 24
@@ -1755,11 +1823,936 @@ class CFIDs():
             if field in lctn_fields:
                 lctn_offsets.append(offset + 6)
             elif field in special_lctn_fields:
-                pass
+                if field in (b'ACPR', b'LCPR', b'ACEP', b'LCEP'):
+                    struct_count = field_size // 12
+                    in_field_offset = offset + 6
+                    for _ in range(struct_count):
+                        lctn_offsets.append(in_field_offset)
+                        lctn_offsets.append(in_field_offset+ 4)
+                        in_field_offset += 12
+                elif field in (b'RCPR', b'ACID', b'LCID'):
+                    form_id_count = field_size // 4
+                    in_field_offset = offset + 6
+                    for _ in range(form_id_count):
+                        lctn_offsets.append(in_field_offset)
+                        in_field_offset += 4
+                elif field in (b'ACUN', b'LCUN'):
+                    struct_count = field_size // 12
+                    in_field_offset = offset + 6
+                    for _ in range(struct_count):
+                        lctn_offsets.append(in_field_offset)
+                        lctn_offsets.append(in_field_offset+ 4)
+                        lctn_offsets.append(in_field_offset+ 8)
+                        in_field_offset += 12
+                elif field in (b'ACSR', b'LCSR'):
+                    struct_count = field_size // 16
+                    in_field_offset = offset + 6
+                    for _ in range(struct_count):
+                        lctn_offsets.append(in_field_offset)
+                        lctn_offsets.append(in_field_offset+ 4)
+                        lctn_offsets.append(in_field_offset+ 8)
+                        in_field_offset += 16
+                elif field == b'KWDA':
+                    lctn_offsets.extend(CFIDs.get_kwda_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), lctn_offsets]
 
+    def save_ligh_data(i, form, master_byte): 
+        ligh_fields = [b'SNAM']
+        special_ligh_fields = [b'VMAD', b'DSTD', b'DMDS']
+
+        ligh_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in ligh_fields:
+                ligh_offsets.append(offset + 6)
+            elif field in special_ligh_fields:
+                if field == b'VMAD':
+                    ligh_offsets.extend(CFIDs.vmad_reader(form, offset, master_byte))
+                elif field == b'DSTD':
+                    ligh_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
+                    ligh_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
+                elif field == b'DMDS':
+                    ligh_offsets.extend(CFIDs.get_alt_texture_offsets(offset, form))
+            offset += field_size + 6
+
+        return [i, bytearray(form), ligh_offsets]
+
+    def save_lscr_data(i, form, master_byte): 
+        lscr_fields = [b'NNAM']
+        special_lscr_fields = [b'CTDA']
+
+        lscr_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in lscr_fields:
+                lscr_offsets.append(offset + 6)
+            elif field in special_lscr_fields:
+                if field == b'CTDA':
+                    lscr_offsets.extend(CFIDs.ctda_reader(form, offset, master_byte))
+            offset += field_size + 6
+
+        return [i, bytearray(form), lscr_offsets]
+
+    def save_ltex_data(i, form): 
+        ltex_fields = [b'TNAM', b'MNAM', b'GNAM']
+
+        ltex_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in ltex_fields:
+                ltex_offsets.append(offset + 6)
+            offset += field_size + 6
+
+        return [i, bytearray(form), ltex_offsets]
+    
+    def save_lvli_data(i, form): 
+        lvli_fields = [b'LVLG']
+        special_lvli_fields = [b'LVLO']
+
+        lvli_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in lvli_fields:
+                lvli_offsets.append(offset + 6)
+            elif field in special_lvli_fields:
+                if field == b'LVLO':
+                    lvli_offsets.append(offset+ 10)
+            offset += field_size + 6
+
+        return [i, bytearray(form), lvli_offsets]
+
+    def save_lvln_data(i, form): 
+        special_lvln_fields = [b'MODS', b'LVLO', b'COED']
+
+        lvln_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in special_lvln_fields:
+                if field == b'COED':
+                    lvln_offsets.append(offset+ 6)
+                    lvln_offsets.append(offset+ 10)
+                elif field == b'MODS':
+                    lvln_offsets.extend(CFIDs.get_alt_texture_offsets(offset, form))
+                elif field == b'LVLO':
+                    lvln_offsets.append(offset+ 10)
+            offset += field_size + 6
+
+        return [i, bytearray(form), lvln_offsets]
+
+    def save_lvsp_data(i, form):
+        special_lvsp_fields = [b'LVLO']
+
+        lvsp_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in special_lvsp_fields:
+                if field == b'LVLO':
+                    lvsp_offsets.append(offset + 10)
+            offset += field_size + 6
+
+        return [i, bytearray(form), lvsp_offsets]
+
+    def save_matt_data(i, form): 
+        matt_fields = [b'HNAM', b'PNAM']
+
+        matt_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in matt_fields:
+                matt_offsets.append(offset + 6)
+            offset += field_size + 6
+
+        return [i, bytearray(form), matt_offsets]
+
+    def save_mesg_data(i, form, master_byte): 
+        mesg_fields = [b'QNAM']
+        special_mesg_fields = [b'CTDA']
+
+        mesg_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in mesg_fields:
+                mesg_offsets.append(offset + 6)
+            elif field in special_mesg_fields:
+                if field == b'CTDA':
+                    mesg_offsets.extend(CFIDs.ctda_reader(form, offset, master_byte))
+            offset += field_size + 6
+
+        return [i, bytearray(form), mesg_offsets]
+
+    def save_mgef_data(i, form, master_byte):
+        mgef_fields = [b'MDOB', b'ESCE']
+        special_mgef_fields = [b'KWDA', b'SNDD', b'CTDA', b'VMAD', b'DATA']
+
+        mgef_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in mgef_fields:
+                mgef_offsets.append(offset + 6)
+            elif field in special_mgef_fields:
+                if field == b'KWDA':
+                    mgef_offsets.extend(CFIDs.get_kwda_offsets(offset, form))
+                elif field == b'SNDD':
+                    list_size = field_size // 8
+                    in_field_offset = offset + 6
+                    for _ in range(list_size):
+                        mgef_offsets.append(in_field_offset+4)
+                        in_field_offset += 8
+                elif field == b'CTDA':
+                    mgef_offsets.extend(CFIDs.ctda_reader(form, offset, master_byte))
+                elif field == b'VMAD':
+                    mgef_offsets.extend(CFIDs.vmad_reader(form, offset, master_byte))
+                elif field == b'DATA':
+                    data_offset = offset + 6 #start of DATA's data
+                    mgef_offsets.append(data_offset + 8)    # 08:RelatedID
+                    mgef_offsets.append(data_offset + 24)   # 18:LightID
+                    mgef_offsets.append(data_offset + 32)   # 20:HitShader
+                    mgef_offsets.append(data_offset + 36)   # 24:EnchantShader
+                    mgef_offsets.append(data_offset + 72)   # 48:ProjectileID
+                    mgef_offsets.append(data_offset + 76)   # 4C:ExplosionID
+                    mgef_offsets.append(data_offset + 92)   # 5C:CastingArtID
+                    mgef_offsets.append(data_offset + 96)   # 60:HitEffectArtID
+                    mgef_offsets.append(data_offset + 100)  # 64:ImpactDataID
+                    mgef_offsets.append(data_offset + 108)  # 6C:DualCastID
+                    mgef_offsets.append(data_offset + 116)  # 74:EnchantArtID
+                    mgef_offsets.append(data_offset + 128)  # 80:EquipAbility
+                    mgef_offsets.append(data_offset + 132)  # 84:ImageSpaceModID
+                    mgef_offsets.append(data_offset + 136)  # 88:PerkID
+            offset += field_size + 6
+
+        return [i, bytearray(form), mgef_offsets]
+
+    def save_misc_data(i, form, master_byte): 
+        misc_fields = [b'YNAM', b'ZNAM']
+        special_misc_fields = [b'VMAD', b'MODS', b'DSTD', b'DMDS', b'KWDA']
+
+        misc_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in misc_fields:
+                misc_offsets.append(offset + 6)
+            elif field in special_misc_fields:
+                if field == b'KWDA':
+                    misc_offsets.extend(CFIDs.get_kwda_offsets(offset, form))
+                elif field == b'VMAD':
+                    misc_offsets.extend(CFIDs.vmad_reader(form, offset, master_byte))
+                elif field == b'MODS':
+                    misc_offsets.extend(CFIDs.get_alt_texture_offsets(offset, form))
+                elif field == b'DSTD':
+                    misc_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
+                    misc_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
+                elif field == b'DMDS':
+                    misc_offsets.extend(CFIDs.get_alt_texture_offsets(offset, form))
+            offset += field_size + 6
+
+        return [i, bytearray(form), misc_offsets]
+
+    def save_mstt_data(i, form): 
+        mstt_fields = [b'SNAM']
+        special_mstt_fields = [b'MODS', b'DSTD']
+
+        mstt_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in mstt_fields:
+                mstt_offsets.append(offset + 6)
+            elif field in special_mstt_fields:
+                if field == b'MODS':
+                    mstt_offsets.extend(CFIDs.get_alt_texture_offsets(offset, form))
+                elif field == b'DSTD':
+                    mstt_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
+                    mstt_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
+            offset += field_size + 6
+
+        return [i, bytearray(form), mstt_offsets]
+
+    def save_musc_data(i, form): 
+        special_musc_fields = [b'TNAM']
+
+        musc_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in special_musc_fields:
+                if field == b'TNAM':
+                    form_id_count = field_size // 4
+                    in_field_offset = offset + 6
+                    for _ in range(form_id_count):
+                        musc_offsets.append(in_field_offset)
+                        in_field_offset += 4
+            offset += field_size + 6
+
+        return [i, bytearray(form), musc_offsets]
+
+    def save_must_data(i, form, master_byte): 
+        special_must_fields = [b'CTDA', b'SNAM']
+
+        must_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in special_must_fields:
+                if field == b'CTDA':
+                    must_offsets.extend(CFIDs.ctda_reader(form, offset, master_byte))
+                elif field == b'SNAM':
+                    form_id_count = field_size // 4
+                    in_field_offset = offset + 6
+                    for _ in range(form_id_count):
+                        if form[in_field_offset:in_field_offset+4] != b'\x00\x00\x00\x00':
+                            must_offsets.append(in_field_offset)
+                        in_field_offset += 4
+            offset += field_size + 6
+
+        return [i, bytearray(form), must_offsets]
+    
+    def save_navi_data(i, form): 
+        navi_fields = [b'']
+        special_navi_fields = [b'NVMI', b'NVPP', b'NVSI']
+
+        navi_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in navi_fields:
+                navi_offsets.append(offset + 6)
+            elif field in special_navi_fields:
+                if field == b'NVSI':
+                    form_id_count = field_size // 4
+                    in_field_offset = offset + 6
+                    for _ in range(form_id_count):
+                        navi_offsets.append(in_field_offset)
+                        in_field_offset += 4
+                elif field == b'NVPP':
+                    path_count = int.from_bytes(form[offset+6:offset+10][::-1])
+                    in_field_offset = offset + 10
+                    #Path Table
+                    for _ in range(path_count):
+                        form_id_count = int.from_bytes(form[in_field_offset:in_field_offset + 4][::-1])
+                        in_field_offset += 4
+                        for _ in range(form_id_count):
+                            navi_offsets.append(in_field_offset)
+                            in_field_offset += 4
+                    node_count = int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
+                    in_field_offset += 4
+                    #Node Table
+                    for _ in range(node_count):
+                        navi_offsets.append(in_field_offset)
+                        in_field_offset += 8
+                elif field == b'NVMI':
+                    in_field_offset = offset + 6
+                    navi_offsets.append(in_field_offset)    # Navmesh
+                    in_field_offset += 24                   # Merged to Count
+                    merged_to_count = int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
+                    in_field_offset += 4                    # start of Merged to
+                    for _ in range(merged_to_count):
+                        navi_offsets.append(in_field_offset)
+                        in_field_offset += 4
+                    perferred_merges_count = int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
+                    in_field_offset += 4                    # start of Perferred Merges
+                    for _ in range(perferred_merges_count):
+                        navi_offsets.append(in_field_offset)
+                        in_field_offset += 4
+                    door_refr_count = int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
+                    in_field_offset += 4                    # start of door structs
+                    for _ in range(door_refr_count):
+                        navi_offsets.append(in_field_offset+4)
+                        in_field_offset += 8
+                    if form[in_field_offset:in_field_offset+1] == b'\x01':
+                        navi_offsets.append(offset + 6 + field_size - 8) # World Space
+                        navi_offsets.append(offset + 6 + field_size - 4) # Cell
+            offset += field_size + 6
+
+        return [i, bytearray(form), navi_offsets]
+
+    def save_navm_data(i, form): 
+        navm_fields = [b'']
+        special_navm_fields = [b'NVNM']
+
+        navm_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in navm_fields:
+                navm_offsets.append(offset + 6)
+            elif field in special_navm_fields:
+                if field == b'NVNM':
+                    in_field_offset = offset + 6 + 8
+                    navm_offsets.append(in_field_offset)        # World Space
+                    navm_offsets.append(in_field_offset + 4)    # Cell
+                    in_field_offset += 4
+                    num_vertices = int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
+                    in_field_offset += 4
+                    for _ in range(num_vertices):
+                        in_field_offset += 12
+                    num_tris = int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
+                    in_field_offset += 4
+                    for _ in range(num_tris):
+                        in_field_offset += 16
+                    ext_connections =  int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
+                    in_field_offset += 4
+                    for _ in range(ext_connections):
+                        navm_offsets.append(in_field_offset + 4)# Navmesh in Connections Struct
+                        in_field_offset += 10
+                    num_door_tris = int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
+                    in_field_offset += 4
+                    for _ in range(num_door_tris):
+                        navm_offsets.append(in_field_offset + 6)# Door REFR
+                        in_field_offset += 10
+            offset += field_size + 6
+
+        return [i, bytearray(form), navm_offsets]
+
+    def save_note_data(i, form, master_byte): 
+        note_fields = [b'ONAM', b'YNAM', b'ZNAM', b'SNAM']
+        special_note_fields = [b'TNAM', b'VMAD', b'MODS']
+
+        note_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in note_fields:
+                note_offsets.append(offset + 6)
+            elif field in special_note_fields:
+                if field == b'TNAM':
+                    data_offset = form.find(b'DATA') + 6
+                    if form[data_offset:data_offset+1] == b'\x03':
+                        note_offsets.append(offset + 6)
+                elif field == b'VMAD':
+                    note_offsets.extend(CFIDs.vmad_reader(form, offset, master_byte))
+                elif field == b'MODS':
+                    note_offsets.extend(CFIDs.get_alt_texture_offsets(offset, form))
+            offset += field_size + 6
+
+        return [i, bytearray(form), note_offsets]
+
+    def save_npc__data(i, form, master_byte): 
+        npc__fields = [b'INAM', b'VTCK', b'TPLT', b'RNAM', b'SPLO', b'WNAM', b'ANAM', b'ATKR', b'SPOR', b'OCOR', b'GWOR', b'ECOR', b'PKID', b'CNTO',
+                       b'CNAM', b'PNAM', b'HCLF', b'ZNAM', b'GNAM', b'CSDI', b'CSCR', b'DOFT', b'SOFT', b'DPLT', b'CRIF', b'FTST', b'SNAM', b'PRKR']
+        special_npc__fields = [b'VMAD', b'DSTD', b'DMDS', b'ATKD', b'COED', b'KWDA']
+
+        npc__offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in npc__fields:
+                npc__offsets.append(offset + 6)
+            elif field in special_npc__fields:
+                if field == b'KWDA':
+                    npc__offsets.extend(CFIDs.get_kwda_offsets(offset, form))
+                elif field == b'VMAD':
+                    npc__offsets.extend(CFIDs.vmad_reader(form, offset, master_byte))
+                elif field == b'DSTD':
+                    npc__offsets.append(offset+14) #ExplosionID 6 + 4 + 4
+                    npc__offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
+                elif field == b'DMDS':
+                    npc__offsets.extend(CFIDs.get_alt_texture_offsets(offset, form))
+                elif field == b'ATKD':
+                    npc__offsets.append(offset + 8)     # Attack Spell
+                    npc__offsets.append(offset + 32)    # Attack Type
+                elif field == b'COED':
+                    npc__offsets.append(offset + 6)
+                    npc__offsets.append(offset + 10)
+
+            offset += field_size + 6
+
+        return [i, bytearray(form), npc__offsets]
+
+    def save_otft_data(i, form): 
+        special_otft_fields = [b'INAM']
+
+        otft_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in special_otft_fields:
+                if field == b'INAM':
+                    form_id_count = field_size // 4
+                    in_field_offset = offset + 6
+                    for _ in range(form_id_count):
+                        otft_offsets.append(in_field_offset)
+                        in_field_offset += 4
+            offset += field_size + 6
+
+        return [i, bytearray(form), otft_offsets]
+    
+    def save_pack_data(i, form, master_byte): 
+        pack_fields = [b'QNAM', b'TPIC', b'INAM']
+        special_pack_fields = [b'VMAD', b'CTDA', b'IDLA', b'PKCU', b'PDTO', b'PLDT', b'PTDA']
+
+        pack_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in pack_fields:
+                pack_offsets.append(offset + 6)
+            elif field in special_pack_fields:
+                if form == b'VMAD':
+                    pack_offsets.extend(CFIDs.vmad_reader(form, offset, master_byte))
+                elif form == b'CTDA':
+                    pack_offsets.extend(CFIDs.ctda_reader(form, offset, master_byte))
+                elif form == b'IDLA':
+                    form_id_count = field_size // 4
+                    in_field_offset = offset + 6
+                    for _ in range(form_id_count):
+                        pack_offsets.append(in_field_offset)
+                        in_field_offset += 4
+                elif form in (b'PKCU', b'PDTO', b'PLDT', b'PTDA'):
+                    pack_offsets.append(offset + 10)
+
+            offset += field_size + 6
+
+        return [i, bytearray(form), pack_offsets]
+
+    def save_perk_data(i, form, master_byte): 
+        perk_fields = [b'NNAM']
+        special_perk_fields = [b'VMAD', b'CTDA', b'DATA', b'EPFD']
+
+        perk_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in perk_fields:
+                perk_offsets.append(offset + 6)
+            elif field in special_perk_fields:
+                if field == b'VMAD':
+                    perk_offsets.extend(CFIDs.vmad_reader(form, offset, master_byte))
+                elif field == b'CTDA':
+                    perk_offsets.extend(CFIDs.ctda_reader(form, offset, master_byte))
+                elif field == b'DATA':
+                    if field_size == 4 or field_size == 8:
+                        perk_offsets.append(offset + 6)
+                elif field == b'EPFD':
+                    current_epft_offset = form.rfind(b'EPFT', 24, offset)
+                    epft_type = form[current_epft_offset+6:current_epft_offset+7]
+                    if epft_type in (b'\x03', b'\x04', b'\x05'):
+                        perk_offsets.append(offset + 6)
+
+            offset += field_size + 6
+
+        return [i, bytearray(form), perk_offsets]
+
+    def save_pgre_data(i, form): 
+        pgre_fields = [b'NAME', b'XOWN', b'XESP']
+
+        pgre_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in pgre_fields:
+                pgre_offsets.append(offset + 6)
+            offset += field_size + 6
+
+        return [i, bytearray(form), pgre_offsets]
+
+    def save_phzd_data(i, form): 
+        phzd_fields = [b'NAME', b'XESP', b'XLRL']
+
+        phzd_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in phzd_fields:
+                phzd_offsets.append(offset + 6)
+            offset += field_size + 6
+
+        return [i, bytearray(form), phzd_offsets]
+
+    def save_proj_data(i, form): 
+        special_proj_fields = [b'DSTD', b'DATA']
+
+        proj_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in special_proj_fields:
+                if field == b'DSTD':
+                    proj_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
+                    proj_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4\
+                elif field == b'DATA':
+                    data_offset = offset + 6
+                    proj_offsets.append(data_offset+ 16)    # Light
+                    proj_offsets.append(data_offset+ 20)    # Muzzle Flash Light
+                    proj_offsets.append(data_offset+ 36)    # Explosion Type
+                    proj_offsets.append(data_offset+ 40)    # Sound Record
+                    proj_offsets.append(data_offset+ 56)    # Countdown Sound
+                    proj_offsets.append(data_offset+ 64)    # Default Weapon Source
+                    proj_offsets.append(data_offset+ 84)    # Decal Data
+                    proj_offsets.append(data_offset+ 88)    # Collision Layer
+            offset += field_size + 6
+
+        return [i, bytearray(form), proj_offsets]
+
+    def save_qust_data(i, form, master_byte): 
+        qust_fields = [b'QTGL', b'NAM0', b'ALCO', b'ALEQ', b'KNAM', b'ALRT', b'ALFL', b'ALFR', b'ALUA', b'CNTO', b'SPOR', b'OCOR', b'GWOR', b'ECOR', b'ALDN', b'ALSP', b'ALFC', b'ALPC', b'VTCK']
+        special_qust_fields = [b'VMAD', b'CTDA', b'KWDA']
+
+        qust_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in qust_fields:
+                qust_offsets.append(offset + 6)
+            elif field in special_qust_fields:
+                if field == b'VMAD':
+                    qust_offsets.extend(CFIDs.vmad_reader(form, offset, master_byte))
+                elif field == b'CTDA':
+                    qust_offsets.extend(CFIDs.ctda_reader(form, offset, master_byte))
+                elif field == b'KWDA':
+                    qust_offsets.extend(CFIDs.get_kwda_offsets(offset, form))
+            offset += field_size + 6
+
+        return [i, bytearray(form), qust_offsets]
+
+    def save_race_data(i, form): 
+        race_fields = [b'SPLO', b'WNAM', b'ATKR', b'GNAM', b'NAM4', b'NAM5', b'NAM7', b'ONAM', b'LNAM', b'MTYP', b'QNAM', b'UNES', b'WKMV',
+                        b'RNMV', b'SWMV', b'FLMV', b'SNMV', b'SPMV', b'RPRM', b'AHCM', b'FTSM', b'DFTM', b'TIND', b'TINC', b'NAM8', b'RNAM']
+        special_race_fields = [b'KWDA', b'VTCK', b'DNAM', b'HCLF', b'ATKD']
+
+        race_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in race_fields:
+                race_offsets.append(offset + 6)
+            elif field in special_race_fields:
+                if field == b'KWDA':
+                    race_offsets.extend(CFIDs.get_kwda_offsets(offset, form))
+                elif field in (b'VTCK', b'DNAM', b'HCLF'):
+                    race_offsets.append(offset + 6)
+                    race_offsets.append(offset + 10)
+                elif field == b'ATKD':
+                    race_offsets.append(offset+ 14)     # Attack Spell
+                    race_offsets.append(offset+ 32)    # Attack Type
+            offset += field_size + 6
+
+        return [i, bytearray(form), race_offsets]
+    
+    def save_refr_data(i, form, master_byte):
+        refr_fields = [b'NAME', b'LNAM', b'INAM', b'XLRM', b'XEMI', b'XLIB', b'XLRT', b'XOWN', b'XEZN', b'XMBR', b'XPWR', b'XATR', b'INAM', b'XLRL', b'XAPR',  b'XTEL', b'XNDP', b'XESP']
+        special_refr_fields = [b'PDTO', b'XLOC', b'XLKR', b'XPOD', b'VMAD']
+
+        refr_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in refr_fields:
+                refr_offsets.append(offset + 6)
+            elif field in special_refr_fields:
+                if field == b'PDTO' or field == b'XLOC':
+                    refr_offsets.append(offset + 10)
+                elif field == b'XLKR' or field == b'XPOD':
+                    refr_offsets.append(offset + 6)
+                    refr_offsets.append(offset + 10)
+                elif field == b'VMAD':
+                    refr_offsets.extend(CFIDs.vmad_reader(form, offset, master_byte))
+            offset += field_size + 6
+
+        return [i, bytearray(form), refr_offsets]
+
+    def save_regn_data(i, form): 
+        regn_fields = [b'WNAM', b'RDMO']
+        special_regn_fields = [b'RDSA', b'RDWT']
+
+        regn_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in regn_fields:
+                regn_offsets.append(offset + 6)
+            elif field in special_regn_fields:
+                if field == b'RDSA':
+                    struct_count = field_size // 12
+                    in_field_offset = offset + 6
+                    for _ in range(struct_count):
+                        regn_offsets.append(in_field_offset)
+                        in_field_offset += 12
+                elif field == b'RDWT':
+                    struct_count = field_size // 12
+                    in_field_offset = offset + 6
+                    for _ in range(struct_count):
+                        regn_offsets.append(in_field_offset)
+                        regn_offsets.append(in_field_offset+8)
+                        in_field_offset + 12
+                
+            offset += field_size + 6
+
+        return [i, bytearray(form), regn_offsets]
+
+    def save_rela_data(i, form): 
+        special_rela_fields = [b'DATA']
+
+        rela_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in special_rela_fields:
+                if field == b'DATA':
+                    data_offset = offset + 6
+                    rela_offsets.append(data_offset)
+                    rela_offsets.append(data_offset+ 4)
+                    rela_offsets.append(data_offset+ 12)
+            offset += field_size + 6
+
+        return [i, bytearray(form), rela_offsets]
+
+    def save_rfct_data(i, form): 
+        special_rfct_fields = [b'DATA']
+
+        rfct_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in special_rfct_fields:
+                if field == b'DATA':
+                    rfct_offsets.append(offset + 6)
+                    rfct_offsets.append(offset + 10)
+            offset += field_size + 6
+
+        return [i, bytearray(form), rfct_offsets]
+    
+    def save_scen_data(i, form, master_byte): 
+        scen_fields = [b'PNAM', b'DATA']
+        special_scen_fields = [b'VMAD', b'CTDA']
+
+        scen_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in scen_fields:
+                scen_offsets.append(offset + 6)
+            elif field in special_scen_fields:
+                if field == b'VMAD':
+                    scen_offsets.extend(CFIDs.vmad_reader(form, offset, master_byte))
+                elif field == b'CTDA':
+                    scen_offsets.extend(CFIDs.ctda_reader(form, offset, master_byte))
+            offset += field_size + 6
+
+        return [i, bytearray(form), scen_offsets]
+
+    def save_scrl_data(i, form, master_byte): 
+        scrl_fields = [b'MDOB', b'ETYP', b'YNAM', b'ZNAM', b'EFID']
+        special_scrl_fields = [b'CTDA', b'KWDA', b'DSTD', b'DMDS']
+
+        scrl_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in scrl_fields:
+                scrl_offsets.append(offset + 6)
+            elif field in special_scrl_fields:
+                if field == b'CTDA':
+                    scrl_offsets.extend(CFIDs.ctda_reader(form, offset, master_byte))
+                elif field == b'KWDA':
+                    scrl_offsets.extend(CFIDs.get_kwda_offsets(offset, form))
+                elif field == b'DSTD':
+                    scrl_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
+                    scrl_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
+                elif field == b'DMDS':
+                    scrl_offsets.extend(CFIDs.get_alt_texture_offsets(offset, form))
+            offset += field_size + 6
+
+        return [i, bytearray(form), scrl_offsets]
+
+    def save_shou_data(i, form): 
+        shou_fields = [b'MDOB']
+        special_shou_fields = [b'SNAM']
+
+        shou_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in shou_fields:
+                shou_offsets.append(offset + 6)
+            elif field in special_shou_fields:
+                if field == b'SNAM':
+                    shou_offsets.append(offset + 6)
+                    shou_offsets.append(offset + 10)
+            offset += field_size + 6
+
+        return [i, bytearray(form), shou_offsets]
+
+    def save_slgm_data(i, form): 
+        slgm_fields = [b'NAM0', b'ZNAM']
+        special_slgm_fields = [b'KWDA']
+
+        slgm_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in slgm_fields:
+                slgm_offsets.append(offset + 6)
+            elif field in special_slgm_fields:
+                if field == b'KWDA':
+                    slgm_offsets.extend(CFIDs.get_kwda_offsets)
+            offset += field_size + 6
+
+        return [i, bytearray(form), slgm_offsets]
+
+    def save_smbn_data(i, form, master_byte): 
+        smbn_fields = [b'PNAM', b'SNAM']
+        special_smbn_fields = [b'CTDA']
+
+        smbn_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in smbn_fields:
+                smbn_offsets.append(offset + 6)
+            elif field in special_smbn_fields:
+                if field == b'CTDA':
+                    smbn_offsets.extend(CFIDs.ctda_reader(form, offset, master_byte))
+            offset += field_size + 6
+
+        return [i, bytearray(form), smbn_offsets]
+
+    def save_smen_data(i, form, master_byte): 
+        smen_fields = [b'PNAM', b'SNAM']
+        special_smen_fields = [b'CTDA']
+
+        smen_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in smen_fields:
+                smen_offsets.append(offset + 6)
+            elif field in special_smen_fields:
+                if field == b'CTDA':
+                    smen_offsets.extend(CFIDs.ctda_reader(form, offset, master_byte))
+            offset += field_size + 6
+
+        return [i, bytearray(form), smen_offsets]
+
+    def save_smqn_data(i, form, master_byte): 
+        smqn_fields = [b'PNAM', b'SNAM', b'NNAM']
+        special_smqn_fields = [b'CTDA']
+
+        smqn_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in smqn_fields:
+                smqn_offsets.append(offset + 6)
+            elif field in special_smqn_fields:
+                if field == b'CTDA':
+                    smqn_offsets.extend(CFIDs.ctda_reader(form, offset, master_byte))
+            offset += field_size + 6
+
+        return [i, bytearray(form), smqn_offsets]
+
+    def save_snct_data(i, form): 
+        snct_fields = [b'PNAM']
+
+        snct_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in snct_fields:
+                snct_offsets.append(offset + 6)
+            offset += field_size + 6
+
+        return [i, bytearray(form), snct_offsets]
+
+    def save_sndr_data(i, form, master_byte): 
+        sndr_fields = [b'GNAM', b'SNAM', b'ONAM']
+        special_sndr_fields = [b'CTDA']
+
+        sndr_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in sndr_fields:
+                sndr_offsets.append(offset + 6)
+            elif field in special_sndr_fields:
+                if field == b'CTDA':
+                    sndr_offsets.extend(CFIDs.ctda_reader(form, offset, master_byte))
+            offset += field_size + 6
+
+        return [i, bytearray(form), sndr_offsets]
+
+    def save_soun_data(i, form): 
+        soun_fields = [b'SDSC']
+
+        soun_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in soun_fields:
+                soun_offsets.append(offset + 6)
+            offset += field_size + 6
+
+        return [i, bytearray(form), soun_offsets]
+
+    def save_spel_data(i, form, master_byte): 
+        spel_fields = [b'MODB', b'ETYP', b'EFID']
+        special_spel_fields = [b'CTDA', b'SPIT']
+
+        spel_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in spel_fields:
+                spel_offsets.append(offset + 6)
+            elif field in special_spel_fields:
+                if field == b'CTDA':
+                    spel_offsets.extend(CFIDs.ctda_reader(form, offset, master_byte))
+                elif field == b'SPIT':
+                    spel_offsets.append(offset + 38)
+            offset += field_size + 6
+
+        return [i, bytearray(form), spel_offsets]
 
     def save_stat_data(i, form):
         special_stat_fields = [b'DNAM', b'MODS']
@@ -1784,10 +2777,73 @@ class CFIDs():
 
         return [i, bytearray(form), stat_offsets]
 
+    def save_tact_data(i, form, master_byte): 
+        tact_fields = [b'SNAM', b'VNAM']
+        special_tact_fields = [b'VMAD', b'MODS', b'KWDA', b'DSTD', b'DMDS']
+
+        tact_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in tact_fields:
+                tact_offsets.append(offset + 6)
+            elif field in special_tact_fields:
+                if field == b'VMAD':
+                    tact_offsets.extend(CFIDs.vmad_reader(form, offset, master_byte))
+                elif field == b'MODS':
+                    tact_offsets.extend(CFIDs.get_alt_texture_offsets(offset, form))
+                elif field == b'KWDA':
+                    tact_offsets.extend(CFIDs.get_kwda_offsets(offset, form))
+                elif field == b'DSTD':
+                    tact_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
+                    tact_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
+                elif field == b'DMDS':
+                    tact_offsets.extend(CFIDs.get_alt_texture_offsets(offset, form))
+            offset += field_size + 6
+
+        return [i, bytearray(form), tact_offsets]
     
-    
-    #Template for each type of form
-    def save_FORMtemplate_data(i, form, master_byte): #Master byte will be for VMAD and temporarily is for CTDA
+    def save_tes4_data(i, form): 
+        special_tes4_fields = [b'ONAM']
+
+        tes4_offsets = []
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in special_tes4_fields:
+                if field == b'ONAM':
+                    overriden_forms_length = field_size // 4
+                    in_field_offset = offset + 6
+                    for _ in range(overriden_forms_length):
+                        tes4_offsets.append(in_field_offset)
+                        in_field_offset += 4
+            offset += field_size + 6
+
+        return [i, bytearray(form), tes4_offsets]
+
+    def save_tree_data(i, form, master_byte): #TODO: This
+        tree_fields = [b'']
+        special_tree_fields = [b'']
+
+        tree_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            if field in tree_fields:
+                tree_offsets.append(offset + 6)
+            elif field in special_tree_fields:
+                pass
+            offset += field_size + 6
+
+        return [i, bytearray(form), tree_offsets]
+
+
+
+    #Template for each type of form #Master byte will be for VMAD and temporarily is for CTDA
+    def save_FORM_data(i, form, master_byte): 
         FORM_fields = [b'']
         special_FORM_fields = [b'']
 
@@ -1805,7 +2861,7 @@ class CFIDs():
         return [i, bytearray(form), FORM_offsets]
 
                     
-    def ctda_reader(form, offset, master_byte): #TODO: proper implementation... ugh
+    def ctda_reader(form, offset, master_byte): #TODO: proper implementation
         offsets = []
         ctda_size = int.from_bytes(form[offset+4:offset+6][::-1]) + offset
         while offset < ctda_size and offset < len(form):
