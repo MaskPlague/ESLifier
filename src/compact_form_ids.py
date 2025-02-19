@@ -357,7 +357,7 @@ class CFIDs():
 
                 uncompressed_size_from_form = data_list[i][24:28]
                 sizes_list[i] = [len(data_list[i]), 0, i, len(data_list[i][28:]), uncompressed_size_from_form]
-                data_list[i] = data_list[i][:28] + decompressed + data_list[i][size+24:]
+                data_list[i] = data_list[i][:24] + decompressed + data_list[i][size+24:]
 
         return data_list, sizes_list
     
