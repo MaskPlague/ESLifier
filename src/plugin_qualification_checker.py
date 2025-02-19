@@ -1,29 +1,19 @@
-import re
 import timeit
 import os
 import json
+import threading
 
 
 class qualification_checker():
-    record_types = [b'GMST', b'KYWD', b'LCRT', b'AACT', b'TXST', b'GLOB', b'CLAS', b'FACT', b'HDPT', b'EYES', b'RACE', b'SOUN', b'ASPC', b'MGEF', b'LTEX', 
-                    b'ENCH', b'SPEL', b'SCRL', b'ACTI', b'TACT', b'ARMO', b'BOOK', b'CONT', b'DOOR', b'INGR', b'LIGH', b'MISC', b'APPA', b'STAT', b'MSTT', 
-                    b'GRAS', b'TREE', b'FLOR', b'FURN', b'WEAP', b'AMMO', b'NPC_', b'LVLN', b'KEYM', b'ALCH', b'IDLM', b'COBJ', b'PROJ', b'HAZD', b'SLGM', 
-                    b'LVLI', b'WTHR', b'CLMT', b'SPGD', b'RFCT', b'REGN', b'NAVI', b'CELL', b'WRLD', b'DIAL', b'QUST', b'IDLE', b'PACK', b'CSTY', b'LSCR', 
-                    b'LVSP', b'ANIO', b'WATR', b'EFSH', b'EXPL', b'DEBR', b'IMGS', b'IMAD', b'FLST', b'PERK', b'BPTD', b'ADDN', b'AVIF', b'CAMS', b'CPTH', 
-                    b'VTYP', b'MATT', b'IPCT', b'IPDS', b'ARMA', b'ECZN', b'LCTN', b'MESG', b'DOBJ', b'LGTM', b'MUSC', b'FSTP', b'FSTS', b'SMBN', b'SMQN',
-                    b'SMEN', b'DLBR', b'MUST', b'DLVW', b'WOOP', b'SHOU', b'EQUP', b'RELA', b'SCEN', b'ASTP', b'OTFT', b'ARTO', b'MATO', b'MOVT', b'HAZD', 
-                    b'SNDR', b'DUAL', b'SNCT', b'SOPM', b'COLL', b'CLFM', b'REVB', b'INFO', b'REFR', b'ACHR', b'NAVM', b'PGRE', b'PHZD', b'LAND']
-    record_types_pattern = b'|'.join(record_types)
-    pattern = rb'(?=(?:' + record_types_pattern + rb')................[\x2c\x2b]\x00.\x00)|(?=GRUP....................)'
-
     def scan(path, update_header, show_cells):
+        qualification_checker.lock = threading.Lock()
         start_time = timeit.default_timer()
         all_plugins = qualification_checker.get_from_file("ESLifier_Data/plugin_list.json")
         plugins = [plugin for plugin in all_plugins if not plugin.lower().endswith('.esl')]
-        need_flag_list = []
-        need_flag_cell_flag_list = []
-        need_compacting_list = []
-        need_compacting_cell_flag_list = []
+        qualification_checker.need_flag_list = []
+        qualification_checker.need_flag_cell_flag_list = []
+        qualification_checker.need_compacting_list = []
+        qualification_checker.need_compacting_cell_flag_list = []
         qualification_checker.max_record_number = 4096
         qualification_checker.show_cells = show_cells
         if update_header:
@@ -32,12 +22,40 @@ class qualification_checker():
             qualification_checker.num_max_records = 2048
 
         print('\n')
-        count = 0
-        plugin_count = len(plugins)
+        qualification_checker.count = 0
+        qualification_checker.plugin_count = len(plugins)
+
+        if len(plugins) > 1000:
+            split = 5
+        elif len(plugins) > 500:
+            split = 2
+        else:
+            split = 1
+
+        chunk_size = len(plugins) // split
+        chunks = [plugins[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
+        chunks.append(plugins[(split) * chunk_size:])
+
+        threads = []
+        for chunk in chunks:
+            thread = threading.Thread(target=qualification_checker.plugin_scanner, args=(chunk,))
+            threads.append(thread)
+            thread.start()
+            
+        for thread in threads:
+            thread.join()
+
+        end_time = timeit.default_timer()
+        time_taken = end_time - start_time
+        print('-  Time taken: ' + str(round(time_taken,2)) + ' seconds')
+        return qualification_checker.need_flag_list, qualification_checker.need_flag_cell_flag_list, qualification_checker.need_compacting_list, qualification_checker.need_compacting_cell_flag_list
+
+    def plugin_scanner(plugins):
+        need_flag_list = []
+        need_flag_cell_flag_list = []
+        need_compacting_list = []
+        need_compacting_cell_flag_list = []
         for plugin in plugins:
-            count += 1
-            percentage = (count / plugin_count) * 100
-            print('\033[F\033[K-  Processed: ' + str(round(percentage, 1)) + '%' + '\n-  Plugins: ' + str(count) + '/' + str(plugin_count), end='\r')
             if not qualification_checker.already_esl(plugin):
                 esl_allowed, need_compacting, new_cell = qualification_checker.file_reader(plugin)
                 if esl_allowed:
@@ -49,11 +67,28 @@ class qualification_checker():
                         need_compacting_list.append(plugin)
                         if new_cell:
                             need_compacting_cell_flag_list.append(os.path.basename(plugin))
+            qualification_checker.count += 1
+            percentage = (qualification_checker.count / qualification_checker.plugin_count) * 100
+            print('\033[F\033[K-  Processed: ' + str(round(percentage, 1)) + '%' + '\n-  Plugins: ' + str(qualification_checker.count) + '/' + str(qualification_checker.plugin_count), end='\r')
 
-        end_time = timeit.default_timer()
-        time_taken = end_time - start_time
-        print('-  Time taken: ' + str(round(time_taken,2)) + ' seconds')
-        return need_flag_list, need_flag_cell_flag_list, need_compacting_list, need_compacting_cell_flag_list
+        with qualification_checker.lock:
+            qualification_checker.need_flag_list.extend(need_flag_list)
+            qualification_checker.need_flag_cell_flag_list.extend(need_flag_cell_flag_list)
+            qualification_checker.need_compacting_list.extend(need_compacting_list)
+            qualification_checker.need_compacting_cell_flag_list.extend(need_compacting_cell_flag_list)
+
+    def create_data_list(data):
+        data_list = []
+        offset = 0
+        while offset < len(data):
+            if data[offset:offset+4] == b'GRUP':
+                data_list.append(data[offset:offset+24])
+                offset += 24
+            else:
+                form_length = int.from_bytes(data[offset+4:offset+8][::-1])
+                data_list.append(data[offset:offset+24+form_length])
+                offset += 24 + form_length
+        return data_list      
 
     def file_reader(file):
         data_list = []
@@ -61,7 +96,7 @@ class qualification_checker():
         need_compacting = False
         with open(file, 'rb') as f:
             data = f.read()
-            data_list = [x for x in re.split(qualification_checker.pattern, data, flags=re.DOTALL) if x]
+            data_list = qualification_checker.create_data_list(data)
         master_count = data_list[0].count(b'MAST')
         count = 0
         cell_form_ids = []
