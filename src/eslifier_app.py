@@ -12,7 +12,8 @@ class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
         #TODO: refine patching of files in compact_form_ids.py
-        #TODO: thread patching dependents maybe?
+        #TODO: append lowercase os.path.relpath() to the compacted and patched dict instead of whatever I'm doing now.
+        #TODO: add to main a "are you sure you want to re-scan?" message box on any scan button click after first scan, QOL.
         #TODO: Consider creating MO2 integration in the form of a notification of esl flagable/new dependent files... no idea where to start with this...
         self.setWindowTitle("ESLifier")
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
