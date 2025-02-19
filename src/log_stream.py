@@ -37,12 +37,13 @@ class log_stream(QMainWindow):
 
     def show(self):
         self.raise_()
+        #self.hide()
         return super().show()
 
     def write(self, text):
         self.list.append(text)
         text = text.strip()
-        if 'Process' not in text and 'Percentage' not in text and text != '':
+        if 'Process' not in text and 'Percentage' not in text and 'Gathered' not in text and text != '':
             self.log_file.write(text + '\n')
     
     def flush(self):
