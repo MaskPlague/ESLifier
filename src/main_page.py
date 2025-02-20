@@ -12,6 +12,7 @@ from plugin_qualification_checker import qualification_checker
 from dependency_getter import dependecy_getter
 from compact_form_ids import CFIDs
 from cell_changed_scanner import cell_scanner
+from full_form_processor import form_processor
 
 class main(QWidget):
     def __init__(self):
@@ -352,8 +353,14 @@ class Worker2(QObject):
         self.mo2_mode = mo2_mode
         
     def run(self):
+        fp = form_processor()
+        total = len(self.checked)
+        count = 0
         for file in self.checked:
-            CFIDs.compact_and_patch(file, self.dependency_dictionary[os.path.basename(file).lower()], self.skyrim_folder_path, self.output_folder_path, self.update_header, self.mo2_mode)
+            count +=1
+            percent = round((count/total)*100,1)
+            print(f'{percent}% Patching: {count}/{total}')
+            CFIDs.compact_and_patch(fp, file, self.dependency_dictionary[os.path.basename(file).lower()], self.skyrim_folder_path, self.output_folder_path, self.update_header, self.mo2_mode)
         print("Compacted and Patched")
         print('CLEAR')
         self.finished_signal.emit()
