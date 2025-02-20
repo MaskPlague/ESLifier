@@ -508,7 +508,7 @@ class form_processor():
 
     def save_book_data(i, form, master_byte):
         book_fields = [b'YNAM', b'ZNAM', b'INAM']
-        special_book_fields = [b'VMAD', b'MODS', b'DSTD', b'DMDS', b'KWDA' b'DATA']
+        special_book_fields = [b'VMAD', b'MODS', b'DSTD', b'DMDS', b'KWDA', b'DATA']
 
         book_offsets = [12]
         offset = 24
@@ -889,7 +889,7 @@ class form_processor():
         return [i, bytearray(form), expl_offsets]
 
     def save_fact_data(i, form): 
-        fact_fields = [b'XNAM', b'JAIL', b'WAIT', b'STOL', b'PLCN', b'CRGR', b'JOUT' b'VEND', b'VENC']
+        fact_fields = [b'XNAM', b'JAIL', b'WAIT', b'STOL', b'PLCN', b'CRGR', b'JOUT', b'VEND', b'VENC']
         special_fact_fields = [b'PLVD', b'CTDA']
 
         fact_offsets = [12]
@@ -1533,7 +1533,6 @@ class form_processor():
         return [i, bytearray(form), must_offsets]
     
     def save_navi_data(i, form): 
-        navi_fields = [b'']
         special_navi_fields = [b'NVMI', b'NVPP', b'NVSI']
 
         navi_offsets = [12]
@@ -1541,9 +1540,7 @@ class form_processor():
         while offset < len(form):
             field = form[offset:offset+4]
             field_size = int.from_bytes(form[offset+4:offset+6][::-1])
-            if field in navi_fields:
-                navi_offsets.append(offset + 6)
-            elif field in special_navi_fields:
+            if field in special_navi_fields:
                 if field == b'NVSI':
                     form_id_count = field_size // 4
                     in_field_offset = offset + 6
@@ -1592,16 +1589,14 @@ class form_processor():
         return [i, bytearray(form), navi_offsets]
 
     def save_navm_data(i, form): 
-        navm_fields = [b'']
         special_navm_fields = [b'NVNM']
+        
         navm_offsets = [12]
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
             field_size = int.from_bytes(form[offset+4:offset+6][::-1])
-            if field in navm_fields:
-                navm_offsets.append(offset + 6)
-            elif field in special_navm_fields:
+            if field in special_navm_fields:
                 if field == b'NVNM':
                     in_field_offset = offset + 6 + 8
                     navm_offsets.append(in_field_offset)        # World Space

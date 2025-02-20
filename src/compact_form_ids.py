@@ -349,35 +349,31 @@ class CFIDs():
 
         for i in range(len(data_list)):
             if data_list[i][:4] != b'GRUP' and data_list[i][10] == 0x4 and (0 <= data_list[i][15] <= master_count):
-                size = int.from_bytes(data_list[i][4:8][::-1])
                 try:
-                    decompressed = zlib.decompress(data_list[i][28:size + 24])  # Decompress the form
+                    decompressed = zlib.decompress(data_list[i][28:])  # Decompress the form
                 except Exception as e:
-                    print(f'Error: {e}\rHeader: {data_list[i][:24]}' )
+                    print(f'Error: {e}\r at Header: {data_list[i][:24]} at Index: {i}' )
 
                 uncompressed_size_from_form = data_list[i][24:28]
                 sizes_list[i] = [len(data_list[i]), 0, i, len(data_list[i][28:]), uncompressed_size_from_form]
-                data_list[i] = data_list[i][:24] + decompressed + data_list[i][size+24:]
+                data_list[i] = data_list[i][:24] + decompressed
 
         return data_list, sizes_list
     
     def recompress_data(data_list, sizes_list, master_count):
         for i in range(len(data_list)):
             if data_list[i][:4] != b'GRUP' and data_list[i][10] == 0x4 and (0 <= data_list[i][15] <= master_count):
-                compressed = zlib.compress(data_list[i][24:], 9)
-                formatted = [0] * 24
-                formatted[:4] = data_list[i][:4]
-                formatted[8:24] = data_list[i][8:24]
+                compressed = zlib.compress(data_list[i][24:], 6)
+                formatted = [0] * (sizes_list[i][0]- 28)
+                formatted[:24] = data_list[i][:24]
                 formatted[24:28] = sizes_list[i][4]
                 formatted[28:len(compressed)] = compressed
-                if len(compressed) != sizes_list[i][3]:
-                    diff = len(compressed) - sizes_list[i][3]
-                    sizes_list[i] = [sizes_list[i][0], diff, sizes_list[i][2], sizes_list[i][3], sizes_list[i][4]]
+                if len(formatted) != sizes_list[i][0]:
+                    diff = len(formatted) - sizes_list[i][0]
+                    sizes_list[i][1] = diff
                     size = int.from_bytes(data_list[i][4:8][::-1])
                     new_size = size + diff
                     formatted[4:8] = [byte for byte in new_size.to_bytes(4, 'little')]
-                else:
-                    formatted[4:8] = data_list[i][4:8]
                 data_list[i] = bytes(formatted)
         return data_list, sizes_list
     
