@@ -1,4 +1,11 @@
+import os
+import threading
+
 class form_processor():
+    def __init__(self):
+        form_processor.lock = threading.Lock()
+        form_processor.temp_form_offsets = {}
+
     def get_kwda_offsets(offset, form):
         offsets = []
         ksiz = int.from_bytes(form[offset+4:offset+6][::-1]) // 4
@@ -18,7 +25,7 @@ class form_processor():
             offset += 8
         return offsets
         
-    def patch_form_data(data_list, forms, form_id_replacements, master_byte):
+    def patch_form_data(self, data_list, forms, form_id_replacements, master_byte):
         for i, form, offsets in forms:
             for offset in offsets:
                 if form[offset+3:offset+4] == master_byte:
@@ -29,7 +36,13 @@ class form_processor():
             data_list[i] = bytes(form)
         return data_list
     
-    def save_all_form_data(data_list, master_byte):
+    
+    def save_all_form_data(self, data_list, master_byte, mod):
+        mod_name = os.path.basename(mod).lower()
+        if mod_name in form_processor.temp_form_offsets.keys():
+            temp_form_offsets =  form_processor.temp_form_offsets[os.path.basename(mod).lower()]
+            return [[i, bytearray(form), temp_form_offsets[i]] for i, form in enumerate(data_list)]
+
         saved_forms = []
         for i, form in enumerate(data_list):
             record_type = form[:4]
@@ -281,7 +294,11 @@ class form_processor():
             elif b'LENS' == record_type:
                 saved_forms.append([i, bytearray(form), [12]])
             else:
-                print(f'Missing processing for record type: {record_type}')
+                print(f'Missing form processing for record type: {record_type}')
+
+        with self.lock:
+            form_processor.temp_form_offsets[mod_name] = [saved[2] for saved in saved_forms]
+
         return saved_forms
     
     def save_achr_data(i, form, master_byte):
@@ -1133,7 +1150,7 @@ class form_processor():
         return [i, bytearray(form), info_offsets]
 
     def save_ingr_data(i, form, master_byte): 
-        ingr_fields = [b'YNAM', b'ZNAM']
+        ingr_fields = [b'YNAM', b'ZNAM', b'EFID']
         special_ingr_fields = [b'VMAD', b'KWDA', b'CTDA']
 
         ingr_offsets = [12]
@@ -1841,8 +1858,8 @@ class form_processor():
         return [i, bytearray(form), qust_offsets]
 
     def save_race_data(i, form): 
-        race_fields = [b'SPLO', b'WNAM', b'ATKR', b'GNAM', b'NAM4', b'NAM5', b'NAM7', b'ONAM', b'LNAM', b'MTYP', b'QNAM', b'UNES', b'WKMV',
-                        b'RNMV', b'SWMV', b'FLMV', b'SNMV', b'SPMV', b'RPRM', b'AHCM', b'FTSM', b'DFTM', b'TIND', b'TINC', b'NAM8', b'RNAM']
+        race_fields = [b'SPLO', b'WNAM', b'ATKR', b'GNAM', b'NAM4', b'NAM5', b'NAM7', b'ONAM', b'LNAM', b'MTYP', b'QNAM', b'UNES', b'WKMV', b'HEAD', b'RPRF', b'DFTF',
+                        b'RNMV', b'SWMV', b'FLMV', b'SNMV', b'SPMV', b'RPRM', b'AHCM', b'FTSM', b'DFTM', b'TIND', b'TINC', b'NAM8', b'RNAM', b'AHCF', b'FTSF']
         special_race_fields = [b'KWDA', b'VTCK', b'DNAM', b'HCLF', b'ATKD']
 
         race_offsets = [12]
@@ -2017,7 +2034,7 @@ class form_processor():
         return [i, bytearray(form), shou_offsets]
 
     def save_slgm_data(i, form): 
-        slgm_fields = [b'NAM0', b'ZNAM']
+        slgm_fields = [b'NAM0', b'ZNAM', b'YNAM']
         special_slgm_fields = [b'KWDA']
 
         slgm_offsets = [12]
