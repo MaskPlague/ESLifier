@@ -26,7 +26,7 @@ class log_stream(QMainWindow):
         self.log_file = open("ESLifier_Data/ESLifier.log", 'w')
 
         sys.stdout = self
-        sys.stderr = self
+        #sys.stderr = self
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.process_queue)
@@ -43,7 +43,7 @@ class log_stream(QMainWindow):
     def write(self, text):
         self.list.append(text)
         text = text.strip()
-        if 'Process' not in text and 'Percentage' not in text and 'Gathered' not in text and text != '':
+        if 'Process' not in text and 'Percentage' not in text and 'Gathered' not in text and 'CLEAR' not in text and text != '':
             self.log_file.write(text + '\n')
     
     def flush(self):
@@ -98,6 +98,8 @@ class log_stream(QMainWindow):
         elif 'CLEAR' == text:
             self.log_file.flush()
             self.timer_clear.start(1500)
+        elif 'CLEAR ALT' == text:
+            self.clear_alt()
         else:
             # Simply append new text if no ANSI codes are found
             self.text_edit.insertPlainText(text)
@@ -110,5 +112,9 @@ class log_stream(QMainWindow):
         self.timer_clear.stop()
         self.text_edit.setPlainText(None)
         self.hide()
+    
+    def clear_alt(self):
+        self.text_edit.setPlainText(None)
+
 
 
