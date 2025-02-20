@@ -116,8 +116,9 @@ class qualification_checker():
         cell_form_ids.sort()
         if cell_form_ids != []:
             cell_form_id_file = 'ESLifier_Data/Cell_IDs/' + os.path.basename(file) + '_CellFormIDs.txt'
-            if not os.path.exists(os.path.dirname(cell_form_id_file)):
-                os.makedirs(os.path.dirname(cell_form_id_file))
+            with qualification_checker.lock:
+                if not os.path.exists(os.path.dirname(cell_form_id_file)):
+                    os.makedirs(os.path.dirname(cell_form_id_file))
             with open(cell_form_id_file, 'w') as f:
                 for form_id in cell_form_ids:
                     f.write(form_id + '\n')
