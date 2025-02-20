@@ -7,18 +7,20 @@ import fileinput
 import zlib
 import json
 import threading
-from full_form_processor import form_processor
 
 #TODO: Further refinement of file patching, additional research on files that need patching
 #TODO: thread patching dependents maybe?
-#TODO: create a temp (one scan? sessions? probably scan) json file (or something) that only holds form id offsets for each file so that we need not call save_form_data() repeatedly
+
 
 class CFIDs():
-    def compact_and_patch(file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header, mo2_mode):
+    def compact_and_patch(form_processor, file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header, mo2_mode):
         CFIDs.lock = threading.Lock()
         CFIDs.compacted_and_patched = {}
         CFIDs.mo2_mode = mo2_mode
-        print("Compacting Plugin: " + os.path.basename(file_to_compact) + '...')
+        CFIDs.form_processor = form_processor
+        size = os.path.getsize(file_to_compact)
+        mb_size = round(size / 1048576, 3)
+        print(f"Compacting Plugin: {os.path.basename(file_to_compact)} ({mb_size} MB)...")
         CFIDs.compact_file(file_to_compact, skyrim_folder_path, output_folder_path, update_header)
         if dependents != []:
             print("-  Patching Dependent Plugins...")
@@ -30,9 +32,11 @@ class CFIDs():
             form_id_map = CFIDs.get_form_id_map(file_to_compact)
             print("-  Patching Dependent Files...")
             CFIDs.patch_files_threader(file_to_compact, to_patch, form_id_map, skyrim_folder_path, output_folder_path, True)
-            print("-  Renaming Dependent Files...")
+            print("-  Renaming/Patching Dependent Files...")
+            print('\n')
             CFIDs.rename_files_threader(file_to_compact, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
         CFIDs.dump_to_file('ESLifier_Data/compacted_and_patched.json')
+        print('CLEAR ALT')
         return
     
     def dump_to_file(file):
@@ -65,8 +69,9 @@ class CFIDs():
             f.seek(9)
             f.write(b'\x02')
 
-    def patch_new(compacted_file, dependents, files_to_patch, skyrim_folder_path, output_folder_path, update_header, mo2_mode):
+    def patch_new(form_processor, compacted_file, dependents, files_to_patch, skyrim_folder_path, output_folder_path, update_header, mo2_mode):
         CFIDs.lock = threading.Lock()
+        CFIDs.form_processor = form_processor
         CFIDs.compacted_and_patched = {}
         CFIDs.mo2_mode = mo2_mode
         print('Patching new plugins and files for ' + compacted_file + '...')
@@ -78,10 +83,15 @@ class CFIDs():
             to_patch, to_rename = CFIDs.sort_files_to_patch_or_rename(compacted_file, files_to_patch[os.path.basename(compacted_file)])
             form_id_map = CFIDs.get_form_id_map(compacted_file)
             print("-  Patching New Dependent Files...")
+            if len(to_patch) > 50:
+                print('\n')
             CFIDs.patch_files_threader(compacted_file, to_patch, form_id_map, skyrim_folder_path, output_folder_path, True)
-            print("-  Renaming Dependent Files...")
+            print("-  Renaming/Patching New Dependent Files...")
+            if len(to_rename) > 50:
+                print('\n')
             CFIDs.rename_files_threader(compacted_file, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
         CFIDs.dump_to_file('ESLifier_Data/compacted_and_patched.json')
+        print('CLEAR ALT')
 
     #Create a copy of the mod plugin we're compacting
     def copy_file_to_output(file, skyrim_folder_path, output_folder):
@@ -92,10 +102,11 @@ class CFIDs():
         else:
             end_path = file[len(skyrim_folder_path) + 1:]
         new_file = os.path.join(os.path.join(output_folder,'ESLifier Compactor Output'), re.sub(r'(.*?)(/|\\)', '', end_path, 1))
-        if not os.path.exists(os.path.dirname(new_file)):
-            os.makedirs(os.path.dirname(new_file))
-        if not os.path.exists(new_file):
-            shutil.copy(file, new_file)
+        with CFIDs.lock:
+            if not os.path.exists(os.path.dirname(new_file)):
+                os.makedirs(os.path.dirname(new_file))
+            if not os.path.exists(new_file):
+                shutil.copy(file, new_file)
         return new_file
     
     #Get files (not including plugins) that may/will need old Form IDs replaced with the new Form IDs
@@ -137,20 +148,22 @@ class CFIDs():
     def rename_files(master, files, form_id_map, skyrim_folder_path, output_folder_path):
         facegeom_meshes = []
         for file in files:
-            CFIDs.count += 1
-            percent = CFIDs.count / CFIDs.file_count * 100
-            factor = round(CFIDs.file_count * 0.001)
-            if factor == 0:
-                factor = 1
-            if (CFIDs.count % factor) >= (factor-1) or CFIDs.count >= CFIDs.file_count:
-                print('\033[F\033[K-  Percentage: ' + str(round(percent,1)) +'%\n-  Files: ' + str(CFIDs.count) + '/' + str(CFIDs.file_count), end='\r')
+            if CFIDs.file_count > 50:
+                CFIDs.count += 1
+                percent = CFIDs.count / CFIDs.file_count * 100
+                factor = round(CFIDs.file_count * 0.001)
+                if factor == 0:
+                    factor = 1
+                if (CFIDs.count % factor) >= (factor-1) or CFIDs.count >= CFIDs.file_count:
+                    print('\033[F\033[K-  Percentage: ' + str(round(percent,1)) +'%\n-  Files: ' + str(CFIDs.count) + '/' + str(CFIDs.file_count), end='\r')
             for form_ids in form_id_map:
                 if form_ids[1].upper() in file.upper():
+                    new_file = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
                     with CFIDs.lock:
-                        new_file = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
                         os.replace(new_file, new_file.replace(form_ids[1].upper(), form_ids[3].upper()))
-                        end_path = file[len(skyrim_folder_path) + 1:]
-                        new_file_but_skyrim_pathed = os.path.join(skyrim_folder_path, re.sub(r'(.*?)(/|\\)', '', end_path, 1))
+                    end_path = file[len(skyrim_folder_path) + 1:]
+                    new_file_but_skyrim_pathed = os.path.join(skyrim_folder_path, re.sub(r'(.*?)(/|\\)', '', end_path, 1))
+                    with CFIDs.lock:
                         if new_file_but_skyrim_pathed not in CFIDs.compacted_and_patched[os.path.basename(master)]:
                             CFIDs.compacted_and_patched[os.path.basename(master)].append(new_file_but_skyrim_pathed)
                         if new_file not in CFIDs.compacted_and_patched[os.path.basename(master)]:
@@ -195,8 +208,17 @@ class CFIDs():
         chunk_size = len(files) // split
         chunks = [files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
         chunks.append(files[(split) * chunk_size:])
-        
+        CFIDs.count = 0
+        CFIDs.file_count = len(files)
         for chunk in chunks:
+            if CFIDs.file_count > 50:
+                CFIDs.count += 1
+                percent = CFIDs.count / CFIDs.file_count * 100
+                factor = round(CFIDs.file_count * 0.001)
+                if factor == 0:
+                    factor = 1
+                if (CFIDs.count % factor) >= (factor-1) or CFIDs.count >= CFIDs.file_count:
+                    print('\033[F\033[K-  Percentage: ' + str(round(percent,1)) +'%\n-  Files: ' + str(CFIDs.count) + '/' + str(CFIDs.file_count), end='\r')
             thread = threading.Thread(target=CFIDs.patch_files, args=(master, chunk, form_id_map, skyrim_folder_path, output_folder_path, flag))
             threads.append(thread)
             thread.start()
@@ -218,6 +240,7 @@ class CFIDs():
     #   .pex: integer form ids in compiled scripts
     def patch_files(master, files, form_id_map, skyrim_folder_path, output_folder_path, flag):
         for file in files:
+
             if flag:
                 new_file = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
             else:
@@ -341,6 +364,7 @@ class CFIDs():
                             f.seek(0)
                             f.write(data)
                         f.close()
+
             with CFIDs.lock:
                 CFIDs.compacted_and_patched[os.path.basename(master)].append(file)
 
@@ -457,7 +481,7 @@ class CFIDs():
 
         master_byte = master_count.to_bytes()
 
-        saved_forms = form_processor.save_all_form_data(data_list, master_byte)
+        saved_forms = CFIDs.form_processor.save_all_form_data(data_list, master_byte, new_file)
 
         form_id_list.sort()
 
@@ -513,7 +537,7 @@ class CFIDs():
             for form_id, new_id in form_id_replacements:
                 fidf.write(str(form_id.hex()) + '|' + str(new_id.hex()) + '\n')
 
-        data_list = form_processor.patch_form_data(data_list, saved_forms, form_id_replacements, master_byte)
+        data_list = CFIDs.form_processor.patch_form_data(data_list, saved_forms, form_id_replacements, master_byte)
 
         data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list, master_count)
 
@@ -535,57 +559,74 @@ class CFIDs():
         with open(form_id_file_name, 'r') as form_id_file:
             form_id_file_data = form_id_file.readlines()
 
+        threads = []
+
         for dependent in dependents:
             new_file = CFIDs.copy_file_to_output(dependent, skyrim_folder_path, output_folder_path)
-            dependent_data = b''
-            print('-    ' + os.path.basename(new_file))
+            #dependent_data = b''
+            size = os.path.getsize(new_file)
+            mb_size = round(size / 1048576, 3)
+            print(f'-    {os.path.basename(new_file)} ({mb_size} MB)')
+            if mb_size > 40:
+                thread = threading.Thread(target=CFIDs.patch_dependent, args=(new_file, update_header,file, dependent, form_id_file_data))
+                threads.append(thread)
+                thread.start()
+            else:
+                CFIDs.patch_dependent(new_file, update_header,file, dependent, form_id_file_data)
+        
+        if len(threads) > 0 and any([thread.is_alive() for thread in threads]):
+            print('-    Waiting for dependent plugin patching to finish...')
+            for thread in threads:
+                thread.join()
 
-            with open(new_file, 'rb+') as dependent_file:
-                #Update header to 1.71 to fit new records
-                if update_header:
-                    dependent_file.seek(0)
-                    dependent_file.seek(30)
-                    dependent_file.write(b'\x48\xE1\xDA\x3F')
-                    dependent_file.seek(0)
-
-                dependent_data = dependent_file.read()
-                
-                data_list, grup_struct = CFIDs.create_data_list(dependent_data)
-            
-                master_count = data_list[0].count(b'MAST')
-                data_list, sizes_list = CFIDs.decompress_data(data_list, master_count)
-
-                master_index = CFIDs.get_master_index(file, dependent_data)
-
-                master_byte = master_index.to_bytes()
-
-                saved_forms = form_processor.save_all_form_data(data_list, master_byte)
-                
-                form_id_replacements = []
-                for i in range(len(form_id_file_data)):
-                    form_id_conversion = form_id_file_data[i].split('|')
-                    from_id = bytes.fromhex(form_id_conversion[0])[:3] + master_byte
-                    to_id = bytes.fromhex(form_id_conversion[1])[:3] + master_byte
-                    form_id_replacements.append([from_id, to_id])
-
-                data_list = form_processor.patch_form_data(data_list, saved_forms, form_id_replacements, master_byte)
-
-                data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list, master_count)
-                
-                data_list = CFIDs.update_grup_sizes(data_list, grup_struct, sizes_list)
-
+    def patch_dependent(new_file, update_header,file, dependent, form_id_file_data):
+        with open(new_file, 'rb+') as dependent_file:
+            #Update header to 1.71 to fit new records
+            if update_header:
                 dependent_file.seek(0)
-                dependent_file.write(b''.join(data_list))
-                dependent_file.close()
+                dependent_file.seek(30)
+                dependent_file.write(b'\x48\xE1\xDA\x3F')
+                dependent_file.seek(0)
 
+            dependent_data = dependent_file.read()
+            
+            data_list, grup_struct = CFIDs.create_data_list(dependent_data)
+        
+            master_count = data_list[0].count(b'MAST')
+            data_list, sizes_list = CFIDs.decompress_data(data_list, master_count)
+
+            master_index = CFIDs.get_master_index(file, data_list)
+
+            master_byte = master_index.to_bytes()
+
+            saved_forms = CFIDs.form_processor.save_all_form_data(data_list, master_byte, new_file)
+            
+            form_id_replacements = []
+            for i in range(len(form_id_file_data)):
+                form_id_conversion = form_id_file_data[i].split('|')
+                from_id = bytes.fromhex(form_id_conversion[0])[:3] + master_byte
+                to_id = bytes.fromhex(form_id_conversion[1])[:3] + master_byte
+                form_id_replacements.append([from_id, to_id])
+
+            data_list = CFIDs.form_processor.patch_form_data(data_list, saved_forms, form_id_replacements, master_byte)
+
+            data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list, master_count)
+            
+            data_list = CFIDs.update_grup_sizes(data_list, grup_struct, sizes_list)
+
+            dependent_file.seek(0)
+            dependent_file.write(b''.join(data_list))
+            dependent_file.close()
+
+        with CFIDs.lock:
             CFIDs.compacted_and_patched[os.path.basename(file)].append(dependent)
             CFIDs.compacted_and_patched[os.path.basename(file)].append(new_file)
         return
 
     #gets what master index the file is in inside of the dependent's data
-    def get_master_index(file, data):
+    def get_master_index(file, data_list):
         master_pattern = re.compile(b'MAST..(.*?).DATA', flags=re.DOTALL)
-        matches = re.findall(master_pattern, data)
+        matches = re.findall(master_pattern, data_list[0])
         master_index = 0
         for match in matches:
             if os.path.basename(file).lower() in str(match).lower():
