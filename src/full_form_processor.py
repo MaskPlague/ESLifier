@@ -252,6 +252,8 @@ class form_processor():
                 saved_forms.append(form_processor.save_soun_data(i, form))
             elif b'SPEL' == record_type:
                 saved_forms.append(form_processor.save_spel_data(i, form))
+            elif b'SPGD' == record_type:
+                saved_forms.append([i, bytearray(form), [12]])
             elif b'STAT' == record_type:
                 saved_forms.append(form_processor.save_stat_data(i, form))
             elif b'TACT' == record_type:
@@ -274,6 +276,10 @@ class form_processor():
                 saved_forms.append(form_processor.save_wrld_data(i, form))
             elif b'WTHR' == record_type:
                 saved_forms.append(form_processor.save_wthr_data(i, form))
+            elif b'VOLI' == record_type:
+                saved_forms.append([i, bytearray(form), [12]])
+            elif b'LENS' == record_type:
+                saved_forms.append([i, bytearray(form), [12]])
             else:
                 print(f'Missing processing for record type: {record_type}')
         return saved_forms
@@ -1590,7 +1596,7 @@ class form_processor():
 
     def save_navm_data(i, form): 
         special_navm_fields = [b'NVNM']
-        
+
         navm_offsets = [12]
         offset = 24
         while offset < len(form):
