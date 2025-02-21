@@ -123,11 +123,11 @@ class scanner():
             else:
                 loop += 1
             if len(mods) == 1:
-                file_path = os.path.join(os.path.join(mods_folder, mods[0]), file)
+                file_path = os.path.join(mods_folder, mods[0], file)
                 winning_files.append(file_path)
             else:
                 mods_sorted = sorted(mods, key=lambda mod: load_order.index(mod))
-                file_path = os.path.join(os.path.join(mods_folder, mods_sorted[-1]), file)
+                file_path = os.path.join(mods_folder, mods_sorted[-1], file)
                 winning_files.append(file_path)
 
         plugin_extensions = ('.esp', '.esl', '.esm')
@@ -221,7 +221,7 @@ class scanner():
         for file in files:
             scanner.count += 1
             scanner.percentage = (scanner.count/scanner.file_count) * 100
-            print('\033[F\033[K-  Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-  Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
+            print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
             scanner.bsa_reader(file)
 
     def file_processor(files, pattern, pattern3, pattern4, pattern5):
@@ -234,7 +234,7 @@ class scanner():
             if factor == 0:
                 factor = 1
             if (scanner.count % factor) >= (factor-1) or scanner.count >= scanner.file_count:
-                print('\033[F\033[K-  Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-  Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
+                print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
             if (not 'meta.ini' in file_lower) and ('.ini' in file_lower or '.json' in file_lower or '_conditions.txt' in file_lower or '_srd.' in file_lower or '.psc' in file_lower):
                 thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
                 scanner.threads.append(thread)
