@@ -21,8 +21,10 @@ class main(QWidget):
         self.skyrim_folder_path = ''
         self.output_folder_path = ''
         self.modlist_txt_path = ''
+        self.scanned = False
         self.mo2_mode = False
         self.update_header = True
+        self.scan_esms = False
         self.show_cells = True
         self.eslify_dictionary = {}
         self.dependency_dictionary = {}
@@ -157,6 +159,13 @@ class main(QWidget):
             file_masters = main.get_from_file('ESLifier_Data/file_masters.json')
             self.confirm = QMessageBox()
             self.confirm.setIcon(QMessageBox.Icon.Information)
+            self.confirm.setWindowTitle("Getting estimated disk usage...")
+            self.confirm.setText('Getting estimated disk usage...')
+            self.confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
+            self.confirm.addButton(QMessageBox.StandardButton.Yes)
+            self.confirm.addButton(QMessageBox.StandardButton.Cancel)
+            self.confirm.setEnabled(False)
+            self.confirm.show()
             size = 0
             counted = []
             for mod in checked:
@@ -183,13 +192,10 @@ class main(QWidget):
                 calculated_size = round(size / 1024,2)
                 self.confirm.setText(f"This may generate up to {calculated_size} KBs of new files.\nAre you sure you want to continue?")
             self.confirm.setWindowTitle("Confirmation")
-            self.confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
-            self.confirm.addButton(QMessageBox.StandardButton.Yes)
-            self.confirm.addButton(QMessageBox.StandardButton.Cancel)
             self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
             self.confirm.accepted.connect(lambda x = checked: self.compact_confirmed(x))
             self.confirm.rejected.connect(lambda:self.setEnabled(True))
-            self.confirm.show()
+            self.confirm.setEnabled(True)
         else:
             self.setEnabled(True)
 
@@ -285,15 +291,33 @@ class main(QWidget):
         
     def scan(self):
         self.button_scan.setEnabled(False)
-        self.log_stream.show()
-        self.thread_new = QThread()
-        self.worker = Worker(self.skyrim_folder_path, self.update_header, self.show_cells, self.mo2_mode, self.modlist_txt_path)
-        self.worker.moveToThread(self.thread_new)
-        self.thread_new.started.connect(self.worker.scan_run)
-        self.worker.finished_signal.connect(self.completed_scan)
-        self.worker.finished_signal.connect(self.thread_new.quit)
-        self.worker.finished_signal.connect(self.thread_new.deleteLater)
-        self.thread_new.start()
+        def run_scan():
+            self.log_stream.show()
+            self.thread_new = QThread()
+            self.worker = Worker(self.skyrim_folder_path, self.update_header, self.scan_esms, self.show_cells, self.mo2_mode, self.modlist_txt_path)
+            self.worker.moveToThread(self.thread_new)
+            self.thread_new.started.connect(self.worker.scan_run)
+            self.worker.finished_signal.connect(self.completed_scan)
+            self.worker.finished_signal.connect(self.thread_new.quit)
+            self.worker.finished_signal.connect(self.thread_new.deleteLater)
+            self.thread_new.start()
+        if not self.scanned:
+            self.scanned = True
+            run_scan()
+        else:
+            self.confirm = QMessageBox()
+            self.confirm.setIcon(QMessageBox.Icon.Question)
+            self.confirm.setWindowTitle("Confirmation")
+            self.confirm.setText("You have already scanned this session.\nWould you like to scan again?")
+            self.confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
+            self.confirm.addButton(QMessageBox.StandardButton.Yes)
+            self.confirm.addButton(QMessageBox.StandardButton.Cancel)
+            self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
+            self.confirm.accepted.connect(run_scan)
+            self.confirm.rejected.connect(lambda:self.button_scan.setEnabled(True))
+            self.confirm.show()
+
+        
         
     def completed_scan(self, list_eslify_mod_list, list_eslify_has_new_cells, list_compact_mod_list, list_compact_has_new_cells, dependency_dictionary):
         self.list_eslify.mod_list = list_eslify_mod_list
@@ -303,8 +327,6 @@ class main(QWidget):
         self.dependency_dictionary = dependency_dictionary
         print('Populating Tables')
         self.eslifier.update_shown()
-        #self.list_eslify.create()
-        #self.list_compact.create()
         self.button_scan.setEnabled(True)
         print('Done Scanning')
         print('CLEAR')
@@ -320,21 +342,22 @@ class main(QWidget):
 
 class Worker(QObject):
     finished_signal = pyqtSignal(list, list , list, list, dict)
-    def __init__(self, path, update, cell, mo2_mode, modlist_txt_path):
+    def __init__(self, path, update, scan_esms, cell, mo2_mode, modlist_txt_path):
         super().__init__()
         self.skyrim_folder_path = path
         self.update_header = update
+        self.scan_esms = scan_esms
         self.show_cells = cell
         self.mo2_mode = mo2_mode
         self.modlist_txt_path = modlist_txt_path
 
     def scan_run(self):
         print('Scanning All Files:')
-        scanner(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path)
+        scanner(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.scan_esms)
         print('\nGettings Dependencies')
         dependency_dictionary = dependecy_getter.scan(self.skyrim_folder_path)
         print('\nScanning Plugins:')
-        list_eslify_mod_list, list_eslify_has_new_cells, list_compact_mod_list, list_compact_has_new_cells = qualification_checker.scan(self.skyrim_folder_path, self.update_header, self.show_cells)
+        list_eslify_mod_list, list_eslify_has_new_cells, list_compact_mod_list, list_compact_has_new_cells = qualification_checker.scan(self.skyrim_folder_path, self.update_header, self.show_cells, self.scan_esms)
         print('\nChecking if New CELLs are Changed:')
         combined_list = [mod for mod in list_compact_mod_list if os.path.basename(mod) in list_compact_has_new_cells]
         combined_list.extend([mod for mod in list_eslify_mod_list if os.path.basename(mod) in list_eslify_has_new_cells])
