@@ -39,6 +39,7 @@ class settings(QWidget):
         self.mo2_modlist_txt_path_widget_init()
         self.mo2_mode_widget_init()
         self.update_header_widget_init()
+        self.scan_esms_widget_init()
         self.show_plugins_with_cells_widget_init()
         self.enable_cell_changed_filter_widget_init()
         self.show_plugins_with_bsas_widget_init()
@@ -56,6 +57,7 @@ class settings(QWidget):
         settings_layout.addWidget(self.mo2_modlist_txt_path_widget)
         settings_layout.addWidget(self.mo2_mode_widget)
         settings_layout.addWidget(self.update_header_widget)
+        settings_layout.addWidget(self.scan_esms_widget)
         settings_layout.addWidget(self.show_plugins_with_cells_widget)
         settings_layout.addWidget(self.show_plugins_with_bsas_widget)
         settings_layout.addWidget(self.enable_cell_changed_filter_widget)
@@ -186,6 +188,19 @@ class settings(QWidget):
         self.update_header_widget.setLayout(update_header_layout)
         update_header_layout.addWidget(update_header_label)
         update_header_layout.addWidget(self.update_header_toggle)
+
+    def scan_esms_widget_init(self):
+        scan_esms_layout = QHBoxLayout()
+        self.scan_esms_widget = QWidget()
+        self.scan_esms_widget.setToolTip(
+            "Scan and include ESM plugins (.esm/ESM flagged).\n"+
+            "Changing this setting will require a re-scan.")
+        scan_esms_label = QLabel("Scan ESM Plugins")
+        self.scan_esms_toggle = QtToggle()
+        self.scan_esms_toggle.clicked.connect(self.update_settings)
+        self.scan_esms_widget.setLayout(scan_esms_layout)
+        scan_esms_layout.addWidget(scan_esms_label)
+        scan_esms_layout.addWidget(self.scan_esms_toggle)
         
     def show_plugins_with_cells_widget_init(self):
         show_plugins_with_cells_layout = QHBoxLayout()
@@ -342,6 +357,7 @@ class settings(QWidget):
                 self.mo2_modlist_txt_path.clear()
                 self.mo2_mode_toggle.setChecked(False)
                 self.update_header_toggle.setChecked(True)
+                self.scan_esms_toggle.setChecked(False)
                 self.show_plugins_with_cells_toggle.setChecked(True)
                 self.show_plugins_with_bsas_toggle.setChecked(False)
                 self.enable_cell_changed_filter_toggle.setChecked(True)
@@ -369,6 +385,9 @@ class settings(QWidget):
         if 'update_header' in self.settings.keys(): self.update_header_toggle.setChecked(self.settings['update_header'])
         else: self.update_header_toggle.setChecked(True)
 
+        if 'scan_esms' in self.settings.keys(): self.scan_esms_toggle.setChecked(self.settings['scan_esms'])
+        else: self.scan_esms_toggle.setChecked(False)
+
         if 'show_cells' in self.settings.keys(): self.show_plugins_with_cells_toggle.setChecked(self.settings['show_cells'])
         else: self.show_plugins_with_cells_toggle.setChecked(True)
 
@@ -392,6 +411,7 @@ class settings(QWidget):
         self.settings['mo2_modlist_txt_path'] = self.mo2_modlist_txt_path.text()
         self.settings['mo2_mode'] = self.mo2_mode_toggle.isChecked()
         self.settings['update_header'] = self.update_header_toggle.isChecked()
+        self.settings['scan_esms'] = self.scan_esms_toggle.isChecked()
         self.settings['show_cells'] = self.show_plugins_with_cells_toggle.isChecked()
         self.settings['enable_cell_changed_filter'] = self.enable_cell_changed_filter_toggle.isChecked()
         self.settings['show_bsas'] = self.show_plugins_with_bsas_toggle.isChecked()
