@@ -5,7 +5,7 @@ import timeit
 import json
 
 class scanner():
-    def __init__(self, path, mo2_mode, modlist_txt_path):
+    def __init__(self, path, mo2_mode, modlist_txt_path, scan_esms):
         scanner.path = path
         start_time = timeit.default_timer()
         scanner.file_count = 0
@@ -15,10 +15,13 @@ class scanner():
         print('-  Gathering Files...\n\n')
         path_level = len(path.split(os.sep))
         loop = 0
-        plugin_extensions = ('.esp', '.esm', '.esl')
+        if scan_esms:
+            plugin_extensions = ('.esp', '.esm', '.esl')
+        else:
+            plugin_extensions = ('.esp', '.esl')
         if mo2_mode:
             load_order, enabled_mods = scanner.fix_modlist(modlist_txt_path)
-            scanner.all_files, scanner.plugins = scanner.get_winning_files(scanner.path, load_order, enabled_mods)
+            scanner.all_files, scanner.plugins = scanner.get_winning_files(scanner.path, load_order, enabled_mods, scan_esms)
             scanner.file_count = len(scanner.all_files)
         else:
             for root, _, files in os.walk(scanner.path):
@@ -51,9 +54,12 @@ class scanner():
         time_taken = end_time - start_time
         print('-  Time taken: ' + str(round(time_taken,2)) + ' seconds')
     
-    def get_files_from_mods(mods_folder, enabled_mods):
+    def get_files_from_mods(mods_folder, enabled_mods, scan_esms):
         mod_files = {}
-        plugin_extensions = ('.esp', '.esl', '.esm')
+        if scan_esms:
+            plugin_extensions = ('.esp', '.esl', '.esm')
+        else:
+            plugin_extensions = ('.esp', '.esl')
         plugin_names = []
         loop = 0
         file_count = 0
@@ -109,9 +115,9 @@ class scanner():
 
         return lines, enabled_mods
 
-    def get_winning_files(mods_folder, load_order, enabled_mods):
+    def get_winning_files(mods_folder, load_order, enabled_mods, scan_esms):
         mod_folder_level = len(mods_folder.split(os.sep))
-        mod_files, plugin_names = scanner.get_files_from_mods(mods_folder, enabled_mods)
+        mod_files, plugin_names = scanner.get_files_from_mods(mods_folder, enabled_mods, scan_esms)
         winning_files = []
         file_count = 0
         loop = 0
@@ -129,8 +135,10 @@ class scanner():
                 mods_sorted = sorted(mods, key=lambda mod: load_order.index(mod))
                 file_path = os.path.join(mods_folder, mods_sorted[-1], file)
                 winning_files.append(file_path)
-
-        plugin_extensions = ('.esp', '.esl', '.esm')
+        if scan_esms:
+            plugin_extensions = ('.esp', '.esl', '.esm')
+        else:
+            plugin_extensions = ('.esp', '.esl')
         plugins = []
         plugin_names_lowered = [plugin.lower() for plugin in plugin_names]
         for file in winning_files:
