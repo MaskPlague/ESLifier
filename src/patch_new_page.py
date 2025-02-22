@@ -1,7 +1,9 @@
 import json
+import os
 
 from PyQt6.QtCore import Qt, pyqtSignal, QThread, QObject
-from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QApplication)
+from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QApplication, QMessageBox)
+from PyQt6.QtGui import QIcon
 
 from scanner import scanner
 from dependency_getter import dependecy_getter
@@ -20,6 +22,8 @@ class patch_new(QWidget):
         self.modlist_txt_path = ''
         self.mo2_mode = False
         self.update_header = True
+        self.scan_esms = False
+        self.scanned = False
         self.create()
 
     def create(self):
@@ -77,15 +81,31 @@ class patch_new(QWidget):
 
     def scan_and_find(self):
         self.setEnabled(False)
-        self.log_stream.show()
-        self.thread_new = QThread()
-        self.worker = Worker(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path)
-        self.worker.moveToThread(self.thread_new)
-        self.thread_new.started.connect(self.worker.scan_run)
-        self.worker.finished_signal.connect(self.completed_scan)
-        self.worker.finished_signal.connect(self.thread_new.quit)
-        self.worker.finished_signal.connect(self.thread_new.deleteLater)
-        self.thread_new.start()
+        def run_scan():
+            self.log_stream.show()
+            self.thread_new = QThread()
+            self.worker = Worker(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.scan_esms)
+            self.worker.moveToThread(self.thread_new)
+            self.thread_new.started.connect(self.worker.scan_run)
+            self.worker.finished_signal.connect(self.completed_scan)
+            self.worker.finished_signal.connect(self.thread_new.quit)
+            self.worker.finished_signal.connect(self.thread_new.deleteLater)
+            self.thread_new.start()
+        if not self.scanned:
+            self.scanned = True
+            run_scan()
+        else:
+            self.confirm = QMessageBox()
+            self.confirm.setIcon(QMessageBox.Icon.Question)
+            self.confirm.setWindowTitle("Confirmation")
+            self.confirm.setText("You have already scanned this session.\nWould you like to scan again?")
+            self.confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
+            self.confirm.addButton(QMessageBox.StandardButton.Yes)
+            self.confirm.addButton(QMessageBox.StandardButton.Cancel)
+            self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
+            self.confirm.accepted.connect(run_scan)
+            self.confirm.rejected.connect(lambda:self.setEnabled(False))
+            self.confirm.show()
     
     def completed_scan(self):
         print('\nGetting New Dependencies and Files')
@@ -112,28 +132,32 @@ class patch_new(QWidget):
         new_files = {}
         new_dependencies = {}
 
-        for key, values in compacted_and_patched.items():
+        for master, patched_files in compacted_and_patched.items():
             file_masters_list = []
             dependencies_list = []
-            if key.lower() in file_masters.keys(): 
-                file_masters_list = file_masters[key.lower()]
-            if key.lower() in dependencies.keys(): 
-                dependencies_list = dependencies[key.lower()]
+            if master.lower() in file_masters.keys(): 
+                file_masters_list = file_masters[master.lower()]
+            if master.lower() in dependencies.keys(): 
+                dependencies_list = dependencies[master.lower()]
             
-            for value in file_masters_list: 
-                if value not in values: 
-                    if key not in new_files.keys():
-                        new_files[key] = []
-                    new_files[key].append(value)
+            for file in file_masters_list:
+                parts = os.path.relpath(file, self.skyrim_folder_path).split('\\')
+                rel_path = os.path.join(*parts[1:])
+                if rel_path.lower() not in patched_files: 
+                    if master not in new_files.keys():
+                        new_files[master] = []
+                    new_files[master].append(file)
 
-            for value in dependencies_list: 
-                if value not in values: 
-                    if key not in new_dependencies.keys():
-                        new_dependencies[key] = []
-                    new_dependencies[key].append(value)
+            for file in dependencies_list:
+                parts = os.path.relpath(file, self.skyrim_folder_path).split('\\')
+                rel_path = os.path.join(*parts[1:])
+                if rel_path.lower() not in patched_files: 
+                    if master not in new_dependencies.keys():
+                        new_dependencies[master] = []
+                    new_dependencies[master].append(file)
 
-        mod_list = [key for key in new_dependencies.keys()]
-        mod_list.extend([key for key in new_files.keys() if key not in mod_list])
+        mod_list = [master for master in new_dependencies.keys()]
+        mod_list.extend([file for file in new_files.keys() if file not in mod_list])
         self.list_compacted_unpatched.mod_list = mod_list
         self.list_unpatched_files.dependencies_dictionary = new_dependencies
         self.list_unpatched_files.file_dictionary = new_files
@@ -171,15 +195,16 @@ class patch_new(QWidget):
 
 class Worker(QObject):
     finished_signal = pyqtSignal()
-    def __init__(self, path, mo2_mode, modlist_txt_path):
+    def __init__(self, path, mo2_mode, modlist_txt_path, scan_esms):
         super().__init__()
         self.skyrim_folder_path = path
         self.mo2_mode = mo2_mode
         self.modlist_txt_path = modlist_txt_path
+        self.scan_esms = scan_esms
 
     def scan_run(self):
         print('Scanning All Files:')
-        scanner(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path)
+        scanner(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.scan_esms)
         print('Getting Dependencies')
         dependecy_getter.scan(self.skyrim_folder_path)
         self.finished_signal.emit()
