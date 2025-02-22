@@ -11,13 +11,8 @@ from log_stream import log_stream
 class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
-        #TODO: create a temp (one scan? sessions? probably scan) json file (or something) that only holds form id offsets for each file so that we need not do the whole loop for save_form_data() repeatedly
-        #TODO: append lowercase os.path.relpath() to the compacted and patched dict instead of whatever I'm doing now. maybe? not sure if this would work well
-        #TODO: add blacklist specifically for patch new? to deal with synthesis patches or other commonly generated patches.
-        #TODO: add optional filter to exclude .esm and ESM flagged plugins, make it default enabled
-        #TODO: add to main a "are you sure you want to re-scan?" message box on any scan button click after first scan, QOL. probably do a check that either list len > 0
         #TODO: refine patching of files in compact_form_ids.py
-        #TODO: Consider creating MO2 integration in the form of a notification of esl flagable/new dependent files... no idea where to start with this...
+        #TODO: Consider creating MO2 integration in the form of a notification of esl flagable/new dependent files...
         self.setWindowTitle("ESLifier")
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.log_stream = log_stream(self)
@@ -183,6 +178,7 @@ class main_window(QMainWindow):
         self.main_widget.mo2_mode = self.settings_widget.settings['mo2_mode']
         self.main_widget.modlist_txt_path = self.settings_widget.settings['mo2_modlist_txt_path']
         self.main_widget.update_header = self.settings_widget.settings['update_header']
+        self.main_widget.scan_esms = self.settings_widget.settings['scan_esms']
         self.main_widget.show_cells = self.settings_widget.settings['show_cells']
         self.main_widget.list_compact.filter_changed_cells = self.settings_widget.settings['enable_cell_changed_filter']
         self.main_widget.list_eslify.filter_changed_cells = self.settings_widget.settings['enable_cell_changed_filter']
@@ -191,6 +187,7 @@ class main_window(QMainWindow):
         self.patch_new_widget.modlist_txt_path = self.settings_widget.settings['mo2_modlist_txt_path']
         self.patch_new_widget.mo2_mode = self.settings_widget.settings['mo2_mode']
         self.patch_new_widget.update_header = self.settings_widget.settings['update_header']
+        self.patch_new_widget.scan_esms = self.settings_widget.settings['scan_esms']
         self.update_shown()
 
     def update_shown(self):
