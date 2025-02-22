@@ -5,7 +5,7 @@ import threading
 
 
 class qualification_checker():
-    def scan(path, update_header, show_cells):
+    def scan(path, update_header, show_cells, scan_esms):
         qualification_checker.lock = threading.Lock()
         start_time = timeit.default_timer()
         all_plugins = qualification_checker.get_from_file("ESLifier_Data/plugin_list.json")
@@ -16,6 +16,7 @@ class qualification_checker():
         qualification_checker.need_compacting_cell_flag_list = []
         qualification_checker.max_record_number = 4096
         qualification_checker.show_cells = show_cells
+        qualification_checker.scan_esms = scan_esms
         if update_header:
             qualification_checker.num_max_records = 4096
         else:
@@ -127,11 +128,15 @@ class qualification_checker():
 
     def already_esl(file):
         with open(file, 'rb') as f:
-            f.seek(9)
-            if f.read(1) == b'\x02':
+            f.seek(8)
+            esm_flag = f.read(1)
+            if esm_flag in (b'\x81', b'\x01') and not qualification_checker.scan_esms:
+                return True #return that the file does not qualify
+            esl_flag = f.read(1)
+            if esl_flag == b'\x02':
                 return True
             else:
-                return False
+                return False #not esl, so it does qualify for processing
             
     def get_from_file(file):
         try:
