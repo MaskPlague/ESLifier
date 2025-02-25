@@ -1,37 +1,50 @@
+# ref: https://docs.github.com/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-githubs-form-schema
 name: Bug Report
-description: File a bug report.
+description: Bug report (Users)
 title: "[Bug]: "
 labels: ["bug"]
-projects: ["ESLifier"]
-assignees:
-  - MaskPlague
+
 body:
-  - type: markdown
+  - type: checkboxes
+    id: no-duplicate-feature
     attributes:
-      value: |
-        Thanks for taking the time to fill out this bug report!
-  - type: textarea
-    id: what-happened
-    attributes:
-      label: What happened?
-      description: Also tell us, what did you expect to happen?
-      placeholder: Tell us what you see!
-      value: "A bug happened!"
-    validations:
-      required: true
-  - type: dropdown
-    id: version
-    attributes:
-      label: Version
-      description: What version of ESLifier are you running?
+      label: Check for duplicate issues
       options:
-        - 1.0.0 (Default)
-      default: 0
+        - label: I have verified that there are no open duplicate issues.
+          required: true
+
+  - type: textarea
+    id: describe-the-problem
+    attributes:
+      label: A Brief Description of the Problem.
+      description: |
+        Please briefly describe the issue you are experiencing. If program is not patching an asset file correctly please detail what mod the file is from
+        and what mod you're compacting the FormIDs for that should be causing the file to be patched. If somehow a mod has errors in xEdit after compacting,
+        please confirm that the issue doesn't exist on the pre-compacted version with the exact same mods loaded in xEdit before reporting it.
     validations:
       required: true
+
   - type: textarea
-    id: logs
+    id: reproducing-the-problem
     attributes:
-      label: Relevant log output
-      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
-      render: shell
+      label: Provide Instructions on Reproducing the Problem
+      description: |
+        When submitting a bug report, please provide the steps that another user should take to reproduce the same issue.
+        Always write your report under the assumption that the developers have no information about the bug, as is the case most of the time
+    validations:
+      required: true
+
+  - type: textarea
+    id: relevant-files
+    attributes:
+      label: Provide Relevant Files
+      description: |
+        If it is an issue with ESLifier crashing the ESLifier.log file should be submitted.
+        If a mod's asset files (.ini, .json, etc.) are not being patched correctly include please include the entire ESLifier_Data folder zipped.
+      placeholder: |
+        ESLifier.log 
+        
+        ESLifier_Data.zip
+    validations:
+      required: false
+    
