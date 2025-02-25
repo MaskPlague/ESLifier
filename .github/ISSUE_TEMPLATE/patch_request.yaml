@@ -1,0 +1,25 @@
+# ref: https://docs.github.com/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-githubs-form-schema
+name: File Patch Request
+description: New File Patch Request
+title: "[Patch Request]: "
+labels: ["Patch Request"]
+
+body:
+  - type: checkboxes
+    id: no-duplicate-feature
+    attributes:
+      label: Check for Duplicate Requests
+      options:
+        - label: I have verified that there are no open duplicate Requests.
+          required: true
+
+  - type: textarea
+    id: patch-request
+    attributes:
+      label: What File Does ESLifier Need to Patch?
+      description: |
+        What file do you need ESLifier to patch when compacting FormIDs? Also, provide a link to a mod that uses the file or a link to the possible framework mod that
+        defines the file (i.e. Spell Perk Item Distributor). Nexus Mods links are preferred.
+    validations:
+      required: true
+    
