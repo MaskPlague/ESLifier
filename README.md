@@ -6,12 +6,12 @@ scan for files and plugins that are added after compacting so that they can also
 # For Users
 ## User Manual
 Notes:
-- If you use MO2 do **not** add ESLifier.exe as an executable. Launching ESLifier through MO2 significantly slows down the file scanning process. Instead enable the MO2 mode in settings in ESLifier.
+- If you use MO2 do **NOT** add ESLifier.exe as an executable. Launching ESLifier through MO2 significantly slows down the file scanning process. Instead enable MO2 mode in the settings of ESLifier.
 - If you have put many of your mod files into BSAs then this program may be much less effective.
 - Almost every element in the program has a tooltip that is activated by hovering over it.
 - When this README says "select" it refers to directly clicking the text of the item, not clicking the check box.
 
-On first launch, or when both paths are not set, you will be directed to the settings page. Here, set the _Skyrim Folder Path_ to the location of the folder that holds _SkyrimSE.exe_ and set _Output Folder Path_ to the folder that the _ESLifier Output_ folder (the folder that will hold the output of ESLifier) will be generated in, for example you can set it to MO2's mods folder or Vortex's mod staging folder so it is automatically a new mod. If you use MO2 then you'll want to toggle on MO2 Mode and set the _Mods Folder Path_ to the mods folder of your instance and set the modlist.txt path to the location of your current profile's modlist.txt (locate in your MO2's profile ini folder). The settings available are by default in the recommended configuration that should ensure the fewest issues when compacting or ESL flagging. You may want to disable _Show plugins with new CELL records_ if you think you may often install mods that patch your existing mods with CELLs (the Patch New Page will warn you if you do install mods that do so).
+On first launch, or when both paths are not set, you will be directed to the settings page. Here, set the _Skyrim Folder Path_ to the location of the folder that holds _SkyrimSE.exe_ and set _Output Folder Path_ to the folder that the _ESLifier Output_ folder (the folder that will hold the output of ESLifier) will be generated in, for example you can set it to MO2's mods folder or Vortex's mod staging folder so it is automatically a new mod. If you use MO2 then you'll want to toggle on MO2 Mode and set the _Mods Folder Path_ to the mods folder of your instance and set the modlist.txt path to the location of your current profile's modlist.txt (located in your MO2's profile ini folder). The settings available are by default in the recommended configuration that should ensure the fewest issues when compacting or ESL flagging. You may want to disable _Show plugins with new CELL records_ if you think you may often install mods that will patch your existing mods with CELLs (the Patch New Page will warn you if you do install mods that do so later).
 
 The first page, _Main_, is where one can select plugins to patch or compact. Select the _Scan Mod Files_ button and wait for the scan to complete (2500+ plugins, 500+ GBs, 800k files takes a bit less then a minute for me). Then the left and right lists will populate. The plugins in the left list are ready to be ESL flagged with almost no worries. The plugins in the right list are one of the main features of ESLifier, these are able to be compacted via the program and all files adn plugins that rely on the compacted plugins will have any form ids in them patched to reflect the form id changes. You can check off each plugin you want to flag/compact. You can right click for various functions including adding a mod to the blacklist. Pushing Space Bar with multiple mods selected will toggle the check on them.
 
@@ -19,13 +19,14 @@ The second page, _Patch New Plugins/Files_, is another main feature of ESLifier.
 
 The third page, _Settings_, mostly controls what is displayed in the _Main_ page.
 - _Allow Form IDs below 0x000800 + Update plugin headers to 1.71_ affects the scanning, flagging, and compacting functions of ESLifier. It is on by default and requires [Backported Extended ESL Support](https://www.nexusmods.com/skyrimspecialedition/mods/106441) if your Skyrim version is below 1.6.1130+. For scanning, it will only find and display plugins in the ESLifyable and Compactable lists that fit in the 1.71 range unless disabled, then it will only show ones that fit in the older 1.70 range. For flagging, it will update the plugin header to 1.71 if enabled. For compacting, it will update the plugin header to 1.71 and compact the form ids to fit in the 1.71 range if enabled.
+- _Scan ESM Plugins_ will determine whether or not .esm and ESM flagged plugins are scanned at all. Changing this setting requires a new scan to display the changes. I added this setting as I could not determine from online research if ESL flagging ESMs had any benefits/detriments.
 - _Show Plugins with new CELL records_ affects the scanning and display of both lists. It is on by default. If enabled, it will scan for and display mods that have new CELL records. If a new CELL record is defined in an ESL flagged plugin and then edited by another plugin then it can break the new CELL. This setting is used in combination with the setting _Hide plugins with new CELL records that are overwriten_.
 - _Show plugins with BSA files_ will show plugins that have .bsa files that may contain files that need patching. It is off by default. If enabled, it will display the BSA flag in _Main_'s Compact list. Hovering over the flag of each plugin will display what kinds of files ESLifier detected may be present in the .bsa that need extracting so that the program can scan and patch them. This program does not extract .bsas automatically and will require the user to do it manually. Compacting a plugin with the BSA flag will likely lead to various issues if you have not extracted the relevant files.
 - _Hide plugins with new CELL records that are overwriten_ hides plugins that have new CELLs that are also edited/overwitten by a dependent plugin that has it as a master. It is on by default. This should probably be left on as if the setting is disabled then you will see plugins that may have their new CELLs broken by ESL flagging them.
 
 # Documentation
 ## How to Build
-Fork this project, install python 3.13, and install _pyinstaller_ with pip.
+Fork this project and install python 3.13 then, _PyQt6_, _Regex_, and _pyinstaller_ with pip.
 Open the console in the _ESLifier_ folder and run the command:
 ```
 pyinstaller "src/eslifier_app.py" --onefile -n "ESLifier" --noconsole --icon "src/images/ESLifier.ico"
@@ -38,10 +39,11 @@ pyinstaller "src/eslifier_app.py" --onefile -n "ESLifier" --noconsole --icon "sr
 - \_srd.: Sound Record Distributor -Patched
 - .psc: Source Scripts -Patched (doesn't patch form ids that are passed as variables)
 - .json (not config.json): -Patched, Dynamic Key Activation Framework NG and Smart Harvest Auto NG AutoLoot Should work for MNC and Dynamic String Distributor ::SHSE needs more work for multiline form id lists.
+- .jslot: -Patched, Racemenu preset files
 - FaceGenData/FaceGeom/\<mesh\>.nif: -Renamed -Texture paths in face mesh files patched
 - FaceGenData/FaceTint/\<texture\>.dds: -Renamed
 - .seq: SEQ files -Patched
-- .pex: integer form ids in compiled scripts -Patched
+- .pex: Compiled script files, patched integers that fit the format (FormID, Plugin) in their .psc files (source files not required) -Patched
 ## File Descriptions
 ### ESLifier_Data Folder Files
 This folder and its contents are generated during program usage, the folder is generated in the same folder as the executable.
