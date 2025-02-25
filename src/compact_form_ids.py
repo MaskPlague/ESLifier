@@ -9,8 +9,6 @@ import json
 import threading
 
 #TODO: Further refinement of file patching, additional research on files that need patching
-#TODO: thread patching dependents maybe?
-
 
 class CFIDs():
     def compact_and_patch(form_processor, file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header, mo2_mode):
@@ -262,7 +260,7 @@ class CFIDs():
                 with CFIDs.lock:
                     with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
                         if '.ini' in new_file.lower(): #All of PO3's various distributors patching and whatever else uses ini files with form ids.
-                            #TODO: consider using regex to make sure that not only part of a form id gets replaced.
+                            #TODO: contemplate on issues that could cause this to fail.
                             basename = os.path.basename(master).lower()
                             if 'skypatcher' in new_file.lower():
                                 for line in f:
@@ -515,14 +513,16 @@ class CFIDs():
             new_form_ids.append([new_decimal, new_id])
             counter += 1
 
-        #TODO: Untested, should remove ids that already fit in the new range
         to_remove = []
-        for old_id in form_id_list:
-            if old_id in new_form_ids:
-                to_remove.append(old_id)
-        for id in to_remove:
-            form_id_list.remove(id)
-            new_form_ids.remove(id)
+        for old_id, type in form_id_list:
+            for new_decimal, new_id in new_form_ids:
+                if old_id == new_id:
+                    to_remove.append([old_id, type, new_decimal, new_id])
+                    break
+
+        for old_id, type, new_decimal, new_id in to_remove:
+            form_id_list.remove([old_id, type])
+            new_form_ids.remove([new_decimal, new_id])
 
         matched_ids = []
 
