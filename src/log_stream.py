@@ -26,7 +26,7 @@ class log_stream(QMainWindow):
         self.log_file = open("ESLifier_Data/ESLifier.log", 'w')
 
         sys.stdout = self
-        #sys.stderr = self
+        sys.stderr = self
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.process_queue)
