@@ -54,6 +54,7 @@ class scanner():
     
     def get_files_from_mods(mods_folder, enabled_mods, scan_esms):
         mod_files = {}
+        cases_of_files = {}
         if scan_esms:
             plugin_extensions = ('.esp', '.esl', '.esm')
         else:
@@ -75,19 +76,21 @@ class scanner():
                         if file != 'meta.ini':
                             # Get the relative file path
                             full_path = os.path.join(root, file)
-                            relative_path = os.path.relpath(full_path, mods_folder).lower()
+                            relative_path = os.path.relpath(full_path, mods_folder)
                             part = relative_path.split('\\')
-                            relative_path = os.path.join(*part[1:])
+                            cased = os.path.join(*part[1:])
+                            relative_path = cased.lower()
                             if '.mohidden' in relative_path: #if the file or containing folder is mod organizer hidden, skip it
                                 continue
                             # Track the file paths by mod
                             if relative_path not in mod_files:
                                 mod_files[relative_path] = []
+                                cases_of_files[relative_path] = cased
                             mod_files[relative_path].append(mod_folder)
                             if file.endswith(plugin_extensions):
                                 plugin_names.append(file)
 
-        return mod_files, plugin_names
+        return mod_files, plugin_names, cases_of_files
 
     def fix_modlist(path):
         lines = []
@@ -115,7 +118,7 @@ class scanner():
 
     def get_winning_files(mods_folder, load_order, enabled_mods, scan_esms):
         mod_folder_level = len(mods_folder.split(os.sep))
-        mod_files, plugin_names = scanner.get_files_from_mods(mods_folder, enabled_mods, scan_esms)
+        mod_files, plugin_names, cases = scanner.get_files_from_mods(mods_folder, enabled_mods, scan_esms)
         winning_files = []
         file_count = 0
         loop = 0
@@ -127,11 +130,11 @@ class scanner():
             else:
                 loop += 1
             if len(mods) == 1:
-                file_path = os.path.join(mods_folder, mods[0], file)
+                file_path = os.path.join(mods_folder, mods[0], cases[file])
                 winning_files.append(file_path)
             else:
                 mods_sorted = sorted(mods, key=lambda mod: load_order.index(mod))
-                file_path = os.path.join(mods_folder, mods_sorted[-1], file)
+                file_path = os.path.join(mods_folder, mods_sorted[-1], cases[file])
                 winning_files.append(file_path)
         if scan_esms:
             plugin_extensions = ('.esp', '.esl', '.esm')
@@ -142,7 +145,7 @@ class scanner():
         for file in winning_files:
             file_level = len(file.split(os.sep))
             if file_level == mod_folder_level + 2 and file.lower().endswith(plugin_extensions):
-                plugin = os.path.join(os.path.dirname(file), plugin_names[plugin_names_lowered.index(os.path.basename(file))])
+                plugin = os.path.join(os.path.dirname(file), plugin_names[plugin_names_lowered.index(os.path.basename(file.lower()))])
                 plugins.append(plugin)
 
         return winning_files, plugins
