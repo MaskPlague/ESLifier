@@ -2,7 +2,7 @@ import os
 import subprocess
 import json
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QItemSelection
 from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem
 
 from blacklist import blacklist
@@ -127,7 +127,7 @@ class list_eslable(QTableWidget):
             select_all_action = menu.addAction("Select All")
             check_all_action = menu.addAction("Check All")
             uncheck_all_action = menu.addAction("Uncheck All")
-            invert_selection_action = menu.addAction("Invert Selection")
+            invert_selection_action = menu.addAction("Invert Selection Checks")
             open_explorer_action = menu.addAction("Open in File Explorer")
             add_to_blacklist_action = menu.addAction("Add Mod(s) to Blacklist")
             action = menu.exec(self.viewport().mapToGlobal(position))
@@ -138,7 +138,7 @@ class list_eslable(QTableWidget):
             if action == uncheck_all_action:
                 self.uncheck_all()
             if action == select_all_action:
-                self.selectAll()
+                self.select_all()
             if action == invert_selection_action:
                 selected_items = self.selectedItems()
                 self.invert_selection(selected_items)
@@ -149,7 +149,7 @@ class list_eslable(QTableWidget):
     def check_all(self):
         self.blockSignals(True)
         for i in range(self.rowCount()):
-            if self.item(i,0).checkState() == Qt.CheckState.Unchecked:
+            if not self.isRowHidden(i) and self.item(i,0).checkState() == Qt.CheckState.Unchecked:
                 self.item(i, 0).setCheckState(Qt.CheckState.Checked)
         self.blockSignals(False)
 
@@ -158,6 +158,16 @@ class list_eslable(QTableWidget):
         for i in range(self.rowCount()):
             if self.item(i,0).checkState() == Qt.CheckState.Checked:
                 self.item(i, 0).setCheckState(Qt.CheckState.Unchecked)
+        self.blockSignals(False)
+
+    def select_all(self):
+        self.blockSignals(True)
+        selection = QItemSelection()
+        for row in range(self.rowCount()):
+            if self.isRowHidden(row) == False:
+                selection.select(self.model().index(row, 0), self.model().index(row, self.model().columnCount() - 1))
+        selection_model = self.selectionModel()
+        selection_model.select(selection, selection_model.SelectionFlag.ClearAndSelect)
         self.blockSignals(False)
     
     def invert_selection(self, selected_items):
