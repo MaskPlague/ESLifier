@@ -212,8 +212,11 @@ class main_window(QMainWindow):
 
     def closeEvent(self, a0):
         sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
+        sys.excepthook = sys.__excepthook__
         for window in QApplication.topLevelWidgets():
             window.close()
+    
 
 app = QApplication(sys.argv)
 w = main_window()
