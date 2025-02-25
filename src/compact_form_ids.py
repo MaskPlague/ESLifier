@@ -257,7 +257,7 @@ class CFIDs():
     #                           Should work for MNC, Dynamic String Distributor
     #   \facegeom\: Texture paths in face mesh files
     #   .seq: SEQ files
-    #   .pex: integer form ids in compiled scripts
+    #   .pex: Compiled script files, should patch any form id in a (formID, plugin) format.
     def patch_files(master, files, form_id_map, skyrim_folder_path, output_folder_path, flag):
         for file in files:
             if flag:
