@@ -241,7 +241,7 @@ class scanner():
                 factor = 1
             if (scanner.count % factor) >= (factor-1) or scanner.count >= scanner.file_count:
                 print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
-            if (not 'meta.ini' in file_lower) and ('.ini' in file_lower or '.json' in file_lower or '_conditions.txt' in file_lower or '_srd.' in file_lower or '.psc' in file_lower):
+            if (not 'meta.ini' in file_lower) and ('.ini' in file_lower or '.json' in file_lower or '_conditions.txt' in file_lower or '_srd.' in file_lower or '.psc' in file_lower or '.jslot' in file_lower):
                 thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
                 scanner.threads.append(thread)
                 thread.start()
@@ -310,14 +310,32 @@ class scanner():
 
     def file_reader(pattern, file, reader_type):
         if reader_type == 'r':
-            with open(file, 'r', errors='ignore') as f:
-                r = re.findall(pattern,f.read().lower())
-                if r != []:
-                    for plugin in r:
-                        if 'NOT Is' not in plugin:
-                            with scanner.lock:
-                                if plugin not in scanner.file_dict.keys(): scanner.file_dict.update({plugin: []})
-                                if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+            if '.jslot' in file.lower():
+                with open(file, 'r', errors='ignore') as f:
+                    data = json.load(f)
+                    plugins = []
+                    if 'actor' in data.keys() and 'headTexture' in data['actor'].keys():
+                        plugin_and_fid = data['actor']['headTexture']
+                        plugins.append(plugin_and_fid[:-7].lower())
+                    
+                    if 'headParts' in data.keys():
+                        for part in data['headParts']:
+                            formIdentifier = part['formIdentifier']
+                            plugins.append(formIdentifier[:-7].lower())
+                    for plugin in plugins:
+                        with scanner.lock:
+                            if plugin not in scanner.file_dict.keys(): scanner.file_dict.update({plugin: []})
+                            if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+            else:
+                with open(file, 'r', errors='ignore') as f:
+                    r = re.findall(pattern,f.read().lower())
+                    if r != []:
+                        for plugin in r:
+                            if 'NOT Is' not in plugin:
+                                with scanner.lock:
+                                    if plugin not in scanner.file_dict.keys(): scanner.file_dict.update({plugin: []})
+                                    if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+
 
         if reader_type == 'rb':
             with open(file, 'rb') as f:
