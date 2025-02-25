@@ -21,18 +21,23 @@ class CFIDs():
         print(f"Compacting Plugin: {os.path.basename(file_to_compact)} ({mb_size} MB)...")
         CFIDs.compact_file(file_to_compact, skyrim_folder_path, output_folder_path, update_header)
         if dependents != []:
-            print("-  Patching Dependent Plugins...")
+            print(f"-  Patching {len(dependents)} Dependent Plugins...")
             CFIDs.patch_dependent_plugins(file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header)
         
         files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
         if os.path.basename(file_to_compact).lower() in files_to_patch.keys():
             to_patch, to_rename = CFIDs.sort_files_to_patch_or_rename(file_to_compact, files_to_patch[os.path.basename(file_to_compact).lower()]) #function to get files that need to be edited in some way to function correctly.
             form_id_map = CFIDs.get_form_id_map(file_to_compact)
-            print("-  Patching Dependent Files...")
-            CFIDs.patch_files_threader(file_to_compact, to_patch, form_id_map, skyrim_folder_path, output_folder_path, True)
-            print("-  Renaming/Patching Dependent Files...")
-            print('\n')
-            CFIDs.rename_files_threader(file_to_compact, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
+            if len(to_patch) > 0:
+                print(f"-  Patching {len(to_patch)} Dependent Files...")
+                if len(to_patch) > 20:
+                    print('\n')
+                CFIDs.patch_files_threader(file_to_compact, to_patch, form_id_map, skyrim_folder_path, output_folder_path, True)
+            if len(to_rename) > 0:
+                print(f"-  Renaming/Patching {len(to_rename)} Dependent Files...")
+                if len(to_rename) > 20:
+                    print('\n')
+                CFIDs.rename_files_threader(file_to_compact, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
         CFIDs.dump_to_file('ESLifier_Data/compacted_and_patched.json')
         print('CLEAR ALT')
         return
@@ -80,14 +85,16 @@ class CFIDs():
         if os.path.basename(compacted_file) in files_to_patch.keys():
             to_patch, to_rename = CFIDs.sort_files_to_patch_or_rename(compacted_file, files_to_patch[os.path.basename(compacted_file)])
             form_id_map = CFIDs.get_form_id_map(compacted_file)
-            print("-  Patching New Dependent Files...")
-            if len(to_patch) > 20:
-                print('\n')
-            CFIDs.patch_files_threader(compacted_file, to_patch, form_id_map, skyrim_folder_path, output_folder_path, True)
-            print("-  Renaming/Patching New Dependent Files...")
-            if len(to_rename) > 20:
-                print('\n')
-            CFIDs.rename_files_threader(compacted_file, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
+            if len(to_rename) > 0:
+                print(f"-  Patching {len(to_patch)} New Dependent Files...")
+                if len(to_patch) > 20:
+                    print('\n')
+                CFIDs.patch_files_threader(compacted_file, to_patch, form_id_map, skyrim_folder_path, output_folder_path, True)
+            if len(to_rename) > 0:
+                print(f"-  Renaming/Patching {len(to_rename)} New Dependent Files...")
+                if len(to_rename) > 20:
+                    print('\n')
+                CFIDs.rename_files_threader(compacted_file, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
         CFIDs.dump_to_file('ESLifier_Data/compacted_and_patched.json')
         print('CLEAR ALT')
 
@@ -112,12 +119,14 @@ class CFIDs():
         #hexaPattern = re.compile(r'([0-9a-fA-F]+){6,}[.](?!p)')
         files_to_patch = []
         files_to_rename = []
-        matchers = ['.pex', '.psc', '.ini', '_conditions.txt', '.json', '_srd.', os.path.splitext(os.path.basename(master))[0].lower() + '.seq']
+        matchers = ['.pex', '.psc', '.ini', '_conditions.txt', '.json', '.jslot', '_srd.', os.path.splitext(os.path.basename(master))[0].lower() + '.seq']
         for file in files:
             if any(match in file.lower() for match in matchers):
                 files_to_patch.append(file)
             elif os.path.basename(master).lower() in file.lower() and ('facegeom' in file.lower() or 'voice' in file.lower() or 'facetint' in file.lower()):
                 files_to_rename.append(file)
+            else:
+                raise TypeError(f"File: {file} \nhas no patching method but it is in file_masters...")
         return files_to_patch, files_to_rename
 
     def rename_files_threader(master, files, form_id_map, skyrim_folder_path, output_folder_path):
@@ -251,7 +260,6 @@ class CFIDs():
     #   .pex: integer form ids in compiled scripts
     def patch_files(master, files, form_id_map, skyrim_folder_path, output_folder_path, flag):
         for file in files:
-
             if flag:
                 new_file = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
             else:
@@ -261,7 +269,6 @@ class CFIDs():
                 with CFIDs.lock:
                     with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
                         if '.ini' in new_file_lower: #All of PO3's various distributors patching and whatever else uses ini files with form ids.
-                            #TODO: contemplate on issues that could cause this to fail.
                             basename = os.path.basename(master).lower()
                             if 'skypatcher' in new_file_lower:
                                 for line in f:
@@ -332,10 +339,36 @@ class CFIDs():
                                         for form_ids in form_id_map:
                                             line = line.replace(form_ids[0], form_ids[2]).replace(form_ids[1], form_ids[3]).replace(form_ids[0].lower(), form_ids[2].lower()).replace(form_ids[1].lower(), form_ids[3].lower())
                                     print(line.strip('\n'))
-                            
                                     
                         fileinput.close()
-            
+
+            elif '.jslot' in new_file_lower:
+                with open(new_file, 'r+') as f:
+                    data = json.load(f)
+                    if 'actor' in data.keys() and 'headTexture' in data['actor'].keys():
+                        plugin_and_fid = data['actor']['headTexture']
+                        if plugin_and_fid[:-7].lower() == os.path.basename(master).lower():
+                            old_id = plugin_and_fid[-6:]
+                            for form_ids in form_id_map:
+                                if old_id == form_ids[1]:
+                                    data['actor']['headTexture'] = plugin_and_fid[:-6] + form_ids[3]
+                                    break
+
+                    if 'headParts' in data.keys():
+                        for i, part in enumerate(data['headParts']):
+                            formIdentifier = part['formIdentifier']
+                            if formIdentifier[:-7].lower() == os.path.basename(master).lower():
+                                formId = part['formId'].to_bytes(4)
+                                old_id = formIdentifier[-6:]
+                                for form_ids in form_id_map:
+                                    if old_id == form_ids[1]:
+                                        new_form_id = formId[:1] + bytes.fromhex(form_ids[3])
+                                        data['headParts'][i]['formId'] = int.from_bytes(new_form_id)
+                                        data['headParts'][i]['formIdentifier'] = formIdentifier[:-6] + form_ids[3]
+                                        break
+                    f.seek(0)
+                    json.dump(data, f, ensure_ascii=False, indent=3, separators=(',', ' : '))
+
             elif 'facegeom' in new_file_lower:
                 if '.nif' in new_file_lower: #FaceGeom mesh patching
                     #TODO: check byte structure via hex editor to see what may go wrong here
@@ -366,13 +399,39 @@ class CFIDs():
                             f.write(data)
                         elif '.pex' in new_file_lower: #Compiled script patching
                             #TODO: Perhaps implement a method to get a list of form id's that need to be replaced if a .psc exists as that would
-                            #lessen the chance that an incorrect integer is replaced as perhaps a random int that matches a form id is in the file
-                            #or another mod is present in the file with a similar form id that would also be replaced. 
-                            #TODO: figure out the proper method of getting to the variables so I don't accidentally replace the wrong bytes
-                            for form_ids in form_id_map:
-                                #\x03 indicates a integer in compiled .pex files. \x00 will always be present instead of the master byte
-                                data = data.replace(b'\x03\x00' + form_ids[4][::-1][1:], b'\x03\x00-||+||-' + form_ids[5][::-1][1:])
-                            data = data.replace(b'-||+||-', b'')
+                            #lessen the chance that an incorrect integer is replaced.
+                            #for form_ids in form_id_map:
+                            #    #\x03 indicates a integer in compiled .pex files. \x00 will always be present instead of the master byte
+                            #    data = data.replace(b'\x03\x00' + form_ids[4][::-1][1:], b'\x03\x00-||+||-' + form_ids[5][::-1][1:])
+                            #data = data.replace(b'-||+||-', b'')
+                            data = bytearray(data)
+                            src_name_length = int.from_bytes(data[16:18])
+                            offset = 18 + src_name_length
+                            username_length = int.from_bytes(data[offset:offset+2])
+                            offset += 2 + username_length
+                            machine_name_length = int.from_bytes(data[offset:offset+2])
+                            offset += 2 + machine_name_length
+                            string_count = int.from_bytes(data[offset:offset+2])
+                            offset += 2
+                            strings = []
+                            for _ in range(string_count):
+                                string_length = int.from_bytes(data[offset:offset+2])
+                                strings.append(data[offset+2:offset+2+string_length].lower())
+                                offset += 2 + string_length
+                            master_name_bytes = os.path.basename(master).lower().encode()
+                            index = strings.index(master_name_bytes, 24, offset)
+                            data_size = len(data)
+                            while offset < data_size:
+                                if data[offset:offset+1] == b'\x03' and data[offset+5:offset+6] == b'\x02' and int.from_bytes(data[offset+6:offset+8]) == index:
+                                    integer_variable = data[offset+2:offset+5]
+                                    for form_ids in form_id_map:
+                                        if integer_variable == form_ids[4][::-1][1:]:
+                                            data[offset+2:offset+5] = form_ids[4][::-1][1:]
+                                            offset += 6
+                                            break
+                                    offset += 1
+                                offset += 1
+                            data = bytes(data)
                             f.seek(0)
                             f.write(data)
                         f.close()
