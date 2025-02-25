@@ -255,6 +255,7 @@ class CFIDs():
     #   .psc: Source Scripts
     #   .json (not config.json): Dynamic Key Activation Framework NG, Smart Harvest Auto NG AutoLoot ::SHSE needs more work for multiline form id lists
     #                           Should work for MNC, Dynamic String Distributor
+    #   .jslot: Racemenu files
     #   \facegeom\: Texture paths in face mesh files
     #   .seq: SEQ files
     #   .pex: Compiled script files, should patch any form id in a (formID, plugin) format.
