@@ -35,8 +35,7 @@ class scanner():
                         loop += 1
                     for file in files:
                         scanner.all_files.append(os.path.join(root, file))
-                        #TODO: remove the + 1 from path_level + 1 as it is for testing only
-                        if path_level + 1 == root_level and file.lower().endswith(plugin_extensions) :
+                        if path_level == root_level and file.lower().endswith(plugin_extensions) :
                             scanner.plugins.append(os.path.join(root, file))
 
         print('\033[F\033[K-  Gathered ' + str(len(scanner.all_files)) +' total files.\n', end='\r')
