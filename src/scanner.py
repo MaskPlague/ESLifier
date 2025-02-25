@@ -42,7 +42,6 @@ class scanner():
         print('\033[F\033[K-  Gathered ' + str(len(scanner.all_files)) +' total files.\n', end='\r')
         print(' ')
         print(' ')
-        print(' ')
         scanner.get_file_masters()
 
         scanner.dump_to_file(file="ESLifier_Data/plugin_list.json", data=scanner.plugins)
