@@ -1,6 +1,7 @@
 import sys
 import os
 import traceback
+import threading
 
 from PyQt6.QtWidgets import QMainWindow, QTextEdit
 from PyQt6.QtCore import Qt, QTimer
@@ -22,6 +23,7 @@ class log_stream(QMainWindow):
         self.text_edit.setReadOnly(True)
         self.setCentralWidget(self.text_edit)
         self.list = []
+        self.crash = False
         if not os.path.exists("ESLifier_Data/"):
             os.makedirs("ESLifier_Data/")
         self.log_file = open("ESLifier_Data/ESLifier.log", 'w')
@@ -29,6 +31,7 @@ class log_stream(QMainWindow):
         sys.stdout = self
         sys.stderr = self
         sys.excepthook = self.exception_hook
+        threading.excepthook = self.custom_exception_hook
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.process_queue)
@@ -49,15 +52,23 @@ class log_stream(QMainWindow):
             self.log_file.flush()
     
     def exception_hook(self, exc_type, exc_value, exc_traceback):
+        self.crash = True
         self.show()
         self.text_edit.setStyleSheet("background-color: red;")
-        print("An error has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data.", file=sys.stderr)
-        traceback.print_tb(exc_traceback, limit=3, file=sys.stdout)
-        print(f"Unhandled exception: {exc_value}", file=sys.stderr)
+        print("\nAn exception has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data.\n")
+        traceback.print_tb(exc_traceback, limit=3)
+        print(f"Unhandled exception: {exc_value}")
+
+    def custom_exception_hook(self, args: threading.ExceptHookArgs):
+        self.crash = True
+        self.show()
+        self.text_edit.setStyleSheet("background-color: red;")
+        print("\nAn exception has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data.\n")
+        traceback.print_tb(args.exc_traceback, limit=3)
+        print(f"Unhandled exception: {args.exc_value}")
 
     def flush(self):
         self.log_file.flush()
-        return super().flush()
 
     def closeEvent(self, a0):
         super().closeEvent(a0)
@@ -69,7 +80,7 @@ class log_stream(QMainWindow):
         length = len(self.list)
         count = 0
 
-        for i in range(length):
+        for _ in range(length):
             line = self.list.pop(0)
             self.update_text_widget(line)
             count += 1
@@ -119,11 +130,13 @@ class log_stream(QMainWindow):
     
     def clean_up(self):
         self.timer_clear.stop()
-        self.text_edit.setPlainText(None)
-        self.hide()
+        if not self.crash:
+            self.text_edit.setPlainText(None)
+            self.hide()
     
     def clear_alt(self):
-        self.text_edit.setPlainText(None)
+        if not self.crash:
+            self.text_edit.setPlainText(None)
 
 
 
