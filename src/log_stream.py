@@ -1,5 +1,6 @@
 import sys
 import os
+import traceback
 
 from PyQt6.QtWidgets import QMainWindow, QTextEdit
 from PyQt6.QtCore import Qt, QTimer
@@ -27,6 +28,7 @@ class log_stream(QMainWindow):
 
         sys.stdout = self
         sys.stderr = self
+        sys.excepthook = self.exception_hook
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.process_queue)
@@ -37,7 +39,6 @@ class log_stream(QMainWindow):
 
     def show(self):
         self.raise_()
-        #self.hide()
         return super().show()
 
     def write(self, text):
@@ -45,10 +46,18 @@ class log_stream(QMainWindow):
         text = text.strip()
         if 'Process' not in text and 'Percentage' not in text and 'Gathered' not in text and 'CLEAR' not in text and text != '':
             self.log_file.write(text + '\n')
+            self.log_file.flush()
     
+    def exception_hook(self, exc_type, exc_value, exc_traceback):
+        self.show()
+        self.text_edit.setStyleSheet("background-color: red;")
+        print("An error has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data.", file=sys.stderr)
+        traceback.print_tb(exc_traceback, limit=3, file=sys.stdout)
+        print(f"Unhandled exception: {exc_value}", file=sys.stderr)
+
     def flush(self):
         self.log_file.flush()
-        pass
+        return super().flush()
 
     def closeEvent(self, a0):
         super().closeEvent(a0)
