@@ -1,5 +1,5 @@
 import sys
-import images_qr
+import images_qr #do not remove, used for icons, it is a PyQt6 resource file
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QPalette, QColor, QIcon
 from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMenuBar, QStackedLayout, QMessageBox
@@ -12,7 +12,7 @@ class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
         #TODO: refine patching of files in compact_form_ids.py
-        #TODO: Consider creating MO2 integration in the form of a notification of esl flagable/new dependent files...
+        #TODO: Fix existing ESLifier plugin
         self.setWindowTitle("ESLifier")
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.log_stream = log_stream(self)
