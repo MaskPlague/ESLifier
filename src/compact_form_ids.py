@@ -256,13 +256,14 @@ class CFIDs():
                 new_file = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
             else:
                 new_file = file
-            if '.ini' in new_file.lower() or '.json' in new_file.lower() or '_conditions.txt' in new_file.lower() or '_srd.' in new_file.lower() or '.psc' in new_file.lower():
+            new_file_lower = new_file.lower()
+            if '.ini' in new_file_lower or '.json' in new_file_lower or '_conditions.txt' in new_file_lower or '_srd.' in new_file_lower or '.psc' in new_file_lower:
                 with CFIDs.lock:
                     with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
-                        if '.ini' in new_file.lower(): #All of PO3's various distributors patching and whatever else uses ini files with form ids.
+                        if '.ini' in new_file_lower: #All of PO3's various distributors patching and whatever else uses ini files with form ids.
                             #TODO: contemplate on issues that could cause this to fail.
                             basename = os.path.basename(master).lower()
-                            if 'skypatcher' in new_file.lower():
+                            if 'skypatcher' in new_file_lower:
                                 for line in f:
                                     if basename in line.lower():
                                         for form_ids in form_id_map:
@@ -275,44 +276,44 @@ class CFIDs():
                                             #this is faster than re.sub by a lot ;_;
                                             line = line.replace('0x' + form_ids[0], '0x' + form_ids[2]).replace('0x' + form_ids[1], '0x' + form_ids[3]).replace('0x' + form_ids[0].lower(), '0x' + form_ids[2].lower()).replace('0x' + form_ids[1].lower(), '0x' + form_ids[3].lower()).replace('0X' + form_ids[0], '0X' + form_ids[2]).replace('0X' + form_ids[1], '0X' + form_ids[3]).replace('0X' + form_ids[0].lower(), '0X' + form_ids[2].lower()).replace('0X' + form_ids[1].lower(), '0X' + form_ids[3].lower())
                                     print(line.strip('\n'))
-                        elif 'config.json' in new_file.lower(): #Open Animation Replacer Patching and MCM helper
-                            if 'openanimationreplacer' in new_file.lower():
+                        elif 'config.json' in new_file_lower: #Open Animation Replacer Patching and MCM helper
+                            if 'openanimationreplacer' in new_file_lower:
                                 basename = os.path.basename(master).lower()
                                 prev_line = ''
                                 for line in f:
-                                    if 'pluginName' in prev_line.lower() and basename in prev_line.lower():
+                                    if 'pluginname' in prev_line.lower() and basename in prev_line.lower():
                                         if 'formid' in line.lower():
                                             for form_ids in form_id_map:
                                                 line = line.replace(form_ids[1], form_ids[3]).replace(form_ids[0], form_ids[2]).replace(form_ids[1].lower(), form_ids[3].lower()).replace(form_ids[0].lower(), form_ids[2].lower())
                                     prev_line = line
                                     print(line.strip('\n'))
-                            elif 'mcm\\config' in new_file.lower(): #MCM helper
+                            elif 'mcm\\config' in new_file_lower: #MCM helper
                                 basename = os.path.basename(master).lower()
                                 for line in f:
                                     if 'sourecform' in line.lower() and basename in line.lower():
                                         for form_ids in form_id_map:
                                             line = line.replace(form_ids[1], form_ids[3]).replace(form_ids[0], form_ids[2]).replace(form_ids[1].lower(), form_ids[3].lower()).replace(form_ids[0].lower(), form_ids[2].lower())
                                     print(line.strip('\n'))
-                        elif '_conditions.txt' in new_file.lower(): #Dynamic Animation Replacer Patching
+                        elif '_conditions.txt' in new_file_lower: #Dynamic Animation Replacer Patching
                             basename = os.path.basename(master).lower()
                             for line in f:
                                 if basename in line.lower():
                                     for form_ids in form_id_map:
                                         line = line.replace('0x00' + form_ids[1], '0x00' + form_ids[3]).replace('0x' + form_ids[1], '0x' + form_ids[3]).replace('0x00' + form_ids[1].lower(), '0x00' + form_ids[3].lower()).replace('0x' + form_ids[1].lower(), '0x' + form_ids[3].lower()).replace('0X00' + form_ids[1], '0X00' + form_ids[3]).replace('0X' + form_ids[1], '0X' + form_ids[3]).replace('0X00' + form_ids[1].lower(), '0X00' + form_ids[3].lower()).replace('0X' + form_ids[1].lower(), '0X' + form_ids[3].lower())
                                 print(line.strip('\n'))
-                        elif '_srd.' in new_file.lower(): #Sound record distributor patching
+                        elif '_srd.' in new_file_lower: #Sound record distributor patching
                             for line in f:
                                 if os.path.basename(master).lower() in line.lower():
                                     for form_ids in form_id_map:
                                         line = line.replace('|' + form_ids[1], '|' + form_ids[3]).replace('|' + form_ids[0], '|' + form_ids[2]).replace('|' + form_ids[1].lower(), '|' + form_ids[3].lower()).replace('|' + form_ids[0].lower(), '|' + form_ids[2].lower())
                                 print(line.strip('\n'))
-                        elif '.psc' in new_file.lower(): #Script source file patching, this doesn't take into account form ids being passed as variables
+                        elif '.psc' in new_file_lower: #Script source file patching, this doesn't take into account form ids being passed as variables
                             for line in f:
                                 if os.path.basename(master).lower() in line.lower() and 'getformfromfile' in line.lower():
                                     for form_ids in form_id_map:
                                         line = re.sub(r'(0x0{0,7})(' + re.escape(form_ids[0]) + r' *,)', r'\0' + form_ids[2] + ',', line, re.IGNORECASE)
                                 print(line.strip('\n'))
-                        elif '.json' in new_file.lower(): #Dynamic Key Activation Framework NG, Smart Harvest Auto NG AutoLoot and whatever else may be using .json?
+                        elif '.json' in new_file_lower: #Dynamic Key Activation Framework NG, Smart Harvest Auto NG AutoLoot and whatever else may be using .json?
                             #TODO: check for other json mods
                             #TODO: convert this to read the files as jsons instead of line replacements...
                             basename = os.path.basename(master).lower()
@@ -335,8 +336,8 @@ class CFIDs():
                                     
                         fileinput.close()
             
-            elif 'facegeom' in new_file.lower():
-                if '.nif' in new_file.lower(): #FaceGeom mesh patching
+            elif 'facegeom' in new_file_lower:
+                if '.nif' in new_file_lower: #FaceGeom mesh patching
                     #TODO: check byte structure via hex editor to see what may go wrong here
                     with CFIDs.lock:
                         with open(new_file, 'rb+') as f:
@@ -349,11 +350,11 @@ class CFIDs():
                             f.seek(0)
                             f.writelines(data)
 
-            elif '.seq' in new_file.lower() or '.pex' in new_file.lower():
+            elif '.seq' in new_file_lower or '.pex' in new_file_lower:
                 with CFIDs.lock:
                     with open(new_file,'rb+') as f:
                         data = f.read()
-                        if '.seq' in new_file.lower(): #SEQ file patching
+                        if '.seq' in new_file_lower: #SEQ file patching
                             seq_form_id_list = [data[i:i+4] for i in range(0, len(data), 4)]
                             for form_ids in form_id_map:
                                 for i in range(len(seq_form_id_list)):
@@ -363,7 +364,7 @@ class CFIDs():
                             data = data.replace(b'-||+||-', b'')
                             f.seek(0)
                             f.write(data)
-                        elif '.pex' in new_file.lower(): #Compiled script patching
+                        elif '.pex' in new_file_lower: #Compiled script patching
                             #TODO: Perhaps implement a method to get a list of form id's that need to be replaced if a .psc exists as that would
                             #lessen the chance that an incorrect integer is replaced as perhaps a random int that matches a form id is in the file
                             #or another mod is present in the file with a similar form id that would also be replaced. 
