@@ -16,8 +16,10 @@ class list_unpatched(QTableWidget):
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.setSortingEnabled(True)
+        self.setAutoScroll(False)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.horizontalHeader().setStretchLastSection(True)
         self.customContextMenuRequested.connect(self.context_menu)
         self.file_dictionary = {}
