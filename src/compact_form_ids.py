@@ -173,8 +173,6 @@ class CFIDs():
                     renamed_file = new_file.replace(form_ids[1].upper(), form_ids[3].upper())
                     with CFIDs.lock:
                         os.replace(new_file, renamed_file)
-                    #end_path = file[len(skyrim_folder_path) + 1:]
-                    #new_file_but_skyrim_pathed = os.path.join(skyrim_folder_path, re.sub(r'(.*?)(/|\\)', '', end_path, 1))
                     parts = os.path.relpath(new_file, skyrim_folder_path).lower().split('\\')
                     rel_path_new_file = os.path.join(*parts[1:])
                     parts = os.path.relpath(renamed_file, skyrim_folder_path).lower().split('\\')
@@ -252,11 +250,21 @@ class CFIDs():
     #Patched files:
     #   .ini: PO3's distributors, SkyPatcher
     #   config.json: OAR, MCM Helper
+    #   user.json: OAR
     #   _conditions.txt: DAR
     #   _srd.: Sound Record Distributor
     #   .psc: Source Scripts
-    #   .json (not config.json): Dynamic Key Activation Framework NG, Smart Harvest Auto NG AutoLoot ::SHSE needs more work for multiline form id lists
-    #                           Should work for MNC, Dynamic String Distributor
+    #   .json:  Dynamic Key Activation Framework NG
+    #           Smart Harvest Auto NG AutoLoot
+    #           PapyrusUtil's StorageDataUtil
+    #           Custom Skills Framework
+    #           Dynamic String Distributor
+    #           Dynamic Armor Variants
+    #           Inventory Injector
+    #           Immersive Equipment Display
+    #           Player Equipment Manager
+    #           Skyrim Unbound
+    #           Creature Framework
     #   .jslot: Racemenu files
     #   \facegeom\: Texture paths in face mesh files
     #   .seq: SEQ files
@@ -271,67 +279,32 @@ class CFIDs():
             basename = os.path.basename(master).lower()
             with CFIDs.lock:
                 if '.ini' in new_file_lower: #All of PO3's various distributors patching and whatever else uses ini files with form ids.
-                    with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
-                        if 'skypatcher' in new_file_lower:
-                            for line in f:
-                                if basename in line.lower():
-                                    for form_ids in form_id_map:
-                                        line = line.replace('|' + form_ids[1], '|' + form_ids[3]).replace('|' + form_ids[0], '|' + form_ids[2]).replace('|' + form_ids[1].lower(), '|' + form_ids[3].lower()).replace('|' + form_ids[0].lower(), '|' + form_ids[2].lower())
-                                print(line.strip('\n'))
-                        else:
-                            for line in f:
-                                if basename in line.lower():
-                                    for form_ids in form_id_map:
-                                        #this is faster than re.sub by a lot ;_;
-                                        line = line.replace('0x' + form_ids[0], '0x' + form_ids[2]).replace('0x' + form_ids[1], '0x' + form_ids[3]).replace('0x' + form_ids[0].lower(), '0x' + form_ids[2].lower()).replace('0x' + form_ids[1].lower(), '0x' + form_ids[3].lower()).replace('0X' + form_ids[0], '0X' + form_ids[2]).replace('0X' + form_ids[1], '0X' + form_ids[3]).replace('0X' + form_ids[0].lower(), '0X' + form_ids[2].lower()).replace('0X' + form_ids[1].lower(), '0X' + form_ids[3].lower())
-                                print(line.strip('\n'))
-                        fileinput.close()
-                elif 'config.json' in new_file_lower: #Open Animation Replacer Patching and MCM helper
-                    with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
-                        if 'openanimationreplacer' in new_file_lower:
-                            prev_line = ''
-                            for line in f:
-                                if 'pluginname' in prev_line.lower() and basename in prev_line.lower():
-                                    if 'formid' in line.lower():
-                                        for form_ids in form_id_map:
-                                            line = line.replace(form_ids[1], form_ids[3]).replace(form_ids[0], form_ids[2]).replace(form_ids[1].lower(), form_ids[3].lower()).replace(form_ids[0].lower(), form_ids[2].lower())
-                                prev_line = line
-                                print(line.strip('\n'))
-                        elif 'mcm\\config' in new_file_lower: #MCM helper
-                            for line in f:
-                                if 'sourecform' in line.lower() and basename in line.lower():
-                                    for form_ids in form_id_map:
-                                        line = line.replace(form_ids[1], form_ids[3]).replace(form_ids[0], form_ids[2]).replace(form_ids[1].lower(), form_ids[3].lower()).replace(form_ids[0].lower(), form_ids[2].lower())
-                                print(line.strip('\n'))
-                        fileinput.close()
-                elif '_conditions.txt' in new_file_lower: #Dynamic Animation Replacer Patching
+                    CFIDs.ini_season_patcher(basename, new_file, form_id_map)
+                    #with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
+                    #    if 'skypatcher' in new_file_lower:
+                    #        for line in f:
+                    #            if basename in line.lower():
+                    #                for form_ids in form_id_map:
+                    #                    line = line.replace('|' + form_ids[1], '|' + form_ids[3]).replace('|' + form_ids[0], '|' + form_ids[2]).replace('|' + form_ids[1].lower(), '|' + form_ids[3].lower()).replace('|' + form_ids[0].lower(), '|' + form_ids[2].lower())
+                    #            print(line.strip('\n'))
+                    #    else:
+                    #        for line in f:
+                    #            if basename in line.lower():
+                    #                for form_ids in form_id_map:
+                    #                    #this is faster than re.sub by a lot ;_;
+                    #                    line = line.replace('0x' + form_ids[0], '0x' + form_ids[2]).replace('0x' + form_ids[1], '0x' + form_ids[3]).replace('0x' + form_ids[0].lower(), '0x' + form_ids[2].lower()).replace('0x' + form_ids[1].lower(), '0x' + form_ids[3].lower()).replace('0X' + form_ids[0], '0X' + form_ids[2]).replace('0X' + form_ids[1], '0X' + form_ids[3]).replace('0X' + form_ids[0].lower(), '0X' + form_ids[2].lower()).replace('0X' + form_ids[1].lower(), '0X' + form_ids[3].lower())
+                    #            print(line.strip('\n'))
+                    #    fileinput.close()
+                elif '_conditions.txt' in new_file_lower:                                               # Dynamic Animation Replacer
                     CFIDs.dar_patcher(basename, new_file, form_id_map)
-                elif '_srd.' in new_file_lower: #Sound record distributor patching
+                elif '_srd.' in new_file_lower:                                                         # Sound record distributor
                     CFIDs.srd_patcher(basename, new_file, form_id_map)
-                elif '.psc' in new_file_lower: #Script source file patching, this doesn't take into account form ids being passed as variables
+                elif '.psc' in new_file_lower:                                                          # Script source file patching, this doesn't take into account form ids being passed as variables
                     with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
                         for line in f:
                             if basename in line.lower() and 'getformfromfile' in line.lower():
                                 for form_ids in form_id_map:
                                     line = re.sub(r'(0x0{0,7})(' + re.escape(form_ids[0]) + r' *,)', r'\0' + form_ids[2] + ',', line, re.IGNORECASE)
-                            print(line.strip('\n'))
-                        fileinput.close()
-                elif basename.startswith('shse.') and '.json' in new_file_lower: # Smart Harvest SE
-                    CFIDs.json_shse_patcher(basename, new_file, form_id_map)
-                elif 'dynamicstringdistributor' in new_file_lower and '.json' in new_file_lower: # Dynamic String Distributor
-                    CFIDs.json_dsd_patcher(basename, new_file, form_id_map)
-                elif 'dkaf' in new_file_lower and '.json' in new_file_lower: # Dynamic Key Activation Framework NG
-                    CFIDs.json_dkaf_patcher(basename, new_file, form_id_map)
-                elif 'dynamicarmorvariants' in new_file_lower and '.json' in new_file_lower: # Dynamic Armor Variants
-                    CFIDs.json_dav_patcher(basename, new_file, form_id_map)
-                elif 'creatures.d' in new_file_lower and '.json' in new_file_lower: # Creature Framework
-                    CFIDs.json_cf_patcher(basename, new_file, form_id_map)
-                elif '.json' in new_file_lower: #Whatever else may be using .json?
-                    with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
-                        for line in f:
-                            if basename in line.lower():
-                                for form_ids in form_id_map:
-                                    line = line.replace(form_ids[0], form_ids[2]).replace(form_ids[1], form_ids[3]).replace(form_ids[0].lower(), form_ids[2].lower()).replace(form_ids[1].lower(), form_ids[3].lower())
                             print(line.strip('\n'))
                         fileinput.close()
                 elif '.jslot' in new_file_lower:
@@ -342,6 +315,42 @@ class CFIDs():
                     CFIDs.seq_patcher(new_file, form_id_map)
                 elif '.pex' in new_file_lower: #Compiled script patching
                     CFIDs.pex_patcher(basename, new_file, form_id_map)
+                elif '.json' in new_file_lower:
+                    if 'animationreplacer' in new_file_lower and ('config.json' in new_file_lower or 'user.json' in new_file_lower): # Open Animation Replacer
+                        CFIDs.json_oar_patcher(basename, new_file, form_id_map)
+                    elif 'mcm\\config' in new_file_lower and 'config.json' in new_file_lower:           # MCM helper
+                        CFIDs.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
+                    elif 'storageutildata' in new_file_lower:                                             # PapyrusUtil's StorageDataUtil
+                        CFIDs.json_sud_patcher(basename, new_file, form_id_map)
+                    elif 'dynamicstringdistributor' in new_file_lower:                                  # Dynamic String Distributor
+                        CFIDs.json_dsd_patcher(basename, new_file, form_id_map)
+                    elif 'dkaf' in new_file_lower:                                                      # Dynamic Key Activation Framework NG
+                        CFIDs.json_dkaf_patcher(basename, new_file, form_id_map)
+                    elif 'dynamicarmorvariants' in new_file_lower:                                      # Dynamic Armor Variants
+                        CFIDs.json_dav_patcher(basename, new_file, form_id_map)
+                    elif '\\ied\\' in new_file_lower:                                                   # Immersive Equipment Display
+                        CFIDs.json_ied_patcher(basename, new_file, form_id_map)
+                    elif 'creatures.d' in new_file_lower:                                               # Creature Framework
+                        CFIDs.json_cf_patcher(basename, new_file, form_id_map)
+                    elif 'inventoryinjector' in new_file_lower:                                         # Inventory Injector
+                        CFIDs.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
+                    elif 'customskills' in new_file_lower:                                              # Custom Skills Framework
+                        CFIDs.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
+                    elif 'skyrimunbound' in new_file_lower:                                             # Skyrim Unbound
+                        CFIDs.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
+                    elif 'playerequipmentmanager' in new_file_lower:                                    # Player Equipment Manager
+                        CFIDs.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
+                    elif os.path.basename(new_file_lower).startswith('shse.'):                          # Smart Harvest
+                        CFIDs.json_shse_patcher(basename, new_file, form_id_map)
+                    else:                                                                               # Might patch whatever else is using .json?
+                        print(new_file)
+                        with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
+                            for line in f:
+                                if basename in line.lower():
+                                    for form_ids in form_id_map:
+                                        line = line.replace(form_ids[0], form_ids[2]).replace(form_ids[1], form_ids[3]).replace(form_ids[0].lower(), form_ids[2].lower()).replace(form_ids[1].lower(), form_ids[3].lower())
+                                print(line.strip('\n'))
+                            fileinput.close()
             parts = os.path.relpath(file, skyrim_folder_path).lower().split('\\')
             rel_path = os.path.join(*parts[1:])
             with CFIDs.lock:
@@ -372,6 +381,7 @@ class CFIDs():
                 for i in range(len(seq_form_id_list)):
                     if form_ids[4] == seq_form_id_list[i]:
                         seq_form_id_list[i] = b'-||+||-' + form_ids[5]+ b'-||+||-'
+                        break
             data = b''.join(seq_form_id_list)
             data = data.replace(b'-||+||-', b'')
             f.seek(0)
@@ -403,7 +413,7 @@ class CFIDs():
                     integer_variable = data[offset+2:offset+5]
                     for form_ids in form_id_map:
                         if integer_variable == form_ids[4][::-1][1:]:
-                            data[offset+2:offset+5] = form_ids[4][::-1][1:]
+                            data[offset+2:offset+5] = form_ids[5][::-1][1:]
                             offset += 6
                             break
                     offset += 1
@@ -411,6 +421,118 @@ class CFIDs():
             data = bytes(data)
             f.seek(0)
             f.write(data)
+            f.close()
+
+    def ini_season_patcher(basename, new_file, form_id_map):
+        pass
+
+    def json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+') as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = CFIDs.remove_trailing_commas_from_json(string)
+            json_dict = CFIDs.extract_values_and_keys(data)
+            for path, value in json_dict:
+                if type(value) is str and '|' in value:
+                    index = value.index('|')
+                    plugin = value[:index]
+                    if plugin.lower() == basename:
+                        form_id_int = int(value[index+1:], 16)
+                        for form_ids in form_id_map:
+                            old_int = int(form_ids[0], 16)
+                            if form_id_int == old_int:
+                                data = CFIDs.change_json_element(data, path, plugin + '|' + form_ids[2])
+                                break
+            f.seek(0)
+            f.truncate(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
+            f.close()
+    
+    def json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+') as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = CFIDs.remove_trailing_commas_from_json(string)
+            json_dict = CFIDs.extract_values_and_keys(data)
+            ox = False
+            for path, value in json_dict:
+                if type(value) is str and '|' in value:
+                    index = value.index('|')
+                    plugin = value[index+1:]
+                    if plugin.lower() == basename:
+                        form_id = value[:index]
+                        form_id_int = int(form_id, 16)
+                        if not ox and '0x' in form_id:
+                            ox = True
+                        for form_ids in form_id_map:
+                            old_int = int(form_ids[0], 16)
+                            if form_id_int == old_int:
+                                if not ox:
+                                    data = CFIDs.change_json_element(data, path, form_ids[2] + '|' + plugin)
+                                else:
+                                    data = CFIDs.change_json_element(data, path, '0x' + form_ids[2] + '|' + plugin)
+                                break
+            f.seek(0)
+            f.truncate(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
+            f.close()
+    
+    def json_oar_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+') as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = CFIDs.remove_trailing_commas_from_json(string)
+            json_dict = CFIDs.extract_values_and_keys(data)
+            plugin = False
+            for path, value in json_dict:
+                if type(path[-1]) is str and 'pluginname' == path[-1].lower() and value.lower() == basename:
+                    plugin = True
+                elif plugin and type(path[-1]) is str and 'formid' == path[-1].lower():
+                    form_id_int = int(value, 16)
+                    for form_ids in form_id_map:
+                        old_id_int = int(form_ids[0], 16)
+                        if form_id_int == old_id_int:
+                            data = CFIDs.change_json_element(data, path, form_ids[2])
+                            break
+                else:
+                    plugin = False
+            f.seek(0)
+            f.truncate(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
+            f.close()
+
+    def json_sud_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+') as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = CFIDs.remove_trailing_commas_from_json(string)
+            json_dict = CFIDs.extract_values_and_keys(data)
+            for path, value in json_dict:
+                if type(value) is str and '|' in value:
+                    index = value.index('|')
+                    plugin = value[index+1:]
+                    if plugin.lower() == basename:
+                        form_id_int = int(value[:index])
+                        for form_ids in form_id_map:
+                            old_id_int = int(form_ids[0], 16)
+                            if form_id_int == old_id_int:
+                                data = CFIDs.change_json_element(data, path, str(int(form_ids[2], 16)) + '|' + plugin)
+                                break
+            f.seek(0)
+            f.truncate(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
         
     def dar_patcher(basename, new_file, form_id_map):
@@ -466,6 +588,7 @@ class CFIDs():
                                 data['headParts'][i]['formIdentifier'] = formIdentifier[:-6] + form_ids[3]
                                 break
             f.seek(0)
+            f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3, separators=(',', ' : '))
             f.close()
 
@@ -490,6 +613,7 @@ class CFIDs():
                 else:
                     plugin = False
             f.seek(0)
+            f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
@@ -513,6 +637,7 @@ class CFIDs():
                                 data = CFIDs.change_json_element(data, path, form_id_start + form_ids[3] + '|' + plugin)
                                 break
             f.seek(0)
+            f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
@@ -537,6 +662,7 @@ class CFIDs():
                                 data = CFIDs.change_json_element(data, path, plugin + '|0x' + form_ids[2])
                                 break
             f.seek(0)
+            f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
@@ -571,6 +697,7 @@ class CFIDs():
                                 data = CFIDs.change_json_element(data, path, plugin + '|' + form_ids[2])
                                 break
             f.seek(0)
+            f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
@@ -595,7 +722,34 @@ class CFIDs():
                             if form_id_int == old_id_int:
                                 data = CFIDs.change_json_element(data, path, value[:index+1] + '0x' + form_ids[2])
             f.seek(0)
+            f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
+            f.close()
+
+    def json_ied_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+') as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = CFIDs.remove_trailing_commas_from_json(string)
+            json_dict = CFIDs.extract_values_and_keys(data)
+            form_id_int = 0
+            form_id_path = []
+            for path, value in json_dict:
+                if path[-1] == 'id':
+                    form_id_int = value
+                    form_id_path = path
+                if path[-1].lower() == 'plugin' and value.lower() == basename:
+                    for form_ids in form_id_map:
+                        old_id_int = int(form_ids[0], 16)
+                        if form_id_int == old_id_int:
+                            data = CFIDs.change_json_element(data, form_id_path, int(form_ids[2], 16))
+                            break
+            f.seek(0)
+            f.truncate(0)
+            json.dump(data, f, ensure_ascii=False)
             f.close()
 
     def remove_trailing_commas_from_json(json_string):
@@ -900,6 +1054,7 @@ class CFIDs():
             data_list = CFIDs.update_grup_sizes(data_list, grup_struct, sizes_list)
 
             dependent_file.seek(0)
+            dependent_file.truncate(0)
             dependent_file.write(b''.join(data_list))
             dependent_file.close()
         parts = os.path.relpath(dependent, skyrim_folder_path).lower().split('\\')
