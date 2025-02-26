@@ -279,7 +279,19 @@ class CFIDs():
             basename = os.path.basename(master).lower()
             with CFIDs.lock:
                 if '.ini' in new_file_lower: #All of PO3's various distributors patching and whatever else uses ini files with form ids.
-                    CFIDs.ini_season_patcher(basename, new_file, form_id_map)
+                    if 'seasons\\' in new_file_lower:
+                        CFIDs.ini_season_patcher(basename, new_file, form_id_map)
+                    elif 'payloadinterpreter\\' in new_file_lower:
+                        CFIDs.ini_pi_patcher(basename, new_file, form_id_map)
+                    elif 'dtrykeyutil\\' in new_file_lower:
+                        CFIDs.ini_pi_patcher(basename, new_file, form_id_map)
+                    elif 'muimpactframework\\' in new_file_lower or 'muskeletoneditor\\' in new_file_lower:
+                        pass
+                    elif '\\poisebreaker' in new_file_lower:
+                        pass
+                    elif 'skypatcher\\' in new_file_lower:
+                        pass
+
                     #with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
                     #    if 'skypatcher' in new_file_lower:
                     #        for line in f:
@@ -424,7 +436,56 @@ class CFIDs():
             f.close()
 
     def ini_season_patcher(basename, new_file, form_id_map):
-        pass
+        with open(new_file, 'r+') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if not ';' in line and basename in line.lower():
+                    index_1 = line.find('~')
+                    index_2 = line.find('|', index_1)
+                    index_3 = line.find('~', index_2)
+                    plugin_1 = line[index_1+1:index_2]
+                    plugin_2 = line[index_3+1:]
+                    form_id_1 = line[:index_1]
+                    form_id_2 = line[index_2+1:index_3]
+                    if basename in plugin_1.lower():
+                        form_id_int_1 = int(form_id_1, 16)
+                        for form_ids in form_id_map:
+                            old_id_int = int(form_ids[0], 16)
+                            if form_id_int_1 == old_id_int: 
+                                form_id_1 = '0x' + form_ids[2]
+                                break
+                    if basename in plugin_2.lower():
+                        form_id_int_2 = int(form_id_2, 16)
+                        for form_ids in form_id_map:
+                            old_id_int = int(form_ids[0], 16)
+                            if form_id_int_2 == old_id_int:
+                                form_id_2 = '0x' + form_ids[2]
+                                break
+                    lines[i] = form_id_1 + '~' + plugin_1 + '|' + form_id_2 + '~' + plugin_2
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+
+    def ini_pi_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if basename in line.lower():
+                    end_index = line.rfind('|', 0, line.lower().index(basename))
+                    start_index = line.rfind('|', 0, end_index)
+                    start_of_line = line[:start_index+1]
+                    end_of_line = line[end_index:]
+                    form_id_int = int(line[start_index+1:end_index],16)
+                    for form_ids in form_id_map:
+                        old_id_int = int(form_ids[0], 16)
+                        if form_id_int == old_id_int:
+                            lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                            break
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
 
     def json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map):
         with open(new_file, 'r+') as f:
