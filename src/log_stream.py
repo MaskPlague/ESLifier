@@ -42,6 +42,7 @@ class log_stream(QMainWindow):
 
     def show(self):
         self.raise_()
+        #self.hide()
         return super().show()
 
     def write(self, text):
@@ -58,6 +59,7 @@ class log_stream(QMainWindow):
         print("\nAn exception has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data.\n")
         traceback.print_tb(exc_traceback, limit=3)
         print(f"Unhandled exception: {exc_value}")
+        print('\n')
 
     def custom_exception_hook(self, args: threading.ExceptHookArgs):
         self.crash = True
@@ -66,6 +68,7 @@ class log_stream(QMainWindow):
         print("\nAn exception has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data.\n")
         traceback.print_tb(args.exc_traceback, limit=3)
         print(f"Unhandled exception: {args.exc_value}")
+        print('\n')
 
     def flush(self):
         self.log_file.flush()
