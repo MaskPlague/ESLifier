@@ -207,12 +207,14 @@ class CFIDs():
             form_id_file_data = fidf.readlines()
         for form_id_history in form_id_file_data:
             form_id_conversion = form_id_history.split('|')
+
             from_id = bytes.fromhex(form_id_conversion[0])[::-1].hex()[2:].removeprefix('0').removeprefix('0').removeprefix('0').removeprefix('0').removeprefix('0').upper()
             from_id_with_leading_0s = bytes.fromhex(form_id_conversion[0])[::-1].hex()[2:].upper()
             to_id = bytes.fromhex(form_id_conversion[1])[::-1].hex()[2:].removeprefix('0').removeprefix('0').removeprefix('0').removeprefix('0').removeprefix('0').upper()
             to_id_with_leading_0s = bytes.fromhex(form_id_conversion[1])[::-1].hex()[2:].upper()
             from_id_little_endian = bytes.fromhex(form_id_conversion[0])
             to_id_little_endian = bytes.fromhex(form_id_conversion[1])
+
             form_id_map.append([from_id, from_id_with_leading_0s, to_id, to_id_with_leading_0s, from_id_little_endian, to_id_little_endian])
         return form_id_map
 
@@ -266,181 +268,389 @@ class CFIDs():
             else:
                 new_file = file
             new_file_lower = new_file.lower()
-            if '.ini' in new_file_lower or '.json' in new_file_lower or '_conditions.txt' in new_file_lower or '_srd.' in new_file_lower or '.psc' in new_file_lower:
-                with CFIDs.lock:
+            basename = os.path.basename(master).lower()
+            with CFIDs.lock:
+                if '.ini' in new_file_lower: #All of PO3's various distributors patching and whatever else uses ini files with form ids.
                     with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
-                        if '.ini' in new_file_lower: #All of PO3's various distributors patching and whatever else uses ini files with form ids.
-                            basename = os.path.basename(master).lower()
-                            if 'skypatcher' in new_file_lower:
-                                for line in f:
-                                    if basename in line.lower():
-                                        for form_ids in form_id_map:
-                                            line = line.replace('|' + form_ids[1], '|' + form_ids[3]).replace('|' + form_ids[0], '|' + form_ids[2]).replace('|' + form_ids[1].lower(), '|' + form_ids[3].lower()).replace('|' + form_ids[0].lower(), '|' + form_ids[2].lower())
-                                    print(line.strip('\n'))
-                            else:
-                                for line in f:
-                                    if basename in line.lower():
-                                        for form_ids in form_id_map:
-                                            #this is faster than re.sub by a lot ;_;
-                                            line = line.replace('0x' + form_ids[0], '0x' + form_ids[2]).replace('0x' + form_ids[1], '0x' + form_ids[3]).replace('0x' + form_ids[0].lower(), '0x' + form_ids[2].lower()).replace('0x' + form_ids[1].lower(), '0x' + form_ids[3].lower()).replace('0X' + form_ids[0], '0X' + form_ids[2]).replace('0X' + form_ids[1], '0X' + form_ids[3]).replace('0X' + form_ids[0].lower(), '0X' + form_ids[2].lower()).replace('0X' + form_ids[1].lower(), '0X' + form_ids[3].lower())
-                                    print(line.strip('\n'))
-                        elif 'config.json' in new_file_lower: #Open Animation Replacer Patching and MCM helper
-                            if 'openanimationreplacer' in new_file_lower:
-                                basename = os.path.basename(master).lower()
-                                prev_line = ''
-                                for line in f:
-                                    if 'pluginname' in prev_line.lower() and basename in prev_line.lower():
-                                        if 'formid' in line.lower():
-                                            for form_ids in form_id_map:
-                                                line = line.replace(form_ids[1], form_ids[3]).replace(form_ids[0], form_ids[2]).replace(form_ids[1].lower(), form_ids[3].lower()).replace(form_ids[0].lower(), form_ids[2].lower())
-                                    prev_line = line
-                                    print(line.strip('\n'))
-                            elif 'mcm\\config' in new_file_lower: #MCM helper
-                                basename = os.path.basename(master).lower()
-                                for line in f:
-                                    if 'sourecform' in line.lower() and basename in line.lower():
-                                        for form_ids in form_id_map:
-                                            line = line.replace(form_ids[1], form_ids[3]).replace(form_ids[0], form_ids[2]).replace(form_ids[1].lower(), form_ids[3].lower()).replace(form_ids[0].lower(), form_ids[2].lower())
-                                    print(line.strip('\n'))
-                        elif '_conditions.txt' in new_file_lower: #Dynamic Animation Replacer Patching
-                            basename = os.path.basename(master).lower()
+                        if 'skypatcher' in new_file_lower:
                             for line in f:
                                 if basename in line.lower():
                                     for form_ids in form_id_map:
-                                        line = line.replace('0x00' + form_ids[1], '0x00' + form_ids[3]).replace('0x' + form_ids[1], '0x' + form_ids[3]).replace('0x00' + form_ids[1].lower(), '0x00' + form_ids[3].lower()).replace('0x' + form_ids[1].lower(), '0x' + form_ids[3].lower()).replace('0X00' + form_ids[1], '0X00' + form_ids[3]).replace('0X' + form_ids[1], '0X' + form_ids[3]).replace('0X00' + form_ids[1].lower(), '0X00' + form_ids[3].lower()).replace('0X' + form_ids[1].lower(), '0X' + form_ids[3].lower())
-                                print(line.strip('\n'))
-                        elif '_srd.' in new_file_lower: #Sound record distributor patching
-                            for line in f:
-                                if os.path.basename(master).lower() in line.lower():
-                                    for form_ids in form_id_map:
                                         line = line.replace('|' + form_ids[1], '|' + form_ids[3]).replace('|' + form_ids[0], '|' + form_ids[2]).replace('|' + form_ids[1].lower(), '|' + form_ids[3].lower()).replace('|' + form_ids[0].lower(), '|' + form_ids[2].lower())
                                 print(line.strip('\n'))
-                        elif '.psc' in new_file_lower: #Script source file patching, this doesn't take into account form ids being passed as variables
+                        else:
                             for line in f:
-                                if os.path.basename(master).lower() in line.lower() and 'getformfromfile' in line.lower():
+                                if basename in line.lower():
                                     for form_ids in form_id_map:
-                                        line = re.sub(r'(0x0{0,7})(' + re.escape(form_ids[0]) + r' *,)', r'\0' + form_ids[2] + ',', line, re.IGNORECASE)
+                                        #this is faster than re.sub by a lot ;_;
+                                        line = line.replace('0x' + form_ids[0], '0x' + form_ids[2]).replace('0x' + form_ids[1], '0x' + form_ids[3]).replace('0x' + form_ids[0].lower(), '0x' + form_ids[2].lower()).replace('0x' + form_ids[1].lower(), '0x' + form_ids[3].lower()).replace('0X' + form_ids[0], '0X' + form_ids[2]).replace('0X' + form_ids[1], '0X' + form_ids[3]).replace('0X' + form_ids[0].lower(), '0X' + form_ids[2].lower()).replace('0X' + form_ids[1].lower(), '0X' + form_ids[3].lower())
                                 print(line.strip('\n'))
-                        elif '.json' in new_file_lower: #Dynamic Key Activation Framework NG, Smart Harvest Auto NG AutoLoot and whatever else may be using .json?
-                            #TODO: check for other json mods
-                            #TODO: convert this to read the files as jsons instead of line replacements...
-                            basename = os.path.basename(master).lower()
-                            if basename.startswith('shse.'):
-                                prev_line = ''
-                                for line in f:
-                                    if 'plugin' in prev_line.lower() and basename in prev_line.lower(): #Smart Harvest
-                                        if 'form' in line.lower():
-                                            for form_ids in form_id_map:
-                                                line = line.replace(form_ids[1], form_ids[3]).replace(form_ids[0], form_ids[2]).replace(form_ids[1].lower(), form_ids[3].lower()).replace(form_ids[0].lower(), form_ids[2].lower())
-                                    prev_line = line
-                                    print(line.strip('\n'))
-                            else: #Dynamic Key Activation Framework NG, Dynamic String Distributor
-                                for line in f:
-                                    if basename in line.lower():
-                                        for form_ids in form_id_map:
-                                            line = line.replace(form_ids[0], form_ids[2]).replace(form_ids[1], form_ids[3]).replace(form_ids[0].lower(), form_ids[2].lower()).replace(form_ids[1].lower(), form_ids[3].lower())
-                                    print(line.strip('\n'))
-                                    
                         fileinput.close()
-
-            elif '.jslot' in new_file_lower:
-                with open(new_file, 'r+') as f:
-                    data = json.load(f)
-                    if 'actor' in data.keys() and 'headTexture' in data['actor'].keys():
-                        plugin_and_fid = data['actor']['headTexture']
-                        if plugin_and_fid[:-7].lower() == os.path.basename(master).lower():
-                            old_id = plugin_and_fid[-6:]
-                            for form_ids in form_id_map:
-                                if old_id == form_ids[1]:
-                                    data['actor']['headTexture'] = plugin_and_fid[:-6] + form_ids[3]
-                                    break
-
-                    if 'headParts' in data.keys():
-                        for i, part in enumerate(data['headParts']):
-                            formIdentifier = part['formIdentifier']
-                            if formIdentifier[:-7].lower() == os.path.basename(master).lower():
-                                formId = part['formId'].to_bytes(4)
-                                old_id = formIdentifier[-6:]
+                elif 'config.json' in new_file_lower: #Open Animation Replacer Patching and MCM helper
+                    with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
+                        if 'openanimationreplacer' in new_file_lower:
+                            prev_line = ''
+                            for line in f:
+                                if 'pluginname' in prev_line.lower() and basename in prev_line.lower():
+                                    if 'formid' in line.lower():
+                                        for form_ids in form_id_map:
+                                            line = line.replace(form_ids[1], form_ids[3]).replace(form_ids[0], form_ids[2]).replace(form_ids[1].lower(), form_ids[3].lower()).replace(form_ids[0].lower(), form_ids[2].lower())
+                                prev_line = line
+                                print(line.strip('\n'))
+                        elif 'mcm\\config' in new_file_lower: #MCM helper
+                            for line in f:
+                                if 'sourecform' in line.lower() and basename in line.lower():
+                                    for form_ids in form_id_map:
+                                        line = line.replace(form_ids[1], form_ids[3]).replace(form_ids[0], form_ids[2]).replace(form_ids[1].lower(), form_ids[3].lower()).replace(form_ids[0].lower(), form_ids[2].lower())
+                                print(line.strip('\n'))
+                        fileinput.close()
+                elif '_conditions.txt' in new_file_lower: #Dynamic Animation Replacer Patching
+                    CFIDs.dar_patcher(basename, new_file, form_id_map)
+                elif '_srd.' in new_file_lower: #Sound record distributor patching
+                    CFIDs.srd_patcher(basename, new_file, form_id_map)
+                elif '.psc' in new_file_lower: #Script source file patching, this doesn't take into account form ids being passed as variables
+                    with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
+                        for line in f:
+                            if basename in line.lower() and 'getformfromfile' in line.lower():
                                 for form_ids in form_id_map:
-                                    if old_id == form_ids[1]:
-                                        new_form_id = formId[:1] + bytes.fromhex(form_ids[3])
-                                        data['headParts'][i]['formId'] = int.from_bytes(new_form_id)
-                                        data['headParts'][i]['formIdentifier'] = formIdentifier[:-6] + form_ids[3]
-                                        break
-                    f.seek(0)
-                    json.dump(data, f, ensure_ascii=False, indent=3, separators=(',', ' : '))
-
-            elif 'facegeom' in new_file_lower:
-                if '.nif' in new_file_lower: #FaceGeom mesh patching
-                    #TODO: check byte structure via hex editor to see what may go wrong here
-                    with CFIDs.lock:
-                        with open(new_file, 'rb+') as f:
-                            data = f.readlines()
-                            bytes_basename = bytes(os.path.basename(master).upper(), 'utf-8')
-                            for i in range(len(data)):
-                                if bytes_basename in data[i].upper(): #check for plugin name, in file path, in line of nif file.
-                                    for form_ids in form_id_map:
-                                        data[i] = data[i].replace(form_ids[1].encode(), form_ids[3].encode()).replace(form_ids[1].encode().lower(), form_ids[3].encode().lower())
-                            f.seek(0)
-                            f.writelines(data)
-
-            elif '.seq' in new_file_lower or '.pex' in new_file_lower:
-                with CFIDs.lock:
-                    with open(new_file,'rb+') as f:
-                        data = f.read()
-                        if '.seq' in new_file_lower: #SEQ file patching
-                            seq_form_id_list = [data[i:i+4] for i in range(0, len(data), 4)]
-                            for form_ids in form_id_map:
-                                for i in range(len(seq_form_id_list)):
-                                    if form_ids[4] == seq_form_id_list[i]:
-                                        seq_form_id_list[i] = b'-||+||-' + form_ids[5]+ b'-||+||-'
-                            data = b''.join(seq_form_id_list)
-                            data = data.replace(b'-||+||-', b'')
-                            f.seek(0)
-                            f.write(data)
-                        elif '.pex' in new_file_lower: #Compiled script patching
-                            #TODO: Perhaps implement a method to get a list of form id's that need to be replaced if a .psc exists as that would
-                            #lessen the chance that an incorrect integer is replaced.
-                            #for form_ids in form_id_map:
-                            #    #\x03 indicates a integer in compiled .pex files. \x00 will always be present instead of the master byte
-                            #    data = data.replace(b'\x03\x00' + form_ids[4][::-1][1:], b'\x03\x00-||+||-' + form_ids[5][::-1][1:])
-                            #data = data.replace(b'-||+||-', b'')
-                            data = bytearray(data)
-                            src_name_length = int.from_bytes(data[16:18])
-                            offset = 18 + src_name_length
-                            username_length = int.from_bytes(data[offset:offset+2])
-                            offset += 2 + username_length
-                            machine_name_length = int.from_bytes(data[offset:offset+2])
-                            offset += 2 + machine_name_length
-                            string_count = int.from_bytes(data[offset:offset+2])
-                            offset += 2
-                            strings = []
-                            for _ in range(string_count):
-                                string_length = int.from_bytes(data[offset:offset+2])
-                                strings.append(data[offset+2:offset+2+string_length].lower())
-                                offset += 2 + string_length
-                            master_name_bytes = os.path.basename(master).lower().encode()
-                            index = strings.index(master_name_bytes, 24, offset)
-                            data_size = len(data)
-                            while offset < data_size:
-                                if data[offset:offset+1] == b'\x03' and data[offset+5:offset+6] == b'\x02' and int.from_bytes(data[offset+6:offset+8]) == index:
-                                    integer_variable = data[offset+2:offset+5]
-                                    for form_ids in form_id_map:
-                                        if integer_variable == form_ids[4][::-1][1:]:
-                                            data[offset+2:offset+5] = form_ids[4][::-1][1:]
-                                            offset += 6
-                                            break
-                                    offset += 1
-                                offset += 1
-                            data = bytes(data)
-                            f.seek(0)
-                            f.write(data)
-                        f.close()
+                                    line = re.sub(r'(0x0{0,7})(' + re.escape(form_ids[0]) + r' *,)', r'\0' + form_ids[2] + ',', line, re.IGNORECASE)
+                            print(line.strip('\n'))
+                        fileinput.close()
+                elif basename.startswith('shse.') and '.json' in new_file_lower: # Smart Harvest SE
+                    CFIDs.json_shse_patcher(basename, new_file, form_id_map)
+                elif 'dynamicstringdistributor' in new_file_lower and '.json' in new_file_lower: # Dynamic String Distributor
+                    CFIDs.json_dsd_patcher(basename, new_file, form_id_map)
+                elif 'dkaf' in new_file_lower and '.json' in new_file_lower: # Dynamic Key Activation Framework NG
+                    CFIDs.json_dkaf_patcher(basename, new_file, form_id_map)
+                elif 'dynamicarmorvariants' in new_file_lower and '.json' in new_file_lower: # Dynamic Armor Variants
+                    CFIDs.json_dav_patcher(basename, new_file, form_id_map)
+                elif 'creatures.d' in new_file_lower and '.json' in new_file_lower: # Creature Framework
+                    CFIDs.json_cf_patcher(basename, new_file, form_id_map)
+                elif '.json' in new_file_lower: #Whatever else may be using .json?
+                    with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
+                        for line in f:
+                            if basename in line.lower():
+                                for form_ids in form_id_map:
+                                    line = line.replace(form_ids[0], form_ids[2]).replace(form_ids[1], form_ids[3]).replace(form_ids[0].lower(), form_ids[2].lower()).replace(form_ids[1].lower(), form_ids[3].lower())
+                            print(line.strip('\n'))
+                        fileinput.close()
+                elif '.jslot' in new_file_lower:
+                    CFIDs.jslot_patcher(basename, new_file, form_id_map)
+                elif 'facegeom' in new_file_lower and '.nif' in new_file_lower: # FaceGeom mesh patching
+                    CFIDs.facegeom_mesh_patcher(basename, new_file, form_id_map)
+                elif '.seq' in new_file_lower: #SEQ file patching
+                    CFIDs.seq_patcher(new_file, form_id_map)
+                elif '.pex' in new_file_lower: #Compiled script patching
+                    CFIDs.pex_patcher(basename, new_file, form_id_map)
             parts = os.path.relpath(file, skyrim_folder_path).lower().split('\\')
             rel_path = os.path.join(*parts[1:])
             with CFIDs.lock:
                 CFIDs.compacted_and_patched[os.path.basename(master)].append(rel_path)
 
+    def find_next_non_alphanumeric(text, start_index):
+        for i in range(start_index, len(text)):
+            if not text[i].isalnum():
+                return i
+        return -1
+    
+    def facegeom_mesh_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'rb+') as f:
+            data = f.readlines()
+            bytes_basename = bytes(basename, 'utf-8')
+            for i in range(len(data)):
+                if bytes_basename in data[i].lower(): #check for plugin name, in file path, in line of nif file.
+                    for form_ids in form_id_map:
+                        data[i] = data[i].replace(form_ids[1].encode(), form_ids[3].encode()).replace(form_ids[1].encode().lower(), form_ids[3].encode().lower())
+            f.seek(0)
+            f.writelines(data)
+    
+    def seq_patcher(new_file, form_id_map):
+        with open(new_file, 'rb+') as f:
+            data = f.read()
+            seq_form_id_list = [data[i:i+4] for i in range(0, len(data), 4)]
+            for form_ids in form_id_map:
+                for i in range(len(seq_form_id_list)):
+                    if form_ids[4] == seq_form_id_list[i]:
+                        seq_form_id_list[i] = b'-||+||-' + form_ids[5]+ b'-||+||-'
+            data = b''.join(seq_form_id_list)
+            data = data.replace(b'-||+||-', b'')
+            f.seek(0)
+            f.write(data)
+            f.close()
+        
+    def pex_patcher(basename, new_file, form_id_map):
+        with open(new_file,'rb+') as f:
+            data = f.read()
+            data = bytearray(data)
+            src_name_length = int.from_bytes(data[16:18])
+            offset = 18 + src_name_length
+            username_length = int.from_bytes(data[offset:offset+2])
+            offset += 2 + username_length
+            machine_name_length = int.from_bytes(data[offset:offset+2])
+            offset += 2 + machine_name_length
+            string_count = int.from_bytes(data[offset:offset+2])
+            offset += 2
+            strings = []
+            for _ in range(string_count):
+                string_length = int.from_bytes(data[offset:offset+2])
+                strings.append(data[offset+2:offset+2+string_length].lower())
+                offset += 2 + string_length
+            master_name_bytes = basename.encode()
+            index = strings.index(master_name_bytes, 24, offset)
+            data_size = len(data)
+            while offset < data_size:
+                if data[offset:offset+1] == b'\x03' and data[offset+5:offset+6] == b'\x02' and int.from_bytes(data[offset+6:offset+8]) == index:
+                    integer_variable = data[offset+2:offset+5]
+                    for form_ids in form_id_map:
+                        if integer_variable == form_ids[4][::-1][1:]:
+                            data[offset+2:offset+5] = form_ids[4][::-1][1:]
+                            offset += 6
+                            break
+                    offset += 1
+                offset += 1
+            data = bytes(data)
+            f.seek(0)
+            f.write(data)
+            f.close()
+        
+    def dar_patcher(basename, new_file, form_id_map):
+        with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
+            for line in f:
+                if basename in line.lower() and '|' in line:
+                    index = line.index('|')
+                    end_index = CFIDs.find_next_non_alphanumeric(line, index+2)
+                    if end_index != -1:
+                        form_id_int = int(line[index+1:end_index], 16)
+                        for form_ids in form_id_map:
+                            old_id_int = int(form_ids[0], 16)
+                            if form_id_int == old_id_int:
+                                line = line[:index+1] + '0x00' + form_ids[3] + line[end_index:]
+                print(line.strip('\n'))
+            fileinput.close()
+
+    def srd_patcher(basename, new_file, form_id_map):
+        with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
+            for line in f:
+                if basename in line.lower() and '|' in line:
+                    index = line.index('|')
+                    form_id_int = int(line[index+1:], 16)
+                    for form_ids in form_id_map:
+                        old_id_int = int(form_ids[0], 16)
+                        if form_id_int == old_id_int:
+                            line = line[:index+1] + form_ids[3]
+                print(line.strip('\n'))
+            fileinput.close()
+
+    def jslot_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+') as f:
+            data = json.load(f)
+            if 'actor' in data.keys() and 'headTexture' in data['actor'].keys():
+                plugin_and_fid = data['actor']['headTexture']
+                if plugin_and_fid[:-7].lower() == basename:
+                    old_id = plugin_and_fid[-6:]
+                    for form_ids in form_id_map:
+                        if old_id == form_ids[1]:
+                            data['actor']['headTexture'] = plugin_and_fid[:-6] + form_ids[3]
+                            break
+
+            if 'headParts' in data.keys():
+                for i, part in enumerate(data['headParts']):
+                    formIdentifier = part['formIdentifier']
+                    if formIdentifier[:-7].lower() == basename:
+                        formId = part['formId'].to_bytes(4)
+                        old_id = formIdentifier[-6:]
+                        for form_ids in form_id_map:
+                            if old_id == form_ids[1]:
+                                new_form_id = formId[:1] + bytes.fromhex(form_ids[3])
+                                data['headParts'][i]['formId'] = int.from_bytes(new_form_id)
+                                data['headParts'][i]['formIdentifier'] = formIdentifier[:-6] + form_ids[3]
+                                break
+            f.seek(0)
+            json.dump(data, f, ensure_ascii=False, indent=3, separators=(',', ' : '))
+            f.close()
+
+    def json_shse_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+') as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = CFIDs.remove_trailing_commas_from_json(string)
+            json_dict = CFIDs.extract_values_and_keys(data)
+            plugin = False
+            for path, value in json_dict:
+                if path[-1] == 'plugin' and basename == value.lower():
+                    plugin = True
+                elif plugin == True and path[-2] == 'form':
+                    for form_ids in form_id_map:
+                        if value ==  '00' + form_ids[1]:
+                            data = CFIDs.change_json_element(data, path, '00' + form_ids[3])
+                            break
+                else:
+                    plugin = False
+            f.seek(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
+            f.close()
+
+    def json_dsd_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+', errors='ignore') as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = CFIDs.remove_trailing_commas_from_json(string)
+            json_dict = CFIDs.extract_values_and_keys(data)
+            for path, value in json_dict:
+                if path[-1] == 'form_id':
+                    form_id_start = value[2:]
+                    form_id = value[2:8]
+                    plugin = value[9:]
+                    if plugin.lower() == basename:
+                        for form_ids in form_id_map:
+                            if form_id == form_ids[1]:
+                                data = CFIDs.change_json_element(data, path, form_id_start + form_ids[3] + '|' + plugin)
+                                break
+            f.seek(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
+            f.close()
+
+    def json_dkaf_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+', errors='ignore') as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = CFIDs.remove_trailing_commas_from_json(string)
+            json_dict = CFIDs.extract_values_and_keys(data)
+            for path, value in json_dict:
+                if type(value) is str and '|' in value:
+                    index = value.find('|')
+                    plugin = value[:index]
+                    form_id_int = int(value[index+1:], 16)
+                    if plugin.lower() == basename:
+                        for form_ids in form_id_map:
+                            old_id_int = int(form_ids[0], 16)
+                            if form_id_int == old_id_int:
+                                data = CFIDs.change_json_element(data, path, plugin + '|0x' + form_ids[2])
+                                break
+            f.seek(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
+            f.close()
+
+    def json_dav_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+') as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = CFIDs.remove_trailing_commas_from_json(string)
+            json_dict = CFIDs.extract_values_and_keys(data)
+            for path, value in json_dict:
+                if len(path) > 2 and type(path[-2]) is str and 'replace' in path[-2]:
+                    if path[-2] == 'replaceByForm':
+                        index = path[-1].index('|')
+                        plugin = path[-1][:index]
+                        form_id_int = int(path[-1][index+1:], 16)
+                        if plugin.lower() == basename:
+                            for form_ids in form_id_map:
+                                old_int = int(form_ids[0], 16)
+                                if form_id_int == old_int:
+                                    data = CFIDs.change_json_key(data, path[-1], plugin + '|' + form_ids[2])
+                                    break
+                    index = value.index('|')
+                    plugin = value[:index]
+                    form_id_int = int(value[index+1:], 16)
+                    if plugin.lower() == basename:
+                        for form_ids in form_id_map:
+                            old_int = int(form_ids[0], 16)
+                            if form_id_int == old_int:
+                                data = CFIDs.change_json_element(data, path, plugin + '|' + form_ids[2])
+                                break
+            f.seek(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
+            f.close()
+
+    def json_cf_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+') as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = CFIDs.remove_trailing_commas_from_json(string)
+            json_dict = CFIDs.extract_values_and_keys(data)
+            for path, value in json_dict:
+                if type(value) is str and '__formdata' in value.lower():
+                    formData_index = value.index('|')
+                    index = value.index('|', formData_index+1)
+                    plugin = value[formData_index+1:index]
+                    if plugin.lower() == basename:
+                        form_id_int = int(value[index+1:],16)
+                        for form_ids in form_id_map:
+                            old_id_int = int(form_ids[0],16)
+                            if form_id_int == old_id_int:
+                                data = CFIDs.change_json_element(data, path, value[:index+1] + '0x' + form_ids[2])
+            f.seek(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
+            f.close()
+
+    def remove_trailing_commas_from_json(json_string):
+        try:
+            return json.loads(json_string)
+        except json.JSONDecodeError as e:
+            json_string = re.sub(r',\s*([\]}])', r'\1', json_string)
+            return json.loads(json_string)
+
+    def extract_values_and_keys(json_data, path=[]):
+        results = []
+        if isinstance(json_data, dict):
+            for key, value in json_data.items():
+                if path:
+                    new_path = path.copy()
+                    new_path.append(key)
+                else:
+                    new_path = [key]
+                results.extend(CFIDs.extract_values_and_keys(value, new_path))
+        elif isinstance(json_data, list):
+            for index, item in enumerate(json_data):
+                if path:
+                    new_path = path.copy()
+                    new_path.append(index)
+                else:
+                    new_path = [index]
+                results.extend(CFIDs.extract_values_and_keys(item, new_path))
+        else:
+            results.append((path, json_data))
+
+        return results
+
+    def change_json_element(data, path, new_value):
+        if not path:
+            return new_value
+        
+        key = path[0]
+        if isinstance(data, dict):
+            data[key] = CFIDs.change_json_element(data[key], path[1:], new_value)
+        elif isinstance(data, list):
+            index = int(key)
+            data[index] = CFIDs.change_json_element(data[index], path[1:], new_value)
+        return data
+
+    def change_json_key(data, old_key, new_key):
+        if isinstance(data, dict):
+            if old_key in data:
+                data[new_key] = data.pop(old_key)
+            for key, value in data.items():
+                CFIDs.change_json_key(value, old_key, new_key)
+        elif isinstance(data, list):
+            for item in data:
+                CFIDs.change_json_key(item, old_key, new_key)
+        return data
+    
     def decompress_data(data_list, master_count):
         sizes_list = [[] for _ in range(len(data_list))]
 
