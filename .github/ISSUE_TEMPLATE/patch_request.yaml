@@ -10,7 +10,7 @@ body:
     attributes:
       label: Check for Duplicate Requests
       options:
-        - label: I have verified that there are no open duplicate Requests.
+        - label: I have verified that there are no duplicate Requests and that the file is not present in the below list.
           required: true
 
   - type: textarea
@@ -20,6 +20,20 @@ body:
       description: |
         What file do you need ESLifier to patch when compacting FormIDs? Also, provide a link to a mod that uses the file or a link to the possible framework mod that
         defines the file (i.e. Spell Perk Item Distributor). Nexus Mods links are preferred.
+        
+        Below is a list of currently patched file types. If you're making a request for one of them because it is not being patched correctly then please make a bug
+        report instead. The list of currently patched file types include:
+            .ini: PO3's distributors, SkyPatcher
+            config.json: OAR, MCM Helper
+            _conditions.txt: DAR
+            _srd.: Sound Record Distributor
+            .psc: Source Scripts
+            .json (not config.json): Dynamic Key Activation Framework NG, Smart Harvest Auto NG AutoLoot, Dynamic String Distributor, Should work for MNC
+            .jslot: Racemenu files
+            facegeom's .nif: Texture paths in face mesh files
+            voice, facetint, facegeom: The names of these files are patched
+            .seq: SEQ files
+            .pex: Compiled script files
     validations:
       required: true
     
