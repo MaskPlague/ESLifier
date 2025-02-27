@@ -248,11 +248,20 @@ class CFIDs():
 
     #Patches each file type in a different way as each has Form IDs present in a different format
     #Patched files:
-    #   .ini: PO3's distributors, SkyPatcher
+    #   .ini:   PO3's KID
+    #           PO3's BOS
+    #           PO3's SPID
+    #           SkyPatcher
+    #           DtryKeyUtil
+    #           Poise Breaker
+    #           Valhalla Combat
     #   config.json: OAR, MCM Helper
     #   user.json: OAR
     #   _conditions.txt: DAR
     #   _srd.: Sound Record Distributor
+    #   .toml:  Dynamic Animation Casting
+    #           Precision
+    #           Loki Poise
     #   .psc: Source Scripts
     #   .json:  Dynamic Key Activation Framework NG
     #           Smart Harvest Auto NG AutoLoot
@@ -279,60 +288,40 @@ class CFIDs():
             basename = os.path.basename(master).lower()
             with CFIDs.lock:
                 if '.ini' in new_file_lower: #All of PO3's various distributors patching and whatever else uses ini files with form ids.
-                    if 'seasons\\' in new_file_lower:
+                    if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini')):                # PO3's SPID, KID, BOS
+                        CFIDs.ini_po3_distr_kid_swap_patcher(basename, new_file, form_id_map)
+                    elif 'seasons\\' in new_file_lower:                                                 # Po3's Seasons of Skyrim
                         CFIDs.ini_season_patcher(basename, new_file, form_id_map)
-                    elif 'payloadinterpreter\\' in new_file_lower:
+                    elif 'payloadinterpreter\\' in new_file_lower:                                      # Payload Interpreter
                         CFIDs.ini_pi_patcher(basename, new_file, form_id_map)
-                    elif 'dtrykeyutil\\' in new_file_lower:
+                    elif 'dtrykeyutil\\' in new_file_lower:                                             # DtryKeyUtil
                         CFIDs.ini_pi_patcher(basename, new_file, form_id_map)
-                    elif 'muimpactframework\\' in new_file_lower or 'muskeletoneditor\\' in new_file_lower:
-                        pass
-                    elif '\\poisebreaker' in new_file_lower:
-                        pass
-                    elif 'skypatcher\\' in new_file_lower:
-                        pass
-
-                    #with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
-                    #    if 'skypatcher' in new_file_lower:
-                    #        for line in f:
-                    #            if basename in line.lower():
-                    #                for form_ids in form_id_map:
-                    #                    line = line.replace('|' + form_ids[1], '|' + form_ids[3]).replace('|' + form_ids[0], '|' + form_ids[2]).replace('|' + form_ids[1].lower(), '|' + form_ids[3].lower()).replace('|' + form_ids[0].lower(), '|' + form_ids[2].lower())
-                    #            print(line.strip('\n'))
-                    #    else:
-                    #        for line in f:
-                    #            if basename in line.lower():
-                    #                for form_ids in form_id_map:
-                    #                    #this is faster than re.sub by a lot ;_;
-                    #                    line = line.replace('0x' + form_ids[0], '0x' + form_ids[2]).replace('0x' + form_ids[1], '0x' + form_ids[3]).replace('0x' + form_ids[0].lower(), '0x' + form_ids[2].lower()).replace('0x' + form_ids[1].lower(), '0x' + form_ids[3].lower()).replace('0X' + form_ids[0], '0X' + form_ids[2]).replace('0X' + form_ids[1], '0X' + form_ids[3]).replace('0X' + form_ids[0].lower(), '0X' + form_ids[2].lower()).replace('0X' + form_ids[1].lower(), '0X' + form_ids[3].lower())
-                    #            print(line.strip('\n'))
-                    #    fileinput.close()
+                    elif 'muimpactframework\\' in new_file_lower or 'muskeletoneditor\\' in new_file_lower: # MU
+                        CFIDs.ini_mu_patcher(basename, new_file, form_id_map)
+                    elif '\\poisebreaker' in new_file_lower:                                            # Poise Breaker
+                        CFIDs.ini_pb_patcher(basename, new_file, form_id_map)
+                    elif 'skypatcher\\' in new_file_lower:                                              # Sky Patcher
+                        CFIDs.ini_sp_patcher(basename, new_file, form_id_map)
+                    elif 'valhallacombat\\' in new_file_lower:                                          # Valhalla Combat
+                        CFIDs.ini_vc_patcher(basename, new_file, form_id_map)
+                    else:                                                                               # Might patch whatever else is using .ini?
+                        print(new_file)
+                        with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
+                            for line in f:
+                                if basename in line.lower():
+                                    for form_ids in form_id_map:
+                                        #this is faster than re.sub by a lot ;_;
+                                        line = line.replace('0x' + form_ids[0], '0x' + form_ids[2]).replace('0x' + form_ids[1], '0x' + form_ids[3]).replace('0x' + form_ids[0].lower(), '0x' + form_ids[2].lower()).replace('0x' + form_ids[1].lower(), '0x' + form_ids[3].lower()).replace('0X' + form_ids[0], '0X' + form_ids[2]).replace('0X' + form_ids[1], '0X' + form_ids[3]).replace('0X' + form_ids[0].lower(), '0X' + form_ids[2].lower()).replace('0X' + form_ids[1].lower(), '0X' + form_ids[3].lower())
+                                print(line.strip('\n'))
+                            fileinput.close()
                 elif '_conditions.txt' in new_file_lower:                                               # Dynamic Animation Replacer
                     CFIDs.dar_patcher(basename, new_file, form_id_map)
-                elif '_srd.' in new_file_lower:                                                         # Sound record distributor
-                    CFIDs.srd_patcher(basename, new_file, form_id_map)
-                elif '.psc' in new_file_lower:                                                          # Script source file patching, this doesn't take into account form ids being passed as variables
-                    with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
-                        for line in f:
-                            if basename in line.lower() and 'getformfromfile' in line.lower():
-                                for form_ids in form_id_map:
-                                    line = re.sub(r'(0x0{0,7})(' + re.escape(form_ids[0]) + r' *,)', r'\0' + form_ids[2] + ',', line, re.IGNORECASE)
-                            print(line.strip('\n'))
-                        fileinput.close()
-                elif '.jslot' in new_file_lower:
-                    CFIDs.jslot_patcher(basename, new_file, form_id_map)
-                elif 'facegeom' in new_file_lower and '.nif' in new_file_lower: # FaceGeom mesh patching
-                    CFIDs.facegeom_mesh_patcher(basename, new_file, form_id_map)
-                elif '.seq' in new_file_lower: #SEQ file patching
-                    CFIDs.seq_patcher(new_file, form_id_map)
-                elif '.pex' in new_file_lower: #Compiled script patching
-                    CFIDs.pex_patcher(basename, new_file, form_id_map)
                 elif '.json' in new_file_lower:
                     if 'animationreplacer' in new_file_lower and ('config.json' in new_file_lower or 'user.json' in new_file_lower): # Open Animation Replacer
                         CFIDs.json_oar_patcher(basename, new_file, form_id_map)
                     elif 'mcm\\config' in new_file_lower and 'config.json' in new_file_lower:           # MCM helper
                         CFIDs.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
-                    elif 'storageutildata' in new_file_lower:                                             # PapyrusUtil's StorageDataUtil
+                    elif 'storageutildata' in new_file_lower:                                           # PapyrusUtil's StorageDataUtil
                         CFIDs.json_sud_patcher(basename, new_file, form_id_map)
                     elif 'dynamicstringdistributor' in new_file_lower:                                  # Dynamic String Distributor
                         CFIDs.json_dsd_patcher(basename, new_file, form_id_map)
@@ -363,10 +352,42 @@ class CFIDs():
                                         line = line.replace(form_ids[0], form_ids[2]).replace(form_ids[1], form_ids[3]).replace(form_ids[0].lower(), form_ids[2].lower()).replace(form_ids[1].lower(), form_ids[3].lower())
                                 print(line.strip('\n'))
                             fileinput.close()
+                elif '.pex' in new_file_lower:                                                          # Compiled script patching
+                    CFIDs.pex_patcher(basename, new_file, form_id_map)
+                elif new_file_lower.endswith('.toml'):
+                    if '\\_dynamicanimationcasting\\' in new_file_lower:
+                        pass
+                    elif '\\precision\\' in new_file_lower:
+                        pass
+                    elif '\\loki_POISE\\' in new_file_lower:
+                        pass
+                elif '_srd.' in new_file_lower:                                                         # Sound record distributor
+                    CFIDs.srd_patcher(basename, new_file, form_id_map)
+                elif '.psc' in new_file_lower:                                                          # Script source file patching, this doesn't take into account form ids being passed as variables
+                    with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
+                        for line in f:
+                            if basename in line.lower() and 'getformfromfile' in line.lower():
+                                for form_ids in form_id_map:
+                                    line = re.sub(r'(0x0{0,7})(' + re.escape(form_ids[0]) + r' *,)', r'\0' + form_ids[2] + ',', line, re.IGNORECASE)
+                            print(line.strip('\n'))
+                        fileinput.close()
+                elif 'facegeom' in new_file_lower and '.nif' in new_file_lower:                         # FaceGeom mesh patching
+                    CFIDs.facegeom_mesh_patcher(basename, new_file, form_id_map)
+                elif '.seq' in new_file_lower:                                                          # SEQ file patching
+                    CFIDs.seq_patcher(new_file, form_id_map)
+                elif '.jslot' in new_file_lower:
+                    CFIDs.jslot_patcher(basename, new_file, form_id_map)
+                
             parts = os.path.relpath(file, skyrim_folder_path).lower().split('\\')
             rel_path = os.path.join(*parts[1:])
             with CFIDs.lock:
                 CFIDs.compacted_and_patched[os.path.basename(master)].append(rel_path)
+
+    def find_prev_non_alphanumeric(text, start_index):
+        for i in range(start_index, 0, -1):
+            if not text[i].isalnum():
+                return i
+        return -1
 
     def find_next_non_alphanumeric(text, start_index):
         for i in range(start_index, len(text)):
@@ -471,7 +492,7 @@ class CFIDs():
         with open(new_file, 'r+') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
-                if basename in line.lower():
+                if basename in line.lower() and '|' in line:
                     end_index = line.rfind('|', 0, line.lower().index(basename))
                     start_index = line.rfind('|', 0, end_index)
                     start_of_line = line[:start_index+1]
@@ -486,6 +507,139 @@ class CFIDs():
             f.truncate(0)
             f.write(''.join(lines))
             f.close()
+
+    def ini_po3_distr_kid_swap_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if basename in line.lower() and '~' in line:
+                    count = line.lower().count('~')
+                    start = 0
+                    for _ in range(count):
+                        line = lines[i]
+                        middle_index = line.index('~', start)
+                        start_index = CFIDs.find_prev_non_alphanumeric(line, middle_index-2)
+                        end_index = middle_index + len(basename) + 1
+                        plugin = line.lower()[middle_index+1:end_index+1]
+                        start_of_line = line[:start_index+1]
+                        end_of_line = line[middle_index:]
+                        form_id_int = int(line[start_index+1:middle_index], 16)
+                        start = middle_index+1
+                        if basename in plugin:
+                            for form_ids in form_id_map:
+                                old_id_int = int(form_ids[0], 16)
+                                if form_id_int == old_id_int:
+                                    lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                    break
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+
+    
+    def ini_mu_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if basename in line.lower() and '|' in line:
+                    count = line.lower().count('|')
+                    start = 0
+                    for _ in range(count):
+                        line = lines[i]
+                        start_index = line.lower().index(basename, start)
+                        middle_index = line.index('|', start_index)
+                        end_index = CFIDs.find_next_non_alphanumeric(line, middle_index+1)
+                        plugin = line.lower()[start_index:middle_index].strip()
+                        start_of_line = line[:middle_index+1]
+                        end_of_line = line[end_index:]
+                        form_id_int = int(line[middle_index+1:end_index], 16)
+                        start = end_index+1
+                        if plugin == basename:
+                            for form_ids in form_id_map:
+                                old_id_int = int(form_ids[0], 16)
+                                if form_id_int == old_id_int:
+                                    lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                    break
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+
+    def ini_sp_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if basename in line.lower() and '|' in line:
+                    count = line.lower().count(basename)
+                    start = 0
+                    for _ in range(count):
+                        line = lines[i]
+                        start_index = line.lower().index(basename, start)
+                        middle_index = line.index('|', start_index)
+                        end_index = CFIDs.find_next_non_alphanumeric(line, middle_index+1)
+                        plugin = line.lower()[start_index:middle_index].strip()
+                        start_of_line = line[:middle_index+1]
+                        end_of_line = line[end_index:]
+                        form_id = line[middle_index+1:end_index]
+                        if len(form_id) == 8:
+                            if form_id[:2] == 'FE':
+                                form_id = form_id [-3:]
+                            else:
+                                form_id = form_id[-6:]
+                        form_id_int = int(form_id, 16)
+                        start = end_index+1
+                        if plugin == basename:
+                            for form_ids in form_id_map:
+                                old_id_int = int(form_ids[0], 16)
+                                if form_id_int == old_id_int:
+                                    lines[i] = start_of_line + form_ids[2] + end_of_line
+                                    break
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+    
+    def ini_pb_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if basename in line.lower() and ':' in line:
+                    index = line.index(':')
+                    end_index = CFIDs.find_next_non_alphanumeric(line, index+1)
+                    start_of_line = line[:index+1]
+                    end_of_line = line[end_index:]
+                    form_id_int = int(line[index+1:end_index], 16)
+                    for form_ids in form_id_map:
+                        old_id_int = int(form_ids[0], 16)
+                        if form_id_int == old_id_int:
+                            lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                            break
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+
+    def ini_vc_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if basename in line.lower() and '|' in line:
+                    middle_index = line.index('|')
+                    end_index = CFIDs.find_next_non_alphanumeric(line, middle_index+1)
+                    start_of_line = line[:middle_index+1]
+                    end_of_line = line[end_index:]
+                    form_id_int = int(line[middle_index+1:end_index], 16)
+                    for form_ids in form_id_map:
+                        old_id_int = int(form_ids[0], 16)
+                        if form_id_int == old_id_int:
+                            lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                            break
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+
+    
 
     def json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map):
         with open(new_file, 'r+') as f:
