@@ -23,17 +23,38 @@ body:
         
         Below is a list of currently patched file types. If you're making a request for one of them because it is not being patched correctly then please make a bug
         report instead. The list of currently patched file types include:
-            .ini: PO3's distributors, SkyPatcher
+            .ini:   PO3's KID
+                    PO3's BOS
+                    PO3's SPID
+                    SkyPatcher
+                    DtryKeyUtil
+                    Poise Breaker
+                    Valhalla Combat
             config.json: OAR, MCM Helper
             _conditions.txt: DAR
             _srd.: Sound Record Distributor
+            .toml:  Dynamic Animation Casting
+                    Precision
+                    Loki Poise
             .psc: Source Scripts
-            .json (not config.json): Dynamic Key Activation Framework NG, Smart Harvest Auto NG AutoLoot, Dynamic String Distributor, Should work for MNC
+            .json:  Dynamic Key Activation Framework NG
+                    Smart Harvest Auto NG AutoLoot
+                    PapyrusUtil's StorageDataUtil
+                    Custom Skills Framework
+                    Dynamic String Distributor
+                    Dynamic Armor Variants
+                    Inventory Injector
+                    Immersive Equipment Display
+                    Player Equipment Manager
+                    Skyrim Unbound
+                    Creature Framework
             .jslot: Racemenu files
             facegeom's .nif: Texture paths in face mesh files
             voice, facetint, facegeom: The names of these files are patched
             .seq: SEQ files
             .pex: Compiled script files
+            
+            #Patched files:
     validations:
       required: true
     
