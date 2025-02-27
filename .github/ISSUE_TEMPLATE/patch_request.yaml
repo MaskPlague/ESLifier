@@ -48,7 +48,7 @@ body:
                     Player Equipment Manager
                     Skyrim Unbound
                     Creature Framework
-            .jslot: Racemenu files
+            .jslot: Racemenu Presets
             facegeom's .nif: Texture paths in face mesh files
             voice, facetint, facegeom: The names of these files are patched
             .seq: SEQ files
