@@ -274,7 +274,7 @@ class CFIDs():
     #           Player Equipment Manager
     #           Skyrim Unbound
     #           Creature Framework
-    #   .jslot: Racemenu files
+    #   .jslot: Racemenu Presets
     #   \facegeom\: Texture paths in face mesh files
     #   .seq: SEQ files
     #   .pex: Compiled script files, should patch any form id in a (formID, plugin) format.
@@ -287,7 +287,7 @@ class CFIDs():
             new_file_lower = new_file.lower()
             basename = os.path.basename(master).lower()
             with CFIDs.lock:
-                if '.ini' in new_file_lower: #All of PO3's various distributors patching and whatever else uses ini files with form ids.
+                if new_file_lower.endswith('.ini'):
                     if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini')):                # PO3's SPID, KID, BOS
                         CFIDs.ini_po3_distr_kid_swap_patcher(basename, new_file, form_id_map)
                     elif 'seasons\\' in new_file_lower:                                                 # Po3's Seasons of Skyrim
@@ -314,9 +314,9 @@ class CFIDs():
                                         line = line.replace('0x' + form_ids[0], '0x' + form_ids[2]).replace('0x' + form_ids[1], '0x' + form_ids[3]).replace('0x' + form_ids[0].lower(), '0x' + form_ids[2].lower()).replace('0x' + form_ids[1].lower(), '0x' + form_ids[3].lower()).replace('0X' + form_ids[0], '0X' + form_ids[2]).replace('0X' + form_ids[1], '0X' + form_ids[3]).replace('0X' + form_ids[0].lower(), '0X' + form_ids[2].lower()).replace('0X' + form_ids[1].lower(), '0X' + form_ids[3].lower())
                                 print(line.strip('\n'))
                             fileinput.close()
-                elif '_conditions.txt' in new_file_lower:                                               # Dynamic Animation Replacer
+                elif new_file_lower.endswith('_conditions.txt'):                                        # Dynamic Animation Replacer
                     CFIDs.dar_patcher(basename, new_file, form_id_map)
-                elif '.json' in new_file_lower:
+                elif new_file_lower.endswith('.json'):
                     if 'animationreplacer' in new_file_lower and ('config.json' in new_file_lower or 'user.json' in new_file_lower): # Open Animation Replacer
                         CFIDs.json_oar_patcher(basename, new_file, form_id_map)
                     elif 'mcm\\config' in new_file_lower and 'config.json' in new_file_lower:           # MCM helper
@@ -352,7 +352,7 @@ class CFIDs():
                                         line = line.replace(form_ids[0], form_ids[2]).replace(form_ids[1], form_ids[3]).replace(form_ids[0].lower(), form_ids[2].lower()).replace(form_ids[1].lower(), form_ids[3].lower())
                                 print(line.strip('\n'))
                             fileinput.close()
-                elif '.pex' in new_file_lower:                                                          # Compiled script patching
+                elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
                     CFIDs.pex_patcher(basename, new_file, form_id_map)
                 elif new_file_lower.endswith('.toml'):
                     if '\\_dynamicanimationcasting\\' in new_file_lower:
@@ -363,7 +363,7 @@ class CFIDs():
                         pass
                 elif '_srd.' in new_file_lower:                                                         # Sound record distributor
                     CFIDs.srd_patcher(basename, new_file, form_id_map)
-                elif '.psc' in new_file_lower:                                                          # Script source file patching, this doesn't take into account form ids being passed as variables
+                elif new_file_lower.endswith('.psc'):                                                   # Script source file patching, this doesn't take into account form ids being passed as variables
                     with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
                         for line in f:
                             if basename in line.lower() and 'getformfromfile' in line.lower():
@@ -371,11 +371,11 @@ class CFIDs():
                                     line = re.sub(r'(0x0{0,7})(' + re.escape(form_ids[0]) + r' *,)', r'\0' + form_ids[2] + ',', line, re.IGNORECASE)
                             print(line.strip('\n'))
                         fileinput.close()
-                elif 'facegeom' in new_file_lower and '.nif' in new_file_lower:                         # FaceGeom mesh patching
+                elif 'facegeom' in new_file_lower and new_file_lower.endswith('.nif'):                  # FaceGeom mesh patching
                     CFIDs.facegeom_mesh_patcher(basename, new_file, form_id_map)
-                elif '.seq' in new_file_lower:                                                          # SEQ file patching
+                elif new_file_lower.endswith('.seq'):                                                   # SEQ file patching
                     CFIDs.seq_patcher(new_file, form_id_map)
-                elif '.jslot' in new_file_lower:
+                elif new_file_lower.endswith('.jslot'):                                                 # Racemenu Presets
                     CFIDs.jslot_patcher(basename, new_file, form_id_map)
                 
             parts = os.path.relpath(file, skyrim_folder_path).lower().split('\\')
