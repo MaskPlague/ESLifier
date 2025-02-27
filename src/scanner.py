@@ -244,7 +244,8 @@ class scanner():
                 factor = 1
             if (scanner.count % factor) >= (factor-1) or scanner.count >= scanner.file_count:
                 print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
-            if (not 'meta.ini' in file_lower) and ('.ini' in file_lower or '.json' in file_lower or '_conditions.txt' in file_lower or '_srd.' in file_lower or '.psc' in file_lower or '.jslot' in file_lower):
+            if ('.ini' in file_lower or '.json' in file_lower or '_conditions.txt' in file_lower or '_srd.' in file_lower or '.psc' in file_lower or 
+                '.jslot' in file_lower or '.toml' in file_lower):
                 thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
                 scanner.threads.append(thread)
                 thread.start()
