@@ -1,6 +1,7 @@
 import os
 import regex as re
 #import re
+import tomllib
 import binascii
 import shutil
 import fileinput
@@ -355,8 +356,8 @@ class CFIDs():
                 elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
                     CFIDs.pex_patcher(basename, new_file, form_id_map)
                 elif new_file_lower.endswith('.toml'):
-                    if '\\_dynamicanimationcasting\\' in new_file_lower:
-                        pass
+                    if '\\_dynamicanimationcasting\\' in new_file_lower:                                # Dynamic Animation Casting (Original/NG)
+                        CFIDs.toml_dac_patcher(basename, new_file, form_id_map)
                     elif '\\precision\\' in new_file_lower:
                         pass
                     elif '\\loki_POISE\\' in new_file_lower:
@@ -377,6 +378,8 @@ class CFIDs():
                     CFIDs.seq_patcher(new_file, form_id_map)
                 elif new_file_lower.endswith('.jslot'):                                                 # Racemenu Presets
                     CFIDs.jslot_patcher(basename, new_file, form_id_map)
+                else:
+                    print(f'Possible missing patcher for: {file}')
                 
             parts = os.path.relpath(file, skyrim_folder_path).lower().split('\\')
             rel_path = os.path.join(*parts[1:])
@@ -553,7 +556,7 @@ class CFIDs():
                         start_of_line = line[:middle_index+1]
                         end_of_line = line[end_index:]
                         form_id_int = int(line[middle_index+1:end_index], 16)
-                        start = end_index+1
+                        start = start_index + 1
                         if plugin == basename:
                             for form_ids in form_id_map:
                                 old_id_int = int(form_ids[0], 16)
@@ -639,7 +642,82 @@ class CFIDs():
             f.write(''.join(lines))
             f.close()
 
-    
+    def toml_dac_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+') as f:
+            lines = f.readlines()
+            dac_toml_type = 'new'
+            events = []
+            for i, line in enumerate(lines):
+                if 'espname' in line.lower():
+                    dac_toml_type = 'old'
+                elif '[[event]]' in line.lower():
+                    events.append(i)
+
+            if dac_toml_type == 'new':
+                for i, line, in enumerate(lines):
+                    if basename in line.lower() and '|' in line:
+                        count = line.lower().count('|')
+                        start = 0
+                        for _ in range(count):
+                            line = lines[i]
+                            start_index = line.lower().index(basename, start)
+                            middle_index = line.index('|', start_index)
+                            end_index = CFIDs.find_next_non_alphanumeric(line, middle_index+1)
+                            plugin = line.lower()[start_index:middle_index].strip()
+                            start_of_line = line[:middle_index+1]
+                            end_of_line = line[end_index:]
+                            form_id_int = int(line[middle_index+1:end_index], 16)
+                            start = start_index + 1
+                            if plugin == basename:
+                                for form_ids in form_id_map:
+                                    old_id_int = int(form_ids[0], 16)
+                                    if form_id_int == old_id_int:
+                                        lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                        break
+
+            else:
+                plugin_offsets = [3, 5, 9, 11, 13, 15]
+                for event in events:
+                    for offset in plugin_offsets:
+                        if basename in lines[event + offset].lower():
+                            if offset == 9:
+                                form_id_offsets = [6,7]
+                            else:
+                                form_id_offsets = [event + offset - 1]
+                            if offset != 15:
+                                for form_id_offset in form_id_offsets:
+                                    line = lines[form_id_offset]
+                                    index = line.index('=')
+                                    start_of_line = line[:index+1]
+                                    end_index = CFIDs.find_next_non_alphanumeric(line, index + 3)
+                                    end_of_line = line[end_index:]
+                                    form_id_int = int(line[index+1:], 16)
+                                    for form_ids in form_id_map:
+                                        old_id_int = int(form_ids[0], 16)
+                                        if form_id_int == old_id_int:
+                                            lines[form_id_offset] = start_of_line + ' 0x' + form_ids[2] + end_of_line
+                                            break
+                            else:
+                                form_id_offset = form_id_offsets[0]
+                                count = lines[form_id_offset].count(',') + 1
+                                start_index = lines[form_id_offset].index('[')
+                                for _ in range(count):
+                                    line = lines[form_id_offset]
+                                    end_index = CFIDs.find_next_non_alphanumeric(line,start_index+1)
+                                    start_of_line = line[:start_index+1]
+                                    end_of_line = line[end_index:]
+                                    id = line[start_index+1:end_index]
+                                    form_id_int = int(id, 16)
+                                    for form_ids in form_id_map:
+                                        old_id_int = int(form_ids[0], 16)
+                                        if form_id_int == old_id_int:
+                                            lines[form_id_offset] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                            break
+                                    start_index = CFIDs.find_next_non_alphanumeric(lines[form_id_offset], start_index+1) + 1
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
 
     def json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map):
         with open(new_file, 'r+') as f:
