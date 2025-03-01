@@ -272,6 +272,7 @@ class CFIDs():
     #           Dynamic Armor Variants
     #           Inventory Injector
     #           Immersive Equipment Display
+    #           Light Placer
     #           Player Equipment Manager
     #           Skyrim Unbound
     #           Creature Framework
