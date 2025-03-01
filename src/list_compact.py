@@ -9,12 +9,14 @@ from blacklist import blacklist
 class list_compactable(QTableWidget):
     def __init__(self):
         super().__init__()
-        self.setColumnCount(5)
-        self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'BSA', 'Dependencies', ''])
+        self.setColumnCount(7)
+        self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'BSA', 'SKSE DLL', 'Dependencies', '', 'Hider'])
         self.horizontalHeaderItem(0).setToolTip('This is the plugin name. Select which plugins you wish to compact.')
         self.horizontalHeaderItem(1).setToolTip('This is the CELL Record Flag. If an ESL plugin creates a new CELL\nand another mod changes that CELL then it may not work due to an engine bug.\n\"New  CELL\" indicates the presence of a new CELL record and \"New CELL Changed\"\nindicates that the new CELL record is changed by a dependent plugin.')
         self.horizontalHeaderItem(2).setToolTip('This is the BSA Flag. If a Bethesda Archive holds files that need\npatching, this program will not be able to patch them until they are extracted.\nHover over the BSA flag to see the relevant .bsa files for each mod.')
-        self.horizontalHeaderItem(3).setToolTip('If a plugin has other plugins with it as a master, they will appear\nwhen the button is clicked. These will also have their\nForm IDs patched to reflect the Master plugin\'s changes.')
+        self.horizontalHeaderItem(3).setToolTip('This is the skse DLL flag. If a dll has the plugin name then it may\nhave a LookUpForm() call that may break after compacting a flagged plugin.')
+        self.horizontalHeaderItem(4).setToolTip('If a plugin has other plugins with it as a master, they will appear\nwhen the button is clicked. These will also have their\nForm IDs patched to reflect the Master plugin\'s changes.')
+        self.setColumnHidden(6, True)
         self.verticalHeader().setHidden(True)
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
@@ -60,6 +62,7 @@ class list_compactable(QTableWidget):
         self.dependency_list = self.get_data_from_file("ESLifier_Data/dependency_dictionary.json")
         self.compacted = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json")
         self.bsa_dict = self.get_data_from_file("ESLifier_Data/bsa_dict.json")
+        self.dll_dict = self.get_data_from_file("ESLifier_Data/dll_dict.json")
         blacklist = self.get_data_from_file('ESLifier_Data/blacklist.json')
         self.cell_changed = self.get_data_from_file("ESLifier_Data/cell_changed.json")
         if blacklist == {}:
@@ -83,7 +86,7 @@ class list_compactable(QTableWidget):
 
         def display_dependencies(mod_key):
             index = self.currentRow()
-            if self.cellWidget(index, 4):
+            if self.cellWidget(index, 5):
                 self.item(index, 0).setTextAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
                 if self.item(index, 1):
                     self.item(index, 1).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignVCenter)
@@ -94,7 +97,7 @@ class list_compactable(QTableWidget):
                         background-color: transparent;
                         border: none;
                     }""")
-                self.removeCellWidget(index, 4)
+                self.removeCellWidget(index, 5)
             else:
                 self.item(index, 0).setTextAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
                 if self.item(index, 1):
@@ -114,7 +117,7 @@ class list_compactable(QTableWidget):
                     item.setToolTip(dependency)
                     list_widget_dependency_list.addItem(item)
                 list_widget_dependency_list.setSizeAdjustPolicy(QTableWidget.SizeAdjustPolicy.AdjustToContents)
-                self.setCellWidget(index, 4, list_widget_dependency_list)
+                self.setCellWidget(index, 5, list_widget_dependency_list)
             self.resizeRowToContents(index)
 
         for i in range(len(self.mod_list)):
@@ -157,6 +160,13 @@ class list_compactable(QTableWidget):
                         tooltip += '    - ' + key + '\n'
                 item_bsa.setToolTip(tooltip)
                 self.setItem(i,2, item_bsa)
+            if os.path.basename(self.mod_list[i].lower()) in self.dll_dict.keys():
+                item_dll = QTableWidgetItem('SKSE DLL')
+                tooltip = 'This mod\'s plugin name is present in the following SKSE dlls:\n'
+                for dll in self.dll_dict[os.path.basename(self.mod_list[i]).lower()]:
+                    tooltip += '- ' + os.path.basename(dll)
+                item_dll.setToolTip(tooltip)
+                self.setItem(i, 3, item_dll)
             if self.dependency_list[os.path.basename(self.mod_list[i]).lower()] != []:
                 dL = QPushButton("Show")
                 dL.clicked.connect(lambda _, mod_key=os.path.basename(self.mod_list[i]).lower(): display_dependencies(mod_key))
@@ -169,7 +179,7 @@ class list_compactable(QTableWidget):
                     border: none;
                     }""")
                 self.button_group.addButton(dL)
-                self.setCellWidget(i,3,dL)
+                self.setCellWidget(i,4,dL)
 
         def somethingChanged(item_changed):
             self.blockSignals(True)
