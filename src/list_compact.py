@@ -14,7 +14,7 @@ class list_compactable(QTableWidget):
         self.horizontalHeaderItem(0).setToolTip('This is the plugin name. Select which plugins you wish to compact.')
         self.horizontalHeaderItem(1).setToolTip('This is the CELL Record Flag. If an ESL plugin creates a new CELL\nand another mod changes that CELL then it may not work due to an engine bug.\n\"New  CELL\" indicates the presence of a new CELL record and \"New CELL Changed\"\nindicates that the new CELL record is changed by a dependent plugin.')
         self.horizontalHeaderItem(2).setToolTip('This is the BSA Flag. If a Bethesda Archive holds files that need\npatching, this program will not be able to patch them until they are extracted.\nHover over the BSA flag to see the relevant .bsa files for each mod.')
-        self.horizontalHeaderItem(3).setToolTip('This is the skse DLL flag. If a dll has the plugin name then it may\nhave a LookUpForm() call that may break after compacting a flagged plugin.')
+        self.horizontalHeaderItem(3).setToolTip('This is the skse DLL flag. If a dll has the plugin name in it then\nit may have a LookUpForm() call that may break after compacting a flagged plugin.')
         self.horizontalHeaderItem(4).setToolTip('If a plugin has other plugins with it as a master, they will appear\nwhen the button is clicked. These will also have their\nForm IDs patched to reflect the Master plugin\'s changes.')
         self.setColumnHidden(6, True)
         self.verticalHeader().setHidden(True)
@@ -162,7 +162,7 @@ class list_compactable(QTableWidget):
                 self.setItem(i,2, item_bsa)
             if os.path.basename(self.mod_list[i].lower()) in self.dll_dict.keys():
                 item_dll = QTableWidgetItem('SKSE DLL')
-                tooltip = 'This mod\'s plugin name is present in the following SKSE dlls:\n'
+                tooltip = 'This mod\'s plugin name is present in the following SKSE dlls\nand may break them if a hard-coded form id is present:\n'
                 for dll in self.dll_dict[os.path.basename(self.mod_list[i]).lower()]:
                     tooltip += '- ' + os.path.basename(dll)
                 item_dll.setToolTip(tooltip)
