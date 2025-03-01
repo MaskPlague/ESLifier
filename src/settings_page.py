@@ -43,6 +43,7 @@ class settings(QWidget):
         self.show_plugins_with_cells_widget_init()
         self.enable_cell_changed_filter_widget_init()
         self.show_plugins_with_bsas_widget_init()
+        self.show_plugins_possibly_refd_by_dlls_init()
         self.edit_blacklist_button_widget_init()
         self.open_eslifier_data_widget_init()
         self.clear_form_id_maps_and_compacted_and_patched_widget_init()
@@ -59,8 +60,9 @@ class settings(QWidget):
         settings_layout.addWidget(self.update_header_widget)
         settings_layout.addWidget(self.scan_esms_widget)
         settings_layout.addWidget(self.show_plugins_with_cells_widget)
-        settings_layout.addWidget(self.show_plugins_with_bsas_widget)
         settings_layout.addWidget(self.enable_cell_changed_filter_widget)
+        settings_layout.addWidget(self.show_plugins_with_bsas_widget)
+        settings_layout.addWidget(self.show_plugins_possibly_refd_by_dlls_widget)
         settings_layout.addWidget(self.edit_blacklist_widget)
         settings_layout.addWidget(self.open_eslifier_data_widget)
         settings_layout.addWidget(self.clear_form_id_maps_and_compacted_and_patched_widget)
@@ -239,6 +241,17 @@ class settings(QWidget):
         show_plugins_with_bsas_layout.addWidget(show_plugins_with_bsas_label)
         show_plugins_with_bsas_layout.addWidget(self.show_plugins_with_bsas_toggle)
 
+    def show_plugins_possibly_refd_by_dlls_init(self):
+        show_plugins_possibly_refd_by_dlls_layout = QHBoxLayout()
+        self.show_plugins_possibly_refd_by_dlls_widget = QWidget()
+        self.show_plugins_possibly_refd_by_dlls_widget.setToolTip('Show or hide plugins that may have Form IDs hard-coded in SKSE dlls.')
+        show_plugins_possibly_refd_by_dlls_label = QLabel("Show plugins in that are in SKSE dlls")
+        self.show_plugins_possibly_refd_by_dlls_toggle = QtToggle()
+        self.show_plugins_possibly_refd_by_dlls_toggle.clicked.connect(self.update_settings)
+        self.show_plugins_possibly_refd_by_dlls_widget.setLayout(show_plugins_possibly_refd_by_dlls_layout)
+        show_plugins_possibly_refd_by_dlls_layout.addWidget(show_plugins_possibly_refd_by_dlls_label)
+        show_plugins_possibly_refd_by_dlls_layout.addWidget(self.show_plugins_possibly_refd_by_dlls_toggle)
+
     def edit_blacklist_button_widget_init(self):
         self.blacklist_window = blacklist_window()
         edit_blacklist_layout = QHBoxLayout()
@@ -360,6 +373,7 @@ class settings(QWidget):
                 self.scan_esms_toggle.setChecked(False)
                 self.show_plugins_with_cells_toggle.setChecked(True)
                 self.show_plugins_with_bsas_toggle.setChecked(False)
+                self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(False)
                 self.enable_cell_changed_filter_toggle.setChecked(True)
                 self.update_settings()
 
@@ -396,6 +410,9 @@ class settings(QWidget):
 
         if 'show_bsas' in self.settings.keys(): self.show_plugins_with_bsas_toggle.setChecked(self.settings['show_bsas'])
         else: self.show_plugins_with_bsas_toggle.setChecked(False)
+
+        if 'show_dlls' in self.settings.keys(): self.show_plugins_with_bsas_toggle.setChecked(self.settings['show_dlls'])
+        else: self.show_plugins_with_bsas_toggle.setChecked(False)
         
 
     def save_settings_to_file(self):
@@ -415,6 +432,7 @@ class settings(QWidget):
         self.settings['show_cells'] = self.show_plugins_with_cells_toggle.isChecked()
         self.settings['enable_cell_changed_filter'] = self.enable_cell_changed_filter_toggle.isChecked()
         self.settings['show_bsas'] = self.show_plugins_with_bsas_toggle.isChecked()
+        self.settings['show_dlls'] = self.show_plugins_possibly_refd_by_dlls_toggle.isChecked()
 
         if self.mo2_mode_toggle.isChecked():
             self.mo2_modlist_txt_path_widget.show()
