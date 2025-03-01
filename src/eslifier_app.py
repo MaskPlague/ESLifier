@@ -2,7 +2,7 @@ import sys
 import images_qr #do not remove, used for icons, it is a PyQt6 resource file
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QPalette, QColor, QIcon
-from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMenuBar, QStackedLayout, QMessageBox
+from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMenuBar, QStackedLayout, QMessageBox, QTableWidgetItem
 
 from settings_page import settings
 from main_page import main
@@ -195,20 +195,36 @@ class main_window(QMainWindow):
         self.main_widget.list_eslify.create()
         show_cells = self.settings_widget.settings['show_cells']
         show_bsa = self.settings_widget.settings['show_bsas']
+        show_dlls = self.settings_widget.settings['show_dlls']
         self.main_widget.list_compact.setColumnHidden(1, not show_cells)
         self.main_widget.list_compact.setColumnHidden(2, not show_bsa)
+        self.main_widget.list_compact.setColumnHidden(3, not show_dlls)
         self.main_widget.list_eslify.setColumnHidden(1, not show_cells)
         for i in range(self.main_widget.list_compact.rowCount()):
+            self.main_widget.list_compact.setRowHidden(i, False)
+            if self.main_widget.list_compact.item(i,6):
+                self.main_widget.list_compact.takeItem(i,6)
+
             if self.main_widget.list_compact.item(i,1) and not show_cells:
                 self.main_widget.list_compact.setRowHidden(i, True)
-            elif self.main_widget.list_compact.item(i,2) and not show_bsa:
+            if self.main_widget.list_compact.item(i,2) and not show_bsa:
                 self.main_widget.list_compact.setRowHidden(i, True)
-            else:
-                self.main_widget.list_compact.setRowHidden(i, False)
+            if self.main_widget.list_compact.item(i,3) and not show_dlls:
+                self.main_widget.list_compact.setRowHidden(i, True)
+
+            if self.main_widget.list_compact.isRowHidden(i):
+                self.main_widget.list_compact.setItem(i, 6, QTableWidgetItem('Hidden'))
+                
 
         for i in range(self.main_widget.list_eslify.rowCount()):
+            if self.main_widget.list_eslify.item(i,3):
+                self.main_widget.list_eslify.takeItem(i,3)
+
             if self.main_widget.list_eslify.item(i,1):
                 self.main_widget.list_eslify.setRowHidden(i, not show_cells)
+            
+            if self.main_widget.list_eslify.isRowHidden(i):
+                self.main_widget.list_eslify.setItem(i, 3, QTableWidgetItem('Hidden'))
 
     def closeEvent(self, a0):
         sys.stdout = sys.__stdout__
