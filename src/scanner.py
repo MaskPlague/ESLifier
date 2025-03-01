@@ -46,7 +46,7 @@ class scanner():
         scanner.dump_to_file(file="ESLifier_Data/plugin_list.json", data=scanner.plugins)
         scanner.dump_to_file(file="ESLifier_Data/file_masters.json", data=scanner.file_dict)
         scanner.dump_to_file(file="ESLifier_Data/bsa_dict.json", data=scanner.bsa_dict)
-        
+        scanner.dump_to_file(file="ESLifier_Data/dll_dict.json", data=scanner.dll_dict)
 
         end_time = timeit.default_timer()
         time_taken = end_time - start_time
@@ -172,10 +172,12 @@ class scanner():
         pattern5 = re.compile(r'\\sound\\voice\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
         scanner.file_dict = {plugin: [] for plugin in plugin_names}
         scanner.bsa_dict = {}
+        scanner.dll_dict = {}
         scanner.bsa_files = []
         scanner.threads = []
         scanner.seq_files = []
         scanner.pex_files = []
+        scanner.dll_files = []
         scanner.count = 0
         
         if len(scanner.all_files) > 500000:
@@ -202,6 +204,15 @@ class scanner():
 
         print("\n-  Scanning .pex files")
         for file in scanner.pex_files:
+            thread = threading.Thread(target=scanner.file_reader,args=(pattern2, file, 'rb'))
+            scanner.threads.append(thread)
+            thread.start()
+
+        for thread in scanner.threads: thread.join()
+        scanner.threads = []
+
+        print("-  Scanning .dll SKSE plugins")
+        for file in scanner.dll_files:
             thread = threading.Thread(target=scanner.file_reader,args=(pattern2, file, 'rb'))
             scanner.threads.append(thread)
             thread.start()
@@ -244,20 +255,21 @@ class scanner():
                 factor = 1
             if (scanner.count % factor) >= (factor-1) or scanner.count >= scanner.file_count:
                 print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
-            if ('.ini' in file_lower or '.json' in file_lower or '_conditions.txt' in file_lower or '_srd.' in file_lower or '.psc' in file_lower or 
-                '.jslot' in file_lower or '.toml' in file_lower):
+            if (file_lower.endswith(('.ini', '.json', '.psc', '.jslot', '.toml', '_conditions.txt')) or '_srd.' in file_lower):
                 thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
                 scanner.threads.append(thread)
                 thread.start()
-            elif '.bsa' in file_lower:
+            elif file_lower.endswith('.bsa'):
                 bsa_blacklist = ['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
                     'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
                     'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa']
                 if os.path.basename(file_lower) not in bsa_blacklist:
                     scanner.bsa_files.append(file)
-            elif '.pex' in file_lower:
+            elif file_lower.endswith('.pex'):
                 scanner.pex_files.append(file)
-            elif '.seq' in file_lower:
+            elif file_lower.endswith('.dll'):
+                scanner.dll_files.append(file)
+            elif file_lower.endswith('.seq'):
                 plugin, _ = os.path.splitext(os.path.basename(file))
                 scanner.seq_files.append([plugin.lower(), file])
             elif ('\\facegeom\\' in file_lower and '.nif' in file_lower):
@@ -314,7 +326,7 @@ class scanner():
 
     def file_reader(pattern, file, reader_type):
         if reader_type == 'r':
-            if '.jslot' in file.lower():
+            if file.lower().endswith('.jslot'):
                 with open(file, 'r', errors='ignore') as f:
                     data = json.load(f)
                     plugins = []
@@ -347,9 +359,14 @@ class scanner():
                 if r != []:
                     for plugin in r:
                         plugin = plugin.decode('utf-8')
-                        with scanner.lock:
-                            if plugin not in scanner.file_dict.keys(): scanner.file_dict.update({plugin: []})
-                            if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+                        if file.lower().endswith('.dll'):
+                            with scanner.lock:
+                                if plugin not in scanner.dll_dict.keys(): scanner.dll_dict.update({plugin: []})
+                                if file not in scanner.dll_dict[plugin]: scanner.dll_dict[plugin].append(file)
+                        else:
+                            with scanner.lock:
+                                if plugin not in scanner.file_dict.keys(): scanner.file_dict.update({plugin: []})
+                                if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
     
     def bsa_reader(bsa_file):
         plugins = []
