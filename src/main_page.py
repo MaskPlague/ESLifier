@@ -131,7 +131,7 @@ class main(QWidget):
             items = self.list_eslify.findItems(self.filter_eslify.text(), Qt.MatchFlag.MatchContains)
             if len(items) > 0:
                 for i in range(self.list_eslify.rowCount()):
-                    self.list_eslify.setRowHidden(i, False if (self.list_eslify.item(i,0) in items) else True)
+                    self.list_eslify.setRowHidden(i, False if (self.list_eslify.item(i,0) in items and not self.list_eslify.item(i, 6)) else True)
         else:
             for i in range(self.list_eslify.rowCount()):
                 self.list_eslify.setRowHidden(i, False)
@@ -141,7 +141,7 @@ class main(QWidget):
             items = self.list_compact.findItems(self.filter_compact.text(), Qt.MatchFlag.MatchContains)
             if len(items) > 0:
                 for i in range(self.list_compact.rowCount()):
-                    self.list_compact.setRowHidden(i, False if (self.list_compact.item(i,0) in items) else True)
+                    self.list_compact.setRowHidden(i, False if (self.list_compact.item(i,0) in items and not self.list_compact.item(i, 6)) else True)
         else:
             for i in range(self.list_compact.rowCount()):
                 self.list_compact.setRowHidden(i, False)
@@ -151,9 +151,7 @@ class main(QWidget):
         checked = []
         self.list_compact.clearSelection()
         for row in range(self.list_compact.rowCount()):
-            if self.list_compact.item(row,0).checkState() == Qt.CheckState.Checked:
-                #self.list_compact.item(row,0).setCheckState(Qt.CheckState.PartiallyChecked)
-                #self.list_compact.item(row,0).setFlags(self.list_compact.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
+            if self.list_compact.item(row,0).checkState() == Qt.CheckState.Checked and not self.list_compact.item(row, 6):
                 checked.append(self.list_compact.item(row,0).toolTip())
         if checked != []:
             file_masters = main.get_from_file('ESLifier_Data/file_masters.json')
@@ -222,9 +220,7 @@ class main(QWidget):
         checked = []
         self.list_eslify.clearSelection()
         for row in range(self.list_eslify.rowCount()):
-            if self.list_eslify.item(row,0).checkState() == Qt.CheckState.Checked:
-                #self.list_eslify.item(row,0).setCheckState(Qt.CheckState.PartiallyChecked)
-                #self.list_eslify.item(row,0).setFlags(self.list_eslify.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
+            if self.list_eslify.item(row,0).checkState() == Qt.CheckState.Checked and not self.list_eslify.item(row, 3):
                 checked.append(self.list_eslify.item(row,0).toolTip())
         if checked != []:
             self.confirm = QMessageBox()
