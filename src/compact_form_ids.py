@@ -120,7 +120,7 @@ class CFIDs():
         #hexaPattern = re.compile(r'([0-9a-fA-F]+){6,}[.](?!p)')
         files_to_patch = []
         files_to_rename = []
-        matchers = ['.pex', '.psc', '.ini', '_conditions.txt', '.json', '.jslot', '_srd.', os.path.splitext(os.path.basename(master))[0].lower() + '.seq']
+        matchers = ['.pex', '.psc', '.ini', '_conditions.txt', '.json', '.jslot', '_srd.', os.path.splitext(os.path.basename(master))[0].lower() + '.seq', '.toml']
         for file in files:
             if any(match in file.lower() for match in matchers):
                 files_to_patch.append(file)
@@ -306,7 +306,7 @@ class CFIDs():
                     elif 'valhallacombat\\' in new_file_lower:                                          # Valhalla Combat
                         CFIDs.ini_vc_patcher(basename, new_file, form_id_map)
                     else:                                                                               # Might patch whatever else is using .ini?
-                        print(new_file)
+                        print(f'Possible missing patcher for: {new_file}')
                         with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
                             for line in f:
                                 if basename in line.lower():
@@ -332,6 +332,8 @@ class CFIDs():
                         CFIDs.json_dav_patcher(basename, new_file, form_id_map)
                     elif '\\ied\\' in new_file_lower:                                                   # Immersive Equipment Display
                         CFIDs.json_ied_patcher(basename, new_file, form_id_map)
+                    elif 'lightplacer' in new_file_lower:                                               # Light Placer #TODO: TEST ME
+                        CFIDs.ini_po3_distr_kid_swap_patcher(basename, new_file, form_id_map)
                     elif 'creatures.d' in new_file_lower:                                               # Creature Framework
                         CFIDs.json_cf_patcher(basename, new_file, form_id_map)
                     elif 'inventoryinjector' in new_file_lower:                                         # Inventory Injector
@@ -345,7 +347,7 @@ class CFIDs():
                     elif os.path.basename(new_file_lower).startswith('shse.'):                          # Smart Harvest
                         CFIDs.json_shse_patcher(basename, new_file, form_id_map)
                     else:                                                                               # Might patch whatever else is using .json?
-                        print(new_file)
+                        print(f'Possible missing patcher for: {new_file}')
                         with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
                             for line in f:
                                 if basename in line.lower():
@@ -358,10 +360,12 @@ class CFIDs():
                 elif new_file_lower.endswith('.toml'):
                     if '\\_dynamicanimationcasting\\' in new_file_lower:                                # Dynamic Animation Casting (Original/NG)
                         CFIDs.toml_dac_patcher(basename, new_file, form_id_map)
-                    elif '\\precision\\' in new_file_lower:
-                        pass
-                    elif '\\loki_POISE\\' in new_file_lower:
-                        pass
+                    elif '\\precision\\' in new_file_lower:                                             # Precision
+                        CFIDs.toml_precision_patcher(basename, new_file, form_id_map)
+                    elif '\\loki_poise\\' in new_file_lower:                                            # Loki Poise
+                        CFIDs.toml_loki_patcher(basename, new_file, form_id_map)
+                    else:
+                        print(new_file)
                 elif '_srd.' in new_file_lower:                                                         # Sound record distributor
                     CFIDs.srd_patcher(basename, new_file, form_id_map)
                 elif new_file_lower.endswith('.psc'):                                                   # Script source file patching, this doesn't take into account form ids being passed as variables
@@ -379,7 +383,7 @@ class CFIDs():
                 elif new_file_lower.endswith('.jslot'):                                                 # Racemenu Presets
                     CFIDs.jslot_patcher(basename, new_file, form_id_map)
                 else:
-                    print(f'Possible missing patcher for: {file}')
+                    print(f'Possible missing patcher for: {new_file}')
                 
             parts = os.path.relpath(file, skyrim_folder_path).lower().split('\\')
             rel_path = os.path.join(*parts[1:])
@@ -388,7 +392,7 @@ class CFIDs():
 
     def find_prev_non_alphanumeric(text, start_index):
         for i in range(start_index, 0, -1):
-            if not text[i].isalnum():
+            if not text[i].isalnum() and text[i] != ' ':
                 return i
         return -1
 
@@ -460,7 +464,7 @@ class CFIDs():
             f.close()
 
     def ini_season_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
                 if not ';' in line and basename in line.lower():
@@ -474,15 +478,13 @@ class CFIDs():
                     if basename in plugin_1.lower():
                         form_id_int_1 = int(form_id_1, 16)
                         for form_ids in form_id_map:
-                            old_id_int = int(form_ids[0], 16)
-                            if form_id_int_1 == old_id_int: 
+                            if form_id_int_1 == int(form_ids[0], 16): 
                                 form_id_1 = '0x' + form_ids[2]
                                 break
                     if basename in plugin_2.lower():
                         form_id_int_2 = int(form_id_2, 16)
                         for form_ids in form_id_map:
-                            old_id_int = int(form_ids[0], 16)
-                            if form_id_int_2 == old_id_int:
+                            if form_id_int_2 == int(form_ids[0], 16):
                                 form_id_2 = '0x' + form_ids[2]
                                 break
                     lines[i] = form_id_1 + '~' + plugin_1 + '|' + form_id_2 + '~' + plugin_2
@@ -492,7 +494,7 @@ class CFIDs():
             f.close()
 
     def ini_pi_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
                 if basename in line.lower() and '|' in line:
@@ -502,8 +504,7 @@ class CFIDs():
                     end_of_line = line[end_index:]
                     form_id_int = int(line[start_index+1:end_index],16)
                     for form_ids in form_id_map:
-                        old_id_int = int(form_ids[0], 16)
-                        if form_id_int == old_id_int:
+                        if form_id_int == int(form_ids[0], 16):
                             lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
                             break
             f.seek(0)
@@ -512,7 +513,7 @@ class CFIDs():
             f.close()
 
     def ini_po3_distr_kid_swap_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
                 if basename in line.lower() and '~' in line:
@@ -530,8 +531,7 @@ class CFIDs():
                         start = middle_index+1
                         if basename in plugin:
                             for form_ids in form_id_map:
-                                old_id_int = int(form_ids[0], 16)
-                                if form_id_int == old_id_int:
+                                if form_id_int == int(form_ids[0], 16):
                                     lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
                                     break
             f.seek(0)
@@ -541,7 +541,7 @@ class CFIDs():
 
     
     def ini_mu_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
                 if basename in line.lower() and '|' in line:
@@ -559,8 +559,7 @@ class CFIDs():
                         start = start_index + 1
                         if plugin == basename:
                             for form_ids in form_id_map:
-                                old_id_int = int(form_ids[0], 16)
-                                if form_id_int == old_id_int:
+                                if form_id_int == int(form_ids[0], 16):
                                     lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
                                     break
             f.seek(0)
@@ -569,7 +568,7 @@ class CFIDs():
             f.close()
 
     def ini_sp_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
                 if basename in line.lower() and '|' in line:
@@ -577,10 +576,11 @@ class CFIDs():
                     start = 0
                     for _ in range(count):
                         line = lines[i]
-                        start_index = line.lower().index(basename, start)
+                        start_index = line.lower().index('.', start)
                         middle_index = line.index('|', start_index)
+                        plugin_start_index = CFIDs.find_prev_non_alphanumeric(line, start_index-1) + 1
                         end_index = CFIDs.find_next_non_alphanumeric(line, middle_index+1)
-                        plugin = line.lower()[start_index:middle_index].strip()
+                        plugin = line.lower()[plugin_start_index:middle_index].strip()
                         start_of_line = line[:middle_index+1]
                         end_of_line = line[end_index:]
                         form_id = line[middle_index+1:end_index]
@@ -593,8 +593,7 @@ class CFIDs():
                         start = end_index+1
                         if plugin == basename:
                             for form_ids in form_id_map:
-                                old_id_int = int(form_ids[0], 16)
-                                if form_id_int == old_id_int:
+                                if form_id_int == int(form_ids[0], 16):
                                     lines[i] = start_of_line + form_ids[2] + end_of_line
                                     break
             f.seek(0)
@@ -603,7 +602,7 @@ class CFIDs():
             f.close()
     
     def ini_pb_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
                 if basename in line.lower() and ':' in line:
@@ -613,8 +612,7 @@ class CFIDs():
                     end_of_line = line[end_index:]
                     form_id_int = int(line[index+1:end_index], 16)
                     for form_ids in form_id_map:
-                        old_id_int = int(form_ids[0], 16)
-                        if form_id_int == old_id_int:
+                        if form_id_int == int(form_ids[0], 16):
                             lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
                             break
             f.seek(0)
@@ -623,7 +621,7 @@ class CFIDs():
             f.close()
 
     def ini_vc_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
                 if basename in line.lower() and '|' in line:
@@ -633,8 +631,7 @@ class CFIDs():
                     end_of_line = line[end_index:]
                     form_id_int = int(line[middle_index+1:end_index], 16)
                     for form_ids in form_id_map:
-                        old_id_int = int(form_ids[0], 16)
-                        if form_id_int == old_id_int:
+                        if form_id_int == int(form_ids[0], 16):
                             lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
                             break
             f.seek(0)
@@ -643,7 +640,7 @@ class CFIDs():
             f.close()
 
     def toml_dac_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             dac_toml_type = 'new'
             events = []
@@ -652,7 +649,7 @@ class CFIDs():
                     dac_toml_type = 'old'
                 elif '[[event]]' in line.lower():
                     events.append(i)
-
+                    
             if dac_toml_type == 'new':
                 for i, line, in enumerate(lines):
                     if basename in line.lower() and '|' in line:
@@ -660,21 +657,20 @@ class CFIDs():
                         start = 0
                         for _ in range(count):
                             line = lines[i]
-                            start_index = line.lower().index(basename, start)
+                            start_index = line.lower().index('.', start)
                             middle_index = line.index('|', start_index)
-                            end_index = CFIDs.find_next_non_alphanumeric(line, middle_index+1)
-                            plugin = line.lower()[start_index:middle_index].strip()
-                            start_of_line = line[:middle_index+1]
-                            end_of_line = line[end_index:]
-                            form_id_int = int(line[middle_index+1:end_index], 16)
+                            plugin_start_index = CFIDs.find_prev_non_alphanumeric(line, start_index-1) + 1
+                            plugin = line.lower()[plugin_start_index:middle_index].strip()
                             start = start_index + 1
                             if plugin == basename:
+                                end_index = CFIDs.find_next_non_alphanumeric(line, middle_index+1)
+                                start_of_line = line[:middle_index+1]
+                                end_of_line = line[end_index:]
+                                form_id_int = int(line[middle_index+1:end_index], 16)
                                 for form_ids in form_id_map:
-                                    old_id_int = int(form_ids[0], 16)
-                                    if form_id_int == old_id_int:
+                                    if form_id_int == int(form_ids[0], 16):
                                         lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
                                         break
-
             else:
                 plugin_offsets = [3, 5, 9, 11, 13, 15]
                 for event in events:
@@ -693,8 +689,7 @@ class CFIDs():
                                     end_of_line = line[end_index:]
                                     form_id_int = int(line[index+1:], 16)
                                     for form_ids in form_id_map:
-                                        old_id_int = int(form_ids[0], 16)
-                                        if form_id_int == old_id_int:
+                                        if form_id_int == int(form_ids[0], 16):
                                             lines[form_id_offset] = start_of_line + ' 0x' + form_ids[2] + end_of_line
                                             break
                             else:
@@ -709,8 +704,7 @@ class CFIDs():
                                     id = line[start_index+1:end_index]
                                     form_id_int = int(id, 16)
                                     for form_ids in form_id_map:
-                                        old_id_int = int(form_ids[0], 16)
-                                        if form_id_int == old_id_int:
+                                        if form_id_int == int(form_ids[0], 16):
                                             lines[form_id_offset] = start_of_line + '0x' + form_ids[2] + end_of_line
                                             break
                                     start_index = CFIDs.find_next_non_alphanumeric(lines[form_id_offset], start_index+1) + 1
@@ -719,8 +713,58 @@ class CFIDs():
             f.write(''.join(lines))
             f.close()
 
+    def toml_precision_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+', encoding='utf-8') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if basename in line.lower() and 'formid' in line.lower():
+                    count = line.count('{')
+                    start = 0
+                    for _ in range(count):
+                        line = lines[i]
+                        formid_index = line.lower().index('0x', start)
+                        plugin_index = line.index('"', formid_index)
+                        plugin_end_index = line.index('"', plugin_index+1)
+                        plugin = line.lower()[plugin_index+1:plugin_end_index].strip()
+                        if plugin == basename:
+                            formid_end_index = CFIDs.find_next_non_alphanumeric(line, formid_index)
+                            form_id_int = int(line[formid_index:formid_end_index], 16)
+                            start_of_line = line[:formid_index]
+                            end_of_line = line[formid_end_index:]
+                            for form_ids in form_id_map:
+                                if form_id_int == int(form_ids[0], 16):
+                                    lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                    break
+                        start = formid_index + 1
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+
+    def toml_loki_patcher(basename, new_file, form_id_map):
+        basename = basename.lower()
+        with open(new_file, 'r+', encoding='utf-8') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if basename in line.lower() and line.lower().startswith('plugin'):
+                    i = i - 1
+                    line = lines[i]
+                    index = line.lower().index('0x')
+                    end_index = CFIDs.find_next_non_alphanumeric(line, index)
+                    start_of_line = line[:index]
+                    end_of_line = line[end_index:]
+                    form_id_int = int(line[index:end_index],16)
+                    for form_ids in form_id_map:
+                        if form_id_int == int(form_ids[0],16):
+                            lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                            break
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+
     def json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             try:
                 data = json.load(f)
             except:
@@ -735,8 +779,7 @@ class CFIDs():
                     if plugin.lower() == basename:
                         form_id_int = int(value[index+1:], 16)
                         for form_ids in form_id_map:
-                            old_int = int(form_ids[0], 16)
-                            if form_id_int == old_int:
+                            if form_id_int == int(form_ids[0], 16):
                                 data = CFIDs.change_json_element(data, path, plugin + '|' + form_ids[2])
                                 break
             f.seek(0)
@@ -745,7 +788,7 @@ class CFIDs():
             f.close()
     
     def json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             try:
                 data = json.load(f)
             except:
@@ -764,8 +807,7 @@ class CFIDs():
                         if not ox and '0x' in form_id:
                             ox = True
                         for form_ids in form_id_map:
-                            old_int = int(form_ids[0], 16)
-                            if form_id_int == old_int:
+                            if form_id_int == int(form_ids[0], 16):
                                 if not ox:
                                     data = CFIDs.change_json_element(data, path, form_ids[2] + '|' + plugin)
                                 else:
@@ -777,7 +819,7 @@ class CFIDs():
             f.close()
     
     def json_oar_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             try:
                 data = json.load(f)
             except:
@@ -792,8 +834,7 @@ class CFIDs():
                 elif plugin and type(path[-1]) is str and 'formid' == path[-1].lower():
                     form_id_int = int(value, 16)
                     for form_ids in form_id_map:
-                        old_id_int = int(form_ids[0], 16)
-                        if form_id_int == old_id_int:
+                        if form_id_int == int(form_ids[0], 16):
                             data = CFIDs.change_json_element(data, path, form_ids[2])
                             break
                 else:
@@ -804,7 +845,7 @@ class CFIDs():
             f.close()
 
     def json_sud_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             try:
                 data = json.load(f)
             except:
@@ -819,8 +860,7 @@ class CFIDs():
                     if plugin.lower() == basename:
                         form_id_int = int(value[:index])
                         for form_ids in form_id_map:
-                            old_id_int = int(form_ids[0], 16)
-                            if form_id_int == old_id_int:
+                            if form_id_int == int(form_ids[0], 16):
                                 data = CFIDs.change_json_element(data, path, str(int(form_ids[2], 16)) + '|' + plugin)
                                 break
             f.seek(0)
@@ -837,8 +877,7 @@ class CFIDs():
                     if end_index != -1:
                         form_id_int = int(line[index+1:end_index], 16)
                         for form_ids in form_id_map:
-                            old_id_int = int(form_ids[0], 16)
-                            if form_id_int == old_id_int:
+                            if form_id_int == int(form_ids[0], 16):
                                 line = line[:index+1] + '0x00' + form_ids[3] + line[end_index:]
                 print(line.strip('\n'))
             fileinput.close()
@@ -850,14 +889,13 @@ class CFIDs():
                     index = line.index('|')
                     form_id_int = int(line[index+1:], 16)
                     for form_ids in form_id_map:
-                        old_id_int = int(form_ids[0], 16)
-                        if form_id_int == old_id_int:
+                        if form_id_int == int(form_ids[0], 16):
                             line = line[:index+1] + form_ids[3]
                 print(line.strip('\n'))
             fileinput.close()
 
     def jslot_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             data = json.load(f)
             if 'actor' in data.keys() and 'headTexture' in data['actor'].keys():
                 plugin_and_fid = data['actor']['headTexture']
@@ -886,7 +924,7 @@ class CFIDs():
             f.close()
 
     def json_shse_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             try:
                 data = json.load(f)
             except:
@@ -911,7 +949,7 @@ class CFIDs():
             f.close()
 
     def json_dsd_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+', errors='ignore') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             try:
                 data = json.load(f)
             except:
@@ -935,7 +973,7 @@ class CFIDs():
             f.close()
 
     def json_dkaf_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+', errors='ignore') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             try:
                 data = json.load(f)
             except:
@@ -950,8 +988,7 @@ class CFIDs():
                     form_id_int = int(value[index+1:], 16)
                     if plugin.lower() == basename:
                         for form_ids in form_id_map:
-                            old_id_int = int(form_ids[0], 16)
-                            if form_id_int == old_id_int:
+                            if form_id_int == int(form_ids[0], 16):
                                 data = CFIDs.change_json_element(data, path, plugin + '|0x' + form_ids[2])
                                 break
             f.seek(0)
@@ -960,7 +997,7 @@ class CFIDs():
             f.close()
 
     def json_dav_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             try:
                 data = json.load(f)
             except:
@@ -976,8 +1013,7 @@ class CFIDs():
                         form_id_int = int(path[-1][index+1:], 16)
                         if plugin.lower() == basename:
                             for form_ids in form_id_map:
-                                old_int = int(form_ids[0], 16)
-                                if form_id_int == old_int:
+                                if form_id_int == int(form_ids[0], 16):
                                     data = CFIDs.change_json_key(data, path[-1], plugin + '|' + form_ids[2])
                                     break
                     index = value.index('|')
@@ -985,8 +1021,7 @@ class CFIDs():
                     form_id_int = int(value[index+1:], 16)
                     if plugin.lower() == basename:
                         for form_ids in form_id_map:
-                            old_int = int(form_ids[0], 16)
-                            if form_id_int == old_int:
+                            if form_id_int == int(form_ids[0], 16):
                                 data = CFIDs.change_json_element(data, path, plugin + '|' + form_ids[2])
                                 break
             f.seek(0)
@@ -995,7 +1030,7 @@ class CFIDs():
             f.close()
 
     def json_cf_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             try:
                 data = json.load(f)
             except:
@@ -1011,8 +1046,7 @@ class CFIDs():
                     if plugin.lower() == basename:
                         form_id_int = int(value[index+1:],16)
                         for form_ids in form_id_map:
-                            old_id_int = int(form_ids[0],16)
-                            if form_id_int == old_id_int:
+                            if form_id_int == int(form_ids[0], 16):
                                 data = CFIDs.change_json_element(data, path, value[:index+1] + '0x' + form_ids[2])
             f.seek(0)
             f.truncate(0)
@@ -1020,7 +1054,7 @@ class CFIDs():
             f.close()
 
     def json_ied_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             try:
                 data = json.load(f)
             except:
@@ -1036,8 +1070,7 @@ class CFIDs():
                     form_id_path = path
                 if path[-1].lower() == 'plugin' and value.lower() == basename:
                     for form_ids in form_id_map:
-                        old_id_int = int(form_ids[0], 16)
-                        if form_id_int == old_id_int:
+                        if form_id_int == int(form_ids[0], 16):
                             data = CFIDs.change_json_element(data, form_id_path, int(form_ids[2], 16))
                             break
             f.seek(0)
