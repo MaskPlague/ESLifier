@@ -1,5 +1,5 @@
 import os
-import re
+import regex as re
 import json
 import timeit
 
