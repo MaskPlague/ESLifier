@@ -1,7 +1,6 @@
 import os
 import regex as re
 #import re
-import tomllib
 import binascii
 import shutil
 import fileinput
@@ -291,7 +290,7 @@ class CFIDs():
             with CFIDs.lock:
                 if new_file_lower.endswith('.ini'):
                     if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini')):                # PO3's SPID, KID, BOS
-                        CFIDs.ini_po3_distr_kid_swap_patcher(basename, new_file, form_id_map)
+                        CFIDs.ini_po3_distr_kid_swap_lightplacer_patcher(basename, new_file, form_id_map)
                     elif 'seasons\\' in new_file_lower:                                                 # Po3's Seasons of Skyrim
                         CFIDs.ini_season_patcher(basename, new_file, form_id_map)
                     elif 'payloadinterpreter\\' in new_file_lower:                                      # Payload Interpreter
@@ -333,8 +332,8 @@ class CFIDs():
                         CFIDs.json_dav_patcher(basename, new_file, form_id_map)
                     elif '\\ied\\' in new_file_lower:                                                   # Immersive Equipment Display
                         CFIDs.json_ied_patcher(basename, new_file, form_id_map)
-                    elif 'lightplacer' in new_file_lower:                                               # Light Placer #TODO: TEST ME
-                        CFIDs.ini_po3_distr_kid_swap_patcher(basename, new_file, form_id_map)
+                    elif 'lightplacer' in new_file_lower:                                               # Light Placer #TODO:
+                        CFIDs.ini_po3_distr_kid_swap_lightplacer_patcher(basename, new_file, form_id_map)
                     elif 'creatures.d' in new_file_lower:                                               # Creature Framework
                         CFIDs.json_cf_patcher(basename, new_file, form_id_map)
                     elif 'inventoryinjector' in new_file_lower:                                         # Inventory Injector
@@ -513,7 +512,7 @@ class CFIDs():
             f.write(''.join(lines))
             f.close()
 
-    def ini_po3_distr_kid_swap_patcher(basename, new_file, form_id_map):
+    def ini_po3_distr_kid_swap_lightplacer_patcher(basename, new_file, form_id_map):
         with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
@@ -524,13 +523,13 @@ class CFIDs():
                         line = lines[i]
                         middle_index = line.index('~', start)
                         start_index = CFIDs.find_prev_non_alphanumeric(line, middle_index-2)
-                        end_index = middle_index + len(basename) + 1
-                        plugin = line.lower()[middle_index+1:end_index+1]
+                        end_index = line.index('.', middle_index) + 3
+                        plugin = line.lower()[middle_index+1:end_index+1].strip()
                         start_of_line = line[:start_index+1]
                         end_of_line = line[middle_index:]
                         form_id_int = int(line[start_index+1:middle_index], 16)
                         start = middle_index+1
-                        if basename in plugin:
+                        if basename == plugin:
                             for form_ids in form_id_map:
                                 if form_id_int == int(form_ids[0], 16):
                                     lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
