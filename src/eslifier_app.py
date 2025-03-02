@@ -11,7 +11,6 @@ from log_stream import log_stream
 class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
-        #TODO: refine patching of files in compact_form_ids.py
         #TODO: Fix existing ESLifier plugin
         self.setWindowTitle("ESLifier")
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
