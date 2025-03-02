@@ -1,6 +1,5 @@
 import os
 import regex as re
-#import re
 import binascii
 import shutil
 import fileinput
@@ -251,10 +250,14 @@ class CFIDs():
     #   .ini:   PO3's KID
     #           PO3's BOS
     #           PO3's SPID
+    #           PO3's ENBL
+    #           Description Framwork
     #           SkyPatcher
     #           DtryKeyUtil
     #           Poise Breaker
     #           Valhalla Combat
+    #           AutoBody
+    #           Various States of Undress
     #   config.json: OAR, MCM Helper
     #   user.json: OAR
     #   _conditions.txt: DAR
@@ -262,6 +265,7 @@ class CFIDs():
     #   .toml:  Dynamic Animation Casting
     #           Precision
     #           Loki Poise
+    #           True Directional Movment
     #   .psc: Source Scripts
     #   .json:  Dynamic Key Activation Framework NG
     #           Smart Harvest Auto NG AutoLoot
@@ -275,6 +279,8 @@ class CFIDs():
     #           Player Equipment Manager
     #           Skyrim Unbound
     #           Creature Framework
+    #           CoMAP
+    #           OBody NG
     #   .jslot: Racemenu Presets
     #   \facegeom\: Texture paths in face mesh files
     #   .seq: SEQ files
@@ -289,8 +295,8 @@ class CFIDs():
             basename = os.path.basename(master).lower()
             with CFIDs.lock:
                 if new_file_lower.endswith('.ini'):
-                    if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini')):                # PO3's SPID, KID, BOS
-                        CFIDs.ini_po3_distr_kid_swap_lightplacer_patcher(basename, new_file, form_id_map)
+                    if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini', '_enbl.ini', '_desc.ini')):   # PO3's SPID, KID, BOS, ENBL; Description Framework
+                        CFIDs.ini_po3_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
                     elif 'seasons\\' in new_file_lower:                                                 # Po3's Seasons of Skyrim
                         CFIDs.ini_season_patcher(basename, new_file, form_id_map)
                     elif 'payloadinterpreter\\' in new_file_lower:                                      # Payload Interpreter
@@ -305,6 +311,10 @@ class CFIDs():
                         CFIDs.ini_sp_patcher(basename, new_file, form_id_map)
                     elif 'valhallacombat\\' in new_file_lower:                                          # Valhalla Combat
                         CFIDs.ini_vc_patcher(basename, new_file, form_id_map)
+                    elif '\\autobody\\' in new_file_lower:                                              # AutoBody
+                        CFIDs.ini_ab_patcher(basename, new_file, form_id_map)
+                    elif 'vsu\\' in new_file_lower:                                                     # VSU
+                        CFIDs.ini_po3_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
                     else:                                                                               # Might patch whatever else is using .ini?
                         print(f'Possible missing patcher for: {new_file}')
                         with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
@@ -332,8 +342,8 @@ class CFIDs():
                         CFIDs.json_dav_patcher(basename, new_file, form_id_map)
                     elif '\\ied\\' in new_file_lower:                                                   # Immersive Equipment Display
                         CFIDs.json_ied_patcher(basename, new_file, form_id_map)
-                    elif 'lightplacer' in new_file_lower:                                               # Light Placer #TODO:
-                        CFIDs.ini_po3_distr_kid_swap_lightplacer_patcher(basename, new_file, form_id_map)
+                    elif 'lightplacer' in new_file_lower:                                               # Light Placer
+                        CFIDs.ini_po3_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
                     elif 'creatures.d' in new_file_lower:                                               # Creature Framework
                         CFIDs.json_cf_patcher(basename, new_file, form_id_map)
                     elif 'inventoryinjector' in new_file_lower:                                         # Inventory Injector
@@ -344,6 +354,10 @@ class CFIDs():
                         CFIDs.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
                     elif 'playerequipmentmanager' in new_file_lower:                                    # Player Equipment Manager
                         CFIDs.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
+                    elif 'mapmarker\\' in new_file_lower:                                               # CoMAP
+                        CFIDs.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
+                    elif new_file_lower.endswith('obody_presetdistributionconfig.json'):                # TODO: json processing of obody
+                        pass
                     elif os.path.basename(new_file_lower).startswith('shse.'):                          # Smart Harvest
                         CFIDs.json_shse_patcher(basename, new_file, form_id_map)
                     else:                                                                               # Might patch whatever else is using .json?
@@ -363,7 +377,9 @@ class CFIDs():
                     elif '\\precision\\' in new_file_lower:                                             # Precision
                         CFIDs.toml_precision_patcher(basename, new_file, form_id_map)
                     elif '\\loki_poise\\' in new_file_lower:                                            # Loki Poise
-                        CFIDs.toml_loki_patcher(basename, new_file, form_id_map)
+                        CFIDs.toml_loki_tdm_patcher(basename, new_file, form_id_map)
+                    elif '\\truedirectionalmovement\\' in new_file_lower:
+                        CFIDs.toml_loki_tdm_patcher(basename,new_file, form_id_map)                     # TDM
                     else:
                         print(new_file)
                 elif '_srd.' in new_file_lower:                                                         # Sound record distributor
@@ -512,7 +528,7 @@ class CFIDs():
             f.write(''.join(lines))
             f.close()
 
-    def ini_po3_distr_kid_swap_lightplacer_patcher(basename, new_file, form_id_map):
+    def ini_po3_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map):
         with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
@@ -639,6 +655,25 @@ class CFIDs():
             f.write(''.join(lines))
             f.close()
 
+    def ini_ab_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+', encoding='utf-8') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if basename in line.lower() and '|' in line:
+                    middle_index = line.index('|')
+                    end_index = CFIDs.find_next_non_alphanumeric(line, middle_index+1)
+                    start_of_line = line[:middle_index+1]
+                    end_of_line = line[end_index:]
+                    form_id_int = int(line[middle_index+1:end_index], 16)
+                    for form_ids in form_id_map:
+                        if form_id_int == int(form_ids[0], 16):
+                            lines[i] = start_of_line + form_ids[2] + end_of_line
+                            break
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+
     def toml_dac_patcher(basename, new_file, form_id_map):
         with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
@@ -741,7 +776,7 @@ class CFIDs():
             f.write(''.join(lines))
             f.close()
 
-    def toml_loki_patcher(basename, new_file, form_id_map):
+    def toml_loki_tdm_patcher(basename, new_file, form_id_map):
         basename = basename.lower()
         with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
@@ -772,15 +807,22 @@ class CFIDs():
                 string = f.read()
                 data = CFIDs.remove_trailing_commas_from_json(string)
             json_dict = CFIDs.extract_values_and_keys(data)
+            ox = False
             for path, value in json_dict:
                 if type(value) is str and '|' in value:
                     index = value.index('|')
                     plugin = value[:index]
                     if plugin.lower() == basename:
-                        form_id_int = int(value[index+1:], 16)
+                        form_id = value[index+1:]
+                        form_id_int = int(form_id, 16)
+                        if not ox and '0x' in form_id:
+                            ox = True
                         for form_ids in form_id_map:
                             if form_id_int == int(form_ids[0], 16):
-                                data = CFIDs.change_json_element(data, path, plugin + '|' + form_ids[2])
+                                if not ox:
+                                    data = CFIDs.change_json_element(data, path, plugin + '|' + form_ids[2])
+                                else:
+                                    data = CFIDs.change_json_element(data, path, plugin + '|0x' + form_ids[2])
                                 break
             f.seek(0)
             f.truncate(0)
