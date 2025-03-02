@@ -26,16 +26,21 @@ body:
             .ini:   PO3's KID
                     PO3's BOS
                     PO3's SPID
+                    PO3's ENBL
+                    Description Framwork
                     SkyPatcher
                     DtryKeyUtil
                     Poise Breaker
                     Valhalla Combat
+                    AutoBody
+                    Various States of Undress
             config.json: OAR, MCM Helper
             _conditions.txt: DAR
             _srd.: Sound Record Distributor
             .toml:  Dynamic Animation Casting
                     Precision
                     Loki Poise
+                    True Directional Movment
             .psc: Source Scripts
             .json:  Dynamic Key Activation Framework NG
                     Smart Harvest Auto NG AutoLoot
@@ -49,13 +54,13 @@ body:
                     Player Equipment Manager
                     Skyrim Unbound
                     Creature Framework
+                    CoMAP
+                    OBody NG
             .jslot: Racemenu Presets
             facegeom's .nif: Texture paths in face mesh files
             voice, facetint, facegeom: The names of these files are patched
             .seq: SEQ files
             .pex: Compiled script files
-            
-            #Patched files:
     validations:
       required: true
     
