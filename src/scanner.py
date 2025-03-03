@@ -4,6 +4,12 @@ import threading
 import timeit
 import json
 
+#TODO: use BSA Browser CLI to extract necessary files
+#      BSA files lose to loose files, if there exists a loose file then ignore the bsa file.
+#      if file does not exist but is in multiple bsa then we'll need to get plugin.txt...
+#      need to scan bsa for file paths first and extract all script files and send them back through file_processor
+#      other files will only need to be extracted if the master plugin is being compacted.
+
 class scanner():
     def __init__(self, path, mo2_mode, modlist_txt_path, scan_esms):
         scanner.path = path
@@ -243,6 +249,8 @@ class scanner():
             scanner.percentage = (scanner.count/scanner.file_count) * 100
             print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
             scanner.bsa_reader(file)
+    
+
 
     def file_processor(files, pattern, pattern3, pattern4, pattern5):
         local_dict = {}
