@@ -7,8 +7,6 @@ import zlib
 import json
 import threading
 
-#TODO: Further refinement of file patching, additional research on files that need patching
-
 class CFIDs():
     def compact_and_patch(form_processor, file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header, mo2_mode):
         CFIDs.lock = threading.Lock()
@@ -356,8 +354,8 @@ class CFIDs():
                         CFIDs.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
                     elif 'mapmarker\\' in new_file_lower:                                               # CoMAP
                         CFIDs.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
-                    elif new_file_lower.endswith('obody_presetdistributionconfig.json'):                # TODO: json processing of obody
-                        pass
+                    elif new_file_lower.endswith('obody_presetdistributionconfig.json'):                # OBody NG
+                        CFIDs.json_obody_patcher(basename, new_file, form_id_map)
                     elif os.path.basename(new_file_lower).startswith('shse.'):                          # Smart Harvest
                         CFIDs.json_shse_patcher(basename, new_file, form_id_map)
                     else:                                                                               # Might patch whatever else is using .json?
@@ -378,8 +376,8 @@ class CFIDs():
                         CFIDs.toml_precision_patcher(basename, new_file, form_id_map)
                     elif '\\loki_poise\\' in new_file_lower:                                            # Loki Poise
                         CFIDs.toml_loki_tdm_patcher(basename, new_file, form_id_map)
-                    elif '\\truedirectionalmovement\\' in new_file_lower:
-                        CFIDs.toml_loki_tdm_patcher(basename,new_file, form_id_map)                     # TDM
+                    elif '\\truedirectionalmovement\\' in new_file_lower:                               # TDM
+                        CFIDs.toml_loki_tdm_patcher(basename,new_file, form_id_map)
                     else:
                         print(new_file)
                 elif '_srd.' in new_file_lower:                                                         # Sound record distributor
@@ -905,6 +903,34 @@ class CFIDs():
                             if form_id_int == int(form_ids[0], 16):
                                 data = CFIDs.change_json_element(data, path, str(int(form_ids[2], 16)) + '|' + plugin)
                                 break
+            f.seek(0)
+            f.truncate(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
+            f.close()
+
+    def json_obody_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+', encoding='utf-8') as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = CFIDs.remove_trailing_commas_from_json(string)
+            json_dict = CFIDs.extract_values_and_keys(data)
+            for path, value in json_dict:
+                if len(path) > 2 and type(path[-3]) is str and basename == path[-3].lower():
+                    if len(path[-2]) > 6:
+                        form_id = path[-2][-6:]
+                        if len(path[-2]) == 7: fid_start = path[-2][:1]
+                        else: fid_start = path[-2][:2]
+                    else:
+                        fid_start = ''
+                        form_id = path[-2]
+                    form_id_int = int(form_id, 16)
+                    for form_ids in form_id_map:
+                        if form_id_int == int(form_ids[0], 16):
+                            data = CFIDs.change_json_key(data, fid_start + form_id, fid_start + form_ids[3])
+                            break
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
