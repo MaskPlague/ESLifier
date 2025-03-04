@@ -12,12 +12,17 @@ import json
 
 class scanner():
     def __init__(self, path, mo2_mode, modlist_txt_path, scan_esms):
+        scanner.bsa_blacklist = ['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
+                    'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
+                    'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa']
         scanner.path = path
         start_time = timeit.default_timer()
         scanner.file_count = 0
         scanner.all_files = []
         scanner.plugins = []
+        scanner.bsab = 'bsa_browser\\bsab.exe'
         scanner.lock = threading.Lock()
+        scanner.extracted = scanner.get_from_file('ESLifier_Data/extracted_bsa.json')
         print('-  Gathering Files...\n\n')
         path_level = len(path.split(os.sep))
         loop = 0
@@ -53,14 +58,18 @@ class scanner():
         scanner.dump_to_file(file="ESLifier_Data/file_masters.json", data=scanner.file_dict)
         scanner.dump_to_file(file="ESLifier_Data/bsa_dict.json", data=scanner.bsa_dict)
         scanner.dump_to_file(file="ESLifier_Data/dll_dict.json", data=scanner.dll_dict)
+        scanner.dump_to_file(file="ESLifier_Data/extracted_bsa.json", data=scanner.extracted)
 
         end_time = timeit.default_timer()
         time_taken = end_time - start_time
         print('-  Time taken: ' + str(round(time_taken,2)) + ' seconds')
     
     def get_files_from_mods(mods_folder, enabled_mods, scan_esms):
+        if not os.path.exists('bsa_extracted/'):
+            os.makedirs('bsa_extracted/')
         mod_files = {}
         cases_of_files = {}
+        bsa_list = []
         if scan_esms:
             plugin_extensions = ('.esp', '.esl', '.esm')
         else:
@@ -95,6 +104,42 @@ class scanner():
                             mod_files[relative_path].append(mod_folder)
                             if file.endswith(plugin_extensions):
                                 plugin_names.append(file)
+                            if file.endswith('.bsa'):
+                                bsa_list.append([mod_folder, full_path])
+
+        order_map = {folder: index for index, folder in enumerate(enabled_mods)}
+
+        bsa_list.sort(key=lambda x: order_map.get(x[0], float('inf')))
+        
+        bsa_length = len(bsa_list)
+        for i, tup in enumerate(bsa_list):
+            file = tup[1]
+            if file not in scanner.extracted:
+                print(f'\033[F\033[K-  Extracting {i}/{bsa_length} BSA files\n-', end='\r')
+                cmd1 = scanner.bsab + ' \"' + file + '\" -f \"scripts\" -e -o \"bsa_extracted/\"'
+                cmd2 = scanner.bsab + ' \"' + file + '\" -f \".seq\" -e -o \"bsa_extracted/\"'
+                os.system(cmd1)
+                os.system(cmd2)
+                scanner.extracted.append(file)
+
+        mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
+
+        for root, dirs, files in os.walk('bsa_extracted/'):
+            file_count += len(files)
+            if loop == 50: #prevent spamming stdout and slowing down the program
+                loop = 0
+                print(f'\033[F\033[K-  Gathered: {file_count}\n-', end='\r')
+            else:
+                loop += 1
+            for file in files:
+                # Get the relative file path
+                full_path = os.path.join(root, file)
+                relative_path = os.path.relpath(full_path, mod_folder)
+                # Track the file paths by mod
+                if relative_path not in mod_files:
+                    mod_files[relative_path] = []
+                    cases_of_files[relative_path] = relative_path
+                mod_files[relative_path].append('bsa_extracted')
 
         return mod_files, plugin_names, cases_of_files
 
@@ -106,7 +151,8 @@ class scanner():
         for i in range(len(lines)):
             if lines[i].startswith(('+','*')) and not lines[i].endswith('_separator'):
                 enabled_mods.append(lines[i][1:].strip())
-
+        
+        enabled_mods.append('bsa_extracted')
         enabled_mods.reverse()
 
         to_remove = []
@@ -118,8 +164,8 @@ class scanner():
         for mod in to_remove:
             lines.remove(mod)
         lines.pop(0)
+        lines.append('bsa_extracted')
         lines.reverse()
-
         return lines, enabled_mods
 
     def get_winning_files(mods_folder, load_order, enabled_mods, scan_esms):
@@ -128,6 +174,7 @@ class scanner():
         winning_files = []
         file_count = 0
         loop = 0
+        cwd = os.getcwd()
         for file, mods in mod_files.items():
             file_count += 1
             if loop == 500:
@@ -136,11 +183,17 @@ class scanner():
             else:
                 loop += 1
             if len(mods) == 1:
-                file_path = os.path.join(mods_folder, mods[0], cases[file])
+                if mods[0] == 'bsa_extracted':
+                    file_path = os.path.join(cwd, mods[0], cases[file])
+                else:
+                    file_path = os.path.join(mods_folder, mods[0], cases[file])
                 winning_files.append(file_path)
             else:
                 mods_sorted = sorted(mods, key=lambda mod: load_order.index(mod))
-                file_path = os.path.join(mods_folder, mods_sorted[-1], cases[file])
+                if mods_sorted[-1] == 'bsa_extracted':
+                    file_path = os.path.join(cwd, mods_sorted[-1], cases[file])
+                else:
+                    file_path = os.path.join(mods_folder, mods_sorted[-1], cases[file])
                 winning_files.append(file_path)
         if scan_esms:
             plugin_extensions = ('.esp', '.esl', '.esm')
@@ -165,7 +218,7 @@ class scanner():
             with open(file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
         except:
-            data = {}
+            data = []
         return data
 
     def get_file_masters():
@@ -202,12 +255,6 @@ class scanner():
             scanner.threads.append(thread)
             thread.start()
         
-        for thread in scanner.threads: thread.join()
-
-        scanner.file_name_without_ext_processor(scanner.seq_files)
-        
-        scanner.threads = []
-
         print("\n-  Scanning .pex files")
         for file in scanner.pex_files:
             thread = threading.Thread(target=scanner.file_reader,args=(pattern2, file, 'rb'))
@@ -249,8 +296,6 @@ class scanner():
             scanner.percentage = (scanner.count/scanner.file_count) * 100
             print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
             scanner.bsa_reader(file)
-    
-
 
     def file_processor(files, pattern, pattern3, pattern4, pattern5):
         local_dict = {}
@@ -268,10 +313,7 @@ class scanner():
                 scanner.threads.append(thread)
                 thread.start()
             elif file_lower.endswith('.bsa'):
-                bsa_blacklist = ['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
-                    'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
-                    'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa']
-                if os.path.basename(file_lower) not in bsa_blacklist:
+                if os.path.basename(file_lower) not in scanner.bsa_blacklist:
                     scanner.bsa_files.append(file)
             elif file_lower.endswith('.pex'):
                 scanner.pex_files.append(file)
@@ -401,25 +443,25 @@ class scanner():
                 plugin = re.search(pattern_1, folder_path).group(0)
                 if plugin not in plugins:
                     plugins.append(plugin)
-            elif 'script' in folder_path:
-                name, _ = os.path.splitext(os.path.basename(bsa_file.lower()))
-                if 'scripts_'+name not in plugins:
-                    plugins.insert(0, 'scripts_'+name)
-            elif 'seq' == folder_path:
-                seq_search = True
-            if count == folder_count and seq_search:
-                file_count = int.from_bytes(data[offset+8:offset+12][::-1])
-                size = file_count * 16
-                files_offset = location + folder_length + size + 1
-                while seq_search:
-                    loc = data.find(b'\x00', files_offset)
-                    file_name = data[files_offset:loc]
-                    files_offset += loc - files_offset + 1
-                    if b'.seq' in file_name:
-                        if file_name.decode(errors='ignore') not in plugins:
-                            plugins.append(file_name.decode(errors='ignore'))
-                    else:
-                        seq_search = False
+            #elif 'script' in folder_path:
+            #    name, _ = os.path.splitext(os.path.basename(bsa_file.lower()))
+            #    if 'scripts_'+name not in plugins:
+            #        plugins.insert(0, 'scripts_'+name)
+            #elif 'seq' == folder_path:
+            #    seq_search = True
+            #if count == folder_count and seq_search:
+            #    file_count = int.from_bytes(data[offset+8:offset+12][::-1])
+            #    size = file_count * 16
+            #    files_offset = location + folder_length + size + 1
+            #    while seq_search:
+            #        loc = data.find(b'\x00', files_offset)
+            #        file_name = data[files_offset:loc]
+            #        files_offset += loc - files_offset + 1
+            #        if b'.seq' in file_name:
+            #            if file_name.decode(errors='ignore') not in plugins:
+            #                plugins.append(file_name.decode(errors='ignore'))
+            #        else:
+            #            seq_search = False
 
             offset += 24
 
