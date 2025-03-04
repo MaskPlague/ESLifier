@@ -13,13 +13,14 @@ from compact_form_ids import CFIDs
 from cell_changed_scanner import cell_scanner
 from full_form_processor import form_processor
 
-#patched dict - hold key patched name, values patched files do a scan and compare old dict to new dict
 class patch_new(QWidget):
     def __init__(self):
         super().__init__()
         self.skyrim_folder_path = ''
         self.output_folder_path = ''
         self.modlist_txt_path = ''
+        self.plugins_txt_path = ''
+        self.bsab = ''
         self.mo2_mode = False
         self.update_header = True
         self.scan_esms = False
@@ -30,7 +31,8 @@ class patch_new(QWidget):
         find_button = QPushButton("Find Unpatched Files")
         find_button.clicked.connect(self.scan_and_find)
         find_button.setToolTip("Scan for new plugins and files that were not\n"+
-                               "present during intial compacting and patching.")
+                               "present during intial compacting and patching.\n"+
+                               "This currently does not detect new facegen files present in BSA.")
         patch_button = QPushButton("Patch Selected")
         patch_button.clicked.connect(self.patch_new_plugins_and_files)
         patch_button.setToolTip("Patch the files that are dependent on the selected plugin(s).")
@@ -84,7 +86,7 @@ class patch_new(QWidget):
         def run_scan():
             self.log_stream.show()
             self.thread_new = QThread()
-            self.worker = Worker(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.scan_esms)
+            self.worker = Worker(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.scan_esms, self.plugins_txt_path, self.bsab)
             self.worker.moveToThread(self.thread_new)
             self.thread_new.started.connect(self.worker.scan_run)
             self.worker.finished_signal.connect(self.completed_scan)
@@ -195,16 +197,18 @@ class patch_new(QWidget):
 
 class Worker(QObject):
     finished_signal = pyqtSignal()
-    def __init__(self, path, mo2_mode, modlist_txt_path, scan_esms):
+    def __init__(self, path, mo2_mode, modlist_txt_path, scan_esms, plugins_txt_path, bsab):
         super().__init__()
         self.skyrim_folder_path = path
         self.mo2_mode = mo2_mode
         self.modlist_txt_path = modlist_txt_path
         self.scan_esms = scan_esms
+        self.plugins_txt_path = plugins_txt_path
+        self.bsab = bsab
 
     def scan_run(self):
         print('Scanning All Files:')
-        scanner(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.scan_esms)
+        scanner(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.scan_esms, self.plugins_txt_path, self.bsab)
         print('Getting Dependencies')
         dependecy_getter.scan(self.skyrim_folder_path)
         self.finished_signal.emit()
