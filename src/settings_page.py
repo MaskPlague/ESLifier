@@ -2,10 +2,10 @@ import json
 import os
 import subprocess
 import shutil
-import sys
+import threading
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QFileDialog)
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QFileDialog
 from PyQt6.QtGui import QIcon
 
 from blacklist import blacklist_window
@@ -37,6 +37,8 @@ class settings(QWidget):
 
         self.skyrim_folder_path_widget_init()
         self.output_folder_path_widget_init()
+        self.plugins_txt_path_widget_init()
+        self.bsab_path_widget_init()
         self.mo2_modlist_txt_path_widget_init()
         self.mo2_mode_widget_init()
         self.update_header_widget_init()
@@ -56,6 +58,8 @@ class settings(QWidget):
 
         settings_layout.addWidget(self.skyrim_folder_path_widget)
         settings_layout.addWidget(self.output_folder_path_widget)
+        settings_layout.addWidget(self.plugins_txt_path_widget)
+        settings_layout.addWidget(self.bsab_path_widget)
         settings_layout.addWidget(self.mo2_modlist_txt_path_widget)
         settings_layout.addWidget(self.mo2_mode_widget)
         settings_layout.addWidget(self.update_header_widget)
@@ -96,6 +100,18 @@ class settings(QWidget):
         path, _ = self.file_dialog_2.getOpenFileName(self, "Select your MO2 profile\'s modlist.txt", self.settings['mo2_modlist_txt_path'], "Modlist (modlist.txt)")
         if path != '':
             self.mo2_modlist_txt_path.setText(path)
+        self.update_settings()
+
+    def plugins_txt_path_clicked(self):
+        path, _ = self.file_dialog_2.getOpenFileName(self, "Select your plugins.txt", self.settings['plugins_txt_path'], "Load Order (plugins.txt)")
+        if path != '':
+            self.plugins_txt_path.setText(path)
+        self.update_settings()
+
+    def bsab_path_clicked(self):
+        path, _ = self.file_dialog_2.getOpenFileName(self, "Select BSA Browser\'s bsab.exe", self.settings['bsab_path'], "BSA Browser CLI (bsab.exe)")
+        if path != '':
+            self.bsab_path.setText(path)
         self.update_settings()
 
     def skyrim_folder_path_widget_init(self):
@@ -177,6 +193,42 @@ class settings(QWidget):
         
         self.mo2_modlist_txt_path.setPlaceholderText('C:/Path/To/MO2/profiles/profile_name/modlist.txt')
         self.mo2_modlist_txt_path.setMinimumWidth(400)
+
+    def plugins_txt_path_widget_init(self):
+        plugins_txt_path_layout = QHBoxLayout()
+        self.plugins_txt_path_widget = QWidget()
+        self.plugins_txt_path_widget.setToolTip("Set this to your modlist\'s plugins.txt")
+        plugins_txt_path_label = QLabel("Plugins.txt Path")
+        self.plugins_txt_path = QLineEdit()
+        plugins_txt_path_button = self.button_maker('Explore...', self.bsab_path_clicked, 60)
+
+        self.plugins_txt_path_widget.setLayout(plugins_txt_path_layout)
+        plugins_txt_path_layout.addWidget(plugins_txt_path_label)
+        plugins_txt_path_layout.addSpacing(30)
+        plugins_txt_path_layout.addWidget(self.plugins_txt_path)
+        plugins_txt_path_layout.addSpacing(10)
+        plugins_txt_path_layout.addWidget(plugins_txt_path_button)
+        
+        self.plugins_txt_path.setPlaceholderText('C:/Path/To/plugins.txt')
+        self.plugins_txt_path.setMinimumWidth(400)
+
+    def bsab_path_widget_init(self):
+        bsab_path_layout = QHBoxLayout()
+        self.bsab_path_widget = QWidget()
+        self.bsab_path_widget.setToolTip("Set this to BSA Browser's CLI: bsab.exe")
+        bsab_path_label = QLabel("bsab.exe Path")
+        self.bsab_path = QLineEdit()
+        bsab_path_button = self.button_maker('Explore...', self.bsab_path_clicked, 60)
+
+        self.bsab_path_widget.setLayout(bsab_path_layout)
+        bsab_path_layout.addWidget(bsab_path_label)
+        bsab_path_layout.addSpacing(30)
+        bsab_path_layout.addWidget(self.bsab_path)
+        bsab_path_layout.addSpacing(10)
+        bsab_path_layout.addWidget(bsab_path_button)
+        
+        self.bsab_path.setPlaceholderText('C:/Path/To/BSA Browser\'s/bsab.exe')
+        self.bsab_path.setMinimumWidth(400)
 
     def update_header_widget_init(self):
         update_header_layout = QHBoxLayout()
@@ -268,9 +320,11 @@ class settings(QWidget):
                 }""")
             confirm.setText(
                 "Are you sure you want to reset the Extracted BSA List?\n" +
-                "This will cause the next scan to take longer as the BSA files will\n"+ 
-                "need to be extracted again. Also the Patch New scanner will not detect\n"+
-                "that the newly extracted files are new.")
+                "This will cause the next scan to take significantly longer as the BSA files will\n"+ 
+                "need to be extracted again and irrelevant script files will need to be filtered.\n\n"+
+                "This can take a minute or so and will freeze the UI\n"+
+                "or you can manually delete the \"bsa_extracted/\" folder\n"+
+                "and then click this button.")
             confirm.setWindowTitle("Confirmation")
             confirm.addButton(QMessageBox.StandardButton.Yes)
             confirm.addButton(QMessageBox.StandardButton.Cancel)
@@ -280,12 +334,25 @@ class settings(QWidget):
                 if os.path.exists('ESLifier_Data/extracted_bsa.json'):
                     os.remove('ESLifier_Data/extracted_bsa.json')
                 if os.path.exists('bsa_extracted/'):
-                    def fast_rmtree(path):
-                        if sys.platform.startswith("win"):
-                            subprocess.run(["cmd", "/c", "rd", "/s", "/q", path], shell=True)
-                        else:
-                            subprocess.run(["rm", "-rf", path], check=True)
-                    fast_rmtree('bsa_extracted/')
+                    def delete_directory(dir_path):
+                        try:
+                            shutil.rmtree(dir_path)
+                        except Exception as e:
+                            pass
+
+                    def delete_subdirectories_threaded(parent_dir):
+                        threads = []
+                        for item in os.listdir(parent_dir):
+                            item_path = os.path.join(parent_dir, item)
+                            if os.path.isdir(item_path):
+                                thread = threading.Thread(target=delete_directory, args=(item_path,))
+                                threads.append(thread)
+                                thread.start()
+
+                        for thread in threads:
+                            thread.join()
+                    delete_subdirectories_threaded('bsa_extracted/')
+                    #shutil.rmtree('bsa_extracted/')
             confirm.accepted.connect(accepted)
             confirm.show()
 
@@ -295,9 +362,9 @@ class settings(QWidget):
         self.blacklist_window = blacklist_window()
         edit_blacklist_layout = QHBoxLayout()
         self.edit_blacklist_widget = QWidget()
-        self.edit_blacklist_widget.setToolTip('Show window to remove mods from the blacklist. You can add\nmods to the blacklist by right clicking them on the Main page.')
+        self.edit_blacklist_widget.setToolTip('Show window to remove plugins from the blacklist. You can add\nplugins to the blacklist by right clicking them on the Main page.')
         edit_blacklist_button = self.button_maker('Edit Blacklist', self.edit_blacklist_button_clicked, 100)
-        edit_blacklist_label = QLabel("Remove Mods From Blacklist")
+        edit_blacklist_label = QLabel("Remove Plugins From Blacklist")
         self.edit_blacklist_widget.setLayout(edit_blacklist_layout)
         edit_blacklist_layout.addWidget(edit_blacklist_label)
         edit_blacklist_layout.addWidget(edit_blacklist_button)
@@ -406,6 +473,8 @@ class settings(QWidget):
                 self.settings.clear()
                 self.skyrim_folder_path.clear()
                 self.output_folder_path.clear()
+                self.plugins_txt_path.clear()
+                self.bsab_path.clear()
                 self.mo2_modlist_txt_path.clear()
                 self.mo2_mode_toggle.setChecked(False)
                 self.update_header_toggle.setChecked(True)
@@ -427,6 +496,12 @@ class settings(QWidget):
 
         if 'output_folder_path' in self.settings.keys(): self.output_folder_path.setText(self.settings['output_folder_path'])
         else: self.settings['output_folder_path'] = ''
+
+        if 'plugins_txt_path' in self.settings.keys(): self.plugins_txt_path.setText(self.settings['plugins_txt_path'])
+        else: self.settings['plugins_txt_path'] = ''
+
+        if 'bsab_path' in self.settings.keys(): self.bsab_path.setText(self.settings['bsab_path'])
+        else: self.settings['bsab_path'] = ''
 
         if 'mo2_modlist_txt_path' in self.settings.keys(): self.mo2_modlist_txt_path.setText(self.settings['mo2_modlist_txt_path'])
         else: self.settings['mo2_modlist_txt_path'] = ''
@@ -460,6 +535,8 @@ class settings(QWidget):
     def update_settings(self):
         self.settings['skyrim_folder_path'] = self.skyrim_folder_path.text()
         self.settings['output_folder_path'] = self.output_folder_path.text()
+        self.settings['plugins_txt_path'] = self.plugins_txt_path.text()
+        self.settings['bsab_path'] = self.bsab_path.text()
         self.settings['mo2_modlist_txt_path'] = self.mo2_modlist_txt_path.text()
         self.settings['mo2_mode'] = self.mo2_mode_toggle.isChecked()
         self.settings['update_header'] = self.update_header_toggle.isChecked()
