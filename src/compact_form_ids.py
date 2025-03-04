@@ -8,7 +8,7 @@ import json
 import threading
 
 class CFIDs():
-    def compact_and_patch(form_processor, file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header, mo2_mode):
+    def compact_and_patch(form_processor, file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header, mo2_mode, bsab):
         CFIDs.lock = threading.Lock()
         CFIDs.compacted_and_patched = {}
         CFIDs.mo2_mode = mo2_mode
@@ -22,8 +22,43 @@ class CFIDs():
             CFIDs.patch_dependent_plugins(file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header)
         
         files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
-        if os.path.basename(file_to_compact).lower() in files_to_patch.keys():
-            to_patch, to_rename = CFIDs.sort_files_to_patch_or_rename(file_to_compact, files_to_patch[os.path.basename(file_to_compact).lower()]) #function to get files that need to be edited in some way to function correctly.
+        bsa_dict = CFIDs.get_from_file('ESLifier_Data/bsa_dict.json')
+        name = os.path.basename(file_to_compact).lower()
+        bsa_masters = []
+        for value in bsa_dict.values():
+            bsa_masters.extend(value)
+        if name in files_to_patch.keys() or name in bsa_masters:
+            patch_or_rename = []
+            if name in files_to_patch.keys():
+                patch_or_rename = files_to_patch[os.path.basename(file_to_compact).lower()]
+
+            if name in bsa_masters:
+                print('-  Temporarily Extracting FaceGen/Voice files from BSA for patching...')
+                if not os.path.exists('bsa_extracted_temp/'):
+                    os.makedirs('bsa_extracted_temp/')
+                else:
+                    shutil.rmtree('bsa_extracted_temp/')
+                    os.makedirs('bsa_extracted_temp/')
+                for bsa_file, values in bsa_dict.items():
+                    if name in values:
+                        cmd1 = f'{bsab} "{bsa_file}" -f "{name}" -e -o "bsa_extracted_temp/"'
+                        os.system(cmd1)
+
+                rel_paths = []
+                for file in patch_or_rename:
+                    rel_path = CFIDs.get_rel_path(file, skyrim_folder_path)
+                    rel_paths.append(rel_path.lower())
+
+                start = os.path.join(os.getcwd(), 'bsa_extracted_temp')
+                for root, dir, files in os.walk('bsa_extracted_temp/'):
+                    for file in files:
+                        full_path = os.path.normpath(os.path.join(root, file))
+                        rel_path = os.path.relpath(full_path, start).lower()
+                        if rel_path not in rel_paths and file.endswith(('.nif', '.dds', '.fuz', '.xwm', '.wav', '.lip')):
+                            patch_or_rename.append(full_path)
+                            rel_paths.append(rel_path)
+                
+            to_patch, to_rename = CFIDs.sort_files_to_patch_or_rename(file_to_compact, patch_or_rename) #function to get files that need to be edited in some way to function correctly.
             form_id_map = CFIDs.get_form_id_map(file_to_compact)
             if len(to_patch) > 0:
                 print(f"-  Patching {len(to_patch)} Dependent Files...")
@@ -36,6 +71,9 @@ class CFIDs():
                     print('\n')
                 CFIDs.rename_files_threader(file_to_compact, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
         CFIDs.dump_to_file('ESLifier_Data/compacted_and_patched.json')
+        print('Deleting Temporily Extracted FaceGen/Voice Files...')
+        if os.path.exists('bsa_extracted_temp/'):
+            shutil.rmtree('bsa_extracted_temp/')
         print('CLEAR ALT')
         return
     
@@ -64,7 +102,7 @@ class CFIDs():
     
     def set_flag(file, skyrim_folder, output_folder):
         print("-  Changing ESL flag in: " + os.path.basename(file))
-        new_file = CFIDs.copy_file_to_output(file, skyrim_folder, output_folder)
+        new_file, _ = CFIDs.copy_file_to_output(file, skyrim_folder, output_folder)
         with open(new_file, 'rb+') as f:
             f.seek(9)
             f.write(b'\x02')
@@ -97,19 +135,39 @@ class CFIDs():
 
     #Create a copy of the mod plugin we're compacting
     def copy_file_to_output(file, skyrim_folder_path, output_folder):
-        if CFIDs.mo2_mode:
-            end_path = os.path.relpath(file, skyrim_folder_path)
-            #part = relative_path.split('\\')
-            #end_path = os.path.join(*part[1:])
+        if 'bsa_extracted' in file:
+            if 'bsa_extracted_temp' in file:
+                start = os.path.join(os.getcwd(), 'bsa_extracted_temp/')
+            else:
+                start = os.path.join(os.getcwd(), 'bsa_extracted/')
+            end_path = os.path.normpath(os.path.relpath(file, start))
         else:
-            end_path = file[len(skyrim_folder_path) + 1:]
-        new_file = os.path.join(os.path.join(output_folder,'ESLifier Compactor Output'), re.sub(r'(.*?)(/|\\)', '', end_path, 1))
+            if CFIDs.mo2_mode:
+                end_path = os.path.join(*os.path.normpath(os.path.relpath(file, skyrim_folder_path)).split(os.sep)[1:])
+            else:
+                end_path = os.path.normpath(os.path.relpath(file, skyrim_folder_path))
+                #end_path = file[len(skyrim_folder_path) + 1:]
+        new_file = os.path.normpath(os.path.join(os.path.join(output_folder,'ESLifier Compactor Output'), end_path))
         with CFIDs.lock:
             if not os.path.exists(os.path.dirname(new_file)):
                 os.makedirs(os.path.dirname(new_file))
             if not os.path.exists(new_file):
                 shutil.copy(file, new_file)
-        return new_file
+        return new_file, end_path
+    
+    def get_rel_path(file, skyrim_folder_path):
+        if 'bsa_extracted' in file:
+            if 'bsa_extracted_temp' in file:
+                start = os.path.join(os.getcwd(), 'bsa_extracted_temp/')
+            else:
+                start = os.path.join(os.getcwd(), 'bsa_extracted/')
+            rel_path = os.path.normpath(os.path.relpath(file, start))
+        else:
+            if CFIDs.mo2_mode:
+                rel_path = os.path.join(*os.path.normpath(os.path.relpath(file, skyrim_folder_path)).split(os.sep)[1:])
+            else:
+                rel_path = os.path.normpath(os.path.relpath(file, skyrim_folder_path))
+        return rel_path
     
     #Get files (not including plugins) that may/will need old Form IDs replaced with the new Form IDs
     def sort_files_to_patch_or_rename(master, files):
@@ -123,7 +181,7 @@ class CFIDs():
             elif os.path.basename(master).lower() in file.lower() and ('facegeom' in file.lower() or 'voice' in file.lower() or 'facetint' in file.lower()):
                 files_to_rename.append(file)
             else:
-                raise TypeError(f"File: {file} \nhas no patching method but it is in file_masters...")
+                raise TypeError(f"{os.path.basename(master).lower()} - File: {file} \nhas no patching method but it is in file_masters...")
         return files_to_patch, files_to_rename
 
     def rename_files_threader(master, files, form_id_map, skyrim_folder_path, output_folder_path):
@@ -162,23 +220,17 @@ class CFIDs():
                 if (CFIDs.count % factor) >= (factor-1) or CFIDs.count >= CFIDs.file_count:
                     print('\033[F\033[K-    Percentage: ' + str(round(percent,1)) +'%\n-    Files: ' + str(CFIDs.count) + '/' + str(CFIDs.file_count), end='\r')
             
-            parts = os.path.relpath(file, skyrim_folder_path).lower().split('\\')
-            file_rel_path = os.path.join(*parts[1:])
+            rel_path = CFIDs.get_rel_path(file, skyrim_folder_path)
             for form_ids in form_id_map:
-                if form_ids[1].upper() in file.upper():
-                    new_file = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
-                    renamed_file = new_file.replace(form_ids[1].upper(), form_ids[3].upper())
+                if form_ids[1].lower() in file.lower():
+                    new_file, rel_path_new_file = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
+                    index = new_file.lower().index(form_ids[1].lower())
+                    renamed_file = new_file[:index] + form_ids[3].upper() + new_file[index+6:]
                     with CFIDs.lock:
                         os.replace(new_file, renamed_file)
-                    parts = os.path.relpath(new_file, skyrim_folder_path).lower().split('\\')
-                    rel_path_new_file = os.path.join(*parts[1:])
-                    parts = os.path.relpath(renamed_file, skyrim_folder_path).lower().split('\\')
-                    rel_path_renamed_file = os.path.join(*parts[1:])
+                    index = rel_path_new_file.lower().index(form_ids[1].lower())
+                    rel_path_renamed_file = rel_path_new_file[:index] + form_ids[3].upper() + rel_path_new_file[index+6:]
                     with CFIDs.lock:
-                        #if new_file_but_skyrim_pathed not in CFIDs.compacted_and_patched[master_base_name]:
-                        #    CFIDs.compacted_and_patched[master_base_name].append(new_file_but_skyrim_pathed)
-                        #if new_file not in CFIDs.compacted_and_patched[master_base_name]:
-                        #    CFIDs.compacted_and_patched[master_base_name].append(new_file)
                         if rel_path_new_file not in CFIDs.compacted_and_patched[master_base_name]:
                             CFIDs.compacted_and_patched[master_base_name].append(rel_path_new_file)
                         if rel_path_renamed_file not in CFIDs.compacted_and_patched[master_base_name]:
@@ -186,7 +238,7 @@ class CFIDs():
                         if 'facegeom' in new_file.lower() and master_base_name.lower() in new_file.lower():
                             facegeom_meshes.append(renamed_file)
                     break
-            CFIDs.compacted_and_patched[master_base_name].append(file_rel_path.lower())
+            CFIDs.compacted_and_patched[master_base_name].append(rel_path.lower())
         if facegeom_meshes != []:
             CFIDs.patch_files(master, facegeom_meshes, form_id_map, skyrim_folder_path, output_folder_path, False)
         return
@@ -286,8 +338,9 @@ class CFIDs():
     def patch_files(master, files, form_id_map, skyrim_folder_path, output_folder_path, flag):
         for file in files:
             if flag:
-                new_file = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
+                new_file, rel_path = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
             else:
+                rel_path = CFIDs.get_rel_path(file, output_folder_path)
                 new_file = file
             new_file_lower = new_file.lower()
             basename = os.path.basename(master).lower()
@@ -398,9 +451,7 @@ class CFIDs():
                     CFIDs.jslot_patcher(basename, new_file, form_id_map)
                 else:
                     print(f'Possible missing patcher for: {new_file}')
-                
-            parts = os.path.relpath(file, skyrim_folder_path).lower().split('\\')
-            rel_path = os.path.join(*parts[1:])
+
             with CFIDs.lock:
                 CFIDs.compacted_and_patched[os.path.basename(master)].append(rel_path)
 
@@ -1278,7 +1329,7 @@ class CFIDs():
         form_id_file_name = 'ESLifier_Data/Form_ID_Maps/' + os.path.basename(file).lower() + "_FormIdMap.txt"
         if not os.path.exists(os.path.dirname(form_id_file_name)):
             os.makedirs(os.path.dirname(form_id_file_name))
-        new_file = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder)
+        new_file, _ = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder)
 
         #Set ESL flag, update to header 1.71 for new Form IDs, and get data from mod plugin
         data = b''
@@ -1395,24 +1446,23 @@ class CFIDs():
         threads = []
 
         for dependent in dependents:
-            new_file = CFIDs.copy_file_to_output(dependent, skyrim_folder_path, output_folder_path)
-            #dependent_data = b''
+            new_file, rel_path = CFIDs.copy_file_to_output(dependent, skyrim_folder_path, output_folder_path)
             size = os.path.getsize(new_file)
             mb_size = round(size / 1048576, 3)
             print(f'-    {os.path.basename(new_file)} ({mb_size} MB)')
             if mb_size > 40:
-                thread = threading.Thread(target=CFIDs.patch_dependent, args=(new_file, update_header,file, dependent, form_id_file_data, skyrim_folder_path))
+                thread = threading.Thread(target=CFIDs.patch_dependent, args=(new_file, update_header, file, form_id_file_data, rel_path))
                 threads.append(thread)
                 thread.start()
             else:
-                CFIDs.patch_dependent(new_file, update_header,file, dependent, form_id_file_data, skyrim_folder_path)
+                CFIDs.patch_dependent(new_file, update_header, file, form_id_file_data, rel_path)
         
         if len(threads) > 0 and any([thread.is_alive() for thread in threads]):
             print('-    Waiting for dependent plugin patching to finish...')
             for thread in threads:
                 thread.join()
 
-    def patch_dependent(new_file, update_header,file, dependent, form_id_file_data, skyrim_folder_path):
+    def patch_dependent(new_file, update_header, file, form_id_file_data, rel_path):
         with open(new_file, 'rb+') as dependent_file:
             #Update header to 1.71 to fit new records
             if update_header:
@@ -1451,12 +1501,10 @@ class CFIDs():
             dependent_file.truncate(0)
             dependent_file.write(b''.join(data_list))
             dependent_file.close()
-        parts = os.path.relpath(dependent, skyrim_folder_path).lower().split('\\')
-        rel_path = os.path.join(*parts[1:])
+        #parts = os.path.relpath(dependent, skyrim_folder_path).lower().split('\\')
+        #rel_path = os.path.join(*parts[1:])
         with CFIDs.lock:
             CFIDs.compacted_and_patched[os.path.basename(file)].append(rel_path)
-            #CFIDs.compacted_and_patched[os.path.basename(file)].append(dependent)
-            #CFIDs.compacted_and_patched[os.path.basename(file)].append(new_file)
         return
 
     #gets what master index the file is in inside of the dependent's data
