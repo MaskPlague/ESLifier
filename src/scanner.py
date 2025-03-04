@@ -5,66 +5,122 @@ import timeit
 import json
 
 #TODO: use BSA Browser CLI to extract necessary files
-#      BSA files lose to loose files, if there exists a loose file then ignore the bsa file.
-#      if file does not exist but is in multiple bsa then we'll need to get plugin.txt...
-#      need to scan bsa for file paths first and extract all script files and send them back through file_processor
 #      other files will only need to be extracted if the master plugin is being compacted.
 
 class scanner():
-    def __init__(self, path, mo2_mode, modlist_txt_path, scan_esms):
+    def __init__(self, path, mo2_mode, modlist_txt_path, scan_esms, plugins_txt_path, bsab):
         scanner.bsa_blacklist = ['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
                     'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
                     'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa']
-        scanner.path = path
         start_time = timeit.default_timer()
         scanner.file_count = 0
         scanner.all_files = []
         scanner.plugins = []
-        scanner.bsab = 'bsa_browser\\bsab.exe'
+        scanner.bsab = bsab
         scanner.lock = threading.Lock()
         scanner.extracted = scanner.get_from_file('ESLifier_Data/extracted_bsa.json')
         print('-  Gathering Files...\n\n')
+        plugins_list = scanner.get_plugins_list(plugins_txt_path)
+        if mo2_mode:
+            load_order, enabled_mods = scanner.get_modlist(modlist_txt_path)
+            scanner.all_files, scanner.plugins = scanner.get_winning_files(path, load_order, enabled_mods, scan_esms, plugins_list)
+            scanner.file_count = len(scanner.all_files)
+        else:
+            scanner.get_files_from_skyrim_folder(path, scan_esms, plugins_list)
+
+        scanner.dump_to_file(file="ESLifier_Data/extracted_bsa.json", data=scanner.extracted)
+        scanner.dump_to_file(file="ESLifier_Data/plugin_list.json", data=scanner.plugins)
+
+        print('\033[F\033[K-  Gathered ' + str(len(scanner.all_files)) +' total files.', end='\r')
+        
+        scanner.get_file_masters()
+
+        bsa_dict = scanner.sort_bsa_files(scanner.bsa_dict, plugins_list)
+
+        scanner.dump_to_file(file="ESLifier_Data/file_masters.json", data=scanner.file_dict)
+        scanner.dump_to_file(file="ESLifier_Data/bsa_dict.json", data=bsa_dict)
+        scanner.dump_to_file(file="ESLifier_Data/dll_dict.json", data=scanner.dll_dict)
+        
+
+        end_time = timeit.default_timer()
+        time_taken = end_time - start_time
+        print(f'\033[F\033[K-  Time taken: ' + str(round(time_taken,2)) + ' seconds')
+
+    
+    def sort_bsa_files(bsa_dict, plugins):
+        def get_base_name(bsa_path):
+            bsa_name = bsa_path.rsplit('\\', 1)[-1].rsplit('/', 1)[-1]
+            bsa_name = bsa_name.lower().removesuffix('.bsa')
+            bsa_name = re.sub(r' - textures\d*$', '', bsa_name)
+            return bsa_name
+        
+        plugin_index = {plugin: idx for idx, plugin in enumerate(plugins)}
+        sorted_bsa_items = sorted(bsa_dict.items(),key=lambda item: plugin_index.get(get_base_name(item[0]), float('inf')))
+        
+        return dict(sorted_bsa_items)
+
+    def get_files_from_skyrim_folder(path, scan_esms, plugins_list):
         path_level = len(path.split(os.sep))
         loop = 0
         if scan_esms:
             plugin_extensions = ('.esp', '.esm', '.esl')
         else:
             plugin_extensions = ('.esp', '.esl')
-        if mo2_mode:
-            load_order, enabled_mods = scanner.fix_modlist(modlist_txt_path)
-            scanner.all_files, scanner.plugins = scanner.get_winning_files(scanner.path, load_order, enabled_mods, scan_esms)
-            scanner.file_count = len(scanner.all_files)
-        else:
-            for root, _, files in os.walk(scanner.path):
-                if 'eslifier' not in root.lower():
-                    root_level = len(root.split(os.sep))
-                    scanner.file_count += len(files)
-                    if loop == 50: #prevent spamming stdout and slowing down the program
-                        loop = 0
-                        print(f'\033[F\033[K-  Gathered: {scanner.file_count}\n-', end='\r')
-                    else:
-                        loop += 1
-                    for file in files:
-                        scanner.all_files.append(os.path.join(root, file))
-                        if path_level == root_level and file.lower().endswith(plugin_extensions) :
-                            scanner.plugins.append(os.path.join(root, file))
+        bsa_list = []
+        temp_rel_paths = []
+        for root, _, files in os.walk(path):
+            if 'eslifier' not in root.lower():
+                root_level = len(root.split(os.sep))
+                scanner.file_count += len(files)
+                if loop == 50: #prevent spamming stdout and slowing down the program
+                    loop = 0
+                    print(f'\033[F\033[K-  Gathered: {scanner.file_count}\n-', end='\r')
+                else:
+                    loop += 1
+                for file in files:
+                    full_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(full_path, path)
+                    scanner.all_files.append(full_path)
+                    temp_rel_paths.append(rel_path)
+                    if path_level == root_level and file.lower().endswith(plugin_extensions) :
+                        scanner.plugins.append(full_path)
+                    if file.lower().endswith('.bsa') and file.lower() not in scanner.bsa_blacklist:
+                        file = file[:-4]
+                        if ' - textures' in file.lower():
+                            index = file.lower().index(' - textures')
+                            file = file[:index]
+                        bsa_list.append([file.lower(), full_path])
 
-        print('\033[F\033[K-  Gathered ' + str(len(scanner.all_files)) +' total files.\n', end='\r')
-        print(' ')
-        print(' ')
-        scanner.get_file_masters()
+        order_map = {plugin: index for index, plugin in enumerate(plugins_list)}
+        filtered_bsa_list = [item for item in bsa_list if item[0] in order_map]
+        filtered_bsa_list.sort(key=lambda x: order_map.get(x[0], float('inf')))
+        bsa_length = len(filtered_bsa_list)
+        for i, tup in enumerate(filtered_bsa_list):
+            file = tup[1]
+            if file not in scanner.extracted:
+                print(f'\033[F\033[K-  Extracting {i}/{bsa_length} BSA files\n-', end='\r')
+                cmd1 = f'{scanner.bsab}" "{file}" -f "scripts" -e -o "bsa_extracted/"'
+                cmd2 = f'{scanner.bsab} "{file}" -f ".seq" -e -o "bsa_extracted/"'
+                os.system(cmd1)
+                os.system(cmd2)
+                scanner.extracted.append(file)
+        
+        mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
 
-        scanner.dump_to_file(file="ESLifier_Data/plugin_list.json", data=scanner.plugins)
-        scanner.dump_to_file(file="ESLifier_Data/file_masters.json", data=scanner.file_dict)
-        scanner.dump_to_file(file="ESLifier_Data/bsa_dict.json", data=scanner.bsa_dict)
-        scanner.dump_to_file(file="ESLifier_Data/dll_dict.json", data=scanner.dll_dict)
-        scanner.dump_to_file(file="ESLifier_Data/extracted_bsa.json", data=scanner.extracted)
+        for root, dirs, files in os.walk('bsa_extracted/'):
+            scanner.file_count += len(files)
+            if loop == 50: #prevent spamming stdout and slowing down the program
+                loop = 0
+                print(f'\033[F\033[K-  Gathered: {scanner.file_count}\n-', end='\r')
+            else:
+                loop += 1
+            for file in files:
+                full_path = os.path.join(root, file)
+                relative_path = os.path.relpath(full_path, mod_folder)
+                if relative_path not in temp_rel_paths:
+                    scanner.all_files.append(full_path)
 
-        end_time = timeit.default_timer()
-        time_taken = end_time - start_time
-        print('-  Time taken: ' + str(round(time_taken,2)) + ' seconds')
-    
-    def get_files_from_mods(mods_folder, enabled_mods, scan_esms):
+    def get_files_from_mods(mods_folder, enabled_mods, scan_esms, plugins_list):
         if not os.path.exists('bsa_extracted/'):
             os.makedirs('bsa_extracted/')
         mod_files = {}
@@ -102,17 +158,20 @@ class scanner():
                                 mod_files[relative_path] = []
                                 cases_of_files[relative_path] = cased
                             mod_files[relative_path].append(mod_folder)
-                            if file.endswith(plugin_extensions):
+                            if file.lower().endswith(plugin_extensions):
                                 plugin_names.append(file)
-                            if file.endswith('.bsa'):
-                                bsa_list.append([mod_folder, full_path])
+                            if file.lower().endswith('.bsa') and file.lower() not in scanner.bsa_blacklist:
+                                file = file[:-4]
+                                if ' - textures' in file.lower():
+                                    index = file.lower().index(' - textures')
+                                    file = file[:index]
+                                bsa_list.append([file.lower(), full_path])
 
-        order_map = {folder: index for index, folder in enumerate(enabled_mods)}
-
-        bsa_list.sort(key=lambda x: order_map.get(x[0], float('inf')))
-        
-        bsa_length = len(bsa_list)
-        for i, tup in enumerate(bsa_list):
+        order_map = {plugin: index for index, plugin in enumerate(plugins_list)}
+        filtered_bsa_list = [item for item in bsa_list if item[0] in order_map]
+        filtered_bsa_list.sort(key=lambda x: order_map.get(x[0], float('inf')))
+        bsa_length = len(filtered_bsa_list)
+        for i, tup in enumerate(filtered_bsa_list):
             file = tup[1]
             if file not in scanner.extracted:
                 print(f'\033[F\033[K-  Extracting {i}/{bsa_length} BSA files\n-', end='\r')
@@ -143,14 +202,14 @@ class scanner():
 
         return mod_files, plugin_names, cases_of_files
 
-    def fix_modlist(path):
+    def get_modlist(path):
         lines = []
         with open(path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
         enabled_mods = []
-        for i in range(len(lines)):
-            if lines[i].startswith(('+','*')) and not lines[i].endswith('_separator'):
-                enabled_mods.append(lines[i][1:].strip())
+        for line in lines:
+            if line.startswith(('+','*')) and not line.endswith('_separator'):
+                enabled_mods.append(line[1:].strip())
         
         enabled_mods.append('bsa_extracted')
         enabled_mods.reverse()
@@ -167,10 +226,20 @@ class scanner():
         lines.append('bsa_extracted')
         lines.reverse()
         return lines, enabled_mods
+    
+    def get_plugins_list(path):
+        lines = []
+        with open(path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+        active_plugins = []
+        for line in lines:
+            if line.startswith('*'):
+                active_plugins.append(line.strip()[1:-4].lower())
+        return active_plugins
 
-    def get_winning_files(mods_folder, load_order, enabled_mods, scan_esms):
+    def get_winning_files(mods_folder, load_order, enabled_mods, scan_esms, plugins_list):
         mod_folder_level = len(mods_folder.split(os.sep))
-        mod_files, plugin_names, cases = scanner.get_files_from_mods(mods_folder, enabled_mods, scan_esms)
+        mod_files, plugin_names, cases = scanner.get_files_from_mods(mods_folder, enabled_mods, scan_esms, plugins_list)
         winning_files = []
         file_count = 0
         loop = 0
@@ -250,27 +319,45 @@ class scanner():
         chunks = [scanner.all_files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
         chunks.append(scanner.all_files[(split) * chunk_size:])
 
+        print('-  Getting masters of loose files...\n\n')
         for chunk in chunks:
             thread = threading.Thread(target=scanner.file_processor, args=(chunk, pattern, pattern3, pattern4, pattern5))
             scanner.threads.append(thread)
             thread.start()
-        
-        print("\n-  Scanning .pex files")
-        for file in scanner.pex_files:
-            thread = threading.Thread(target=scanner.file_reader,args=(pattern2, file, 'rb'))
+
+        for thread in scanner.threads: thread.join()
+        scanner.threads.clear()
+
+        print(f"\033[F\033[K-  Scanning .pex files\n\n")
+        scanner.file_count = len(scanner.pex_files)
+        scanner.count = 0
+        if len(scanner.pex_files) > 8192 :
+            split = 8192 
+        elif len(scanner.pex_files) > 2048:
+            split = 2048
+        elif len(scanner.pex_files) > 512:
+            split = 512
+        else:
+            split = 1
+        chunk_size = len(scanner.pex_files) // split
+        chunks = [scanner.pex_files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
+        chunks.append(scanner.pex_files[(split) * chunk_size:])
+        for chunk in chunks:
+            thread = threading.Thread(target=scanner.pex_processor, args=(pattern2, chunk,))
             scanner.threads.append(thread)
             thread.start()
 
         for thread in scanner.threads: thread.join()
-        scanner.threads = []
+        scanner.threads.clear()
 
-        print("-  Scanning .dll SKSE plugins")
+        print(f"\033[F\033[K-  Scanning .dll SKSE plugins")
         for file in scanner.dll_files:
             thread = threading.Thread(target=scanner.file_reader,args=(pattern2, file, 'rb'))
             scanner.threads.append(thread)
             thread.start()
 
         for thread in scanner.threads: thread.join()
+        scanner.threads.clear()
 
         print("-  Scanning .bsa files\n\n")
         scanner.file_count = len(scanner.bsa_files)
@@ -282,13 +369,14 @@ class scanner():
         chunk_size = len(scanner.bsa_files) // split
         chunks = [scanner.bsa_files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
         chunks.append(scanner.bsa_files[(split) * chunk_size:])
-        threads = []
         for chunk in chunks:
             thread = threading.Thread(target=scanner.bsa_processor, args=(chunk,))
-            threads.append(thread)
+            scanner.threads.append(thread)
             thread.start()
         
-        for thread in threads: thread.join()
+        for thread in scanner.threads: thread.join()
+        scanner.threads.clear()
+
 
     def bsa_processor(files):
         for file in files:
@@ -297,18 +385,27 @@ class scanner():
             print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
             scanner.bsa_reader(file)
 
+    def pex_processor(pattern2, files):
+        for file in files:
+            scanner.count += 1
+            scanner.percentage = (scanner.count/scanner.file_count) * 100
+            print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
+            scanner.file_reader(pattern2, file, 'rb')
+
     def file_processor(files, pattern, pattern3, pattern4, pattern5):
         local_dict = {}
         for file in files:
             scanner.count += 1
             scanner.percentage = (scanner.count / scanner.file_count) * 100
             file_lower = file.lower()
-            factor = round(scanner.file_count * 0.001)
+            factor = round(scanner.file_count * 0.01)
             if factor == 0:
                 factor = 1
             if (scanner.count % factor) >= (factor-1) or scanner.count >= scanner.file_count:
                 print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
             if (file_lower.endswith(('.ini', '.json', '.psc', '.jslot', '.toml', '_conditions.txt')) or '_srd.' in file_lower):
+                if file_lower.endswith('.json') and 'modex\\user\\kits' in file_lower:
+                    continue
                 thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
                 scanner.threads.append(thread)
                 thread.start()
@@ -331,9 +428,7 @@ class scanner():
                         if file not in local_dict[plugin]: 
                             local_dict[plugin].append(file)
                     except Exception as e:
-                        print(e)
-                        print(file)
-                        print('\n\n')
+                        pass
             elif '\\facetint\\' in file_lower and '.dds' in file_lower:
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
@@ -343,9 +438,7 @@ class scanner():
                         if file not in local_dict[plugin]: 
                             local_dict[plugin].append(file)
                     except Exception as e:
-                        print(e)
-                        print(file)
-                        print('\n\n')
+                        pass
             elif '\\sound\\' in file_lower and '\\voice\\' in file_lower:
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
@@ -355,9 +448,7 @@ class scanner():
                         if file not in local_dict[plugin]: 
                             local_dict[plugin].append(file)
                     except Exception as e:
-                        print(e)
-                        print(file)
-                        print('\n\n')
+                        pass
                         
         for key, values_list in local_dict.items():
             with scanner.lock:
@@ -379,45 +470,52 @@ class scanner():
             if file.lower().endswith('.jslot'):
                 with open(file, 'r', errors='ignore') as f:
                     data = json.load(f)
-                    plugins = []
-                    if 'actor' in data.keys() and 'headTexture' in data['actor'].keys():
-                        plugin_and_fid = data['actor']['headTexture']
-                        plugins.append(plugin_and_fid[:-7].lower())
-                    
-                    if 'headParts' in data.keys():
-                        for part in data['headParts']:
-                            formIdentifier = part['formIdentifier']
-                            plugins.append(formIdentifier[:-7].lower())
-                    for plugin in plugins:
-                        with scanner.lock:
-                            if plugin not in scanner.file_dict.keys(): scanner.file_dict.update({plugin: []})
-                            if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+                    f.close()
+                plugins = []
+                if 'actor' in data.keys() and 'headTexture' in data['actor'].keys():
+                    plugin_and_fid = data['actor']['headTexture']
+                    plugins.append(plugin_and_fid[:-7].lower())
+                
+                if 'headParts' in data.keys():
+                    for part in data['headParts']:
+                        formIdentifier = part['formIdentifier']
+                        plugins.append(formIdentifier[:-7].lower())
+                for plugin in plugins:
+                    with scanner.lock:
+                        if plugin not in scanner.file_dict.keys(): scanner.file_dict.update({plugin: []})
+                        if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
             else:
                 with open(file, 'r', errors='ignore') as f:
                     r = re.findall(pattern,f.read().lower())
-                    if r != []:
-                        for plugin in r:
-                            if 'NOT Is' not in plugin:
-                                with scanner.lock:
-                                    if plugin not in scanner.file_dict.keys(): scanner.file_dict.update({plugin: []})
-                                    if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
-
+                    f.close()
+                if r != []:
+                    for plugin in r:
+                        if 'NOT Is' not in plugin:
+                            with scanner.lock:
+                                if plugin not in scanner.file_dict.keys(): scanner.file_dict.update({plugin: []})
+                                if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+                elif 'bsa_extracted\\' in file and file.endswith('.psc'):
+                    os.remove(file)
 
         if reader_type == 'rb':
             with open(file, 'rb') as f:
                 r = re.findall(pattern,f.read().lower())
-                if r != []:
-                    for plugin in r:
-                        plugin = plugin.decode('utf-8')
-                        if file.lower().endswith('.dll'):
-                            with scanner.lock:
-                                if plugin not in scanner.dll_dict.keys(): scanner.dll_dict.update({plugin: []})
-                                if file not in scanner.dll_dict[plugin]: scanner.dll_dict[plugin].append(file)
-                        else:
-                            with scanner.lock:
-                                if plugin not in scanner.file_dict.keys(): scanner.file_dict.update({plugin: []})
-                                if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
-    
+                f.close()
+            if r != []:
+                for plugin in r:
+                    plugin = plugin.decode('utf-8')
+                    if file.lower().endswith('.dll'):
+                        with scanner.lock:
+                            if plugin not in scanner.dll_dict.keys(): scanner.dll_dict.update({plugin: []})
+                            if file not in scanner.dll_dict[plugin]: scanner.dll_dict[plugin].append(file)
+                    else:
+                        with scanner.lock:
+                            if plugin not in scanner.file_dict.keys(): scanner.file_dict.update({plugin: []})
+                            if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+
+            elif 'bsa_extracted\\' in file and file.endswith('.pex'):
+                os.remove(file)
+
     def bsa_reader(bsa_file):
         plugins = []
         with open(bsa_file, 'rb') as f:
@@ -430,12 +528,9 @@ class scanner():
 
         end_of_folder_records = (folder_count * 24) + 36
         offset = 36
-        count = 0
-        seq_search = False
         pattern_1 = re.compile(r'([^\\]+\.es[pml])')
 
         while offset < end_of_folder_records:
-            count += 1
             location = int.from_bytes(data[offset+16:offset+20][::-1]) - total_file_name_length
             folder_length = int.from_bytes(data[location:location+1])
             folder_path = data[location+1:location+folder_length].decode(errors='ignore')
@@ -443,27 +538,8 @@ class scanner():
                 plugin = re.search(pattern_1, folder_path).group(0)
                 if plugin not in plugins:
                     plugins.append(plugin)
-            #elif 'script' in folder_path:
-            #    name, _ = os.path.splitext(os.path.basename(bsa_file.lower()))
-            #    if 'scripts_'+name not in plugins:
-            #        plugins.insert(0, 'scripts_'+name)
-            #elif 'seq' == folder_path:
-            #    seq_search = True
-            #if count == folder_count and seq_search:
-            #    file_count = int.from_bytes(data[offset+8:offset+12][::-1])
-            #    size = file_count * 16
-            #    files_offset = location + folder_length + size + 1
-            #    while seq_search:
-            #        loc = data.find(b'\x00', files_offset)
-            #        file_name = data[files_offset:loc]
-            #        files_offset += loc - files_offset + 1
-            #        if b'.seq' in file_name:
-            #            if file_name.decode(errors='ignore') not in plugins:
-            #                plugins.append(file_name.decode(errors='ignore'))
-            #        else:
-            #            seq_search = False
 
             offset += 24
 
         if plugins != []:
-            scanner.bsa_dict[os.path.basename(bsa_file)] = plugins
+            scanner.bsa_dict[bsa_file] = plugins
