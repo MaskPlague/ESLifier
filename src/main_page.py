@@ -21,6 +21,8 @@ class main(QWidget):
         self.skyrim_folder_path = ''
         self.output_folder_path = ''
         self.modlist_txt_path = ''
+        self.plugins_txt_path = ''
+        self.bsab = ''
         self.scanned = False
         self.mo2_mode = False
         self.update_header = True
@@ -206,7 +208,7 @@ class main(QWidget):
                     self.list_compact.item(row,0).setFlags(self.list_compact.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
             self.log_stream.show()
             self.thread_new = QThread()
-            self.worker = Worker2(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, self.update_header, self.mo2_mode)
+            self.worker = Worker2(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, self.update_header, self.mo2_mode, self.bsab)
             self.worker.moveToThread(self.thread_new)
             self.thread_new.started.connect(self.worker.run)
             self.worker.finished_signal.connect(self.thread_new.quit)
@@ -290,7 +292,8 @@ class main(QWidget):
         def run_scan():
             self.log_stream.show()
             self.thread_new = QThread()
-            self.worker = Worker(self.skyrim_folder_path, self.update_header, self.scan_esms, self.show_cells, self.mo2_mode, self.modlist_txt_path)
+            self.worker = Worker(self.skyrim_folder_path, self.update_header, self.scan_esms, self.show_cells, self.mo2_mode,
+                                  self.modlist_txt_path, self.plugins_txt_path, self.bsab)
             self.worker.moveToThread(self.thread_new)
             self.thread_new.started.connect(self.worker.scan_run)
             self.worker.finished_signal.connect(self.completed_scan)
@@ -338,7 +341,7 @@ class main(QWidget):
 
 class Worker(QObject):
     finished_signal = pyqtSignal(list, list , list, list, dict)
-    def __init__(self, path, update, scan_esms, cell, mo2_mode, modlist_txt_path):
+    def __init__(self, path, update, scan_esms, cell, mo2_mode, modlist_txt_path, plugins_txt_path, bsab):
         super().__init__()
         self.skyrim_folder_path = path
         self.update_header = update
@@ -346,10 +349,12 @@ class Worker(QObject):
         self.show_cells = cell
         self.mo2_mode = mo2_mode
         self.modlist_txt_path = modlist_txt_path
+        self.plugins_txt_path = plugins_txt_path
+        self.bsab = bsab
 
     def scan_run(self):
         print('Scanning All Files:')
-        scanner(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.scan_esms)
+        scanner(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.scan_esms, self.plugins_txt_path, self.bsab)
         print('\nGettings Dependencies')
         dependency_dictionary = dependecy_getter.scan(self.skyrim_folder_path)
         print('\nScanning Plugins:')
@@ -362,7 +367,7 @@ class Worker(QObject):
 
 class Worker2(QObject):
     finished_signal = pyqtSignal()
-    def __init__(self, checked, dependency_dictionary, skyrim_folder_path, output_folder_path, update_header, mo2_mode):
+    def __init__(self, checked, dependency_dictionary, skyrim_folder_path, output_folder_path, update_header, mo2_mode, bsab):
         super().__init__()
         self.checked = checked
         self.dependency_dictionary = dependency_dictionary
@@ -370,6 +375,7 @@ class Worker2(QObject):
         self.output_folder_path = output_folder_path
         self.update_header = update_header
         self.mo2_mode = mo2_mode
+        self.bsab = bsab
         
     def run(self):
         fp = form_processor()
@@ -379,7 +385,7 @@ class Worker2(QObject):
             count +=1
             percent = round((count/total)*100,1)
             print(f'{percent}% Patching: {count}/{total}')
-            CFIDs.compact_and_patch(fp, file, self.dependency_dictionary[os.path.basename(file).lower()], self.skyrim_folder_path, self.output_folder_path, self.update_header, self.mo2_mode)
+            CFIDs.compact_and_patch(fp, file, self.dependency_dictionary[os.path.basename(file).lower()], self.skyrim_folder_path, self.output_folder_path, self.update_header, self.mo2_mode, self.bsab)
         print("Compacted and Patched")
         print('CLEAR')
         self.finished_signal.emit()
