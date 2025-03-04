@@ -1,4 +1,3 @@
-import timeit
 import os
 import json
 import threading
@@ -7,7 +6,6 @@ import threading
 class qualification_checker():
     def scan(path, update_header, show_cells, scan_esms):
         qualification_checker.lock = threading.Lock()
-        start_time = timeit.default_timer()
         all_plugins = qualification_checker.get_from_file("ESLifier_Data/plugin_list.json")
         plugins = [plugin for plugin in all_plugins if not plugin.lower().endswith('.esl')]
         qualification_checker.need_flag_list = []
@@ -21,10 +19,6 @@ class qualification_checker():
             qualification_checker.num_max_records = 4096
         else:
             qualification_checker.num_max_records = 2048
-
-        print('\n')
-        qualification_checker.count = 0
-        qualification_checker.plugin_count = len(plugins)
 
         if len(plugins) > 1000:
             split = 5
@@ -46,9 +40,6 @@ class qualification_checker():
         for thread in threads:
             thread.join()
 
-        end_time = timeit.default_timer()
-        time_taken = end_time - start_time
-        print('-  Time taken: ' + str(round(time_taken,2)) + ' seconds')
         return qualification_checker.need_flag_list, qualification_checker.need_flag_cell_flag_list, qualification_checker.need_compacting_list, qualification_checker.need_compacting_cell_flag_list
 
     def plugin_scanner(plugins):
@@ -68,9 +59,6 @@ class qualification_checker():
                         need_compacting_list.append(plugin)
                         if new_cell:
                             need_compacting_cell_flag_list.append(os.path.basename(plugin))
-            qualification_checker.count += 1
-            percentage = (qualification_checker.count / qualification_checker.plugin_count) * 100
-            print('\033[F\033[K-  Processed: ' + str(round(percentage, 1)) + '%' + '\n-  Plugins: ' + str(qualification_checker.count) + '/' + str(qualification_checker.plugin_count), end='\r')
 
         with qualification_checker.lock:
             qualification_checker.need_flag_list.extend(need_flag_list)
