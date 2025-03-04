@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import shutil
+import sys
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QFileDialog)
@@ -42,8 +43,8 @@ class settings(QWidget):
         self.scan_esms_widget_init()
         self.show_plugins_with_cells_widget_init()
         self.enable_cell_changed_filter_widget_init()
-        self.show_plugins_with_bsas_widget_init()
         self.show_plugins_possibly_refd_by_dlls_init()
+        self.reset_extracted_bsa_list_widget_init()
         self.edit_blacklist_button_widget_init()
         self.open_eslifier_data_widget_init()
         self.clear_form_id_maps_and_compacted_and_patched_widget_init()
@@ -61,8 +62,8 @@ class settings(QWidget):
         settings_layout.addWidget(self.scan_esms_widget)
         settings_layout.addWidget(self.show_plugins_with_cells_widget)
         settings_layout.addWidget(self.enable_cell_changed_filter_widget)
-        settings_layout.addWidget(self.show_plugins_with_bsas_widget)
         settings_layout.addWidget(self.show_plugins_possibly_refd_by_dlls_widget)
+        settings_layout.addWidget(self.reset_extracted_bsa_list_widget)
         settings_layout.addWidget(self.edit_blacklist_widget)
         settings_layout.addWidget(self.open_eslifier_data_widget)
         settings_layout.addWidget(self.clear_form_id_maps_and_compacted_and_patched_widget)
@@ -230,16 +231,6 @@ class settings(QWidget):
         enable_cell_changed_filter_layout.addWidget(enable_cell_changed_filter_label)
         enable_cell_changed_filter_layout.addWidget(self.enable_cell_changed_filter_toggle)
 
-    def show_plugins_with_bsas_widget_init(self):
-        show_plugins_with_bsas_layout = QHBoxLayout()
-        self.show_plugins_with_bsas_widget = QWidget()
-        self.show_plugins_with_bsas_widget.setToolTip('Show or hide plugins that have a BSA file.')
-        show_plugins_with_bsas_label = QLabel("Show plugins with BSA files")
-        self.show_plugins_with_bsas_toggle = QtToggle()
-        self.show_plugins_with_bsas_toggle.clicked.connect(self.update_settings)
-        self.show_plugins_with_bsas_widget.setLayout(show_plugins_with_bsas_layout)
-        show_plugins_with_bsas_layout.addWidget(show_plugins_with_bsas_label)
-        show_plugins_with_bsas_layout.addWidget(self.show_plugins_with_bsas_toggle)
 
     def show_plugins_possibly_refd_by_dlls_init(self):
         show_plugins_possibly_refd_by_dlls_layout = QHBoxLayout()
@@ -251,6 +242,54 @@ class settings(QWidget):
         self.show_plugins_possibly_refd_by_dlls_widget.setLayout(show_plugins_possibly_refd_by_dlls_layout)
         show_plugins_possibly_refd_by_dlls_layout.addWidget(show_plugins_possibly_refd_by_dlls_label)
         show_plugins_possibly_refd_by_dlls_layout.addWidget(self.show_plugins_possibly_refd_by_dlls_toggle)
+    
+    def reset_extracted_bsa_list_widget_init(self):
+        reset_extracted_bsa_list_layout = QHBoxLayout()
+        self.reset_extracted_bsa_list_widget = QWidget()
+        self.reset_extracted_bsa_list_widget.setToolTip(
+            'ESLifier uses the Extracted BSA list to ensure that it does not need to\n'+
+            'go through the tedious process of extracting all releveant files in BSAs\n'+
+            'each time it scans. Use this button if a BSA has new files or you have\n'+
+            'deleted a mod that had a BSA.')
+        reset_extracted_bsa_list_label = QLabel("Reset Extracted BSA List and Delete Extracted Files")
+        reset_extracted_bsa_list_button = QPushButton('Reset BSA')
+        self.reset_extracted_bsa_list_widget.setLayout(reset_extracted_bsa_list_layout)
+        reset_extracted_bsa_list_layout.addWidget(reset_extracted_bsa_list_label)
+        reset_extracted_bsa_list_layout.addWidget(reset_extracted_bsa_list_button)
+        reset_extracted_bsa_list_button.setMinimumWidth(100)
+        reset_extracted_bsa_list_button.setMaximumWidth(100)
+        def button_pushed():
+            confirm = QMessageBox()
+            confirm.setIcon(QMessageBox.Icon.Warning)
+            confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
+            confirm.setStyleSheet("""
+                QMessageBox {
+                    background-color: lightcoral;
+                }""")
+            confirm.setText(
+                "Are you sure you want to reset the Extracted BSA List?\n" +
+                "This will cause the next scan to take longer as the BSA files will\n"+ 
+                "need to be extracted again. Also the Patch New scanner will not detect\n"+
+                "that the newly extracted files are new.")
+            confirm.setWindowTitle("Confirmation")
+            confirm.addButton(QMessageBox.StandardButton.Yes)
+            confirm.addButton(QMessageBox.StandardButton.Cancel)
+            confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
+            def accepted():
+                confirm.hide()
+                if os.path.exists('ESLifier_Data/extracted_bsa.json'):
+                    os.remove('ESLifier_Data/extracted_bsa.json')
+                if os.path.exists('bsa_extracted/'):
+                    def fast_rmtree(path):
+                        if sys.platform.startswith("win"):
+                            subprocess.run(["cmd", "/c", "rd", "/s", "/q", path], shell=True)
+                        else:
+                            subprocess.run(["rm", "-rf", path], check=True)
+                    fast_rmtree('bsa_extracted/')
+            confirm.accepted.connect(accepted)
+            confirm.show()
+
+        reset_extracted_bsa_list_button.clicked.connect(button_pushed)
 
     def edit_blacklist_button_widget_init(self):
         self.blacklist_window = blacklist_window()
@@ -372,7 +411,6 @@ class settings(QWidget):
                 self.update_header_toggle.setChecked(True)
                 self.scan_esms_toggle.setChecked(False)
                 self.show_plugins_with_cells_toggle.setChecked(True)
-                self.show_plugins_with_bsas_toggle.setChecked(False)
                 self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(False)
                 self.enable_cell_changed_filter_toggle.setChecked(True)
                 self.update_settings()
@@ -408,11 +446,8 @@ class settings(QWidget):
         if 'enable_cell_changed_filter' in self.settings.keys(): self.enable_cell_changed_filter_toggle.setChecked(self.settings['enable_cell_changed_filter'])
         else: self.enable_cell_changed_filter_toggle.setChecked(True)
 
-        if 'show_bsas' in self.settings.keys(): self.show_plugins_with_bsas_toggle.setChecked(self.settings['show_bsas'])
-        else: self.show_plugins_with_bsas_toggle.setChecked(False)
-
-        if 'show_dlls' in self.settings.keys(): self.show_plugins_with_bsas_toggle.setChecked(self.settings['show_dlls'])
-        else: self.show_plugins_with_bsas_toggle.setChecked(False)
+        if 'show_dlls' in self.settings.keys(): self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(self.settings['show_dlls'])
+        else: self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(False)
         
 
     def save_settings_to_file(self):
@@ -431,7 +466,6 @@ class settings(QWidget):
         self.settings['scan_esms'] = self.scan_esms_toggle.isChecked()
         self.settings['show_cells'] = self.show_plugins_with_cells_toggle.isChecked()
         self.settings['enable_cell_changed_filter'] = self.enable_cell_changed_filter_toggle.isChecked()
-        self.settings['show_bsas'] = self.show_plugins_with_bsas_toggle.isChecked()
         self.settings['show_dlls'] = self.show_plugins_possibly_refd_by_dlls_toggle.isChecked()
 
         if self.mo2_mode_toggle.isChecked():

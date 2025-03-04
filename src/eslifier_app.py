@@ -193,26 +193,22 @@ class main_window(QMainWindow):
         self.main_widget.list_compact.create()
         self.main_widget.list_eslify.create()
         show_cells = self.settings_widget.settings['show_cells']
-        show_bsa = self.settings_widget.settings['show_bsas']
         show_dlls = self.settings_widget.settings['show_dlls']
         self.main_widget.list_compact.setColumnHidden(1, not show_cells)
-        self.main_widget.list_compact.setColumnHidden(2, not show_bsa)
-        self.main_widget.list_compact.setColumnHidden(3, not show_dlls)
+        self.main_widget.list_compact.setColumnHidden(2, not show_dlls)
         self.main_widget.list_eslify.setColumnHidden(1, not show_cells)
         for i in range(self.main_widget.list_compact.rowCount()):
             self.main_widget.list_compact.setRowHidden(i, False)
             if self.main_widget.list_compact.item(i,6):
-                self.main_widget.list_compact.takeItem(i,6)
+                self.main_widget.list_compact.takeItem(i,5)
 
             if self.main_widget.list_compact.item(i,1) and not show_cells:
-                self.main_widget.list_compact.setRowHidden(i, True)
-            if self.main_widget.list_compact.item(i,2) and not show_bsa:
                 self.main_widget.list_compact.setRowHidden(i, True)
             if self.main_widget.list_compact.item(i,3) and not show_dlls:
                 self.main_widget.list_compact.setRowHidden(i, True)
 
             if self.main_widget.list_compact.isRowHidden(i):
-                self.main_widget.list_compact.setItem(i, 6, QTableWidgetItem('Hidden'))
+                self.main_widget.list_compact.setItem(i, 5, QTableWidgetItem('Hidden'))
                 
 
         for i in range(self.main_widget.list_eslify.rowCount()):

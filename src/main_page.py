@@ -62,7 +62,7 @@ class main(QWidget):
         self.button_scan = QPushButton("Scan Mod Files")
         self.button_scan.setToolTip(
             "This will scan the entire Skyrim Special Edition folder.\n"+
-            "Depending on the cell, bsa, and header settings, what is displayed\n" +
+            "Depending on the cell and header settings, what is displayed\n" +
             "in the below lists will change.")
         self.button_scan.clicked.connect(self.scan)
         
@@ -131,7 +131,7 @@ class main(QWidget):
             items = self.list_eslify.findItems(self.filter_eslify.text(), Qt.MatchFlag.MatchContains)
             if len(items) > 0:
                 for i in range(self.list_eslify.rowCount()):
-                    self.list_eslify.setRowHidden(i, False if (self.list_eslify.item(i,0) in items and not self.list_eslify.item(i, 6)) else True)
+                    self.list_eslify.setRowHidden(i, False if (self.list_eslify.item(i,0) in items and not self.list_eslify.item(i, 3)) else True)
         else:
             for i in range(self.list_eslify.rowCount()):
                 self.list_eslify.setRowHidden(i, False)
@@ -141,7 +141,7 @@ class main(QWidget):
             items = self.list_compact.findItems(self.filter_compact.text(), Qt.MatchFlag.MatchContains)
             if len(items) > 0:
                 for i in range(self.list_compact.rowCount()):
-                    self.list_compact.setRowHidden(i, False if (self.list_compact.item(i,0) in items and not self.list_compact.item(i, 6)) else True)
+                    self.list_compact.setRowHidden(i, False if (self.list_compact.item(i,0) in items and not self.list_compact.item(i, 5)) else True)
         else:
             for i in range(self.list_compact.rowCount()):
                 self.list_compact.setRowHidden(i, False)
