@@ -48,7 +48,8 @@ class log_stream(QMainWindow):
     def write(self, text):
         self.list.append(text)
         text = text.strip()
-        if 'Process' not in text and 'Percentage' not in text and 'Gathered' not in text and 'CLEAR' not in text and text != '':
+        if ('Process' not in text and 'Percentage' not in text and 'Gathered' not in text and 
+        'Extract' not in text and 'CLEAR' not in text and text != ''):
             self.log_file.write(text + '\n')
             self.log_file.flush()
     
@@ -96,28 +97,10 @@ class log_stream(QMainWindow):
         cursor = self.text_edit.textCursor()
         cursor.movePosition(cursor.MoveOperation.End)
 
-        if "\033[F" in text or "\033[K" in text:
-            # Parse ANSI codes to handle special behavior
-            lines = self.text_edit.toPlainText().split("\n")
-            # Handle ANSI codes
-            if "\033[F" in text:  # Move up a line
-                text = text.replace("\033[F", "")
-                if lines:
-                    lines.pop()  # Remove the last line as a simulation of 'move up'
-                if lines:
-                    lines.pop()
-
-            if "\033[K" in text:  # Clear the current line
-                text = text.replace("\033[K", "")
-                if lines:
-                    lines[-1] = ""  # Clear the last line
-                if lines:
-                    lines[-1] = ""
-
-                # Update the widget content after processing ANSI codes
-                if lines:
-                    lines[-1] = text.strip()
-            self.text_edit.setPlainText("\n".join(lines))
+        if "\033[F\033[K" in text:
+            lines = self.text_edit.toPlainText().split('\n')[:-3]
+            lines.append(text.removeprefix('\033[F\033[K'))
+            self.text_edit.setPlainText('\n'.join(lines))
         elif 'CLEAR' == text:
             self.log_file.flush()
             self.timer_clear.start(1500)
