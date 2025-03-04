@@ -1,11 +1,9 @@
 import os
 import regex as re
 import json
-import timeit
 
 class cell_scanner():
     def scan(mods_with_new_cells):
-        start_time = timeit.default_timer()
         cell_scanner.cell_changed_list = []
         cell_scanner.dependency_dict = cell_scanner.get_from_file('ESLifier_Data/dependency_dictionary.json')
         cell_scanner.plugin_count = 0
@@ -13,13 +11,8 @@ class cell_scanner():
         for mod in mods_with_new_cells:
             cell_scanner.plugin_count += len(cell_scanner.dependency_dict[os.path.basename(mod).lower()])
 
-        print('\n')
         for mod in mods_with_new_cells:
             cell_scanner.check_if_dependents_modify_new_cells(mod)
-
-        end_time = timeit.default_timer()
-        time_taken = end_time - start_time
-        print('-  Time taken: ' + str(round(time_taken,2)) + ' seconds')
 
         cell_scanner.dump_to_file('ESLifier_Data/cell_changed.json')
 
