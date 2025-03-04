@@ -409,3 +409,5 @@ src/eslifier_app.spec
 ESLifier.spec
 /dist
 Commands.txt
+/bsa_browser
+/bsa_extracted
