@@ -1,5 +1,4 @@
 import os
-import regex as re
 import json
 
 class dependecy_getter():
@@ -42,11 +41,14 @@ class dependecy_getter():
         master_list = []
         with open(file, 'rb') as f:
             f.seek(4)
-            size = int.from_bytes(f.read(4)[::-1])
+            tes4_size = int.from_bytes(f.read(4)[::-1]) + 24
             f.seek(0)
-            tes4_header = f.read(size + 24)
-            data_list = re.split(b'MAST..', tes4_header, flags=re.DOTALL)
-            data_list.remove(data_list[0])
-            for master in data_list:
-                master_list.append(re.sub(b'.DATA.*', b'', master, flags=re.DOTALL).decode('utf-8'))
+            tes4_record = f.read(tes4_size)
+        offset = 24
+        while offset < tes4_size:
+            field = tes4_record[offset:offset+4]
+            field_size = int.from_bytes(tes4_record[offset+4:offset+6][::-1])
+            if field == b'MAST':
+                master_list.append(tes4_record[offset+6:offset+field_size+5].decode('utf-8'))
+            offset += field_size + 6
         return master_list
