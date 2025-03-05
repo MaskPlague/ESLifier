@@ -22,7 +22,7 @@ class form_processor():
         for _ in range(alternate_texture_count):
             alt_tex_size = int.from_bytes(form[offset:offset+4][::-1])
             offsets.append(offset+alt_tex_size+4)
-            offset += 8 + alt_tex_size
+            offset += 12 + alt_tex_size 
         return offsets
         
     def patch_form_data(self, data_list, forms, form_id_replacements, master_byte):
