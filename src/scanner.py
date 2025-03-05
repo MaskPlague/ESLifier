@@ -3,6 +3,7 @@ import regex as re
 import threading
 import timeit
 import json
+import subprocess
 
 class scanner():
     def __init__(self, path, mo2_mode, modlist_txt_path, scan_esms, plugins_txt_path, bsab):
@@ -52,7 +53,8 @@ class scanner():
             return bsa_name
         
         plugin_index = {plugin: idx for idx, plugin in enumerate(plugins)}
-        sorted_bsa_items = sorted(bsa_dict.items(),key=lambda item: plugin_index.get(get_base_name(item[0]), float('inf')))
+        filtered_bsa_items = {k: v for k, v in bsa_dict.items() if get_base_name(k) in plugin_index}
+        sorted_bsa_items = sorted(filtered_bsa_items.items(),key=lambda item: plugin_index.get(get_base_name(item[0]), float('inf')))
         
         return dict(sorted_bsa_items)
 
@@ -96,10 +98,8 @@ class scanner():
             file = tup[1]
             if file not in scanner.extracted:
                 print(f'\033[F\033[K-  Extracting {i}/{bsa_length} BSA files\n-', end='\r')
-                cmd1 = f'{scanner.bsab}" "{file}" -f "scripts" -e -o "bsa_extracted/"'
-                cmd2 = f'{scanner.bsab} "{file}" -f ".seq" -e -o "bsa_extracted/"'
-                os.system(cmd1)
-                os.system(cmd2)
+                subprocess.run([scanner.bsab, file, "-f", ".pex", "-e", "-o", "bsa_extracted"], creationflags=subprocess.CREATE_NO_WINDOW)
+                subprocess.run([scanner.bsab, file, "-f", ".seq", "-e", "-o", "bsa_extracted"], creationflags=subprocess.CREATE_NO_WINDOW)
                 scanner.extracted.append(file)
         
         mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
@@ -168,14 +168,37 @@ class scanner():
         filtered_bsa_list = [item for item in bsa_list if item[0] in order_map]
         filtered_bsa_list.sort(key=lambda x: order_map.get(x[0], float('inf')))
         bsa_length = len(filtered_bsa_list)
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        last = 0
+        update_time = 0.1
         for i, tup in enumerate(filtered_bsa_list):
             file = tup[1]
             if file not in scanner.extracted:
-                print(f'\033[F\033[K-  Extracting {i}/{bsa_length} BSA files\n-', end='\r')
-                cmd1 = scanner.bsab + ' \"' + file + '\" -f \"scripts\" -e -o \"bsa_extracted/\"'
-                cmd2 = scanner.bsab + ' \"' + file + '\" -f \".seq\" -e -o \"bsa_extracted/\"'
-                os.system(cmd1)
-                os.system(cmd2)
+                print(f'\033[F\033[K-  Extracting {i}/{bsa_length} BSA files\n\n', end='\r')
+                with subprocess.Popen(
+                    [scanner.bsab, file, "-f", ".pex", "-e", "-o", "bsa_extracted"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    startupinfo=startupinfo,
+                    text=True
+                    ) as p:
+                        for line in p.stdout:
+                            if timeit.default_timer() - last > update_time:
+                                last = timeit.default_timer()
+                                print(f'\033[F\033[K{line}', end='\r')
+                with subprocess.Popen(
+                    [scanner.bsab, file, "-f", ".seq", "-e", "-o", "bsa_extracted"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    startupinfo=startupinfo,
+                    text=True
+                    ) as p:
+                        for line in p.stdout:
+                            if timeit.default_timer() - last > update_time:
+                                last = timeit.default_timer()
+                                print(f'\033[F\033[K{line}', end='\r')
+                print(f'\033[F\033[K')
                 scanner.extracted.append(file)
 
         mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
@@ -385,8 +408,12 @@ class scanner():
     def pex_processor(pattern2, files):
         for file in files:
             scanner.count += 1
-            scanner.percentage = (scanner.count/scanner.file_count) * 100
-            print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
+            scanner.percentage = (scanner.count / scanner.file_count) * 100
+            factor = round(scanner.file_count * 0.01)
+            if factor == 0:
+                factor = 1
+            if (scanner.count % factor) >= (factor-1):
+                print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
             scanner.file_reader(pattern2, file, 'rb')
 
     def file_processor(files, pattern, pattern3, pattern4, pattern5):
@@ -398,7 +425,7 @@ class scanner():
             factor = round(scanner.file_count * 0.01)
             if factor == 0:
                 factor = 1
-            if (scanner.count % factor) >= (factor-1) or scanner.count >= scanner.file_count:
+            if (scanner.count % factor) >= (factor-1):
                 print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
             if (file_lower.endswith(('.ini', '.json', '.psc', '.jslot', '.toml', '_conditions.txt')) or '_srd.' in file_lower):
                 if 'modex\\user\\kits' in file_lower or 'nemesis_engine' in file_lower:
