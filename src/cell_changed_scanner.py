@@ -70,7 +70,7 @@ class cell_scanner():
             
                     
     def get_master_index(file, data):
-        master_pattern = re.compile(b'MAST..(.*?).DATA')
+        master_pattern = re.compile(b'MAST..(.*?).DATA', flags=re.DOTALL)
         matches = re.findall(master_pattern, data)
         master_index = 0
         for match in matches:

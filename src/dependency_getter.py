@@ -45,9 +45,8 @@ class dependecy_getter():
             size = int.from_bytes(f.read(4)[::-1])
             f.seek(0)
             tes4_header = f.read(size + 24)
-            data_list = re.split(b'MAST..',tes4_header)
+            data_list = re.split(b'MAST..', tes4_header, flags=re.DOTALL)
             data_list.remove(data_list[0])
             for master in data_list:
                 master_list.append(re.sub(b'.DATA.*', b'', master, flags=re.DOTALL).decode('utf-8'))
-
         return master_list
