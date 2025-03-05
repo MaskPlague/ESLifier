@@ -1254,7 +1254,9 @@ class CFIDs():
         sizes_list = [[] for _ in range(len(data_list))]
 
         for i in range(len(data_list)):
-            if data_list[i][:4] != b'GRUP' and data_list[i][10] == 0x4 and (0 <= data_list[i][15] <= master_count):
+            flag_byte = data_list[i][10]
+            compressed_flag = (flag_byte & 0x04) != 0
+            if data_list[i][:4] != b'GRUP' and compressed_flag and (0 <= data_list[i][15] <= master_count):
                 try:
                     decompressed = zlib.decompress(data_list[i][28:])  # Decompress the form
                 except Exception as e:
@@ -1268,7 +1270,9 @@ class CFIDs():
     
     def recompress_data(data_list, sizes_list, master_count):
         for i in range(len(data_list)):
-            if data_list[i][:4] != b'GRUP' and data_list[i][10] == 0x4 and (0 <= data_list[i][15] <= master_count):
+            flag_byte = data_list[i][10]
+            compressed_flag = (flag_byte & 0x04) != 0
+            if data_list[i][:4] != b'GRUP' and compressed_flag and (0 <= data_list[i][15] <= master_count):
                 compressed = zlib.compress(data_list[i][24:], 6)
                 formatted = [0] * (sizes_list[i][0]- 28)
                 formatted[:24] = data_list[i][:24]
