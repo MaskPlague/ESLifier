@@ -119,7 +119,7 @@ class main_window(QMainWindow):
         self.update_settings()
         self.tabs.setCurrentIndex(0)
         if (self.settings_widget.settings['output_folder_path'] == '' or self.settings_widget.settings['skyrim_folder_path'] == '' or 
-            self.settings_widget.settings['plugins_txt_path'] == '' or
+            self.settings_widget.settings['plugins_txt_path'] == '' or self.settings_widget.settings['bsab_path'] == '' or
             (self.settings_widget.settings['mo2_mode'] and self.settings_widget.settings['mo2_modlist_txt_path'] == '')):
             self.tabs.setCurrentIndex(2)
             self.no_path_set()
@@ -127,7 +127,7 @@ class main_window(QMainWindow):
     def patch_new_selected(self):
         self.tabs.setCurrentIndex(1)
         if (self.settings_widget.settings['output_folder_path'] == '' or self.settings_widget.settings['skyrim_folder_path'] == '' or 
-            self.settings_widget.settings['plugins_txt_path'] == '' or
+            self.settings_widget.settings['plugins_txt_path'] == '' or self.settings_widget.settings['bsab_path'] == '' or
             (self.settings_widget.settings['mo2_mode'] and self.settings_widget.settings['mo2_modlist_txt_path'] == '')):
             self.tabs.setCurrentIndex(2)
             self.no_path_set()
