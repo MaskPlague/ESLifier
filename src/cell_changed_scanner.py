@@ -1,5 +1,4 @@
 import os
-import regex as re
 import json
 
 class cell_scanner():
@@ -56,25 +55,29 @@ class cell_scanner():
         dependent_data = b''
         with open(dependent, 'rb') as f:
             dependent_data = f.read()
-        
-        master_index = cell_scanner.get_master_index(mod, dependent_data)
-        previous_offset = 0
-        count = dependent_data.count(b'CELL')
-        for i in range(count):
-            offset = dependent_data.index(b'CELL', previous_offset)
-            if dependent_data[offset+15] == master_index and str(dependent_data[offset+12:offset+15].hex()) in cell_form_ids:
+        data_list = cell_scanner.create_data_list(dependent_data)
+        master_index = cell_scanner.get_master_index(mod, data_list)
+        for form in data_list:
+            if form[:4] == b'CELL' and form[15] == master_index and str(form[12:15].hex()) in cell_form_ids:
                 if os.path.basename(mod) not in cell_scanner.cell_changed_list:
                     cell_scanner.cell_changed_list.append(os.path.basename(mod))
                 return
-            previous_offset = offset+4
-            
                     
-    def get_master_index(file, data):
-        master_pattern = re.compile(b'MAST..(.*?).DATA', flags=re.DOTALL)
-        matches = re.findall(master_pattern, data)
+    def get_master_index(file, data_list):
+        tes4 = data_list[0]
+        offset = 24
+        data_len = len(tes4)
+        master_list = []
         master_index = 0
-        for match in matches:
-            if os.path.basename(file).lower() in str(match).lower():
+        name = os.path.basename(file).lower()
+        while offset < data_len:
+            field = tes4[offset:offset+4]
+            field_size = int.from_bytes(tes4[offset+4:offset+6][::-1])
+            if field == b'MAST':
+                master_list.append(tes4[offset+6:offset+field_size+5].decode('utf-8'))
+            offset += field_size + 6
+        for master in master_list:
+            if name == master.lower():
                 return master_index
             else:
                 master_index += 1
@@ -90,3 +93,16 @@ class cell_scanner():
     def dump_to_file(file):
         with open(file, 'w', encoding='utf-8') as f:
             json.dump(cell_scanner.cell_changed_list, f, ensure_ascii=False, indent=4)
+
+    def create_data_list(data):
+        data_list = []
+        offset = 0
+        while offset < len(data):
+            if data[offset:offset+4] == b'GRUP':
+                data_list.append(data[offset:offset+24])
+                offset += 24
+            else:
+                form_length = int.from_bytes(data[offset+4:offset+8][::-1])
+                data_list.append(data[offset:offset+24+form_length])
+                offset += 24 + form_length
+        return data_list
