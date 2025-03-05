@@ -171,7 +171,6 @@ class CFIDs():
     
     #Get files (not including plugins) that may/will need old Form IDs replaced with the new Form IDs
     def sort_files_to_patch_or_rename(master, files):
-        #hexaPattern = re.compile(r'([0-9a-fA-F]+){6,}[.](?!p)')
         files_to_patch = []
         files_to_rename = []
         matchers = ['.pex', '.psc', '.ini', '_conditions.txt', '.json', '.jslot', '_srd.', os.path.splitext(os.path.basename(master))[0].lower() + '.seq', '.toml']
@@ -367,7 +366,7 @@ class CFIDs():
                     elif 'vsu\\' in new_file_lower:                                                     # VSU
                         CFIDs.ini_po3_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
                     else:                                                                               # Might patch whatever else is using .ini?
-                        print(f'Possible missing patcher for: {new_file}')
+                        print(f'Warn: Possible missing patcher for: {new_file}')
                         with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
                             for line in f:
                                 if basename in line.lower():
@@ -412,7 +411,7 @@ class CFIDs():
                     elif os.path.basename(new_file_lower).startswith('shse.'):                          # Smart Harvest
                         CFIDs.json_shse_patcher(basename, new_file, form_id_map)
                     else:                                                                               # Might patch whatever else is using .json?
-                        print(f'Possible missing patcher for: {new_file}')
+                        print(f'Warn: Possible missing patcher for: {new_file}')
                         with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
                             for line in f:
                                 if basename in line.lower():
@@ -450,7 +449,7 @@ class CFIDs():
                 elif new_file_lower.endswith('.jslot'):                                                 # Racemenu Presets
                     CFIDs.jslot_patcher(basename, new_file, form_id_map)
                 else:
-                    print(f'Possible missing patcher for: {new_file}')
+                    print(f'Warn: Possible missing patcher for: {new_file}')
 
             with CFIDs.lock:
                 CFIDs.compacted_and_patched[os.path.basename(master)].append(rel_path)
@@ -525,6 +524,7 @@ class CFIDs():
                 offset += 1
             data = bytes(data)
             f.seek(0)
+            f.truncate(0)
             f.write(data)
             f.close()
 
@@ -1427,8 +1427,6 @@ class CFIDs():
 
         data_list = CFIDs.update_grup_sizes(data_list, grup_struct, sizes_list)
 
-        #data = b''.join(data_list)
-
         with open(new_file, 'wb') as f:
             f.write(b''.join(data_list))
             f.close()
@@ -1501,8 +1499,7 @@ class CFIDs():
             dependent_file.truncate(0)
             dependent_file.write(b''.join(data_list))
             dependent_file.close()
-        #parts = os.path.relpath(dependent, skyrim_folder_path).lower().split('\\')
-        #rel_path = os.path.join(*parts[1:])
+
         with CFIDs.lock:
             CFIDs.compacted_and_patched[os.path.basename(file)].append(rel_path)
         return
