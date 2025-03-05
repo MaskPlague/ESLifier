@@ -100,7 +100,7 @@ class settings(QWidget):
             "enable_cell_changed_filter"
         )
         self.show_plugins_possibly_refd_by_dlls_widget, self.show_plugins_possibly_refd_by_dlls_toggle = self.create_toggle_widget(
-            "Show plugins in that are in SKSE dlls",
+            "Show plugins that are in SKSE dlls",
             "Show or hide plugins that may have Form IDs hard-coded in SKSE dlls.",
             "show_dlls"
         )
