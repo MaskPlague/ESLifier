@@ -357,9 +357,9 @@ class Worker(QObject):
         scanner(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.scan_esms, self.plugins_txt_path, self.bsab)
         print('\nGettings Dependencies')
         dependency_dictionary = dependecy_getter.scan(self.skyrim_folder_path)
-        print('\nScanning Plugins:')
+        print('\nScanning Plugins')
         list_eslify_mod_list, list_eslify_has_new_cells, list_compact_mod_list, list_compact_has_new_cells = qualification_checker.scan(self.skyrim_folder_path, self.update_header, self.show_cells, self.scan_esms)
-        print('\nChecking if New CELLs are Changed:')
+        print('Checking if New CELLs are Changed')
         combined_list = [mod for mod in list_compact_mod_list if os.path.basename(mod) in list_compact_has_new_cells]
         combined_list.extend([mod for mod in list_eslify_mod_list if os.path.basename(mod) in list_eslify_has_new_cells])
         cell_scanner.scan(combined_list)
