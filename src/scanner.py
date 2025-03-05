@@ -352,11 +352,11 @@ class scanner():
         scanner.file_count = len(scanner.pex_files)
         scanner.count = 0
         if len(scanner.pex_files) > 8192 :
-            split = 8192 
+            split = 500 
         elif len(scanner.pex_files) > 2048:
-            split = 2048
+            split = 200
         elif len(scanner.pex_files) > 512:
-            split = 512
+            split = 50
         else:
             split = 1
         chunk_size = len(scanner.pex_files) // split
