@@ -6,6 +6,7 @@ import fileinput
 import zlib
 import json
 import threading
+import subprocess
 
 class CFIDs():
     def compact_and_patch(form_processor, file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header, mo2_mode, bsab):
@@ -41,8 +42,7 @@ class CFIDs():
                     os.makedirs('bsa_extracted_temp/')
                 for bsa_file, values in bsa_dict.items():
                     if name in values:
-                        cmd1 = f'{bsab} "{bsa_file}" -f "{name}" -e -o "bsa_extracted_temp/"'
-                        os.system(cmd1)
+                        subprocess.run([bsab, file, "-f", name, "-e", "-o", "bsa_extracted"], creationflags=subprocess.CREATE_NO_WINDOW)
 
                 rel_paths = []
                 for file in patch_or_rename:
