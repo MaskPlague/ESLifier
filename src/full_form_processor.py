@@ -22,7 +22,7 @@ class form_processor():
         for _ in range(alternate_texture_count):
             alt_tex_size = int.from_bytes(form[offset:offset+4][::-1])
             offsets.append(offset+alt_tex_size+4)
-            offset += 8
+            offset += 8 + alt_tex_size
         return offsets
         
     def patch_form_data(self, data_list, forms, form_id_replacements, master_byte):
@@ -447,6 +447,7 @@ class form_processor():
 
     def save_arma_data(i, form):
         arma_fields = [b'RNAM', b'NAM0', b'NAM1', b'NAM2', b'NAM3', b'MODL', b'SNDD', b'ONAM']
+        special_arma_fields = [b'MO2S', b'MO3S', b'MO4S', b'MO5S']
 
         arma_offsets = [12]
         offset = 24
@@ -455,6 +456,9 @@ class form_processor():
             field_size = int.from_bytes(form[offset+4:offset+6][::-1])
             if field in arma_fields:
                 arma_offsets.append(offset + 6)
+            elif field in special_arma_fields:
+                if field in (b'MO2S', b'MO3S', b'MO4S', b'MO5S'):
+                    arma_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), arma_offsets]
