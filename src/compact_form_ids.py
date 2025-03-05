@@ -42,7 +42,7 @@ class CFIDs():
                     os.makedirs('bsa_extracted_temp/')
                 for bsa_file, values in bsa_dict.items():
                     if name in values:
-                        subprocess.run([bsab, file, "-f", name, "-e", "-o", "bsa_extracted"], creationflags=subprocess.CREATE_NO_WINDOW)
+                        subprocess.run([bsab, bsa_file, "-f", name, "-e", "-o", "bsa_extracted"], creationflags=subprocess.CREATE_NO_WINDOW)
 
                 rel_paths = []
                 for file in patch_or_rename:
