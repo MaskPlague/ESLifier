@@ -35,8 +35,8 @@ pyinstaller "src/eslifier_app.py" --onefile -n "ESLifier" --noconsole --icon "sr
 ```
 ## Files that are patched by ESLifier
 - .ini: PO3's KID
--   PO3's BOS
-    PO3's SPID
+-- PO3's BOS
+-- PO3's SPID
         PO3's ENBL
         Description Framwork
         SkyPatcher
