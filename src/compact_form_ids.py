@@ -350,9 +350,9 @@ class CFIDs():
                     elif 'seasons\\' in new_file_lower:                                                 # Po3's Seasons of Skyrim
                         CFIDs.ini_season_patcher(basename, new_file, form_id_map)
                     elif 'payloadinterpreter\\' in new_file_lower:                                      # Payload Interpreter
-                        CFIDs.ini_pi_patcher(basename, new_file, form_id_map)
+                        CFIDs.ini_pi_dtry_patcher(basename, new_file, form_id_map)
                     elif 'dtrykeyutil\\' in new_file_lower:                                             # DtryKeyUtil
-                        CFIDs.ini_pi_patcher(basename, new_file, form_id_map)
+                        CFIDs.ini_pi_dtry_patcher(basename, new_file, form_id_map)
                     elif 'muimpactframework\\' in new_file_lower or 'muskeletoneditor\\' in new_file_lower: # MU
                         CFIDs.ini_mu_patcher(basename, new_file, form_id_map)
                     elif '\\poisebreaker' in new_file_lower:                                            # Poise Breaker
@@ -431,7 +431,7 @@ class CFIDs():
                     elif '\\truedirectionalmovement\\' in new_file_lower:                               # TDM
                         CFIDs.toml_loki_tdm_patcher(basename,new_file, form_id_map)
                     else:
-                        print(new_file)
+                        print(f'Warn: Possible missing patcher for: {new_file}')
                 elif '_srd.' in new_file_lower:                                                         # Sound record distributor
                     CFIDs.srd_patcher(basename, new_file, form_id_map)
                 elif new_file_lower.endswith('.psc'):                                                   # Script source file patching, this doesn't take into account form ids being passed as variables
@@ -558,7 +558,7 @@ class CFIDs():
             f.write(''.join(lines))
             f.close()
 
-    def ini_pi_patcher(basename, new_file, form_id_map):
+    def ini_pi_dtry_patcher(basename, new_file, form_id_map):
         with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
