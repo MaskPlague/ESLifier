@@ -36,11 +36,10 @@ class form_processor():
             data_list[i] = bytes(form)
         return data_list
     
-    
     def save_all_form_data(self, data_list, master_byte, mod):
         mod_name = os.path.basename(mod).lower()
         if mod_name in form_processor.temp_form_offsets.keys():
-            temp_form_offsets =  form_processor.temp_form_offsets[os.path.basename(mod).lower()]
+            temp_form_offsets = form_processor.temp_form_offsets[mod_name]
             return [[i, bytearray(form), temp_form_offsets[i]] for i, form in enumerate(data_list)]
 
         saved_forms = []
