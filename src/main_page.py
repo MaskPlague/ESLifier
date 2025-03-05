@@ -259,7 +259,7 @@ class main(QWidget):
                 self.list_eslify.item(row,0).setFlags(self.list_eslify.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
         self.log_stream.show()
         for file in checked:
-            CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path)
+            CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path, self.mo2_mode)
         print("Flag(s) Changed")
         print("CLEAR")
         self.finished_button_action('eslify', checked)

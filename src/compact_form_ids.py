@@ -100,7 +100,9 @@ class CFIDs():
             data = {}
         return data
     
-    def set_flag(file, skyrim_folder, output_folder):
+    def set_flag(file, skyrim_folder, output_folder, mo2_mode):
+        CFIDs.mo2_mode = mo2_mode
+        CFIDs.lock = threading.Lock()
         print("-  Changing ESL flag in: " + os.path.basename(file))
         new_file, _ = CFIDs.copy_file_to_output(file, skyrim_folder, output_folder)
         with open(new_file, 'rb+') as f:
@@ -439,7 +441,7 @@ class CFIDs():
                         for line in f:
                             if basename in line.lower() and 'getformfromfile' in line.lower():
                                 for form_ids in form_id_map:
-                                    line = re.sub(r'(0x0{0,7})(' + re.escape(form_ids[0]) + r' *,)', r'\0' + form_ids[2] + ',', line, re.IGNORECASE)
+                                    line = re.sub(r'(0x0{0,7})(' + re.escape(form_ids[0]) + r' *,)', r'\0' + form_ids[2] + ',', line, flags=re.IGNORECASE)
                             print(line.strip('\n'))
                         fileinput.close()
                 elif 'facegeom' in new_file_lower and new_file_lower.endswith('.nif'):                  # FaceGeom mesh patching
@@ -1250,13 +1252,13 @@ class CFIDs():
                 CFIDs.change_json_key(item, old_key, new_key)
         return data
     
-    def decompress_data(data_list, master_count):
+    def decompress_data(data_list):
         sizes_list = [[] for _ in range(len(data_list))]
 
         for i in range(len(data_list)):
             flag_byte = data_list[i][10]
             compressed_flag = (flag_byte & 0x04) != 0
-            if data_list[i][:4] != b'GRUP' and compressed_flag and (0 <= data_list[i][15] <= master_count):
+            if data_list[i][:4] != b'GRUP' and compressed_flag:
                 try:
                     decompressed = zlib.decompress(data_list[i][28:])  # Decompress the form
                 except Exception as e:
@@ -1268,11 +1270,11 @@ class CFIDs():
 
         return data_list, sizes_list
     
-    def recompress_data(data_list, sizes_list, master_count):
+    def recompress_data(data_list, sizes_list):
         for i in range(len(data_list)):
             flag_byte = data_list[i][10]
             compressed_flag = (flag_byte & 0x04) != 0
-            if data_list[i][:4] != b'GRUP' and compressed_flag and (0 <= data_list[i][15] <= master_count):
+            if data_list[i][:4] != b'GRUP' and compressed_flag:
                 compressed = zlib.compress(data_list[i][24:], 6)
                 formatted = [0] * (sizes_list[i][0]- 28)
                 formatted[:24] = data_list[i][:24]
@@ -1357,7 +1359,7 @@ class CFIDs():
         else:
             mC = str(master_count)
 
-        data_list, sizes_list = CFIDs.decompress_data(data_list, master_count)
+        data_list, sizes_list = CFIDs.decompress_data(data_list)
 
         form_id_list = []
         #Get all form ids in plugin
@@ -1427,7 +1429,7 @@ class CFIDs():
 
         data_list = CFIDs.form_processor.patch_form_data(data_list, saved_forms, form_id_replacements, master_byte)
 
-        data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list, master_count)
+        data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
 
         data_list = CFIDs.update_grup_sizes(data_list, grup_struct, sizes_list)
 
@@ -1477,8 +1479,7 @@ class CFIDs():
             
             data_list, grup_struct = CFIDs.create_data_list(dependent_data)
         
-            master_count = data_list[0].count(b'MAST')
-            data_list, sizes_list = CFIDs.decompress_data(data_list, master_count)
+            data_list, sizes_list = CFIDs.decompress_data(data_list)
 
             master_index = CFIDs.get_master_index(file, data_list)
 
@@ -1495,7 +1496,7 @@ class CFIDs():
 
             data_list = CFIDs.form_processor.patch_form_data(data_list, saved_forms, form_id_replacements, master_byte)
 
-            data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list, master_count)
+            data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
             
             data_list = CFIDs.update_grup_sizes(data_list, grup_struct, sizes_list)
 
