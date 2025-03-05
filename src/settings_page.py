@@ -35,22 +35,113 @@ class settings(QWidget):
         self.file_dialog_2 = QFileDialog()
         self.file_dialog_2.setFileMode(QFileDialog.FileMode.ExistingFile)
 
-        self.skyrim_folder_path_widget_init()
-        self.output_folder_path_widget_init()
-        self.plugins_txt_path_widget_init()
-        self.bsab_path_widget_init()
-        self.mo2_modlist_txt_path_widget_init()
-        self.mo2_mode_widget_init()
-        self.update_header_widget_init()
-        self.scan_esms_widget_init()
-        self.show_plugins_with_cells_widget_init()
-        self.enable_cell_changed_filter_widget_init()
-        self.show_plugins_possibly_refd_by_dlls_init()
-        self.reset_extracted_bsa_list_widget_init()
-        self.edit_blacklist_button_widget_init()
-        self.open_eslifier_data_widget_init()
-        self.clear_form_id_maps_and_compacted_and_patched_widget_init()
-        self.reset_settings_widget_init()
+        self.skyrim_folder_path_widget, self.skyrim_folder_path = self.create_path_widget(
+            "Skyrim Folder Path",
+            "Set this to your Skyrim Special Edition folder that holds SkyrimSE.exe.",
+            'C:/Path/To/Skyrim Special Edition',
+            self.skyrim_folder_path_clicked
+        )
+        self.output_folder_path_widget, self.output_folder_path = self.create_path_widget(
+            "Output Folder Path",
+            "Set where you want the Output Folder 'ESLifier Ouput' to be generated.",
+            'C:/Path/To/The/Output/Folder/',
+            self.output_folder_path_clicked
+        )
+        self.plugins_txt_path_widget, self.plugins_txt_path = self.create_path_widget(
+            "Plugins.txt Path",
+            "Set this to your modlist\'s plugins.txt",
+            'C:/Path/To/plugins.txt',
+            self.plugins_txt_path_clicked
+        )
+        self.bsab_path_widget, self.bsab_path = self.create_path_widget(
+            "bsab.exe Path",
+            "Set this to BSA Browser's CLI: bsab.exe",
+            'C:/Path/To/BSA Browser\'s/bsab.exe',
+            self.bsab_path_clicked
+        )
+        self.mo2_modlist_txt_path_widget, self.mo2_modlist_txt_path = self.create_path_widget(
+            "Modlist.txt Path",
+            "Set this to your profile's modlist.txt",
+            'C:/Path/To/MO2/profiles/profile_name/modlist.txt',
+            self.mo2_modlist_txt_path_clicked
+        )
+        self.mo2_mode_widget, self.mo2_mode_toggle = self.create_toggle_widget(
+            "Enabled MO2 Mode",
+            "MO2 users should not launch this executible through MO2 and\n"+
+            "instead enable this setting. This will change the paths and scanner\n"+
+            "method to scan the MO2 mods folder and get winning file conflicts.\n"+
+            "Launching this program through MO2 drastically slows down the scanner.",
+            "mo2_mode"
+        )
+        self.mo2_mode_widget.layout().itemAt(1).widget().clicked.connect(self.mo2_mode_clicked)
+        self.update_header_widget, self.update_header_toggle = self.create_toggle_widget(
+            "Allow Form IDs below 0x000800 + Update plugin headers to 1.71",
+            "Allow scanning and patching to use the new 1.71 header.\n"+
+            "Requires Backported Extended ESL Support on Skyrim versions below 1.6.1130.\n"+
+            "Changing this settings requires a re-scan.",
+            "update_header"
+        )
+        self.scan_esms_widget, self.scan_esms_toggle = self.create_toggle_widget(
+            "Scan ESM Plugins",
+            "Scan and include ESM plugins (.esm/ESM flagged).\n"+
+            "Changing this setting will require a re-scan.",
+            "scan_esms"
+        )
+        self.show_plugins_with_cells_widget, self.show_plugins_with_cells_toggle = self.create_toggle_widget(
+            "Show plugins with new CELL records",
+            "Show or hide plugins with new CELL records.\n"+
+            "Enabling this setting will require a re-scan if you scanned with it off.",
+            "show_cells"
+        )
+        self.enable_cell_changed_filter_widget, self.enable_cell_changed_filter_toggle = self.create_toggle_widget(
+            "Hide plugins with new CELL records that are overwriten",
+            "Hide plugins with new CELL records that have been changed by a dependent plugin.\n"+
+            "Enabling this setting will require a re-scan.",
+            "enable_cell_changed_filter"
+        )
+        self.show_plugins_possibly_refd_by_dlls_widget, self.show_plugins_possibly_refd_by_dlls_toggle = self.create_toggle_widget(
+            "Show plugins in that are in SKSE dlls",
+            "Show or hide plugins that may have Form IDs hard-coded in SKSE dlls.",
+            "show_dlls"
+        )
+        self.reset_extracted_bsa_list_widget = self.create_button_widget(
+            "Reset Extracted BSA List and Delete Extracted Files",
+            'ESLifier uses the Extracted BSA list to ensure that it does not need to\n'+
+            'go through the tedious process of extracting all releveant files in BSAs\n'+
+            'each time it scans. Use this button if a BSA has new files or you have\n'+
+            'deleted a mod that had a BSA.',
+            'Reset BSA',
+            self.reset_extracted_bsa_list_clicked
+        )
+        self.blacklist_window = blacklist_window()
+        self.edit_blacklist_widget = self.create_button_widget(
+            "Remove Plugins From Blacklist",
+            'Show window to remove plugins from the blacklist. You can add\n'+
+            'plugins to the blacklist by right clicking them on the Main page.',
+            'Edit Blacklist',
+            self.edit_blacklist_button_clicked
+        )
+        self.open_eslifier_data_widget = self.create_button_widget(
+            "Open ESLifier's Data Folder",
+            "This opens the folder where all of the dictionaries and Form ID maps are stored.",
+            "Open Folder",
+            self.open_eslifier_data
+        )
+        self.clear_form_id_maps_and_compacted_and_patched_widget = self.create_button_widget(
+            "Delete All Form ID Maps and Compacted/Patched History",
+            "The Form ID Maps are used for patching any new files and plugins.\n" +
+            "The Compacted and Patched History is for getting what files and plugins\n" +
+            "are newly added after a mod was compacted and its dependents patched.\n\n" +
+            "Only use this button when you have updated a mod and/or deleted the ESLifier Ouput.",
+            "Delete All",
+            self.clear_form_id_maps_and_compacted_and_patched_clicked
+        )
+        self.reset_settings_widget = self.create_button_widget(
+            "Reset All Settings",
+            None,
+            "Reset",
+            self.reset_settings_clicked
+        )
 
         self.set_init_widget_values()
         
@@ -84,412 +175,212 @@ class settings(QWidget):
         button.setFixedWidth(width)
         return button
     
-    def skyrim_folder_path_clicked(self):
-        path = self.file_dialog.getExistingDirectory(self, "Select the Skyrim Special Edition folder", self.settings['skyrim_folder_path'])
-        if path != '':
-            self.skyrim_folder_path.setText(path)
+    def select_file_path(self, dialog, title, setting_key, line_edit, filter):
+        if filter != None:
+            path, _ = dialog.getOpenFileName(self, title, self.settings.get(setting_key, ""), filter)
+        else:
+            path = dialog.getExistingDirectory(self, title, self.settings.get(setting_key, ""))
+        if path:
+            line_edit.setText(path)
         self.update_settings()
+    
+    def skyrim_folder_path_clicked(self):
+        self.select_file_path(self.file_dialog, "Select the Skyrim Special Edition folder", 'skyrim_folder_path', self.skyrim_folder_path, None)
 
     def output_folder_path_clicked(self):
-        path = self.file_dialog.getExistingDirectory(self, "Select where you want the ouput folder", self.settings['output_folder_path'])
-        if path != '':
-            self.output_folder_path.setText(path)
-        self.update_settings()
+        self.select_file_path(self.file_dialog, "Select where you want the ouput folder", 'output_folder_path', self.output_folder_path, None)
 
     def mo2_modlist_txt_path_clicked(self):
-        path, _ = self.file_dialog_2.getOpenFileName(self, "Select your MO2 profile\'s modlist.txt", self.settings['mo2_modlist_txt_path'], "Modlist (modlist.txt)")
-        if path != '':
-            self.mo2_modlist_txt_path.setText(path)
-        self.update_settings()
+        self.select_file_path(self.file_dialog_2, "Select your MO2 profile\'s modlist.txt", 'mo2_modlist_txt_path', self.mo2_modlist_txt_path, "Modlist (modlist.txt)")
 
     def plugins_txt_path_clicked(self):
-        path, _ = self.file_dialog_2.getOpenFileName(self, "Select your plugins.txt", self.settings['plugins_txt_path'], "Load Order (plugins.txt)")
-        if path != '':
-            self.plugins_txt_path.setText(path)
-        self.update_settings()
+        self.select_file_path(self.file_dialog_2, "Select your plugins.txt", 'plugins_txt_path', self.plugins_txt_path, "Load Order (plugins.txt)")
 
     def bsab_path_clicked(self):
-        path, _ = self.file_dialog_2.getOpenFileName(self, "Select BSA Browser\'s bsab.exe", self.settings['bsab_path'], "BSA Browser CLI (bsab.exe)")
-        if path != '':
-            self.bsab_path.setText(path)
-        self.update_settings()
+        self.select_file_path(self.file_dialog_2, "Select BSA Browser's bsab.exe", 'bsab_path', self.bsab_path, "BSA Browser CLI (bsab.exe)")
 
-    def skyrim_folder_path_widget_init(self):
-        skyrim_folder_path_layout = QHBoxLayout()
-        self.skyrim_folder_path_widget = QWidget()
-        self.skyrim_folder_path_widget.setToolTip("Set this to your Skyrim Special Edition folder that holds SkyrimSE.exe.")
-        self.skyrim_folder_path_label = QLabel("Skyrim Folder Path")
-        self.skyrim_folder_path = QLineEdit()
-        skyrim_folder_path_button = self.button_maker('Explore...', self.skyrim_folder_path_clicked, 60)
+    def create_path_widget(self, label_text, tooltip, placeholder, click_function):
+        layout = QHBoxLayout()
+        widget = QWidget()
+        widget.setToolTip(tooltip)
+        label = QLabel(label_text)
+        line_edit = QLineEdit()
+        button = self.button_maker('Explore...', click_function, 100)
 
-        self.skyrim_folder_path_widget.setLayout(skyrim_folder_path_layout)
-        skyrim_folder_path_layout.addWidget(self.skyrim_folder_path_label)
-        skyrim_folder_path_layout.addSpacing(30)
-        skyrim_folder_path_layout.addWidget(self.skyrim_folder_path)
-        skyrim_folder_path_layout.addSpacing(10)
-        skyrim_folder_path_layout.addWidget(skyrim_folder_path_button)
+        widget.setLayout(layout)
+        layout.addWidget(label)
+        layout.addSpacing(10)
+        layout.addWidget(line_edit)
+        layout.addSpacing(10)
+        layout.addWidget(button)
+
+        line_edit.setPlaceholderText(placeholder)
+        line_edit.setMinimumWidth(400)
+        line_edit.setMaximumWidth(420)
         
-        self.skyrim_folder_path.setPlaceholderText('C:/Path/To/Skyrim Special Edition')
-        self.skyrim_folder_path.setMinimumWidth(400)
+        return widget, line_edit
+    
+    def create_toggle_widget(self, label_text, tooltip, setting_key):
+        layout = QHBoxLayout()
+        widget = QWidget()
+        widget.setToolTip(tooltip)
+        label = QLabel(label_text)
+        toggle = QtToggle()
+        toggle.setChecked(self.settings.get(setting_key, False))
+        toggle.clicked.connect(self.update_settings)
+        
+        widget.setLayout(layout)
+        layout.addWidget(label)
+        layout.addWidget(toggle)
 
-    def output_folder_path_widget_init(self):
-        output_folder_path_layout = QHBoxLayout()
-        self.output_folder_path_widget = QWidget()
-        self.output_folder_path_widget.setToolTip("Set where you want the output folder 'ESLifier Ouput' to be generated.")
-        output_folder_path_label = QLabel("Output Folder Path")
-        self.output_folder_path = QLineEdit()
-        output_folder_path_button = self.button_maker('Explore...', self.output_folder_path_clicked, 60)
-
-        self.output_folder_path_widget.setLayout(output_folder_path_layout)
-        output_folder_path_layout.addWidget(output_folder_path_label)
-        output_folder_path_layout.addSpacing(30)
-        output_folder_path_layout.addWidget(self.output_folder_path)
-        output_folder_path_layout.addSpacing(10)
-        output_folder_path_layout.addWidget(output_folder_path_button)
-
-        self.output_folder_path.setPlaceholderText('C:/Path/To/The/Output/Folder/')
-        self.output_folder_path.setMinimumWidth(400)
-
-    def mo2_mode_widget_init(self):
-        mo2_mode_layout = QHBoxLayout()
-        self.mo2_mode_widget = QWidget()
-        self.mo2_mode_widget.setToolTip(
-            "MO2 users should not launch this executible through MO2 and\n"+
-            "instead enable this setting. This will change the paths and scanner\n"+
-            "method to scan the MO2 mods folder and get winning file conflicts.\n"+
-            "Launching this program through MO2 drastically slows down the scanner.")
-        mo2_mode_label = QLabel("Enabled MO2 Mode")
-        self.mo2_mode_toggle = QtToggle()
-        self.mo2_mode_toggle.clicked.connect(self.update_settings)
-        self.mo2_mode_toggle.clicked.connect(self.mo2_mode_clicked)
-        self.mo2_mode_widget.setLayout(mo2_mode_layout)
-        mo2_mode_layout.addWidget(mo2_mode_label)
-        mo2_mode_layout.addWidget(self.mo2_mode_toggle)
+        return widget, toggle
 
     def mo2_mode_clicked(self):
         if self.mo2_mode_toggle.checkState() == Qt.CheckState.Checked:
             self.skyrim_folder_path_widget.setToolTip("Set this to your Mod Organizer 2 mod's folder that holds all of your installed mods.")
-            self.skyrim_folder_path_label.setText("MO2 Mod\'s Folder Path")
+            self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText("MO2 Mod\'s Folder Path")
             self.skyrim_folder_path.setPlaceholderText('C:/Path/To/MO2/mods')
         else:
             self.skyrim_folder_path_widget.setToolTip("Set this to your Skyrim Special Edition folder that holds SkyrimSE.exe.")
-            self.skyrim_folder_path_label.setText("Skyrim Folder Path")
+            self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText("Skyrim Folder Path")
             self.skyrim_folder_path.setPlaceholderText('C:/Path/To/Skyrim Special Edition')
 
-    def mo2_modlist_txt_path_widget_init(self):
-        mo2_modlist_txt_path_layout = QHBoxLayout()
-        self.mo2_modlist_txt_path_widget = QWidget()
-        self.mo2_modlist_txt_path_widget.setToolTip("Set this to your profile\'s modlist.txt")
-        mo2_modlist_txt_path_label = QLabel("Modlist.txt Path")
-        self.mo2_modlist_txt_path = QLineEdit()
-        mo2_modlist_txt_path_button = self.button_maker('Explore...', self.mo2_modlist_txt_path_clicked, 60)
+    def create_button_widget(self, label_text, tooltip, button_text, click_function):
+        layout = QHBoxLayout()
+        widget = QWidget()
+        widget.setToolTip(tooltip)
+        label = QLabel(label_text)
+        button = QPushButton(button_text)
+        button.setFixedWidth(100)
+        button.clicked.connect(click_function)
 
-        self.mo2_modlist_txt_path_widget.setLayout(mo2_modlist_txt_path_layout)
-        mo2_modlist_txt_path_layout.addWidget(mo2_modlist_txt_path_label)
-        mo2_modlist_txt_path_layout.addSpacing(30)
-        mo2_modlist_txt_path_layout.addWidget(self.mo2_modlist_txt_path)
-        mo2_modlist_txt_path_layout.addSpacing(10)
-        mo2_modlist_txt_path_layout.addWidget(mo2_modlist_txt_path_button)
-        
-        self.mo2_modlist_txt_path.setPlaceholderText('C:/Path/To/MO2/profiles/profile_name/modlist.txt')
-        self.mo2_modlist_txt_path.setMinimumWidth(400)
-
-    def plugins_txt_path_widget_init(self):
-        plugins_txt_path_layout = QHBoxLayout()
-        self.plugins_txt_path_widget = QWidget()
-        self.plugins_txt_path_widget.setToolTip("Set this to your modlist\'s plugins.txt")
-        plugins_txt_path_label = QLabel("Plugins.txt Path")
-        self.plugins_txt_path = QLineEdit()
-        plugins_txt_path_button = self.button_maker('Explore...', self.bsab_path_clicked, 60)
-
-        self.plugins_txt_path_widget.setLayout(plugins_txt_path_layout)
-        plugins_txt_path_layout.addWidget(plugins_txt_path_label)
-        plugins_txt_path_layout.addSpacing(30)
-        plugins_txt_path_layout.addWidget(self.plugins_txt_path)
-        plugins_txt_path_layout.addSpacing(10)
-        plugins_txt_path_layout.addWidget(plugins_txt_path_button)
-        
-        self.plugins_txt_path.setPlaceholderText('C:/Path/To/plugins.txt')
-        self.plugins_txt_path.setMinimumWidth(400)
-
-    def bsab_path_widget_init(self):
-        bsab_path_layout = QHBoxLayout()
-        self.bsab_path_widget = QWidget()
-        self.bsab_path_widget.setToolTip("Set this to BSA Browser's CLI: bsab.exe")
-        bsab_path_label = QLabel("bsab.exe Path")
-        self.bsab_path = QLineEdit()
-        bsab_path_button = self.button_maker('Explore...', self.bsab_path_clicked, 60)
-
-        self.bsab_path_widget.setLayout(bsab_path_layout)
-        bsab_path_layout.addWidget(bsab_path_label)
-        bsab_path_layout.addSpacing(30)
-        bsab_path_layout.addWidget(self.bsab_path)
-        bsab_path_layout.addSpacing(10)
-        bsab_path_layout.addWidget(bsab_path_button)
-        
-        self.bsab_path.setPlaceholderText('C:/Path/To/BSA Browser\'s/bsab.exe')
-        self.bsab_path.setMinimumWidth(400)
-
-    def update_header_widget_init(self):
-        update_header_layout = QHBoxLayout()
-        self.update_header_widget = QWidget()
-        self.update_header_widget.setToolTip(
-            "Allow scanning and patching to use the new 1.71 header.\n"+
-            "Requires Backported Extended ESL Support on Skyrim versions below 1.6.1130.\n"+
-            "Changing this settings requires a re-scan.")
-        update_header_label = QLabel("Allow Form IDs below 0x000800 + Update plugin headers to 1.71")
-        self.update_header_toggle = QtToggle()
-        self.update_header_toggle.clicked.connect(self.update_settings)
-        self.update_header_widget.setLayout(update_header_layout)
-        update_header_layout.addWidget(update_header_label)
-        update_header_layout.addWidget(self.update_header_toggle)
-
-    def scan_esms_widget_init(self):
-        scan_esms_layout = QHBoxLayout()
-        self.scan_esms_widget = QWidget()
-        self.scan_esms_widget.setToolTip(
-            "Scan and include ESM plugins (.esm/ESM flagged).\n"+
-            "Changing this setting will require a re-scan.")
-        scan_esms_label = QLabel("Scan ESM Plugins")
-        self.scan_esms_toggle = QtToggle()
-        self.scan_esms_toggle.clicked.connect(self.update_settings)
-        self.scan_esms_widget.setLayout(scan_esms_layout)
-        scan_esms_layout.addWidget(scan_esms_label)
-        scan_esms_layout.addWidget(self.scan_esms_toggle)
-        
-    def show_plugins_with_cells_widget_init(self):
-        show_plugins_with_cells_layout = QHBoxLayout()
-        self.show_plugins_with_cells_widget = QWidget()
-        self.show_plugins_with_cells_widget.setToolTip(
-            "Show or hide plugins with new CELL records.\n"+
-            "Enabling this setting will require a re-scan if you scanned with it off.")
-        show_plugins_with_cells_label = QLabel("Show plugins with new CELL records")
-        self.show_plugins_with_cells_toggle = QtToggle()
-        self.show_plugins_with_cells_toggle.clicked.connect(self.update_settings)
-        self.show_plugins_with_cells_widget.setLayout(show_plugins_with_cells_layout)
-        show_plugins_with_cells_layout.addWidget(show_plugins_with_cells_label)
-        show_plugins_with_cells_layout.addWidget(self.show_plugins_with_cells_toggle)
-
-    def enable_cell_changed_filter_widget_init(self):
-        enable_cell_changed_filter_layout = QHBoxLayout()
-        self.enable_cell_changed_filter_widget = QWidget()
-        self.enable_cell_changed_filter_widget.setToolTip(
-            "Hide plugins with new CELL records that have been changed by a dependent plugin.\n"+
-            "Enabling this setting will require a re-scan.")
-        enable_cell_changed_filter_label = QLabel("Hide plugins with new CELL records that are overwriten")
-        self.enable_cell_changed_filter_toggle = QtToggle()
-        self.enable_cell_changed_filter_toggle.clicked.connect(self.update_settings)
-        self.enable_cell_changed_filter_widget.setLayout(enable_cell_changed_filter_layout)
-        enable_cell_changed_filter_layout.addWidget(enable_cell_changed_filter_label)
-        enable_cell_changed_filter_layout.addWidget(self.enable_cell_changed_filter_toggle)
-
-
-    def show_plugins_possibly_refd_by_dlls_init(self):
-        show_plugins_possibly_refd_by_dlls_layout = QHBoxLayout()
-        self.show_plugins_possibly_refd_by_dlls_widget = QWidget()
-        self.show_plugins_possibly_refd_by_dlls_widget.setToolTip('Show or hide plugins that may have Form IDs hard-coded in SKSE dlls.')
-        show_plugins_possibly_refd_by_dlls_label = QLabel("Show plugins in that are in SKSE dlls")
-        self.show_plugins_possibly_refd_by_dlls_toggle = QtToggle()
-        self.show_plugins_possibly_refd_by_dlls_toggle.clicked.connect(self.update_settings)
-        self.show_plugins_possibly_refd_by_dlls_widget.setLayout(show_plugins_possibly_refd_by_dlls_layout)
-        show_plugins_possibly_refd_by_dlls_layout.addWidget(show_plugins_possibly_refd_by_dlls_label)
-        show_plugins_possibly_refd_by_dlls_layout.addWidget(self.show_plugins_possibly_refd_by_dlls_toggle)
+        widget.setLayout(layout)
+        layout.addWidget(label)
+        layout.addWidget(button)
+        return widget
     
-    def reset_extracted_bsa_list_widget_init(self):
-        reset_extracted_bsa_list_layout = QHBoxLayout()
-        self.reset_extracted_bsa_list_widget = QWidget()
-        self.reset_extracted_bsa_list_widget.setToolTip(
-            'ESLifier uses the Extracted BSA list to ensure that it does not need to\n'+
-            'go through the tedious process of extracting all releveant files in BSAs\n'+
-            'each time it scans. Use this button if a BSA has new files or you have\n'+
-            'deleted a mod that had a BSA.')
-        reset_extracted_bsa_list_label = QLabel("Reset Extracted BSA List and Delete Extracted Files")
-        reset_extracted_bsa_list_button = QPushButton('Reset BSA')
-        self.reset_extracted_bsa_list_widget.setLayout(reset_extracted_bsa_list_layout)
-        reset_extracted_bsa_list_layout.addWidget(reset_extracted_bsa_list_label)
-        reset_extracted_bsa_list_layout.addWidget(reset_extracted_bsa_list_button)
-        reset_extracted_bsa_list_button.setMinimumWidth(100)
-        reset_extracted_bsa_list_button.setMaximumWidth(100)
-        def button_pushed():
-            confirm = QMessageBox()
-            confirm.setIcon(QMessageBox.Icon.Warning)
-            confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
-            confirm.setStyleSheet("""
-                QMessageBox {
-                    background-color: lightcoral;
-                }""")
-            confirm.setText(
-                "Are you sure you want to reset the Extracted BSA List?\n" +
-                "This will cause the next scan to take significantly longer as the BSA files will\n"+ 
-                "need to be extracted again and irrelevant script files will need to be filtered.\n\n"+
-                "This can take a minute or so and will freeze the UI\n"+
-                "or you can manually delete the \"bsa_extracted/\" folder\n"+
-                "and then click this button.")
-            confirm.setWindowTitle("Confirmation")
-            confirm.addButton(QMessageBox.StandardButton.Yes)
-            confirm.addButton(QMessageBox.StandardButton.Cancel)
-            confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
-            def accepted():
-                confirm.hide()
-                if os.path.exists('ESLifier_Data/extracted_bsa.json'):
-                    os.remove('ESLifier_Data/extracted_bsa.json')
-                if os.path.exists('bsa_extracted/'):
-                    def delete_directory(dir_path):
-                        try:
-                            shutil.rmtree(dir_path)
-                        except Exception as e:
-                            pass
+    def reset_extracted_bsa_list_clicked(self):
+        confirm = QMessageBox()
+        confirm.setIcon(QMessageBox.Icon.Warning)
+        confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
+        confirm.setStyleSheet("""
+            QMessageBox {
+                background-color: lightcoral;
+            }""")
+        confirm.setText(
+            "Are you sure you want to reset the Extracted BSA List?\n" +
+            "This will cause the next scan to take significantly longer as the BSA files will\n"+ 
+            "need to be extracted again and irrelevant script files will need to be filtered.\n\n"+
+            "This can take a short bit and will freeze the UI\n"+
+            "or you can manually delete the \"bsa_extracted/\" folder\n"+
+            "and then click this button.")
+        confirm.setWindowTitle("Confirmation")
+        confirm.addButton(QMessageBox.StandardButton.Yes)
+        confirm.addButton(QMessageBox.StandardButton.Cancel)
+        confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
+        def accepted():
+            confirm.hide()
+            if os.path.exists('ESLifier_Data/extracted_bsa.json'):
+                os.remove('ESLifier_Data/extracted_bsa.json')
+            if os.path.exists('bsa_extracted/'):
+                def delete_directory(dir_path):
+                    try:
+                        shutil.rmtree(dir_path)
+                    except Exception as e:
+                        pass
 
-                    def delete_subdirectories_threaded(parent_dir):
-                        threads = []
-                        for item in os.listdir(parent_dir):
-                            item_path = os.path.join(parent_dir, item)
-                            if os.path.isdir(item_path):
-                                thread = threading.Thread(target=delete_directory, args=(item_path,))
-                                threads.append(thread)
-                                thread.start()
+                def delete_subdirectories_threaded(parent_dir):
+                    threads = []
+                    for item in os.listdir(parent_dir):
+                        item_path = os.path.join(parent_dir, item)
+                        if os.path.isdir(item_path):
+                            thread = threading.Thread(target=delete_directory, args=(item_path,))
+                            threads.append(thread)
+                            thread.start()
 
-                        for thread in threads:
-                            thread.join()
-                    delete_subdirectories_threaded('bsa_extracted/')
-                    #shutil.rmtree('bsa_extracted/')
-            confirm.accepted.connect(accepted)
-            confirm.show()
-
-        reset_extracted_bsa_list_button.clicked.connect(button_pushed)
-
-    def edit_blacklist_button_widget_init(self):
-        self.blacklist_window = blacklist_window()
-        edit_blacklist_layout = QHBoxLayout()
-        self.edit_blacklist_widget = QWidget()
-        self.edit_blacklist_widget.setToolTip('Show window to remove plugins from the blacklist. You can add\nplugins to the blacklist by right clicking them on the Main page.')
-        edit_blacklist_button = self.button_maker('Edit Blacklist', self.edit_blacklist_button_clicked, 100)
-        edit_blacklist_label = QLabel("Remove Plugins From Blacklist")
-        self.edit_blacklist_widget.setLayout(edit_blacklist_layout)
-        edit_blacklist_layout.addWidget(edit_blacklist_label)
-        edit_blacklist_layout.addWidget(edit_blacklist_button)
+                    for thread in threads:
+                        thread.join()
+                delete_subdirectories_threaded('bsa_extracted/')
+        confirm.accepted.connect(accepted)
+        confirm.show()
 
     def edit_blacklist_button_clicked(self):
         self.blacklist_window.blacklist.create()
         self.blacklist_window.show()
 
-    def open_eslifier_data_widget_init(self):
-        open_eslifier_data_layout = QHBoxLayout()
-        self.open_eslifier_data_widget = QWidget()
-        self.open_eslifier_data_widget.setLayout(open_eslifier_data_layout)
-        self.open_eslifier_data_widget.setToolTip("This opens the folder where all of the dictionaries and Form ID maps are stored.")
-        open_eslifier_data_label = QLabel("Open ESLifier's Data Folder")
-        open_eslifier_data_button = QPushButton("Open Folder")
-        open_eslifier_data_layout.addWidget(open_eslifier_data_label)
-        open_eslifier_data_layout.addWidget(open_eslifier_data_button)
-        open_eslifier_data_button.setMinimumWidth(100)
-        open_eslifier_data_button.setMaximumWidth(100)
-        def open_eslifier_data():
-            directory = os.path.join(os.getcwd(), 'ESLifier_data')
-            try:
-                if os.name == 'nt':
-                    os.startfile(directory)
-                elif os.name == 'posix':
-                    subprocess.Popen(['xdg-open', os.path.dirname(directory)])
-                else:
-                    subprocess.Popen(['open', os.path.dirname(directory)])
-            except Exception as e:
-                print(f"Error opening file explorer: {e}")
+    def open_eslifier_data(self):
+        directory = os.path.join(os.getcwd(), 'ESLifier_data')
+        try:
+            if os.name == 'nt':
+                os.startfile(directory)
+            elif os.name == 'posix':
+                subprocess.Popen(['xdg-open', os.path.dirname(directory)])
+            else:
+                subprocess.Popen(['open', os.path.dirname(directory)])
+        except Exception as e:
+            print(f"Error opening file explorer: {e}")
 
-        open_eslifier_data_button.clicked.connect(open_eslifier_data)
+    def clear_form_id_maps_and_compacted_and_patched_clicked(self):
+        confirm = QMessageBox()
+        confirm.setIcon(QMessageBox.Icon.Warning)
+        confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
+        confirm.setStyleSheet("""
+            QMessageBox {
+                background-color: lightcoral;
+            }""")
+        confirm.setText(
+            "Are you sure you want to delete all of the Form ID Maps and the Compacted and Patched History?\n" +
+            "This will prevent the 'Patch New' functionality from working and will require you to manually " +
+            "delete the ESLifier Ouput to continue using the program without issue.\n")
+        confirm.setWindowTitle("Confirmation")
+        confirm.addButton(QMessageBox.StandardButton.Yes)
+        confirm.addButton(QMessageBox.StandardButton.Cancel)
+        confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
+        def accepted():
+            confirm.hide()
+            if os.path.exists('ESLifier_Data/Form_ID_Maps'):
+                shutil.rmtree('ESLifier_Data/Form_ID_Maps')
+            if os.path.exists('ESLifier_Data/Cell_IDs'):
+                shutil.rmtree('ESLifier_Data/Cell_IDs')
+            if os.path.exists('ESLifier_Data/compacted_and_patched.json'):
+                os.remove('ESLifier_Data/compacted_and_patched.json')
 
-    def clear_form_id_maps_and_compacted_and_patched_widget_init(self):
-        clear_form_id_maps_and_compacted_and_patched_layout = QHBoxLayout()
-        self.clear_form_id_maps_and_compacted_and_patched_widget = QWidget()
-        self.clear_form_id_maps_and_compacted_and_patched_widget.setLayout(clear_form_id_maps_and_compacted_and_patched_layout)
-        self.clear_form_id_maps_and_compacted_and_patched_widget.setToolTip(
-            "The Form ID Maps are used for patching any new files and plugins.\n" +
-            "The Compacted and Patched History is for getting what files and plugins\n" +
-            "are newly added after a mod was compacted and its dependents patched.\n\n" +
-            "Only use this button when you have updated a mod and/or deleted the ESLifier Ouput.")
-        clear_form_id_maps_and_compacted_and_patched_label = QLabel("Delete All Form ID Maps and Compacted/Patched History")
-        clear_form_id_maps_and_compacted_and_patched_button = QPushButton("Delete All")
-        clear_form_id_maps_and_compacted_and_patched_layout.addWidget(clear_form_id_maps_and_compacted_and_patched_label)
-        clear_form_id_maps_and_compacted_and_patched_layout.addWidget(clear_form_id_maps_and_compacted_and_patched_button)
-        clear_form_id_maps_and_compacted_and_patched_button.setMinimumWidth(100)
-        clear_form_id_maps_and_compacted_and_patched_button.setMaximumWidth(100)
-        def button_pushed():
-            confirm = QMessageBox()
-            confirm.setIcon(QMessageBox.Icon.Warning)
-            confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
-            confirm.setStyleSheet("""
-                QMessageBox {
-                    background-color: lightcoral;
-                }""")
-            confirm.setText(
-                "Are you sure you want to delete all of the Form ID Maps and the Compacted and Patched History?\n" +
-                "This will prevent the 'Patch New' functionality from working and will require you to manually " +
-                "delete the ESLifier Ouput to continue using the program without issue.\n")
-            confirm.setWindowTitle("Confirmation")
-            confirm.addButton(QMessageBox.StandardButton.Yes)
-            confirm.addButton(QMessageBox.StandardButton.Cancel)
-            confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
-            def accepted():
-                confirm.hide()
-                if os.path.exists('ESLifier_Data/Form_ID_Maps'):
-                    shutil.rmtree('ESLifier_Data/Form_ID_Maps')
-                if os.path.exists('ESLifier_Data/Cell_IDs'):
-                    shutil.rmtree('ESLifier_Data/Cell_IDs')
-                if os.path.exists('ESLifier_Data/compacted_and_patched.json'):
-                    os.remove('ESLifier_Data/compacted_and_patched.json')
+        confirm.accepted.connect(accepted)
+        confirm.show()
 
-            confirm.accepted.connect(accepted)
-            confirm.show()
-
-        clear_form_id_maps_and_compacted_and_patched_button.clicked.connect(button_pushed)
-    
-    def reset_settings_widget_init(self):
-        reset_settings_layout = QHBoxLayout()
-        self.reset_settings_widget = QWidget()
-        self.reset_settings_widget.setLayout(reset_settings_layout)
-        reset_settings_label = QLabel("Reset All Settings")
-        reset_settings_button = QPushButton("Reset")
-        reset_settings_layout.addWidget(reset_settings_label)
-        reset_settings_layout.addWidget(reset_settings_button)
-        reset_settings_button.setMinimumWidth(100)
-        reset_settings_button.setMaximumWidth(100)
-        def button_pushed():
-            confirm = QMessageBox()
-            confirm.setIcon(QMessageBox.Icon.Warning)
-            confirm.setStyleSheet("""
-                QMessageBox {
-                    background-color: lightcoral;
-                }""")
-            confirm.setText("Are you sure you want to reset all settings?")
-            confirm.setWindowTitle("Confirmation")
-            confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
-            confirm.addButton(QMessageBox.StandardButton.Yes)
-            confirm.addButton(QMessageBox.StandardButton.Cancel)
-            confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
-            def acccepted():
-                confirm.hide()
-                if os.path.exists('ESLifier_Data/settings.json'):
-                    os.remove('ESLifier_Data/settings.json')
-                self.settings.clear()
-                self.skyrim_folder_path.clear()
-                self.output_folder_path.clear()
-                self.plugins_txt_path.clear()
-                self.bsab_path.clear()
-                self.mo2_modlist_txt_path.clear()
-                self.mo2_mode_toggle.setChecked(False)
-                self.update_header_toggle.setChecked(True)
-                self.scan_esms_toggle.setChecked(False)
-                self.show_plugins_with_cells_toggle.setChecked(True)
-                self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(False)
-                self.enable_cell_changed_filter_toggle.setChecked(True)
-                self.update_settings()
-
-            confirm.accepted.connect(acccepted)
-            confirm.show()
-            
-        reset_settings_button.clicked.connect(button_pushed)
+    def reset_settings_clicked(self):
+        confirm = QMessageBox()
+        confirm.setIcon(QMessageBox.Icon.Warning)
+        confirm.setStyleSheet("""
+            QMessageBox {
+                background-color: lightcoral;
+            }""")
+        confirm.setText("Are you sure you want to reset all settings?")
+        confirm.setWindowTitle("Confirmation")
+        confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
+        confirm.addButton(QMessageBox.StandardButton.Yes)
+        confirm.addButton(QMessageBox.StandardButton.Cancel)
+        confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
+        def acccepted():
+            confirm.hide()
+            if os.path.exists('ESLifier_Data/settings.json'):
+                os.remove('ESLifier_Data/settings.json')
+            self.settings.clear()
+            self.skyrim_folder_path.clear()
+            self.output_folder_path.clear()
+            self.plugins_txt_path.clear()
+            self.bsab_path.clear()
+            self.mo2_modlist_txt_path.clear()
+            self.mo2_mode_toggle.setChecked(False)
+            self.update_header_toggle.setChecked(True)
+            self.scan_esms_toggle.setChecked(False)
+            self.show_plugins_with_cells_toggle.setChecked(True)
+            self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(False)
+            self.enable_cell_changed_filter_toggle.setChecked(True)
+            self.update_settings()
+        confirm.accepted.connect(acccepted)
+        confirm.show()
         
-
     def set_init_widget_values(self):
         if 'skyrim_folder_path' in self.settings.keys(): self.skyrim_folder_path.setText(self.settings['skyrim_folder_path'])
         else: self.settings['skyrim_folder_path'] = ''
