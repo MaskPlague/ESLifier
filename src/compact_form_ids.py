@@ -1352,7 +1352,7 @@ class CFIDs():
 
         data_list, grup_struct = CFIDs.create_data_list(data)
 
-        master_count = data_list[0].count(b'MAST')
+        master_count = CFIDs.get_master_count(data_list)
 
         if master_count <= 15:
             mC = '0' + str(master_count)
@@ -1511,11 +1511,33 @@ class CFIDs():
 
     #gets what master index the file is in inside of the dependent's data
     def get_master_index(file, data_list):
-        master_pattern = re.compile(b'MAST..(.*?).DATA', flags=re.DOTALL)
-        matches = re.findall(master_pattern, data_list[0])
+        tes4 = data_list[0]
+        offset = 24
+        data_len = len(tes4)
+        master_list = []
         master_index = 0
-        for match in matches:
-            if os.path.basename(file).lower() in str(match).lower():
+        name = os.path.basename(file).lower()
+        while offset < data_len:
+            field = tes4[offset:offset+4]
+            field_size = int.from_bytes(tes4[offset+4:offset+6][::-1])
+            if field == b'MAST':
+                master_list.append(tes4[offset+6:offset+field_size+5].decode('utf-8'))
+            offset += field_size + 6
+        for master in master_list:
+            if name == master.lower():
                 return master_index
             else:
                 master_index += 1
+    
+    def get_master_count(data_list):
+        tes4 = data_list[0]
+        offset = 24
+        data_len = len(tes4)
+        master_list = []
+        while offset < data_len:
+            field = tes4[offset:offset+4]
+            field_size = int.from_bytes(tes4[offset+4:offset+6][::-1])
+            if field == b'MAST':
+                master_list.append(tes4[offset+6:offset+field_size+5].decode('utf-8'))
+            offset += field_size + 6
+        return len(master_list)
