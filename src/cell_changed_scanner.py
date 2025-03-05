@@ -10,7 +10,7 @@ class cell_scanner():
         cell_scanner.count = 0
         for mod in mods_with_new_cells:
             cell_scanner.plugin_count += len(cell_scanner.dependency_dict[os.path.basename(mod).lower()])
-
+        print('\n')
         for mod in mods_with_new_cells:
             cell_scanner.check_if_dependents_modify_new_cells(mod)
 
