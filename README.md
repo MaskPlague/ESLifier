@@ -34,9 +34,9 @@ Open the console in the _ESLifier_ folder and run the command:
 pyinstaller "src/eslifier_app.py" --onefile -n "ESLifier" --noconsole --icon "src/images/ESLifier.ico"
 ```
 ## Files that are patched by ESLifier
-- .ini:  PO3's KID
-        PO3's BOS
-        PO3's SPID
+- .ini: PO3's KID
+-   PO3's BOS
+    PO3's SPID
         PO3's ENBL
         Description Framwork
         SkyPatcher
