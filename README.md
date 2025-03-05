@@ -34,39 +34,44 @@ Open the console in the _ESLifier_ folder and run the command:
 pyinstaller "src/eslifier_app.py" --onefile -n "ESLifier" --noconsole --icon "src/images/ESLifier.ico"
 ```
 ## Files that are patched by ESLifier
-- .ini: PO3's KID
-  - PO3's BOS
-  - PO3's SPID
-        PO3's ENBL
-        Description Framwork
-        SkyPatcher
-        DtryKeyUtil
-        Poise Breaker
-        Valhalla Combat
-        AutoBody
-        Various States of Undress
-- config.json: OAR, MCM Helper
-- _conditions.txt: DAR
+- .ini:
+  - Keyword Item Distributor
+  - Base Object Swapper
+  - Spell Perk Item Distributor
+  - ENB Lights For Effect Shaders
+  - Description Framwork
+  - SkyPatcher
+  - DtryKeyUtil
+  - Poise Breaker
+  - Valhalla Combat
+  - AutoBody
+  - Various States of Undress
+- config.json:
+  - Open Animation Replacer (and user.json)
+  - MCM Helper
+- _conditions.txt: Dynamic Animation Replacer
 - _srd.: Sound Record Distributor
-- .toml:  Dynamic Animation Casting
-          Precision
-          Loki Poise
-          True Directional Movment
+- .toml:
+  - Dynamic Animation Casting
+  - Precision
+  - Loki Poise
+  - True Directional Movment
 - .psc: Source Scripts
-- .json:  Dynamic Key Activation Framework NG
-          Smart Harvest Auto NG AutoLoot
-          PapyrusUtil's StorageDataUtil
-          Custom Skills Framework
-          Dynamic String Distributor
-          Dynamic Armor Variants
-          Inventory Injector
-          Immersive Equipment Display
-          Light Placer
-          Player Equipment Manager
-          Skyrim Unbound
-          Creature Framework
-          CoMAP
-          OBody NG
+- .json:
+  - Dynamic Key Activation Framework NG
+  - Smart Harvest Auto NG AutoLoot
+  - PapyrusUtil's StorageDataUtil
+  - Custom Skills Framework
+  - Dynamic String Distributor
+  - Dynamic Armor Variants
+  - Inventory Injector
+  - Immersive Equipment Display
+  - Light Placer
+  - Player Equipment Manager
+  - Skyrim Unbound
+  - Creature Framework
+  - CoMAP
+  - OBody NG
 - .jslot: Racemenu Presets
 - facegeom's .nif: Texture paths in face mesh files
 - voice, facetint, facegeom: The names of these files are patched
