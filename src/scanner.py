@@ -4,9 +4,6 @@ import threading
 import timeit
 import json
 
-#TODO: use BSA Browser CLI to extract necessary files
-#      other files will only need to be extracted if the master plugin is being compacted.
-
 class scanner():
     def __init__(self, path, mo2_mode, modlist_txt_path, scan_esms, plugins_txt_path, bsab):
         scanner.bsa_blacklist = ['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
