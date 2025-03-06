@@ -12,12 +12,8 @@ class log_stream(QMainWindow):
         super().__init__(parent)
         self.setWindowTitle('Log Stream')
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowCloseButtonHint & ~Qt.WindowType.Dialog)
-        self.setFixedWidth(700)
-        self.setFixedHeight(300)
-        self.move(
-            parent.width() // 4,
-            parent.height() // 4
-        )
+        self.setFixedSize(400, 300)
+        self.center_on_parent()
         self.hide()
         self.text_edit = QTextEdit()
         self.text_edit.setReadOnly(True)
@@ -39,6 +35,11 @@ class log_stream(QMainWindow):
 
         self.timer_clear = QTimer(self)
         self.timer_clear.timeout.connect(self.clean_up)
+
+    def center_on_parent(self):
+        x = (self.parent().geometry().width() // 2) - (self.geometry().width() // 2)
+        y = (self.parent().geometry().height() // 2) - (self.geometry().height() // 2)
+        self.move(x,y)
 
     def show(self):
         self.raise_()
