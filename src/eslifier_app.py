@@ -203,12 +203,12 @@ class main_window(QMainWindow):
         self.main_widget.list_eslify.setColumnHidden(1, not show_cells)
         for i in range(self.main_widget.list_compact.rowCount()):
             self.main_widget.list_compact.setRowHidden(i, False)
-            if self.main_widget.list_compact.item(i,6):
+            if self.main_widget.list_compact.item(i,5):
                 self.main_widget.list_compact.takeItem(i,5)
 
             if self.main_widget.list_compact.item(i,1) and not show_cells:
                 self.main_widget.list_compact.setRowHidden(i, True)
-            if self.main_widget.list_compact.item(i,3) and not show_dlls:
+            if self.main_widget.list_compact.item(i,2) and not show_dlls:
                 self.main_widget.list_compact.setRowHidden(i, True)
 
             if self.main_widget.list_compact.isRowHidden(i):
@@ -231,6 +231,14 @@ class main_window(QMainWindow):
         sys.excepthook = sys.__excepthook__
         for window in QApplication.topLevelWidgets():
             window.close()
+
+    def resizeEvent(self, a0):
+        self.log_stream.center_on_parent()
+        return super().resizeEvent(a0)
+    
+    def moveEvent(self, a0):
+        self.log_stream.center_on_parent()
+        return super().moveEvent(a0)
     
 
 app = QApplication(sys.argv)
