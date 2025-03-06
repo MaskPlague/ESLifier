@@ -16,6 +16,7 @@ class list_compactable(QTableWidget):
         self.horizontalHeaderItem(2).setToolTip('This is the skse DLL flag. If a dll has the plugin name in it then\nit may have a LookUpForm() call that may break after compacting a flagged plugin.')
         self.horizontalHeaderItem(3).setToolTip('If a plugin has other plugins with it as a master, they will appear\nwhen the button is clicked. These will also have their\nForm IDs patched to reflect the Master plugin\'s changes.')
         self.setColumnHidden(5, True)
+        self.horizontalHeader().sortIndicatorChanged.connect(self.rehide_rows)
         self.verticalHeader().setHidden(True)
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
@@ -178,6 +179,13 @@ class list_compactable(QTableWidget):
         self.resizeColumnToContents(3)
         self.itemChanged.connect(somethingChanged)
         self.resizeRowsToContents()
+
+    def rehide_rows(self):
+        for row in range(self.rowCount()):
+            if self.item(row, 5):
+                self.setRowHidden(row, True)
+            else:
+                self.setRowHidden(row, False)
 
     def get_data_from_file(self, file):
         try:

@@ -15,6 +15,7 @@ class list_eslable(QTableWidget):
         self.horizontalHeaderItem(0).setToolTip('This is the plugin name. Select which plugins you wish to flag as light.')
         self.horizontalHeaderItem(1).setToolTip('This is the CELL Record Flag. If an ESL plugin creates a new CELL\nand another mod changes that CELL then it may not work due to an engine bug.\n\"New  CELL\" indicates the presence of a new CELL record and \"New CELL Changed\"\nindicates that the new CELL record is changed by a dependent plugin.')
         self.setColumnHidden(3, True)
+        self.horizontalHeader().sortIndicatorChanged.connect(self.rehide_rows)
         self.verticalHeader().setHidden(True)
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
@@ -114,6 +115,13 @@ class list_eslable(QTableWidget):
         self.itemChanged.connect(somethingChanged)
         self.resizeRowsToContents()
 
+    def rehide_rows(self):
+        for row in range(self.rowCount()):
+            if self.item(row, 3):
+                self.setRowHidden(row, True)
+            else:
+                self.setRowHidden(row, False)
+
     def get_data_from_file(self, file):
         try:
             with open(file, 'r') as f:
@@ -121,7 +129,6 @@ class list_eslable(QTableWidget):
         except:
             data = {}
         return data
-
     
     def contextMenu(self, position):
         selected_item = self.item(self.rowAt(position.y()), 0)
