@@ -153,7 +153,7 @@ class main(QWidget):
         checked = []
         self.list_compact.clearSelection()
         for row in range(self.list_compact.rowCount()):
-            if self.list_compact.item(row,0).checkState() == Qt.CheckState.Checked and not self.list_compact.item(row, 6):
+            if self.list_compact.item(row,0).checkState() == Qt.CheckState.Checked and not self.list_compact.item(row, 5):
                 checked.append(self.list_compact.item(row,0).toolTip())
         if checked != []:
             file_masters = main.get_from_file('ESLifier_Data/file_masters.json')
