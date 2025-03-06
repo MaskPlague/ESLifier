@@ -68,27 +68,27 @@ class scanner():
         bsa_list = []
         temp_rel_paths = []
         for root, _, files in os.walk(path):
-            if 'eslifier' not in root.lower():
-                root_level = len(root.split(os.sep))
-                scanner.file_count += len(files)
-                if loop == 50: #prevent spamming stdout and slowing down the program
-                    loop = 0
-                    print(f'\033[F\033[K-  Gathered: {scanner.file_count}\n-', end='\r')
-                else:
-                    loop += 1
-                for file in files:
-                    full_path = os.path.join(root, file)
-                    rel_path = os.path.relpath(full_path, path)
-                    scanner.all_files.append(full_path)
-                    temp_rel_paths.append(rel_path)
-                    if path_level == root_level and file.lower().endswith(plugin_extensions) :
-                        scanner.plugins.append(full_path)
-                    if file.lower().endswith('.bsa') and file.lower() not in scanner.bsa_blacklist:
-                        file = file[:-4]
-                        if ' - textures' in file.lower():
-                            index = file.lower().index(' - textures')
-                            file = file[:index]
-                        bsa_list.append([file.lower(), full_path])
+            #if 'eslifier' not in root.lower():
+            root_level = len(root.split(os.sep))
+            scanner.file_count += len(files)
+            if loop == 50: #prevent spamming stdout and slowing down the program
+                loop = 0
+                print(f'\033[F\033[K-  Gathered: {scanner.file_count}\n-', end='\r')
+            else:
+                loop += 1
+            for file in files:
+                full_path = os.path.join(root, file)
+                rel_path = os.path.relpath(full_path, path)
+                scanner.all_files.append(full_path)
+                temp_rel_paths.append(rel_path)
+                if path_level == root_level and file.lower().endswith(plugin_extensions) :
+                    scanner.plugins.append(full_path)
+                if file.lower().endswith('.bsa') and file.lower() not in scanner.bsa_blacklist:
+                    file = file[:-4]
+                    if ' - textures' in file.lower():
+                        index = file.lower().index(' - textures')
+                        file = file[:index]
+                    bsa_list.append([file.lower(), full_path])
 
         order_map = {plugin: index for index, plugin in enumerate(plugins_list)}
         filtered_bsa_list = [item for item in bsa_list if item[0] in order_map]
@@ -313,11 +313,12 @@ class scanner():
     def get_file_masters():
         plugin_names = []
         for plugin in scanner.plugins: plugin_names.append(os.path.basename(plugin).lower())
-        pattern = re.compile(r'(?:~|: *|\||=|,|-|")\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\)?)(?:\||,|"|$)')
-        pattern2 = re.compile(rb'\x00.([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\x00', flags=re.DOTALL)
-        pattern3 = re.compile(r'\\facegeom\\([a-zA-Z0-9_\-\'\?\!\(\)\[\]\, ]+\.es[pml])\\')
-        pattern4 = re.compile(r'\\facetint\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
-        pattern5 = re.compile(r'\\sound\\voice\\([a-z0-9\_\'\-\?\!\(\)\[\]\, ]+\.es[pml])\\')
+        #pattern = re.compile(r'(?:~|: *|\||=|,|-|")\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\)?)(?:\||,|"|$)')
+        pattern = re.compile(r'(?:~|: *|\||=|,|-|")\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\)?)\s*(?:\||,|"|$)')
+        pattern2 = re.compile(rb'\x00.([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\x00', flags=re.DOTALL)
+        pattern3 = re.compile(r'\\facegeom\\([a-zA-Z0-9_\-\'\?\!\(\)\[\]\,\s]+\.es[pml])\\')
+        pattern4 = re.compile(r'\\facetint\\([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\\')
+        pattern5 = re.compile(r'\\sound\\voice\\([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\\')
         scanner.file_dict = {plugin: [] for plugin in plugin_names}
         scanner.bsa_dict = {}
         scanner.dll_dict = {}
@@ -509,7 +510,7 @@ class scanner():
                         if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
                         if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
             else:
-                with open(file, 'r', errors='ignore') as f:
+                with open(file, 'r', encoding='utf-8', errors='ignore') as f:
                     r = re.findall(pattern,f.read().lower())
                     f.close()
                 if r != []:
@@ -522,6 +523,7 @@ class scanner():
                     os.remove(file)
 
         if reader_type == 'rb':
+            #TODO: optimize .pex scanning, probably get all strings from the string table and use .endswith()
             with open(file, 'rb') as f:
                 r = re.findall(pattern,f.read().lower())
                 f.close()
