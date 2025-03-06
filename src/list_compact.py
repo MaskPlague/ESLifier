@@ -120,7 +120,7 @@ class list_compactable(QTableWidget):
 
         for i in range(len(self.mod_list)):
             item = QTableWidgetItem(os.path.basename(self.mod_list[i]))
-            if os.path.basename(self.mod_list[i]) in self.compacted.keys():
+            if os.path.basename(self.mod_list[i]) in self.compacted:
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
                 item.setCheckState(Qt.CheckState.PartiallyChecked)
             else:
@@ -138,7 +138,7 @@ class list_compactable(QTableWidget):
                     item_cell_flag.setToolTip('This mod has a new CELL record\nand has a dependent plugin that modifies it.\nIt is NOT recommended to ESL flag it.')
                 item_cell_flag.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.setItem(i, 1, item_cell_flag)
-            if os.path.basename(self.mod_list[i].lower()) in self.dll_dict.keys():
+            if os.path.basename(self.mod_list[i].lower()) in self.dll_dict:
                 item_dll = QTableWidgetItem('SKSE DLL')
                 tooltip = 'This mod\'s plugin name is present in the following SKSE dlls\nand may break them if a hard-coded form id is present:\n'
                 for dll in self.dll_dict[os.path.basename(self.mod_list[i]).lower()]:

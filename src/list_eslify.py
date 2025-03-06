@@ -79,7 +79,7 @@ class list_eslable(QTableWidget):
 
         for i in range(len(self.mod_list)):
             item = QTableWidgetItem(os.path.basename(self.mod_list[i]))
-            if os.path.basename(self.mod_list[i]).lower() in self.compacted.keys():
+            if os.path.basename(self.mod_list[i]).lower() in self.compacted:
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
                 item.setCheckState(Qt.CheckState.PartiallyChecked)
             else:

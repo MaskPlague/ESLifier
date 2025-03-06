@@ -137,16 +137,16 @@ class patch_new(QWidget):
         for master, patched_files in compacted_and_patched.items():
             file_masters_list = []
             dependencies_list = []
-            if master.lower() in file_masters.keys(): 
+            if master.lower() in file_masters: 
                 file_masters_list = file_masters[master.lower()]
-            if master.lower() in dependencies.keys(): 
+            if master.lower() in dependencies: 
                 dependencies_list = dependencies[master.lower()]
             
             for file in file_masters_list:
                 parts = os.path.relpath(file, self.skyrim_folder_path).split('\\')
                 rel_path = os.path.join(*parts[1:])
                 if rel_path.lower() not in patched_files: 
-                    if master not in new_files.keys():
+                    if master not in new_files:
                         new_files[master] = []
                     new_files[master].append(file)
 
@@ -154,12 +154,12 @@ class patch_new(QWidget):
                 parts = os.path.relpath(file, self.skyrim_folder_path).split('\\')
                 rel_path = os.path.join(*parts[1:])
                 if rel_path.lower() not in patched_files: 
-                    if master not in new_dependencies.keys():
+                    if master not in new_dependencies:
                         new_dependencies[master] = []
                     new_dependencies[master].append(file)
 
-        mod_list = [master for master in new_dependencies.keys()]
-        mod_list.extend([file for file in new_files.keys() if file not in mod_list])
+        mod_list = [master for master in new_dependencies]
+        mod_list.extend([file for file in new_files if file not in mod_list])
         self.list_compacted_unpatched.mod_list = mod_list
         self.list_unpatched_files.dependencies_dictionary = new_dependencies
         self.list_unpatched_files.file_dictionary = new_files
@@ -234,7 +234,7 @@ class Worker2(QObject):
             percent = round((count/total)*100,1)
             print(f'{percent}% Patching: {count}/{total}')
             dependents = []
-            if file in self.dependencies_dictionary.keys():
+            if file in self.dependencies_dictionary:
                 dependents = self.dependencies_dictionary[file]
             CFIDs.patch_new(fp, file, dependents, self.file_dictionary, self.skyrim_folder_path, self.output_folder_path, self.update_header, self.mo2_mode)
         self.finished_signal.emit()

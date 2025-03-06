@@ -46,7 +46,7 @@ class list_unpatched(QTableWidget):
         self.compacted_and_patched = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json")
         size = 0
         for mod in self.mods_selected:
-            if mod in self.file_dictionary.keys():
+            if mod in self.file_dictionary:
                 size += len(self.file_dictionary[mod])
             if mod in self.dependencies_dictionary:
                 size += len(self.dependencies_dictionary[mod])
@@ -57,7 +57,7 @@ class list_unpatched(QTableWidget):
         metric = QFontMetrics(font)
         for mod in self.mods_selected:
             x = 0
-            if mod in self.dependencies_dictionary.keys():
+            if mod in self.dependencies_dictionary:
                 while x in range(len(self.dependencies_dictionary[mod])):
                     file = metric.elidedText(self.dependencies_dictionary[mod][x], Qt.TextElideMode.ElideLeft, 400)
                     item = QTableWidgetItem(file)
@@ -65,7 +65,7 @@ class list_unpatched(QTableWidget):
                     self.setItem(i, 0, item)
                     i += 1
                     x += 1
-            if mod in self.file_dictionary.keys():
+            if mod in self.file_dictionary:
                 while x in range(len(self.file_dictionary[mod])):
                     file = metric.elidedText(self.file_dictionary[mod][x], Qt.TextElideMode.ElideLeft, 400)
                     item = QTableWidgetItem(file)

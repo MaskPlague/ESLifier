@@ -24,17 +24,17 @@ class cell_scanner():
         for key, value in dependency_dict.items():
             cell_scanner.dependency_dict[key.lower()] = value
         for mod in mods:
-            if mod in cell_scanner.dependency_dict.keys():
+            if mod in cell_scanner.dependency_dict:
                 cell_scanner.plugin_count += len(cell_scanner.dependency_dict[os.path.basename(mod).lower()])
         for mod in mods:
-            if mod in cell_scanner.dependency_dict.keys():
+            if mod in cell_scanner.dependency_dict:
                 cell_scanner.check_if_dependents_modify_new_cells(mod)
 
         cell_scanner.dump_to_file('ESLifier_Data/cell_changed.json')
 
     def check_if_dependents_modify_new_cells(mod):
         cell_form_id_file = 'ESLifier_Data/Cell_IDs/' + os.path.basename(mod) + '_CellFormIDs.txt'
-        if not os.path.exists(cell_form_id_file) or not os.path.basename(mod).lower() in cell_scanner.dependency_dict.keys():
+        if not os.path.exists(cell_form_id_file) or not os.path.basename(mod).lower() in cell_scanner.dependency_dict:
             return
         with open(cell_form_id_file, 'r') as f:
             cell_form_ids = [line.strip() for line in f.readlines()]

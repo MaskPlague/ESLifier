@@ -32,7 +32,7 @@ class dependecy_getter():
             masters = dependecy_getter.get_masters(plugin)
             if len(masters) > 0:
                 for master in masters:
-                    if master.lower() not in dependecy_getter.dependency_dictionary.keys():
+                    if master.lower() not in dependecy_getter.dependency_dictionary:
                         dependecy_getter.dependency_dictionary[master.lower()] = []
                     if plugin not in dependecy_getter.dependency_dictionary[master.lower()]:
                         dependecy_getter.dependency_dictionary[master.lower()].append(plugin)

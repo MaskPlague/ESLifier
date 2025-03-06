@@ -382,37 +382,37 @@ class settings(QWidget):
         confirm.show()
         
     def set_init_widget_values(self):
-        if 'skyrim_folder_path' in self.settings.keys(): self.skyrim_folder_path.setText(self.settings['skyrim_folder_path'])
+        if 'skyrim_folder_path' in self.settings: self.skyrim_folder_path.setText(self.settings['skyrim_folder_path'])
         else: self.settings['skyrim_folder_path'] = ''
 
-        if 'output_folder_path' in self.settings.keys(): self.output_folder_path.setText(self.settings['output_folder_path'])
+        if 'output_folder_path' in self.settings: self.output_folder_path.setText(self.settings['output_folder_path'])
         else: self.settings['output_folder_path'] = ''
 
-        if 'plugins_txt_path' in self.settings.keys(): self.plugins_txt_path.setText(self.settings['plugins_txt_path'])
+        if 'plugins_txt_path' in self.settings: self.plugins_txt_path.setText(self.settings['plugins_txt_path'])
         else: self.settings['plugins_txt_path'] = ''
 
-        if 'bsab_path' in self.settings.keys(): self.bsab_path.setText(self.settings['bsab_path'])
+        if 'bsab_path' in self.settings: self.bsab_path.setText(self.settings['bsab_path'])
         else: self.settings['bsab_path'] = ''
 
-        if 'mo2_modlist_txt_path' in self.settings.keys(): self.mo2_modlist_txt_path.setText(self.settings['mo2_modlist_txt_path'])
+        if 'mo2_modlist_txt_path' in self.settings: self.mo2_modlist_txt_path.setText(self.settings['mo2_modlist_txt_path'])
         else: self.settings['mo2_modlist_txt_path'] = ''
 
-        if 'mo2_mode' in self.settings.keys(): self.mo2_mode_toggle.setChecked(self.settings['mo2_mode'])
+        if 'mo2_mode' in self.settings: self.mo2_mode_toggle.setChecked(self.settings['mo2_mode'])
         else: self.mo2_mode_toggle.setChecked(False)
 
-        if 'update_header' in self.settings.keys(): self.update_header_toggle.setChecked(self.settings['update_header'])
+        if 'update_header' in self.settings: self.update_header_toggle.setChecked(self.settings['update_header'])
         else: self.update_header_toggle.setChecked(True)
 
-        if 'scan_esms' in self.settings.keys(): self.scan_esms_toggle.setChecked(self.settings['scan_esms'])
+        if 'scan_esms' in self.settings: self.scan_esms_toggle.setChecked(self.settings['scan_esms'])
         else: self.scan_esms_toggle.setChecked(False)
 
-        if 'show_cells' in self.settings.keys(): self.show_plugins_with_cells_toggle.setChecked(self.settings['show_cells'])
+        if 'show_cells' in self.settings: self.show_plugins_with_cells_toggle.setChecked(self.settings['show_cells'])
         else: self.show_plugins_with_cells_toggle.setChecked(True)
 
-        if 'enable_cell_changed_filter' in self.settings.keys(): self.enable_cell_changed_filter_toggle.setChecked(self.settings['enable_cell_changed_filter'])
+        if 'enable_cell_changed_filter' in self.settings: self.enable_cell_changed_filter_toggle.setChecked(self.settings['enable_cell_changed_filter'])
         else: self.enable_cell_changed_filter_toggle.setChecked(True)
 
-        if 'show_dlls' in self.settings.keys(): self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(self.settings['show_dlls'])
+        if 'show_dlls' in self.settings: self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(self.settings['show_dlls'])
         else: self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(False)
         
 

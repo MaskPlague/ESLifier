@@ -447,7 +447,7 @@ class scanner():
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
                         plugin = re.search(pattern3, file_lower).group(1)
-                        if plugin not in local_dict.keys(): 
+                        if plugin not in local_dict: 
                             local_dict.update({plugin: []})
                         if file not in local_dict[plugin]: 
                             local_dict[plugin].append(file)
@@ -457,7 +457,7 @@ class scanner():
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
                         plugin = re.search(pattern4, file_lower).group(1)
-                        if plugin not in local_dict.keys(): 
+                        if plugin not in local_dict: 
                             local_dict.update({plugin: []})
                         if file not in local_dict[plugin]: 
                             local_dict[plugin].append(file)
@@ -467,7 +467,7 @@ class scanner():
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
                         plugin = re.search(pattern5, file_lower).group(1)
-                        if plugin not in local_dict.keys(): 
+                        if plugin not in local_dict: 
                             local_dict.update({plugin: []})
                         if file not in local_dict[plugin]: 
                             local_dict[plugin].append(file)
@@ -482,11 +482,11 @@ class scanner():
     def file_name_without_ext_processor(files):
         for file in files:
             esp, esl, esm = file[0] + '.esp', file[0] + '.esl', file[0] + '.esm'
-            if esp in scanner.file_dict.keys():
+            if esp in scanner.file_dict:
                 if file[1] not in scanner.file_dict[esp]: scanner.file_dict[esp].append(file[1])
-            elif esl in scanner.file_dict.keys():
+            elif esl in scanner.file_dict:
                 if file[1] not in scanner.file_dict[esl]: scanner.file_dict[esl].append(file[1])
-            elif esm in scanner.file_dict.keys():
+            elif esm in scanner.file_dict:
                 if file[1] not in scanner.file_dict[esm]: scanner.file_dict[esm].append(file[1])
 
     def file_reader(pattern, file, reader_type):
@@ -496,17 +496,17 @@ class scanner():
                     data = json.load(f)
                     f.close()
                 plugins = []
-                if 'actor' in data.keys() and 'headTexture' in data['actor'].keys():
+                if 'actor' in data and 'headTexture' in data['actor']:
                     plugin_and_fid = data['actor']['headTexture']
                     plugins.append(plugin_and_fid[:-7].lower())
                 
-                if 'headParts' in data.keys():
+                if 'headParts' in data:
                     for part in data['headParts']:
                         formIdentifier = part['formIdentifier']
                         plugins.append(formIdentifier[:-7].lower())
                 for plugin in plugins:
                     with scanner.lock:
-                        if plugin not in scanner.file_dict.keys(): scanner.file_dict.update({plugin: []})
+                        if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
                         if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
             else:
                 with open(file, 'r', errors='ignore') as f:
@@ -516,7 +516,7 @@ class scanner():
                     for plugin in r:
                         if 'NOT Is' not in plugin:
                             with scanner.lock:
-                                if plugin not in scanner.file_dict.keys(): scanner.file_dict.update({plugin: []})
+                                if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
                                 if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
                 elif 'bsa_extracted\\' in file and file.endswith('.psc'):
                     os.remove(file)
@@ -530,11 +530,11 @@ class scanner():
                     plugin = plugin.decode('utf-8')
                     if file.lower().endswith('.dll'):
                         with scanner.lock:
-                            if plugin not in scanner.dll_dict.keys(): scanner.dll_dict.update({plugin: []})
+                            if plugin not in scanner.dll_dict: scanner.dll_dict.update({plugin: []})
                             if file not in scanner.dll_dict[plugin]: scanner.dll_dict[plugin].append(file)
                     else:
                         with scanner.lock:
-                            if plugin not in scanner.file_dict.keys(): scanner.file_dict.update({plugin: []})
+                            if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
                             if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
 
             elif 'bsa_extracted\\' in file and file.endswith('.pex'):
