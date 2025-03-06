@@ -2,7 +2,6 @@ import os
 import regex as re
 import binascii
 import shutil
-import fileinput
 import zlib
 import json
 import threading
@@ -28,9 +27,9 @@ class CFIDs():
         bsa_masters = []
         for value in bsa_dict.values():
             bsa_masters.extend(value)
-        if name in files_to_patch.keys() or name in bsa_masters:
+        if name in files_to_patch or name in bsa_masters:
             patch_or_rename = []
-            if name in files_to_patch.keys():
+            if name in files_to_patch:
                 patch_or_rename = files_to_patch[os.path.basename(file_to_compact).lower()]
 
             if name in bsa_masters:
@@ -42,7 +41,7 @@ class CFIDs():
                     os.makedirs('bsa_extracted_temp/')
                 for bsa_file, values in bsa_dict.items():
                     if name in values:
-                        subprocess.run([bsab, bsa_file, "-f", name, "-e", "-o", "bsa_extracted"], creationflags=subprocess.CREATE_NO_WINDOW)
+                        subprocess.run([bsab, bsa_file, "-f", name, "-e", "-o", "bsa_extracted_temp"], creationflags=subprocess.CREATE_NO_WINDOW)
 
                 rel_paths = []
                 for file in patch_or_rename:
@@ -83,7 +82,7 @@ class CFIDs():
         except:
             data = {}
         for key, value in CFIDs.compacted_and_patched.items():
-            if key not in data.keys():
+            if key not in data:
                 data[key] = []
             for item in value:
                 if item.lower() not in data[key]:
@@ -119,7 +118,7 @@ class CFIDs():
         if dependents != []:
             print("-  Patching New Dependent Plugins...")
             CFIDs.patch_dependent_plugins(compacted_file, dependents, skyrim_folder_path, output_folder_path, update_header)
-        if os.path.basename(compacted_file) in files_to_patch.keys():
+        if os.path.basename(compacted_file) in files_to_patch:
             to_patch, to_rename = CFIDs.sort_files_to_patch_or_rename(compacted_file, files_to_patch[os.path.basename(compacted_file)])
             form_id_map = CFIDs.get_form_id_map(compacted_file)
             if len(to_rename) > 0:
@@ -369,14 +368,16 @@ class CFIDs():
                         CFIDs.ini_po3_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
                     else:                                                                               # Might patch whatever else is using .ini?
                         print(f'Warn: Possible missing patcher for: {new_file}')
-                        with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
-                            for line in f:
+                        with open(new_file, 'r+', encoding='utf-9') as f:
+                            lines = f.readlines()
+                            for i, line in lines:
                                 if basename in line.lower():
                                     for form_ids in form_id_map:
-                                        #this is faster than re.sub by a lot ;_;
-                                        line = line.replace('0x' + form_ids[0], '0x' + form_ids[2]).replace('0x' + form_ids[1], '0x' + form_ids[3]).replace('0x' + form_ids[0].lower(), '0x' + form_ids[2].lower()).replace('0x' + form_ids[1].lower(), '0x' + form_ids[3].lower()).replace('0X' + form_ids[0], '0X' + form_ids[2]).replace('0X' + form_ids[1], '0X' + form_ids[3]).replace('0X' + form_ids[0].lower(), '0X' + form_ids[2].lower()).replace('0X' + form_ids[1].lower(), '0X' + form_ids[3].lower())
-                                print(line.strip('\n'))
-                            fileinput.close()
+                                        lines[i] = line.replace('0x' + form_ids[0], '0x' + form_ids[2]).replace('0x' + form_ids[1], '0x' + form_ids[3]).replace('0x' + form_ids[0].lower(), '0x' + form_ids[2].lower()).replace('0x' + form_ids[1].lower(), '0x' + form_ids[3].lower()).replace('0X' + form_ids[0], '0X' + form_ids[2]).replace('0X' + form_ids[1], '0X' + form_ids[3]).replace('0X' + form_ids[0].lower(), '0X' + form_ids[2].lower()).replace('0X' + form_ids[1].lower(), '0X' + form_ids[3].lower())
+                            f.seek(0)
+                            f.truncate(0)
+                            f.write(''.join(lines))
+                            f.close()
                 elif new_file_lower.endswith('_conditions.txt'):                                        # Dynamic Animation Replacer
                     CFIDs.dar_patcher(basename, new_file, form_id_map)
                 elif new_file_lower.endswith('.json'):
@@ -414,13 +415,16 @@ class CFIDs():
                         CFIDs.json_shse_patcher(basename, new_file, form_id_map)
                     else:                                                                               # Might patch whatever else is using .json?
                         print(f'Warn: Possible missing patcher for: {new_file}')
-                        with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
-                            for line in f:
+                        with open(new_file, 'r+', encoding='utf-9') as f:
+                            lines = f.readlines()
+                            for i, line in lines:
                                 if basename in line.lower():
                                     for form_ids in form_id_map:
-                                        line = line.replace(form_ids[0], form_ids[2]).replace(form_ids[1], form_ids[3]).replace(form_ids[0].lower(), form_ids[2].lower()).replace(form_ids[1].lower(), form_ids[3].lower())
-                                print(line.strip('\n'))
-                            fileinput.close()
+                                        lines[i] = line.replace(form_ids[0], form_ids[2]).replace(form_ids[1], form_ids[3]).replace(form_ids[0].lower(), form_ids[2].lower()).replace(form_ids[1].lower(), form_ids[3].lower())
+                            f.seek(0)
+                            f.truncate(0)
+                            f.write(''.join(lines))
+                            f.close()
                 elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
                     CFIDs.pex_patcher(basename, new_file, form_id_map)
                 elif new_file_lower.endswith('.toml'):
@@ -437,13 +441,7 @@ class CFIDs():
                 elif '_srd.' in new_file_lower:                                                         # Sound record distributor
                     CFIDs.srd_patcher(basename, new_file, form_id_map)
                 elif new_file_lower.endswith('.psc'):                                                   # Script source file patching, this doesn't take into account form ids being passed as variables
-                    with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
-                        for line in f:
-                            if basename in line.lower() and 'getformfromfile' in line.lower():
-                                for form_ids in form_id_map:
-                                    line = re.sub(r'(0x0{0,7})(' + re.escape(form_ids[0]) + r' *,)', r'\0' + form_ids[2] + ',', line, flags=re.IGNORECASE)
-                            print(line.strip('\n'))
-                        fileinput.close()
+                    CFIDs.psc_patcher(basename, new_file, form_id_map)
                 elif 'facegeom' in new_file_lower and new_file_lower.endswith('.nif'):                  # FaceGeom mesh patching
                     CFIDs.facegeom_mesh_patcher(basename, new_file, form_id_map)
                 elif new_file_lower.endswith('.seq'):                                                   # SEQ file patching
@@ -468,6 +466,18 @@ class CFIDs():
                 return i
         return -1
     
+    def psc_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if basename in line.lower() and 'getformfromfile' in line.lower():
+                    for form_ids in form_id_map:
+                        lines[i] = re.sub(r'(0x0{0,7})(' + re.escape(form_ids[0]) + r' *,)', r'\0' + form_ids[2] + ',', line, flags=re.IGNORECASE)
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+    
     def facegeom_mesh_patcher(basename, new_file, form_id_map):
         with open(new_file, 'rb+') as f:
             data = f.readlines()
@@ -491,6 +501,7 @@ class CFIDs():
             data = b''.join(seq_form_id_list)
             data = data.replace(b'-||+||-', b'')
             f.seek(0)
+            f.truncate(0)
             f.write(data)
             f.close()
         
@@ -990,8 +1001,9 @@ class CFIDs():
             f.close()
         
     def dar_patcher(basename, new_file, form_id_map):
-        with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
-            for line in f:
+        with open(new_file, 'r+') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
                 if basename in line.lower() and '|' in line:
                     index = line.index('|')
                     end_index = CFIDs.find_next_non_alphanumeric(line, index+2)
@@ -999,26 +1011,35 @@ class CFIDs():
                         form_id_int = int(line[index+1:end_index], 16)
                         for form_ids in form_id_map:
                             if form_id_int == int(form_ids[0], 16):
-                                line = line[:index+1] + '0x00' + form_ids[3] + line[end_index:]
-                print(line.strip('\n'))
-            fileinput.close()
+                                lines[i] = line[:index+1] + '0x' + form_ids[3] + line[end_index:]
+                                break
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
 
     def srd_patcher(basename, new_file, form_id_map):
-        with fileinput.input(new_file, inplace=True, encoding="utf-8") as f:
-            for line in f:
+        with open(new_file, 'r+') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
                 if basename in line.lower() and '|' in line:
                     index = line.index('|')
+                    end_index = CFIDs.find_next_non_alphanumeric(line, index+1)
+                    end_of_line = line[end_index:]
                     form_id_int = int(line[index+1:], 16)
                     for form_ids in form_id_map:
                         if form_id_int == int(form_ids[0], 16):
-                            line = line[:index+1] + form_ids[3]
-                print(line.strip('\n'))
-            fileinput.close()
+                            lines[i] = line[:index+1] + form_ids[3] + end_of_line
+                            break
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
 
     def jslot_patcher(basename, new_file, form_id_map):
         with open(new_file, 'r+', encoding='utf-8') as f:
             data = json.load(f)
-            if 'actor' in data.keys() and 'headTexture' in data['actor'].keys():
+            if 'actor' in data and 'headTexture' in data['actor']:
                 plugin_and_fid = data['actor']['headTexture']
                 if plugin_and_fid[:-7].lower() == basename:
                     old_id = plugin_and_fid[-6:]
@@ -1027,7 +1048,7 @@ class CFIDs():
                             data['actor']['headTexture'] = plugin_and_fid[:-6] + form_ids[3]
                             break
 
-            if 'headParts' in data.keys():
+            if 'headParts' in data:
                 for i, part in enumerate(data['headParts']):
                     formIdentifier = part['formIdentifier']
                     if formIdentifier[:-7].lower() == basename:
