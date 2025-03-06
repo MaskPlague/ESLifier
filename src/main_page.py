@@ -167,29 +167,34 @@ class main(QWidget):
             self.confirm.setEnabled(False)
             self.confirm.show()
             size = 0
-            counted = []
+            counted = set()
+
             for mod in checked:
-                if mod not in counted:
+                mod_lower = mod.lower()
+                if mod_lower not in counted:
                     size += os.path.getsize(mod)
-                    counted.append(mod)
-                if os.path.basename(mod.lower()) in self.dependency_dictionary.keys():
-                    for dependent_mod in self.dependency_dictionary[os.path.basename(mod.lower())]:
-                        if dependent_mod not in counted:
+                    counted.add(mod_lower)
+                mod_basename = os.path.basename(mod_lower)
+                if mod_basename in self.dependency_dictionary:
+                    for dependent_mod in self.dependency_dictionary[mod_basename]:
+                        dep_lower = dependent_mod.lower()
+                        if dep_lower not in counted:
                             size += os.path.getsize(dependent_mod)
-                            counted.append(dependent_mod)
-                if os.path.basename(mod.lower()) in file_masters.keys():
-                    for file in file_masters[os.path.basename(mod.lower())]:
-                        if file not in counted:
+                            counted.add(dep_lower)
+                if mod_basename in file_masters:
+                    for file in file_masters[mod_basename]:
+                        file_lower = file.lower()
+                        if file_lower not in counted:
                             size += os.path.getsize(file)
-                            counted.append(file)
+                            counted.add(file_lower)
             if size > 1024 ** 3:
-                calculated_size = round(size / (1024 ** 3),3)
+                calculated_size = round(size / (1024 ** 3), 3)
                 self.confirm.setText(f"This may generate up to {calculated_size} GBs of new files.\nAre you sure you want to continue?")
             elif size > 1048576:
-                calculated_size = round(size / 1048576,2)
+                calculated_size = round(size / 1048576, 2)
                 self.confirm.setText(f"This may generate up to {calculated_size} MBs of new files.\nAre you sure you want to continue?")
             else:
-                calculated_size = round(size / 1024,2)
+                calculated_size = round(size / 1024, 2)
                 self.confirm.setText(f"This may generate up to {calculated_size} KBs of new files.\nAre you sure you want to continue?")
             self.confirm.setWindowTitle("Confirmation")
             self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
@@ -234,11 +239,11 @@ class main(QWidget):
                     size += os.path.getsize(mod)
                     counted.append(mod)
             if size > 1048576:
-                calculated_size = round(size / 1048576,2)
-                self.confirm.setText(f"This may generate up to {calculated_size} MiBs of new files.\nAre you sure you want to continue?")
+                calculated_size = round(size / 1048576, 2)
+                self.confirm.setText(f"This may generate up to {calculated_size} MBs of new files.\nAre you sure you want to continue?")
             else:
                 calculated_size = round(size / 1024,2)
-                self.confirm.setText(f"This may generate up to {calculated_size} KiBs of new files.\nAre you sure you want to continue?")
+                self.confirm.setText(f"This may generate up to {calculated_size} KBs of new files.\nAre you sure you want to continue?")
             self.confirm.setWindowTitle("Confirmation")
             self.confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
             self.confirm.addButton(QMessageBox.StandardButton.Yes)
