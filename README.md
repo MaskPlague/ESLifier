@@ -11,6 +11,7 @@ ESLifier relies on [BSA Browser](https://www.nexusmods.com/skyrimspecialedition/
 Notes:
 - If you use MO2 do **NOT** add ESLifier.exe as an executable. Launching ESLifier through MO2 significantly slows down the file scanning process. Instead enable MO2 mode in the settings of ESLifier.
 - Almost every element in the program has a tooltip that is activated by hovering over it.
+- Currently, ESLifier may break existing save games as compacting form ids will break the existing form ids in the save file. I am currently working on processing and patching save game files.
 
 On the first launch or when the paths are not set, you will be redirected to the settings page. Set all available paths to the required folders and files. You will not be able to exit the settings page until they are set. The settings available are by default in the recommended configuration that should ensure the fewest issues when compacting or ESL flagging. You may want to disable _Show plugins with new CELL records_ if you think you may often install mods that will patch your existing mods with CELLs (the Patch New Page will warn you if you do install mods that do so later).
 
