@@ -69,7 +69,7 @@ class list_unpatched(QTableWidget):
                 while x in range(len(self.file_dictionary[mod])):
                     file = metric.elidedText(self.file_dictionary[mod][x], Qt.TextElideMode.ElideLeft, 400)
                     item = QTableWidgetItem(file)
-                    item.setToolTip(self.dependencies_dictionary[mod][x])
+                    item.setToolTip(self.file_dictionary[mod][x])
                     self.setItem(i, 0, item)
                     i += 1
                     x += 1
