@@ -70,14 +70,18 @@ class list_compacted_unpatched(QTableWidget):
                 self.setItem(i, 1, item_error)
 
         def something_changed(itemChanged):
-            if itemChanged.checkState() == Qt.CheckState.Checked:
-                for x in self.selectedItems():
-                    if x.checkState() == Qt.CheckState.Unchecked:
-                        x.setCheckState(Qt.CheckState.Checked)
-            else:
-                for x in self.selectedItems():
-                    if x.checkState() == Qt.CheckState.Checked:
-                        x.setCheckState(Qt.CheckState.Unchecked)
+            multi_check = True
+            if len(self.selectedItems()) < 2:
+                multi_check = False
+            if multi_check:
+                if itemChanged.checkState() == Qt.CheckState.Checked:
+                    for x in self.selectedItems():
+                        if x.checkState() == Qt.CheckState.Unchecked:
+                            x.setCheckState(Qt.CheckState.Checked)
+                else:
+                    for x in self.selectedItems():
+                        if x.checkState() == Qt.CheckState.Checked:
+                            x.setCheckState(Qt.CheckState.Unchecked)
 
         def item_selected():
             selected_items = self.selectedItems()

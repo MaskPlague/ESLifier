@@ -100,14 +100,18 @@ class list_eslable(QTableWidget):
 
         def somethingChanged(itemChanged):
             self.blockSignals(True)
-            if itemChanged.checkState() == Qt.CheckState.Checked:
-                for x in self.selectedItems():
-                    if x.column() == 0:
-                        x.setCheckState(Qt.CheckState.Checked)
-            else:
-                for x in self.selectedItems():
-                    if x.column() == 0:
-                        x.setCheckState(Qt.CheckState.Unchecked)
+            multi_check = True
+            if len(self.selectedItems()) < 2:
+                multi_check = False
+            if multi_check:
+                if itemChanged.checkState() == Qt.CheckState.Checked:
+                    for x in self.selectedItems():
+                        if x.column() == 0:
+                            x.setCheckState(Qt.CheckState.Checked)
+                else:
+                    for x in self.selectedItems():
+                        if x.column() == 0:
+                            x.setCheckState(Qt.CheckState.Unchecked)
             self.blockSignals(False)
 
         self.resizeColumnToContents(0)

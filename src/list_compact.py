@@ -16,7 +16,7 @@ class list_compactable(QTableWidget):
         self.horizontalHeaderItem(2).setToolTip('This is the skse DLL flag. If a dll has the plugin name in it then\nit may have a LookUpForm() call that may break after compacting a flagged plugin.')
         self.horizontalHeaderItem(3).setToolTip('If a plugin has other plugins with it as a master, they will appear\nwhen the button is clicked. These will also have their\nForm IDs patched to reflect the Master plugin\'s changes.')
         self.setColumnHidden(5, True)
-        self.horizontalHeader().sortIndicatorChanged.connect(self.rehide_rows)
+        self.horizontalHeader().sortIndicatorChanged.connect(self.hide_rows)
         self.verticalHeader().setHidden(True)
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
@@ -120,8 +120,9 @@ class list_compactable(QTableWidget):
             self.resizeRowToContents(index)
 
         for i in range(len(self.mod_list)):
-            item = QTableWidgetItem(os.path.basename(self.mod_list[i]))
-            if os.path.basename(self.mod_list[i]) in self.compacted:
+            basename = os.path.basename(self.mod_list[i])
+            item = QTableWidgetItem(basename)
+            if basename in self.compacted:
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
                 item.setCheckState(Qt.CheckState.PartiallyChecked)
             else:
@@ -131,24 +132,24 @@ class list_compactable(QTableWidget):
             item.setTextAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
             self.setItem(i, 0, item)
             self.setRowHidden(i, False)
-            if os.path.basename(self.mod_list[i]) in self.has_new_cells:
+            if basename in self.has_new_cells:
                 item_cell_flag = QTableWidgetItem('New CELL')
                 item_cell_flag.setToolTip('This mod has a new CELL record and no mods currently modify it.\nIt is currently safe to ESL flag it.')
-                if os.path.basename(self.mod_list[i]) in self.cell_changed:
+                if basename in self.cell_changed:
                     item_cell_flag.setText('New CELL Changed')
                     item_cell_flag.setToolTip('This mod has a new CELL record\nand has a dependent plugin that modifies it.\nIt is NOT recommended to ESL flag it.')
                 item_cell_flag.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.setItem(i, 1, item_cell_flag)
-            if os.path.basename(self.mod_list[i].lower()) in self.dll_dict:
+            if basename.lower() in self.dll_dict:
                 item_dll = QTableWidgetItem('SKSE DLL')
                 tooltip = 'This mod\'s plugin name is present in the following SKSE dlls\nand may break them if a hard-coded form id is present:\n'
-                for dll in self.dll_dict[os.path.basename(self.mod_list[i]).lower()]:
+                for dll in self.dll_dict[basename.lower()]:
                     tooltip += '- ' + os.path.basename(dll)
                 item_dll.setToolTip(tooltip)
                 self.setItem(i, 2, item_dll)
-            if self.dependency_list[os.path.basename(self.mod_list[i]).lower()] != []:
+            if self.dependency_list[basename.lower()] != []:
                 dL = QPushButton("Show")
-                dL.clicked.connect(lambda _, mod_key=os.path.basename(self.mod_list[i]).lower(): display_dependencies(mod_key))
+                dL.clicked.connect(lambda _, mod_key=basename.lower(): display_dependencies(mod_key))
                 dL.setMaximumSize(90,22)
                 dL.setMinimumSize(90,22)
                 dL.setStyleSheet("""
@@ -162,17 +163,20 @@ class list_compactable(QTableWidget):
 
         def somethingChanged(item_changed):
             self.blockSignals(True)
-            if item_changed.checkState() == Qt.CheckState.Checked:
-                for x in self.selectedItems():
-                    if x.column() == 0:
-                        x.setCheckState(Qt.CheckState.Checked)
-            else:
-                for x in self.selectedItems():
-                    if x.column() == 0:
-                        x.setCheckState(Qt.CheckState.Unchecked)
+            multi_check = True
+            if len(self.selectedItems()) < 2:
+                multi_check = False
+            if multi_check:
+                if item_changed.checkState() == Qt.CheckState.Checked:
+                    for x in self.selectedItems():
+                        if x.column() == 0:
+                            x.setCheckState(Qt.CheckState.Checked)
+                else:
+                    for x in self.selectedItems():
+                        if x.column() == 0:
+                            x.setCheckState(Qt.CheckState.Unchecked)
             self.blockSignals(False)
             
-
         self.resizeColumnToContents(0)
         self.resizeColumnToContents(1)
         self.resizeColumnToContents(2)
@@ -180,7 +184,7 @@ class list_compactable(QTableWidget):
         self.itemChanged.connect(somethingChanged)
         self.resizeRowsToContents()
 
-    def rehide_rows(self):
+    def hide_rows(self):
         for row in range(self.rowCount()):
             if self.item(row, 5):
                 self.setRowHidden(row, True)
