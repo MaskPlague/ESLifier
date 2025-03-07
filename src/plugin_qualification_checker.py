@@ -90,7 +90,7 @@ class qualification_checker():
         count = 0
         cell_form_ids = []
         for form in data_list:
-            if form[:4] != 'TES4' and len(form) > 24 and form[15] == master_count:
+            if form[:4] != 'TES4' and len(form) > 24 and form[15] >= master_count:
                 count += 1
                 if count > qualification_checker.num_max_records:
                     return False, False, False
@@ -100,7 +100,7 @@ class qualification_checker():
                     if not qualification_checker.show_cells:
                         return False, False, True
                     new_cell = True
-            if len(form) >= 24 and form[:4] == b'CELL' and form[15] == master_count and str(form[12:15].hex()) not in cell_form_ids:
+            if len(form) >= 24 and form[:4] == b'CELL' and form[15] >= master_count and str(form[12:15].hex()) not in cell_form_ids:
                 cell_form_ids.append(str(form[12:15].hex()))
         cell_form_ids.sort()
         if cell_form_ids != []:

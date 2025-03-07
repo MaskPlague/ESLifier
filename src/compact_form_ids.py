@@ -1383,14 +1383,14 @@ class CFIDs():
         data_list, sizes_list = CFIDs.decompress_data(data_list)
 
         form_id_list = []
-        #Get all form ids in plugin
+        #Get all new form ids in plugin
         for form in data_list:
-            if len(form) > 24 and form[15] == master_count and form[12:16] not in form_id_list:
+            if len(form) > 24 and form[15] >= master_count and form[12:16] not in form_id_list:
                 form_id_list.append([form[12:16], form[:4]])
 
         master_byte = master_count.to_bytes()
 
-        saved_forms = CFIDs.form_processor.save_all_form_data(data_list, master_byte, new_file)
+        saved_forms = CFIDs.form_processor.save_all_form_data(data_list, new_file)
 
         form_id_list.sort()
 
@@ -1448,7 +1448,9 @@ class CFIDs():
             for form_id, new_id in form_id_replacements:
                 fidf.write(str(form_id.hex()) + '|' + str(new_id.hex()) + '\n')
 
-        data_list = CFIDs.form_processor.patch_form_data(data_list, saved_forms, form_id_replacements, master_byte)
+        form_id_replacements_no_master_byte = [[old_id[:3], new_id[:3]] for old_id, new_id in form_id_replacements]
+
+        data_list = CFIDs.form_processor.patch_form_data(data_list, saved_forms, form_id_replacements_no_master_byte, master_byte)
 
         data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
 
@@ -1506,16 +1508,16 @@ class CFIDs():
 
             master_byte = master_index.to_bytes()
 
-            saved_forms = CFIDs.form_processor.save_all_form_data(data_list, master_byte, new_file)
+            saved_forms = CFIDs.form_processor.save_all_form_data(data_list, new_file)
             
             form_id_replacements = []
             for i in range(len(form_id_file_data)):
                 form_id_conversion = form_id_file_data[i].split('|')
-                from_id = bytes.fromhex(form_id_conversion[0])[:3] + master_byte
-                to_id = bytes.fromhex(form_id_conversion[1])[:3] + master_byte
+                from_id = bytes.fromhex(form_id_conversion[0])[:3]
+                to_id = bytes.fromhex(form_id_conversion[1])[:3]
                 form_id_replacements.append([from_id, to_id])
 
-            data_list = CFIDs.form_processor.patch_form_data(data_list, saved_forms, form_id_replacements, master_byte)
+            data_list = CFIDs.form_processor.patch_form_data_dependent(data_list, saved_forms, form_id_replacements, master_byte)
 
             data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
             
