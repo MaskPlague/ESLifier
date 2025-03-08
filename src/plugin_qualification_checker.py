@@ -1,7 +1,7 @@
 import os
 import json
 import threading
-
+import zlib
 
 class qualification_checker():
     def scan(path, update_header, show_cells, scan_esms):
@@ -10,8 +10,10 @@ class qualification_checker():
         plugins = [plugin for plugin in all_plugins if not plugin.lower().endswith('.esl')]
         qualification_checker.need_flag_list = []
         qualification_checker.need_flag_cell_flag_list = []
+        qualification_checker.need_flag_interior_cell_flag_list = []
         qualification_checker.need_compacting_list = []
         qualification_checker.need_compacting_cell_flag_list = []
+        qualification_checker.need_compacting_interior_cell_flag_list = []
         qualification_checker.max_record_number = 4096
         qualification_checker.show_cells = show_cells
         qualification_checker.scan_esms = scan_esms
@@ -40,32 +42,40 @@ class qualification_checker():
         for thread in threads:
             thread.join()
 
-        return qualification_checker.need_flag_list, qualification_checker.need_flag_cell_flag_list, qualification_checker.need_compacting_list, qualification_checker.need_compacting_cell_flag_list
         return (qualification_checker.need_flag_list, qualification_checker.need_flag_cell_flag_list, qualification_checker.need_flag_interior_cell_flag_list, 
+                qualification_checker.need_compacting_list, qualification_checker.need_compacting_cell_flag_list, qualification_checker.need_compacting_interior_cell_flag_list)
 
     def plugin_scanner(plugins):
         need_flag_list = []
         need_flag_cell_flag_list = []
+        need_flag_interior_cell_flag_list = []
         need_compacting_list = []
         need_compacting_cell_flag_list = []
+        need_compacting_interior_cell_flag_list = []
         for plugin in plugins:
             if not qualification_checker.already_esl(plugin):
-                esl_allowed, need_compacting, new_cell = qualification_checker.file_reader(plugin)
+                esl_allowed, need_compacting, new_cell, interior_cell = qualification_checker.file_reader(plugin)
                 if esl_allowed:
                     if not need_compacting:
                         need_flag_list.append(plugin)
                         if new_cell:
                             need_flag_cell_flag_list.append(os.path.basename(plugin))
+                            if interior_cell:
+                                need_flag_interior_cell_flag_list.append(os.path.basename(plugin))
                     else:
                         need_compacting_list.append(plugin)
                         if new_cell:
                             need_compacting_cell_flag_list.append(os.path.basename(plugin))
+                            if interior_cell:
+                                need_compacting_interior_cell_flag_list.append(os.path.basename(plugin))
 
         with qualification_checker.lock:
             qualification_checker.need_flag_list.extend(need_flag_list)
             qualification_checker.need_flag_cell_flag_list.extend(need_flag_cell_flag_list)
+            qualification_checker.need_flag_interior_cell_flag_list.extend(need_compacting_cell_flag_list)
             qualification_checker.need_compacting_list.extend(need_compacting_list)
             qualification_checker.need_compacting_cell_flag_list.extend(need_compacting_cell_flag_list)
+            qualification_checker.need_compacting_interior_cell_flag_list.extend(need_compacting_interior_cell_flag_list)
 
     def create_data_list(data):
         data_list = []
@@ -83,6 +93,7 @@ class qualification_checker():
     def file_reader(file):
         data_list = []
         new_cell = False
+        interior_cell_flag = False
         need_compacting = False
         with open(file, 'rb') as f:
             data = f.read()
@@ -91,17 +102,33 @@ class qualification_checker():
         count = 0
         cell_form_ids = []
         for form in data_list:
-            if form[:4] != 'TES4' and len(form) > 24 and form[15] >= master_count:
+            record_type = form[:4]
+            if record_type not in (b'GRUP', b'TES4') and form[15] >= master_count:
                 count += 1
                 if count > qualification_checker.num_max_records:
-                    return False, False, False
+                    return False, False, False, False
                 if int.from_bytes(form[12:15][::-1]) > qualification_checker.max_record_number:
                     need_compacting = True
-                if form[:4] == b'CELL':
+                if record_type == b'CELL' and not interior_cell_flag:
                     if not qualification_checker.show_cells:
-                        return False, False, True
+                        return False, False, True, False
+                    flag_byte = form[10]
+                    compressed_flag = (flag_byte & 0x04) != 0
+                    offset = 24
+                    if compressed_flag:
+                        form_to_check = zlib.decompress(form[28:])
+                        offset = 0
+                    form_to_check = form
+                    form_size = len(form_to_check)
+                    while offset < form_size:
+                        field = form_to_check[offset:offset+4]
+                        field_size = int.from_bytes(form_to_check[offset+4:offset+6][::-1])
+                        if field == b'DATA':
+                            flags = form_to_check[offset+6]
+                            interior_cell_flag = (flags & 0x01) != 0
+                        offset += field_size + 6
                     new_cell = True
-            if len(form) >= 24 and form[:4] == b'CELL' and form[15] >= master_count and str(form[12:15].hex()) not in cell_form_ids:
+            if record_type == b'CELL' and form[15] >= master_count and str(form[12:15].hex()) not in cell_form_ids:
                 cell_form_ids.append(str(form[12:15].hex()))
         cell_form_ids.sort()
         if cell_form_ids != []:
@@ -113,7 +140,7 @@ class qualification_checker():
                 for form_id in cell_form_ids:
                     f.write(form_id + '\n')
 
-        return True, need_compacting, new_cell
+        return True, need_compacting, new_cell, interior_cell_flag
 
     def already_esl(file):
         with open(file, 'rb') as f:
