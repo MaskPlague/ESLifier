@@ -39,6 +39,8 @@ pyinstaller "src/eslifier_app.py" --onefile -n "ESLifier" --noconsole --icon "sr
   - Keyword Item Distributor
   - Base Object Swapper
   - Spell Perk Item Distributor
+  - Seasons of Skyrim
+  - Payload Interpreter
   - ENB Lights For Effect Shaders
   - Description Framwork
   - SkyPatcher
