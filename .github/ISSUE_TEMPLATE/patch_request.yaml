@@ -20,8 +20,13 @@ body:
       description: |
         What file do you need ESLifier to patch when compacting FormIDs? Also, provide a link to a mod that uses the file or a link to the possible framework mod that
         defines the file (i.e. Spell Perk Item Distributor). Nexus Mods links are preferred.
+    validations:
+      required: true
 
-        
+  - type: markdown
+    id: patched-files-list
+    attirbutes:
+      value: |
         Below is a list of currently patched file types. If you're making a request for one of them because it is not being patched correctly then please make a bug
         report instead. 
 
@@ -87,6 +92,4 @@ body:
           
         - **.pex:**  
           - Compiled script files  
-    validations:
-      required: true
     
