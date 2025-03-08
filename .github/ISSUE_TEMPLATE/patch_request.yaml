@@ -22,7 +22,7 @@ body:
         defines the file (i.e. Spell Perk Item Distributor). Nexus Mods links are preferred.
     validations:
       required: true
-
+      
   - type: markdown
     attirbutes:
       value: |
