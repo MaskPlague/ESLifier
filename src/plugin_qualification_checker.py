@@ -41,6 +41,7 @@ class qualification_checker():
             thread.join()
 
         return qualification_checker.need_flag_list, qualification_checker.need_flag_cell_flag_list, qualification_checker.need_compacting_list, qualification_checker.need_compacting_cell_flag_list
+        return (qualification_checker.need_flag_list, qualification_checker.need_flag_cell_flag_list, qualification_checker.need_flag_interior_cell_flag_list, 
 
     def plugin_scanner(plugins):
         need_flag_list = []
@@ -86,7 +87,7 @@ class qualification_checker():
         with open(file, 'rb') as f:
             data = f.read()
             data_list = qualification_checker.create_data_list(data)
-        master_count = data_list[0].count(b'MAST')
+        master_count = qualification_checker.get_master_count(data_list)
         count = 0
         cell_form_ids = []
         for form in data_list:
@@ -133,3 +134,16 @@ class qualification_checker():
         except:
             data = []
         return data
+    
+    def get_master_count(data_list):
+        tes4 = data_list[0]
+        offset = 24
+        data_len = len(tes4)
+        master_list_size = 0
+        while offset < data_len:
+            field = tes4[offset:offset+4]
+            field_size = int.from_bytes(tes4[offset+4:offset+6][::-1])
+            if field == b'MAST':
+                master_list_size += 1
+            offset += field_size + 6
+        return master_list_size
