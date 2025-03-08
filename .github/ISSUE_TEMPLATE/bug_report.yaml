@@ -18,8 +18,8 @@ body:
     attributes:
       label: A Brief Description of the Problem.
       description: |
-        Please briefly describe the issue you are experiencing. If program is not patching an asset file correctly please detail what mod the file is from
-        and what mod you're compacting the FormIDs for that should be causing the file to be patched. If somehow a mod has errors in xEdit after compacting,
+        Please briefly describe the issue you are experiencing. If the program is not patching an asset file correctly please detail what mod the file is from
+        and what mod you're compacting the FormIDs for that should be causing the file to be patched. If a mod has errors in xEdit after compacting,
         please confirm that the issue doesn't exist on the pre-compacted version with the exact same mods loaded in xEdit before reporting it.
     validations:
       required: true
@@ -30,7 +30,7 @@ body:
       label: Provide Instructions on Reproducing the Problem
       description: |
         When submitting a bug report, please provide the steps that another user should take to reproduce the same issue.
-        Always write your report under the assumption that the developers have no information about the bug, as is the case most of the time
+        Always write your report under the assumption that the developers have no information about the bug.
     validations:
       required: true
 
@@ -40,7 +40,7 @@ body:
       label: Provide Relevant Files
       description: |
         If it is an issue with ESLifier crashing the ESLifier.log file should be submitted.
-        If a mod's asset files (.ini, .json, etc.) are not being patched correctly include please include the entire ESLifier_Data folder zipped.
+        If you want you can include the entire ESLifier_Data folder zipped.
       placeholder: |
         ESLifier.log 
         

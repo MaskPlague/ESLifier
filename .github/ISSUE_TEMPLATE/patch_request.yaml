@@ -5,14 +5,6 @@ title: "[Patch Request]: "
 labels: ["Patch Request"]
 
 body:
-  - type: checkboxes
-    id: no-duplicate-feature
-    attributes:
-      label: Check for Duplicate Requests
-      options:
-        - label: I have verified that there are no duplicate Requests and that the file is not present in the below list.
-          required: true
-
   - type: textarea
     id: patch-request
     attributes:
@@ -20,47 +12,83 @@ body:
       description: |
         What file do you need ESLifier to patch when compacting FormIDs? Also, provide a link to a mod that uses the file or a link to the possible framework mod that
         defines the file (i.e. Spell Perk Item Distributor). Nexus Mods links are preferred.
-        
-        Below is a list of currently patched file types. If you're making a request for one of them because it is not being patched correctly then please make a bug
-        report instead. The list of currently patched file types include:
-            .ini:   PO3's KID
-                    PO3's BOS
-                    PO3's SPID
-                    PO3's ENBL
-                    Description Framwork
-                    SkyPatcher
-                    DtryKeyUtil
-                    Poise Breaker
-                    Valhalla Combat
-                    AutoBody
-                    Various States of Undress
-            config.json: OAR, MCM Helper
-            _conditions.txt: DAR
-            _srd.: Sound Record Distributor
-            .toml:  Dynamic Animation Casting
-                    Precision
-                    Loki Poise
-                    True Directional Movment
-            .psc: Source Scripts
-            .json:  Dynamic Key Activation Framework NG
-                    Smart Harvest Auto NG AutoLoot
-                    PapyrusUtil's StorageDataUtil
-                    Custom Skills Framework
-                    Dynamic String Distributor
-                    Dynamic Armor Variants
-                    Inventory Injector
-                    Immersive Equipment Display
-                    Light Placer
-                    Player Equipment Manager
-                    Skyrim Unbound
-                    Creature Framework
-                    CoMAP
-                    OBody NG
-            .jslot: Racemenu Presets
-            facegeom's .nif: Texture paths in face mesh files
-            voice, facetint, facegeom: The names of these files are patched
-            .seq: SEQ files
-            .pex: Compiled script files
     validations:
       required: true
+      
+  - type: markdown
+    attributes:
+      value: |
+        Below is a list of currently patched file types. If you're making a request for one of them because it is not being patched correctly then please make a bug
+        report instead. 
+
+        
+        **Currently Patched File Types:**
+        - **.ini:**  
+          - Keyword Item Distributor
+          - Base Object Swapper
+          - Spell Perk Item Distributor
+          - ENB Lights for Effects Shaders
+          - Description Framework  
+          - SkyPatcher  
+          - DtryKeyUtil  
+          - Poise Breaker  
+          - Valhalla Combat  
+          - AutoBody  
+          - Various States of Undress  
+          
+        - **.json:**  
+          - Open Animation Replacer (OAR)  
+          - MCM Helper  
+          - Dynamic Key Activation Framework NG  
+          - Smart Harvest Auto NG AutoLoot  
+          - PapyrusUtil's StorageDataUtil  
+          - Custom Skills Framework  
+          - Dynamic String Distributor  
+          - Dynamic Armor Variants  
+          - Inventory Injector  
+          - Immersive Equipment Display  
+          - Light Placer  
+          - Player Equipment Manager  
+          - Skyrim Unbound  
+          - Creature Framework  
+          - CoMAP  
+          - OBody NG  
+        
+        - **.jslot:**  
+          - RaceMenu Presets  
+        
+        - **_conditions.txt:**  
+          - Dynamic Animation Replacer (DAR)  
+        
+        - **_srd.:**  
+          - Sound Record Distributor  
+        
+        - **.toml:**  
+          - Dynamic Animation Casting  
+          - Precision  
+          - Loki Poise  
+          - True Directional Movement 
+          
+        - **facegeom's .nif:**  
+          - Texture paths in face mesh files  
+        
+        - **voice, facetint, facegeom:**  
+          - These file names are patched  
+        
+        - **.seq:**  
+          - SEQ files  
+          
+        - **.psc:**  
+          - Source Scripts  
+          
+        - **.pex:**  
+          - Compiled script files  
+          
+  - type: checkboxes
+    id: no-duplicate-feature
+    attributes:
+      label: Check for Duplicate Requests
+      options:
+        - label: I have verified that there are no duplicate Requests and that the file is not present in the above list.
+          required: true
     
