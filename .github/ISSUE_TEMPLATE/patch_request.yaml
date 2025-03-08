@@ -20,47 +20,75 @@ body:
       description: |
         What file do you need ESLifier to patch when compacting FormIDs? Also, provide a link to a mod that uses the file or a link to the possible framework mod that
         defines the file (i.e. Spell Perk Item Distributor). Nexus Mods links are preferred.
+
         
         Below is a list of currently patched file types. If you're making a request for one of them because it is not being patched correctly then please make a bug
-        report instead. The list of currently patched file types include:
-            .ini:   PO3's KID
-                    PO3's BOS
-                    PO3's SPID
-                    PO3's ENBL
-                    Description Framework
-                    SkyPatcher
-                    DtryKeyUtil
-                    Poise Breaker
-                    Valhalla Combat
-                    AutoBody
-                    Various States of Undress
-            config.json: OAR, MCM Helper
-            _conditions.txt: DAR
-            _srd.: Sound Record Distributor
-            .toml:  Dynamic Animation Casting
-                    Precision
-                    Loki Poise
-                    True Directional Movment
-            .psc: Source Scripts
-            .json:  Dynamic Key Activation Framework NG
-                    Smart Harvest Auto NG AutoLoot
-                    PapyrusUtil's StorageDataUtil
-                    Custom Skills Framework
-                    Dynamic String Distributor
-                    Dynamic Armor Variants
-                    Inventory Injector
-                    Immersive Equipment Display
-                    Light Placer
-                    Player Equipment Manager
-                    Skyrim Unbound
-                    Creature Framework
-                    CoMAP
-                    OBody NG
-            .jslot: Racemenu Presets
-            facegeom's .nif: Texture paths in face mesh files
-            voice, facetint, facegeom: The names of these files are patched
-            .seq: SEQ files
-            .pex: Compiled script files
+        report instead. 
+
+        
+        **Currently Patched File Types:**
+        - **.ini:**  
+          - PO3's KID  
+          - PO3's BOS  
+          - PO3's SPID  
+          - PO3's ENBL  
+          - Description Framework  
+          - SkyPatcher  
+          - DtryKeyUtil  
+          - Poise Breaker  
+          - Valhalla Combat  
+          - AutoBody  
+          - Various States of Undress  
+        
+        - **config.json:**  
+          - Open Animation Replacer (OAR)  
+          - MCM Helper  
+        
+        - **_conditions.txt:**  
+          - Dynamic Animation Replacer (DAR)  
+        
+        - **_srd.:**  
+          - Sound Record Distributor  
+        
+        - **.toml:**  
+          - Dynamic Animation Casting  
+          - Precision  
+          - Loki Poise  
+          - True Directional Movement  
+        
+        - **.psc:**  
+          - Source Scripts  
+        
+        - **.json:**  
+          - Dynamic Key Activation Framework NG  
+          - Smart Harvest Auto NG AutoLoot  
+          - PapyrusUtil's StorageDataUtil  
+          - Custom Skills Framework  
+          - Dynamic String Distributor  
+          - Dynamic Armor Variants  
+          - Inventory Injector  
+          - Immersive Equipment Display  
+          - Light Placer  
+          - Player Equipment Manager  
+          - Skyrim Unbound  
+          - Creature Framework  
+          - CoMAP  
+          - OBody NG  
+        
+        - **.jslot:**  
+          - RaceMenu Presets  
+        
+        - **facegeom's .nif:**  
+          - Texture paths in face mesh files  
+        
+        - **voice, facetint, facegeom:**  
+          - These file names are patched  
+        
+        - **.seq:**  
+          - SEQ files  
+        
+        - **.pex:**  
+          - Compiled script files  
     validations:
       required: true
     
