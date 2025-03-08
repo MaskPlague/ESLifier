@@ -1,0 +1,16 @@
+name: Feature Request/Suggestions
+description: Feature Request (Users)
+title: "[Suggestion]: "
+labels: ["feature request"]
+
+body:
+  - type: textarea
+    id: describe-the-request
+    attributes:
+      label: A Description of Your Feature Request/Suggestion
+      description: |
+        As I've written this program I have constantly been thinking about what users may need, because of this I know I have missed features that
+        would be convenient or even necessary. Please describe what you think should be changed or added to ESLifier
+    validations:
+      required: true
+    
