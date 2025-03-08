@@ -24,7 +24,7 @@ body:
       required: true
       
   - type: markdown
-    attirbutes:
+    attributes:
       value: |
         Below is a list of currently patched file types. If you're making a request for one of them because it is not being patched correctly then please make a bug
         report instead. 
