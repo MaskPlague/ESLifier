@@ -109,25 +109,27 @@ class qualification_checker():
                     return False, False, False, False
                 if int.from_bytes(form[12:15][::-1]) > qualification_checker.max_record_number:
                     need_compacting = True
-                if record_type == b'CELL' and not interior_cell_flag:
+                if record_type == b'CELL':
                     if not qualification_checker.show_cells:
                         return False, False, True, False
-                    flag_byte = form[10]
-                    compressed_flag = (flag_byte & 0x04) != 0
-                    offset = 24
-                    if compressed_flag:
-                        form_to_check = zlib.decompress(form[28:])
-                        offset = 0
-                    form_to_check = form
-                    form_size = len(form_to_check)
-                    while offset < form_size:
-                        field = form_to_check[offset:offset+4]
-                        field_size = int.from_bytes(form_to_check[offset+4:offset+6][::-1])
-                        if field == b'DATA':
-                            flags = form_to_check[offset+6]
-                            interior_cell_flag = (flags & 0x01) != 0
-                        offset += field_size + 6
                     new_cell = True
+                    if not interior_cell_flag:
+                        flag_byte = form[10]
+                        compressed_flag = (flag_byte & 0x04) != 0
+                        offset = 24
+                        form_to_check = form
+                        if compressed_flag:
+                            form_to_check = zlib.decompress(form[28:])
+                            offset = 0
+                        form_size = len(form_to_check)
+                        while offset < form_size:
+                            field = form_to_check[offset:offset+4]
+                            field_size = int.from_bytes(form_to_check[offset+4:offset+6][::-1])
+                            if field == b'DATA':
+                                flags = form_to_check[offset+6]
+                                interior_cell_flag = (flags & 0x01) != 0
+                            offset += field_size + 6
+                    
             if record_type == b'CELL' and form[15] >= master_count and str(form[12:15].hex()) not in cell_form_ids:
                 cell_form_ids.append(str(form[12:15].hex()))
         cell_form_ids.sort()
@@ -166,11 +168,11 @@ class qualification_checker():
         tes4 = data_list[0]
         offset = 24
         data_len = len(tes4)
-        master_list_size = 0
+        master_count = 0
         while offset < data_len:
             field = tes4[offset:offset+4]
             field_size = int.from_bytes(tes4[offset+4:offset+6][::-1])
             if field == b'MAST':
-                master_list_size += 1
+                master_count += 1
             offset += field_size + 6
-        return master_list_size
+        return master_count
