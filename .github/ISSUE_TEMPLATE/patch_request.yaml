@@ -89,6 +89,6 @@ body:
     attributes:
       label: Check for Duplicate Requests
       options:
-        - label: I have verified that there are no duplicate Requests and that the file is not present in the below list.
+        - label: I have verified that there are no duplicate Requests and that the file is not present in the above list.
           required: true
     
