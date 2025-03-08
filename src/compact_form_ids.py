@@ -1556,11 +1556,11 @@ class CFIDs():
         tes4 = data_list[0]
         offset = 24
         data_len = len(tes4)
-        master_list = []
+        master_list_count = 0
         while offset < data_len:
             field = tes4[offset:offset+4]
             field_size = int.from_bytes(tes4[offset+4:offset+6][::-1])
             if field == b'MAST':
-                master_list.append(tes4[offset+6:offset+field_size+5].decode('utf-8'))
+                master_list_count  += 1
             offset += field_size + 6
-        return len(master_list)
+        return master_list_count
