@@ -428,9 +428,9 @@ class scanner():
                 factor = 1
             if (scanner.count % factor) >= (factor-1):
                 print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
-            if (file_lower.endswith(('.ini', '.json', '.psc', '.jslot', '.toml', '_conditions.txt')) or '_srd.' in file_lower):
-                if 'modex\\user\\kits' in file_lower or 'nemesis_engine' in file_lower:
-                    continue
+            if (file_lower.endswith(('.ini', '.json', '.psc', '.jslot', '.toml', '_conditions.txt'))
+                or ((file_lower.endswith('_srd.yaml')) and ('.esp' in file_lower or '.esl' in file_lower or '.esm' in file_lower))
+                and not ('modex\\user\\kits' in file_lower or 'nemesis_engine' in file_lower)):
                 thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
                 scanner.threads.append(thread)
                 thread.start()
