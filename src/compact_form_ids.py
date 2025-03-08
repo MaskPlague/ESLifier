@@ -297,27 +297,20 @@ class CFIDs():
 
     #Patches each file type in a different way as each has Form IDs present in a different format
     #Patched files:
-    #   .ini:   PO3's KID
-    #           PO3's BOS
-    #           PO3's SPID
-    #           PO3's ENBL
-    #           Description Framwork
+    #   .ini:   Keyword Item Distributor
+    #           Base Object Swapper
+    #           Spell Perk Item Distributor
+    #           ENB Lights for Effect Shaders
+    #           Description Framework
     #           SkyPatcher
     #           DtryKeyUtil
     #           Poise Breaker
     #           Valhalla Combat
     #           AutoBody
     #           Various States of Undress
-    #   config.json: OAR, MCM Helper
-    #   user.json: OAR
-    #   _conditions.txt: DAR
-    #   _srd.: Sound Record Distributor
-    #   .toml:  Dynamic Animation Casting
-    #           Precision
-    #           Loki Poise
-    #           True Directional Movment
-    #   .psc: Source Scripts
-    #   .json:  Dynamic Key Activation Framework NG
+    #   .json:  Open Animation Replacer
+    #           MCM Helper
+    #           Dynamic Key Activation Framework NG
     #           Smart Harvest Auto NG AutoLoot
     #           PapyrusUtil's StorageDataUtil
     #           Custom Skills Framework
@@ -332,8 +325,15 @@ class CFIDs():
     #           CoMAP
     #           OBody NG
     #   .jslot: Racemenu Presets
-    #   \facegeom\: Texture paths in face mesh files
+    #   _conditions.txt: Dynamic Animation Replacer
+    #   _srd.yaml: Sound Record Distributor
+    #   .toml:  Dynamic Animation Casting
+    #           Precision
+    #           Loki Poise
+    #           True Directional Movment
+    #   facegeom: Texture paths in face mesh files
     #   .seq: SEQ files
+    #   .psc: Source Scripts
     #   .pex: Compiled script files, should patch any form id in a (formID, plugin) format.
     def patch_files(master, files, form_id_map, skyrim_folder_path, output_folder_path, flag):
         for file in files:
@@ -438,7 +438,7 @@ class CFIDs():
                         CFIDs.toml_loki_tdm_patcher(basename,new_file, form_id_map)
                     else:
                         print(f'Warn: Possible missing patcher for: {new_file}')
-                elif '_srd.' in new_file_lower:                                                         # Sound record distributor
+                elif new_file_lower.endswith('_srd.yaml'):                                              # Sound record distributor
                     CFIDs.srd_patcher(basename, new_file, form_id_map)
                 elif new_file_lower.endswith('.psc'):                                                   # Script source file patching, this doesn't take into account form ids being passed as variables
                     CFIDs.psc_patcher(basename, new_file, form_id_map)
