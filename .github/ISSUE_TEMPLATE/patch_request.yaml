@@ -28,10 +28,10 @@ body:
         
         **Currently Patched File Types:**
         - **.ini:**  
-          - PO3's KID  
-          - PO3's BOS  
-          - PO3's SPID  
-          - PO3's ENBL  
+          - Keyword Item Distributor
+          - Base Object Swapper
+          - Spell Perk Item Distributor
+          - ENB Lights for Effects Shaders
           - Description Framework  
           - SkyPatcher  
           - DtryKeyUtil  
@@ -39,27 +39,9 @@ body:
           - Valhalla Combat  
           - AutoBody  
           - Various States of Undress  
-        
-        - **config.json:**  
+        - **.json:**  
           - Open Animation Replacer (OAR)  
           - MCM Helper  
-        
-        - **_conditions.txt:**  
-          - Dynamic Animation Replacer (DAR)  
-        
-        - **_srd.:**  
-          - Sound Record Distributor  
-        
-        - **.toml:**  
-          - Dynamic Animation Casting  
-          - Precision  
-          - Loki Poise  
-          - True Directional Movement  
-        
-        - **.psc:**  
-          - Source Scripts  
-        
-        - **.json:**  
           - Dynamic Key Activation Framework NG  
           - Smart Harvest Auto NG AutoLoot  
           - PapyrusUtil's StorageDataUtil  
@@ -78,6 +60,18 @@ body:
         - **.jslot:**  
           - RaceMenu Presets  
         
+        - **_conditions.txt:**  
+          - Dynamic Animation Replacer (DAR)  
+        
+        - **_srd.:**  
+          - Sound Record Distributor  
+        
+        - **.toml:**  
+          - Dynamic Animation Casting  
+          - Precision  
+          - Loki Poise  
+          - True Directional Movement 
+          
         - **facegeom's .nif:**  
           - Texture paths in face mesh files  
         
@@ -86,7 +80,10 @@ body:
         
         - **.seq:**  
           - SEQ files  
-        
+          
+        - **.psc:**  
+          - Source Scripts  
+          
         - **.pex:**  
           - Compiled script files  
     validations:
