@@ -30,6 +30,7 @@ class list_compactable(QTableWidget):
         self.customContextMenuRequested.connect(self.contextMenu)
         self.mod_list = []
         self.has_new_cells = []
+        self.has_interior_cells = []
         self.filter_changed_cells = True
 
         self.blacklist = blacklist()
@@ -137,7 +138,15 @@ class list_compactable(QTableWidget):
                 item_cell_flag.setToolTip('This mod has a new CELL record and no mods currently modify it.\nIt is currently safe to ESL flag it.')
                 if basename in self.cell_changed:
                     item_cell_flag.setText('!New CELL Changed!')
+                    item_cell_flag.setToolTip('This mod has at least one new CELL record that is an interior cell.\n'+
+                                              'ESL interior cells do not reload properly on save game load until\n'+
+                                              'the game has restarted.')
                     item_cell_flag.setToolTip('This mod has a new CELL record\nand has a dependent plugin that modifies it.\nIt is NOT recommended to ESL flag it.')
+                elif basename in self.has_interior_cells:
+                    item_cell_flag.setText('!New Interior CELL!')
+                    item_cell_flag.setToolTip('This mod has at least one new CELL record that is an interior cell.\n'+
+                                              'ESL interior cells do not reload properly on save game load until\n'+
+                                              'the game has restarted.')
                 item_cell_flag.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.setItem(i, 1, item_cell_flag)
             if basename.lower() in self.dll_dict:

@@ -29,6 +29,7 @@ class list_eslable(QTableWidget):
         self.customContextMenuRequested.connect(self.contextMenu)
         self.mod_list = []
         self.has_new_cells = []
+        self.has_interior_cells = []
         self.filter_changed_cells = True
 
         self.blacklist = blacklist()
@@ -79,22 +80,23 @@ class list_eslable(QTableWidget):
         self.setRowCount(len(self.mod_list))
 
         for i in range(len(self.mod_list)):
-            item = QTableWidgetItem(os.path.basename(self.mod_list[i]))
-            if os.path.basename(self.mod_list[i]).lower() in self.compacted:
-                item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
-                item.setCheckState(Qt.CheckState.PartiallyChecked)
-            else:
-                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-                item.setCheckState(Qt.CheckState.Unchecked)
+            basename = os.path.basename(self.mod_list[i])
+            item = QTableWidgetItem(basename)
             item.setToolTip(self.mod_list[i])
             self.setItem(i, 0, item)
             self.setRowHidden(i, False)
-            if os.path.basename(self.mod_list[i]) in self.has_new_cells:
+            
+            if basename in self.has_new_cells:
                 item_cell_flag = QTableWidgetItem('New CELL')
                 item_cell_flag.setToolTip('This mod has a new CELL record.')
-                if os.path.basename(self.mod_list[i]) in self.cell_changed:
+                if basename in self.cell_changed:
                     item_cell_flag.setText('!New CELL Changed!')
                     item_cell_flag.setToolTip('This mod has a new CELL record\nand has a dependent plugin that modifies it.\nIt is NOT recommended to esl it.')
+                elif basename in self.has_interior_cells:
+                    item_cell_flag.setText('!New Interior CELL!')
+                    item_cell_flag.setToolTip('This mod has at least one new CELL record that is an interior cell.\n'+
+                                              'ESL interior cells do not reload properly on save game load until\n'+
+                                              'the game has restarted.')
                 item_cell_flag.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.setItem(i, 1, item_cell_flag)
 
