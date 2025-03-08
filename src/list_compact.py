@@ -136,12 +136,12 @@ class list_compactable(QTableWidget):
                 item_cell_flag = QTableWidgetItem('New CELL')
                 item_cell_flag.setToolTip('This mod has a new CELL record and no mods currently modify it.\nIt is currently safe to ESL flag it.')
                 if basename in self.cell_changed:
-                    item_cell_flag.setText('New CELL Changed')
+                    item_cell_flag.setText('!New CELL Changed!')
                     item_cell_flag.setToolTip('This mod has a new CELL record\nand has a dependent plugin that modifies it.\nIt is NOT recommended to ESL flag it.')
                 item_cell_flag.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.setItem(i, 1, item_cell_flag)
             if basename.lower() in self.dll_dict:
-                item_dll = QTableWidgetItem('SKSE DLL')
+                item_dll = QTableWidgetItem('!SKSE DLL!')
                 tooltip = 'This mod\'s plugin name is present in the following SKSE dlls\nand may break them if a hard-coded form id is present:\n'
                 for dll in self.dll_dict[basename.lower()]:
                     tooltip += '- ' + os.path.basename(dll)
