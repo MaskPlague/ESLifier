@@ -196,7 +196,7 @@ class main(QWidget):
             else:
                 calculated_size = round(size / 1024, 2)
                 self.confirm.setText(f"This may generate up to {calculated_size} KBs of new files.\nAre you sure you want to continue?")
-            self.confirm.setWindowTitle("Confirmation")
+            self.confirm.setWindowTitle(f"Confirmation: Patching {len(checked)} Mod(s)")
             self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
             self.confirm.accepted.connect(lambda x = checked: self.compact_confirmed(x))
             self.confirm.rejected.connect(lambda:self.setEnabled(True))
@@ -244,7 +244,7 @@ class main(QWidget):
             else:
                 calculated_size = round(size / 1024,2)
                 self.confirm.setText(f"This may generate up to {calculated_size} KBs of new files.\nAre you sure you want to continue?")
-            self.confirm.setWindowTitle("Confirmation")
+            self.confirm.setWindowTitle(f"Confirmation: ESL Flagging {len(checked)} Mod(s)")
             self.confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
             self.confirm.addButton(QMessageBox.StandardButton.Yes)
             self.confirm.addButton(QMessageBox.StandardButton.Cancel)
