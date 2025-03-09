@@ -608,8 +608,11 @@ class CFIDs():
                         end_of_line = line[middle_index:]
                         form_id = line[start_index+1:middle_index]
                         if len(form_id) > 6:
-                            form_id = form_id[-6:]
-                        form_id_int = int(line[start_index+1:middle_index], 16)
+                            if form_id[:2] == 'FE':
+                                form_id = form_id [-3:]
+                            else:
+                                form_id = form_id[-6:]
+                        form_id_int = int(form_id, 16)
                         start = middle_index+1
                         if basename == plugin:
                             for form_ids in form_id_map:
@@ -670,7 +673,7 @@ class CFIDs():
                         start_of_line = line[:middle_index+1]
                         end_of_line = line[end_index:]
                         form_id = line[middle_index+1:end_index]
-                        if len(form_id) == 8:
+                        if len(form_id) > 6:
                             if form_id[:2] == 'FE':
                                 form_id = form_id [-3:]
                             else:
