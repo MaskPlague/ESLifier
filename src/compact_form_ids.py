@@ -308,6 +308,7 @@ class CFIDs():
     #           Valhalla Combat
     #           AutoBody
     #           Various States of Undress
+    #           Form List Manipulator
     #   .json:  Open Animation Replacer
     #           MCM Helper
     #           Dynamic Key Activation Framework NG
@@ -346,7 +347,7 @@ class CFIDs():
             basename = os.path.basename(master).lower()
             with CFIDs.lock:
                 if new_file_lower.endswith('.ini'):
-                    if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini', '_enbl.ini', '_desc.ini')):   # PO3's SPID, KID, BOS, ENBL; Description Framework
+                    if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini', '_enbl.ini', '_desc.ini', '_flm.ini')):   # PO3's SPID, KID, BOS, ENBL; Description Framework, FLM
                         CFIDs.ini_po3_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
                     elif 'seasons\\' in new_file_lower:                                                 # Po3's Seasons of Skyrim
                         CFIDs.ini_season_patcher(basename, new_file, form_id_map)
