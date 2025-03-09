@@ -12,9 +12,18 @@ class list_compactable(QTableWidget):
         self.setColumnCount(6)
         self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'SKSE DLL', 'Dependencies', '', 'Hider'])
         self.horizontalHeaderItem(0).setToolTip('This is the plugin name. Select which plugins you wish to compact.')
-        self.horizontalHeaderItem(1).setToolTip('This is the CELL Record Flag. If an ESL plugin creates a new CELL\nand another mod changes that CELL then it may not work due to an engine bug.\n\"New  CELL\" indicates the presence of a new CELL record and \"New CELL Changed\"\nindicates that the new CELL record is changed by a dependent plugin.')
-        self.horizontalHeaderItem(2).setToolTip('This is the skse DLL flag. If a dll has the plugin name in it then\nit may have a LookUpForm() call that may break after compacting a flagged plugin.')
-        self.horizontalHeaderItem(3).setToolTip('If a plugin has other plugins with it as a master, they will appear\nwhen the button is clicked. These will also have their\nForm IDs patched to reflect the Master plugin\'s changes.')
+        self.horizontalHeaderItem(1).setToolTip('This is the CELL Record Flag. If an ESL plugin creates a new CELL\n'+
+                                                'and another mod changes that CELL then it may not work due to an engine bug.\n'+
+                                                'If an ESL plugin creates a new interior CELL then that cell may experience\n'+
+                                                'issues when reloading a save without restarting the game.\n'+
+                                                '"New  CELL" indicates the presence of a new CELL record.\n'+
+                                                '"!New Interior CELL!" indicates that a new CELL is an interior.\n'+
+                                                '"!!New CELL Changed!!" indicates that a new CELL record is changed by a dependent plugin.')
+        self.horizontalHeaderItem(2).setToolTip('This is the skse DLL flag. If a dll has the plugin name in it then it may\n'+
+                                                'have a LookUpForm() call that may break after compacting a flagged plugin.')
+        self.horizontalHeaderItem(3).setToolTip('If a plugin has other plugins with it as a master, they will appear when\n'+
+                                                'the button is clicked. These will also have their Form IDs patched to\n'+
+                                                'reflect the Master plugin\'s changes.')
         self.setColumnHidden(5, True)
         self.horizontalHeader().sortIndicatorChanged.connect(self.hide_rows)
         self.verticalHeader().setHidden(True)
@@ -137,7 +146,7 @@ class list_compactable(QTableWidget):
                 item_cell_flag = QTableWidgetItem('New CELL')
                 item_cell_flag.setToolTip('This mod has a new CELL record and no mods currently modify it.\nIt is currently safe to ESL flag it.')
                 if basename in self.cell_changed:
-                    item_cell_flag.setText('!New CELL Changed!')
+                    item_cell_flag.setText('!!New CELL Changed!!')
                     item_cell_flag.setToolTip('This mod has at least one new CELL record that is an interior cell.\n'+
                                               'ESL interior cells do not reload properly on save game load until\n'+
                                               'the game has restarted.')
@@ -145,8 +154,8 @@ class list_compactable(QTableWidget):
                 elif basename in self.has_interior_cells:
                     item_cell_flag.setText('!New Interior CELL!')
                     item_cell_flag.setToolTip('This mod has at least one new CELL record that is an interior cell.\n'+
-                                              'ESL interior cells sometimes do not reload properly on save game load\n'+
-                                              'until the game has restarted.')
+                                              'ESL created interior cells sometimes do not reload properly on a save\n'+
+                                              'game load, until the game itself has restarted.')
                 item_cell_flag.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.setItem(i, 1, item_cell_flag)
             if basename.lower() in self.dll_dict:

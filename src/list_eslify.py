@@ -13,7 +13,13 @@ class list_eslable(QTableWidget):
         self.setColumnCount(4)
         self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', '', 'Hider'])
         self.horizontalHeaderItem(0).setToolTip('This is the plugin name. Select which plugins you wish to flag as light.')
-        self.horizontalHeaderItem(1).setToolTip('This is the CELL Record Flag. If an ESL plugin creates a new CELL\nand another mod changes that CELL then it may not work due to an engine bug.\n\"New  CELL\" indicates the presence of a new CELL record and \"New CELL Changed\"\nindicates that the new CELL record is changed by a dependent plugin.')
+        self.horizontalHeaderItem(1).setToolTip('This is the CELL Record Flag. If an ESL plugin creates a new CELL\n'+
+                                                'and another mod changes that CELL then it may not work due to an engine bug.\n'+
+                                                'If an ESL plugin creates a new interior CELL then that cell may experience\n'+
+                                                'issues when reloading a save without restarting the game.\n'+
+                                                '"New  CELL" indicates the presence of a new CELL record.\n'+
+                                                '"!New Interior CELL!" indicates that a new CELL is an interior.\n'+
+                                                '"!!New CELL Changed!!" indicates that a new CELL record is changed by a dependent plugin.')
         self.setColumnHidden(3, True)
         self.horizontalHeader().sortIndicatorChanged.connect(self.rehide_rows)
         self.verticalHeader().setHidden(True)
@@ -90,13 +96,13 @@ class list_eslable(QTableWidget):
                 item_cell_flag = QTableWidgetItem('New CELL')
                 item_cell_flag.setToolTip('This mod has a new CELL record.')
                 if basename in self.cell_changed:
-                    item_cell_flag.setText('!New CELL Changed!')
+                    item_cell_flag.setText('!!New CELL Changed!!')
                     item_cell_flag.setToolTip('This mod has a new CELL record\nand has a dependent plugin that modifies it.\nIt is NOT recommended to esl it.')
                 elif basename in self.has_interior_cells:
                     item_cell_flag.setText('!New Interior CELL!')
                     item_cell_flag.setToolTip('This mod has at least one new CELL record that is an interior cell.\n'+
-                                              'ESL interior cells sometimes do not reload properly on save game load\n'+
-                                              'until the game has restarted.')
+                                              'ESL created interior cells sometimes do not reload properly on a save\n'+
+                                              'game load, until the game itself has restarted.')
                 item_cell_flag.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.setItem(i, 1, item_cell_flag)
 
