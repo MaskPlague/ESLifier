@@ -663,16 +663,18 @@ class CFIDs():
                 if basename in line.lower() and '|' in line:
                     count = line.lower().count(basename)
                     start = 0
+                    previous_index = 0
                     for _ in range(count):
                         line = lines[i]
                         start_index = line.lower().index('.es', start)
                         middle_index = line.index('|', start_index)
                         plugin_start_index = -1
                         for i in range(start_index-1, 0, -1):
-                            if line[i] in ('=', ','):
+                            if line[i] in ('=', ',') and not len(line[previous_index:i]) > 4:
                                 plugin_start_index = i + 1
                                 break
                         end_index = CFIDs.find_next_non_alphanumeric(line, middle_index+1)
+                        previous_index = end_index-1
                         plugin = line.lower()[plugin_start_index:middle_index].strip()
                         start_of_line = line[:middle_index+1]
                         end_of_line = line[end_index:]
