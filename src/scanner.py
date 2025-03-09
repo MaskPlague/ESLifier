@@ -78,10 +78,10 @@ class scanner():
                 loop += 1
             for file in files:
                 full_path = os.path.join(root, file)
-                rel_path = os.path.relpath(full_path, path)
+                rel_path = os.path.relpath(full_path, path).lower()
                 scanner.all_files.append(full_path)
                 temp_rel_paths.append(rel_path)
-                if path_level == root_level and file.lower().endswith(plugin_extensions) :
+                if path_level == root_level and file.lower().endswith(plugin_extensions):
                     scanner.plugins.append(full_path)
                 if file.lower().endswith('.bsa') and file.lower() not in scanner.bsa_blacklist:
                     file = file[:-4]
@@ -113,7 +113,7 @@ class scanner():
                 loop += 1
             for file in files:
                 full_path = os.path.join(root, file)
-                relative_path = os.path.relpath(full_path, mod_folder)
+                relative_path = os.path.relpath(full_path, mod_folder).lower()
                 if relative_path not in temp_rel_paths:
                     scanner.all_files.append(full_path)
 
@@ -314,7 +314,7 @@ class scanner():
         plugin_names = []
         for plugin in scanner.plugins: plugin_names.append(os.path.basename(plugin).lower())
         #pattern = re.compile(r'(?:~|: *|\||=|,|-|")\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\)?)(?:\||,|"|$)')
-        pattern = re.compile(r'(?:~|: *|\||=|,|-|")\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\)?)\s*(?:\||,|"|$)')
+        pattern = re.compile(r'(?:~|:\s*|\||=|,|-|")\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\)?)\s*(?:\||,|"|$)')
         pattern2 = re.compile(rb'\x00.([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\x00', flags=re.DOTALL)
         pattern3 = re.compile(r'\\facegeom\\([a-zA-Z0-9_\-\'\?\!\(\)\[\]\,\s]+\.es[pml])\\')
         pattern4 = re.compile(r'\\facetint\\([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\\')
@@ -428,8 +428,7 @@ class scanner():
                 factor = 1
             if (scanner.count % factor) >= (factor-1):
                 print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
-            if ((file_lower.endswith(('.ini', '.json', '.psc', '.jslot', '.toml', '_conditions.txt'))
-                or ((file_lower.endswith('_srd.yaml')) and ('.esp' in file_lower or '.esl' in file_lower or '.esm' in file_lower)))
+            if (file_lower.endswith(('.ini', '.json', '.psc', '.jslot', '.toml', '_conditions.txt', '_srd.yaml'))
                 and not ('modex\\user\\kits' in file_lower or 'nemesis_engine' in file_lower)):
                 thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
                 scanner.threads.append(thread)
