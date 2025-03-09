@@ -89,6 +89,8 @@ class list_eslable(QTableWidget):
             basename = os.path.basename(self.mod_list[i])
             item = QTableWidgetItem(basename)
             item.setToolTip(self.mod_list[i])
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(Qt.CheckState.Unchecked)
             self.setItem(i, 0, item)
             self.setRowHidden(i, False)
             
