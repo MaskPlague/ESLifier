@@ -49,6 +49,10 @@ pyinstaller "src/eslifier_app.py" --onefile -n "ESLifier" --noconsole --icon "sr
   - Valhalla Combat
   - AutoBody
   - Various States of Undress
+  - Form List Manipulator
+  - Leveled List Object Swapper
+  - Item Property Manipulator
+  - Music Type Distributor
 - config.json:
   - Open Animation Replacer (and user.json)
   - MCM Helper
