@@ -11,6 +11,7 @@ from log_stream import log_stream
 class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
+        #TODO: Research into making a save patcher
         #TODO: Fix existing ESLifier plugin
         self.setWindowTitle("ESLifier")
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
@@ -182,7 +183,9 @@ class main_window(QMainWindow):
         self.main_widget.scan_esms = self.settings_widget.settings['scan_esms']
         self.main_widget.show_cells = self.settings_widget.settings['show_cells']
         self.main_widget.list_compact.filter_changed_cells = self.settings_widget.settings['enable_cell_changed_filter']
+        self.main_widget.list_compact.filter_interior_cells = self.settings_widget.settings['enable_interior_cell_filter']
         self.main_widget.list_eslify.filter_changed_cells = self.settings_widget.settings['enable_cell_changed_filter']
+        self.main_widget.list_eslify.filter_interior_cells = self.settings_widget.settings['enable_interior_cell_filter']
         self.patch_new_widget.skyrim_folder_path = self.settings_widget.settings['skyrim_folder_path']
         self.patch_new_widget.output_folder_path = self.settings_widget.settings['output_folder_path']
         self.patch_new_widget.plugins_txt_path = self.settings_widget.settings['plugins_txt_path']

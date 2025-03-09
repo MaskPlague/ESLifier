@@ -41,6 +41,7 @@ class list_compactable(QTableWidget):
         self.has_new_cells = []
         self.has_interior_cells = []
         self.filter_changed_cells = True
+        self.filter_interior_cells = False
 
         self.blacklist = blacklist()
 
@@ -81,6 +82,9 @@ class list_compactable(QTableWidget):
             if self.cell_changed == {}:
                 self.cell_changed = []
             blacklist.extend(self.cell_changed)
+
+        if self.filter_interior_cells:
+            blacklist.extend(self.has_interior_cells)
 
         to_remove = []
         for mod in self.mod_list:

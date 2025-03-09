@@ -96,8 +96,14 @@ class settings(QWidget):
         self.enable_cell_changed_filter_widget, self.enable_cell_changed_filter_toggle = self.create_toggle_widget(
             "Hide plugins with new CELL records that are overwriten",
             "Hide plugins with new CELL records that have been changed by a dependent plugin.\n"+
-            "Enabling this setting will require a re-scan.",
+            "Disabling this filter will require a re-scan.",
             "enable_cell_changed_filter"
+        )
+        self.enable_interior_cell_filter_widget, self.enable_interior_cell_filter_toggle = self.create_toggle_widget(
+            "Hide plugins with new interior CELL records",
+            "Hide plugins with new interior CELL records as they can have issues when reloading\n"+
+            "a save without restarting the game. Disabling this filter will require a re-scan.",
+            "enable_interior_cell_filter"
         )
         self.show_plugins_possibly_refd_by_dlls_widget, self.show_plugins_possibly_refd_by_dlls_toggle = self.create_toggle_widget(
             "Show plugins that are in SKSE dlls",
@@ -157,6 +163,7 @@ class settings(QWidget):
         settings_layout.addWidget(self.scan_esms_widget)
         settings_layout.addWidget(self.show_plugins_with_cells_widget)
         settings_layout.addWidget(self.enable_cell_changed_filter_widget)
+        settings_layout.addWidget(self.enable_interior_cell_filter_widget)
         settings_layout.addWidget(self.show_plugins_possibly_refd_by_dlls_widget)
         settings_layout.addWidget(self.reset_extracted_bsa_list_widget)
         settings_layout.addWidget(self.edit_blacklist_widget)
@@ -377,6 +384,7 @@ class settings(QWidget):
             self.show_plugins_with_cells_toggle.setChecked(True)
             self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(False)
             self.enable_cell_changed_filter_toggle.setChecked(True)
+            self.enable_interior_cell_filter_toggle.setChecked(False)
             self.update_settings()
         confirm.accepted.connect(acccepted)
         confirm.show()
@@ -412,6 +420,9 @@ class settings(QWidget):
         if 'enable_cell_changed_filter' in self.settings: self.enable_cell_changed_filter_toggle.setChecked(self.settings['enable_cell_changed_filter'])
         else: self.enable_cell_changed_filter_toggle.setChecked(True)
 
+        if 'enable_interior_cell_filter' in self.settings: self.enable_interior_cell_filter_toggle.setChecked(self.settings['enable_interior_cell_filter'])
+        else: self.enable_interior_cell_filter_toggle.setChecked(False)
+
         if 'show_dlls' in self.settings: self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(self.settings['show_dlls'])
         else: self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(False)
         
@@ -434,6 +445,7 @@ class settings(QWidget):
         self.settings['scan_esms'] = self.scan_esms_toggle.isChecked()
         self.settings['show_cells'] = self.show_plugins_with_cells_toggle.isChecked()
         self.settings['enable_cell_changed_filter'] = self.enable_cell_changed_filter_toggle.isChecked()
+        self.settings['enable_interior_cell_filter'] = self.enable_interior_cell_filter_toggle.isChecked()
         self.settings['show_dlls'] = self.show_plugins_possibly_refd_by_dlls_toggle.isChecked()
 
         if self.mo2_mode_toggle.isChecked():
