@@ -373,7 +373,7 @@ class CFIDs():
                         CFIDs.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
                     else:                                                                               # Might patch whatever else is using .ini?
                         print(f'Warn: Possible missing patcher for: {new_file}')
-                        with open(new_file, 'r+', encoding='utf-9') as f:
+                        with open(new_file, 'r+', encoding='utf-8') as f:
                             lines = f.readlines()
                             for i, line in lines:
                                 if basename in line.lower():
@@ -420,7 +420,7 @@ class CFIDs():
                         CFIDs.json_shse_patcher(basename, new_file, form_id_map)
                     else:                                                                               # Might patch whatever else is using .json?
                         print(f'Warn: Possible missing patcher for: {new_file}')
-                        with open(new_file, 'r+', encoding='utf-9') as f:
+                        with open(new_file, 'r+', encoding='utf-8') as f:
                             lines = f.readlines()
                             for i, line in lines:
                                 if basename in line.lower():
