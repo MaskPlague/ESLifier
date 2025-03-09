@@ -601,10 +601,13 @@ class CFIDs():
                         line = lines[i]
                         middle_index = line.index('~', start)
                         start_index = CFIDs.find_prev_non_alphanumeric(line, middle_index-2)
-                        end_index = line.index('.', middle_index) + 3
+                        end_index = line.index('.es', middle_index) + 3
                         plugin = line.lower()[middle_index+1:end_index+1].strip()
                         start_of_line = line[:start_index+1]
                         end_of_line = line[middle_index:]
+                        form_id = line[start_index+1:middle_index]
+                        if len(form_id) > 6:
+                            form_id = form_id[-6:]
                         form_id_int = int(line[start_index+1:middle_index], 16)
                         start = middle_index+1
                         if basename == plugin:
@@ -654,9 +657,13 @@ class CFIDs():
                     start = 0
                     for _ in range(count):
                         line = lines[i]
-                        start_index = line.lower().index('.', start)
+                        start_index = line.lower().index('.es', start)
                         middle_index = line.index('|', start_index)
-                        plugin_start_index = CFIDs.find_prev_non_alphanumeric(line, start_index-1) + 1
+                        plugin_start_index = -1
+                        for i in range(start_index-1, 0, -1):
+                            if line[i] in ('=', ','):
+                                plugin_start_index = i + 1
+                                break
                         end_index = CFIDs.find_next_non_alphanumeric(line, middle_index+1)
                         plugin = line.lower()[plugin_start_index:middle_index].strip()
                         start_of_line = line[:middle_index+1]
@@ -756,7 +763,11 @@ class CFIDs():
                             line = lines[i]
                             start_index = line.lower().index('.', start)
                             middle_index = line.index('|', start_index)
-                            plugin_start_index = CFIDs.find_prev_non_alphanumeric(line, start_index-1) + 1
+                            plugin_start_index = -1
+                            for i in range(start_index-1, 0, -1):
+                                if line[i] == '"':
+                                    plugin_start_index = i + 1
+                                    break
                             plugin = line.lower()[plugin_start_index:middle_index].strip()
                             start = start_index + 1
                             if plugin == basename:
