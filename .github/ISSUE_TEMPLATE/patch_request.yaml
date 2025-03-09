@@ -36,7 +36,11 @@ body:
           - Poise Breaker  
           - Valhalla Combat  
           - AutoBody  
-          - Various States of Undress  
+          - Various States of Undress
+          - Form List Manipulator
+          - Leveled List Object Swapper
+          - Item Property Manipulator
+          - Music Type Distributor
           
         - **.json:**  
           - Open Animation Replacer (OAR)  
