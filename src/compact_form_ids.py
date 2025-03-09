@@ -309,6 +309,9 @@ class CFIDs():
     #           AutoBody
     #           Various States of Undress
     #           Form List Manipulator
+    #           Leveled List Object Swapper
+    #           Item Property Manipulator
+    #           Music Type Distributor
     #   .json:  Open Animation Replacer
     #           MCM Helper
     #           Dynamic Key Activation Framework NG
@@ -347,8 +350,9 @@ class CFIDs():
             basename = os.path.basename(master).lower()
             with CFIDs.lock:
                 if new_file_lower.endswith('.ini'):
-                    if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini', '_enbl.ini', '_desc.ini', '_flm.ini')):   # PO3's SPID, KID, BOS, ENBL; Description Framework, FLM
-                        CFIDs.ini_po3_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
+                    if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini', '_enbl.ini',     # PO3's SPID, KID, BOS, ENBL
+                                                '_desc.ini', '_flm.ini', '_llos.ini', '_ipm.ini', '_mus.ini ')): # Description Framework, FLM, LLOS, IPM, MTD
+                        CFIDs.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
                     elif 'seasons\\' in new_file_lower:                                                 # Po3's Seasons of Skyrim
                         CFIDs.ini_season_patcher(basename, new_file, form_id_map)
                     elif 'payloadinterpreter\\' in new_file_lower:                                      # Payload Interpreter
@@ -366,7 +370,7 @@ class CFIDs():
                     elif '\\autobody\\' in new_file_lower:                                              # AutoBody
                         CFIDs.ini_ab_patcher(basename, new_file, form_id_map)
                     elif 'vsu\\' in new_file_lower:                                                     # VSU
-                        CFIDs.ini_po3_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
+                        CFIDs.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
                     else:                                                                               # Might patch whatever else is using .ini?
                         print(f'Warn: Possible missing patcher for: {new_file}')
                         with open(new_file, 'r+', encoding='utf-9') as f:
@@ -397,7 +401,7 @@ class CFIDs():
                     elif '\\ied\\' in new_file_lower:                                                   # Immersive Equipment Display
                         CFIDs.json_ied_patcher(basename, new_file, form_id_map)
                     elif 'lightplacer' in new_file_lower:                                               # Light Placer
-                        CFIDs.ini_po3_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
+                        CFIDs.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
                     elif 'creatures.d' in new_file_lower:                                               # Creature Framework
                         CFIDs.json_cf_patcher(basename, new_file, form_id_map)
                     elif 'inventoryinjector' in new_file_lower:                                         # Inventory Injector
@@ -591,7 +595,7 @@ class CFIDs():
             f.write(''.join(lines))
             f.close()
 
-    def ini_po3_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map):
+    def ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map):
         with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
@@ -606,9 +610,9 @@ class CFIDs():
                         plugin = line.lower()[middle_index+1:end_index+1].strip()
                         start_of_line = line[:start_index+1]
                         end_of_line = line[middle_index:]
-                        form_id = line[start_index+1:middle_index]
-                        if len(form_id) > 6:
-                            if form_id[:2] == 'FE':
+                        form_id = line[start_index+1:middle_index].strip()
+                        if len(form_id) > 8: # 0x accounts for 2
+                            if form_id[2:4] == 'FE':
                                 form_id = form_id [-3:]
                             else:
                                 form_id = form_id[-6:]
