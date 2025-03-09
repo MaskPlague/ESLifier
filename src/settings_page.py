@@ -36,9 +36,9 @@ class settings(QWidget):
         self.file_dialog_2.setFileMode(QFileDialog.FileMode.ExistingFile)
 
         self.skyrim_folder_path_widget, self.skyrim_folder_path = self.create_path_widget(
-            "Skyrim Folder Path",
-            "Set this to your Skyrim Special Edition folder that holds SkyrimSE.exe.",
-            'C:/Path/To/Skyrim Special Edition',
+            "Skyrim Data Folder Path",
+            "Set this to your Skyrim Special Edition Data folder that holds Skyrim.esm.",
+            'C:/Path/To/Skyrim Special Edition/Data',
             self.skyrim_folder_path_clicked
         )
         self.output_folder_path_widget, self.output_folder_path = self.create_path_widget(
