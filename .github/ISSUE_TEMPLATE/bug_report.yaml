@@ -20,7 +20,7 @@ body:
       options:
         - 0.1.2-alpha
         - 0.0.1-alpha
-    validation:
+    validations:
       required: true
 
   - type: textarea
