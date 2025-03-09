@@ -13,6 +13,16 @@ body:
         - label: I have verified that there are no open duplicate issues.
           required: true
 
+  - type: dropdown
+    id: version
+    attributes:
+      label: What version of ESLifier are you using?
+      options:
+        - 0.1.2-alpha
+        - 0.0.1-alpha
+    validation:
+      required: true
+
   - type: textarea
     id: describe-the-problem
     attributes:
