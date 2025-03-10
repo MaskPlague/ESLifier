@@ -130,6 +130,7 @@ class scanner():
         plugin_names = []
         loop = 0
         file_count = 0
+        #Get file from MO2's mods folder
         for mod_folder in os.listdir(mods_folder):
             mod_path = os.path.join(mods_folder, mod_folder)
             if os.path.isdir(mod_path) and mod_folder in enabled_mods:
@@ -164,6 +165,35 @@ class scanner():
                                     file = file[:index]
                                 bsa_list.append([file.lower(), full_path])
 
+        #Get files from MO2's overwrite folder
+        overwrite_path = os.path.join(os.path.split(mods_folder)[0], 'overwrite')
+        for root, dirs, files in os.walk(overwrite_path):
+            file_count += len(files)
+            if loop == 50: #prevent spamming stdout and slowing down the program
+                loop = 0
+                print(f'\033[F\033[K-  Gathered: {file_count}\n-', end='\r')
+            else:
+                loop += 1
+            for file in files:
+                full_path = os.path.join(root, file)
+                cased = os.path.relpath(full_path, overwrite_path)
+                relative_path = cased.lower()
+                if '.mohidden' in relative_path:
+                    continue
+                if relative_path not in mod_files:
+                    mod_files[relative_path] = []
+                    cases_of_files[relative_path] = cased
+                mod_files[relative_path].append('overwrite_eslifier_scan')
+                if file.lower().endswith(plugin_extensions):
+                    plugin_names.append(file)
+                if file.lower().endswith('.bsa') and file.lower() not in scanner.bsa_blacklist:
+                    file = file[:-4]
+                    if ' - textures' in file.lower():
+                        index = file.lower().index(' - textures')
+                        file = file[:index]
+                    bsa_list.append([file.lower(), full_path])
+
+
         order_map = {plugin: index for index, plugin in enumerate(plugins_list)}
         filtered_bsa_list = [item for item in bsa_list if item[0] in order_map]
         filtered_bsa_list.sort(key=lambda x: order_map.get(x[0], float('inf')))
@@ -172,6 +202,7 @@ class scanner():
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         last = 0
         update_time = 0.1
+        #Extract Files from BSA
         for i, tup in enumerate(filtered_bsa_list):
             file = tup[1]
             if file not in scanner.extracted:
@@ -202,7 +233,7 @@ class scanner():
                 scanner.extracted.append(file)
 
         mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
-
+        #Get files from overwrite
         for root, dirs, files in os.walk('bsa_extracted/'):
             file_count += len(files)
             if loop == 50: #prevent spamming stdout and slowing down the program
@@ -218,34 +249,36 @@ class scanner():
                 if relative_path not in mod_files:
                     mod_files[relative_path] = []
                     cases_of_files[relative_path] = relative_path
-                mod_files[relative_path].append('bsa_extracted')
+                mod_files[relative_path].append('bsa_extracted_eslifier_scan')
 
         return mod_files, plugin_names, cases_of_files
 
     def get_modlist(path):
-        lines = []
+        load_order = []
         with open(path, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
+            load_order = f.readlines()
         enabled_mods = []
-        for line in lines:
+        for line in load_order:
             if line.startswith(('+','*')) and not line.endswith('_separator'):
                 enabled_mods.append(line[1:].strip())
         
-        enabled_mods.append('bsa_extracted')
+        enabled_mods.append('bsa_extracted_eslifier_scan')
         enabled_mods.reverse()
+        enabled_mods.append('overwrite_eslifier_scan')
 
         to_remove = []
-        for i in range(len(lines)):
-            lines[i] = lines[i][1:].strip()
-            if '_separator' in lines[i]:
-                to_remove.append(lines[i])
+        for i in range(len(load_order)):
+            load_order[i] = load_order[i][1:].strip()
+            if '_separator' in load_order[i]:
+                to_remove.append(load_order[i])
         
         for mod in to_remove:
-            lines.remove(mod)
-        lines.pop(0)
-        lines.append('bsa_extracted')
-        lines.reverse()
-        return lines, enabled_mods
+            load_order.remove(mod)
+        load_order.pop(0)
+        load_order.append('bsa_extracted_eslifier_scan')
+        load_order.reverse()
+        load_order.append('overwrite_eslifier_scan')
+        return load_order, enabled_mods
     
     def get_plugins_list(path):
         lines = []
@@ -264,6 +297,7 @@ class scanner():
         file_count = 0
         loop = 0
         cwd = os.getcwd()
+        overwrite_path = os.path.join(os.path.split(mods_folder)[0], 'overwrite')
         for file, mods in mod_files.items():
             file_count += 1
             if loop == 500:
@@ -272,15 +306,19 @@ class scanner():
             else:
                 loop += 1
             if len(mods) == 1:
-                if mods[0] == 'bsa_extracted':
-                    file_path = os.path.join(cwd, mods[0], cases[file])
+                if mods[0] == 'bsa_extracted_eslifier_scan':
+                    file_path = os.path.join(cwd, 'bsa_extracted', cases[file])
+                elif mods[0] == 'overwrite_eslifier_scan':
+                    file_path = os.path.join(overwrite_path, cases[file])
                 else:
                     file_path = os.path.join(mods_folder, mods[0], cases[file])
                 winning_files.append(file_path)
             else:
                 mods_sorted = sorted(mods, key=lambda mod: load_order.index(mod))
-                if mods_sorted[-1] == 'bsa_extracted':
-                    file_path = os.path.join(cwd, mods_sorted[-1], cases[file])
+                if mods_sorted[-1] == 'bsa_extracted_eslifier_scan':
+                    file_path = os.path.join(cwd, 'bsa_extracted', cases[file])
+                elif mods_sorted[-1] == 'overwrite_eslifier_scan':
+                    file_path = os.path.join(overwrite_path, cases[file])
                 else:
                     file_path = os.path.join(mods_folder, mods_sorted[-1], cases[file])
                 winning_files.append(file_path)
@@ -380,6 +418,9 @@ class scanner():
         for thread in scanner.threads: thread.join()
         scanner.threads.clear()
 
+        print("-  Sorting .seq files")
+        scanner.seq_plugin_extension_processor(scanner.seq_files)
+
         print("-  Scanning .bsa files\n\n")
         scanner.file_count = len(scanner.bsa_files)
         scanner.count = 0
@@ -429,7 +470,7 @@ class scanner():
             if (scanner.count % factor) >= (factor-1):
                 print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
             if (file_lower.endswith(('.ini', '.json', '.psc', '.jslot', '.toml', '_conditions.txt', '_srd.yaml'))
-                and not ('modex\\user\\kits' in file_lower or 'nemesis_engine' in file_lower)):
+                and not ('modex\\user\\kits' in file_lower or 'nemesis_engine' in file_lower or 'quickarmorrebalance\\config\\' in file_lower)):
                 thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
                 scanner.threads.append(thread)
                 thread.start()
@@ -441,7 +482,7 @@ class scanner():
             elif file_lower.endswith('.dll'):
                 scanner.dll_files.append(file)
             elif file_lower.endswith('.seq'):
-                plugin, _ = os.path.splitext(os.path.basename(file))
+                plugin = os.path.splitext(os.path.basename(file))[0]
                 scanner.seq_files.append([plugin.lower(), file])
             elif ('\\facegeom\\' in file_lower and '.nif' in file_lower):
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
@@ -479,7 +520,7 @@ class scanner():
                 if key not in scanner.file_dict: scanner.file_dict.update({key: []})
                 scanner.file_dict[key].extend(values_list)
 
-    def file_name_without_ext_processor(files):
+    def seq_plugin_extension_processor(files):
         for file in files:
             esp, esl, esm = file[0] + '.esp', file[0] + '.esl', file[0] + '.esm'
             if esp in scanner.file_dict:
