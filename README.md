@@ -28,6 +28,7 @@ The third page, _Settings_, mostly controls what is displayed in the _Main_ page
 - _Hide plugins with new interior CELL records_ hides plugins that have new interior CELLs as they can have issues with not reloading properly on save load if the player doesn't restart the game. This is off by default. The user should decide if they think these kinds of plugins are safe to ESL.
 - _Show plugins that are in SKSE dlls_ will display plugins that have their name present in SKSE dlls. This is off by default and should probably be left off. If a plugin has its name in a dll then it is likely that its form IDs are hard-coded in a FormLookup() call which will fail if the form IDs are changed via compacting.
 
+Other important settings:
 - _Reset Extracted BSA List and Delete Extracted Files_ This setting should be used when you remove a mod that has a BSA file or update a mod that has a BSA file.
 - _Delete All Form ID Maps and Compacted/Patched History_ This setting deletes the Form ID Maps that ESLifier uses to patch new dependent plugins and files. It also deletes the Compacted/Patched History which ESLifier uses to track what mods it has compacted/patched. Use this when you update compacted mods. You'll also want to manually delete the ESLifier Output folder's contents. A list of previously compacted mods will be generated upon deleting your compacted/patched history and the right click context menu for the compactable list on the main page can use this to tick all previously compacted mods.
 
