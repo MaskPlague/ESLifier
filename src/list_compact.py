@@ -239,6 +239,7 @@ class list_compactable(QTableWidget):
             check_all_action = menu.addAction("Check All")
             uncheck_all_action = menu.addAction("Uncheck All")
             invert_selection_action = menu.addAction("Invert Selection Checks")
+            check_previously_compacted_action = menu.addAction("Check Previously Compacted")
             open_explorer_action = menu.addAction("Open in File Explorer")
             add_to_blacklist_action = menu.addAction("Add Mod(s) to Blacklist")
             action = menu.exec(self.viewport().mapToGlobal(position))
@@ -250,6 +251,8 @@ class list_compactable(QTableWidget):
                 self.uncheck_all()
             if action == select_all_action:
                 self.select_all()
+            if action == check_previously_compacted_action:
+                self.check_previously_compacted()
             if action == invert_selection_action:
                 selected_items = self.selectedItems()
                 self.invert_selection(selected_items)
@@ -279,6 +282,18 @@ class list_compactable(QTableWidget):
                 selection.select(self.model().index(row, 0), self.model().index(row, self.model().columnCount() - 1))
         selection_model = self.selectionModel()
         selection_model.select(selection, selection_model.SelectionFlag.ClearAndSelect)
+        self.blockSignals(False)
+
+    def check_previously_compacted(self):
+        self.blockSignals(True)
+        if os.path.exists('ESLifier_Data/previously_compacted.json'):
+            with open('ESLifier_Data/previously_compacted.json', 'r', encoding='utf-8') as f:
+                previously_compacted = json.load(f)
+                f.close()
+            for row in range(self.rowCount()):
+                if self.isRowHidden(row) == False and self.item(row, 0).checkState() == Qt.CheckState.Unchecked and self.item(row, 0).text() in previously_compacted:
+                    self.item(row,0).setCheckState(Qt.CheckState.Checked)
+
         self.blockSignals(False)
     
     def invert_selection(self, selected_items):
