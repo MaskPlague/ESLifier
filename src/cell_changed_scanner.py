@@ -1,31 +1,40 @@
 import os
 import json
+import threading
 
 class cell_scanner():
     def scan(mods_with_new_cells):
         cell_scanner.cell_changed_list = []
+        cell_scanner.lock = threading.Lock()
         cell_scanner.dependency_dict = cell_scanner.get_from_file('ESLifier_Data/dependency_dictionary.json')
-        cell_scanner.plugin_count = 0
-        cell_scanner.count = 0
+        #cell_scanner.plugin_count = 0
+        #cell_scanner.count = 0
+        #for mod in mods_with_new_cells:
+        #    cell_scanner.plugin_count += len(cell_scanner.dependency_dict[os.path.basename(mod).lower()])
+        #print('\n')
+        threads = []
         for mod in mods_with_new_cells:
-            cell_scanner.plugin_count += len(cell_scanner.dependency_dict[os.path.basename(mod).lower()])
-        print('\n')
-        for mod in mods_with_new_cells:
-            cell_scanner.check_if_dependents_modify_new_cells(mod)
+            thread = threading.Thread(target=cell_scanner.check_if_dependents_modify_new_cells, args=(mod,))
+            threads.append(thread)
+            thread.start()
+            #cell_scanner.check_if_dependents_modify_new_cells(mod)
+        
+        for thread in threads:
+            thread.join()
 
         cell_scanner.dump_to_file('ESLifier_Data/cell_changed.json')
 
     def scan_new_dependents(mods, dependency_dict):
         cell_scanner.dependency_dict = {}
         cell_scanner.cell_changed_list = []
-        cell_scanner.plugin_count = 0
-        cell_scanner.count = 0
+        #cell_scanner.plugin_count = 0
+        #cell_scanner.count = 0
         
         for key, value in dependency_dict.items():
             cell_scanner.dependency_dict[key.lower()] = value
-        for mod in mods:
-            if mod in cell_scanner.dependency_dict:
-                cell_scanner.plugin_count += len(cell_scanner.dependency_dict[os.path.basename(mod).lower()])
+        #for mod in mods:
+        #    if mod in cell_scanner.dependency_dict:
+        #        cell_scanner.plugin_count += len(cell_scanner.dependency_dict[os.path.basename(mod).lower()])
         for mod in mods:
             if mod in cell_scanner.dependency_dict:
                 cell_scanner.check_if_dependents_modify_new_cells(mod)
@@ -44,13 +53,13 @@ class cell_scanner():
                 cell_scanner.scan_dependent(mod, dependent, cell_form_ids)
 
     def scan_dependent(mod, dependent, cell_form_ids):
-        cell_scanner.count += 1
-        cell_scanner.percentage = (cell_scanner.count / cell_scanner.plugin_count) * 100
-        factor = round(cell_scanner.plugin_count * 0.01)
-        if factor == 0:
-            factor = 1
-        if (cell_scanner.count % factor) >= (factor-1) or cell_scanner.count >= cell_scanner.plugin_count:
-            print('\033[F\033[K-  Processed: ' + str(round(cell_scanner.percentage, 1)) + '%' + '\n-  Plugins: ' + str(cell_scanner.count) + '/' + str(cell_scanner.plugin_count), end='\r')
+        #cell_scanner.count += 1
+        #cell_scanner.percentage = (cell_scanner.count / cell_scanner.plugin_count) * 100
+        #factor = round(cell_scanner.plugin_count * 0.01)
+        #if factor == 0:
+        #    factor = 1
+        #if (cell_scanner.count % factor) >= (factor-1) or cell_scanner.count >= cell_scanner.plugin_count:
+        #    print('\033[F\033[K-  Processed: ' + str(round(cell_scanner.percentage, 1)) + '%' + '\n-  Plugins: ' + str(cell_scanner.count) + '/' + str(cell_scanner.plugin_count), end='\r')
         
         dependent_data = b''
         with open(dependent, 'rb') as f:
@@ -60,7 +69,8 @@ class cell_scanner():
         for form in data_list:
             if form[:4] == b'CELL' and form[15] == master_index and str(form[12:15].hex()) in cell_form_ids:
                 if os.path.basename(mod) not in cell_scanner.cell_changed_list:
-                    cell_scanner.cell_changed_list.append(os.path.basename(mod))
+                    with cell_scanner.lock:
+                        cell_scanner.cell_changed_list.append(os.path.basename(mod))
                 return
                     
     def get_master_index(file, data_list):
