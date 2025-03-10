@@ -229,6 +229,8 @@ class main_window(QMainWindow):
                 self.main_widget.list_eslify.setItem(i, 3, QTableWidgetItem('Hidden'))
 
     def closeEvent(self, a0):
+        sys.stdout.flush()
+        sys.stderr.flush()
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
         sys.excepthook = sys.__excepthook__

@@ -105,9 +105,13 @@ class scanner():
             file = tup[1]
             if file not in scanner.extracted:
                 print(f'\033[F\033[K-  Extracting {i}/{bsa_length} BSA files\n-', end='\r')
-                subprocess.run([scanner.bsab, file, "-f", ".pex", "-e", "-o", "bsa_extracted"], creationflags=subprocess.CREATE_NO_WINDOW)
-                subprocess.run([scanner.bsab, file, "-f", ".seq", "-e", "-o", "bsa_extracted"], creationflags=subprocess.CREATE_NO_WINDOW)
-                scanner.extracted.append(file)
+                try:
+                    subprocess.run([scanner.bsab, file, "-f", ".pex", "-e", "-o", "bsa_extracted"], creationflags=subprocess.CREATE_NO_WINDOW)
+                    subprocess.run([scanner.bsab, file, "-f", ".seq", "-e", "-o", "bsa_extracted"], creationflags=subprocess.CREATE_NO_WINDOW)
+                    scanner.extracted.append(file)
+                except Exception as e:
+                    print(f'Error Reading BSA: {file}')
+                    print(e)
         
         mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
 
@@ -213,31 +217,36 @@ class scanner():
         for i, tup in enumerate(filtered_bsa_list):
             file = tup[1]
             if file not in scanner.extracted:
-                print(f'\033[F\033[K-  Extracting {i}/{bsa_length} BSA files\n\n', end='\r')
-                with subprocess.Popen(
-                    [scanner.bsab, file, "-f", ".pex", "-e", "-o", "bsa_extracted"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    startupinfo=startupinfo,
-                    text=True
-                    ) as p:
-                        for line in p.stdout:
-                            if timeit.default_timer() - last > update_time:
-                                last = timeit.default_timer()
-                                print(f'\033[F\033[K{line}', end='\r')
-                with subprocess.Popen(
-                    [scanner.bsab, file, "-f", ".seq", "-e", "-o", "bsa_extracted"],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    startupinfo=startupinfo,
-                    text=True
-                    ) as p:
-                        for line in p.stdout:
-                            if timeit.default_timer() - last > update_time:
-                                last = timeit.default_timer()
-                                print(f'\033[F\033[K{line}', end='\r')
+                print(f'\033[F\033[K-  Extracting {i}/{bsa_length} BSA files ({os.path.basename(file)})\n\n', end='\r')
+                try:
+                    with subprocess.Popen(
+                        [scanner.bsab, file, "-f", ".pex", "-e", "-o", "bsa_extracted"],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        startupinfo=startupinfo,
+                        text=True
+                        ) as p:
+                            for line in p.stdout:
+                                if timeit.default_timer() - last > update_time:
+                                    last = timeit.default_timer()
+                                    print(f'\033[F\033[K{line}', end='\r')
+                    with subprocess.Popen(
+                        [scanner.bsab, file, "-f", ".seq", "-e", "-o", "bsa_extracted"],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        startupinfo=startupinfo,
+                        text=True
+                        ) as p:
+                            for line in p.stdout:
+                                if timeit.default_timer() - last > update_time:
+                                    last = timeit.default_timer()
+                                    print(f'\033[F\033[K{line}', end='\r')
+                    
+                    scanner.extracted.append(file)
+                except Exception as e:
+                    print(f'Error Reading BSA: {file}')
+                    print(e)
                 print(f'\033[F\033[K')
-                scanner.extracted.append(file)
 
         mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
         #Get files from overwrite
@@ -620,5 +629,5 @@ class scanner():
             if plugins != []:
                 scanner.bsa_dict[bsa_file] = plugins
         except Exception as e:
-            print(f'Error Reading: {bsa_file}')
-            raise ValueError(e)
+            print(f'Error Reading BSA: {bsa_file}')
+            print(e)

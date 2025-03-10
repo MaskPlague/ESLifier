@@ -50,7 +50,7 @@ class log_stream(QMainWindow):
         self.list.append(text)
         text = text.strip()
         if ('Process' not in text and 'Percentage' not in text and 'Gathered' not in text and 
-        'Extract' not in text and 'CLEAR' not in text and text != '\033[F\033[K' and text != ''):
+            'Extracting:' not in text and 'CLEAR' not in text and text != '\033[F\033[K' and text != ''):
             self.log_file.write(text + '\n')
             self.log_file.flush()
     
