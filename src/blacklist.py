@@ -141,9 +141,12 @@ class blacklist(QTableWidget):
         self.create()
 
     def dump_to_file(self, file):
-        with open(file, 'w', encoding='utf-8') as f:
-            json.dump(self.blacklist, f, ensure_ascii=False, indent=4)
-
+        try:
+            with open(file, 'w', encoding='utf-8') as f:
+                json.dump(self.blacklist, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print(f'!Error: Failed to dump blacklist data to {file}')
+            print(e)
         
 class blacklist_window(QMainWindow):
     def __init__(self):

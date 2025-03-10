@@ -27,14 +27,8 @@ class cell_scanner():
     def scan_new_dependents(mods, dependency_dict):
         cell_scanner.dependency_dict = {}
         cell_scanner.cell_changed_list = []
-        #cell_scanner.plugin_count = 0
-        #cell_scanner.count = 0
-        
         for key, value in dependency_dict.items():
             cell_scanner.dependency_dict[key.lower()] = value
-        #for mod in mods:
-        #    if mod in cell_scanner.dependency_dict:
-        #        cell_scanner.plugin_count += len(cell_scanner.dependency_dict[os.path.basename(mod).lower()])
         for mod in mods:
             if mod in cell_scanner.dependency_dict:
                 cell_scanner.check_if_dependents_modify_new_cells(mod)
@@ -53,17 +47,12 @@ class cell_scanner():
                 cell_scanner.scan_dependent(mod, dependent, cell_form_ids)
 
     def scan_dependent(mod, dependent, cell_form_ids):
-        #cell_scanner.count += 1
-        #cell_scanner.percentage = (cell_scanner.count / cell_scanner.plugin_count) * 100
-        #factor = round(cell_scanner.plugin_count * 0.01)
-        #if factor == 0:
-        #    factor = 1
-        #if (cell_scanner.count % factor) >= (factor-1) or cell_scanner.count >= cell_scanner.plugin_count:
-        #    print('\033[F\033[K-  Processed: ' + str(round(cell_scanner.percentage, 1)) + '%' + '\n-  Plugins: ' + str(cell_scanner.count) + '/' + str(cell_scanner.plugin_count), end='\r')
-        
         dependent_data = b''
-        with open(dependent, 'rb') as f:
-            dependent_data = f.read()
+        try:
+            with open(dependent, 'rb') as f:
+                dependent_data = f.read()
+        except:
+            print(f'!Error: Failed to read data of {dependent}')
         data_list = cell_scanner.create_data_list(dependent_data)
         master_index = cell_scanner.get_master_index(mod, data_list)
         for form in data_list:
@@ -101,8 +90,11 @@ class cell_scanner():
         return data
     
     def dump_to_file(file):
-        with open(file, 'w', encoding='utf-8') as f:
-            json.dump(cell_scanner.cell_changed_list, f, ensure_ascii=False, indent=4)
+        try:
+            with open(file, 'w', encoding='utf-8') as f:
+                json.dump(cell_scanner.cell_changed_list, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print(f'!Error: Failed to dump data to {file}')
 
     def create_data_list(data):
         data_list = []

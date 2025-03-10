@@ -129,6 +129,8 @@ class patch_new(QWidget):
             with open("ESLifier_Data/dependency_dictionary.json", 'r', encoding='utf-8') as f: 
                 dependencies = json.load(f)
         except Exception as e:
+            print(f'!Error: Failed to find a required dictionary.')
+            print(e)
             return {}
         
         new_files = {}

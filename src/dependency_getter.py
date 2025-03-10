@@ -11,8 +11,11 @@ class dependecy_getter():
         return dependecy_getter.dependency_dictionary
     
     def dump_to_file(file):
-        with open(file, 'w+', encoding='utf-8') as f:
-            json.dump(dependecy_getter.dependency_dictionary, f, ensure_ascii=False, indent=4)
+        try:
+            with open(file, 'w+', encoding='utf-8') as f:
+                json.dump(dependecy_getter.dependency_dictionary, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print(f"!Error: Failed to dump data to {file}")
     
     def get_from_file(file):
         try:
@@ -39,11 +42,16 @@ class dependecy_getter():
 
     def get_masters(file):
         master_list = []
-        with open(file, 'rb') as f:
-            f.seek(4)
-            tes4_size = int.from_bytes(f.read(4)[::-1]) + 24
-            f.seek(0)
-            tes4_record = f.read(tes4_size)
+        try:
+            with open(file, 'rb') as f:
+                f.seek(4)
+                tes4_size = int.from_bytes(f.read(4)[::-1]) + 24
+                f.seek(0)
+                tes4_record = f.read(tes4_size)
+        except Exception as e:
+            print(f"!Error: Failed to get master list of {file}")
+            print(e)
+            return []
         offset = 24
         while offset < tes4_size:
             field = tes4_record[offset:offset+4]

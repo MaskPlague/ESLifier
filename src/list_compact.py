@@ -181,7 +181,9 @@ class list_compactable(QTableWidget):
                     border: none;
                     }""")
                 self.button_group.addButton(dL)
+                item_hidden = QTableWidgetItem('')
                 self.setCellWidget(i,3,dL)
+                self.setItem(i,3,item_hidden)
 
         def somethingChanged(item_changed):
             self.blockSignals(True)
@@ -287,12 +289,16 @@ class list_compactable(QTableWidget):
     def check_previously_compacted(self):
         self.blockSignals(True)
         if os.path.exists('ESLifier_Data/previously_compacted.json'):
-            with open('ESLifier_Data/previously_compacted.json', 'r', encoding='utf-8') as f:
-                previously_compacted = json.load(f)
-                f.close()
-            for row in range(self.rowCount()):
-                if self.isRowHidden(row) == False and self.item(row, 0).checkState() == Qt.CheckState.Unchecked and self.item(row, 0).text() in previously_compacted:
-                    self.item(row,0).setCheckState(Qt.CheckState.Checked)
+            try:
+                with open('ESLifier_Data/previously_compacted.json', 'r', encoding='utf-8') as f:
+                    previously_compacted = json.load(f)
+                    f.close()
+                for row in range(self.rowCount()):
+                    if self.isRowHidden(row) == False and self.item(row, 0).checkState() == Qt.CheckState.Unchecked and self.item(row, 0).text() in previously_compacted:
+                        self.item(row,0).setCheckState(Qt.CheckState.Checked)
+            except Exception as e:
+                print('!Error: Failed to get previously_compacted.json')
+                print(e)
 
         self.blockSignals(False)
     
@@ -325,6 +331,3 @@ class list_compactable(QTableWidget):
         mods = [item.text() for item in selected_items if item.column() == 0]
         self.blacklist.add_to_blacklist(mods)
         self.create()
-
-        
-
