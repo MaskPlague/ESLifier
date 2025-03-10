@@ -1406,7 +1406,7 @@ class CFIDs():
         form_id_list = []
         #Get all new form ids in plugin
         for form in data_list:
-            if len(form) > 24 and form[15] >= master_count and form[12:16] not in form_id_list:
+            if form[:4] not in (b'GRUP', b'TES4') and form[15] >= master_count and form[12:16] not in form_id_list:
                 form_id_list.append([form[12:16], form[:4]])
 
         master_byte = master_count.to_bytes()
