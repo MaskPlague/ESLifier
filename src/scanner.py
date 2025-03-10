@@ -101,17 +101,80 @@ class scanner():
         filtered_bsa_list = [item for item in bsa_list if item[0] in order_map]
         filtered_bsa_list.sort(key=lambda x: order_map.get(x[0], float('inf')))
         bsa_length = len(filtered_bsa_list)
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        last = 0
+        update_time = 0.1
         for i, tup in enumerate(filtered_bsa_list):
             file = tup[1]
             if file not in scanner.extracted:
                 print(f'\033[F\033[K-  Extracting {i}/{bsa_length} BSA files\n-', end='\r')
                 try:
-                    subprocess.run([scanner.bsab, file, "-f", ".pex", "-e", "-o", "bsa_extracted"], creationflags=subprocess.CREATE_NO_WINDOW)
-                    subprocess.run([scanner.bsab, file, "-f", ".seq", "-e", "-o", "bsa_extracted"], creationflags=subprocess.CREATE_NO_WINDOW)
-                    scanner.extracted.append(file)
+                    try:
+                        with subprocess.Popen(
+                            [scanner.bsab, file, "--encoding", "utf7", "-f", ".pex", "-e", "-o", "bsa_extracted"],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            startupinfo=startupinfo,
+                            text=True
+                            ) as p:
+                                for line in p.stdout:
+                                    if line.startswith('An error'):
+                                        print(f'\033[F\033[K{line}', end='\r')
+                                        raise EncodingWarning(f'~utf-7 failed switching to utf-8 for {file}')
+                                    if timeit.default_timer() - last > update_time:
+                                        last = timeit.default_timer()
+                                        print(f'\033[F\033[K{line}', end='\r')
+                        with subprocess.Popen(
+                            [scanner.bsab, file, "--encoding", "utf7", "-f", ".seq", "-e", "-o", "bsa_extracted"],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            startupinfo=startupinfo,
+                            text=True
+                            ) as p:
+                                for line in p.stdout:
+                                    if line.startswith('An error'):
+                                        print(f'\033[F\033[K{line}', end='\r')
+                                        raise EncodingWarning(f'~utf-7 failed switching to utf-8 for {file}')
+                                    if timeit.default_timer() - last > update_time:
+                                        last = timeit.default_timer()
+                                        print(f'\033[F\033[K{line}', end='\r')
+                        
+                        scanner.extracted.append(file)
+                    except Exception as e:
+                        print(e)
+                        with subprocess.Popen(
+                            [scanner.bsab, file, "--encoding", "utf8", "-f", ".pex", "-e", "-o", "bsa_extracted"],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            startupinfo=startupinfo,
+                            text=True
+                            ) as p:
+                                for line in p.stdout:
+                                    if line.startswith('An error'):
+                                        raise EncodingWarning(f'~utf-8 failed for {file}')
+                                    if timeit.default_timer() - last > update_time:
+                                        last = timeit.default_timer()
+                                        print(f'\033[F\033[K{line}', end='\r')
+                        with subprocess.Popen(
+                            [scanner.bsab, file, "--encoding", "utf8", "-f", ".seq", "-e", "-o", "bsa_extracted"],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            startupinfo=startupinfo,
+                            text=True
+                            ) as p:
+                                for line in p.stdout:
+                                    if line.startswith('An error'):
+                                        raise EncodingWarning(f'~utf-8 failed for {file}')
+                                    if timeit.default_timer() - last > update_time:
+                                        last = timeit.default_timer()
+                                        print(f'\033[F\033[K{line}', end='\r')
+                        
+                        scanner.extracted.append(file)
                 except Exception as e:
-                    print(f'Error Reading BSA: {file}')
+                    print(f'!Error Reading BSA: {file}')
                     print(e)
+                print(f'\033[F\033[K')
         
         mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
 
@@ -219,32 +282,67 @@ class scanner():
             if file not in scanner.extracted:
                 print(f'\033[F\033[K-  Extracting {i}/{bsa_length} BSA files ({os.path.basename(file)})\n\n', end='\r')
                 try:
-                    with subprocess.Popen(
-                        [scanner.bsab, file, "-f", ".pex", "-e", "-o", "bsa_extracted"],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        startupinfo=startupinfo,
-                        text=True
-                        ) as p:
-                            for line in p.stdout:
-                                if timeit.default_timer() - last > update_time:
-                                    last = timeit.default_timer()
-                                    print(f'\033[F\033[K{line}', end='\r')
-                    with subprocess.Popen(
-                        [scanner.bsab, file, "-f", ".seq", "-e", "-o", "bsa_extracted"],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        startupinfo=startupinfo,
-                        text=True
-                        ) as p:
-                            for line in p.stdout:
-                                if timeit.default_timer() - last > update_time:
-                                    last = timeit.default_timer()
-                                    print(f'\033[F\033[K{line}', end='\r')
-                    
-                    scanner.extracted.append(file)
+                    try:
+                        with subprocess.Popen(
+                            [scanner.bsab, file, "--encoding", "utf7", "-f", ".pex", "-e", "-o", "bsa_extracted"],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            startupinfo=startupinfo,
+                            text=True
+                            ) as p:
+                                for line in p.stdout:
+                                    if line.startswith('An error'):
+                                        raise EncodingWarning(f'~utf-7 failed switching to utf-8 for {file}')
+                                    if timeit.default_timer() - last > update_time:
+                                        last = timeit.default_timer()
+                                        print(f'\033[F\033[K{line}', end='\r')
+                        with subprocess.Popen(
+                            [scanner.bsab, file, "--encoding", "utf7", "-f", ".seq", "-e", "-o", "bsa_extracted"],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            startupinfo=startupinfo,
+                            text=True
+                            ) as p:
+                                for line in p.stdout:
+                                    if line.startswith('An error'):
+                                        raise EncodingWarning(f'~utf-7 failed switching to utf-8 for {file}')
+                                    if timeit.default_timer() - last > update_time:
+                                        last = timeit.default_timer()
+                                        print(f'\033[F\033[K{line}', end='\r')
+                        
+                        scanner.extracted.append(file)
+                    except Exception as e:
+                        print(e)
+                        with subprocess.Popen(
+                            [scanner.bsab, file, "--encoding", "utf8", "-f", ".pex", "-e", "-o", "bsa_extracted"],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            startupinfo=startupinfo,
+                            text=True
+                            ) as p:
+                                for line in p.stdout:
+                                    if line.startswith('An error'):
+                                        raise EncodingWarning(f'~utf-8 failed for {file}')
+                                    if timeit.default_timer() - last > update_time:
+                                        last = timeit.default_timer()
+                                        print(f'\033[F\033[K{line}', end='\r')
+                        with subprocess.Popen(
+                            [scanner.bsab, file, "--encoding", "utf8", "-f", ".seq", "-e", "-o", "bsa_extracted"],
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            startupinfo=startupinfo,
+                            text=True
+                            ) as p:
+                                for line in p.stdout:
+                                    if line.startswith('An error'):
+                                        raise EncodingWarning(f'~utf-8 failed for {file}')
+                                    if timeit.default_timer() - last > update_time:
+                                        last = timeit.default_timer()
+                                        print(f'\033[F\033[K{line}', end='\r')
+                        
+                        scanner.extracted.append(file)
                 except Exception as e:
-                    print(f'Error Reading BSA: {file}')
+                    print(f'!Error Reading BSA: {file}')
                     print(e)
                 print(f'\033[F\033[K')
 
@@ -271,8 +369,13 @@ class scanner():
 
     def get_modlist(path):
         load_order = []
-        with open(path, 'r', encoding='utf-8') as f:
-            load_order = f.readlines()
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                load_order = f.readlines()
+        except Exception as e:
+            print(f"!Error: failed to get modlist at {path}")
+            print(e)
+
         enabled_mods = []
         for line in load_order:
             if line.startswith(('+','*')) and not line.endswith('_separator'):
@@ -298,12 +401,17 @@ class scanner():
     
     def get_plugins_list(path):
         lines = []
-        with open(path, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-        active_plugins = []
-        for line in lines:
-            if line.startswith('*'):
-                active_plugins.append(line.strip()[1:-4].lower())
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+            active_plugins = []
+            for line in lines:
+                if line.startswith('*'):
+                    active_plugins.append(line.strip()[1:-4].lower())
+        except Exception as e:
+            print(f'!Error: failed to get plugins list at: {path}')
+            print(e)
+            return []
         return active_plugins
 
     def get_winning_files(mods_folder, load_order, enabled_mods, scan_esms, plugins_list):
@@ -353,8 +461,12 @@ class scanner():
         return winning_files, plugins
 
     def dump_to_file(file, data):
-        with open(file, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
+        try:
+            with open(file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print(f'!Error: Failed to dump data to: {file}')
+            print(e)
     
     def get_from_file(file):
         try:
@@ -549,56 +661,60 @@ class scanner():
                 if file[1] not in scanner.file_dict[esm]: scanner.file_dict[esm].append(file[1])
 
     def file_reader(pattern, file, reader_type):
-        if reader_type == 'r':
-            if file.lower().endswith('.jslot'):
-                with open(file, 'r', errors='ignore') as f:
-                    data = json.load(f)
-                    f.close()
-                plugins = []
-                if 'actor' in data and 'headTexture' in data['actor']:
-                    plugin_and_fid = data['actor']['headTexture']
-                    plugins.append(plugin_and_fid[:-7].lower())
-                
-                if 'headParts' in data:
-                    for part in data['headParts']:
-                        formIdentifier = part['formIdentifier']
-                        plugins.append(formIdentifier[:-7].lower())
-                for plugin in plugins:
-                    with scanner.lock:
-                        if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
-                        if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
-            else:
-                with open(file, 'r', encoding='utf-8', errors='ignore') as f:
+        try:
+            if reader_type == 'r':
+                if file.lower().endswith('.jslot'):
+                    with open(file, 'r', errors='ignore') as f:
+                        data = json.load(f)
+                        f.close()
+                    plugins = []
+                    if 'actor' in data and 'headTexture' in data['actor']:
+                        plugin_and_fid = data['actor']['headTexture']
+                        plugins.append(plugin_and_fid[:-7].lower())
+                    
+                    if 'headParts' in data:
+                        for part in data['headParts']:
+                            formIdentifier = part['formIdentifier']
+                            plugins.append(formIdentifier[:-7].lower())
+                    for plugin in plugins:
+                        with scanner.lock:
+                            if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
+                            if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+                else:
+                    with open(file, 'r', encoding='utf-8', errors='ignore') as f:
+                        r = re.findall(pattern,f.read().lower())
+                        f.close()
+                    if r != []:
+                        for plugin in r:
+                            if 'NOT Is' not in plugin:
+                                with scanner.lock:
+                                    if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
+                                    if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+                    elif 'bsa_extracted\\' in file and file.endswith('.psc'):
+                        os.remove(file)
+
+            if reader_type == 'rb':
+                #TODO: optimize .pex scanning, probably get all strings from the string table and use .endswith()
+                with open(file, 'rb') as f:
                     r = re.findall(pattern,f.read().lower())
                     f.close()
                 if r != []:
                     for plugin in r:
-                        if 'NOT Is' not in plugin:
+                        plugin = plugin.decode('utf-8')
+                        if file.lower().endswith('.dll'):
+                            with scanner.lock:
+                                if plugin not in scanner.dll_dict: scanner.dll_dict.update({plugin: []})
+                                if file not in scanner.dll_dict[plugin]: scanner.dll_dict[plugin].append(file)
+                        else:
                             with scanner.lock:
                                 if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
                                 if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
-                elif 'bsa_extracted\\' in file and file.endswith('.psc'):
+
+                elif 'bsa_extracted\\' in file and file.endswith('.pex'):
                     os.remove(file)
-
-        if reader_type == 'rb':
-            #TODO: optimize .pex scanning, probably get all strings from the string table and use .endswith()
-            with open(file, 'rb') as f:
-                r = re.findall(pattern,f.read().lower())
-                f.close()
-            if r != []:
-                for plugin in r:
-                    plugin = plugin.decode('utf-8')
-                    if file.lower().endswith('.dll'):
-                        with scanner.lock:
-                            if plugin not in scanner.dll_dict: scanner.dll_dict.update({plugin: []})
-                            if file not in scanner.dll_dict[plugin]: scanner.dll_dict[plugin].append(file)
-                    else:
-                        with scanner.lock:
-                            if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
-                            if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
-
-            elif 'bsa_extracted\\' in file and file.endswith('.pex'):
-                os.remove(file)
+        except Exception as e:
+            print(f"!Error reading file {file}")
+            print(e)
 
     def bsa_reader(bsa_file):
         plugins = []

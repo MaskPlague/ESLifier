@@ -39,9 +39,38 @@ class CFIDs():
                 else:
                     shutil.rmtree('bsa_extracted_temp/')
                     os.makedirs('bsa_extracted_temp/')
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
                 for bsa_file, values in bsa_dict.items():
                     if name in values:
-                        subprocess.run([bsab, bsa_file, "-f", name, "-e", "-o", "bsa_extracted_temp"], creationflags=subprocess.CREATE_NO_WINDOW)
+                        try:
+                            try:
+                                with subprocess.Popen(
+                                    [bsab, bsa_file, "--encoding", "utf8", "-f", name, "-e", "-o", "bsa_extracted_temp"],
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    startupinfo=startupinfo,
+                                    text=True
+                                    ) as p:
+                                        for line in p.stdout:
+                                            if line.startswith('An error'):
+                                                raise EncodingWarning(f'~utf-8 failed switching to utf-7 for {file}')
+                            except Exception as e:
+                                print(e)
+                                with subprocess.Popen(
+                                    [bsab, bsa_file, "--encoding", "utf7", "-f", name, "-e", "-o", "bsa_extracted_temp"],
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    startupinfo=startupinfo,
+                                    text=True
+                                    ) as p:
+                                        for line in p.stdout:
+                                            if line.startswith('An error'):
+                                                raise EncodingWarning(f'~utf-7 failed for {file}')
+                        except Exception as e:
+                            print(f'!Error Reading BSA: {file}')
+                            print(e)
+                                            
 
                 rel_paths = []
                 for file in patch_or_rename:
@@ -87,9 +116,12 @@ class CFIDs():
             for item in value:
                 if item.lower() not in data[key]:
                     data[key].append(item.lower())
-
-        with open(file, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
+        try:
+            with open(file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print('!Error: Failed to dump data to {file}')
+            print(e)
 
     def get_from_file(file):
         try:
@@ -104,9 +136,13 @@ class CFIDs():
         CFIDs.lock = threading.Lock()
         print("-  Changing ESL flag in: " + os.path.basename(file))
         new_file, _ = CFIDs.copy_file_to_output(file, skyrim_folder, output_folder)
-        with open(new_file, 'rb+') as f:
-            f.seek(9)
-            f.write(b'\x02')
+        try:
+            with open(new_file, 'rb+') as f:
+                f.seek(9)
+                f.write(b'\x02')
+        except Exception as e:
+            print('!Error: Failed to set ESL flag in {file}')
+            print(e)            
 
     def patch_new(form_processor, compacted_file, dependents, files_to_patch, skyrim_folder_path, output_folder_path, update_header, mo2_mode):
         CFIDs.lock = threading.Lock()
@@ -351,118 +387,123 @@ class CFIDs():
                 new_file = file
             new_file_lower = new_file.lower()
             basename = os.path.basename(master).lower()
-            with CFIDs.lock:
-                if new_file_lower.endswith('.ini'):
-                    if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini', '_enbl.ini',     # PO3's SPID, KID, BOS, ENBL
-                                                '_desc.ini', '_flm.ini', '_llos.ini', '_ipm.ini', '_mus.ini ')): # Description Framework, FLM, LLOS, IPM, MTD
-                        CFIDs.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
-                    elif 'seasons\\' in new_file_lower:                                                 # Po3's Seasons of Skyrim
-                        CFIDs.ini_season_patcher(basename, new_file, form_id_map)
-                    elif 'payloadinterpreter\\' in new_file_lower:                                      # Payload Interpreter
-                        CFIDs.ini_pi_dtry_patcher(basename, new_file, form_id_map)
-                    elif 'dtrykeyutil\\' in new_file_lower:                                             # DtryKeyUtil
-                        CFIDs.ini_pi_dtry_patcher(basename, new_file, form_id_map)
-                    elif 'muimpactframework\\' in new_file_lower or 'muskeletoneditor\\' in new_file_lower: # MU
-                        CFIDs.ini_mu_patcher(basename, new_file, form_id_map)
-                    elif '\\poisebreaker' in new_file_lower:                                            # Poise Breaker
-                        CFIDs.ini_pb_patcher(basename, new_file, form_id_map)
-                    elif 'skypatcher\\' in new_file_lower:                                              # Sky Patcher
-                        CFIDs.ini_sp_patcher(basename, new_file, form_id_map)
-                    elif 'valhallacombat\\' in new_file_lower:                                          # Valhalla Combat
-                        CFIDs.ini_vc_patcher(basename, new_file, form_id_map)
-                    elif '\\autobody\\' in new_file_lower:                                              # AutoBody
-                        CFIDs.ini_ab_patcher(basename, new_file, form_id_map)
-                    elif 'vsu\\' in new_file_lower:                                                     # VSU
-                        CFIDs.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
-                    else:                                                                               # Might patch whatever else is using .ini?
-                        print(f'Warn: Possible missing patcher for: {new_file}')
-                        with open(new_file, 'r+', encoding='utf-8') as f:
-                            lines = f.readlines()
-                            for i, line in lines:
-                                if basename in line.lower():
-                                    for form_ids in form_id_map:
-                                        lines[i] = line.replace('0x' + form_ids[0], '0x' + form_ids[2]).replace('0x' + form_ids[1], '0x' + form_ids[3]).replace('0x' + form_ids[0].lower(), '0x' + form_ids[2].lower()).replace('0x' + form_ids[1].lower(), '0x' + form_ids[3].lower()).replace('0X' + form_ids[0], '0X' + form_ids[2]).replace('0X' + form_ids[1], '0X' + form_ids[3]).replace('0X' + form_ids[0].lower(), '0X' + form_ids[2].lower()).replace('0X' + form_ids[1].lower(), '0X' + form_ids[3].lower())
-                            f.seek(0)
-                            f.truncate(0)
-                            f.write(''.join(lines))
-                            f.close()
-                elif new_file_lower.endswith('_conditions.txt'):                                        # Dynamic Animation Replacer
-                    CFIDs.dar_patcher(basename, new_file, form_id_map)
-                elif new_file_lower.endswith('.json'):
-                    if 'animationreplacer' in new_file_lower and ('config.json' in new_file_lower or 'user.json' in new_file_lower): # Open Animation Replacer
-                        CFIDs.json_oar_patcher(basename, new_file, form_id_map)
-                    elif 'mcm\\config' in new_file_lower and 'config.json' in new_file_lower:           # MCM helper
-                        CFIDs.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
-                    elif 'storageutildata' in new_file_lower:                                           # PapyrusUtil's StorageDataUtil
-                        CFIDs.json_sud_patcher(basename, new_file, form_id_map)
-                    elif 'dynamicstringdistributor' in new_file_lower:                                  # Dynamic String Distributor
-                        CFIDs.json_dsd_patcher(basename, new_file, form_id_map)
-                    elif 'dkaf' in new_file_lower:                                                      # Dynamic Key Activation Framework NG
-                        CFIDs.json_dkaf_patcher(basename, new_file, form_id_map)
-                    elif 'dynamicarmorvariants' in new_file_lower:                                      # Dynamic Armor Variants
-                        CFIDs.json_dav_patcher(basename, new_file, form_id_map)
-                    elif '\\ied\\' in new_file_lower:                                                   # Immersive Equipment Display
-                        CFIDs.json_ied_patcher(basename, new_file, form_id_map)
-                    elif 'lightplacer' in new_file_lower:                                               # Light Placer
-                        CFIDs.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
-                    elif 'creatures.d' in new_file_lower:                                               # Creature Framework
-                        CFIDs.json_cf_patcher(basename, new_file, form_id_map)
-                    elif 'inventoryinjector' in new_file_lower:                                         # Inventory Injector
-                        CFIDs.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
-                    elif 'customskills' in new_file_lower:                                              # Custom Skills Framework
-                        CFIDs.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
-                    elif 'skyrimunbound' in new_file_lower:                                             # Skyrim Unbound
-                        CFIDs.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
-                    elif 'playerequipmentmanager' in new_file_lower:                                    # Player Equipment Manager
-                        CFIDs.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
-                    elif 'mapmarker\\' in new_file_lower:                                               # CoMAP
-                        CFIDs.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
-                    elif new_file_lower.endswith('obody_presetdistributionconfig.json'):                # OBody NG
-                        CFIDs.json_obody_patcher(basename, new_file, form_id_map)
-                    elif os.path.basename(new_file_lower).startswith('shse.'):                          # Smart Harvest
-                        CFIDs.json_shse_patcher(basename, new_file, form_id_map)
-                    elif os.path.basename(new_file_lower) == 'sexlabconfig.json':                       # SL MCM Generated config
-                        CFIDs.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
-                    else:                                                                               # Might patch whatever else is using .json?
-                        print(f'Warn: Possible missing patcher for: {new_file}')
-                        with open(new_file, 'r+', encoding='utf-8') as f:
-                            lines = f.readlines()
-                            for i, line in lines:
-                                if basename in line.lower():
-                                    for form_ids in form_id_map:
-                                        lines[i] = line.replace(form_ids[0], form_ids[2]).replace(form_ids[1], form_ids[3]).replace(form_ids[0].lower(), form_ids[2].lower()).replace(form_ids[1].lower(), form_ids[3].lower())
-                            f.seek(0)
-                            f.truncate(0)
-                            f.write(''.join(lines))
-                            f.close()
-                elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
-                    CFIDs.pex_patcher(basename, new_file, form_id_map)
-                elif new_file_lower.endswith('.toml'):
-                    if '\\_dynamicanimationcasting\\' in new_file_lower:                                # Dynamic Animation Casting (Original/NG)
-                        CFIDs.toml_dac_patcher(basename, new_file, form_id_map)
-                    elif '\\precision\\' in new_file_lower:                                             # Precision
-                        CFIDs.toml_precision_patcher(basename, new_file, form_id_map)
-                    elif '\\loki_poise\\' in new_file_lower:                                            # Loki Poise
-                        CFIDs.toml_loki_tdm_patcher(basename, new_file, form_id_map)
-                    elif '\\truedirectionalmovement\\' in new_file_lower:                               # TDM
-                        CFIDs.toml_loki_tdm_patcher(basename,new_file, form_id_map)
+            try:
+                with CFIDs.lock:
+                    if new_file_lower.endswith('.ini'):
+                        if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini', '_enbl.ini',     # PO3's SPID, KID, BOS, ENBL
+                                                    '_desc.ini', '_flm.ini', '_llos.ini', '_ipm.ini', '_mus.ini ')): # Description Framework, FLM, LLOS, IPM, MTD
+                            CFIDs.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
+                        elif 'seasons\\' in new_file_lower:                                                 # Po3's Seasons of Skyrim
+                            CFIDs.ini_season_patcher(basename, new_file, form_id_map)
+                        elif 'payloadinterpreter\\' in new_file_lower:                                      # Payload Interpreter
+                            CFIDs.ini_pi_dtry_patcher(basename, new_file, form_id_map)
+                        elif 'dtrykeyutil\\' in new_file_lower:                                             # DtryKeyUtil
+                            CFIDs.ini_pi_dtry_patcher(basename, new_file, form_id_map)
+                        elif 'muimpactframework\\' in new_file_lower or 'muskeletoneditor\\' in new_file_lower: # MU
+                            CFIDs.ini_mu_patcher(basename, new_file, form_id_map)
+                        elif '\\poisebreaker' in new_file_lower:                                            # Poise Breaker
+                            CFIDs.ini_pb_patcher(basename, new_file, form_id_map)
+                        elif 'skypatcher\\' in new_file_lower:                                              # Sky Patcher
+                            CFIDs.ini_sp_patcher(basename, new_file, form_id_map)
+                        elif 'valhallacombat\\' in new_file_lower:                                          # Valhalla Combat
+                            CFIDs.ini_vc_patcher(basename, new_file, form_id_map)
+                        elif '\\autobody\\' in new_file_lower:                                              # AutoBody
+                            CFIDs.ini_ab_patcher(basename, new_file, form_id_map)
+                        elif 'vsu\\' in new_file_lower:                                                     # VSU
+                            CFIDs.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
+                        else:                                                                               # Might patch whatever else is using .ini?
+                            print(f'Warn: Possible missing patcher for: {new_file}')
+                            with open(new_file, 'r+', encoding='utf-8') as f:
+                                lines = f.readlines()
+                                for i, line in lines:
+                                    if basename in line.lower():
+                                        for form_ids in form_id_map:
+                                            lines[i] = line.replace('0x' + form_ids[0], '0x' + form_ids[2]).replace('0x' + form_ids[1], '0x' + form_ids[3]).replace('0x' + form_ids[0].lower(), '0x' + form_ids[2].lower()).replace('0x' + form_ids[1].lower(), '0x' + form_ids[3].lower()).replace('0X' + form_ids[0], '0X' + form_ids[2]).replace('0X' + form_ids[1], '0X' + form_ids[3]).replace('0X' + form_ids[0].lower(), '0X' + form_ids[2].lower()).replace('0X' + form_ids[1].lower(), '0X' + form_ids[3].lower())
+                                f.seek(0)
+                                f.truncate(0)
+                                f.write(''.join(lines))
+                                f.close()
+                    elif new_file_lower.endswith('_conditions.txt'):                                        # Dynamic Animation Replacer
+                        CFIDs.dar_patcher(basename, new_file, form_id_map)
+                    elif new_file_lower.endswith('.json'):
+                        if 'animationreplacer' in new_file_lower and ('config.json' in new_file_lower or 'user.json' in new_file_lower): # Open Animation Replacer
+                            CFIDs.json_oar_patcher(basename, new_file, form_id_map)
+                        elif 'mcm\\config' in new_file_lower and 'config.json' in new_file_lower:           # MCM helper
+                            CFIDs.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
+                        elif 'storageutildata' in new_file_lower:                                           # PapyrusUtil's StorageDataUtil
+                            CFIDs.json_sud_patcher(basename, new_file, form_id_map)
+                        elif 'dynamicstringdistributor' in new_file_lower:                                  # Dynamic String Distributor
+                            CFIDs.json_dsd_patcher(basename, new_file, form_id_map)
+                        elif 'dkaf' in new_file_lower:                                                      # Dynamic Key Activation Framework NG
+                            CFIDs.json_dkaf_patcher(basename, new_file, form_id_map)
+                        elif 'dynamicarmorvariants' in new_file_lower:                                      # Dynamic Armor Variants
+                            CFIDs.json_dav_patcher(basename, new_file, form_id_map)
+                        elif '\\ied\\' in new_file_lower:                                                   # Immersive Equipment Display
+                            CFIDs.json_ied_patcher(basename, new_file, form_id_map)
+                        elif 'lightplacer' in new_file_lower:                                               # Light Placer
+                            CFIDs.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
+                        elif 'creatures.d' in new_file_lower:                                               # Creature Framework
+                            CFIDs.json_cf_patcher(basename, new_file, form_id_map)
+                        elif 'inventoryinjector' in new_file_lower:                                         # Inventory Injector
+                            CFIDs.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
+                        elif 'customskills' in new_file_lower:                                              # Custom Skills Framework
+                            CFIDs.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
+                        elif 'skyrimunbound' in new_file_lower:                                             # Skyrim Unbound
+                            CFIDs.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
+                        elif 'playerequipmentmanager' in new_file_lower:                                    # Player Equipment Manager
+                            CFIDs.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
+                        elif 'mapmarker\\' in new_file_lower:                                               # CoMAP
+                            CFIDs.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
+                        elif new_file_lower.endswith('obody_presetdistributionconfig.json'):                # OBody NG
+                            CFIDs.json_obody_patcher(basename, new_file, form_id_map)
+                        elif os.path.basename(new_file_lower).startswith('shse.'):                          # Smart Harvest
+                            CFIDs.json_shse_patcher(basename, new_file, form_id_map)
+                        elif os.path.basename(new_file_lower) == 'sexlabconfig.json':                       # SL MCM Generated config
+                            CFIDs.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
+                        else:                                                                               # Might patch whatever else is using .json?
+                            print(f'Warn: Possible missing patcher for: {new_file}')
+                            with open(new_file, 'r+', encoding='utf-8') as f:
+                                lines = f.readlines()
+                                for i, line in lines:
+                                    if basename in line.lower():
+                                        for form_ids in form_id_map:
+                                            lines[i] = line.replace(form_ids[0], form_ids[2]).replace(form_ids[1], form_ids[3]).replace(form_ids[0].lower(), form_ids[2].lower()).replace(form_ids[1].lower(), form_ids[3].lower())
+                                f.seek(0)
+                                f.truncate(0)
+                                f.write(''.join(lines))
+                                f.close()
+                    elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
+                        CFIDs.pex_patcher(basename, new_file, form_id_map)
+                    elif new_file_lower.endswith('.toml'):
+                        if '\\_dynamicanimationcasting\\' in new_file_lower:                                # Dynamic Animation Casting (Original/NG)
+                            CFIDs.toml_dac_patcher(basename, new_file, form_id_map)
+                        elif '\\precision\\' in new_file_lower:                                             # Precision
+                            CFIDs.toml_precision_patcher(basename, new_file, form_id_map)
+                        elif '\\loki_poise\\' in new_file_lower:                                            # Loki Poise
+                            CFIDs.toml_loki_tdm_patcher(basename, new_file, form_id_map)
+                        elif '\\truedirectionalmovement\\' in new_file_lower:                               # TDM
+                            CFIDs.toml_loki_tdm_patcher(basename,new_file, form_id_map)
+                        else:
+                            print(f'Warn: Possible missing patcher for: {new_file}')
+                    elif new_file_lower.endswith('_srd.yaml'):                                              # Sound record distributor
+                        CFIDs.srd_patcher(basename, new_file, form_id_map)
+                    elif new_file_lower.endswith('.psc'):                                                   # Script source file patching, this doesn't take into account form ids being passed as variables
+                        CFIDs.psc_patcher(basename, new_file, form_id_map)
+                    elif 'facegeom' in new_file_lower and new_file_lower.endswith('.nif'):                  # FaceGeom mesh patching
+                        CFIDs.facegeom_mesh_patcher(basename, new_file, form_id_map)
+                    elif new_file_lower.endswith('.seq'):                                                   # SEQ file patching
+                        CFIDs.seq_patcher(new_file, form_id_map)
+                    elif new_file_lower.endswith('.jslot'):                                                 # Racemenu Presets
+                        CFIDs.jslot_patcher(basename, new_file, form_id_map)
                     else:
                         print(f'Warn: Possible missing patcher for: {new_file}')
-                elif new_file_lower.endswith('_srd.yaml'):                                              # Sound record distributor
-                    CFIDs.srd_patcher(basename, new_file, form_id_map)
-                elif new_file_lower.endswith('.psc'):                                                   # Script source file patching, this doesn't take into account form ids being passed as variables
-                    CFIDs.psc_patcher(basename, new_file, form_id_map)
-                elif 'facegeom' in new_file_lower and new_file_lower.endswith('.nif'):                  # FaceGeom mesh patching
-                    CFIDs.facegeom_mesh_patcher(basename, new_file, form_id_map)
-                elif new_file_lower.endswith('.seq'):                                                   # SEQ file patching
-                    CFIDs.seq_patcher(new_file, form_id_map)
-                elif new_file_lower.endswith('.jslot'):                                                 # Racemenu Presets
-                    CFIDs.jslot_patcher(basename, new_file, form_id_map)
-                else:
-                    print(f'Warn: Possible missing patcher for: {new_file}')
 
-            with CFIDs.lock:
-                CFIDs.compacted_and_patched[os.path.basename(master)].append(rel_path)
+                with CFIDs.lock:
+                    CFIDs.compacted_and_patched[os.path.basename(master)].append(rel_path)
+
+            except Exception as e:
+                print(f'!Error: Failed to patch file: {file}')
+                print(e)    
 
     def find_prev_non_alphanumeric(text, start_index):
         for i in range(start_index, 0, -1):
@@ -1506,46 +1547,49 @@ class CFIDs():
                 thread.join()
 
     def patch_dependent(new_file, update_header, file, form_id_file_data, rel_path):
-        with open(new_file, 'rb+') as dependent_file:
-            #Update header to 1.71 to fit new records
-            if update_header:
+        try:
+            with open(new_file, 'rb+') as dependent_file:
+                #Update header to 1.71 to fit new records
+                if update_header:
+                    dependent_file.seek(0)
+                    dependent_file.seek(30)
+                    dependent_file.write(b'\x48\xE1\xDA\x3F')
+                    dependent_file.seek(0)
+
+                dependent_data = dependent_file.read()
+                
+                data_list, grup_struct = CFIDs.create_data_list(dependent_data)
+            
+                data_list, sizes_list = CFIDs.decompress_data(data_list)
+
+                master_index = CFIDs.get_master_index(file, data_list)
+
+                master_byte = master_index.to_bytes()
+
+                saved_forms = CFIDs.form_processor.save_all_form_data(data_list, new_file)
+                
+                form_id_replacements = []
+                for i in range(len(form_id_file_data)):
+                    form_id_conversion = form_id_file_data[i].split('|')
+                    from_id = bytes.fromhex(form_id_conversion[0])[:3]
+                    to_id = bytes.fromhex(form_id_conversion[1])[:3]
+                    form_id_replacements.append([from_id, to_id])
+
+                data_list = CFIDs.form_processor.patch_form_data_dependent(data_list, saved_forms, form_id_replacements, master_byte)
+
+                data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
+                
+                data_list = CFIDs.update_grup_sizes(data_list, grup_struct, sizes_list)
+
                 dependent_file.seek(0)
-                dependent_file.seek(30)
-                dependent_file.write(b'\x48\xE1\xDA\x3F')
-                dependent_file.seek(0)
+                dependent_file.truncate(0)
+                dependent_file.write(b''.join(data_list))
+                dependent_file.close()
 
-            dependent_data = dependent_file.read()
-            
-            data_list, grup_struct = CFIDs.create_data_list(dependent_data)
-        
-            data_list, sizes_list = CFIDs.decompress_data(data_list)
-
-            master_index = CFIDs.get_master_index(file, data_list)
-
-            master_byte = master_index.to_bytes()
-
-            saved_forms = CFIDs.form_processor.save_all_form_data(data_list, new_file)
-            
-            form_id_replacements = []
-            for i in range(len(form_id_file_data)):
-                form_id_conversion = form_id_file_data[i].split('|')
-                from_id = bytes.fromhex(form_id_conversion[0])[:3]
-                to_id = bytes.fromhex(form_id_conversion[1])[:3]
-                form_id_replacements.append([from_id, to_id])
-
-            data_list = CFIDs.form_processor.patch_form_data_dependent(data_list, saved_forms, form_id_replacements, master_byte)
-
-            data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
-            
-            data_list = CFIDs.update_grup_sizes(data_list, grup_struct, sizes_list)
-
-            dependent_file.seek(0)
-            dependent_file.truncate(0)
-            dependent_file.write(b''.join(data_list))
-            dependent_file.close()
-
-        with CFIDs.lock:
-            CFIDs.compacted_and_patched[os.path.basename(file)].append(rel_path)
+            with CFIDs.lock:
+                CFIDs.compacted_and_patched[os.path.basename(file)].append(rel_path)
+        except Exception as e:
+            print(f'!Error: Failed to patch depdendent: {new_file}')
         return
 
     #gets what master index the file is in inside of the dependent's data
