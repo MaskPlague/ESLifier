@@ -4,6 +4,8 @@ import threading
 import timeit
 import json
 import subprocess
+import mmap
+import psutil
 
 class scanner():
     def __init__(self, path, mo2_mode, modlist_txt_path, scan_esms, plugins_txt_path, bsab):
@@ -16,6 +18,11 @@ class scanner():
         scanner.plugins = []
         scanner.bsab = bsab
         scanner.lock = threading.Lock()
+        total_ram = psutil.virtual_memory().total
+        usable_ram = total_ram * 0.75
+        thread_memory_usage = 10 * 1024 * 1024
+        scanner.max_threads_by_ram = int(usable_ram / thread_memory_usage)
+
         scanner.extracted = scanner.get_from_file('ESLifier_Data/extracted_bsa.json')
         print('-  Gathering Files...\n\n')
         plugins_list = scanner.get_plugins_list(plugins_txt_path)
@@ -368,7 +375,7 @@ class scanner():
         scanner.count = 0
         
         if len(scanner.all_files) > 500000:
-            split = 500
+            split = scanner.max_threads_by_ram // 2
         elif len(scanner.all_files) > 50000:
             split = 50
         else:
@@ -424,7 +431,9 @@ class scanner():
         print("-  Scanning .bsa files\n\n")
         scanner.file_count = len(scanner.bsa_files)
         scanner.count = 0
-        if len(scanner.bsa_files) > 10:
+        if len(scanner.bsa_files) > 100:
+            split = 100
+        elif len(scanner.bsa_files) > 10:
             split = 10
         else:
             split = 1
@@ -584,28 +593,32 @@ class scanner():
 
     def bsa_reader(bsa_file):
         plugins = []
-        with open(bsa_file, 'rb') as f:
-            f.seek(16)
-            folder_count = int.from_bytes(f.read(4)[::-1])
-            f.seek(8,1)
-            total_file_name_length = int.from_bytes(f.read(4)[::-1])
-            f.seek(0)
-            data = f.read()
+        pattern_1 = re.compile(rb'([^\\]+\.es[pml])')
+        try:
+            with open(bsa_file, 'rb') as f:
+                with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+                    folder_count = int.from_bytes(mm[16:20][::-1])
+                    total_file_name_length = int.from_bytes(mm[28:32][::-1])
 
-        end_of_folder_records = (folder_count * 24) + 36
-        offset = 36
-        pattern_1 = re.compile(r'([^\\]+\.es[pml])')
+                    end_of_folder_records = (folder_count * 24) + 36
+                    offset = 36
 
-        while offset < end_of_folder_records:
-            location = int.from_bytes(data[offset+16:offset+20][::-1]) - total_file_name_length
-            folder_length = int.from_bytes(data[location:location+1])
-            folder_path = data[location+1:location+folder_length].decode(errors='ignore')
-            if ('facegeom\\' in folder_path or 'facetint\\' in folder_path or 'sound\\voice' in folder_path) and ('.esp' in folder_path or '.esl' in folder_path or '.esm' in folder_path):
-                plugin = re.search(pattern_1, folder_path).group(0)
-                if plugin not in plugins:
-                    plugins.append(plugin)
+                    while offset < end_of_folder_records:
+                        location = int.from_bytes(mm[offset+16:offset+20][::-1]) - total_file_name_length
+                        folder_length = int.from_bytes(mm[location:location+1])
+                        folder_path = mm[location+1:location+folder_length].decode(errors='ignore')
 
-            offset += 24
+                        if ('facegeom\\' in folder_path or 'facetint\\' in folder_path or 'sound\\voice' in folder_path) and ('.esp' in folder_path or '.esl' in folder_path or '.esm' in folder_path):
+                            match = re.search(pattern_1, folder_path.encode())
+                            if match:
+                                plugin = match.group(0).decode()
+                                if plugin not in plugins:
+                                    plugins.append(plugin)
 
-        if plugins != []:
-            scanner.bsa_dict[bsa_file] = plugins
+                        offset += 24
+
+            if plugins != []:
+                scanner.bsa_dict[bsa_file] = plugins
+        except Exception as e:
+            print(f'Error Reading: {bsa_file}')
+            raise ValueError(e)
