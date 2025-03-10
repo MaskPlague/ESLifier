@@ -142,12 +142,14 @@ class CFIDs():
             else:
                 start = os.path.join(os.getcwd(), 'bsa_extracted/')
             end_path = os.path.normpath(os.path.relpath(file, start))
+        elif CFIDs.mo2_mode and '\\overwrite\\' in file:
+            overwrite_path = os.path.join(os.path.split(skyrim_folder_path)[0], 'overwrite')
+            end_path = os.path.normpath(os.path.relpath(file, overwrite_path))
         else:
             if CFIDs.mo2_mode:
                 end_path = os.path.join(*os.path.normpath(os.path.relpath(file, skyrim_folder_path)).split(os.sep)[1:])
             else:
                 end_path = os.path.normpath(os.path.relpath(file, skyrim_folder_path))
-                #end_path = file[len(skyrim_folder_path) + 1:]
         new_file = os.path.normpath(os.path.join(os.path.join(output_folder,'ESLifier Compactor Output'), end_path))
         with CFIDs.lock:
             if not os.path.exists(os.path.dirname(new_file)):
@@ -328,6 +330,7 @@ class CFIDs():
     #           Creature Framework
     #           CoMAP
     #           OBody NG
+    #           SexLab Config
     #   .jslot: Racemenu Presets
     #   _conditions.txt: Dynamic Animation Replacer
     #   _srd.yaml: Sound Record Distributor
@@ -418,6 +421,8 @@ class CFIDs():
                         CFIDs.json_obody_patcher(basename, new_file, form_id_map)
                     elif os.path.basename(new_file_lower).startswith('shse.'):                          # Smart Harvest
                         CFIDs.json_shse_patcher(basename, new_file, form_id_map)
+                    elif os.path.basename(new_file_lower) == 'sexlabconfig.json':                       # SL MCM Generated config
+                        CFIDs.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
                     else:                                                                               # Might patch whatever else is using .json?
                         print(f'Warn: Possible missing patcher for: {new_file}')
                         with open(new_file, 'r+', encoding='utf-8') as f:
@@ -498,16 +503,11 @@ class CFIDs():
         with open(new_file, 'rb+') as f:
             data = f.read()
             seq_form_id_list = [data[i:i+4] for i in range(0, len(data), 4)]
-            for form_ids in form_id_map:
-                for i in range(len(seq_form_id_list)):
-                    if form_ids[4] == seq_form_id_list[i]:
-                        seq_form_id_list[i] = b'-||+||-' + form_ids[5]+ b'-||+||-'
-                        break
-            data = b''.join(seq_form_id_list)
-            data = data.replace(b'-||+||-', b'')
+            form_id_dict = {form_ids[4]: form_ids[5] for form_ids in form_id_map}
+            new_seq_form_id_list = [form_id_dict.get(fid, fid) for fid in seq_form_id_list]
             f.seek(0)
             f.truncate(0)
-            f.write(data)
+            f.write(b''.join(new_seq_form_id_list))
             f.close()
         
     def pex_patcher(basename, new_file, form_id_map):
@@ -1409,7 +1409,7 @@ class CFIDs():
         saved_forms = CFIDs.form_processor.save_all_form_data(data_list, new_file)
 
         form_id_list.sort()
-        
+
         if update_header:
             new_id = binascii.unhexlify(master_count.to_bytes().hex() + '000000')
             new_range = 4096
