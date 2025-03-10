@@ -59,7 +59,7 @@ class log_stream(QMainWindow):
         self.show()
         self.text_edit.setStyleSheet("background-color: red;")
         print("\nAn exception has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data.\n")
-        traceback.print_tb(exc_traceback, limit=3)
+        traceback.print_tb(exc_traceback, limit=5)
         print(f"Unhandled exception: {exc_value}")
         print('\n')
 
@@ -68,7 +68,7 @@ class log_stream(QMainWindow):
         self.show()
         self.text_edit.setStyleSheet("background-color: red;")
         print("\nAn exception has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data.\n")
-        traceback.print_tb(args.exc_traceback, limit=3)
+        traceback.print_tb(args.exc_traceback, limit=5)
         print(f"Unhandled exception: {args.exc_value}")
         print('\n')
 
