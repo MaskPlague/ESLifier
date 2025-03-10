@@ -248,9 +248,9 @@ class settings(QWidget):
             self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText("MO2 Mod\'s Folder Path")
             self.skyrim_folder_path.setPlaceholderText('C:/Path/To/MO2/mods')
         else:
-            self.skyrim_folder_path_widget.setToolTip("Set this to your Skyrim Special Edition folder that holds SkyrimSE.exe.")
-            self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText("Skyrim Folder Path")
-            self.skyrim_folder_path.setPlaceholderText('C:/Path/To/Skyrim Special Edition')
+            self.skyrim_folder_path_widget.setToolTip("Set this to your Skyrim Special Edition Data folder that holds Skyrim.esm.")
+            self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText("Skyrim Data Folder Path")
+            self.skyrim_folder_path.setPlaceholderText('C:/Path/To/Skyrim Special Edition/Data')
 
     def create_button_widget(self, label_text, tooltip, button_text, click_function):
         layout = QHBoxLayout()
