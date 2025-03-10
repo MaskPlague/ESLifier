@@ -36,7 +36,7 @@ class settings(QWidget):
         self.file_dialog_2.setFileMode(QFileDialog.FileMode.ExistingFile)
 
         self.skyrim_folder_path_widget, self.skyrim_folder_path = self.create_path_widget(
-            "Skyrim Data Folder Path",
+            "Data Folder Path",
             "Set this to your Skyrim Special Edition Data folder that holds Skyrim.esm.",
             'C:/Path/To/Skyrim Special Edition/Data',
             self.skyrim_folder_path_clicked
@@ -249,7 +249,7 @@ class settings(QWidget):
             self.skyrim_folder_path.setPlaceholderText('C:/Path/To/MO2/mods')
         else:
             self.skyrim_folder_path_widget.setToolTip("Set this to your Skyrim Special Edition Data folder that holds Skyrim.esm.")
-            self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText("Skyrim Data Folder Path")
+            self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText("Data Folder Path")
             self.skyrim_folder_path.setPlaceholderText('C:/Path/To/Skyrim Special Edition/Data')
 
     def create_button_widget(self, label_text, tooltip, button_text, click_function):
