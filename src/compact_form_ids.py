@@ -1396,11 +1396,6 @@ class CFIDs():
 
         master_count = CFIDs.get_master_count(data_list)
 
-        if master_count <= 15:
-            mC = '0' + str(master_count)
-        else:
-            mC = str(master_count)
-
         data_list, sizes_list = CFIDs.decompress_data(data_list)
 
         form_id_list = []
@@ -1414,12 +1409,12 @@ class CFIDs():
         saved_forms = CFIDs.form_processor.save_all_form_data(data_list, new_file)
 
         form_id_list.sort()
-
+        
         if update_header:
-            new_id = binascii.unhexlify(mC + '000000')
+            new_id = binascii.unhexlify(master_count.to_bytes().hex() + '000000')
             new_range = 4096
         else:
-            new_id = binascii.unhexlify(mC + '000800')
+            new_id = binascii.unhexlify(master_count.to_bytes().hex() + '000800')
             new_range = 2048
         new_id_len = len(new_id)
         counter = int.from_bytes(new_id, 'big')
