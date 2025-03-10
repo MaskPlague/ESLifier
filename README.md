@@ -9,7 +9,7 @@ ESLifier relies on [BSA Browser](https://www.nexusmods.com/skyrimspecialedition/
 
 ## User Manual
 Notes:
-- If you use MO2 do **NOT** add ESLifier.exe as an executable. Launching ESLifier through MO2 significantly slows down the file scanning process. Instead enable MO2 mode in the settings of ESLifier.
+- If you use MO2 do **NOT** add ESLifier.exe as an executable. Launching ESLifier through MO2 significantly slows down the file scanning process. Instead enable MO2 mode in the settings of ESLifier. Also, ESLifier can scan the Overwrite folder however, you will probably want to move everything in it to a mod instead, so that ESLifier's output can win any file conflicts and you won't keep the only copy of any configs generated in overwrite patched to ESLifier Output as your only copy.
 - Almost every element in the program has a tooltip that is activated by hovering over it.
 - ESLifier may cause issues in existing save games as is the nature of compacting form ids. I am currently looking into how difficult it would be to patch an existing save file.
 
