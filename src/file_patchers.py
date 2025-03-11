@@ -18,12 +18,13 @@ class patchers():
         return -1
     
     def psc_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding="utf-8") as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
                 if basename in line.lower() and 'getformfromfile' in line.lower():
                     for form_ids in form_id_map:
-                        lines[i] = re.sub(r'(0x0{0,7})(' + re.escape(form_ids[0]) + r' *,)', r'\0' + form_ids[2] + ',', line, flags=re.IGNORECASE)
+                        if form_ids[0].lower() in line.lower():
+                            lines[i] = re.sub(r'0x0*' + re.escape(form_ids[0]) + r'\b', '0x' + form_ids[2], line, flags=re.IGNORECASE)
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -578,7 +579,7 @@ class patchers():
             f.close()
         
     def dar_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
                 if basename in line.lower() and '|' in line:
@@ -596,7 +597,7 @@ class patchers():
             f.close()
 
     def srd_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+') as f:
+        with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
                 if basename in line.lower() and '|' in line:
