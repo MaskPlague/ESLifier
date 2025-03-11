@@ -154,7 +154,7 @@ class CFIDs():
         CFIDs.compacted_and_patched[compacted_file] = []
         if dependents != []:
             print("-  Patching New Dependent Plugins...")
-            CFIDs.patch_dependent_plugins(compacted_file, dependents, skyrim_folder_path, output_folder_path, update_header)
+            CFIDs.patch_dependent_plugins(compacted_file, dependents, skyrim_folder_path, output_folder_path, update_header, files_to_patch)
         if os.path.basename(compacted_file) in files_to_patch:
             to_patch, to_rename = CFIDs.sort_files_to_patch_or_rename(compacted_file, files_to_patch[os.path.basename(compacted_file)])
             form_id_map = CFIDs.get_form_id_map(compacted_file)
@@ -294,9 +294,10 @@ class CFIDs():
         for form_id_history in form_id_file_data:
             form_id_conversion = form_id_history.split('|')
 
-            from_id = bytes.fromhex(form_id_conversion[0])[::-1].hex()[2:].removeprefix('0').removeprefix('0').removeprefix('0').removeprefix('0').removeprefix('0').upper()
+            from_id = bytes.fromhex(form_id_conversion[0])[::-1].hex()[2:].lstrip('0').upper()
             from_id_with_leading_0s = bytes.fromhex(form_id_conversion[0])[::-1].hex()[2:].upper()
-            to_id = bytes.fromhex(form_id_conversion[1])[::-1].hex()[2:].removeprefix('0').removeprefix('0').removeprefix('0').removeprefix('0').removeprefix('0').upper()
+            to_id = bytes.fromhex(form_id_conversion[1])[::-1].hex()[2:].lstrip('0').upper()
+            if to_id == '': to_id = '0'
             to_id_with_leading_0s = bytes.fromhex(form_id_conversion[1])[::-1].hex()[2:].upper()
             from_id_little_endian = bytes.fromhex(form_id_conversion[0])
             to_id_little_endian = bytes.fromhex(form_id_conversion[1])
@@ -711,7 +712,7 @@ class CFIDs():
             new_file, rel_path = CFIDs.copy_file_to_output(dependent, skyrim_folder_path, output_folder_path)
             basename = os.path.basename(new_file)
             basename_lower = basename.lower()
-            if basename_lower in file_masters and len(file_masters[basename_lower]) > 0 and file_masters[basename_lower][-1].lower().endswith('.seq'):
+            if len(file_masters) > 0 and basename_lower in file_masters and len(file_masters[basename_lower]) > 0 and file_masters[basename_lower][-1].lower().endswith('.seq'):
                 new_seq_file, rel_path_seq = CFIDs.copy_file_to_output(file_masters[basename_lower][-1], skyrim_folder_path, output_folder_path)
             else:
                 new_seq_file, rel_path_seq = None, None
@@ -777,6 +778,8 @@ class CFIDs():
             except Exception as e:
                 print(f'!Error: Failed to patch depdendent\'s SEQ file: {new_seq_file}')
                 print(e)
+            with CFIDs.lock:
+                CFIDs.compacted_and_patched[os.path.basename(file)].append(rel_path_seq)
         return
 
     #gets what master index the file is in inside of the dependent's data
