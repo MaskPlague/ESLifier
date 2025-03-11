@@ -788,6 +788,4 @@ class CFIDs():
             if field == b'MAST':
                 master_list_count  += 1
             offset += field_size + 6
-        if master_list_count == 0:
-            master_list_count = 1
         return master_list_count

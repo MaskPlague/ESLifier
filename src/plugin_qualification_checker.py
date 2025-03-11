@@ -177,6 +177,4 @@ class qualification_checker():
             if field == b'MAST':
                 master_count += 1
             offset += field_size + 6
-        if master_count == 0:
-            master_count = 1
         return master_count
