@@ -101,13 +101,17 @@ class qualification_checker():
             data = f.read()
             data_list = qualification_checker.create_data_list(data)
         master_count = qualification_checker.get_master_count(data_list)
+        if master_count == 0:
+            num_max_records = 2048
+        else:
+            num_max_records = qualification_checker.num_max_records
         count = 0
         cell_form_ids = []
         for form in data_list:
             record_type = form[:4]
             if record_type not in (b'GRUP', b'TES4') and form[15] >= master_count:
                 count += 1
-                if count > qualification_checker.num_max_records:
+                if count > num_max_records:
                     return False, False, False, False
                 if int.from_bytes(form[12:15][::-1]) > qualification_checker.max_record_number:
                     need_compacting = True

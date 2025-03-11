@@ -623,7 +623,7 @@ class CFIDs():
 
         form_id_list.sort()
 
-        if update_header:
+        if update_header and master_count != 0:
             new_id = binascii.unhexlify(master_count.to_bytes().hex() + '000000')
             new_range = 4096
         else:
