@@ -44,10 +44,10 @@ body:
     attributes:
       label: Provide Instructions on Reproducing the Problem
       description: |
-        When submitting a bug report, please provide the steps that another user should take to reproduce the same issue.
-        Always write your report under the assumption that the developers have no information about the bug.
+        When submitting a bug report, please provide the steps that another user should take to reproduce the same issue, assuming that the bug needs any specific
+        steps to recreate. Always write your report under the assumption that the developers have no information about the bug.
     validations:
-      required: true
+      required: false
 
   - type: textarea
     id: relevant-files
