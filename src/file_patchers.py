@@ -40,11 +40,14 @@ class patchers():
             f.seek(0)
             f.writelines(data)
     
-    def seq_patcher(new_file, form_id_map):
+    def seq_patcher(new_file, form_id_map, dependent=False):
         with open(new_file, 'rb+') as f:
             data = f.read()
             seq_form_id_list = [data[i:i+4] for i in range(0, len(data), 4)]
-            form_id_dict = {form_ids[4]: form_ids[5] for form_ids in form_id_map}
+            if not dependent:
+                form_id_dict = {form_ids[4]: form_ids[5] for form_ids in form_id_map}
+            else:
+                form_id_dict = {old_id: new_id for old_id, new_id in form_id_map}
             new_seq_form_id_list = [form_id_dict.get(fid, fid) for fid in seq_form_id_list]
             f.seek(0)
             f.truncate(0)

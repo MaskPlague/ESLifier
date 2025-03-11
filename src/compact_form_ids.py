@@ -17,11 +17,12 @@ class CFIDs():
         CFIDs.form_processor = form_processor
         print(f"Compacting Plugin: {os.path.basename(file_to_compact)}...")
         CFIDs.compact_file(file_to_compact, skyrim_folder_path, output_folder_path, update_header)
+        files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
         if dependents != []:
             print(f"-  Patching {len(dependents)} Dependent Plugins...")
-            CFIDs.patch_dependent_plugins(file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header)
+            CFIDs.patch_dependent_plugins(file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header, files_to_patch)
         
-        files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
+        #files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
         bsa_dict = CFIDs.get_from_file('ESLifier_Data/bsa_dict.json')
         name = os.path.basename(file_to_compact).lower()
         bsa_masters = []
@@ -692,7 +693,7 @@ class CFIDs():
         CFIDs.compacted_and_patched[os.path.basename(new_file)] = []
         
     #replaced the old form ids with the new ones in all files that have the comapacted file as a master
-    def patch_dependent_plugins(file, dependents, skyrim_folder_path, output_folder_path, update_header):
+    def patch_dependent_plugins(file, dependents, skyrim_folder_path, output_folder_path, update_header, file_masters):
         form_id_file_name = "ESLifier_Data/Form_ID_Maps/" + os.path.basename(file).lower() + "_FormIdMap.txt"
         form_id_file_data = ''
         
@@ -703,15 +704,25 @@ class CFIDs():
 
         for dependent in dependents:
             new_file, rel_path = CFIDs.copy_file_to_output(dependent, skyrim_folder_path, output_folder_path)
-            print(f'-    {os.path.basename(new_file)}')
-            thread = threading.Thread(target=CFIDs.patch_dependent, args=(new_file, update_header, file, form_id_file_data, rel_path))
+            basename = os.path.basename(new_file)
+            basename_lower = basename.lower()
+            if basename_lower in file_masters and len(file_masters[basename_lower]) > 0 and file_masters[basename_lower][-1].lower().endswith('.seq'):
+                new_seq_file, rel_path_seq = CFIDs.copy_file_to_output(file_masters[basename_lower][-1], skyrim_folder_path, output_folder_path)
+            else:
+                new_seq_file, rel_path_seq = None, None
+            if new_seq_file:
+                print(f'-    {basename} + .seq')
+            else:
+                print(f'-    {basename}')
+            thread = threading.Thread(target=CFIDs.patch_dependent, args=(new_file, update_header, file, form_id_file_data, rel_path, new_seq_file, rel_path_seq))
             threads.append(thread)
             thread.start()
 
         for thread in threads:
             thread.join()
 
-    def patch_dependent(new_file, update_header, file, form_id_file_data, rel_path):
+    def patch_dependent(new_file, update_header, file, form_id_file_data, rel_path, new_seq_file, rel_path_seq):
+        form_id_replacements = []
         try:
             with open(new_file, 'rb+') as dependent_file:
                 #Update header to 1.71 to fit new records
@@ -733,7 +744,6 @@ class CFIDs():
 
                 saved_forms = CFIDs.form_processor.save_all_form_data(data_list, new_file)
                 
-                form_id_replacements = []
                 for i in range(len(form_id_file_data)):
                     form_id_conversion = form_id_file_data[i].split('|')
                     from_id = bytes.fromhex(form_id_conversion[0])[:3]
@@ -755,6 +765,12 @@ class CFIDs():
                 CFIDs.compacted_and_patched[os.path.basename(file)].append(rel_path)
         except Exception as e:
             print(f'!Error: Failed to patch depdendent: {new_file}')
+
+        if new_seq_file:
+            try:
+                patchers.seq_patcher(new_seq_file, form_id_replacements, True)
+            except Exception as e:
+                print(f'!Error: Failed to patch depdendent\'s SEQ file: {new_seq_file}')
         return
 
     #gets what master index the file is in inside of the dependent's data
