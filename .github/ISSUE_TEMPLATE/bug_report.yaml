@@ -18,12 +18,11 @@ body:
     attributes:
       label: What version of ESLifier are you using?
       options:
+        - 0.3.19-alpha
         - 0.3.17-alpha
         - 0.3.16-alpha
         - 0.3.15-alpha
         - 0.3.14-alpha
-        - 0.3.10-alpha
-        - 0.3.7-alpha
         - (Specify in Description)
     validations:
       required: true
