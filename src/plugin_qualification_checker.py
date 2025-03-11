@@ -2,6 +2,7 @@ import os
 import json
 import threading
 import zlib
+import struct
 
 class qualification_checker():
     def scan(path, update_header, show_cells, scan_esms):
@@ -85,9 +86,10 @@ class qualification_checker():
                 data_list.append(data[offset:offset+24])
                 offset += 24
             else:
-                form_length = int.from_bytes(data[offset+4:offset+8][::-1])
-                data_list.append(data[offset:offset+24+form_length])
-                offset += 24 + form_length
+                form_length = struct.unpack("<I", data[offset+4:offset+8])[0]
+                offset_end = offset + 24 + form_length
+                data_list.append(data[offset:offset_end])
+                offset = offset_end
         return data_list      
 
     def file_reader(file):
@@ -124,7 +126,7 @@ class qualification_checker():
                         form_size = len(form_to_check)
                         while offset < form_size:
                             field = form_to_check[offset:offset+4]
-                            field_size = int.from_bytes(form_to_check[offset+4:offset+6][::-1])
+                            field_size = struct.unpack("<H", data[offset+4:offset+6])[0]
                             if field == b'DATA':
                                 flags = form_to_check[offset+6]
                                 interior_cell_flag = (flags & 0x01) != 0
@@ -171,7 +173,7 @@ class qualification_checker():
         master_count = 0
         while offset < data_len:
             field = tes4[offset:offset+4]
-            field_size = int.from_bytes(tes4[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", tes4[offset+4:offset+6])[0]
             if field == b'MAST':
                 master_count += 1
             offset += field_size + 6

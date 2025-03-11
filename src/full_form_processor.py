@@ -1,5 +1,6 @@
 import os
 import threading
+import struct
 
 class form_processor():
     def __init__(self):
@@ -8,7 +9,7 @@ class form_processor():
 
     def get_kwda_offsets(offset, form):
         offsets = []
-        ksiz = int.from_bytes(form[offset+4:offset+6][::-1]) // 4
+        ksiz = struct.unpack("<H", form[offset+4:offset+6])[0] // 4
         offset += 6
         for _ in range(ksiz):
             offsets.append(offset)
@@ -17,10 +18,10 @@ class form_processor():
 
     def get_alt_texture_offsets(offset, form):
         offsets = []
-        alternate_texture_count = int.from_bytes(form[offset+6:offset+10][::-1])
+        alternate_texture_count = struct.unpack("<I", form[offset+6:offset+10])[0]
         offset += 10
         for _ in range(alternate_texture_count):
-            alt_tex_size = int.from_bytes(form[offset:offset+4][::-1])
+            alt_tex_size = struct.unpack("<I", form[offset:offset+4])[0]
             offsets.append(offset+alt_tex_size+4)
             offset += 12 + alt_tex_size 
         return offsets
@@ -320,7 +321,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in achr_fields:
                 achr_offsets.append(offset + 6)
             elif field in special_achr_fields:
@@ -340,7 +341,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in acti_fields:
                 acti_offsets.append(offset + 6)
             elif field in special_acti_fields:
@@ -367,7 +368,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in addn_fields:
                 addn_offsets.append(offset + 6)
             offset += field_size + 6
@@ -382,7 +383,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in alch_fields:
                 alch_offsets.append(offset + 6)
             elif field in special_alch_fields:
@@ -407,7 +408,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in ammo_fields:
                 ammo_offsets.append(offset + 6)
             elif field in special_ammo_fields:
@@ -424,7 +425,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_anio_fields:
                 if field == b'MODS':
                     anio_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
@@ -440,7 +441,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in appa_fields:
                 appa_offsets.append(offset + 6)
             elif field in special_appa_fields:
@@ -463,7 +464,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in arma_fields:
                 arma_offsets.append(offset + 6)
             elif field in special_arma_fields:
@@ -481,7 +482,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in armo_fields:
                 armo_offsets.append(offset + 6)
             elif field in special_armo_fields:
@@ -507,7 +508,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_arto_fields:
                 if field == b'MODS':
                     arto_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
@@ -522,7 +523,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in aspc_fields:
                 aspc_offsets.append(offset + 6)
             offset += field_size + 6
@@ -536,7 +537,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in avif_fields:
                 avif_offsets.append(offset + 6)
             offset += field_size + 6
@@ -551,7 +552,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in book_fields:
                 book_offsets.append(offset + 6)
             elif field in special_book_fields:
@@ -580,7 +581,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in bptd_fields:
                 bptd_offsets.append(offset + 6)
             elif field in special_bptd_fields:
@@ -605,7 +606,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in cams_fields:
                 cams_offsets.append(offset + 6)
             offset += field_size + 6
@@ -620,7 +621,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in cell_fields:
                 cell_offsets.append(offset + 6)
             elif field in special_cell_fields:
@@ -641,7 +642,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
 
             if field in special_clmt_fields:
                 if field == b'WLST':
@@ -663,7 +664,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in cobj_fields:
                 cobj_offsets.append(offset + 6)
             elif field in special_cobj_fields:
@@ -683,15 +684,16 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_coll_fields:
                 if field == b'CNAM':
                     intv_offset = form.find(b'INTV', 24)
-                    intv = int.from_bytes(form[intv_offset+6:intv_offset+10][::-1])
-                    in_field_offset = offset + 6
-                    for _ in range(intv):
-                        coll_offsets.append(in_field_offset)
-                        in_field_offset += 4
+                    if intv_offset != -1:
+                        intv = struct.unpack("<I", form[intv_offset+6:intv_offset+10])[0]
+                        in_field_offset = offset + 6
+                        for _ in range(intv):
+                            coll_offsets.append(in_field_offset)
+                            in_field_offset += 4
             offset += field_size + 6
 
         return [i, bytearray(form), coll_offsets]
@@ -704,7 +706,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in cont_fields:
                 cont_offsets.append(offset + 6)
             elif field in special_cont_fields:
@@ -727,7 +729,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in cpth_fields:
                 cpth_offsets.append(offset + 6)
             elif field in special_cpth_fields:
@@ -747,7 +749,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in dial_fields:
                 dial_offsets.append(offset + 6)
             offset += field_size + 6
@@ -761,7 +763,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in dlbr_fields:
                 dlbr_offsets.append(offset + 6)
             offset += field_size + 6
@@ -775,7 +777,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in dlvw_fields:
                 dlvw_offsets.append(offset + 6)
             offset += field_size + 6
@@ -789,7 +791,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_dobj_fields:
                 if field == b'DNAM':
                     array_size = field_size // 8
@@ -810,7 +812,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in door_fields:
                 door_offsets.append(offset + 6)
             elif field in special_door_fields:
@@ -829,7 +831,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_dual_fields:
                 if b'DATA':
                     in_field_offset = offset + 6
@@ -849,7 +851,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_eczn_fields:
                 if field == b'DATA':
                     eczn_offsets.append(offset + 6)
@@ -866,7 +868,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in ench_fields:
                 ench_offsets.append(offset + 6)
             elif field in special_ench_fields:
@@ -889,7 +891,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_equp_fields:
                 if field == b'PNAM':
                     pnam_size = field_size // 4
@@ -909,7 +911,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in expl_fields:
                 expl_offsets.append(offset + 6)
             elif field in special_FORM_fields:
@@ -933,7 +935,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in fact_fields:
                 fact_offsets.append(offset + 6)
             elif field in special_fact_fields:
@@ -953,7 +955,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in flor_fields:
                 flor_offsets.append(offset + 6)
             elif field in special_flor_fields:
@@ -979,7 +981,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in flst_fields:
                 flst_offsets.append(offset + 6)
             offset += field_size + 6
@@ -993,7 +995,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in fstp_fields:
                 fstp_offsets.append(offset + 6)
             offset += field_size + 6
@@ -1007,7 +1009,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_fsts_fields:
                 if field == b'DATA':
                     data_length = field_size // 4
@@ -1027,7 +1029,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in furn_fields:
                 furn_offsets.append(offset + 6)
             elif field in special_furn_fields:
@@ -1053,7 +1055,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_glob_fields:
                 if field == b'VMAD':
                     glob_offsets.extend(form_processor.vmad_reader(form, offset))
@@ -1062,7 +1064,7 @@ class form_processor():
         return [i, bytearray(form), glob_offsets]
 
     def save_grup_data(i, form): 
-        grup_type = int.from_bytes(form[12:16][::-1])
+        grup_type = struct.unpack("<I", form[12:16])[0]
         if grup_type in (1, 6, 7, 8, 9):
             grup_offsets = [8]
         else:
@@ -1077,7 +1079,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in hazd_fields:
                 hazd_offsets.append(offset + 6)
             elif field in special_hazd_fields:
@@ -1098,7 +1100,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in hdpt_fields:
                 hdpt_offsets.append(offset + 6)
             offset += field_size + 6
@@ -1112,7 +1114,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_idle_fields:
                 if field == b'CTDA':
                     idle_offsets.extend(form_processor.ctda_reader(form, offset))
@@ -1130,7 +1132,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_idlm_fields:
                 idla_length = field_size // 4
                 in_field_offset = offset + 6
@@ -1149,7 +1151,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in info_fields:
                 info_offsets.append(offset + 6)
             elif field in special_info_fields:
@@ -1171,7 +1173,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in ingr_fields:
                 ingr_offsets.append(offset + 6)
             elif field in special_ingr_fields:
@@ -1192,7 +1194,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in ipct_fields:
                 ipct_offsets.append(offset + 6)
             offset += field_size + 6
@@ -1206,7 +1208,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_ipds_fields:
                 if field == b'PNAM':
                     ipds_offsets.append(offset + 6)
@@ -1223,7 +1225,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in keym_fields:
                 keym_offsets.append(offset + 6)
             elif field in special_keym_fields:
@@ -1242,7 +1244,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in land_fields:
                 land_offsets.append(offset + 6)
             offset += field_size + 6
@@ -1257,7 +1259,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in lctn_fields:
                 lctn_offsets.append(offset + 6)
             elif field in special_lctn_fields:
@@ -1304,7 +1306,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in ligh_fields:
                 ligh_offsets.append(offset + 6)
             elif field in special_ligh_fields:
@@ -1327,7 +1329,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in lscr_fields:
                 lscr_offsets.append(offset + 6)
             elif field in special_lscr_fields:
@@ -1344,7 +1346,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in ltex_fields:
                 ltex_offsets.append(offset + 6)
             offset += field_size + 6
@@ -1359,7 +1361,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in lvli_fields:
                 lvli_offsets.append(offset + 6)
             elif field in special_lvli_fields:
@@ -1376,7 +1378,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_lvln_fields:
                 if field == b'COED':
                     lvln_offsets.append(offset+ 6)
@@ -1396,7 +1398,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_lvsp_fields:
                 if field == b'LVLO':
                     lvsp_offsets.append(offset + 10)
@@ -1411,7 +1413,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in matt_fields:
                 matt_offsets.append(offset + 6)
             offset += field_size + 6
@@ -1426,7 +1428,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in mesg_fields:
                 mesg_offsets.append(offset + 6)
             elif field in special_mesg_fields:
@@ -1444,7 +1446,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in mgef_fields:
                 mgef_offsets.append(offset + 6)
             elif field in special_mgef_fields:
@@ -1488,7 +1490,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in misc_fields:
                 misc_offsets.append(offset + 6)
             elif field in special_misc_fields:
@@ -1515,7 +1517,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in mstt_fields:
                 mstt_offsets.append(offset + 6)
             elif field in special_mstt_fields:
@@ -1535,7 +1537,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_musc_fields:
                 if field == b'TNAM':
                     form_id_count = field_size // 4
@@ -1554,7 +1556,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_must_fields:
                 if field == b'CTDA':
                     must_offsets.extend(form_processor.ctda_reader(form, offset))
@@ -1576,7 +1578,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_navi_fields:
                 if field == b'NVSI':
                     form_id_count = field_size // 4
@@ -1585,16 +1587,16 @@ class form_processor():
                         navi_offsets.append(in_field_offset)
                         in_field_offset += 4
                 elif field == b'NVPP':
-                    path_count = int.from_bytes(form[offset+6:offset+10][::-1])
+                    path_count = struct.unpack("<I", form[offset+6:offset+10])[0]
                     in_field_offset = offset + 10
                     #Path Table
                     for _ in range(path_count):
-                        form_id_count = int.from_bytes(form[in_field_offset:in_field_offset + 4][::-1])
+                        form_id_count = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
                         in_field_offset += 4
                         for _ in range(form_id_count):
                             navi_offsets.append(in_field_offset)
                             in_field_offset += 4
-                    node_count = int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
+                    node_count = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4
                     #Node Table
                     for _ in range(node_count):
@@ -1604,17 +1606,17 @@ class form_processor():
                     in_field_offset = offset + 6
                     navi_offsets.append(in_field_offset)    # Navmesh
                     in_field_offset += 24                   # Merged to Count
-                    merged_to_count = int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
+                    merged_to_count = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4                    # start of Merged to
                     for _ in range(merged_to_count):
                         navi_offsets.append(in_field_offset)
                         in_field_offset += 4
-                    perferred_merges_count = int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
+                    perferred_merges_count = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4                    # start of Perferred Merges
                     for _ in range(perferred_merges_count):
                         navi_offsets.append(in_field_offset)
                         in_field_offset += 4
-                    door_refr_count = int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
+                    door_refr_count = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4                    # start of door structs
                     for _ in range(door_refr_count):
                         navi_offsets.append(in_field_offset+4)
@@ -1632,27 +1634,27 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_navm_fields:
                 if field == b'NVNM':
                     in_field_offset = offset + 6 + 8
                     navm_offsets.append(in_field_offset)        # World Space
                     navm_offsets.append(in_field_offset + 4)    # Cell
                     in_field_offset += 8
-                    num_vertices = int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
+                    num_vertices = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4
                     for _ in range(num_vertices):
                         in_field_offset += 12
-                    num_tris = int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
+                    num_tris = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4
                     for _ in range(num_tris):
                         in_field_offset += 16
-                    ext_connections =  int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
+                    ext_connections = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4
                     for _ in range(ext_connections):
                         navm_offsets.append(in_field_offset + 4)# Navmesh in Connections Struct
                         in_field_offset += 10
-                    num_door_tris = int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
+                    num_door_tris = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4
                     for _ in range(num_door_tris):
                         navm_offsets.append(in_field_offset + 6)# Door REFR
@@ -1669,7 +1671,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in note_fields:
                 note_offsets.append(offset + 6)
             elif field in special_note_fields:
@@ -1694,7 +1696,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in npc__fields:
                 npc__offsets.append(offset + 6)
             elif field in special_npc__fields:
@@ -1725,7 +1727,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_otft_fields:
                 if field == b'INAM':
                     form_id_count = field_size // 4
@@ -1745,7 +1747,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in pack_fields:
                 pack_offsets.append(offset + 6)
             elif field in special_pack_fields:
@@ -1774,7 +1776,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in perk_fields:
                 perk_offsets.append(offset + 6)
             elif field in special_perk_fields:
@@ -1802,7 +1804,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in pgre_fields:
                 pgre_offsets.append(offset + 6)
             offset += field_size + 6
@@ -1816,7 +1818,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in phzd_fields:
                 phzd_offsets.append(offset + 6)
             offset += field_size + 6
@@ -1830,11 +1832,11 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_proj_fields:
                 if field == b'DSTD':
                     proj_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
-                    proj_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4\
+                    proj_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
                 elif field == b'DATA':
                     data_offset = offset + 6
                     proj_offsets.append(data_offset+ 16)    # Light
@@ -1857,7 +1859,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in qust_fields:
                 qust_offsets.append(offset + 6)
             elif field in special_qust_fields:
@@ -1880,7 +1882,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in race_fields:
                 race_offsets.append(offset + 6)
             elif field in special_race_fields:
@@ -1891,7 +1893,7 @@ class form_processor():
                     race_offsets.append(offset + 10)
                 elif field == b'ATKD':
                     race_offsets.append(offset+ 14)     # Attack Spell
-                    race_offsets.append(offset+ 32)    # Attack Type
+                    race_offsets.append(offset+ 32)     # Attack Type
             offset += field_size + 6
 
         return [i, bytearray(form), race_offsets]
@@ -1904,7 +1906,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in refr_fields:
                 refr_offsets.append(offset + 6)
             elif field in special_refr_fields:
@@ -1927,7 +1929,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in regn_fields:
                 regn_offsets.append(offset + 6)
             elif field in special_regn_fields:
@@ -1956,7 +1958,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_rela_fields:
                 if field == b'DATA':
                     data_offset = offset + 6
@@ -1974,7 +1976,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_rfct_fields:
                 if field == b'DATA':
                     rfct_offsets.append(offset + 6)
@@ -1991,7 +1993,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in scen_fields:
                 scen_offsets.append(offset + 6)
             elif field in special_scen_fields:
@@ -2011,7 +2013,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in scrl_fields:
                 scrl_offsets.append(offset + 6)
             elif field in special_scrl_fields:
@@ -2036,7 +2038,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in shou_fields:
                 shou_offsets.append(offset + 6)
             elif field in special_shou_fields:
@@ -2055,7 +2057,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in slgm_fields:
                 slgm_offsets.append(offset + 6)
             elif field in special_slgm_fields:
@@ -2073,7 +2075,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in smbn_fields:
                 smbn_offsets.append(offset + 6)
             elif field in special_smbn_fields:
@@ -2091,7 +2093,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in smen_fields:
                 smen_offsets.append(offset + 6)
             elif field in special_smen_fields:
@@ -2109,7 +2111,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in smqn_fields:
                 smqn_offsets.append(offset + 6)
             elif field in special_smqn_fields:
@@ -2126,7 +2128,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in snct_fields:
                 snct_offsets.append(offset + 6)
             offset += field_size + 6
@@ -2141,7 +2143,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in sndr_fields:
                 sndr_offsets.append(offset + 6)
             elif field in special_sndr_fields:
@@ -2158,7 +2160,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in soun_fields:
                 soun_offsets.append(offset + 6)
             offset += field_size + 6
@@ -2173,7 +2175,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in spel_fields:
                 spel_offsets.append(offset + 6)
             elif field in special_spel_fields:
@@ -2192,16 +2194,16 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_stat_fields:
                 if field == b'DNAM':
                     stat_offsets.append(offset+10)
                 elif field == b'MODS':
                     in_field_offset = offset
-                    alternate_texture_count = int.from_bytes(form[offset+6:offset+10][::-1])
+                    alternate_texture_count = struct.unpack("<I", form[offset+6:offset+10])[0]
                     in_field_offset += 10
                     for _ in range(alternate_texture_count):
-                        alt_tex_size = int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
+                        alt_tex_size = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
                         stat_offsets.append(in_field_offset+alt_tex_size+4)
                         in_field_offset += 8
             offset += field_size + 6
@@ -2216,7 +2218,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in tact_fields:
                 tact_offsets.append(offset + 6)
             elif field in special_tact_fields:
@@ -2242,7 +2244,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_tes4_fields:
                 if field == b'ONAM':
                     overriden_forms_length = field_size // 4
@@ -2261,7 +2263,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in tree_fields:
                 tree_offsets.append(offset + 6)
             offset += field_size + 6
@@ -2275,7 +2277,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in watr_fields:
                 watr_offsets.append(offset + 6)
             offset += field_size + 6
@@ -2290,7 +2292,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in weap_fields:
                 weap_offsets.append(offset + 6)
             elif field in special_weap_fields:
@@ -2318,13 +2320,13 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in wrld_fields:
                 wrld_offsets.append(offset + 6)
             elif field in special_wrld_fields:
                 if field == b'RNAM':
                     in_field_offset = offset + 10
-                    pair_count = int.from_bytes(form[in_field_offset:in_field_offset+4][::-1])
+                    pair_count = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4
                     for _ in range(pair_count):
                         wrld_offsets.append(in_field_offset)
@@ -2343,7 +2345,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in wthr_fields:
                 wthr_offsets.append(offset + 6)
             elif field in special_wthr_fields:
@@ -2356,7 +2358,7 @@ class form_processor():
 
         return [i, bytearray(form), wthr_offsets]
 
-    #Template for each type of form #Master byte will be for VMAD and temporarily is for CTDA
+    #Template for each type of form
     def save_FORM_data(i, form): 
         FORM_fields = [b'']
         special_FORM_fields = [b'']
@@ -2365,7 +2367,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
-            field_size = int.from_bytes(form[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in FORM_fields:
                 FORM_offsets.append(offset + 6)
             elif field in special_FORM_fields:
@@ -2384,7 +2386,7 @@ class form_processor():
         if use_global_flag: 
             offsets.append(offset + 4)  # ComparisonValue
         offset += 4
-        function_index = int.from_bytes(form[offset:offset+2][::-1])
+        function_index = struct.unpack("<H", form[offset:offset+2])[0]
         offset += 4
         #GetEventData is 4672 - 4096 = 576
         if function_index == 576:
@@ -2398,13 +2400,13 @@ class form_processor():
 
     def script_reader(form, offset, obj_format):
         offsets = []
-        script_name_size = int.from_bytes(form[offset:offset+2][::-1])
+        script_name_size = struct.unpack("<H", form[offset:offset+2])[0]
         #script_name = form[offset+2:offset+script_name_size+2]
         offset += script_name_size + 2
-        property_count = int.from_bytes(form[offset+1:offset+3][::-1])
+        property_count = struct.unpack("<H", form[offset+1:offset+3])[0]
         offset += 3
         for _ in range(property_count):
-            property_name_size = int.from_bytes(form[offset:offset+2][::-1])
+            property_name_size = struct.unpack("<H", form[offset:offset+2])[0]
             #property_name = form[offset+2: offset +property_name_size + 2]
             offset += property_name_size + 2
             property_type = int.from_bytes(form[offset:offset+1][::-1])
@@ -2416,7 +2418,7 @@ class form_processor():
                     offsets.append(offset+4)
                 offset += 8
             elif property_type == 2:
-                string_size = int.from_bytes(form[offset:offset+2][::-1])
+                string_size = struct.unpack("<H", form[offset:offset+2])[0]
                 offset += string_size + 2
             elif property_type == 3:
                 offset += 4
@@ -2425,7 +2427,7 @@ class form_processor():
             elif property_type == 5:
                 offset += 1
             elif property_type == 11:
-                item_count = int.from_bytes(form[offset:offset+4][::-1])
+                item_count = struct.unpack("<I", form[offset:offset+4])[0]
                 offset += 4
                 if obj_format == 1:
                     for _ in range(item_count):
@@ -2436,23 +2438,23 @@ class form_processor():
                         offsets.append(offset+4)
                         offset += 8
             elif property_type == 12:
-                item_count = int.from_bytes(form[offset:offset+4][::-1])
+                item_count = struct.unpack("<I", form[offset:offset+4])[0]
                 offset += 4
                 for _ in range(item_count):
-                    string_size = int.from_bytes(form[offset:offset+2][::-1])
+                    string_size = struct.unpack("<H", form[offset:offset+2])[0]
                     offset += string_size + 2
             elif property_type == 13:
-                item_count = int.from_bytes(form[offset:offset+4][::-1])
+                item_count = struct.unpack("<I", form[offset:offset+4])[0]
                 offset += 4
                 for _ in range(item_count):
                     offset += 4
             elif property_type == 14:
-                item_count = int.from_bytes(form[offset:offset+4][::-1])
+                item_count = struct.unpack("<I", form[offset:offset+4])[0]
                 offset += 4
                 for _ in range(item_count):
                     offset += 4
             elif property_type == 15:
-                item_count = int.from_bytes(form[offset:offset+4][::-1])
+                item_count = struct.unpack("<I", form[offset:offset+4])[0]
                 offset += 4
                 for _ in range(item_count):
                     offset += 1
@@ -2460,10 +2462,10 @@ class form_processor():
     
     def vmad_reader(form, offset):
         offsets = []
-        vmad_size = int.from_bytes(form[offset+4:offset+6][::-1])
+        vmad_size = struct.unpack("<H", form[offset+4:offset+6])[0]
         vmad_end_offset = offset + 6 + vmad_size
-        obj_format = int.from_bytes(form[offset+8:offset+10][::-1])
-        script_count = int.from_bytes(form[offset+10:offset+12][::-1])
+        obj_format = struct.unpack("<H", form[offset+8:offset+10])[0]
+        script_count = struct.unpack("<H", form[offset+10:offset+12])[0]
         offset += 12
         for _ in range(script_count):
             script_offsets, offset = form_processor.script_reader(form, offset, obj_format)
@@ -2472,21 +2474,21 @@ class form_processor():
         if form[:4] in (b'INFO', b'PACK', b'PERK', b'QUST', b'SCEN') and offset < vmad_end_offset:
             if form[:4] == b'QUST':
                 offset += 1
-                fragment_count = int.from_bytes(form[offset:offset+2][::-1])
+                fragment_count = struct.unpack("<H", form[offset:offset+2])[0]
                 offset += 2
-                script_file_name_size = int.from_bytes(form[offset:offset+2][::-1])
+                script_file_name_size = struct.unpack("<H", form[offset:offset+2])[0]
                 #script_file_name = form[offset+2:offset+script_file_name_size+2]
                 offset += 2 + script_file_name_size
 
                 #Iterate through fragments
                 for _ in range(fragment_count):
                     offset += 9
-                    fragment_script_name_size = int.from_bytes(form[offset:offset+2][::-1])
+                    fragment_script_name_size = struct.unpack("<H", form[offset:offset+2])[0]
                     offset += fragment_script_name_size  + 2
-                    fragment_function_name_size = int.from_bytes(form[offset:offset+2][::-1])
+                    fragment_function_name_size = struct.unpack("<H", form[offset:offset+2])[0]
                     offset += fragment_function_name_size + 2
 
-                alias_count = int.from_bytes(form[offset:offset+2][::-1])
+                alias_count = struct.unpack("<H", form[offset:offset+2])[0]
                 offset += 2
                 #Iterate through aliases
                 for _ in range(alias_count):
@@ -2495,7 +2497,7 @@ class form_processor():
                     elif obj_format == 2:
                         offsets.append(offset+4)
                     offset += 12
-                    alias_script_count = int.from_bytes(form[offset:offset+2][::-1])
+                    alias_script_count = struct.unpack("<H", form[offset:offset+2])[0]
                     offset += 2
                     for _ in range(alias_script_count):
                         alias_script_offsets, offset = form_processor.script_reader(form, offset, obj_format)

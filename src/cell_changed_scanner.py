@@ -1,6 +1,7 @@
 import os
 import json
 import threading
+import struct
 
 class cell_scanner():
     def scan(mods_with_new_cells):
@@ -72,6 +73,7 @@ class cell_scanner():
         while offset < data_len:
             field = tes4[offset:offset+4]
             field_size = int.from_bytes(tes4[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", tes4[offset+4:offset+6])[0]
             if field == b'MAST':
                 master_list.append(tes4[offset+6:offset+field_size+5].decode('utf-8'))
             offset += field_size + 6
@@ -104,7 +106,8 @@ class cell_scanner():
                 data_list.append(data[offset:offset+24])
                 offset += 24
             else:
-                form_length = int.from_bytes(data[offset+4:offset+8][::-1])
-                data_list.append(data[offset:offset+24+form_length])
-                offset += 24 + form_length
+                form_length = struct.unpack("<I", data[offset+4:offset+8])[0]
+                offset_end = offset + 24 + form_length
+                data_list.append(data[offset:offset_end])
+                offset = offset_end
         return data_list
