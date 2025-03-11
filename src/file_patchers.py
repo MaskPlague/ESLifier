@@ -456,7 +456,7 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
     
-    def json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map):
+    def json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map, int_type=False):
         with open(new_file, 'r+', encoding='utf-8') as f:
             try:
                 data = json.load(f)
@@ -465,23 +465,35 @@ class patchers():
                 string = f.read()
                 data = patchers.remove_trailing_commas_from_json(string)
             json_dict = patchers.extract_values_and_keys(data)
-            ox = False
-            for path, value in json_dict:
-                if type(value) is str and '|' in value:
-                    index = value.index('|')
-                    plugin = value[index+1:]
-                    if plugin.lower() == basename:
-                        form_id = value[:index]
-                        form_id_int = int(form_id, 16)
-                        if not ox and '0x' in form_id:
-                            ox = True
-                        for form_ids in form_id_map:
-                            if form_id_int == int(form_ids[0], 16):
-                                if not ox:
-                                    data = patchers.change_json_element(data, path, form_ids[2] + '|' + plugin)
-                                else:
-                                    data = patchers.change_json_element(data, path, '0x' + form_ids[2] + '|' + plugin)
-                                break
+            if not int_type:
+                ox = False
+                for path, value in json_dict:
+                    if type(value) is str and '|' in value:
+                        index = value.index('|')
+                        plugin = value[index+1:]
+                        if plugin.lower() == basename:
+                            form_id = value[:index]
+                            form_id_int = int(form_id, 16)
+                            if not ox and '0x' in form_id:
+                                ox = True
+                            for form_ids in form_id_map:
+                                if form_id_int == int(form_ids[0], 16):
+                                    if not ox:
+                                        data = patchers.change_json_element(data, path, form_ids[2] + '|' + plugin)
+                                    else:
+                                        data = patchers.change_json_element(data, path, '0x' + form_ids[2] + '|' + plugin)
+                                    break
+            else:
+                for path, value in json_dict:
+                    if type(value) is str and '|' in value:
+                        index = value.index('|')
+                        plugin = value[index+1:]
+                        if plugin.lower() == basename:
+                            form_id_int = value[:index]
+                            for form_ids in form_id_map:
+                                if form_id_int == int(form_ids[0], 16):
+                                    data = patchers.change_json_element(data, path, str(int(form_ids[2], 16)) + '|' + plugin)
+                                    break
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
