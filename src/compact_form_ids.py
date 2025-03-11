@@ -7,6 +7,7 @@ import threading
 import subprocess
 import struct
 from file_patchers import patchers
+from intervaltree import IntervalTree
 
 class CFIDs():
     def compact_and_patch(form_processor, file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header, mo2_mode, bsab):
@@ -14,9 +15,7 @@ class CFIDs():
         CFIDs.compacted_and_patched = {}
         CFIDs.mo2_mode = mo2_mode
         CFIDs.form_processor = form_processor
-        size = os.path.getsize(file_to_compact)
-        mb_size = round(size / 1048576, 3)
-        print(f"Compacting Plugin: {os.path.basename(file_to_compact)} ({mb_size} MB)...")
+        print(f"Compacting Plugin: {os.path.basename(file_to_compact)}...")
         CFIDs.compact_file(file_to_compact, skyrim_folder_path, output_folder_path, update_header)
         if dependents != []:
             print(f"-  Patching {len(dependents)} Dependent Plugins...")
@@ -573,17 +572,18 @@ class CFIDs():
                 data_list.append(data[offset:offset_end])
                 offset = offset_end
             index += 1
-        
-        struct = {}
+            
+        tree = IntervalTree()
+        for i, (index, start, end) in enumerate(grup_list):
+            tree[start:end] = index
+
+        grup_struct = {}
 
         for i, data_offset in enumerate(data_list_offsets):
-            is_inside_of = []
-            for index, start, end in grup_list:
-                if start <= data_offset < end and index != i:
-                    is_inside_of.append(index)
-            struct[i] = is_inside_of    
+            is_inside_of = [interval.data for interval in tree[data_offset]]
+            grup_struct[i] = sorted([index for index in is_inside_of if index != i])
 
-        return data_list, struct
+        return data_list, grup_struct
     
     #Compacts master file and returns the new mod folder
     def compact_file(file, skyrim_folder_path, output_folder, update_header):
@@ -703,20 +703,13 @@ class CFIDs():
 
         for dependent in dependents:
             new_file, rel_path = CFIDs.copy_file_to_output(dependent, skyrim_folder_path, output_folder_path)
-            size = os.path.getsize(new_file)
-            mb_size = round(size / 1048576, 3)
-            print(f'-    {os.path.basename(new_file)} ({mb_size} MB)')
-            if mb_size > 40:
-                thread = threading.Thread(target=CFIDs.patch_dependent, args=(new_file, update_header, file, form_id_file_data, rel_path))
-                threads.append(thread)
-                thread.start()
-            else:
-                CFIDs.patch_dependent(new_file, update_header, file, form_id_file_data, rel_path)
-        
-        if len(threads) > 0 and any([thread.is_alive() for thread in threads]):
-            print('-    Waiting for dependent plugin patching to finish...')
-            for thread in threads:
-                thread.join()
+            print(f'-    {os.path.basename(new_file)}')
+            thread = threading.Thread(target=CFIDs.patch_dependent, args=(new_file, update_header, file, form_id_file_data, rel_path))
+            threads.append(thread)
+            thread.start()
+
+        for thread in threads:
+            thread.join()
 
     def patch_dependent(new_file, update_header, file, form_id_file_data, rel_path):
         try:
