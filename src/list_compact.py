@@ -29,7 +29,6 @@ class list_compactable(QTableWidget):
         self.verticalHeader().setHidden(True)
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.setSortingEnabled(True)
         self.setAutoScroll(False)
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -69,6 +68,7 @@ class list_compactable(QTableWidget):
         self.create()
 
     def create(self):
+        self.setSortingEnabled(False)
         self.clearContents()
         self.dependency_list = self.get_data_from_file("ESLifier_Data/dependency_dictionary.json")
         self.compacted = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json")
@@ -207,6 +207,7 @@ class list_compactable(QTableWidget):
         self.resizeColumnToContents(3)
         self.itemChanged.connect(somethingChanged)
         self.resizeRowsToContents()
+        self.setSortingEnabled(True)
 
     def hide_rows(self):
         for row in range(self.rowCount()):

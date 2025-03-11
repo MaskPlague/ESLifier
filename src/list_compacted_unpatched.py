@@ -16,7 +16,6 @@ class list_compacted_unpatched(QTableWidget):
         self.verticalHeader().setHidden(True)
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.setSortingEnabled(True)
         self.setAutoScroll(False)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenu)
@@ -49,6 +48,7 @@ class list_compacted_unpatched(QTableWidget):
         self.create()
 
     def create(self):
+        self.setSortingEnabled(False)
         cell_changed = self.get_data_from_file('ESLifier_Data/cell_changed.json')
         self.clearContents()
         self.setRowCount(len(self.mod_list))
@@ -93,6 +93,7 @@ class list_compacted_unpatched(QTableWidget):
         self.itemSelectionChanged.connect(item_selected)
         self.resizeColumnToContents(0)
         self.resizeRowsToContents()
+        self.setSortingEnabled(True)
 
     def contextMenu(self, position):
         selectedItem = self.itemAt(position)

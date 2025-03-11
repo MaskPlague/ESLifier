@@ -15,7 +15,6 @@ class list_unpatched(QTableWidget):
         self.verticalHeader().setHidden(True)
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.setSortingEnabled(True)
         self.setAutoScroll(False)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
@@ -42,6 +41,7 @@ class list_unpatched(QTableWidget):
         self.create()
 
     def create(self):
+        self.setSortingEnabled(False)
         self.clearContents()
         self.compacted_and_patched = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json")
         size = 0
@@ -75,6 +75,7 @@ class list_unpatched(QTableWidget):
                     x += 1
 
         self.resizeRowsToContents()
+        self.setSortingEnabled(True)
 
     def get_data_from_file(self, file):
         try:

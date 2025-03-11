@@ -25,7 +25,6 @@ class list_eslable(QTableWidget):
         self.verticalHeader().setHidden(True)
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.setSortingEnabled(True)
         self.setAutoScroll(False)
         self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -64,6 +63,7 @@ class list_eslable(QTableWidget):
         self.create()
 
     def create(self):
+        self.setSortingEnabled(False)
         self.clearContents()
         self.compacted = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json")
         blacklist = self.get_data_from_file('ESLifier_Data/blacklist.json')
@@ -132,6 +132,7 @@ class list_eslable(QTableWidget):
         self.resizeColumnToContents(1)
         self.itemChanged.connect(somethingChanged)
         self.resizeRowsToContents()
+        self.setSortingEnabled(True)
 
     def rehide_rows(self):
         for row in range(self.rowCount()):
