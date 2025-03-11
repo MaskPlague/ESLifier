@@ -100,7 +100,7 @@ class CFIDs():
                     print('\n')
                 CFIDs.rename_files_threader(file_to_compact, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
         CFIDs.dump_to_file('ESLifier_Data/compacted_and_patched.json')
-        print('Deleting Temporily Extracted FaceGen/Voice Files...')
+        print('Deleting temporarily Extracted FaceGen/Voice Files...')
         if os.path.exists('bsa_extracted_temp/'):
             shutil.rmtree('bsa_extracted_temp/')
         print('CLEAR ALT')
@@ -461,6 +461,11 @@ class CFIDs():
                             patchers.json_shse_patcher(basename, new_file, form_id_map)
                         elif os.path.basename(new_file_lower) == 'sexlabconfig.json':                       # SL MCM Generated config
                             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
+                        elif 'sexlab\\expression_' in new_file_lower:                                       # SL expressions
+                            patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
+                        elif 'sexlab\\animations' in new_file_lower:                                        # SL animations?
+                            if not new_file_lower.endswith('arrokreversecowgirl.json'):
+                                patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map, int_type=True)
                         else:                                                                               # Might patch whatever else is using .json?
                             print(f'Warn: Possible missing patcher for: {new_file}')
                             with open(new_file, 'r+', encoding='utf-8') as f:
@@ -503,7 +508,7 @@ class CFIDs():
                     CFIDs.compacted_and_patched[os.path.basename(master)].append(rel_path)
 
             except Exception as e:
-                print(f'!Error: Failed to patch file: {file}')
+                print(f'!Error: Failed to patch file: {new_file}')
                 print(e)    
 
     def decompress_data(data_list):
@@ -771,6 +776,7 @@ class CFIDs():
                 patchers.seq_patcher(new_seq_file, form_id_replacements, True)
             except Exception as e:
                 print(f'!Error: Failed to patch depdendent\'s SEQ file: {new_seq_file}')
+                print(e)
         return
 
     #gets what master index the file is in inside of the dependent's data
