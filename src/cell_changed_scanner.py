@@ -8,17 +8,11 @@ class cell_scanner():
         cell_scanner.cell_changed_list = []
         cell_scanner.lock = threading.Lock()
         cell_scanner.dependency_dict = cell_scanner.get_from_file('ESLifier_Data/dependency_dictionary.json')
-        #cell_scanner.plugin_count = 0
-        #cell_scanner.count = 0
-        #for mod in mods_with_new_cells:
-        #    cell_scanner.plugin_count += len(cell_scanner.dependency_dict[os.path.basename(mod).lower()])
-        #print('\n')
         threads = []
         for mod in mods_with_new_cells:
             thread = threading.Thread(target=cell_scanner.check_if_dependents_modify_new_cells, args=(mod,))
             threads.append(thread)
             thread.start()
-            #cell_scanner.check_if_dependents_modify_new_cells(mod)
         
         for thread in threads:
             thread.join()
