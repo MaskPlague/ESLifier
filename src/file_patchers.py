@@ -72,7 +72,7 @@ class patchers():
                 strings.append(data[offset+2:offset+2+string_length].lower())
                 offset += 2 + string_length
             master_name_bytes = basename.encode()
-            index = strings.index(master_name_bytes, 24, offset)
+            index = strings.index(master_name_bytes)
             data_size = len(data)
             while offset < data_size:
                 if data[offset:offset+1] == b'\x03' and data[offset+5:offset+6] == b'\x02' and int.from_bytes(data[offset+6:offset+8]) == index:
