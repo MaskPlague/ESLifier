@@ -975,7 +975,7 @@ class form_processor():
         return [i, bytearray(form), flor_offsets]
 
     def save_flst_data(i, form): 
-        flst_fields = [b'FLST']
+        flst_fields = [b'LNAM']
 
         flst_offsets = [12]
         offset = 24
