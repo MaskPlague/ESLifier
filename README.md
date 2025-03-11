@@ -34,7 +34,7 @@ Other important settings:
 
 # Documentation
 ## How to Build
-Fork this project and install python 3.13 then, _PyQt6_, _Regex_, and _pyinstaller_ with pip.
+Fork this project and install python 3.13 then install these libraries via pip: _PyQt6_, _Regex_, _mmap_, _intervalTree_, and _pyinstaller_.
 Open the console in the _ESLifier_ folder and run the command:
 ```
 pyinstaller "src/eslifier_app.py" --onefile -n "ESLifier" --noconsole --icon "src/images/ESLifier.ico"
