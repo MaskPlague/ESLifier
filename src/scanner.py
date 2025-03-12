@@ -539,7 +539,7 @@ class scanner():
 
         print(f"\033[F\033[K-  Scanning .dll SKSE plugins")
         for file in scanner.dll_files:
-            thread = threading.Thread(target=scanner.file_reader,args=(pattern2, file, 'rb'))
+            thread = threading.Thread(target=scanner.file_reader,args=(pattern2, file, 'dll'))
             scanner.threads.append(thread)
             thread.start()
 
@@ -586,7 +586,7 @@ class scanner():
                 factor = 1
             if (scanner.count % factor) >= (factor-1):
                 print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
-            scanner.file_reader(pattern2, file, 'rb')
+            scanner.file_reader(pattern2, file, 'pex')
 
     def file_processor(files, pattern, pattern3, pattern4, pattern5):
         local_dict = {}
@@ -662,8 +662,9 @@ class scanner():
 
     def file_reader(pattern, file, reader_type):
         try:
+            file_lower = file.lower()
             if reader_type == 'r':
-                if file.lower().endswith('.jslot'):
+                if file_lower.endswith('.jslot'):
                     with open(file, 'r', errors='ignore') as f:
                         data = json.load(f)
                         f.close()
@@ -680,6 +681,19 @@ class scanner():
                         with scanner.lock:
                             if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
                             if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+                elif file_lower.endswith('.psc'):
+                    with open(file, 'r', encoding='utf-8', errors='ignore') as f:
+                        data = f.read().lower()
+                        f.close()
+                    if 'getformfromfile' in data:
+                        r = re.findall(pattern, data)
+                        if r != []:
+                            for plugin in r:
+                                with scanner.lock:
+                                    if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
+                                    if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+                    elif 'bsa_extracted\\' in file:
+                        os.remove(file)
                 else:
                     with open(file, 'r', encoding='utf-8', errors='ignore') as f:
                         r = re.findall(pattern,f.read().lower())
@@ -690,28 +704,43 @@ class scanner():
                                 with scanner.lock:
                                     if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
                                     if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
-                    elif 'bsa_extracted\\' in file and file.endswith('.psc'):
-                        os.remove(file)
 
-            if reader_type == 'rb':
-                #TODO: optimize .pex scanning, probably get all strings from the string table and use .endswith()
+            elif reader_type == 'pex':
+                with open(file, 'rb') as f:
+                    data = f.read()
+                    offset = 18 + int.from_bytes(data[16:18])
+                    offset += 2 + int.from_bytes(data[offset:offset+2])
+                    offset += 2 + int.from_bytes(data[offset:offset+2])
+                    string_count = int.from_bytes(data[offset:offset+2])
+                    offset += 2
+                    strings = []
+                    for _ in range(string_count):
+                        string_length = int.from_bytes(data[offset:offset+2])
+                        strings.append(data[offset+2:offset+2+string_length].lower().decode())
+                        offset += 2 + string_length
+                    f.close()
+                if 'getformfromfile' in strings:
+                    for string in strings:
+                        if string.endswith(('.esp', '.esl', '.esm')):
+                            with scanner.lock:
+                                if string not in scanner.file_dict: scanner.file_dict.update({string: []})
+                                if file not in scanner.file_dict[string]: scanner.file_dict[string].append(file)
+                elif 'bsa_extracted\\' in file:
+                    os.remove(file)
+            elif reader_type == 'dll':
                 with open(file, 'rb') as f:
                     r = re.findall(pattern,f.read().lower())
                     f.close()
                 if r != []:
                     for plugin in r:
                         plugin = plugin.decode('utf-8')
-                        if file.lower().endswith('.dll'):
-                            with scanner.lock:
-                                if plugin not in scanner.dll_dict: scanner.dll_dict.update({plugin: []})
-                                if file not in scanner.dll_dict[plugin]: scanner.dll_dict[plugin].append(file)
-                        else:
-                            with scanner.lock:
-                                if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
-                                if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+                        with scanner.lock:
+                            if plugin not in scanner.dll_dict: scanner.dll_dict.update({plugin: []})
+                            if file not in scanner.dll_dict[plugin]: scanner.dll_dict[plugin].append(file)
+            else:
+                print(f'!Warn: Missing file scan type for {file}')
 
-                elif 'bsa_extracted\\' in file and file.endswith('.pex'):
-                    os.remove(file)
+                
         except Exception as e:
             print(f"!Error reading file {file}")
             print(e)
