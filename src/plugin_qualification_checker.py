@@ -99,7 +99,7 @@ class qualification_checker():
         need_compacting = False
         with open(file, 'rb') as f:
             data = f.read()
-            data_list = qualification_checker.create_data_list(data)
+        data_list = qualification_checker.create_data_list(data)
         master_count = qualification_checker.get_master_count(data_list)
         if master_count == 0:
             num_max_records = 2048
@@ -130,7 +130,7 @@ class qualification_checker():
                         form_size = len(form_to_check)
                         while offset < form_size:
                             field = form_to_check[offset:offset+4]
-                            field_size = struct.unpack("<H", data[offset+4:offset+6])[0]
+                            field_size = struct.unpack("<H", form_to_check[offset+4:offset+6])[0]
                             if field == b'DATA':
                                 flags = form_to_check[offset+6]
                                 interior_cell_flag = (flags & 0x01) != 0
@@ -138,6 +138,7 @@ class qualification_checker():
                     
             if record_type == b'CELL' and form[15] >= master_count and str(form[12:15].hex()) not in cell_form_ids:
                 cell_form_ids.append(str(form[12:15].hex()))
+
         cell_form_ids.sort()
         if cell_form_ids != []:
             cell_form_id_file = 'ESLifier_Data/Cell_IDs/' + os.path.basename(file) + '_CellFormIDs.txt'
