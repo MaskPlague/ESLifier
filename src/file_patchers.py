@@ -72,9 +72,13 @@ class patchers():
                 string_length = int.from_bytes(data[offset:offset+2])
                 strings.append(data[offset+2:offset+2+string_length].lower())
                 offset += 2 + string_length
+            start_offset = offset
             master_name_bytes = basename.encode()
             index = strings.index(master_name_bytes)
+            getformfromfile_index = strings.index(b'getformfromfile').to_bytes(2)
             data_size = len(data)
+            arrays = []
+            patch_arrays = False
             while offset < data_size:
                 if data[offset:offset+1] == b'\x03' and data[offset+5:offset+6] == b'\x02' and int.from_bytes(data[offset+6:offset+8]) == index:
                     integer_variable = data[offset+2:offset+5]
@@ -83,8 +87,60 @@ class patchers():
                             data[offset+2:offset+5] = form_ids[5][::-1][1:]
                             offset += 6
                             break
-                    offset += 1
+                elif not patch_arrays and data[offset:offset+2] == b'\x1E\x01':
+                    patch_arrays = True
                 offset += 1
+            if patch_arrays:
+                offset = start_offset
+                last_offset = 0
+                while offset < data_size:
+                    if data[offset:offset+2] == b'\x1E\x01' and data[offset+4:offset+5] == b'\x03':
+                        last_offset = offset + 16
+                        array = {'id': data[offset+10:offset+13], 'integers': [], 'patch': False}
+                        offset += 16
+                        temp_var = data[offset+1:offset+4]
+                        while offset < data_size:
+                            if data[offset:offset+1] == b'\x0D' and data[offset+1:offset+4] == temp_var:
+                                offset +=4
+                                array['integers'].append([offset+2, data[offset+2:offset+5]])
+                                offset +=17
+                            else:
+                                break
+                        while offset < data_size:
+                            if data[offset:offset+3] == array['id']:
+                                if data[offset+6:offset+7] == b'\x19':
+                                    offset += 10
+                                    if data[offset:offset+1] == b'\x01' and data[offset+1:offset+3] == getformfromfile_index:
+                                        offset += 14
+                                        if data[offset:offset+1] == b'\x02' and data[offset+1: offset+3] == index.to_bytes(2):
+                                            array['patch'] = True
+                                break
+                            offset += 1
+                        arrays.append(array)
+                        offset = last_offset
+                    offset +=1
+                #if len(arrays) > 0:
+                #    patched = False
+                for array in arrays:
+                    if array['patch'] == True:
+                        for int_offset, integer in array['integers']:
+                            for form_ids in form_id_map:
+                                if integer == form_ids[4][::-1][1:]:
+                                    #print(f'successfuly patched at {int_offset}')
+                                    data[int_offset:int_offset+3] = form_ids[5][::-1][1:]
+                                    #patched = True
+                                    break
+                #if len(arrays) > 0 and not patched:
+                #    check_array = [form_ids[4][::-1][1:] for form_ids in form_id_map]
+                #    flag = False
+                #    for array in arrays:
+                #        for _, integer in array['integers']:
+                #            if integer in check_array:
+                #                print(f'pex file {new_file} has an array but no ids were patched, investigate if correct.')
+                #                flag = True
+                #                break
+                #        if flag == True:
+                #            break
             data = bytes(data)
             f.seek(0)
             f.truncate(0)
