@@ -24,7 +24,8 @@ class scanner():
         scanner.max_threads_by_ram = int(usable_ram / thread_memory_usage)
 
         scanner.extracted = scanner.get_from_file('ESLifier_Data/extracted_bsa.json')
-        print('-  Gathering Files...\n\n')
+        #print('-  Gathering Files...\n\n')
+        print('\n')
         plugins_list = scanner.get_plugins_list(plugins_txt_path)
         if mo2_mode:
             load_order, enabled_mods = scanner.get_modlist(modlist_txt_path)
@@ -614,6 +615,7 @@ class scanner():
             elif file_lower.endswith('.seq'):
                 plugin = os.path.splitext(os.path.basename(file))[0]
                 scanner.seq_files.append([plugin.lower(), file])
+            #TODO: try optimizing these as the plugin name should be a certain index from facegeom etc.
             elif ('\\facegeom\\' in file_lower and '.nif' in file_lower):
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
