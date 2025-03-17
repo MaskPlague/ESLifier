@@ -169,7 +169,7 @@ class patch_new(QWidget):
         mod_list_lowered = [mod.lower() for mod in mod_list]
         for mod in dll_dict:
             if mod in compacted_lowered and mod not in mod_list_lowered:
-                mod_list.append(mod)
+                mod_list.append('SKSE WARN - ' + mod)
 
         self.list_compacted_unpatched.mod_list = mod_list
         self.list_unpatched_files.dependencies_dictionary = new_dependencies
@@ -182,7 +182,8 @@ class patch_new(QWidget):
             if self.list_compacted_unpatched.item(row,0).checkState() == Qt.CheckState.Checked:
                 self.list_compacted_unpatched.item(row,0).setCheckState(Qt.CheckState.Unchecked)
                 self.list_compacted_unpatched.item(row,0).setFlags(self.list_compacted_unpatched.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
-                checked.append(self.list_compacted_unpatched.item(row,0).toolTip())
+                if not self.list_compacted_unpatched.item(row,0).text().startswith('SKSE WARN - '):
+                    checked.append(self.list_compacted_unpatched.item(row,0).toolTip())
         if checked != []:
             self.setEnabled(False)
             self.log_stream.show()

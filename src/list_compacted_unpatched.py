@@ -63,27 +63,30 @@ class list_compacted_unpatched(QTableWidget):
             if not checked_cell_changed_warning and os.path.basename(mod) in cell_changed:
                 self.setColumnHidden(1, False)
                 checked_cell_changed_warning = True
-            if not checked_skse_dll_warning and os.path.basename(mod).lower() in dll_dict:
+            if not checked_skse_dll_warning and os.path.basename(mod).removeprefix('SKSE WARN - ').lower() in dll_dict:
                 self.setColumnHidden(2, False)
                 checked_skse_dll_warning = True
             if checked_cell_changed_warning and checked_skse_dll_warning:
                 break
 
         for i in range(len(self.mod_list)):
-            item = QTableWidgetItem(os.path.basename(self.mod_list[i]))
+            basename = os.path.basename(self.mod_list[i])
+            item = QTableWidgetItem(basename)
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
             item.setCheckState(Qt.CheckState.Unchecked)
             item.setToolTip(self.mod_list[i])
+            if basename.startswith('SKSE WARN - '):
+                item.setToolTip(None)
             self.setItem(i, 0, item)
-            basename = os.path.basename(self.mod_list[i])
+            
             if basename in cell_changed:
                 item_cell_changed_error = QTableWidgetItem('CELL Changed!')
                 item_cell_changed_error.setToolTip('This mod has a dependent plugin that changes a new CELL record.\nThis may break the mod\'s new CELL.')
                 self.setItem(i, 1, item_cell_changed_error)
-            if basename.lower() in dll_dict:
+            if basename.removeprefix('SKSE WARN - ').lower() in dll_dict:
                 item_dll_error = QTableWidgetItem('DLL!')
                 tooltip = "This mod's plugin name is present in the following dlls and\nmay be breaking them as they may rely on hard-coded form ids:"
-                for dll in dll_dict[basename.lower()]:
+                for dll in dll_dict[basename.removeprefix('SKSE WARN - ').lower()]:
                     tooltip += '\n- ' + os.path.basename(dll)
                 item_dll_error.setToolTip(tooltip)
                 self.setItem(i, 2, item_dll_error)
@@ -184,7 +187,7 @@ class list_compacted_unpatched(QTableWidget):
                 else:
                     subprocess.Popen(['open', os.path.dirname(file_directory)])
             except Exception as e:
-                print(f"Error opening file explorer: {e}")
+                print(f"!Error opening file explorer: {e}")
 
     def get_data_from_file(self, file):
         try:
