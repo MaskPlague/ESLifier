@@ -128,6 +128,8 @@ class patch_new(QWidget):
                 file_masters = json.load(f)
             with open("ESLifier_Data/dependency_dictionary.json", 'r', encoding='utf-8') as f: 
                 dependencies = json.load(f)
+            with open("ESLifier_Data/dll_dict.json", 'r', encoding='utf-8') as f:
+                dll_dict = json.load(f)
         except Exception as e:
             print(f'!Error: Failed to find a required dictionary.')
             print(e)
@@ -162,6 +164,13 @@ class patch_new(QWidget):
 
         mod_list = [master for master in new_dependencies]
         mod_list.extend([file for file in new_files if file not in mod_list])
+
+        compacted_lowered = [key.lower() for key in compacted_and_patched]
+        mod_list_lowered = [mod.lower() for mod in mod_list]
+        for mod in dll_dict:
+            if mod in compacted_lowered and mod not in mod_list_lowered:
+                mod_list.append(mod)
+
         self.list_compacted_unpatched.mod_list = mod_list
         self.list_unpatched_files.dependencies_dictionary = new_dependencies
         self.list_unpatched_files.file_dictionary = new_files

@@ -8,11 +8,13 @@ from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidget
 class list_compacted_unpatched(QTableWidget):
     def __init__(self):
         super().__init__()
-        self.setColumnCount(2)
-        self.setHorizontalHeaderLabels(['Mod', 'New CELL Warning'])
+        self.setColumnCount(3)
+        self.setHorizontalHeaderLabels(['Mod', 'New CELL Warning', 'SKSE DLL Warning'])
         self.horizontalHeaderItem(0).setToolTip('These are plugins which this program has compacted.\nTick the plugin for which you want to patch new files.\nSelect for which plugin you want to show the unpatched files.')
         self.horizontalHeaderItem(1).setToolTip('If you can see this column then one or more of the mods\nbelow have a new dependent plugin which modifies it\'s\nnew CELL record which may break because the master is ESL.')
+        self.horizontalHeaderItem(2).setToolTip('If you can see this column then one or more of the mods\nbelow have a SKSE DLL that may rely on the uncompacted\n form ids which may be hard-coded into it.')
         self.horizontalHeaderItem(1).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.horizontalHeaderItem(2).setTextAlignment(Qt.AlignmentFlag.AlignLeft)
         self.verticalHeader().setHidden(True)
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
@@ -50,12 +52,21 @@ class list_compacted_unpatched(QTableWidget):
     def create(self):
         self.setSortingEnabled(False)
         cell_changed = self.get_data_from_file('ESLifier_Data/cell_changed.json')
+        dll_dict = self.get_data_from_file('ESLifier_Data/dll_dict.json')
         self.clearContents()
         self.setRowCount(len(self.mod_list))
         self.setColumnHidden(1, True)
+        self.setColumnHidden(2, True)
+        checked_cell_changed_warning = False
+        checked_skse_dll_warning = False
         for mod in self.mod_list:
-            if os.path.basename(mod) in cell_changed:
+            if not checked_cell_changed_warning and os.path.basename(mod) in cell_changed:
                 self.setColumnHidden(1, False)
+                checked_cell_changed_warning = True
+            if not checked_skse_dll_warning and os.path.basename(mod).lower() in dll_dict:
+                self.setColumnHidden(2, False)
+                checked_skse_dll_warning = True
+            if checked_cell_changed_warning and checked_skse_dll_warning:
                 break
 
         for i in range(len(self.mod_list)):
@@ -64,10 +75,18 @@ class list_compacted_unpatched(QTableWidget):
             item.setCheckState(Qt.CheckState.Unchecked)
             item.setToolTip(self.mod_list[i])
             self.setItem(i, 0, item)
-            if os.path.basename(self.mod_list[i]) in cell_changed:
-                item_error = QTableWidgetItem('Warning!')
-                item_error.setToolTip('This mod has a dependent plugin that changes a new CELL record.\nThis may break the mod\'s new CELL.')
-                self.setItem(i, 1, item_error)
+            basename = os.path.basename(self.mod_list[i])
+            if basename in cell_changed:
+                item_cell_changed_error = QTableWidgetItem('CELL Changed!')
+                item_cell_changed_error.setToolTip('This mod has a dependent plugin that changes a new CELL record.\nThis may break the mod\'s new CELL.')
+                self.setItem(i, 1, item_cell_changed_error)
+            if basename.lower() in dll_dict:
+                item_dll_error = QTableWidgetItem('DLL!')
+                tooltip = "This mod's plugin name is present in the following dlls and\nmay be breaking them as they may rely on hard-coded form ids:"
+                for dll in dll_dict[basename.lower()]:
+                    tooltip += '\n- ' + os.path.basename(dll)
+                item_dll_error.setToolTip(tooltip)
+                self.setItem(i, 2, item_dll_error)
 
         def something_changed(itemChanged):
             multi_check = True
