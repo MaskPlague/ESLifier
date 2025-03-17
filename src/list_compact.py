@@ -164,9 +164,9 @@ class list_compactable(QTableWidget):
                 self.setItem(i, 1, item_cell_flag)
             if basename.lower() in self.dll_dict:
                 item_dll = QTableWidgetItem('!SKSE DLL!')
-                tooltip = 'This mod\'s plugin name is present in the following SKSE dlls\nand may break them if a hard-coded form id is present:\n'
+                tooltip = 'This mod\'s plugin name is present in the following SKSE dlls and\nmay break their FormLookup() function calls if a hard-coded form id is present:'
                 for dll in self.dll_dict[basename.lower()]:
-                    tooltip += '- ' + os.path.basename(dll)
+                    tooltip += '\n- ' + os.path.basename(dll)
                 item_dll.setToolTip(tooltip)
                 self.setItem(i, 2, item_dll)
             if self.dependency_list[basename.lower()] != []:
