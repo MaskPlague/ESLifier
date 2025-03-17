@@ -100,7 +100,7 @@ class CFIDs():
                     print('\n')
                 CFIDs.rename_files_threader(file_to_compact, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
         CFIDs.dump_to_file('ESLifier_Data/compacted_and_patched.json')
-        print('Deleting temporarily Extracted FaceGen/Voice Files...')
+        print('-  Deleting temporarily Extracted FaceGen/Voice Files...')
         if os.path.exists('bsa_extracted_temp/'):
             shutil.rmtree('bsa_extracted_temp/')
         print('CLEAR ALT')
@@ -628,7 +628,7 @@ class CFIDs():
 
         saved_forms = CFIDs.form_processor.save_all_form_data(data_list, new_file)
 
-        form_id_list.sort()
+        form_id_list.sort(key= lambda x: struct.unpack('<I', x[0])[0])
 
         if update_header and master_count != 0:
             new_id = binascii.unhexlify(master_count.to_bytes().hex() + '000000')
@@ -652,6 +652,10 @@ class CFIDs():
                 if old_id == new_id:
                     to_remove.append([old_id, type, new_decimal, new_id])
                     break
+        if len(to_remove) > 0:
+            new_next_available_object_id = to_remove[-1][0]
+        else:
+            new_next_available_object_id = b'\x00\x00\x00\x00'
 
         for old_id, type, new_decimal, new_id in to_remove:
             form_id_list.remove([old_id, type])
@@ -678,7 +682,7 @@ class CFIDs():
                 _, new_id = new_form_ids.pop(0)
                 form_id_replacements.append([form_id, new_id])
 
-        form_id_replacements.sort()
+        form_id_replacements.sort(key= lambda x: struct.unpack('<I', x[0])[0])
 
         with open(form_id_file_name, 'w') as fidf:
             for form_id, new_id in form_id_replacements:
@@ -691,6 +695,13 @@ class CFIDs():
         data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
 
         data_list = CFIDs.update_grup_sizes(data_list, grup_struct, sizes_list)
+
+        if struct.unpack('<I', form_id_replacements[-1][1])[0] > struct.unpack('<I', new_next_available_object_id)[0]:
+            new_next_available_object_id = (struct.unpack('<I', form_id_replacements[-1][1])[0] + 1).to_bytes(4, 'little')
+        else:
+            new_next_available_object_id = (struct.unpack('<I', new_next_available_object_id)[0] + 1).to_bytes(4, 'little')
+
+        data_list[0] = data_list[0][:38] + new_next_available_object_id[:3] + b'\x00' + data_list[0][42:]
 
         with open(new_file, 'wb') as f:
             f.write(b''.join(data_list))
