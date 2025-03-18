@@ -652,10 +652,11 @@ class CFIDs():
                 if old_id == new_id:
                     to_remove.append([old_id, type, new_decimal, new_id])
                     break
+
         if len(to_remove) > 0:
             new_next_available_object_id = to_remove[-1][0]
         else:
-            new_next_available_object_id = b'\x00\x00\x00\x00'
+            new_next_available_object_id = b'\x00\x00\x00\x01'
 
         for old_id, type, new_decimal, new_id in to_remove:
             form_id_list.remove([old_id, type])
