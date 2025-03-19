@@ -379,7 +379,7 @@ class CFIDs():
     #   facegeom: Texture paths in face mesh files
     #   .seq: SEQ files
     #   .psc: Source Scripts
-    #   .pex: Compiled script files, should patch any form id in a (formID, plugin) format.
+    #   .pex: Compiled script files
     def patch_files(master, files, form_id_map, skyrim_folder_path, output_folder_path, flag):
         for file in files:
             if flag:
