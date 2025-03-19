@@ -459,6 +459,7 @@ class settings(QWidget):
         self.settings['enable_interior_cell_filter'] = self.enable_interior_cell_filter_toggle.isChecked()
         self.settings['show_dlls'] = self.show_plugins_possibly_refd_by_dlls_toggle.isChecked()
 
+        self.mo2_mode_clicked()
         if self.mo2_mode_toggle.isChecked():
             self.mo2_modlist_txt_path_widget.show()
         else:
