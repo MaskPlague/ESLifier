@@ -74,7 +74,6 @@ class ESLifier(mobase.IPluginTool):
         eslifier_folder = self._organizer.pluginSetting("ESLifier", "ESLifier Folder")
         eslifier_exe = os.path.join(eslifier_folder, 'ESLifier.exe')
         if os.path.exists(eslifier_exe):
-            os.chdir(eslifier_folder)
             try:
                 if os.name == 'nt':
                     os.startfile(eslifier_exe)
