@@ -4,6 +4,7 @@ If the user compacts a plugin, then ESLifier will also patch and rename all file
 scan for files and plugins that are added after compacting so that they can also be patched to fit the new form ids of the compacted master.
 
 Nexus Mods [ESLifier](https://www.nexusmods.com/skyrimspecialedition/mods/145168)
+
 Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspecialedition/mods/126298)
   
 # For Users
