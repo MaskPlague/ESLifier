@@ -64,17 +64,17 @@ class qualification_checker():
         
         return True, need_compacting, new_cell, interior_cell_flag
     
-    def already_esl(file):
+    def already_esl(file): # return true if already esl or ESM but not scanning ESMs
         with open(file, 'rb') as f:
             f.seek(8)
             esm_flag = f.read(1)
             if esm_flag in (b'\x81', b'\x01') and not qualification_checker.scan_esms:
-                return True #return that the file is esm and doesn't qualify
+                return True
             esl_flag = f.read(1)
             if esl_flag == b'\x02':
                 return True
             else:
-                return False #not esl, so it does qualify for processing
+                return False
             
     def get_master_count(data_list):
         tes4 = data_list[0]
