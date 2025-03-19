@@ -74,6 +74,7 @@ class settings(QWidget):
             "mo2_mode"
         )
         self.mo2_mode_widget.layout().itemAt(1).widget().clicked.connect(self.mo2_mode_clicked)
+        self.mo2_mode_widget.layout().itemAt(1).widget().clicked.connect(self.skyrim_folder_path.clear)
         self.update_header_widget, self.update_header_toggle = self.create_toggle_widget(
             "Allow Form IDs below 0x000800 + Update plugin headers to 1.71",
             "Allow scanning and patching to use the new 1.71 header.\n"+
