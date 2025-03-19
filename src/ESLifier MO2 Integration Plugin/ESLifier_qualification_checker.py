@@ -3,9 +3,10 @@ import zlib
 import struct
 
 class qualification_checker():
-    def qualification_check(self, plugin, new_header, show_cells=True):
+    def qualification_check(self, plugin, new_header, show_cells, scan_esms):
         qualification_checker.max_record_number = 4096
         qualification_checker.show_cells = show_cells
+        qualification_checker.scan_esms = scan_esms
 
         if new_header:
             qualification_checker.num_max_records = 4096
@@ -67,7 +68,7 @@ class qualification_checker():
         with open(file, 'rb') as f:
             f.seek(8)
             esm_flag = f.read(1)
-            if esm_flag in (b'\x81', b'\x01'):
+            if esm_flag in (b'\x81', b'\x01') and not qualification_checker.scan_esms:
                 return True #return that the file is esm and doesn't qualify
             esl_flag = f.read(1)
             if esl_flag == b'\x02':
