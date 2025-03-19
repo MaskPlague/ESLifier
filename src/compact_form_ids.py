@@ -336,50 +336,6 @@ class CFIDs():
             thread.join()
 
     #Patches each file type in a different way as each has Form IDs present in a different format
-    #Patched files:
-    #   .ini:   Keyword Item Distributor
-    #           Base Object Swapper
-    #           Spell Perk Item Distributor
-    #           ENB Lights for Effect Shaders
-    #           Description Framework
-    #           SkyPatcher
-    #           DtryKeyUtil
-    #           Poise Breaker
-    #           Valhalla Combat
-    #           AutoBody
-    #           Various States of Undress
-    #           Form List Manipulator
-    #           Leveled List Object Swapper
-    #           Item Property Manipulator
-    #           Music Type Distributor
-    #   .json:  Open Animation Replacer
-    #           MCM Helper
-    #           Dynamic Key Activation Framework NG
-    #           Smart Harvest Auto NG AutoLoot
-    #           PapyrusUtil's StorageDataUtil
-    #           Custom Skills Framework
-    #           Dynamic String Distributor
-    #           Dynamic Armor Variants
-    #           Inventory Injector
-    #           Immersive Equipment Display
-    #           Light Placer
-    #           Player Equipment Manager
-    #           Skyrim Unbound
-    #           Creature Framework
-    #           CoMAP
-    #           OBody NG
-    #           SexLab Config
-    #   .jslot: Racemenu Presets
-    #   _conditions.txt: Dynamic Animation Replacer
-    #   _srd.yaml: Sound Record Distributor
-    #   .toml:  Dynamic Animation Casting
-    #           Precision
-    #           Loki Poise
-    #           True Directional Movment
-    #   facegeom: Texture paths in face mesh files
-    #   .seq: SEQ files
-    #   .psc: Source Scripts
-    #   .pex: Compiled script files
     def patch_files(master, files, form_id_map, skyrim_folder_path, output_folder_path, flag):
         for file in files:
             if flag:
