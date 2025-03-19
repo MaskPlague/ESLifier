@@ -61,7 +61,6 @@ class ESLifier(mobase.IPluginTool):
         return self.tr("")
     
     def icon(self):
-        print(self.icon_path)
         return QIcon(self.icon_path + '\\ESLifier.ico')
 
     def getFiles(self):
