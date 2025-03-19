@@ -59,18 +59,9 @@ pyinstaller "src/eslifier_app.py" --onefile -n "ESLifier" --noconsole --icon "sr
   - Leveled List Object Swapper
   - Item Property Manipulator
   - Music Type Distributor
-- config.json:
-  - Open Animation Replacer (and user.json)
-  - MCM Helper
-- _conditions.txt: Dynamic Animation Replacer
-- _srd.: Sound Record Distributor
-- .toml:
-  - Dynamic Animation Casting
-  - Precision
-  - Loki Poise
-  - True Directional Movment
-- .psc: Source Scripts
 - .json:
+  - Open Animation Replacer
+  - MCM Helper
   - Dynamic Key Activation Framework NG
   - Smart Harvest Auto NG AutoLoot
   - PapyrusUtil's StorageDataUtil
@@ -85,10 +76,20 @@ pyinstaller "src/eslifier_app.py" --onefile -n "ESLifier" --noconsole --icon "sr
   - Creature Framework
   - CoMAP
   - OBody NG
+  - SL Configs
+- .toml:
+  - Dynamic Animation Casting
+  - Precision
+  - Loki Poise
+  - True Directional Movment
+- .psc: Source Scripts
+- .pex: Compiled script files
+- _conditions.txt: Dynamic Animation Replacer
+- _srd.: Sound Record Distributor
 - .jslot: Racemenu Presets
 - facegeom's .nif: Texture paths in face mesh files
 - voice, facetint, facegeom: The names of these files are patched
 - .seq: SEQ files
-- .pex: Compiled script files
+
   
     
