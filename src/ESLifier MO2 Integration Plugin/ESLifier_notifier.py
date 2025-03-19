@@ -145,6 +145,8 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
         self.needs_compacting_new_cell_list.clear()
         self.needs_flag_interior_cell_list.clear()
         self.any_esl = False
+        show_cells = self._organizer.pluginSetting("ESLifier", "Display Plugins With Cells")
+        scan_esms = self._organizer.pluginSetting("ESLifier", "Scans ESMs")
         eslifier_folder = self._organizer.pluginSetting("ESLifier", "ESLifier Folder")
         blacklist_path = os.path.join(eslifier_folder, 'ESLifier_Data/blacklist.json')
         if os.path.exists(blacklist_path):
@@ -169,7 +171,7 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
 
         threads = []
         for chunk in chunks:
-            thread = threading.Thread(target=self.plugin_scanner, args=(chunk, new_header))
+            thread = threading.Thread(target=self.plugin_scanner, args=(chunk, new_header, show_cells, scan_esms))
             threads.append(thread)
             thread.start()
             
@@ -178,9 +180,9 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
 
         return self.any_esl
     
-    def plugin_scanner(self, plugins, new_header):
+    def plugin_scanner(self, plugins, new_header, show_cells, scan_esms):
         for plugin in plugins:
-            esl_allowed, needs_compacting, new_cell, new_interior_cell = self.qualification_check(plugin, new_header, True)
+            esl_allowed, needs_compacting, new_cell, new_interior_cell = self.qualification_check(plugin, new_header, show_cells, scan_esms)
             if esl_allowed == True:
                 self.any_esl = True
                 basename = os.path.basename(plugin)
@@ -203,5 +205,5 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
                 self.needs_compacting_list, self.needs_compacting_new_cell_list, self.needs_compacting_interior_cell_list)
     
     @staticmethod
-    def qualification_check(plugin, new_header, show_cells):
-        return light_check().qualification_check(plugin, new_header, show_cells)
+    def qualification_check(plugin, new_header, show_cells, scan_esms):
+        return light_check().qualification_check(plugin, new_header, show_cells, scan_esms)
