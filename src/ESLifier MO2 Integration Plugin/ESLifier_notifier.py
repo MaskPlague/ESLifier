@@ -72,8 +72,8 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
         if self._problems == [0]:
             output_string = ""
             if len(self.needs_flag_list) > 0:
-                output_string += "The following plugins can be flagged as esl:\n"
-                output_string += "NC = New Cell Flag, IC = New Interior Cell Flag\n"
+                output_string += self.tr("The following plugins can be flagged as esl:\n")
+                output_string += self.tr("NC = New Cell Flag, IC = New Interior Cell Flag\n")
                 for plugin in self.needs_flag_list:
                     line = " ‣ "
                     if plugin in self.needs_flag_new_cell_list:
@@ -89,8 +89,8 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
                 output_string += '\n'
 
             if len(self.needs_compacting_list) > 0:
-                output_string += "The following plugins can be flagged as esl after compacting:\n"
-                output_string += "NC = New Cell Flag, IC = New Interior Cell Flag\n"
+                output_string += self.tr("The following plugins can be flagged as esl after compacting:\n")
+                output_string += self.tr("NC = New Cell Flag, IC = New Interior Cell Flag\n")
                 for plugin in self.needs_compacting_list:
                     line = " ‣ "
                     if plugin in self.needs_compacting_new_cell_list:
@@ -107,9 +107,11 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
                 output_string += '\n'
                 
             output_string += self.tr(
+                "Notes/Warnings:\n"
                 "You can launch ESLifier via the tool button.\n"
-                "Plugins with new cells may have the cell be inaccessable after marking as light.\n"
-                "Light plugins' new interior cells may not properly reload if the game is not restarted before load.\n"
+                "Compacting plugins may break things in on-going saves.\n"
+                "Plugins with new cells may have the cell be break after marking as light if another mod changes it.\n"
+                "Light plugins' new interior cells may not properly reload if the game is not restarted before loading.\n"
                 "You can ignore a game plugin via this MO2 plugin's dropdown or via ESLifier's blacklist.\n"
             )
             return output_string
@@ -146,7 +148,7 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
         self.needs_flag_interior_cell_list.clear()
         self.any_esl = False
         show_cells = self._organizer.pluginSetting("ESLifier", "Display Plugins With Cells")
-        scan_esms = self._organizer.pluginSetting("ESLifier", "Scans ESMs")
+        scan_esms = self._organizer.pluginSetting("ESLifier", "Scan ESMs")
         eslifier_folder = self._organizer.pluginSetting("ESLifier", "ESLifier Folder")
         blacklist_path = os.path.join(eslifier_folder, 'ESLifier_Data/blacklist.json')
         if os.path.exists(blacklist_path):
@@ -155,8 +157,11 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
         else:
             ignore_list = []
         new_header = self._organizer.pluginSetting("ESLifier", "Use 1.71 Header Range")
-        
-        plugin_files_list = [plugin for plugin in self._organizer.findFiles("", "*.es[pm]") if os.path.basename(plugin) not in ignore_list]
+        if scan_esms:
+            filter = "*.es[pm]"
+        else:
+            filter = "*.esp"
+        plugin_files_list = [plugin for plugin in self._organizer.findFiles("", filter) if os.path.basename(plugin) not in ignore_list]
 
         if len(plugin_files_list) > 1000:
             split = 5
