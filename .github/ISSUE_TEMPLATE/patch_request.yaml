@@ -27,6 +27,8 @@ body:
           - Keyword Item Distributor
           - Base Object Swapper
           - Spell Perk Item Distributor
+          - Seasons of Skyrim
+          - Payload Interpreter
           - ENB Lights for Effects Shaders
           - Description Framework  
           - Seasons of Skyrim
@@ -59,7 +61,20 @@ body:
           - Creature Framework  
           - CoMAP  
           - OBody NG  
-        
+          - SL Configs
+          
+        - **.toml:**  
+          - Dynamic Animation Casting  
+          - Precision  
+          - Loki Poise  
+          - True Directional Movement 
+          
+        - **.psc:**  
+          - Source Scripts  
+          
+        - **.pex:**  
+          - Compiled script files  
+          
         - **.jslot:**  
           - RaceMenu Presets  
         
@@ -68,12 +83,6 @@ body:
         
         - **_srd.:**  
           - Sound Record Distributor  
-        
-        - **.toml:**  
-          - Dynamic Animation Casting  
-          - Precision  
-          - Loki Poise  
-          - True Directional Movement 
           
         - **facegeom's .nif:**  
           - Texture paths in face mesh files  
@@ -84,11 +93,7 @@ body:
         - **.seq:**  
           - SEQ files  
           
-        - **.psc:**  
-          - Source Scripts  
-          
-        - **.pex:**  
-          - Compiled script files  
+
           
   - type: checkboxes
     id: no-duplicate-feature
