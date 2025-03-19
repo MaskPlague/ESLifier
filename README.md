@@ -48,7 +48,7 @@ pyinstaller "src/eslifier_app.py" --onefile -n "ESLifier" --noconsole --icon "sr
   - Seasons of Skyrim
   - Payload Interpreter
   - ENB Lights For Effect Shaders
-  - Description Framwork
+  - Description Framework
   - SkyPatcher
   - DtryKeyUtil
   - Poise Breaker
