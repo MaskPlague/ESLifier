@@ -145,7 +145,7 @@ class qualification_checker():
             with qualification_checker.lock:
                 if not os.path.exists(os.path.dirname(cell_form_id_file)):
                     os.makedirs(os.path.dirname(cell_form_id_file))
-            with open(cell_form_id_file, 'w') as f:
+            with open(cell_form_id_file, 'w', encoding='utf-8') as f:
                 for form_id in cell_form_ids:
                     f.write(form_id + '\n')
 
@@ -165,7 +165,7 @@ class qualification_checker():
             
     def get_from_file(file):
         try:
-            with open(file, 'r') as f:
+            with open(file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
         except:
             data = []

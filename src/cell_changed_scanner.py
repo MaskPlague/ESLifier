@@ -34,7 +34,7 @@ class cell_scanner():
         cell_form_id_file = 'ESLifier_Data/Cell_IDs/' + os.path.basename(mod) + '_CellFormIDs.txt'
         if not os.path.exists(cell_form_id_file) or not os.path.basename(mod).lower() in cell_scanner.dependency_dict:
             return
-        with open(cell_form_id_file, 'r') as f:
+        with open(cell_form_id_file, 'r', encoding='utf-8') as f:
             cell_form_ids = [line.strip() for line in f.readlines()]
         if cell_form_ids:
             dependents = cell_scanner.dependency_dict[os.path.basename(mod).lower()]

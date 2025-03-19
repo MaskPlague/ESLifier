@@ -641,7 +641,7 @@ class CFIDs():
 
         form_id_replacements.sort(key= lambda x: struct.unpack('<I', x[0])[0])
 
-        with open(form_id_file_name, 'w') as fidf:
+        with open(form_id_file_name, 'w', encoding='utf-8') as fidf:
             for form_id, new_id in form_id_replacements:
                 fidf.write(str(form_id.hex()) + '|' + str(new_id.hex()) + '\n')
 
@@ -671,7 +671,7 @@ class CFIDs():
         form_id_file_name = "ESLifier_Data/Form_ID_Maps/" + os.path.basename(file).lower() + "_FormIdMap.txt"
         form_id_file_data = ''
         
-        with open(form_id_file_name, 'r') as form_id_file:
+        with open(form_id_file_name, 'r', encoding='utf-8') as form_id_file:
             form_id_file_data = form_id_file.readlines()
 
         threads = []

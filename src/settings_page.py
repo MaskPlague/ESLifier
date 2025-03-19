@@ -353,7 +353,7 @@ class settings(QWidget):
                 try:
                     with open('ESLifier_Data/compacted_and_patched.json', 'r', encoding='utf-8') as fcp:
                         compacted_and_patched_dict = json.load(fcp)
-                        with open('ESLifier_Data/previously_compacted.json', 'w') as fpc:
+                        with open('ESLifier_Data/previously_compacted.json', 'w', encoding='utf-8') as fpc:
                             previously_compacted = [key for key in compacted_and_patched_dict.keys()]
                             json.dump(previously_compacted, fpc, ensure_ascii=False, indent=4)
                             fpc.close()
@@ -467,7 +467,7 @@ class settings(QWidget):
         
     def get_settings_from_file(self):
         try:
-            with open('ESLifier_Data/settings.json', 'r') as f:
+            with open('ESLifier_Data/settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 return settings
         except:

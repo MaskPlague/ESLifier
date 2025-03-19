@@ -143,7 +143,7 @@ class list_eslable(QTableWidget):
 
     def get_data_from_file(self, file):
         try:
-            with open(file, 'r') as f:
+            with open(file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
         except:
             data = {}

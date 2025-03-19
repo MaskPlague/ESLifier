@@ -22,7 +22,7 @@ class log_stream(QMainWindow):
         self.crash = False
         if not os.path.exists("ESLifier_Data/"):
             os.makedirs("ESLifier_Data/")
-        self.log_file = open("ESLifier_Data/ESLifier.log", 'w')
+        self.log_file = open("ESLifier_Data/ESLifier.log", 'w', encoding='utf-8')
 
         sys.stdout = self
         sys.stderr = self

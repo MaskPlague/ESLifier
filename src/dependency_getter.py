@@ -19,7 +19,7 @@ class dependecy_getter():
     
     def get_from_file(file):
         try:
-            with open(file, 'r') as f:
+            with open(file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
         except:
             data = []

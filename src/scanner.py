@@ -667,7 +667,7 @@ class scanner():
             file_lower = file.lower()
             if reader_type == 'r':
                 if file_lower.endswith('.jslot'):
-                    with open(file, 'r', errors='ignore') as f:
+                    with open(file, 'r', encoding='utf-8', errors='ignore') as f:
                         data = json.load(f)
                         f.close()
                     plugins = []
