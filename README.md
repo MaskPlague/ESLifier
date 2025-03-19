@@ -1,6 +1,6 @@
 # ESLifier
 ESLifier allows users to scan their Skyrim Special Edition directory for plugins that can either be flagged as ESL or compacted to fit ESL conditions. The user can then flag or compact the relevant plugins.
-If the user compacts a plugin then ESLifier will also patch and rename all files that have that mod as a master (plugins and files that directly reference a form id present in the compacted plugin). The user can also
+If the user compacts a plugin, then ESLifier will also patch and rename all files that have that mod as a master (plugins and files that directly reference a form id present in the compacted plugin). The user can also
 scan for files and plugins that are added after compacting so that they can also be patched to fit the new form ids of the compacted master.
   
 # For Users
