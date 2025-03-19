@@ -50,7 +50,7 @@ class ESLifier(mobase.IPluginTool):
     def settings(self):
         return [
             mobase.PluginSetting("Display Plugins With Cells", self.tr("Display plugins that can be light with Cells."), True),
-            mobase.PluginSetting("Scans ESMs", self.tr("Scan plugins that are flagged as ESM."), False),
+            mobase.PluginSetting("Scan ESMs", self.tr("Scan plugins that are flagged as ESM."), False),
             mobase.PluginSetting("Use 1.71 Header Range", self.tr("Use the new 1.71 Header range when scanning for plugins that can be light."), True),
             mobase.PluginSetting("ESLifier Folder", self.tr("Set this to the folder that holds ESLifier.exe."), ""),
         ]
