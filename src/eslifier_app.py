@@ -2,8 +2,8 @@ import sys
 import os
 import images_qr #do not remove, used for icons, it is a PyQt6 resource file
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QAction, QPalette, QColor, QIcon
-from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMenuBar, QStackedLayout, QMessageBox, QTableWidgetItem
+from PyQt6.QtGui import QPalette, QColor, QIcon
+from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMessageBox, QTableWidgetItem, QTabWidget, QVBoxLayout
 
 from settings_page import settings
 from main_page import main
@@ -19,117 +19,110 @@ class main_window(QMainWindow):
 
         self.setWindowTitle("ESLifier")
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
+        self.resize(1300, 500)
+        self.move(100,50)
         self.log_stream = log_stream(self)
         self.setWindowIcon(QIcon(":/images/ESLifier.png"))
         self.setFocus()
-        self.setStyleSheet("""
-            QLineEdit {
-                border: 1px solid grey;
-                border-radius: 5px;
-            }
-            QLineEdit::focus {
-                border: 1px solid black;
-                border-radius: 5px;
-            }
-            QPushButton {
-                border: 1px solid LightGrey;
-                border-radius: 5px;
-                background-color: LightGrey;
-            }
-            QPushButton::hover{
-                border: 1px solid ghostwhite;
-                border-radius: 5px;
-                background-color: ghostwhite;
-            }
-            QLabel{
-                color: White
-            }
-            """)
-
-        main_menu_action = QAction("Main", self)
-        main_menu_action.triggered.connect(self.main_selected)
-        main_menu_action.setToolTip(
-            "This is the Main Page, scan your skyrim folder and select plugins to flag or compress.")
-        setting_menu_action = QAction("Settings", self)
-        setting_menu_action.triggered.connect(self.settings_selected)
-        setting_menu_action.setToolTip(
-            "This is the settings page. Certain settings will effect what plugins will display after scanning.")
-        patch_new_menu_action = QAction("Patch New Plugins/Files", self)
-        patch_new_menu_action.triggered.connect(self.patch_new_selected)
-        patch_new_menu_action.setToolTip(
-            "This is the Patch New Files Page, scan for new files that were not present when you\n"+
-            "initially compressed plugins and patched dependent plugins and files, then select the\n"+
-            "master of the new files you want to patch.")
-        help_menu_action = QAction("Help?", self)
-        help_menu_action.triggered.connect(self.help_selected)
-        help_menu_action.setToolTip("Help Button, displays help message.")
-
-        top_menu = QMenuBar()
-        top_menu.addAction(main_menu_action)
-        top_menu.addAction(patch_new_menu_action)
-        top_menu.addAction(setting_menu_action)
-        top_menu.addAction(help_menu_action)
-        top_menu.setStyleSheet("""
-            QMenuBar {
-                background-color: rgb(70,70,70);
-                color: rgb(255,255,255);
-                border-bottom: 1px solid rgb(255,255,255)
-            }
-            QMenuBar::item {
-                background-color: rgb(70,70,70);
-                color: rgb(255,255,255);
-            }
-            QMenuBar::item::selected {
-                background-color: rgb(100,100,100);
-            }
-            QMenuBar::item::pressed{
-                background-color: rgb(50,50,50);
-            }
-            """)
-        top_menu.setToolTip(
+        if COLOR_MODE == 'Light':
+            palette = QPalette()
+            palette.setColor(QPalette.ColorRole.Window, QColor("Gray"))
+            palette.setColor(QPalette.ColorRole.ButtonText, QColor("Black"))
+            palette.setColor(QPalette.ColorRole.Button, QColor("Light Grey"))
+            palette.setColor(QPalette.ColorRole.WindowText, QColor("White"))
+            self.setPalette(palette)
+            self.setStyleSheet("""
+                QLineEdit {
+                    border: 1px solid grey;
+                    border-radius: 5px;
+                }
+                QLineEdit::focus {
+                    border: 1px solid black;
+                    border-radius: 5px;
+                }
+                QPushButton {
+                    border: 1px solid LightGrey;
+                    border-radius: 5px;
+                    background-color: LightGrey;
+                }
+                QPushButton::hover{
+                    border: 1px solid ghostwhite;
+                    border-radius: 5px;
+                    background-color: ghostwhite;
+                    color: black
+                }
+                QLabel{
+                    color: White
+                }
+                """)
+            
+        self.settings_widget = settings()
+        self.main_widget = main()
+        self.patch_new_widget = patch_new()
+        self.update_settings()
+        self.tabs = QTabWidget()
+        self.tabs.setToolTip(
             "Main Page: Scan your skyrim folder and select plugins to flag or compress.\n" +
             "Patch New Files Page: Scan for new files and dependents that were not present when you\n"+
                 "\tinitially compressed plugins and patched dependent files/plugins.\n"+
                 "\tSelect the master of the new files you want to patch.\n" +
             "Settings Page: Certain settings will effect what plugins will display after scanning.")
-            
-        self.settings_widget = settings()
-        self.main_widget = main()
-        self.patch_new_widget = patch_new()
-        self.main_widget.setMinimumWidth(1000)
-        self.main_widget.setMinimumHeight(500)
-        self.update_settings()
-        self.tabs = QStackedLayout()
-        self.tabs.addWidget(self.main_widget)
-        self.tabs.addWidget(self.patch_new_widget)
-        self.tabs.addWidget(self.settings_widget)
+        if COLOR_MODE == 'Light':
+            self.tabs.setStyleSheet("""
+                QTabWidget::pane { /* The tab widget frame */
+                    border-top: 1px solid rgb(255,255,255);
+                }
+                QTabWidget::tab-bar {
+                    left: 20px
+                }
+                QTabBar::tab {
+                    background-color: lightgrey;
+                    border-top-left-radius: 1px;
+                    border-top-right-radius: 1px;
+                    border-right: 1px solid grey;
+                    min-width: 8ex;
+                    padding: 3px;
+                }
+                QTabBar::tab:selected, QTabBar::tab:hover {
+                    background-color: ghostwhite
+                }
+                """)
+
+        self.tabs.addTab(self.main_widget, "  Main  ")
+        self.tabs.setTabToolTip(0, "This is the Main Page, scan your skyrim folder and select plugins to flag or compress.")
+        self.tabs.addTab(self.patch_new_widget, "  Patch New Plugins/Files  ")
+        self.tabs.setTabToolTip(1,
+            "This is the Patch New Files Page, scan for new files that were not present when you\n"+
+            "initially compressed plugins and patched dependent plugins and files, then select the\n"+
+            "master of the new files you want to patch.")
+        self.tabs.addTab(self.settings_widget, "  Settings  ")
+        self.tabs.setTabToolTip(2, "This is the settings page. Certain settings will effect what plugins will display after scanning.")
+        self.tabs.addTab(QWidget(), "  Help?  ")
+        self.tabs.currentChanged.connect(self.tab_changed)
         self.tabs.setCurrentIndex(0)
+        self.previous_tab = 0
+
         if self.settings_widget.settings['output_folder_path'] == '' or self.settings_widget.settings['skyrim_folder_path'] == '':
             self.tabs.setCurrentIndex(2)
+            self.previous_tab = 2
         self.layout().setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         display_widget = QWidget()
-        display_widget.setLayout(self.tabs)
-        palette = QPalette()
-        palette.setColor(QPalette.ColorRole.Window, QColor("Gray"))
-        palette.setColor(QPalette.ColorRole.ButtonText, QColor("Black"))
-        palette.setColor(QPalette.ColorRole.Button, QColor("Light Grey"))
-        palette.setColor(QPalette.ColorRole.WindowText, QColor("White"))
-        self.setPalette(palette)
-
+        tabs_layout = QVBoxLayout()
+        tabs_layout.addWidget(self.tabs)
+        display_widget.setLayout(tabs_layout)
         self.setCentralWidget(display_widget)
-        self.setMenuBar(top_menu)
 
-    def main_selected(self):
-        self.update_settings()
-        self.tabs.setCurrentIndex(0)
-        self.path_validator()
-
-    def patch_new_selected(self):
-        self.tabs.setCurrentIndex(1)
+    def tab_changed(self, index):
+        if index == 3:
+            self.tabs.setCurrentIndex(self.previous_tab)
+            self.help_selected()
+            index = self.previous_tab
+        self.previous_tab = index
         self.path_validator()
 
     def path_validator(self):
+        self.tabs.blockSignals(True)
         if (self.settings_widget.settings['output_folder_path'] == '' or self.settings_widget.settings['skyrim_folder_path'] == '' or 
             self.settings_widget.settings['plugins_txt_path'] == '' or self.settings_widget.settings['bsab_path'] == '' or
             (self.settings_widget.settings['mo2_mode'] and self.settings_widget.settings['mo2_modlist_txt_path'] == '')):
@@ -182,7 +175,7 @@ class main_window(QMainWindow):
                 message.close()
             message.accepted.connect(close)
             message.show()
-
+        self.tabs.blockSignals(False)
 
     def settings_selected(self):
         self.tabs.setCurrentIndex(2)
@@ -295,9 +288,16 @@ class main_window(QMainWindow):
     def moveEvent(self, a0):
         self.log_stream.center_on_parent()
         return super().moveEvent(a0)
-    
 
 app = QApplication(sys.argv)
+palette = app.palette()
+background_color = palette.color(QPalette.ColorRole.Window)
+
+# Determine if the mode is dark or light based on brightness
+if background_color.lightness() < 128:  # Darker backgrounds mean dark mode
+    COLOR_MODE = "Dark"
+else:
+    COLOR_MODE = "Light"
 w = main_window()
 w.show()
 app.exec()
