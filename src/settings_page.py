@@ -213,6 +213,7 @@ class settings(QWidget):
         widget.setToolTip(tooltip)
         label = QLabel(label_text)
         line_edit = QLineEdit()
+        line_edit.editingFinished.connect(self.update_settings)
         button = self.button_maker('Explore...', click_function, 100)
 
         widget.setLayout(layout)
