@@ -153,13 +153,13 @@ class settings(QWidget):
         self.set_init_widget_values()
         
         self.update_settings()
-
+        
+        settings_layout.addWidget(self.mo2_mode_widget)
         settings_layout.addWidget(self.skyrim_folder_path_widget)
         settings_layout.addWidget(self.output_folder_path_widget)
         settings_layout.addWidget(self.plugins_txt_path_widget)
         settings_layout.addWidget(self.bsab_path_widget)
         settings_layout.addWidget(self.mo2_modlist_txt_path_widget)
-        settings_layout.addWidget(self.mo2_mode_widget)
         settings_layout.addWidget(self.update_header_widget)
         settings_layout.addWidget(self.scan_esms_widget)
         settings_layout.addWidget(self.show_plugins_with_cells_widget)
