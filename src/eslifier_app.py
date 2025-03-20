@@ -123,19 +123,66 @@ class main_window(QMainWindow):
     def main_selected(self):
         self.update_settings()
         self.tabs.setCurrentIndex(0)
-        if (self.settings_widget.settings['output_folder_path'] == '' or self.settings_widget.settings['skyrim_folder_path'] == '' or 
-            self.settings_widget.settings['plugins_txt_path'] == '' or self.settings_widget.settings['bsab_path'] == '' or
-            (self.settings_widget.settings['mo2_mode'] and self.settings_widget.settings['mo2_modlist_txt_path'] == '')):
-            self.tabs.setCurrentIndex(2)
-            self.no_path_set()
+        self.path_validator()
 
     def patch_new_selected(self):
         self.tabs.setCurrentIndex(1)
+        self.path_validator()
+
+    def path_validator(self):
         if (self.settings_widget.settings['output_folder_path'] == '' or self.settings_widget.settings['skyrim_folder_path'] == '' or 
             self.settings_widget.settings['plugins_txt_path'] == '' or self.settings_widget.settings['bsab_path'] == '' or
             (self.settings_widget.settings['mo2_mode'] and self.settings_widget.settings['mo2_modlist_txt_path'] == '')):
             self.tabs.setCurrentIndex(2)
             self.no_path_set()
+            return
+        
+        output_path = self.settings_widget.settings['output_folder_path']
+        data_path = self.settings_widget.settings['skyrim_folder_path']
+        plugins_txt = self.settings_widget.settings['plugins_txt_path']
+        bsab = self.settings_widget.settings['bsab_path']
+        mo2_mode = self.settings_widget.settings['mo2_mode']
+        if mo2_mode:
+            mo2_path = self.settings_widget.settings['mo2_modlist_txt_path']
+
+        error_message = ''
+        if not os.path.exists(output_path):
+            error_message += "Invalid Output Directory, it does not exist.\n"
+        if not os.path.exists(data_path):
+            if mo2_mode:
+                error_message += "Invalid MO2 Mods Directory, it does not exist.\n"
+            else:
+                error_message += "Invalid Skyrim Data Directory, it does not exist.\n"
+        if not plugins_txt.lower().endswith('.txt'):
+            error_message += "Invalid plugins.txt, the path should be to the file not directory.\n"
+        if not os.path.exists(plugins_txt):
+            error_message += "Invalid plugins.txt, the file does not exist.\n"
+        if not bsab.lower().endswith('bsab.exe'):
+            error_message += "Invalid bsab.exe, the path should be to the file not directory\n"
+        if not os.path.exists(bsab):
+            error_message += "Invalid bsab.exe, the file does not exist.\n"
+        if mo2_mode and not mo2_path.lower().endswith('modlist.txt'):
+            error_message += "Invalid MO2 modlist.txt, the path should be to the file not directory.\n"
+        if mo2_mode and not os.path.exists(mo2_path):
+            error_message += "Invalid MO2 modlist.txt, the file does not exist.\n"
+
+        if len(error_message) > 10:
+            self.tabs.setCurrentIndex(2)
+            message = QMessageBox()
+            message.setWindowTitle("Path Validation Error")
+            message.setIcon(QMessageBox.Icon.Warning)
+            message.setWindowIcon(QIcon(":/images/ESLifier.png"))
+            message.setStyleSheet("""
+                QMessageBox {
+                    background-color: lightcoral;
+                }""")
+            message.setText(error_message)
+            message.addButton(QMessageBox.StandardButton.Ok)
+            def close():
+                message.close()
+            message.accepted.connect(close)
+            message.show()
+
 
     def settings_selected(self):
         self.tabs.setCurrentIndex(2)
