@@ -167,6 +167,7 @@ class blacklist_window(QMainWindow):
                 border: 1px solid LightGrey;
                 border-radius: 5px;
                 background-color: LightGrey;
+                color: black
             }
             QPushButton::hover{
                 border: 1px solid ghostwhite;
