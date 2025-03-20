@@ -61,12 +61,6 @@ class main_window(QMainWindow):
         self.patch_new_widget = patch_new()
         self.update_settings()
         self.tabs = QTabWidget()
-        self.tabs.setToolTip(
-            "Main Page: Scan your skyrim folder and select plugins to flag or compress.\n" +
-            "Patch New Files Page: Scan for new files and dependents that were not present when you\n"+
-                "\tinitially compressed plugins and patched dependent files/plugins.\n"+
-                "\tSelect the master of the new files you want to patch.\n" +
-            "Settings Page: Certain settings will effect what plugins will display after scanning.")
         if COLOR_MODE == 'Light':
             self.tabs.setStyleSheet("""
                 QTabWidget::pane { /* The tab widget frame */
