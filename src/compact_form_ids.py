@@ -47,7 +47,27 @@ class CFIDs():
                         try:
                             try:
                                 with subprocess.Popen(
-                                    [bsab, bsa_file, "--encoding", "utf8", "-f", name, "-e", "-o", "bsa_extracted_temp"],
+                                    [bsab, bsa_file, "--encoding", "utf8", "-f", "\\voice\\" + name, "-e", "-o", "bsa_extracted_temp"],
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    startupinfo=startupinfo,
+                                    text=True
+                                    ) as p:
+                                        for line in p.stdout:
+                                            if line.startswith('An error'):
+                                                raise EncodingWarning(f'~utf-8 failed switching to utf-7 for {file}')
+                                with subprocess.Popen(
+                                    [bsab, bsa_file, "--encoding", "utf8", "-f", "\\facetint\\" + name, "-e", "-o", "bsa_extracted_temp"],
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    startupinfo=startupinfo,
+                                    text=True
+                                    ) as p:
+                                        for line in p.stdout:
+                                            if line.startswith('An error'):
+                                                raise EncodingWarning(f'~utf-8 failed switching to utf-7 for {file}')
+                                with subprocess.Popen(
+                                    [bsab, bsa_file, "--encoding", "utf8", "-f", "\\facegeom\\" + name, "-e", "-o", "bsa_extracted_temp"],
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE,
                                     startupinfo=startupinfo,
@@ -59,7 +79,27 @@ class CFIDs():
                             except Exception as e:
                                 print(e)
                                 with subprocess.Popen(
-                                    [bsab, bsa_file, "--encoding", "utf7", "-f", name, "-e", "-o", "bsa_extracted_temp"],
+                                    [bsab, bsa_file, "--encoding", "utf7", "-f", "\\voice\\" + name, "-e", "-o", "bsa_extracted_temp"],
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    startupinfo=startupinfo,
+                                    text=True
+                                    ) as p:
+                                        for line in p.stdout:
+                                            if line.startswith('An error'):
+                                                raise EncodingWarning(f'~utf-7 failed for {file}')
+                                with subprocess.Popen(
+                                    [bsab, bsa_file, "--encoding", "utf7", "-f", "\\facetint\\" + name, "-e", "-o", "bsa_extracted_temp"],
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    startupinfo=startupinfo,
+                                    text=True
+                                    ) as p:
+                                        for line in p.stdout:
+                                            if line.startswith('An error'):
+                                                raise EncodingWarning(f'~utf-7 failed for {file}')
+                                with subprocess.Popen(
+                                    [bsab, bsa_file, "--encoding", "utf7", "-f", "\\facegeom\\" + name, "-e", "-o", "bsa_extracted_temp"],
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE,
                                     startupinfo=startupinfo,
@@ -72,7 +112,6 @@ class CFIDs():
                             print(f'!Error Reading BSA: {file}')
                             print(e)
                                             
-
                 rel_paths = []
                 for file in patch_or_rename:
                     rel_path = CFIDs.get_rel_path(file, skyrim_folder_path)
@@ -100,8 +139,8 @@ class CFIDs():
                     print('\n')
                 CFIDs.rename_files_threader(file_to_compact, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
         CFIDs.dump_to_file('ESLifier_Data/compacted_and_patched.json')
-        print('-  Deleting temporarily Extracted FaceGen/Voice Files...')
         if os.path.exists('bsa_extracted_temp/'):
+            print('-  Deleting temporarily Extracted FaceGen/Voice Files...')
             shutil.rmtree('bsa_extracted_temp/')
         print('CLEAR ALT')
         return
