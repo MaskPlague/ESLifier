@@ -22,7 +22,6 @@ class CFIDs():
             print(f"-  Patching {len(dependents)} Dependent Plugins...")
             CFIDs.patch_dependent_plugins(file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header, files_to_patch)
         
-        #files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
         bsa_dict = CFIDs.get_from_file('ESLifier_Data/bsa_dict.json')
         name = os.path.basename(file_to_compact).lower()
         bsa_masters = []
