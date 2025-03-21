@@ -422,38 +422,40 @@ class CFIDs():
                     elif new_file_lower.endswith('_conditions.txt'):                                        # Dynamic Animation Replacer
                         patchers.dar_patcher(basename, new_file, form_id_map)
                     elif new_file_lower.endswith('.json'):
-                        if 'animationreplacer' in new_file_lower and ('config.json' in new_file_lower or 'user.json' in new_file_lower): # Open Animation Replacer
+                        if '\\animationreplacer\\' in new_file_lower and ('config.json' in new_file_lower or 'user.json' in new_file_lower): # Open Animation Replacer
                             patchers.json_oar_patcher(basename, new_file, form_id_map)
                         elif 'mcm\\config' in new_file_lower and 'config.json' in new_file_lower:           # MCM helper
                             patchers.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
-                        elif 'storageutildata' in new_file_lower:                                           # PapyrusUtil's StorageDataUtil
+                        elif '\\storageutildata\\' in new_file_lower:                                           # PapyrusUtil's StorageDataUtil
                             patchers.json_sud_patcher(basename, new_file, form_id_map)
-                        elif 'dynamicstringdistributor' in new_file_lower:                                  # Dynamic String Distributor
+                        elif '\\dynamicstringdistributor\\' in new_file_lower:                                  # Dynamic String Distributor
                             patchers.json_dsd_patcher(basename, new_file, form_id_map)
-                        elif 'dkaf' in new_file_lower:                                                      # Dynamic Key Activation Framework NG
+                        elif '\\dkaf\\' in new_file_lower:                                                      # Dynamic Key Activation Framework NG
                             patchers.json_dkaf_patcher(basename, new_file, form_id_map)
-                        elif 'dynamicarmorvariants' in new_file_lower:                                      # Dynamic Armor Variants
+                        elif '\\dynamicarmorvariants\\' in new_file_lower:                                      # Dynamic Armor Variants
                             patchers.json_dav_patcher(basename, new_file, form_id_map)
                         elif '\\ied\\' in new_file_lower:                                                   # Immersive Equipment Display
                             patchers.json_ied_patcher(basename, new_file, form_id_map)
-                        elif 'lightplacer' in new_file_lower:                                               # Light Placer
+                        elif '\\lightplacer\\' in new_file_lower:                                               # Light Placer
                             patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
-                        elif 'creatures.d' in new_file_lower:                                               # Creature Framework
+                        elif '\\creatures.d\\' in new_file_lower:                                               # Creature Framework
                             patchers.json_cf_patcher(basename, new_file, form_id_map)
-                        elif 'inventoryinjector' in new_file_lower:                                         # Inventory Injector
+                        elif '\\inventoryinjector\\' in new_file_lower:                                         # Inventory Injector
                             patchers.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
-                        elif 'customskills' in new_file_lower:                                              # Custom Skills Framework
+                        elif '\\customskills\\' in new_file_lower:                                              # Custom Skills Framework
                             patchers.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
-                        elif 'skyrimunbound' in new_file_lower:                                             # Skyrim Unbound
+                        elif '\\skyrimunbound\\' in new_file_lower:                                             # Skyrim Unbound
                             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
-                        elif 'playerequipmentmanager' in new_file_lower:                                    # Player Equipment Manager
+                        elif '\\playerequipmentmanager\\' in new_file_lower:                                    # Player Equipment Manager
                             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
-                        elif 'mapmarker\\' in new_file_lower:                                               # CoMAP
+                        elif '\\mapmarker\\' in new_file_lower:                                               # CoMAP
                             patchers.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
                         elif new_file_lower.endswith('obody_presetdistributionconfig.json'):                # OBody NG
                             patchers.json_obody_patcher(basename, new_file, form_id_map)
                         elif os.path.basename(new_file_lower).startswith('shse.'):                          # Smart Harvest
                             patchers.json_shse_patcher(basename, new_file, form_id_map)
+                        elif 'plugins\\ostim\\' in new_file_lower:                                             # OStim
+                            patchers.json_ostim_patcher(basename, new_file, form_id_map)
                         elif os.path.basename(new_file_lower) == 'sexlabconfig.json':                       # SL MCM Generated config
                             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
                         elif 'sexlab\\expression_' in new_file_lower:                                       # SL expressions

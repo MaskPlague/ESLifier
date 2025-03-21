@@ -119,28 +119,13 @@ class patchers():
                         arrays.append(array)
                         offset = last_offset
                     offset +=1
-                #if len(arrays) > 0:
-                #    patched = False
                 for array in arrays:
                     if array['patch'] == True:
                         for int_offset, integer in array['integers']:
                             for form_ids in form_id_map:
                                 if integer == form_ids[4][::-1][1:]:
-                                    #print(f'successfuly patched at {int_offset}')
                                     data[int_offset:int_offset+3] = form_ids[5][::-1][1:]
-                                    #patched = True
                                     break
-                #if len(arrays) > 0 and not patched:
-                #    check_array = [form_ids[4][::-1][1:] for form_ids in form_id_map]
-                #    flag = False
-                #    for array in arrays:
-                #        for _, integer in array['integers']:
-                #            if integer in check_array:
-                #                print(f'pex file {new_file} has an array but no ids were patched, investigate if correct.')
-                #                flag = True
-                #                break
-                #        if flag == True:
-                #            break
             data = bytes(data)
             f.seek(0)
             f.truncate(0)
@@ -228,7 +213,6 @@ class patchers():
             f.truncate(0)
             f.write(''.join(lines))
             f.close()
-
     
     def ini_mu_patcher(basename, new_file, form_id_map):
         with open(new_file, 'r+', encoding='utf-8') as f:
@@ -852,6 +836,32 @@ class patchers():
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False)
+            f.close()
+
+    def json_ostim_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+', encoding='utf-8') as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = patchers.remove_trailing_commas_from_json(string)
+            json_dict = patchers.extract_values_and_keys(data)
+            plugin = False
+            for path, value in json_dict:
+                if type(path[-1]) is str and 'mod' == path[-1].lower() and value.lower() == basename:
+                    plugin = True
+                elif plugin and type(path[-1]) is str and 'formid' == path[-1].lower():
+                    form_id_int = int(value, 16)
+                    for form_ids in form_id_map:
+                        if form_id_int == int(form_ids[0], 16):
+                            data = patchers.change_json_element(data, path, "0x"+form_ids[2])
+                            break
+                else:
+                    plugin = False
+            f.seek(0)
+            f.truncate(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
     def remove_trailing_commas_from_json(json_string):
