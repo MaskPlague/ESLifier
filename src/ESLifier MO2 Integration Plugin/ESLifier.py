@@ -8,11 +8,11 @@ from .ESLifier_blacklist import blacklist_window
 try:
     from PyQt6.QtCore import QCoreApplication
     from PyQt6.QtGui import QIcon
-    from PyQt6.QtWidgets import QDialog, QMessageBox, QPushButton, QVBoxLayout
+    from PyQt6.QtWidgets import QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog
 except ImportError:
     from PyQt5.QtCore import QCoreApplication
     from PyQt5.QtGui import QIcon
-    from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton, QVBoxLayout
+    from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog
             
 class ESLifier(mobase.IPluginTool):
     def __init__(self):
@@ -90,7 +90,7 @@ class ESLifier(mobase.IPluginTool):
         error_message = QMessageBox(parent=self._parentWidget())
         error_message.setIcon(QMessageBox.Icon.Warning)
         error_message.setWindowTitle("ESLifier Folder Not Set")
-        error_message.setText('Please set the ESLifier Folder setting of the ESLifier plugin in MO2\'s plugin settings.')
+        error_message.setText('Please set the ESLifier Folder setting of the ESLifier plugin in MO2\'s plugin settings or via the button.')
         error_message.addButton(QMessageBox.StandardButton.Ok)
         error_message.show()
 
@@ -124,6 +124,13 @@ class ESLifier(mobase.IPluginTool):
         self.blacklist_remove.blacklist.create(True)
         self.blacklist_remove.show()
 
+    def set_eslifier_path(self):
+        dialog = QFileDialog()
+        dialog.setFileMode(QFileDialog.FileMode.Directory)
+        path = dialog.getExistingDirectory(None, "Select the folder that holds ESLifier.exe.", self._organizer.pluginSetting("ESLifier", "ESLifier Folder"))
+        if path:
+            self._organizer.setPluginSetting("ESLifier", "ESLifier Folder", path)
+
     def create(self, _):
         v_layout = QVBoxLayout()
         self.dialog.setLayout(v_layout)
@@ -132,6 +139,7 @@ class ESLifier(mobase.IPluginTool):
         v_layout.addWidget(self.button_maker("Start ESLifier", self.start_eslifier, True))
         v_layout.addWidget(self.button_maker("Add Plugins to Blacklist", self.add_to_blacklist))
         v_layout.addWidget(self.button_maker("Remove Plugins from Blacklist", self.remove_from_blacklist))
+        v_layout.addWidget(self.button_maker("Set ESLifier Path", self.set_eslifier_path))
         v_layout.addWidget(self.button_maker("Exit", None, True))
 
     def button_maker(self, name, function, hide=False):
