@@ -108,6 +108,7 @@ class main_window(QMainWindow):
         self.setCentralWidget(display_widget)
 
     def tab_changed(self, index):
+        self.update_settings()
         if index == 3:
             self.tabs.setCurrentIndex(self.previous_tab)
             self.help_selected()
