@@ -92,13 +92,14 @@ class main_window(QMainWindow):
         self.tabs.addTab(self.settings_widget, "  Settings  ")
         self.tabs.setTabToolTip(2, "This is the settings page. Certain settings will effect what plugins will display after scanning.")
         self.tabs.addTab(QWidget(), "  Help?  ")
-        self.tabs.currentChanged.connect(self.tab_changed)
-        self.tabs.setCurrentIndex(0)
-        self.previous_tab = 0
-
+        
         if self.settings_widget.settings['output_folder_path'] == '' or self.settings_widget.settings['skyrim_folder_path'] == '':
             self.tabs.setCurrentIndex(2)
             self.previous_tab = 2
+        else:
+            self.tabs.setCurrentIndex(0)
+            self.previous_tab = 0
+        self.tabs.currentChanged.connect(self.tab_changed)
         self.layout().setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         display_widget = QWidget()
@@ -123,6 +124,7 @@ class main_window(QMainWindow):
             (self.settings_widget.settings['mo2_mode'] and self.settings_widget.settings['mo2_modlist_txt_path'] == '')):
             self.tabs.setCurrentIndex(2)
             self.no_path_set()
+            self.tabs.blockSignals(False)
             return
         
         output_path = self.settings_widget.settings['output_folder_path']
