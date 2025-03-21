@@ -67,6 +67,7 @@ class scanner():
         return dict(sorted_bsa_items)
 
     def get_files_from_skyrim_folder(path, scan_esms, plugins_list):
+        path = os.path.normpath(path)
         path_level = len(path.split(os.sep))
         loop = 0
         if scan_esms:
@@ -76,7 +77,6 @@ class scanner():
         bsa_list = []
         temp_rel_paths = []
         for root, _, files in os.walk(path):
-            #if 'eslifier' not in root.lower():
             root_level = len(root.split(os.sep))
             scanner.file_count += len(files)
             if loop == 50: #prevent spamming stdout and slowing down the program
@@ -177,7 +177,7 @@ class scanner():
                     print(e)
                 print(f'\033[F\033[K')
         
-        mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
+        mod_folder = os.path.join(os.getcwd(), 'bsa_extracted')
 
         for root, dirs, files in os.walk('bsa_extracted/'):
             scanner.file_count += len(files)
@@ -221,7 +221,7 @@ class scanner():
                             # Get the relative file path
                             full_path = os.path.join(root, file)
                             relative_path = os.path.relpath(full_path, mods_folder)
-                            part = relative_path.split('\\')
+                            part = relative_path.split(os.sep)
                             cased = os.path.join(*part[1:])
                             relative_path = cased.lower()
                             if '.mohidden' in relative_path: #if the file or containing folder is mod organizer hidden, skip it
@@ -416,6 +416,7 @@ class scanner():
         return active_plugins
 
     def get_winning_files(mods_folder, load_order, enabled_mods, scan_esms, plugins_list):
+        mods_folder = os.path.normpath(mods_folder)
         mod_folder_level = len(mods_folder.split(os.sep))
         mod_files, plugin_names, cases = scanner.get_files_from_mods(mods_folder, enabled_mods, scan_esms, plugins_list)
         winning_files = []
@@ -480,7 +481,6 @@ class scanner():
     def get_file_masters():
         plugin_names = []
         for plugin in scanner.plugins: plugin_names.append(os.path.basename(plugin).lower())
-        #pattern = re.compile(r'(?:~|: *|\||=|,|-|")\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\)?)(?:\||,|"|$)')
         pattern = re.compile(r'(?:~|:\s*|\||=|,|-|")\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\)?)\s*(?:\||,|"|$)')
         pattern2 = re.compile(rb'\x00.([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\x00', flags=re.DOTALL)
         pattern3 = re.compile(r'\\facegeom\\([a-zA-Z0-9_\-\'\?\!\(\)\[\]\,\s]+\.es[pml])\\')
