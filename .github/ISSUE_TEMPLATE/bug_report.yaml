@@ -56,8 +56,6 @@ body:
         If you want you can include the entire ESLifier_Data folder zipped.
       placeholder: |
         ESLifier.log 
-        
-        ESLifier_Data.zip
     validations:
       required: false
     
