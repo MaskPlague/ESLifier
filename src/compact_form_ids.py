@@ -196,7 +196,7 @@ class CFIDs():
         if os.path.basename(compacted_file) in files_to_patch:
             to_patch, to_rename = CFIDs.sort_files_to_patch_or_rename(compacted_file, files_to_patch[os.path.basename(compacted_file)])
             form_id_map = CFIDs.get_form_id_map(compacted_file)
-            if len(to_rename) > 0:
+            if len(to_patch) > 0:
                 print(f"-  Patching {len(to_patch)} New Dependent Files...")
                 if len(to_patch) > 20:
                     print('\n')
