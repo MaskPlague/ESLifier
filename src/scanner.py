@@ -6,6 +6,7 @@ import json
 import subprocess
 import mmap
 import psutil
+import struct
 
 class scanner():
     def __init__(self, path, mo2_mode, modlist_txt_path, scan_esms, plugins_txt_path, bsab):
@@ -24,7 +25,6 @@ class scanner():
         scanner.max_threads_by_ram = int(usable_ram / thread_memory_usage)
 
         scanner.extracted = scanner.get_from_file('ESLifier_Data/extracted_bsa.json')
-        #print('-  Gathering Files...\n\n')
         print('\n')
         plugins_list = scanner.get_plugins_list(plugins_txt_path)
         if mo2_mode:
@@ -710,14 +710,14 @@ class scanner():
             elif reader_type == 'pex':
                 with open(file, 'rb') as f:
                     data = f.read()
-                    offset = 18 + int.from_bytes(data[16:18])
-                    offset += 2 + int.from_bytes(data[offset:offset+2])
-                    offset += 2 + int.from_bytes(data[offset:offset+2])
-                    string_count = int.from_bytes(data[offset:offset+2])
+                    offset = 18 + struct.unpack('>H', data[16:18])[0]
+                    offset += 2 + struct.unpack('>H', data[offset:offset+2])[0]
+                    offset += 2 + struct.unpack('>H', data[offset:offset+2])[0]
+                    string_count = struct.unpack('>H', data[offset:offset+2])[0]
                     offset += 2
                     strings = []
                     for _ in range(string_count):
-                        string_length = int.from_bytes(data[offset:offset+2])
+                        string_length = struct.unpack('>H', data[offset:offset+2])[0]
                         strings.append(data[offset+2:offset+2+string_length].lower().decode())
                         offset += 2 + string_length
                     f.close()
