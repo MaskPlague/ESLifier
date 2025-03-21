@@ -147,16 +147,22 @@ class patch_new(QWidget):
                 dependencies_list = dependencies[master.lower()]
             
             for file in file_masters_list:
-                parts = os.path.relpath(file, self.skyrim_folder_path).split('\\')
-                rel_path = os.path.join(*parts[1:])
+                if self.mo2_mode:
+                    parts = os.path.relpath(file, self.skyrim_folder_path).split(os.sep)
+                    rel_path = os.path.join(*parts[1:])
+                else:
+                    rel_path = os.path.relpath(file, self.skyrim_folder_path)
                 if rel_path.lower() not in patched_files: 
                     if master not in new_files:
                         new_files[master] = []
                     new_files[master].append(file)
 
             for file in dependencies_list:
-                parts = os.path.relpath(file, self.skyrim_folder_path).split('\\')
-                rel_path = os.path.join(*parts[1:])
+                if self.mo2_mode:
+                    parts = os.path.relpath(file, self.skyrim_folder_path).split(os.sep)
+                    rel_path = os.path.join(*parts[1:])
+                else:
+                    rel_path = os.path.relpath(file, self.skyrim_folder_path)
                 if rel_path.lower() not in patched_files: 
                     if master not in new_dependencies:
                         new_dependencies[master] = []
