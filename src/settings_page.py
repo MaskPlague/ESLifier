@@ -55,7 +55,8 @@ class settings(QWidget):
         )
         self.bsab_path_widget, self.bsab_path = self.create_path_widget(
             "bsab.exe Path",
-            "Set this to BSA Browser's CLI: bsab.exe",
+            "Set this to BSA Browser's CLI: bsab.exe\n"+
+            "Do NOT rename 'BSA Browser.exe' to bsab.exe",
             'C:/Path/To/BSA Browser\'s/bsab.exe',
             self.bsab_path_clicked
         )
