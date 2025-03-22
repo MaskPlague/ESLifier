@@ -5,13 +5,12 @@ import zlib
 import struct
 
 class qualification_checker():
-    def scan(path, update_header, show_cells, scan_esms):
+    def scan(path, update_header, scan_esms):
         qualification_checker.lock = threading.Lock()
         all_plugins = qualification_checker.get_from_file("ESLifier_Data/plugin_list.json")
         plugins = [plugin for plugin in all_plugins if not plugin.lower().endswith('.esl')]
         qualification_checker.flag_dict = {}
         qualification_checker.max_record_number = 4096
-        qualification_checker.show_cells = show_cells
         qualification_checker.scan_esms = scan_esms
         if update_header:
             qualification_checker.num_max_records = 4096
@@ -37,7 +36,6 @@ class qualification_checker():
             
         for thread in threads:
             thread.join()
-
         return qualification_checker.flag_dict
 
     def plugin_scanner(plugins):
@@ -95,12 +93,12 @@ class qualification_checker():
             if record_type not in (b'GRUP', b'TES4') and form[15] >= master_count:
                 count += 1
                 if count > num_max_records:
-                    return False, False, False, False
+                    return False, False, False, False, False
                 if int.from_bytes(form[12:15][::-1]) > qualification_checker.max_record_number:
                     need_compacting = True
                 if record_type == b'CELL':
-                    if not qualification_checker.show_cells:
-                        return False, False, True, False, False
+                    #if not qualification_checker.show_cells:
+                    #    return False, False, True, False, False
                     new_cell = True
                     if not interior_cell_flag:
                         flag_byte = form[10]
@@ -118,9 +116,9 @@ class qualification_checker():
                                 flags = form_to_check[offset+6]
                                 interior_cell_flag = (flags & 0x01) != 0
                             offset += field_size + 6
-                if record_type == 'WRLD':
-                    if not qualification_checker.show_cells:
-                        return False, False, False, False, True
+                if record_type == b'WRLD':
+                    #if qualification_checker.filter_worldspaces:
+                    #    return False, False, False, False, True
                     new_wrld = True
                     
             if record_type == b'CELL' and form[15] >= master_count and str(form[12:15].hex()) not in cell_form_ids:
