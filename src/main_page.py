@@ -27,7 +27,6 @@ class main(QWidget):
         self.mo2_mode = False
         self.update_header = True
         self.scan_esms = False
-        self.show_cells = True
         self.eslify_dictionary = {}
         self.dependency_dictionary = {}
         for window in QApplication.allWidgets():
@@ -133,7 +132,7 @@ class main(QWidget):
             items = self.list_eslify.findItems(self.filter_eslify.text(), Qt.MatchFlag.MatchContains)
             if len(items) > 0:
                 for i in range(self.list_eslify.rowCount()):
-                    self.list_eslify.setRowHidden(i, False if (self.list_eslify.item(i,0) in items and not self.list_eslify.item(i, 3)) else True)
+                    self.list_eslify.setRowHidden(i, False if (self.list_eslify.item(i,self.list_eslify.MOD_COL) in items and not self.list_eslify.item(i, self.list_eslify.HIDER_COL)) else True)
         else:
             for i in range(self.list_eslify.rowCount()):
                 self.list_eslify.setRowHidden(i, False)
@@ -143,7 +142,7 @@ class main(QWidget):
             items = self.list_compact.findItems(self.filter_compact.text(), Qt.MatchFlag.MatchContains)
             if len(items) > 0:
                 for i in range(self.list_compact.rowCount()):
-                    self.list_compact.setRowHidden(i, False if (self.list_compact.item(i,0) in items and not self.list_compact.item(i, 5)) else True)
+                    self.list_compact.setRowHidden(i, False if (self.list_compact.item(i, self.list_compact.MOD_COL) in items and not self.list_compact.item(i, self.list_compact.HIDER_COL)) else True)
         else:
             for i in range(self.list_compact.rowCount()):
                 self.list_compact.setRowHidden(i, False)
@@ -153,8 +152,8 @@ class main(QWidget):
         checked = []
         self.list_compact.clearSelection()
         for row in range(self.list_compact.rowCount()):
-            if self.list_compact.item(row,0).checkState() == Qt.CheckState.Checked and not self.list_compact.item(row, 5):
-                checked.append(self.list_compact.item(row,0).toolTip())
+            if self.list_compact.item(row, self.list_compact.MOD_COL).checkState() == Qt.CheckState.Checked and not self.list_compact.item(row, self.list_compact.HIDER_COL):
+                checked.append(self.list_compact.item(row, self.list_compact.MOD_COL).toolTip())
         if checked != []:
             file_masters = main.get_from_file('ESLifier_Data/file_masters.json')
             self.confirm = QMessageBox()
@@ -208,9 +207,9 @@ class main(QWidget):
             self.confirm.hide()
             self.confirm.deleteLater()
             for row in range(self.list_compact.rowCount()):
-                if self.list_compact.item(row,0).checkState() == Qt.CheckState.Checked:
-                    self.list_compact.item(row,0).setCheckState(Qt.CheckState.PartiallyChecked)
-                    self.list_compact.item(row,0).setFlags(self.list_compact.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
+                if self.list_compact.item(row,self.list_compact.MOD_COL).checkState() == Qt.CheckState.Checked:
+                    self.list_compact.item(row,self.list_compact.MOD_COL).setCheckState(Qt.CheckState.PartiallyChecked)
+                    self.list_compact.item(row,self.list_compact.MOD_COL).setFlags(self.list_compact.item(row,self.list_compact.MOD_COL).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
             self.log_stream.show()
             self.thread_new = QThread()
             self.worker = Worker2(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, self.update_header, self.mo2_mode, self.bsab)
@@ -227,8 +226,8 @@ class main(QWidget):
         checked = []
         self.list_eslify.clearSelection()
         for row in range(self.list_eslify.rowCount()):
-            if self.list_eslify.item(row,0).checkState() == Qt.CheckState.Checked and not self.list_eslify.item(row, 3):
-                checked.append(self.list_eslify.item(row,0).toolTip())
+            if self.list_eslify.item(row, self.list_eslify.MOD_COL).checkState() == Qt.CheckState.Checked and not self.list_eslify.item(row, self.list_eslify.HIDER_COL):
+                checked.append(self.list_eslify.item(row, self.list_eslify.MOD_COL).toolTip())
         if checked != []:
             self.confirm = QMessageBox()
             self.confirm.setIcon(QMessageBox.Icon.Information)
@@ -259,9 +258,9 @@ class main(QWidget):
         self.confirm.hide()
         self.confirm.deleteLater()
         for row in range(self.list_eslify.rowCount()):
-            if self.list_eslify.item(row,0).checkState() == Qt.CheckState.Checked:
-                self.list_eslify.item(row,0).setCheckState(Qt.CheckState.PartiallyChecked)
-                self.list_eslify.item(row,0).setFlags(self.list_eslify.item(row,0).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
+            if self.list_eslify.item(row, self.list_eslify.MOD_COL).checkState() == Qt.CheckState.Checked:
+                self.list_eslify.item(row, self.list_eslify.MOD_COL).setCheckState(Qt.CheckState.PartiallyChecked)
+                self.list_eslify.item(row, self.list_eslify.MOD_COL).setFlags(self.list_eslify.item(row, self.list_eslify.MOD_COL).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
         self.log_stream.show()
         for file in checked:
             CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path, self.mo2_mode)
@@ -283,13 +282,13 @@ class main(QWidget):
         message.show()
         if sender == 'compact':
             for mod in checked_list:
-                self.list_compact.mod_list.remove(mod)
+                self.list_compact.flag_dict.pop(mod)
             self.list_compact.create()
         elif sender == 'eslify':
             for mod in checked_list:
-                self.list_eslify.mod_list.remove(mod)
+                self.list_eslify.flag_dict.pop(mod)
             self.list_eslify.create()
-        self.eslifier.update_shown()
+        self.eslifier.update_settings()
         self.setEnabled(True)
         
     def scan(self):
@@ -297,7 +296,7 @@ class main(QWidget):
         def run_scan():
             self.log_stream.show()
             self.thread_new = QThread()
-            self.worker = Worker(self.skyrim_folder_path, self.update_header, self.scan_esms, self.show_cells, self.mo2_mode,
+            self.worker = Worker(self.skyrim_folder_path, self.update_header, self.scan_esms, self.mo2_mode,
                                   self.modlist_txt_path, self.plugins_txt_path, self.bsab)
             self.worker.moveToThread(self.thread_new)
             self.thread_new.started.connect(self.worker.scan_run)
@@ -326,7 +325,7 @@ class main(QWidget):
         self.list_compact.flag_dict = {p: f for p, f in flag_dict.items() if 'need_compacting' in f}
         self.dependency_dictionary = dependency_dictionary
         print('Populating Tables')
-        self.eslifier.update_shown()
+        self.eslifier.update_settings()
         self.button_scan.setEnabled(True)
         print('Done Scanning')
         print('CLEAR')
@@ -342,12 +341,11 @@ class main(QWidget):
 
 class Worker(QObject):
     finished_signal = pyqtSignal(dict, dict)
-    def __init__(self, path, update, scan_esms, cell, mo2_mode, modlist_txt_path, plugins_txt_path, bsab):
+    def __init__(self, path, update, scan_esms, mo2_mode, modlist_txt_path, plugins_txt_path, bsab):
         super().__init__()
         self.skyrim_folder_path = path
         self.update_header = update
         self.scan_esms = scan_esms
-        self.show_cells = cell
         self.mo2_mode = mo2_mode
         self.modlist_txt_path = modlist_txt_path
         self.plugins_txt_path = plugins_txt_path
@@ -359,7 +357,7 @@ class Worker(QObject):
         print('\nGettings Dependencies')
         dependency_dictionary = dependecy_getter.scan(self.skyrim_folder_path)
         print('\nScanning Plugins')
-        flag_dict = qualification_checker.scan(self.skyrim_folder_path, self.update_header, self.show_cells, self.scan_esms)
+        flag_dict = qualification_checker.scan(self.skyrim_folder_path, self.update_header,self.scan_esms)
         print('Checking if New CELLs are Changed')
         plugins_with_cells = [plugin for plugin, flags in flag_dict.items() if 'new_cell' in flags]
         cell_scanner.scan(plugins_with_cells)
