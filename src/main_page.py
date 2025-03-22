@@ -74,7 +74,7 @@ class main(QWidget):
         self.filter_eslify.setMaximumWidth(150)
         self.filter_eslify.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.filter_eslify.setClearButtonEnabled(True)
-        self.filter_eslify.textChanged.connect(self.searchE)
+        self.filter_eslify.textChanged.connect(self.search_eslify)
 
         self.filter_compact = QLineEdit()
         self.filter_compact.setPlaceholderText("Filter ")
@@ -83,7 +83,7 @@ class main(QWidget):
         self.filter_compact.setMaximumWidth(150)
         self.filter_compact.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.filter_compact.setClearButtonEnabled(True)
-        self.filter_compact.textChanged.connect(self.searchC)
+        self.filter_compact.textChanged.connect(self.search_compact)
 
         self.main_layout = QVBoxLayout()
         self.settings_layout = QVBoxLayout()
@@ -127,7 +127,7 @@ class main(QWidget):
 
         self.setLayout(self.main_layout)
         
-    def searchE(self):
+    def search_eslify(self):
         if len(self.filter_eslify.text()) > 0:
             items = self.list_eslify.findItems(self.filter_eslify.text(), Qt.MatchFlag.MatchContains)
             if len(items) > 0:
@@ -135,9 +135,9 @@ class main(QWidget):
                     self.list_eslify.setRowHidden(i, False if (self.list_eslify.item(i,self.list_eslify.MOD_COL) in items and not self.list_eslify.item(i, self.list_eslify.HIDER_COL)) else True)
         else:
             for i in range(self.list_eslify.rowCount()):
-                self.list_eslify.setRowHidden(i, False)
+                self.list_eslify.setRowHidden(i, True if self.list_eslify.item(i, self.list_eslify.HIDER_COL) else False)
 
-    def searchC(self):
+    def search_compact(self):
         if len(self.filter_compact.text()) > 0:
             items = self.list_compact.findItems(self.filter_compact.text(), Qt.MatchFlag.MatchContains)
             if len(items) > 0:
@@ -145,7 +145,7 @@ class main(QWidget):
                     self.list_compact.setRowHidden(i, False if (self.list_compact.item(i, self.list_compact.MOD_COL) in items and not self.list_compact.item(i, self.list_compact.HIDER_COL)) else True)
         else:
             for i in range(self.list_compact.rowCount()):
-                self.list_compact.setRowHidden(i, False)
+                self.list_compact.setRowHidden(i, True if self.list_compact.item(i, self.list_compact.HIDER_COL) else False)
 
     def compact_selected_clicked(self):
         self.setEnabled(False)
