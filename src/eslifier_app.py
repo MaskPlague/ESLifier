@@ -214,61 +214,34 @@ class main_window(QMainWindow):
 
     def update_settings(self):
         self.settings_widget.update_settings()
-        self.main_widget.skyrim_folder_path = self.settings_widget.settings['skyrim_folder_path']
-        self.main_widget.output_folder_path = self.settings_widget.settings['output_folder_path']
-        self.main_widget.mo2_mode = self.settings_widget.settings['mo2_mode']
-        self.main_widget.modlist_txt_path = self.settings_widget.settings['mo2_modlist_txt_path']
-        self.main_widget.plugins_txt_path = self.settings_widget.settings['plugins_txt_path']
-        self.main_widget.bsab = self.settings_widget.settings['bsab_path']
-        self.main_widget.update_header = self.settings_widget.settings['update_header']
-        self.main_widget.scan_esms = self.settings_widget.settings['scan_esms']
-        self.main_widget.show_cells = self.settings_widget.settings['show_cells']
-        self.main_widget.list_compact.filter_changed_cells = self.settings_widget.settings['enable_cell_changed_filter']
-        self.main_widget.list_compact.filter_interior_cells = self.settings_widget.settings['enable_interior_cell_filter']
-        self.main_widget.list_eslify.filter_changed_cells = self.settings_widget.settings['enable_cell_changed_filter']
-        self.main_widget.list_eslify.filter_interior_cells = self.settings_widget.settings['enable_interior_cell_filter']
-        self.patch_new_widget.skyrim_folder_path = self.settings_widget.settings['skyrim_folder_path']
-        self.patch_new_widget.output_folder_path = self.settings_widget.settings['output_folder_path']
-        self.patch_new_widget.plugins_txt_path = self.settings_widget.settings['plugins_txt_path']
-        self.patch_new_widget.bsab = self.settings_widget.settings['bsab_path']
-        self.patch_new_widget.modlist_txt_path = self.settings_widget.settings['mo2_modlist_txt_path']
-        self.patch_new_widget.mo2_mode = self.settings_widget.settings['mo2_mode']
-        self.patch_new_widget.update_header = self.settings_widget.settings['update_header']
-        self.patch_new_widget.scan_esms = self.settings_widget.settings['scan_esms']
-        self.update_shown()
-
-    def update_shown(self):
+        self.main_widget.skyrim_folder_path =                   self.settings_widget.settings['skyrim_folder_path']
+        self.main_widget.output_folder_path =                   self.settings_widget.settings['output_folder_path']
+        self.main_widget.mo2_mode =                             self.settings_widget.settings['mo2_mode']
+        self.main_widget.modlist_txt_path =                     self.settings_widget.settings['mo2_modlist_txt_path']
+        self.main_widget.plugins_txt_path =                     self.settings_widget.settings['plugins_txt_path']
+        self.main_widget.bsab =                                 self.settings_widget.settings['bsab_path']
+        self.main_widget.update_header =                        self.settings_widget.settings['update_header']
+        self.main_widget.scan_esms =                            self.settings_widget.settings['scan_esms']
+        self.main_widget.list_compact.filter_changed_cells =    self.settings_widget.settings['enable_cell_changed_filter']
+        self.main_widget.list_compact.filter_interior_cells =   self.settings_widget.settings['enable_interior_cell_filter']
+        self.main_widget.list_compact.show_cells =              self.settings_widget.settings['show_cells']
+        self.main_widget.list_compact.show_dlls =               self.settings_widget.settings['show_dlls']
+        self.main_widget.list_compact.filter_worldspaces =      self.settings_widget.settings['filter_worldspaces']
+        self.main_widget.list_eslify.filter_changed_cells =     self.settings_widget.settings['enable_cell_changed_filter']
+        self.main_widget.list_eslify.filter_interior_cells =    self.settings_widget.settings['enable_interior_cell_filter']
+        self.main_widget.list_eslify.show_cells =               self.settings_widget.settings['show_cells']
+        self.main_widget.list_eslify.filter_worldspaces =       self.settings_widget.settings['filter_worldspaces']
+        self.patch_new_widget.skyrim_folder_path =              self.settings_widget.settings['skyrim_folder_path']
+        self.patch_new_widget.output_folder_path =              self.settings_widget.settings['output_folder_path']
+        self.patch_new_widget.plugins_txt_path =                self.settings_widget.settings['plugins_txt_path']
+        self.patch_new_widget.bsab =                            self.settings_widget.settings['bsab_path']
+        self.patch_new_widget.modlist_txt_path =                self.settings_widget.settings['mo2_modlist_txt_path']
+        self.patch_new_widget.mo2_mode =                        self.settings_widget.settings['mo2_mode']
+        self.patch_new_widget.update_header =                   self.settings_widget.settings['update_header']
+        self.patch_new_widget.scan_esms =                       self.settings_widget.settings['scan_esms']
         self.main_widget.list_compact.create()
         self.main_widget.list_eslify.create()
-        show_cells = self.settings_widget.settings['show_cells']
-        show_dlls = self.settings_widget.settings['show_dlls']
-        self.main_widget.list_compact.setColumnHidden(1, not show_cells)
-        self.main_widget.list_compact.setColumnHidden(2, not show_dlls)
-        self.main_widget.list_eslify.setColumnHidden(1, not show_cells)
-        for i in range(self.main_widget.list_compact.rowCount()):
-            self.main_widget.list_compact.setRowHidden(i, False)
-            if self.main_widget.list_compact.item(i,5):
-                self.main_widget.list_compact.takeItem(i,5)
-
-            if self.main_widget.list_compact.item(i,1) and not show_cells:
-                self.main_widget.list_compact.setRowHidden(i, True)
-            if self.main_widget.list_compact.item(i,2) and not show_dlls:
-                self.main_widget.list_compact.setRowHidden(i, True)
-
-            if self.main_widget.list_compact.isRowHidden(i):
-                self.main_widget.list_compact.setItem(i, 5, QTableWidgetItem('Hidden'))
-                
-
-        for i in range(self.main_widget.list_eslify.rowCount()):
-            if self.main_widget.list_eslify.item(i,3):
-                self.main_widget.list_eslify.takeItem(i,3)
-
-            if self.main_widget.list_eslify.item(i,1):
-                self.main_widget.list_eslify.setRowHidden(i, not show_cells)
-            
-            if self.main_widget.list_eslify.isRowHidden(i):
-                self.main_widget.list_eslify.setItem(i, 3, QTableWidgetItem('Hidden'))
-
+        
     def closeEvent(self, a0):
         sys.stdout.flush()
         sys.stderr.flush()
