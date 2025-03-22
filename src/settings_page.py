@@ -91,21 +91,25 @@ class settings(QWidget):
         )
         self.show_plugins_with_cells_widget, self.show_plugins_with_cells_toggle = self.create_toggle_widget(
             "Show plugins with new CELL records",
-            "Show or hide plugins with new CELL records.\n"+
-            "Enabling this setting will require a re-scan if you scanned with it off.",
+            "Show or hide plugins with new CELL records.",
             "show_cells"
         )
         self.enable_cell_changed_filter_widget, self.enable_cell_changed_filter_toggle = self.create_toggle_widget(
             "Hide plugins with new CELL records that are overwriten",
-            "Hide plugins with new CELL records that have been changed by a dependent plugin.\n"+
-            "Disabling this filter will require a re-scan.",
+            "Hide plugins with new CELL records that have been changed by a dependent plugin.",
             "enable_cell_changed_filter"
         )
         self.enable_interior_cell_filter_widget, self.enable_interior_cell_filter_toggle = self.create_toggle_widget(
             "Hide plugins with new interior CELL records",
             "Hide plugins with new interior CELL records as they can have issues when reloading\n"+
-            "a save without restarting the game. Disabling this filter will require a re-scan.",
+            "a save without restarting the game.",
             "enable_interior_cell_filter"
+        )
+        self.enable_worldspaces_filter_widget, self.enable_worldspaces_filter_toggle = self.create_toggle_widget(
+            "Hide plugins with new WRLD (worldspace) records",
+            "Hide plugins with new worldspaces records as they can have the landscape disappear\n"+
+            "(no ground) when flagged as ESL.",
+            "filter_worldspaces"
         )
         self.show_plugins_possibly_refd_by_dlls_widget, self.show_plugins_possibly_refd_by_dlls_toggle = self.create_toggle_widget(
             "Show plugins that are in SKSE dlls",
@@ -159,13 +163,14 @@ class settings(QWidget):
         settings_layout.addWidget(self.skyrim_folder_path_widget)
         settings_layout.addWidget(self.output_folder_path_widget)
         settings_layout.addWidget(self.plugins_txt_path_widget)
-        settings_layout.addWidget(self.bsab_path_widget)
         settings_layout.addWidget(self.mo2_modlist_txt_path_widget)
+        settings_layout.addWidget(self.bsab_path_widget)
         settings_layout.addWidget(self.update_header_widget)
         settings_layout.addWidget(self.scan_esms_widget)
         settings_layout.addWidget(self.show_plugins_with_cells_widget)
         settings_layout.addWidget(self.enable_cell_changed_filter_widget)
         settings_layout.addWidget(self.enable_interior_cell_filter_widget)
+        settings_layout.addWidget(self.enable_worldspaces_filter_widget)
         settings_layout.addWidget(self.show_plugins_possibly_refd_by_dlls_widget)
         settings_layout.addWidget(self.reset_extracted_bsa_list_widget)
         settings_layout.addWidget(self.edit_blacklist_widget)
@@ -194,10 +199,13 @@ class settings(QWidget):
         self.update_settings()
     
     def skyrim_folder_path_clicked(self):
-        self.select_file_path(self.file_dialog, "Select the Skyrim Special Edition folder", 'skyrim_folder_path', self.skyrim_folder_path, None)
+        if not self.mo2_mode_toggle.isChecked():
+            self.select_file_path(self.file_dialog, "Select the Skyrim Special Edition Data folder", 'skyrim_folder_path', self.skyrim_folder_path, None)
+        else:
+            self.select_file_path(self.file_dialog, "Select your MO2 mods folder", 'skyrim_folder_path', self.skyrim_folder_path, None)
 
     def output_folder_path_clicked(self):
-        self.select_file_path(self.file_dialog, "Select where you want the ouput folder", 'output_folder_path', self.output_folder_path, None)
+        self.select_file_path(self.file_dialog, "Select where you want the output folder", 'output_folder_path', self.output_folder_path, None)
 
     def mo2_modlist_txt_path_clicked(self):
         self.select_file_path(self.file_dialog_2, "Select your MO2 profile\'s modlist.txt", 'mo2_modlist_txt_path', self.mo2_modlist_txt_path, "Modlist (modlist.txt)")
@@ -399,46 +407,25 @@ class settings(QWidget):
             self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(False)
             self.enable_cell_changed_filter_toggle.setChecked(True)
             self.enable_interior_cell_filter_toggle.setChecked(False)
+            self.enable_worldspaces_filter_toggle.setChecked(True)
             self.update_settings()
         confirm.accepted.connect(acccepted)
         confirm.show()
         
     def set_init_widget_values(self):
-        if 'skyrim_folder_path' in self.settings: self.skyrim_folder_path.setText(self.settings['skyrim_folder_path'])
-        else: self.settings['skyrim_folder_path'] = ''
-
-        if 'output_folder_path' in self.settings: self.output_folder_path.setText(self.settings['output_folder_path'])
-        else: self.settings['output_folder_path'] = ''
-
-        if 'plugins_txt_path' in self.settings: self.plugins_txt_path.setText(self.settings['plugins_txt_path'])
-        else: self.settings['plugins_txt_path'] = ''
-
-        if 'bsab_path' in self.settings: self.bsab_path.setText(self.settings['bsab_path'])
-        else: self.settings['bsab_path'] = ''
-
-        if 'mo2_modlist_txt_path' in self.settings: self.mo2_modlist_txt_path.setText(self.settings['mo2_modlist_txt_path'])
-        else: self.settings['mo2_modlist_txt_path'] = ''
-
-        if 'mo2_mode' in self.settings: self.mo2_mode_toggle.setChecked(self.settings['mo2_mode'])
-        else: self.mo2_mode_toggle.setChecked(False)
-
-        if 'update_header' in self.settings: self.update_header_toggle.setChecked(self.settings['update_header'])
-        else: self.update_header_toggle.setChecked(True)
-
-        if 'scan_esms' in self.settings: self.scan_esms_toggle.setChecked(self.settings['scan_esms'])
-        else: self.scan_esms_toggle.setChecked(False)
-
-        if 'show_cells' in self.settings: self.show_plugins_with_cells_toggle.setChecked(self.settings['show_cells'])
-        else: self.show_plugins_with_cells_toggle.setChecked(True)
-
-        if 'enable_cell_changed_filter' in self.settings: self.enable_cell_changed_filter_toggle.setChecked(self.settings['enable_cell_changed_filter'])
-        else: self.enable_cell_changed_filter_toggle.setChecked(True)
-
-        if 'enable_interior_cell_filter' in self.settings: self.enable_interior_cell_filter_toggle.setChecked(self.settings['enable_interior_cell_filter'])
-        else: self.enable_interior_cell_filter_toggle.setChecked(False)
-
-        if 'show_dlls' in self.settings: self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(self.settings['show_dlls'])
-        else: self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(False)
+        self.skyrim_folder_path.setText(self.settings.get('skyrim_folder_path', ''))
+        self.output_folder_path.setText(self.settings.get('output_folder_path', ''))
+        self.plugins_txt_path.setText(self.settings.get('plugins_txt_path', ''))
+        self.bsab_path.setText(self.settings.get('bsab_path', ''))
+        self.mo2_modlist_txt_path.setText(self.settings.get('mo2_modlist_txt_path' ,''))
+        self.mo2_mode_toggle.setChecked(self.settings.get('mo2_mode', False))
+        self.update_header_toggle.setChecked(self.settings.get('update_header', True))
+        self.scan_esms_toggle.setChecked(self.settings.get('scan_esms', False))
+        self.show_plugins_with_cells_toggle.setChecked(self.settings.get('show_cells', True))
+        self.enable_cell_changed_filter_toggle.setChecked(self.settings.get('enable_cell_changed_filter', True))
+        self.enable_interior_cell_filter_toggle.setChecked(self.settings.get('enable_interior_cell_filter', False))
+        self.enable_worldspaces_filter_toggle.setChecked(self.settings.get('filter_worldspaces', True))
+        self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(self.settings.get('show_dlls', False))
         
 
     def save_settings_to_file(self):
@@ -460,6 +447,7 @@ class settings(QWidget):
         self.settings['show_cells'] = self.show_plugins_with_cells_toggle.isChecked()
         self.settings['enable_cell_changed_filter'] = self.enable_cell_changed_filter_toggle.isChecked()
         self.settings['enable_interior_cell_filter'] = self.enable_interior_cell_filter_toggle.isChecked()
+        self.settings['filter_worldspaces'] = self.enable_worldspaces_filter_toggle.isChecked()
         self.settings['show_dlls'] = self.show_plugins_possibly_refd_by_dlls_toggle.isChecked()
 
         self.mo2_mode_clicked()
