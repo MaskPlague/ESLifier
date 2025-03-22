@@ -44,6 +44,7 @@ class qualification_checker():
         flag_dict = {}
         for plugin in plugins:
             if not qualification_checker.already_esl(plugin):
+                esl_allowed, need_compacting, new_cell, interior_cell, new_wrld = qualification_checker.file_reader(plugin)
                 if esl_allowed:
                     flag_dict[plugin] = []
                     if need_compacting:
@@ -52,6 +53,8 @@ class qualification_checker():
                         flag_dict[plugin].append('new_cell')
                         if interior_cell:
                             flag_dict[plugin].append('new_interior_cell')
+                    if new_wrld:
+                        flag_dict[plugin].append('new_wrld')
         with qualification_checker.lock:
             for key, value in flag_dict.items():
                 if key not in qualification_checker.flag_dict:
@@ -76,6 +79,7 @@ class qualification_checker():
         new_cell = False
         interior_cell_flag = False
         need_compacting = False
+        new_wrld = False
         with open(file, 'rb') as f:
             data = f.read()
         data_list = qualification_checker.create_data_list(data)
@@ -96,7 +100,7 @@ class qualification_checker():
                     need_compacting = True
                 if record_type == b'CELL':
                     if not qualification_checker.show_cells:
-                        return False, False, True, False
+                        return False, False, True, False, False
                     new_cell = True
                     if not interior_cell_flag:
                         flag_byte = form[10]
@@ -114,6 +118,10 @@ class qualification_checker():
                                 flags = form_to_check[offset+6]
                                 interior_cell_flag = (flags & 0x01) != 0
                             offset += field_size + 6
+                if record_type == 'WRLD':
+                    if not qualification_checker.show_cells:
+                        return False, False, False, False, True
+                    new_wrld = True
                     
             if record_type == b'CELL' and form[15] >= master_count and str(form[12:15].hex()) not in cell_form_ids:
                 cell_form_ids.append(str(form[12:15].hex()))
@@ -128,7 +136,7 @@ class qualification_checker():
                 for form_id in cell_form_ids:
                     f.write(form_id + '\n')
 
-        return True, need_compacting, new_cell, interior_cell_flag
+        return True, need_compacting, new_cell, interior_cell_flag, new_wrld
 
     def already_esl(file):
         with open(file, 'rb') as f:
