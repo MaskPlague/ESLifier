@@ -19,6 +19,7 @@ class list_compactable(QTableWidget):
                                                 '"New  CELL" indicates the presence of a new CELL record.\n'+
                                                 '"!New Interior CELL!" indicates that a new CELL is an interior.\n'+
                                                 '"!!New CELL Changed!!" indicates that a new CELL record is changed by a dependent plugin.')
+        #TODO: Add wrld space flags to both lists
         self.horizontalHeaderItem(2).setToolTip('This is the skse DLL flag. If a dll has the plugin name in it then it may\n'+
                                                 'have a LookUpForm() call that may break after compacting a flagged plugin.')
         self.horizontalHeaderItem(3).setToolTip('If a plugin has other plugins with it as a master, they will appear when\n'+
@@ -36,12 +37,10 @@ class list_compactable(QTableWidget):
         self.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignLeft)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenu)
-        self.mod_list = []
-        self.has_new_cells = []
-        self.has_interior_cells = []
+        self.flag_dict = {}
         self.filter_changed_cells = True
         self.filter_interior_cells = False
-
+        self.filter_worldspaces = True
         self.blacklist = blacklist()
 
         self.setStyleSheet("""
@@ -84,17 +83,17 @@ class list_compactable(QTableWidget):
             blacklist.extend(self.cell_changed)
 
         if self.filter_interior_cells:
-            blacklist.extend(self.has_interior_cells)
+            blacklist.extend([os.path.basename(plugin) for plugin, flags in self.flag_dict.items() if 'new_interior_cell' in flags])
 
         to_remove = []
-        for mod in self.mod_list:
+        for mod in self.flag_dict:
             if os.path.basename(mod) in blacklist:
                 to_remove.append(mod)
-                
+        
         for mod in to_remove:
-            self.mod_list.remove(mod)
+            self.flag_dict.pop(mod)
 
-        self.setRowCount(len(self.mod_list))
+        self.setRowCount(len(self.flag_dict))
         self.button_group = QButtonGroup()
 
         def display_dependencies(mod_key):
@@ -133,8 +132,8 @@ class list_compactable(QTableWidget):
                 self.setCellWidget(index, 4, list_widget_dependency_list)
             self.resizeRowToContents(index)
 
-        for i in range(len(self.mod_list)):
-            basename = os.path.basename(self.mod_list[i])
+        for i, (plugin, flags) in enumerate(self.flag_dict.items()):
+            basename = os.path.basename(plugin)
             item = QTableWidgetItem(basename)
             if basename in self.compacted:
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
@@ -142,11 +141,11 @@ class list_compactable(QTableWidget):
             else:
                 item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
                 item.setCheckState(Qt.CheckState.Unchecked)
-            item.setToolTip(self.mod_list[i])
+            item.setToolTip(plugin)
             item.setTextAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
             self.setItem(i, 0, item)
             self.setRowHidden(i, False)
-            if basename in self.has_new_cells:
+            if 'new_cell' in flags:
                 item_cell_flag = QTableWidgetItem('New CELL')
                 item_cell_flag.setToolTip('This mod has a new CELL record and no mods currently modify it.\nIt is currently safe to ESL flag it.')
                 if basename in self.cell_changed:
@@ -155,7 +154,7 @@ class list_compactable(QTableWidget):
                                               'ESL interior cells do not reload properly on save game load until\n'+
                                               'the game has restarted.')
                     item_cell_flag.setToolTip('This mod has a new CELL record\nand has a dependent plugin that modifies it.\nIt is NOT recommended to ESL flag it.')
-                elif basename in self.has_interior_cells:
+                elif 'new_interior_cell' in flags:
                     item_cell_flag.setText('!New Interior CELL!')
                     item_cell_flag.setToolTip('This mod has at least one new CELL record that is an interior cell.\n'+
                                               'ESL created interior cells sometimes do not reload properly on a save\n'+

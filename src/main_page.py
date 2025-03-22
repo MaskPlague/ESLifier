@@ -321,15 +321,9 @@ class main(QWidget):
             self.confirm.rejected.connect(lambda:self.button_scan.setEnabled(True))
             self.confirm.show()
         
-    def completed_scan(self, list_eslify_mod_list, list_eslify_has_new_cells, list_eslify_interior_cells,
-                       list_compact_mod_list, list_compact_has_new_cells, list_compact_interior_cells,
-                       dependency_dictionary):
-        self.list_eslify.mod_list = list_eslify_mod_list
-        self.list_eslify.has_new_cells = list_eslify_has_new_cells
-        self.list_eslify.has_interior_cells = list_eslify_interior_cells
-        self.list_compact.mod_list = list_compact_mod_list
-        self.list_compact.has_new_cells = list_compact_has_new_cells
-        self.list_compact.has_interior_cells = list_compact_interior_cells
+    def completed_scan(self, flag_dict, dependency_dictionary):
+        self.list_eslify.flag_dict = {p: f for p, f in flag_dict.items() if 'need_compacting' not in f}
+        self.list_compact.flag_dict = {p: f for p, f in flag_dict.items() if 'need_compacting' in f}
         self.dependency_dictionary = dependency_dictionary
         print('Populating Tables')
         self.eslifier.update_shown()
@@ -347,7 +341,7 @@ class main(QWidget):
 
 
 class Worker(QObject):
-    finished_signal = pyqtSignal(list, list , list, list, list, list, dict)
+    finished_signal = pyqtSignal(dict, dict)
     def __init__(self, path, update, scan_esms, cell, mo2_mode, modlist_txt_path, plugins_txt_path, bsab):
         super().__init__()
         self.skyrim_folder_path = path
@@ -365,15 +359,11 @@ class Worker(QObject):
         print('\nGettings Dependencies')
         dependency_dictionary = dependecy_getter.scan(self.skyrim_folder_path)
         print('\nScanning Plugins')
-        (list_eslify_mod_list, list_eslify_has_new_cells, list_eslify_interior_cells,
-         list_compact_mod_list, list_compact_has_new_cells, list_compact_interior_cells) = qualification_checker.scan(self.skyrim_folder_path, self.update_header, self.show_cells, self.scan_esms)
+        flag_dict = qualification_checker.scan(self.skyrim_folder_path, self.update_header, self.show_cells, self.scan_esms)
         print('Checking if New CELLs are Changed')
-        combined_list = [mod for mod in list_compact_mod_list if os.path.basename(mod) in list_compact_has_new_cells]
-        combined_list.extend([mod for mod in list_eslify_mod_list if os.path.basename(mod) in list_eslify_has_new_cells])
-        cell_scanner.scan(combined_list)
-        self.finished_signal.emit(list_eslify_mod_list, list_eslify_has_new_cells, list_eslify_interior_cells,
-                                  list_compact_mod_list, list_compact_has_new_cells, list_compact_interior_cells,
-                                  dependency_dictionary)
+        plugins_with_cells = [plugin for plugin, flags in flag_dict.items() if 'new_cell' in flags]
+        cell_scanner.scan(plugins_with_cells)
+        self.finished_signal.emit(flag_dict, dependency_dictionary)
 
 class Worker2(QObject):
     finished_signal = pyqtSignal()

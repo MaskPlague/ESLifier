@@ -9,12 +9,7 @@ class qualification_checker():
         qualification_checker.lock = threading.Lock()
         all_plugins = qualification_checker.get_from_file("ESLifier_Data/plugin_list.json")
         plugins = [plugin for plugin in all_plugins if not plugin.lower().endswith('.esl')]
-        qualification_checker.need_flag_list = []
-        qualification_checker.need_flag_cell_flag_list = []
-        qualification_checker.need_flag_interior_cell_flag_list = []
-        qualification_checker.need_compacting_list = []
-        qualification_checker.need_compacting_cell_flag_list = []
-        qualification_checker.need_compacting_interior_cell_flag_list = []
+        qualification_checker.flag_dict = {}
         qualification_checker.max_record_number = 4096
         qualification_checker.show_cells = show_cells
         qualification_checker.scan_esms = scan_esms
@@ -43,40 +38,24 @@ class qualification_checker():
         for thread in threads:
             thread.join()
 
-        return (qualification_checker.need_flag_list, qualification_checker.need_flag_cell_flag_list, qualification_checker.need_flag_interior_cell_flag_list, 
-                qualification_checker.need_compacting_list, qualification_checker.need_compacting_cell_flag_list, qualification_checker.need_compacting_interior_cell_flag_list)
+        return qualification_checker.flag_dict
 
     def plugin_scanner(plugins):
-        need_flag_list = []
-        need_flag_cell_flag_list = []
-        need_flag_interior_cell_flag_list = []
-        need_compacting_list = []
-        need_compacting_cell_flag_list = []
-        need_compacting_interior_cell_flag_list = []
+        flag_dict = {}
         for plugin in plugins:
             if not qualification_checker.already_esl(plugin):
-                esl_allowed, need_compacting, new_cell, interior_cell = qualification_checker.file_reader(plugin)
                 if esl_allowed:
-                    if not need_compacting:
-                        need_flag_list.append(plugin)
-                        if new_cell:
-                            need_flag_cell_flag_list.append(os.path.basename(plugin))
-                            if interior_cell:
-                                need_flag_interior_cell_flag_list.append(os.path.basename(plugin))
-                    else:
-                        need_compacting_list.append(plugin)
-                        if new_cell:
-                            need_compacting_cell_flag_list.append(os.path.basename(plugin))
-                            if interior_cell:
-                                need_compacting_interior_cell_flag_list.append(os.path.basename(plugin))
-
+                    flag_dict[plugin] = []
+                    if need_compacting:
+                        flag_dict[plugin].append('need_compacting')
+                    if new_cell:
+                        flag_dict[plugin].append('new_cell')
+                        if interior_cell:
+                            flag_dict[plugin].append('new_interior_cell')
         with qualification_checker.lock:
-            qualification_checker.need_flag_list.extend(need_flag_list)
-            qualification_checker.need_flag_cell_flag_list.extend(need_flag_cell_flag_list)
-            qualification_checker.need_flag_interior_cell_flag_list.extend(need_compacting_cell_flag_list)
-            qualification_checker.need_compacting_list.extend(need_compacting_list)
-            qualification_checker.need_compacting_cell_flag_list.extend(need_compacting_cell_flag_list)
-            qualification_checker.need_compacting_interior_cell_flag_list.extend(need_compacting_interior_cell_flag_list)
+            for key, value in flag_dict.items():
+                if key not in qualification_checker.flag_dict:
+                    qualification_checker.flag_dict[key] = value
 
     def create_data_list(data):
         data_list = []

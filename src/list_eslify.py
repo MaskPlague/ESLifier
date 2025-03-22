@@ -32,11 +32,10 @@ class list_eslable(QTableWidget):
         self.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignLeft)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenu)
-        self.mod_list = []
-        self.has_new_cells = []
-        self.has_interior_cells = []
+        self.flag_dict = {}
         self.filter_changed_cells = True
         self.filter_interior_cells = False
+        self.filter_world_spacer = True
 
         self.blacklist = blacklist()
 
@@ -77,34 +76,34 @@ class list_eslable(QTableWidget):
             blacklist.extend(self.cell_changed)
 
         if self.filter_interior_cells:
-            blacklist.extend(self.has_interior_cells)
+            blacklist.extend([os.path.basename(plugin) for plugin, flags in self.flag_dict.items() if 'new_interior_cell' in flags])
 
         to_remove = []
-        for mod in self.mod_list:
+        for mod in self.flag_dict:
             if os.path.basename(mod) in blacklist:
                 to_remove.append(mod)
-                
+        
         for mod in to_remove:
-            self.mod_list.remove(mod)
+            self.flag_dict.pop(mod)
 
-        self.setRowCount(len(self.mod_list))
+        self.setRowCount(len(self.flag_dict))
 
-        for i in range(len(self.mod_list)):
-            basename = os.path.basename(self.mod_list[i])
+        for i, (plugin, flags) in enumerate(self.flag_dict.items()):
+            basename = os.path.basename(plugin)
             item = QTableWidgetItem(basename)
-            item.setToolTip(self.mod_list[i])
+            item.setToolTip(plugin)
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
             item.setCheckState(Qt.CheckState.Unchecked)
             self.setItem(i, 0, item)
             self.setRowHidden(i, False)
             
-            if basename in self.has_new_cells:
+            if 'new_cell' in flags:
                 item_cell_flag = QTableWidgetItem('New CELL')
                 item_cell_flag.setToolTip('This mod has a new CELL record.')
                 if basename in self.cell_changed:
                     item_cell_flag.setText('!!New CELL Changed!!')
                     item_cell_flag.setToolTip('This mod has a new CELL record\nand has a dependent plugin that modifies it.\nIt is NOT recommended to esl it.')
-                elif basename in self.has_interior_cells:
+                elif 'new_interior_cell' in flags:
                     item_cell_flag.setText('!New Interior CELL!')
                     item_cell_flag.setToolTip('This mod has at least one new CELL record that is an interior cell.\n'+
                                               'ESL created interior cells sometimes do not reload properly on a save\n'+
