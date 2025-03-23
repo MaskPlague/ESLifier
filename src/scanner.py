@@ -770,9 +770,12 @@ class scanner():
 
                     end_of_folder_records = (folder_count * folder_record_size) + 36
                     offset = 36
+                    max_time = 10
+                    time = 0
+                    start_time = timeit.default_timer()
                     if end_of_folder_records > len(mm) + 1:
                         raise ValueError('Possibly Corrupt BSA')
-                    while offset < end_of_folder_records:
+                    while offset < end_of_folder_records and time < max_time:
                         location = int.from_bytes(mm[offset+file_record_offset:offset+file_record_offset+4][::-1]) - total_file_name_length
                         folder_length = int.from_bytes(mm[location:location+1])
                         folder_path = mm[location+1:location+folder_length].decode(errors='ignore')
@@ -783,8 +786,10 @@ class scanner():
                                 plugin = match.group(0).decode()
                                 if plugin not in plugins:
                                     plugins.append(plugin)
-
+                        time = timeit.default_timer() - start_time
                         offset += folder_record_size
+                    if time > max_time:
+                        raise ValueError('Exceeded max processing time')
 
             if plugins != []:
                 with scanner.lock:
