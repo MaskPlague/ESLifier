@@ -15,7 +15,7 @@ class patchers():
         for i in range(start_index, len(text)):
             if not text[i].isalnum():
                 return i
-        return -1
+        return len(text)
     
     def psc_patcher(basename, new_file, form_id_map):
         with open(new_file, 'r+', encoding="utf-8") as f:
