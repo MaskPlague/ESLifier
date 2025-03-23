@@ -2199,13 +2199,7 @@ class form_processor():
                 if field == b'DNAM':
                     stat_offsets.append(offset+10)
                 elif field == b'MODS':
-                    in_field_offset = offset
-                    alternate_texture_count = struct.unpack("<I", form[offset+6:offset+10])[0]
-                    in_field_offset += 10
-                    for _ in range(alternate_texture_count):
-                        alt_tex_size = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
-                        stat_offsets.append(in_field_offset+alt_tex_size+4)
-                        in_field_offset += 8
+                    stat_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), stat_offsets]
