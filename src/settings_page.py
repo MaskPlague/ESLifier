@@ -43,7 +43,7 @@ class settings(QWidget):
         )
         self.output_folder_path_widget, self.output_folder_path = self.create_path_widget(
             "Output Folder Path",
-            "Set where you want the Output Folder 'ESLifier Ouput' to be generated.",
+            "Set where you want the Output Folder 'ESLifier Compactor Ouput' to be generated.",
             'C:/Path/To/The/Output/Folder/',
             self.output_folder_path_clicked
         )
@@ -144,7 +144,7 @@ class settings(QWidget):
             "The Form ID Maps are used for patching any new files and plugins.\n" +
             "The Compacted and Patched History is for getting what files and plugins\n" +
             "are newly added after a mod was compacted and its dependents patched.\n\n" +
-            "Only use this button when you have updated a mod and/or deleted the ESLifier Ouput.",
+            "Only use this button when you have updated a mod and/or deleted the ESLifier Compactor Ouput.",
             "Delete All",
             self.clear_form_id_maps_and_compacted_and_patched_clicked
         )
@@ -349,7 +349,7 @@ class settings(QWidget):
         confirm.setText(
             "Are you sure you want to delete all of the Form ID Maps and the Compacted and Patched History?\n" +
             "This will prevent the 'Patch New' functionality from working and will require you to manually " +
-            "delete the ESLifier Ouput to continue using the program without issue.\n")
+            "delete the ESLifier Compactor Ouput to continue using the program without issue.\n")
         confirm.setWindowTitle("Confirmation")
         confirm.addButton(QMessageBox.StandardButton.Yes)
         confirm.addButton(QMessageBox.StandardButton.Cancel)

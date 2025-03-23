@@ -13,7 +13,6 @@ class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
         #TODO: Research into making a save patcher
-        
         if getattr(sys, 'frozen', False):
             os.chdir(os.path.dirname(sys.executable))
 
