@@ -744,7 +744,6 @@ class scanner():
             else:
                 print(f'!Warn: Missing file scan type for {file}')
 
-                
         except Exception as e:
             print(f"!Error reading file {file}")
             print(e)
@@ -776,7 +775,8 @@ class scanner():
                         offset += 24
 
             if plugins != []:
-                scanner.bsa_dict[bsa_file] = plugins
+                with scanner.lock:
+                    scanner.bsa_dict[bsa_file] = plugins
         except Exception as e:
             print(f'Error Reading BSA: {bsa_file}')
             print(e)
