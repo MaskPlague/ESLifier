@@ -580,7 +580,7 @@ class patchers():
                     index = value.index('|')
                     plugin = value[index+1:]
                     if plugin.lower() == basename:
-                        form_id_int = int(value[:index])
+                        form_id_int = int(value[:index], 16)
                         for form_ids in form_id_map:
                             if form_id_int == int(form_ids[0], 16):
                                 data = patchers.change_json_element(data, path, str(int(form_ids[2], 16)) + '|' + plugin)
