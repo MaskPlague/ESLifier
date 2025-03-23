@@ -770,7 +770,8 @@ class scanner():
 
                     end_of_folder_records = (folder_count * folder_record_size) + 36
                     offset = 36
-
+                    if end_of_folder_records > len(mm) + 1:
+                        raise ValueError('Possibly Corrupt BSA')
                     while offset < end_of_folder_records:
                         location = int.from_bytes(mm[offset+file_record_offset:offset+file_record_offset+4][::-1]) - total_file_name_length
                         folder_length = int.from_bytes(mm[location:location+1])
@@ -789,5 +790,5 @@ class scanner():
                 with scanner.lock:
                     scanner.bsa_dict[bsa_file] = plugins
         except Exception as e:
-            print(f'Error Reading BSA: {bsa_file}')
+            print(f'!Error Reading BSA: {bsa_file}')
             print(e)
