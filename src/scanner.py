@@ -682,8 +682,9 @@ class scanner():
                     
                     if 'headParts' in data:
                         for part in data['headParts']:
-                            formIdentifier = part['formIdentifier']
-                            plugins.append(formIdentifier[:-7].lower())
+                            if 'formIdentifier' in part:
+                                formIdentifier = part['formIdentifier']
+                                plugins.append(formIdentifier[:-7].lower())
                     for plugin in plugins:
                         with scanner.lock:
                             if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})

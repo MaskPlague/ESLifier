@@ -678,16 +678,17 @@ class patchers():
 
             if 'headParts' in data:
                 for i, part in enumerate(data['headParts']):
-                    formIdentifier = part['formIdentifier']
-                    if formIdentifier[:-7].lower() == basename:
-                        formId = part['formId'].to_bytes(4)
-                        old_id = formIdentifier[-6:]
-                        for form_ids in form_id_map:
-                            if old_id == form_ids[1]:
-                                new_form_id = formId[:1] + bytes.fromhex(form_ids[3])
-                                data['headParts'][i]['formId'] = int.from_bytes(new_form_id)
-                                data['headParts'][i]['formIdentifier'] = formIdentifier[:-6] + form_ids[3]
-                                break
+                    if 'formIdentifier' in part:
+                        formIdentifier = part['formIdentifier']
+                        if formIdentifier[:-7].lower() == basename:
+                            formId = part['formId'].to_bytes(4)
+                            old_id = formIdentifier[-6:]
+                            for form_ids in form_id_map:
+                                if old_id == form_ids[1]:
+                                    new_form_id = formId[:1] + bytes.fromhex(form_ids[3])
+                                    data['headParts'][i]['formId'] = int.from_bytes(new_form_id)
+                                    data['headParts'][i]['formIdentifier'] = formIdentifier[:-6] + form_ids[3]
+                                    break
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3, separators=(',', ' : '))
