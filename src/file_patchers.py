@@ -579,11 +579,21 @@ class patchers():
                 if type(value) is str and '|' in value:
                     index = value.index('|')
                     plugin = value[index+1:]
+                    
                     if plugin.lower() == basename:
-                        form_id_int = int(value[:index], 16)
+                        form_id = value[:index]
+                        if '0x' in form_id:
+                            ox = True
+                            form_id_int = int(value[:index],16)
+                        else:
+                            ox = False
+                            form_id_int = int(value[:index])
                         for form_ids in form_id_map:
                             if form_id_int == int(form_ids[0], 16):
-                                data = patchers.change_json_element(data, path, str(int(form_ids[2], 16)) + '|' + plugin)
+                                if ox:
+                                    data = patchers.change_json_element(data, path, '0x'+form_ids[2] + '|' + plugin)
+                                else:
+                                    data = patchers.change_json_element(data, path, str(int(form_ids[2], 16)) + '|' + plugin)
                                 break
             f.seek(0)
             f.truncate(0)
