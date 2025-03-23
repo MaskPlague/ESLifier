@@ -758,14 +758,21 @@ class scanner():
         try:
             with open(bsa_file, 'rb') as f:
                 with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
-                    folder_count = int.from_bytes(mm[16:20][::-1])
-                    total_file_name_length = int.from_bytes(mm[28:32][::-1])
+                    folder_count = struct.unpack('<I', mm[16:20])[0]
+                    version = struct.unpack('<I', mm[4:8])[0]
+                    if version == 105:
+                        folder_record_size = 24
+                        file_record_offset = 16
+                    else:
+                        folder_record_size = 16
+                        file_record_offset = 12
+                    total_file_name_length = struct.unpack('<I', mm[28:32])[0]
 
-                    end_of_folder_records = (folder_count * 24) + 36
+                    end_of_folder_records = (folder_count * folder_record_size) + 36
                     offset = 36
 
                     while offset < end_of_folder_records:
-                        location = int.from_bytes(mm[offset+16:offset+20][::-1]) - total_file_name_length
+                        location = int.from_bytes(mm[offset+file_record_offset:offset+file_record_offset+4][::-1]) - total_file_name_length
                         folder_length = int.from_bytes(mm[location:location+1])
                         folder_path = mm[location+1:location+folder_length].decode(errors='ignore')
 
@@ -776,7 +783,7 @@ class scanner():
                                 if plugin not in plugins:
                                     plugins.append(plugin)
 
-                        offset += 24
+                        offset += folder_record_size
 
             if plugins != []:
                 with scanner.lock:
