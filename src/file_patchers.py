@@ -246,20 +246,18 @@ class patchers():
             lines = f.readlines()
             for i, line in enumerate(lines):
                 if basename in line.lower() and '|' in line and not line.startswith(';'):
-                    count = line.lower().count(basename)
+                    count = line.lower().count('|')
                     start = 0
-                    previous_index = 0
                     for _ in range(count):
                         line = lines[i]
                         start_index = line.lower().index('.es', start)
                         middle_index = line.index('|', start_index)
                         plugin_start_index = -1
                         for j in range(start_index-1, 0, -1):
-                            if line[j] in ('=', ',') and not len(line[previous_index:j]) > 4:
+                            if line[j] in ('=', ','):
                                 plugin_start_index = j + 1
                                 break
                         end_index = patchers.find_next_non_alphanumeric(line, middle_index+1)
-                        previous_index = end_index-1
                         plugin = line.lower()[plugin_start_index:middle_index].strip()
                         start_of_line = line[:middle_index+1]
                         end_of_line = line[end_index:]
@@ -269,13 +267,16 @@ class patchers():
                                 form_id = form_id [-3:]
                             else:
                                 form_id = form_id[-6:]
-                        form_id_int = int(form_id, 16)
-                        start = end_index+1
-                        if plugin == basename:
-                            for form_ids in form_id_map:
-                                if form_id_int == int(form_ids[0], 16):
-                                    lines[i] = start_of_line + form_ids[2] + end_of_line
-                                    break
+                        try:
+                            form_id_int = int(form_id, 16)
+                            start = start_index+3
+                            if plugin == basename:
+                                for form_ids in form_id_map:
+                                    if form_id_int == int(form_ids[0], 16):
+                                        lines[i] = start_of_line + form_ids[2] + end_of_line
+                                        break
+                        except:
+                            start = start_index+3
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
