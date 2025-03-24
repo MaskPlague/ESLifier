@@ -3,7 +3,7 @@ import json
 import shutil
 
 from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal
-from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QApplication
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QApplication, QSplitter
 from PyQt6.QtGui import QIcon
 
 from list_eslify import list_eslable
@@ -18,7 +18,6 @@ from full_form_processor import form_processor
 class main(QWidget):
     def __init__(self):
         super().__init__()
-        self.create()
         self.skyrim_folder_path = ''
         self.output_folder_path = ''
         self.modlist_txt_path = ''
@@ -35,6 +34,7 @@ class main(QWidget):
                 self.log_stream = window
             if window.windowTitle() == 'ESLifier':
                 self.eslifier = window
+        self.create()
 
     def create(self):
         self.eslify = QLabel("ESLify")
@@ -92,7 +92,16 @@ class main(QWidget):
         self.v_layout1 =  QVBoxLayout()
         self.v_layout2 =  QVBoxLayout()
         
-        self.h_layout1 = QHBoxLayout()
+        splitter = QSplitter()
+        column_widget_1 = QWidget()
+        column_widget_2 = QWidget()
+        column_widget_1.setLayout(self.v_layout1)
+        column_widget_2.setLayout(self.v_layout2)
+        splitter.addWidget(column_widget_1)
+        splitter.addWidget(column_widget_2)
+        splitter.setHandleWidth(26)
+        splitter.setStyleSheet("QSplitter::handle { background: transparent; border: none; }")
+        splitter.setSizes([1,1])
 
         #Bottom of left Column
         self.h_layout3 = QHBoxLayout()
@@ -105,27 +114,27 @@ class main(QWidget):
         self.h_layout5.addWidget(self.filter_compact)
 
         #Left Column
-        self.h_layout1.addLayout(self.v_layout1)
+        #self.h_layout1.addLayout(self.v_layout1)
         self.v_layout1.addWidget(self.eslify)
         self.v_layout1.addWidget(self.list_eslify)
         self.v_layout1.addLayout(self.h_layout3)
 
-        self.h_layout1.addSpacing(20)
+        #self.h_layout1.addSpacing(20)
 
         #Right Column
-        self.h_layout1.addLayout(self.v_layout2)
+        #self.h_layout1.addLayout(self.v_layout2)
         self.v_layout2.addWidget(self.compact)
         self.v_layout2.addWidget(self.list_compact)
         self.v_layout2.addLayout(self.h_layout5)
 
         self.main_layout.addWidget(self.button_scan)
-        self.main_layout.addLayout(self.h_layout1)
+        self.main_layout.addWidget(splitter)
         
         self.v_layout1.setContentsMargins(0,11,0,11)
         self.v_layout2.setContentsMargins(0,11,0,11)
 
         self.main_layout.setContentsMargins(21,11,21,11)
-
+        
         self.setLayout(self.main_layout)
         
     def search_eslify(self):
