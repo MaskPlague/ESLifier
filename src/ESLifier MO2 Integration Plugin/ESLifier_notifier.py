@@ -18,15 +18,11 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
     
     def init(self, organiser = mobase.IOrganizer):
         self._organizer = organiser
-        self.needs_flag_list = []
-        self.needs_compacting_list = []
-        self.needs_flag_new_cell_list = []
-        self.needs_compacting_new_cell_list = []
-        self.needs_flag_interior_cell_list = []
-        self.needs_compacting_interior_cell_list = []
+        self.flag_dict = {}
         self._problems = [0]
         self._finished = False
         self.any_esl = False
+        self.show_cells = True
         self.lock = threading.Lock()
         return True
 
@@ -71,36 +67,49 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
     def fullDescription(self, key):
         if self._problems == [0]:
             output_string = ""
-            if len(self.needs_flag_list) > 0:
+            if len(self.needs_flag_dict) > 0:
                 output_string += self.tr("The following plugins can be flagged as esl:\n")
-                output_string += self.tr("NC = New Cell Flag, IC = New Interior Cell Flag\n")
-                for plugin in self.needs_flag_list:
+                output_string += self.tr("NC = New Cell Flag, IC = New Interior Cell Flag, NW = New Worldspace\n")
+                for plugin, flags in self.needs_flag_dict.items():
                     line = " ‣ "
-                    if plugin in self.needs_flag_new_cell_list:
+                    if 'new_cell' in flags:
+                        if not self.show_cells:
+                            continue
                         line += " | NC"
                     else:
                         line += " |      "
-                    if plugin in self.needs_flag_interior_cell_list:
+                    if 'new_interior_cell' in flags:
                         line += " | IC"
                     else:
                         line += " |    "
+                    if 'new_wrld' in flags:
+                        line += " | NW"
+                    else:
+                        line += " |       "
+
                     line += " | " + os.path.basename(plugin) + '\n'
                     output_string += line
                 output_string += '\n'
 
-            if len(self.needs_compacting_list) > 0:
+            if len(self.needs_compacting_flag_dict) > 0:
                 output_string += self.tr("The following plugins can be flagged as esl after compacting:\n")
-                output_string += self.tr("NC = New Cell Flag, IC = New Interior Cell Flag\n")
-                for plugin in self.needs_compacting_list:
+                output_string += self.tr("NC = New Cell Flag, IC = New Interior Cell Flag, NW = New Worldspace\n")
+                for plugin, flags in self.needs_compacting_flag_dict.items():
                     line = " ‣ "
-                    if plugin in self.needs_compacting_new_cell_list:
+                    if 'new_cell' in flags:
+                        if not self.show_cells:
+                            continue
                         line += " | NC"
                     else:
                         line += " |      "
-                    if plugin in self.needs_compacting_interior_cell_list:
+                    if 'new_interior_cell' in flags:
                         line += " | IC"
                     else:
                         line += " |    "
+                    if 'new_wrld' in flags:
+                        line += " | NW"
+                    else:
+                        line += " |       "
                     line += " | " + os.path.basename(plugin) + '\n'
                     output_string += line
                 
@@ -112,6 +121,7 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
                 "Compacting plugins may break things in on-going saves.\n"
                 "Plugins with new cells may have the cell be break after marking as light if another mod changes it.\n"
                 "Light plugins' new interior cells may not properly reload if the game is not restarted before loading.\n"
+                "Plugins with new worldspaces will have them lose landscape data (no ground) when flagged ESL."
                 "You can ignore a game plugin via this MO2 plugin's dropdown or via ESLifier's blacklist.\n"
             )
             return output_string
@@ -141,13 +151,9 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
         pass
     
     def scan_for_eslable(self):
-        self.needs_flag_list.clear()
-        self.needs_compacting_list.clear()
-        self.needs_flag_new_cell_list.clear()
-        self.needs_compacting_new_cell_list.clear()
-        self.needs_flag_interior_cell_list.clear()
+        self.flag_dict = {}
         self.any_esl = False
-        show_cells = self._organizer.pluginSetting("ESLifier", "Display Plugins With Cells")
+        self.show_cells = self._organizer.pluginSetting("ESLifier", "Display Plugins With Cells")
         scan_esms = self._organizer.pluginSetting("ESLifier", "Scan ESMs")
         eslifier_folder = self._organizer.pluginSetting("ESLifier", "ESLifier Folder")
         blacklist_path = os.path.join(eslifier_folder, 'ESLifier_Data/blacklist.json')
@@ -176,39 +182,42 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
 
         threads = []
         for chunk in chunks:
-            thread = threading.Thread(target=self.plugin_scanner, args=(chunk, new_header, show_cells, scan_esms))
+            thread = threading.Thread(target=self.plugin_scanner, args=(chunk, new_header, scan_esms))
             threads.append(thread)
             thread.start()
             
         for thread in threads:
             thread.join()
-
+        self.needs_flag_dict = {p: f for p, f in self.flag_dict.items() if 'need_compacting' not in f}
+        self.needs_compacting_flag_dict = {p: f for p, f in self.flag_dict.items() if 'need_compacting' in f}
         return self.any_esl
     
-    def plugin_scanner(self, plugins, new_header, show_cells, scan_esms):
+    def plugin_scanner(self, plugins, new_header, scan_esms):
+        flag_dict = {}
         for plugin in plugins:
-            esl_allowed, needs_compacting, new_cell, new_interior_cell = self.qualification_check(plugin, new_header, show_cells, scan_esms)
+            esl_allowed, need_compacting, new_cell, interior_cell, new_wrld = self.qualification_check(plugin, new_header, scan_esms)
             if esl_allowed == True:
                 self.any_esl = True
                 basename = os.path.basename(plugin)
                 with self.lock:
                     if esl_allowed:
-                        if not needs_compacting:
-                            self.needs_flag_list.append(basename)
-                            if new_cell:
-                                self.needs_flag_new_cell_list.append(basename)
-                                if new_interior_cell:
-                                    self.needs_flag_interior_cell_list.append(basename)
-                        else:
-                            self.needs_compacting_list.append(basename)
-                            if new_cell:
-                                self.needs_compacting_new_cell_list.append(basename)
-                                if new_interior_cell:
-                                    self.needs_compacting_interior_cell_list.append(basename)
+                        flag_dict[basename] = []
+                        if need_compacting:
+                            flag_dict[basename].append('need_compacting')
+                        if new_cell:
+                            flag_dict[basename].append('new_cell')
+                            if interior_cell:
+                                flag_dict[basename].append('new_interior_cell')
+                        if new_wrld:
+                            flag_dict[basename].append('new_wrld')
+        with self.lock:
+            for key, value in flag_dict.items():
+                if key not in self.flag_dict:
+                    self.flag_dict[key] = value
+
     def return_eslable(self):
-        return (self.needs_flag_list, self.needs_flag_new_cell_list, self.needs_flag_interior_cell_list,
-                self.needs_compacting_list, self.needs_compacting_new_cell_list, self.needs_compacting_interior_cell_list)
+        return self.flag_dict
     
     @staticmethod
-    def qualification_check(plugin, new_header, show_cells, scan_esms):
-        return light_check().qualification_check(plugin, new_header, show_cells, scan_esms)
+    def qualification_check(plugin, new_header, scan_esms):
+        return light_check().qualification_check(plugin, new_header, scan_esms)
