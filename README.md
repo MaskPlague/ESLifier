@@ -99,6 +99,7 @@ pyinstaller "src/eslifier_app.py" --onefile -n "ESLifier" --noconsole --icon "sr
   - CoMAP
   - OBody NG
   - SL Configs
+  - OStim Standalone
 - .toml:
   - Dynamic Animation Casting
   - Precision

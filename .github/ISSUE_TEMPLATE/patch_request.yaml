@@ -62,6 +62,7 @@ body:
           - CoMAP  
           - OBody NG  
           - SL Configs
+          - OStim Standalone
           
         - **.toml:**  
           - Dynamic Animation Casting  
