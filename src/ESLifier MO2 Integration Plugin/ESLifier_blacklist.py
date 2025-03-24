@@ -21,12 +21,13 @@ class blacklist(QTableWidget):
             self.setHorizontalHeaderLabels(['*   Blacklisted Mod'])
             self.horizontalHeaderItem(0).setToolTip('These are the blacklisted plugins, select the mods you want to remove from the blacklist.')
         else:
-            self.setColumnCount(4)
-            self.setHorizontalHeaderLabels(['*   ESLify-able Mod', 'Needs Compacting', 'New Cell', 'New Interior Cell'])
+            self.setColumnCount(5)
+            self.setHorizontalHeaderLabels(['*   ESLify-able Mod', 'Needs Compacting', 'New Cell', 'New Interior Cell', 'New Worldspace'])
             self.horizontalHeaderItem(0).setToolTip('These are the ESLify-able plugins, select the mods you want to add to the blacklist.')
             self.horizontalHeaderItem(1).setToolTip('Whether the mod needs comapcting or just the ESL flag.')
             self.horizontalHeaderItem(2).setToolTip('If the plugin has a new cell.')
-            self.horizontalHeaderItem(3).setToolTip('If the plugin has a new Interior CELL')
+            self.horizontalHeaderItem(3).setToolTip('If the plugin has a new Interior CELL.')
+            self.horizontalHeaderItem(4).setToolTip('If the plugin has a new worldspace.')
         self.verticalHeader().setHidden(True)
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
@@ -37,16 +38,10 @@ class blacklist(QTableWidget):
         self.customContextMenuRequested.connect(self.contextMenu)
         self.blacklist = []
         self.blacklist_path = ''
-        self.needs_compacting_list = []
-        self.needs_flag_new_cell_list = []
-        self.needs_flag_interior_cell_list = []
-        self.needs_compacting_new_cell_list = []
-        self.needs_compacting_interior_cell_list = []
 
     def create(self, remove_mode):
         self.setSortingEnabled(False)
         self.clearContents()
-        
         if remove_mode:
             self.blacklist = self.get_data_from_file(self.blacklist_path)
             self.setRowCount(len(self.blacklist))
@@ -58,29 +53,24 @@ class blacklist(QTableWidget):
                 self.setRowHidden(i, False)
         else:
             self.setRowCount(len(self.blacklist))
-            for i in range(len(self.blacklist)):
-                basename = os.path.basename(self.blacklist[i])
-                item = QTableWidgetItem(basename)
+            for i, (plugin, flags) in enumerate(self.blacklist.items()):
+                item = QTableWidgetItem(plugin)
                 item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
                 item.setCheckState(Qt.CheckState.Unchecked)
                 self.setItem(i, 0, item)
                 self.setRowHidden(i, False)
-                if basename in self.needs_compacting_list:
+                if 'need_compacting' in flags:
                     item_compacting = QTableWidgetItem('Needs Compacting')
                     self.setItem(i, 1, item_compacting)
-                    if basename in self.needs_compacting_new_cell_list:
-                        item_cell = QTableWidgetItem('New Cell')
-                        self.setItem(i, 2, item_cell)
-                    if basename in self.needs_compacting_interior_cell_list:
-                        item_interior = QTableWidgetItem('Interior Cell')
-                        self.setItem(i, 3, item_interior)
-                else:
-                    if basename in self.needs_flag_new_cell_list:
-                        item_cell = QTableWidgetItem('New Cell')
-                        self.setItem(i, 2, item_cell)
-                    if basename in self.needs_flag_interior_cell_list:
-                        item_interior = QTableWidgetItem('Interior Cell')
-                        self.setItem(i, 3, item_interior)
+                if 'new_cell' in flags:
+                    item_cell = QTableWidgetItem('New Cell')
+                    self.setItem(i, 2, item_cell)
+                if 'interior_cell' in flags:
+                    item_interior = QTableWidgetItem('Interior Cell')
+                    self.setItem(i, 3, item_interior)
+                if 'new_wrld' in flags:
+                    item_wrld = QTableWidgetItem('New Worldspace')
+                    self.setItem(i, 4, item_wrld)
 
 
         def somethingChanged(itemChanged):
