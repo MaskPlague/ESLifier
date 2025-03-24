@@ -97,8 +97,6 @@ class qualification_checker():
                 if int.from_bytes(form[12:15][::-1]) > qualification_checker.max_record_number:
                     need_compacting = True
                 if record_type == b'CELL':
-                    #if not qualification_checker.show_cells:
-                    #    return False, False, True, False, False
                     new_cell = True
                     if not interior_cell_flag:
                         flag_byte = form[10]
@@ -117,8 +115,6 @@ class qualification_checker():
                                 interior_cell_flag = (flags & 0x01) != 0
                             offset += field_size + 6
                 if record_type == b'WRLD':
-                    #if qualification_checker.filter_worldspaces:
-                    #    return False, False, False, False, True
                     new_wrld = True
                     
             if record_type == b'CELL' and form[15] >= master_count and str(form[12:15].hex()) not in cell_form_ids:
