@@ -118,6 +118,15 @@ class patch_new(QWidget):
         print('CLEAR')
         self.list_unpatched_files.create()
         self.list_compacted_unpatched.create()
+        if self.list_compacted_unpatched.mod_list == []:
+            self.no_new_files_message = QMessageBox()
+            self.no_new_files_message.setWindowTitle("No New Files Found")
+            self.no_new_files_message.setIcon(QMessageBox.Icon.Information)
+            self.no_new_files_message.setWindowIcon(QIcon(":/images/ESLifier.png"))
+            self.no_new_files_message.setText('No new files that need patching have been found.')
+            self.no_new_files_message.addButton(QMessageBox.StandardButton.Ok)
+            self.no_new_files_message.accepted.connect(self.no_new_files_message.hide)
+            self.no_new_files_message.show()
         self.setEnabled(True)
 
     def find(self):
