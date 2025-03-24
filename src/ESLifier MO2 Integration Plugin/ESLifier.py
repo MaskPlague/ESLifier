@@ -101,15 +101,7 @@ class ESLifier(mobase.IPluginTool):
             return
         blacklist_path = os.path.join(eslifier_folder, 'ESLifier_Data/blacklist.json')
         self.notifier.scan_for_eslable()
-        f, f_c, f_i_c, c, c_c, c_i_c, = self.notifier.return_eslable()
-        full_list = f.copy()
-        full_list.extend(c)
-        self.blacklist_add.blacklist.blacklist = full_list
-        self.blacklist_add.blacklist.needs_flag_new_cell_list = f_c
-        self.blacklist_add.blacklist.needs_flag_interior_cell_list = f_i_c
-        self.blacklist_add.blacklist.needs_compacting_list = c
-        self.blacklist_add.blacklist.needs_compacting_new_cell_list = c_c
-        self.blacklist_add.blacklist.needs_compacting_interior_cell_list = c_i_c
+        self.blacklist_add.blacklist.blacklist = self.notifier.flag_dict
         self.blacklist_add.blacklist.blacklist_path = blacklist_path
         self.blacklist_add.blacklist.create(False)
         self.blacklist_add.show()
