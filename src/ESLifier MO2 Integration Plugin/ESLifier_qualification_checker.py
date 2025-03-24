@@ -1,4 +1,4 @@
-import mobase
+import mobase # type: ignore
 import zlib
 import struct
 
