@@ -166,7 +166,7 @@ class patchers():
         with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
-                if basename in line.lower() and '|' in line:
+                if basename in line.lower() and '|' in line and not line.startswith(';'):
                     end_index = line.rfind('|', 0, line.lower().index(basename))
                     start_index = line.rfind('|', 0, end_index)
                     start_of_line = line[:start_index+1]
@@ -185,7 +185,7 @@ class patchers():
         with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
-                if basename in line.lower() and '~' in line:
+                if basename in line.lower() and '~' in line and not line.startswith(';'):
                     count = line.lower().count('~')
                     start = 0
                     for _ in range(count):
@@ -218,7 +218,7 @@ class patchers():
         with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
-                if basename in line.lower() and '|' in line:
+                if basename in line.lower() and '|' in line and not line.startswith(';'):
                     count = line.lower().count('|')
                     start = 0
                     for _ in range(count):
@@ -245,7 +245,7 @@ class patchers():
         with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
-                if basename in line.lower() and '|' in line:
+                if basename in line.lower() and '|' in line and not line.startswith(';'):
                     count = line.lower().count(basename)
                     start = 0
                     previous_index = 0
@@ -254,9 +254,9 @@ class patchers():
                         start_index = line.lower().index('.es', start)
                         middle_index = line.index('|', start_index)
                         plugin_start_index = -1
-                        for i in range(start_index-1, 0, -1):
-                            if line[i] in ('=', ',') and not len(line[previous_index:i]) > 4:
-                                plugin_start_index = i + 1
+                        for j in range(start_index-1, 0, -1):
+                            if line[j] in ('=', ',') and not len(line[previous_index:j]) > 4:
+                                plugin_start_index = j + 1
                                 break
                         end_index = patchers.find_next_non_alphanumeric(line, middle_index+1)
                         previous_index = end_index-1
@@ -285,7 +285,7 @@ class patchers():
         with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
-                if basename in line.lower() and ':' in line:
+                if basename in line.lower() and ':' in line and not line.startswith(';'):
                     index = line.index(':')
                     end_index = patchers.find_next_non_alphanumeric(line, index+1)
                     start_of_line = line[:index+1]
@@ -304,7 +304,7 @@ class patchers():
         with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
-                if basename in line.lower() and '|' in line:
+                if basename in line.lower() and '|' in line and not line.startswith(';'):
                     middle_index = line.index('|')
                     end_index = patchers.find_next_non_alphanumeric(line, middle_index+1)
                     start_of_line = line[:middle_index+1]
@@ -323,7 +323,7 @@ class patchers():
         with open(new_file, 'r+', encoding='utf-8') as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
-                if basename in line.lower() and '|' in line:
+                if basename in line.lower() and '|' in line and not line.startswith(';'):
                     middle_index = line.index('|')
                     end_index = patchers.find_next_non_alphanumeric(line, middle_index+1)
                     start_of_line = line[:middle_index+1]
@@ -359,9 +359,9 @@ class patchers():
                             start_index = line.lower().index('.', start)
                             middle_index = line.index('|', start_index)
                             plugin_start_index = -1
-                            for i in range(start_index-1, 0, -1):
-                                if line[i] == '"':
-                                    plugin_start_index = i + 1
+                            for j in range(start_index-1, 0, -1):
+                                if line[j] == '"':
+                                    plugin_start_index = j + 1
                                     break
                             plugin = line.lower()[plugin_start_index:middle_index].strip()
                             start = start_index + 1
