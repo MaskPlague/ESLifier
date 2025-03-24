@@ -3,9 +3,8 @@ import zlib
 import struct
 
 class qualification_checker():
-    def qualification_check(self, plugin, new_header, show_cells, scan_esms):
+    def qualification_check(self, plugin, new_header, scan_esms):
         qualification_checker.max_record_number = 4096
-        qualification_checker.show_cells = show_cells
         qualification_checker.scan_esms = scan_esms
 
         if new_header:
@@ -14,16 +13,17 @@ class qualification_checker():
             qualification_checker.num_max_records = 2048
         
         if not qualification_checker.already_esl(plugin):
-            esl_allowed, need_comapcting, new_cell, interior_cell = qualification_checker.file_reader(plugin)
+            esl_allowed, need_comapcting, new_cell, interior_cell, new_wrld = qualification_checker.file_reader(plugin)
         else:
-            return False, False, False, False
-        return esl_allowed, need_comapcting, new_cell, interior_cell
+            return False, False, False, False, False
+        return esl_allowed, need_comapcting, new_cell, interior_cell, new_wrld
     
     def file_reader(file):
         data_list = []
         new_cell = False
         interior_cell_flag = False
         need_compacting = False
+        new_wrld = False
         with open(file, 'rb') as f:
             data = f.read()
         data_list = qualification_checker.create_data_list(data)
@@ -38,12 +38,10 @@ class qualification_checker():
             if record_type not in (b'GRUP', b'TES4') and form[15] >= master_count:
                 count += 1
                 if count > num_max_records:
-                    return False, False, False, False
+                    return False, False, False, False, False
                 if int.from_bytes(form[12:15][::-1]) > qualification_checker.max_record_number:
                     need_compacting = True
                 if record_type == b'CELL':
-                    if not qualification_checker.show_cells:
-                        return False, False, True, False
                     new_cell = True
                     if not interior_cell_flag:
                         flag_byte = form[10]
@@ -61,8 +59,10 @@ class qualification_checker():
                                 flags = form_to_check[offset+6]
                                 interior_cell_flag = (flags & 0x01) != 0
                             offset += field_size + 6
+                if record_type == b'WRLD':
+                    new_wrld = True
         
-        return True, need_compacting, new_cell, interior_cell_flag
+        return True, need_compacting, new_cell, interior_cell_flag, new_wrld
     
     def already_esl(file): # return true if already esl or ESM but not scanning ESMs
         with open(file, 'rb') as f:
