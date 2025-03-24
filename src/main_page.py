@@ -1,5 +1,6 @@
 import os
 import json
+import shutil
 
 from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QApplication
@@ -186,15 +187,20 @@ class main(QWidget):
                         if file_lower not in counted:
                             size += os.path.getsize(file)
                             counted.add(file_lower)
+            total, used, free = shutil.disk_usage(self.output_folder_path)
+            free_space = round(free / (1024**3), 3)
             if size > 1024 ** 3:
                 calculated_size = round(size / (1024 ** 3), 3)
-                self.confirm.setText(f"This may generate up to {calculated_size} GBs of new files.\nAre you sure you want to continue?")
+                self.confirm.setText(f"This may generate up to {calculated_size} GBs of new files\nand you have {free_space} GBs of space left.\nAre you sure you want to continue?")
             elif size > 1048576:
                 calculated_size = round(size / 1048576, 2)
-                self.confirm.setText(f"This may generate up to {calculated_size} MBs of new files.\nAre you sure you want to continue?")
+                self.confirm.setText(f"This may generate up to {calculated_size} MBs of new files\nand you have {free_space} GBs of space left.\nAre you sure you want to continue?")
             else:
                 calculated_size = round(size / 1024, 2)
-                self.confirm.setText(f"This may generate up to {calculated_size} KBs of new files.\nAre you sure you want to continue?")
+                self.confirm.setText(f"This may generate up to {calculated_size} KBs of new files\nand you have {free_space} GBs of space left.\nAre you sure you want to continue?")
+            if size >= free:
+                self.confirm.setText(f'Not enough space!\nNeeded space: {round(size / (1024**3),3)}\nSpace left: {free_space} GBs')
+                self.confirm.removeButton(QMessageBox.StandardButton.Yes)
             self.confirm.setWindowTitle(f"Confirmation: Patching {len(checked)} Mod(s)")
             self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
             self.confirm.accepted.connect(lambda x = checked: self.compact_confirmed(x))
