@@ -750,6 +750,8 @@ class scanner():
 
         except Exception as e:
             print(f"!Error reading file {file}")
+            if reader_type == 'pex':
+                print('!pex file is likely corrupt.')
             print(e)
 
     def bsa_reader(bsa_file):
@@ -770,7 +772,7 @@ class scanner():
 
                     end_of_folder_records = (folder_count * folder_record_size) + 36
                     offset = 36
-                    max_time = 10
+                    max_time = 5
                     time = 0
                     start_time = timeit.default_timer()
                     if end_of_folder_records > len(mm) + 1:
