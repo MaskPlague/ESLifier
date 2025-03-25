@@ -247,7 +247,7 @@ class CFIDs():
                 rel_path = os.path.normpath(os.path.relpath(file, skyrim_folder_path))
         return rel_path
     
-    #Get files (not including plugins) that may/will need old Form IDs replaced with the new Form IDs
+    #Sort the file masters list into files that only need patching and files that need renaming and maybe patching
     def sort_files_to_patch_or_rename(master, files):
         files_to_patch = []
         files_to_rename = []
@@ -409,16 +409,6 @@ class CFIDs():
                             patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
                         else:                                                                               # Might patch whatever else is using .ini?
                             print(f'Warn: Possible missing patcher for: {new_file}')
-                            with open(new_file, 'r+', encoding='utf-8') as f:
-                                lines = f.readlines()
-                                for i, line in lines:
-                                    if basename in line.lower():
-                                        for form_ids in form_id_map:
-                                            lines[i] = line.replace('0x' + form_ids[0], '0x' + form_ids[2]).replace('0x' + form_ids[1], '0x' + form_ids[3]).replace('0x' + form_ids[0].lower(), '0x' + form_ids[2].lower()).replace('0x' + form_ids[1].lower(), '0x' + form_ids[3].lower()).replace('0X' + form_ids[0], '0X' + form_ids[2]).replace('0X' + form_ids[1], '0X' + form_ids[3]).replace('0X' + form_ids[0].lower(), '0X' + form_ids[2].lower()).replace('0X' + form_ids[1].lower(), '0X' + form_ids[3].lower())
-                                f.seek(0)
-                                f.truncate(0)
-                                f.write(''.join(lines))
-                                f.close()
                     elif new_file_lower.endswith('_conditions.txt'):                                        # Dynamic Animation Replacer
                         patchers.dar_patcher(basename, new_file, form_id_map)
                     elif new_file_lower.endswith('.json'):
@@ -465,18 +455,8 @@ class CFIDs():
                         elif 'sexlab\\animations' in new_file_lower:                                        # SL animations?
                             if not new_file_lower.endswith('arrokreversecowgirl.json'):
                                 patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map, int_type=True)
-                        else:                                                                               # Might patch whatever else is using .json?
+                        else:
                             print(f'Warn: Possible missing patcher for: {new_file}')
-                            with open(new_file, 'r+', encoding='utf-8') as f:
-                                lines = f.readlines()
-                                for i, line in lines:
-                                    if basename in line.lower():
-                                        for form_ids in form_id_map:
-                                            lines[i] = line.replace(form_ids[0], form_ids[2]).replace(form_ids[1], form_ids[3]).replace(form_ids[0].lower(), form_ids[2].lower()).replace(form_ids[1].lower(), form_ids[3].lower())
-                                f.seek(0)
-                                f.truncate(0)
-                                f.write(''.join(lines))
-                                f.close()
                     elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
                         patchers.pex_patcher(basename, new_file, form_id_map)
                     elif new_file_lower.endswith('.toml'):
