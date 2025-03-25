@@ -315,7 +315,7 @@ class form_processor():
     def save_achr_data(i, form):
         #XESP and XAPR are structs but FormID is in same offset as others
         achr_fields = [b'NAME', b'XEZN', b'INAM', b'XAPR', b'XLRT', b'XHOR', b'XOWN', b'XESP', b'XLCN', b'XLRL']
-        special_achr_fields = [b'PDTO', b'VMAD']
+        special_achr_fields = [b'PDTO', b'VMAD', b'XLKR']
 
         achr_offsets = [12]
         offset = 24
@@ -330,6 +330,9 @@ class form_processor():
                         achr_offsets.append(offset + 10)
                 elif field == b'VMAD':
                     achr_offsets.extend(form_processor.vmad_reader(form, offset))
+                elif field == b'XLKR':
+                    achr_offsets.append(offset + 6)
+                    achr_offsets.append(offset + 10)
             offset += field_size + 6
         return [i, bytearray(form), achr_offsets]
     
@@ -2374,11 +2377,12 @@ class form_processor():
         offsets = []
         offset += 6
         op_flag_byte = form[offset]
-        use_global_flag = (op_flag_byte & 0x04) != 0
+        flags = op_flag_byte & 0x1F  # Mask out the upper 3 bits, keeping only the lower 5 bits
+        use_global_flag = (flags & 0x04) != 0
         offset += 4
         #If lower 5 bit 0x04 is set then use global and comparison value is a formid
         if use_global_flag: 
-            offsets.append(offset + 4)  # ComparisonValue
+            offsets.append(offset)  # ComparisonValue
         offset += 4
         function_index = struct.unpack("<H", form[offset:offset+2])[0]
         offset += 4
