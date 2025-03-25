@@ -128,7 +128,7 @@ class form_processor():
             elif b'ECZN' == record_type:
                 saved_forms.append(form_processor.save_eczn_data(i, form))
             elif b'EFSH' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
+                saved_forms.append(form_processor.save_efsh_data(i, form))
             elif b'ENCH' == record_type:
                 saved_forms.append(form_processor.save_ench_data(i, form))
             elif b'EQUP' == record_type:
@@ -862,6 +862,22 @@ class form_processor():
             offset += field_size + 6
 
         return [i, bytearray(form), eczn_offsets]
+
+    def save_efsh_data(i, form): 
+        special_efsh_fields = [b'DATA']
+
+        efsh_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field = form[offset:offset+4]
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
+            if field in special_efsh_fields:
+                if field == b'DATA':
+                    efsh_offsets.append(offset + 250) # 244 + 6 Addon Models
+                    efsh_offsets.append(offset + 314) # 308 + 6 Ambient Sound
+            offset += field_size + 6
+
+        return [i, bytearray(form), efsh_offsets]
 
     def save_ench_data(i, form):
         ench_fields = [b'EFID']
