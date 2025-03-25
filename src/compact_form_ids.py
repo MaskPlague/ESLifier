@@ -518,7 +518,7 @@ class CFIDs():
                 try:
                     decompressed = zlib.decompress(data_list[i][28:])  # Decompress the form
                 except Exception as e:
-                    print(f'Error: {e}\r at Header: {data_list[i][:24]} at Index: {i}' )
+                    print(f'!Error: {e}\r at Header: {data_list[i][:24]} at Index: {i}' )
 
                 uncompressed_size_from_form = data_list[i][24:28]
                 sizes_list[i] = [len(data_list[i]), 0, i, len(data_list[i][28:]), uncompressed_size_from_form]
