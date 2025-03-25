@@ -454,7 +454,9 @@ class CFIDs():
                             patchers.json_obody_patcher(basename, new_file, form_id_map)
                         elif os.path.basename(new_file_lower).startswith('shse.'):                          # Smart Harvest
                             patchers.json_shse_patcher(basename, new_file, form_id_map)
-                        elif 'plugins\\ostim\\' in new_file_lower:                                             # OStim
+                        elif 'plugins\\rcs\\' in new_file_lower:                                            # Race Compatibility SKSE
+                            patchers.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
+                        elif 'plugins\\ostim\\' in new_file_lower:                                          # OStim
                             patchers.json_ostim_patcher(basename, new_file, form_id_map)
                         elif os.path.basename(new_file_lower) == 'sexlabconfig.json':                       # SL MCM Generated config
                             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
