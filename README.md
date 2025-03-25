@@ -100,6 +100,7 @@ pyinstaller "src/eslifier_app.py" --onefile -n "ESLifier" --noconsole --icon "sr
   - OBody NG
   - SL Configs
   - OStim Standalone
+  - Race Compatibility SKSE
 - .toml:
   - Dynamic Animation Casting
   - Precision
