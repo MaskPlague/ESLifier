@@ -50,7 +50,7 @@ body:
           - Dynamic Key Activation Framework NG  
           - Smart Harvest Auto NG AutoLoot  
           - PapyrusUtil's StorageDataUtil  
-          - Custom Skills Framework  
+          - Custom Skills Framework (old format CustomSkill.<name>.config.txt supported)
           - Dynamic String Distributor  
           - Dynamic Armor Variants  
           - Inventory Injector  
