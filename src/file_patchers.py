@@ -928,3 +928,28 @@ class patchers():
             for item in data:
                 patchers.change_json_key(item, old_key, new_key)
         return data
+    
+    def old_customskill_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+', encoding='utf-8') as f:
+            lines = f.readlines()
+            patch_next_line = False
+            for i, line in enumerate(lines):
+                if patch_next_line and 'Id' in line:
+                    index = line.index('=') + 1
+                    start_of_line = line[:index]
+                    end_index = patchers.find_next_non_alphanumeric(line, index + 1)
+                    end_of_line = line[end_index:]
+                    form_id_int = int(line[index:end_index], 16)
+                    for form_ids in form_id_map:
+                        if form_id_int == int(form_ids[0], 16):
+                            lines[i] = start_of_line + ' 0x' + form_ids[2] + end_of_line
+                            
+                if 'File' in line and basename in line.lower():
+                    patch_next_line = True
+                else:
+                    False
+                
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()

@@ -251,11 +251,14 @@ class CFIDs():
     def sort_files_to_patch_or_rename(master, files):
         files_to_patch = []
         files_to_rename = []
-        matchers = ['.pex', '.psc', '.ini', '_conditions.txt', '.json', '.jslot', '_srd.', os.path.splitext(os.path.basename(master))[0].lower() + '.seq', '.toml']
+        split_name = os.path.splitext(os.path.basename(master))[0].lower()
+        matchers = ['.pex', '.psc', '.ini', '_conditions.txt', '.json', '.jslot', '_srd.',
+                    split_name + '.seq', '.toml', 'netscriptframework\\plugins\\customskill']
         for file in files:
-            if any(match in file.lower() for match in matchers):
+            file_lower = file.lower()
+            if any(match in file_lower for match in matchers):
                 files_to_patch.append(file)
-            elif os.path.basename(master).lower() in file.lower() and ('facegeom' in file.lower() or 'voice' in file.lower() or 'facetint' in file.lower()):
+            elif os.path.basename(master).lower() in file_lower and ('facegeom' in file_lower or 'voice' in file_lower or 'facetint' in file_lower):
                 files_to_rename.append(file)
             else:
                 raise TypeError(f"{os.path.basename(master).lower()} - File: {file} \nhas no patching method but it is in file_masters...")
@@ -480,6 +483,8 @@ class CFIDs():
                         patchers.seq_patcher(new_file, form_id_map)
                     elif new_file_lower.endswith('.jslot'):                                                 # Racemenu Presets
                         patchers.jslot_patcher(basename, new_file, form_id_map)
+                    elif 'netscriptframework\\plugins\\customskill' in new_file_lower:                      # Old txt format CSF
+                        patchers.old_customskill_patcher(basename, new_file, form_id_map)
                     else:
                         print(f'Warn: Possible missing patcher for: {new_file}')
 

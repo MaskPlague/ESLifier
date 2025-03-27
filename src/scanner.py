@@ -603,6 +603,7 @@ class scanner():
             if (scanner.count % factor) >= (factor-1):
                 print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
             if (file_lower.endswith(('.ini', '.json', '.psc', '.jslot', '.toml', '_conditions.txt', '_srd.yaml'))
+                or ('netscriptframework\\plugins\\customskill' in file_lower)
                 and not ('modex\\user\\kits' in file_lower
                         or 'nemesis_engine' in file_lower
                         or 'quickarmorrebalance\\config\\' in file_lower
@@ -620,7 +621,6 @@ class scanner():
             elif file_lower.endswith('.seq'):
                 plugin = os.path.splitext(os.path.basename(file))[0]
                 scanner.seq_files.append([plugin.lower(), file])
-            #TODO: try optimizing these as the plugin name should be a certain index from facegeom etc.
             elif ('\\facegeom\\' in file_lower and '.nif' in file_lower):
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
