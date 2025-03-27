@@ -147,7 +147,7 @@ class blacklist(QTableWidget):
         for mod in mods_to_add:
             if mod not in blacklist:
                 blacklist.append(mod)
-            self.blacklist.remove(mod)
+            self.blacklist.pop(mod)
         self.dump_to_file(blacklist, self.blacklist_path)
         self.create(False)
 
