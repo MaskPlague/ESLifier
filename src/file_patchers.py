@@ -948,7 +948,7 @@ class patchers():
                 if 'File' in line and basename in line.lower():
                     patch_next_line = True
                 else:
-                    False
+                    patch_next_line = False
                 
             f.seek(0)
             f.truncate(0)
