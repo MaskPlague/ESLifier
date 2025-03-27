@@ -603,7 +603,7 @@ class scanner():
             if (scanner.count % factor) >= (factor-1):
                 print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
             if (file_lower.endswith(('.ini', '.json', '.psc', '.jslot', '.toml', '_conditions.txt', '_srd.yaml'))
-                or ('netscriptframework\\plugins\\customskill' in file_lower)
+                or (file_lower.endswith('config.txt') and 'plugins\\customskill' in file_lower)
                 and not ('modex\\user\\kits' in file_lower
                         or 'nemesis_engine' in file_lower
                         or 'quickarmorrebalance\\config\\' in file_lower

@@ -483,7 +483,7 @@ class CFIDs():
                         patchers.seq_patcher(new_file, form_id_map)
                     elif new_file_lower.endswith('.jslot'):                                                 # Racemenu Presets
                         patchers.jslot_patcher(basename, new_file, form_id_map)
-                    elif 'netscriptframework\\plugins\\customskill' in new_file_lower:                      # Old txt format CSF
+                    elif new_file_lower.endswith('config.txt') and 'plugin\\customskill' in new_file_lower: # CSF's old txt format
                         patchers.old_customskill_patcher(basename, new_file, form_id_map)
                     else:
                         print(f'Warn: Possible missing patcher for: {new_file}')
