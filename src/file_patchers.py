@@ -940,9 +940,10 @@ class patchers():
                     end_index = patchers.find_next_non_alphanumeric(line, index + 1)
                     end_of_line = line[end_index:]
                     form_id_int = int(line[index:end_index], 16)
-                    for form_ids in form_id_map:
-                        if form_id_int == int(form_ids[0], 16):
-                            lines[i] = start_of_line + ' 0x' + form_ids[2] + end_of_line
+                    if form_id_int != 0:
+                        for form_ids in form_id_map:
+                            if form_id_int == int(form_ids[0], 16):
+                                lines[i] = start_of_line + ' 0x' + form_ids[2] + end_of_line
                             
                 if 'File' in line and basename in line.lower():
                     patch_next_line = True
