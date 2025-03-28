@@ -483,7 +483,8 @@ class scanner():
     def get_file_masters():
         plugin_names = []
         for plugin in scanner.plugins: plugin_names.append(os.path.basename(plugin).lower())
-        pattern = re.compile(r'(?:~|:\s*|\||=|,|-|")\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\)?)\s*(?:\||,|"|$)')
+        #pattern = re.compile(r'(?:~|:\s*|\||=|,|-|")\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\)?)\s*(?:\||,|"|$)')
+        pattern = re.compile(r'(?:~|:\s*|\||=|,|-|"|\*)\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\)?)\s*(?:\||,|"|$|\n)')
         pattern2 = re.compile(rb'\x00.([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\x00', flags=re.DOTALL)
         pattern3 = re.compile(r'\\facegeom\\([a-zA-Z0-9_\-\'\?\!\(\)\[\]\,\s]+\.es[pml])\\')
         pattern4 = re.compile(r'\\facetint\\([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\\')
@@ -729,7 +730,7 @@ class scanner():
                     f.close()
                 if 'getformfromfile' in strings:
                     for string in strings:
-                        if string.endswith(('.esp', '.esl', '.esm')):
+                        if string.endswith(('.esp', '.esl', '.esm')) and not ':' in string:
                             with scanner.lock:
                                 if string not in scanner.file_dict: scanner.file_dict.update({string: []})
                                 if file not in scanner.file_dict[string]: scanner.file_dict[string].append(file)
