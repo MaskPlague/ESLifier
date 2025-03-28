@@ -114,15 +114,11 @@ class main(QWidget):
         self.h_layout5.addWidget(self.filter_compact)
 
         #Left Column
-        #self.h_layout1.addLayout(self.v_layout1)
         self.v_layout1.addWidget(self.eslify)
         self.v_layout1.addWidget(self.list_eslify)
         self.v_layout1.addLayout(self.h_layout3)
-
-        #self.h_layout1.addSpacing(20)
-
+        
         #Right Column
-        #self.h_layout1.addLayout(self.v_layout2)
         self.v_layout2.addWidget(self.compact)
         self.v_layout2.addWidget(self.list_compact)
         self.v_layout2.addLayout(self.h_layout5)
