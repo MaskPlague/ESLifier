@@ -393,12 +393,13 @@ class patchers():
             variable_end = variable[index:]
         else:
             form_id = variable
-        form_id = patchers.form_id_replacer(form_id, form_id_map)
-        variable = '0x' + form_id
-        if var_end:
-            variable += variable_end
-        else:
-            variable += ' '
+        if global_replace:
+            form_id = patchers.form_id_replacer(form_id, form_id_map)
+            variable = '0x' + form_id
+            if var_end:
+                variable += variable_end
+            else:
+                variable += ' '
         line = variable + line[equal_index:]
         line = patchers.comp_layout_3_processor(global_replace, basename, line, form_id_map)
         return line
