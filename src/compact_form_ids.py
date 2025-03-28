@@ -410,6 +410,8 @@ class CFIDs():
                             patchers.ini_ab_patcher(basename, new_file, form_id_map)
                         elif 'vsu\\' in new_file_lower:                                                     # VSU
                             patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
+                        elif 'completionistdata\\' in new_file_lower:                                       # Completionist
+                            patchers.ini_completionist_patcher(basename, new_file, form_id_map)
                         else:                                                                               # Might patch whatever else is using .ini?
                             print(f'Warn: Possible missing patcher for: {new_file}')
                     elif new_file_lower.endswith('_conditions.txt'):                                        # Dynamic Animation Replacer
