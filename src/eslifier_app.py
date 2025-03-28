@@ -3,7 +3,7 @@ import os
 import images_qr #do not remove, used for icons, it is a PyQt6 resource file
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPalette, QColor, QIcon
-from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMessageBox, QTableWidgetItem, QTabWidget, QVBoxLayout
+from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMessageBox, QTabWidget, QVBoxLayout
 
 from settings_page import settings
 from main_page import main
