@@ -36,6 +36,8 @@ class scanner():
         else:
             scanner.get_files_from_skyrim_folder(path, scan_esms, plugins_list)
 
+        scanner.plugin_basename_list = [os.path.basename(plugin).lower() for plugin in scanner.plugins]
+
         scanner.dump_to_file(file="ESLifier_Data/extracted_bsa.json", data=scanner.extracted)
         scanner.dump_to_file(file="ESLifier_Data/plugin_list.json", data=scanner.plugins)
 
@@ -705,14 +707,26 @@ class scanner():
                         os.remove(file)
                 else:
                     with open(file, 'r', encoding='utf-8', errors='ignore') as f:
-                        r = re.findall(pattern,f.read().lower())
-                        f.close()
-                    if r != []:
-                        for plugin in r:
-                            if 'NOT Is' not in plugin:
-                                with scanner.lock:
-                                    if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
-                                    if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+                        lines = [line.lower() for line in f.readlines()]
+                    found_plugins = set()
+                    for line in lines:
+                        if '.es' in line:
+                            for plugin in scanner.plugin_basename_list:
+                                if plugin in line:
+                                    found_plugins.add(plugin)
+                                        
+                    for plugin in found_plugins:
+                        with scanner.lock:
+                            if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
+                            if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+                    #    r = re.findall(pattern,f.read().lower())
+                    #    f.close()
+                    #if r != []:
+                    #    for plugin in r:
+                    #        if 'NOT Is' not in plugin:
+                    #            with scanner.lock:
+                    #                if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
+                    #                if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
 
             elif reader_type == 'pex':
                 with open(file, 'rb') as f:
