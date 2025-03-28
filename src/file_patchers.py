@@ -5,6 +5,13 @@ except ImportError:
 import json
 
 class patchers():
+    def form_id_replacer(form_id, form_id_map):
+        form_id_int = int(form_id, 16)
+        for form_ids in form_id_map:
+            if form_id_int == int(form_ids[0], 16):
+                return form_ids[2]
+        return form_id
+    
     def find_prev_non_alphanumeric(text, start_index):
         for i in range(start_index, 0, -1):
             if not text[i].isalnum() and text[i] != ' ':
@@ -338,6 +345,115 @@ class patchers():
             f.truncate(0)
             f.write(''.join(lines))
             f.close()
+
+    def ini_completionist_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+', encoding='utf-8') as f:
+            lines = f.readlines()
+            start_patching = False
+            plugin_to_patch = ''
+            global_replace = False
+            in_form_ids = False
+            end_tag = 'ENDTAG'
+            for i, line in enumerate(lines):
+                if not start_patching and line.startswith('PluginFileName'):
+                    index = line.index('=')+1
+                    plugin_to_patch = line[index:].strip().lower()
+                    if plugin_to_patch == basename:
+                        global_replace = True
+                if not in_form_ids and line.startswith('FormIDs'):
+                    if '<<<' in line:
+                        in_form_ids = True
+                        index = line.index('<<<')+3
+                        end_tag = line[index:].strip()
+                        continue
+                    else:
+                        lines[i] = patchers.comp_layout_3_processor(global_replace, basename, line, form_id_map)
+                if in_form_ids and line.strip() == end_tag:
+                    in_form_ids = False
+                
+                if in_form_ids:
+                    lines[i] = patchers.comp_form_id_processor(line, basename, global_replace, form_id_map, True)
+
+                if not in_form_ids and line.startswith('0x') and '=' in line:
+                    lines[i] = patchers.comp_variable_from_id(line, basename, global_replace, form_id_map)
+
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+
+    def comp_variable_from_id(line, basename, global_replace, form_id_map):
+        equal_index = line.index('=')
+        variable = line[:equal_index]
+        var_end = False
+        if '_' in variable:
+            index = variable.index('_')
+            form_id = variable[:index]
+            var_end = True
+            variable_end = variable[index:]
+        else:
+            form_id = variable
+        form_id = patchers.form_id_replacer(form_id, form_id_map)
+        variable = '0x' + form_id
+        if var_end:
+            variable += variable_end
+        else:
+            variable += ' '
+        line = variable + line[equal_index:]
+        line = patchers.comp_layout_3_processor(global_replace, basename, line, form_id_map)
+        return line
+
+    def comp_layout_3_processor(global_replace, basename, line, form_id_map):
+        # This assumes that no plugin name has a comma. If one does then it probably breaks completionist anyways.
+        start_index = line.index('=')+1
+        parts = [part for part in line[start_index:].split(',') if part]
+        append_newline = False
+        if parts[-1] == '\n':
+            append_newline = True
+            parts.pop()
+        for i, form_id_string in enumerate(parts):
+            parts[i] = patchers.comp_form_id_processor(form_id_string, basename, global_replace, form_id_map, False)
+        return_string = line[:start_index] + ' ' + ', '.join(parts) + ','
+        if append_newline:
+            return_string += '\n'
+        return return_string
+
+    def comp_form_id_processor(form_id_string, basename, global_replace, form_id_map, has_comma):
+        if has_comma:
+            index = form_id_string.index(',')
+            end_of_line = form_id_string[index:]
+            form_id_string = form_id_string[:index]
+        if '*' in form_id_string:
+            index = form_id_string.index('*')
+            if '<' in form_id_string:
+                add_end = True
+                end_index = form_id_string.index('<')
+            else:
+                add_end = False
+                end_index = len(form_id_string)
+            plugin = form_id_string[index+1:end_index].strip()
+            if plugin.lower() == basename:
+                form_id = form_id_string[:index]
+                form_id = patchers.form_id_replacer(form_id, form_id_map)
+                if add_end:
+                    end = form_id_string[end_index:]
+                    form_id_string = '0x' + form_id + '*' + plugin + end
+                else:
+                    form_id_string = '0x' + form_id + '*' + plugin
+        elif '<' in form_id_string:
+            end_index = form_id_string.index('<')
+            form_id = form_id_string[:end_index]
+            end = form_id_string[end_index:]
+            form_id = patchers.form_id_replacer(form_id, form_id_map)
+            form_id_string = '0x' + form_id + end
+            
+        elif global_replace:
+            form_id = patchers.form_id_replacer(form_id_string, form_id_map)
+            form_id_string = '0x' + form_id
+            
+        if has_comma:
+            form_id_string += end_of_line
+        return form_id_string
 
     def toml_dac_patcher(basename, new_file, form_id_map):
         with open(new_file, 'r+', encoding='utf-8') as f:
