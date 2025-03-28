@@ -730,7 +730,7 @@ class scanner():
                     f.close()
                 if 'getformfromfile' in strings:
                     for string in strings:
-                        if string.endswith(('.esp', '.esl', '.esm')) and not ':' in string:
+                        if string.endswith(('.esp', '.esl', '.esm')) and not ':' in string and not '/' in string and not '\\' in string:
                             with scanner.lock:
                                 if string not in scanner.file_dict: scanner.file_dict.update({string: []})
                                 if file not in scanner.file_dict[string]: scanner.file_dict[string].append(file)
