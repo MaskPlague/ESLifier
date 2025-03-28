@@ -81,6 +81,7 @@ pyinstaller "src/eslifier_app.py" --onefile -n "ESLifier" --noconsole --icon "sr
   - Leveled List Object Swapper
   - Item Property Manipulator
   - Music Type Distributor
+  - Completionist
 - .json:
   - Open Animation Replacer
   - MCM Helper
