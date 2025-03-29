@@ -1964,7 +1964,7 @@ class form_processor():
                     for _ in range(struct_count):
                         regn_offsets.append(in_field_offset)
                         regn_offsets.append(in_field_offset+8)
-                        in_field_offset + 12
+                        in_field_offset += 12
                 
             offset += field_size + 6
 
@@ -2351,8 +2351,8 @@ class form_processor():
         return [i, bytearray(form), wrld_offsets]
 
     def save_wthr_data(i, form): 
-        wthr_fields = [b'MNAM', b'NNAM', b'TNAM', b'SNAM']
-        special_wthr_fields = [b'IMSP']
+        wthr_fields = [b'MNAM', b'NNAM', b'TNAM', b'SNAM', b'GNAM']
+        special_wthr_fields = [b'IMSP', b'HNAM']
 
         wthr_offsets = [12]
         offset = 24
@@ -2362,7 +2362,7 @@ class form_processor():
             if field in wthr_fields:
                 wthr_offsets.append(offset + 6)
             elif field in special_wthr_fields:
-                if field == b'IMSP':
+                if field in (b'IMSP', b'HNAM'):
                     wthr_offsets.append(offset + 6)
                     wthr_offsets.append(offset + 10)
                     wthr_offsets.append(offset + 14)
