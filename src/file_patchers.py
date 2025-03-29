@@ -3,6 +3,7 @@ try:
 except ImportError:
     import re
 import json
+import os
 
 class patchers():
     def form_id_replacer(form_id, form_id_map):
@@ -455,6 +456,36 @@ class patchers():
         if has_comma:
             form_id_string += end_of_line
         return form_id_string
+
+    def ini_kreate_patcher(basename, new_file, form_id_map):
+        edid_file = 'ESLifier_Data\\EDIDs\\' + basename + '_EDIDs.txt'
+        edids = []
+        with open(edid_file, 'r', encoding='utf-8') as f:
+            for line in f.readlines():
+                edids.append(line.strip())
+        edid_name = os.path.basename(new_file).removesuffix('.ini')
+               # assume everything in a preset is meant for one weather mod or does not share ANY Form IDs with other weather mods
+        with open(new_file, 'r+', encoding='utf-8') as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if line.startswith('ID =') and edid_name in edids:
+                    index = line.index('=')
+                    form_id_int = int(line[index+1:],16)
+                    for form_ids in form_id_map:
+                        if form_id_int == int(form_ids[0], 16):
+                            lines[i] = 'ID = 0xFE' + form_ids[3] + '\n'
+                            break
+                elif 'ID' in line and '= 0x' in line:
+                    index = line.index('=')
+                    form_id_int = int(line[index+1:], 16)
+                    for form_ids in form_id_map:
+                        if form_id_int == int(form_ids[0], 16):
+                            lines[i] = line[:index+1] + ' 0xFE' + form_ids[3] + '\n'
+                            break
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
 
     def toml_dac_patcher(basename, new_file, form_id_map):
         with open(new_file, 'r+', encoding='utf-8') as f:
