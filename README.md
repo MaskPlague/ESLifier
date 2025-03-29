@@ -83,6 +83,7 @@ pyinstaller "src/eslifier_app.py" --onefile -n "ESLifier" --noconsole --icon "sr
   - Item Property Manipulator
   - Music Type Distributor
   - Completionist
+  - KreatE
 - .json:
   - Open Animation Replacer
   - MCM Helper
