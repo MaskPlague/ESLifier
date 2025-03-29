@@ -8,8 +8,11 @@ import mmap
 import psutil
 import struct
 
+from plugin_qualification_checker import qualification_checker
+from dependency_getter import dependecy_getter
+
 class scanner():
-    def __init__(self, path, mo2_mode, modlist_txt_path, scan_esms, plugins_txt_path, bsab):
+    def scan(path, mo2_mode, modlist_txt_path, scan_esms, plugins_txt_path, bsab, update_header, full_scan):
         scanner.bsa_blacklist = ['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
                     'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
                     'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa']
@@ -17,6 +20,15 @@ class scanner():
         scanner.file_count = 0
         scanner.all_files = []
         scanner.plugins = []
+        scanner.file_dict = {}
+        scanner.bsa_dict = {}
+        scanner.dll_dict = {}
+        scanner.bsa_files = []
+        scanner.threads = []
+        scanner.seq_files = []
+        scanner.pex_files = []
+        scanner.dll_files = []
+        scanner.kreate_files = []
         scanner.bsab = bsab
         scanner.lock = threading.Lock()
         total_ram = psutil.virtual_memory().total
@@ -42,7 +54,13 @@ class scanner():
         scanner.dump_to_file(file="ESLifier_Data/plugin_list.json", data=scanner.plugins)
 
         print('\033[F\033[K-  Gathered ' + str(len(scanner.all_files)) +' total files.', end='\r')
-        
+
+        if full_scan:
+            print('\nGettings Dependencies')
+            dependency_dictionary = dependecy_getter.scan(path)
+            print('\nScanning Plugins')
+            flag_dict = qualification_checker.scan(path, update_header, scan_esms)
+
         scanner.get_file_masters()
 
         bsa_dict = scanner.sort_bsa_files(scanner.bsa_dict, plugins_list)
@@ -55,7 +73,7 @@ class scanner():
         end_time = timeit.default_timer()
         time_taken = end_time - start_time
         print(f'\033[F\033[K-  Time taken: ' + str(round(time_taken,2)) + ' seconds')
-
+        return flag_dict, dependency_dictionary
     
     def sort_bsa_files(bsa_dict, plugins):
         def get_base_name(bsa_path):
@@ -492,13 +510,6 @@ class scanner():
         pattern4 = re.compile(r'\\facetint\\([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\\')
         pattern5 = re.compile(r'\\sound\\voice\\([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\\')
         scanner.file_dict = {plugin: [] for plugin in plugin_names}
-        scanner.bsa_dict = {}
-        scanner.dll_dict = {}
-        scanner.bsa_files = []
-        scanner.threads = []
-        scanner.seq_files = []
-        scanner.pex_files = []
-        scanner.dll_files = []
         scanner.count = 0
         
         if len(scanner.all_files) > 500000:
@@ -575,6 +586,41 @@ class scanner():
         for thread in scanner.threads: thread.join()
         scanner.threads.clear()
 
+        print("-  Scanning Other files")
+        scanner.kreate_processor()
+
+    def kreate_processor():
+        plugin_edid_dict = {}
+        if os.path.exists('ESLifier_Data\\EDIDs'):
+            for file in os.scandir('ESLifier_Data\\EDIDs'):
+                basename = os.path.basename(file)
+                plugin_name = basename.removesuffix('_EDIDs.txt').lower()
+                plugin_edid_dict[plugin_name] = []
+                with open(file, 'r', encoding='utf-8') as f:
+                    for line in f.readlines():
+                        plugin_edid_dict[plugin_name].append(line.strip())
+
+        for plugin, edids in plugin_edid_dict.items():
+            for kreate_file in scanner.kreate_files:
+                file_edid = os.path.basename(kreate_file).removesuffix('.ini')
+                # only works if KreatE preset has at least one EDID ini file from a weather mod
+                if file_edid in edids:
+                    # assume everything in a preset is meant for one weather mod or does not share ANY Form IDs with other weather mods
+                    if plugin not in scanner.file_dict: 
+                        scanner.file_dict.update({plugin: []})
+                    split = kreate_file.split(os.sep)[:-2]
+                    level = len(split)
+                    directory = os.sep.join(split)
+                    for root, _, files in os.walk(directory):
+                        split = root.split(os.sep)
+                        root_level = len(split)
+                        if root_level == level + 1:
+                            for file_name in files:
+                                file = os.path.join(root, file_name)
+                                if file not in scanner.file_dict[plugin]: 
+                                    scanner.file_dict[plugin].append(file)
+                    break
+        
 
     def bsa_processor(files):
         for file in files:
@@ -611,6 +657,9 @@ class scanner():
                         or 'nemesis_engine' in file_lower
                         or 'quickarmorrebalance\\config\\' in file_lower
                         or 'equipmenttoggle\\slotdata\\' in file_lower)):
+                if 'kreate\\presets\\' in file_lower:
+                    scanner.kreate_files.append(file)
+                    continue
                 thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
                 scanner.threads.append(thread)
                 thread.start()
