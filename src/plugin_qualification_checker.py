@@ -12,6 +12,10 @@ class qualification_checker():
         qualification_checker.flag_dict = {}
         qualification_checker.max_record_number = 4096
         qualification_checker.scan_esms = scan_esms
+        if not os.path.exists("ESLifier_Data/EDIDs"):
+            os.makedirs("ESLifier_Data/EDIDs")
+        if not os.path.exists('ESLifier_Data/Cell_IDs/'):
+            os.makedirs('ESLifier_Data/Cell_IDs/')
         if update_header:
             qualification_checker.num_max_records = 4096
         else:
@@ -78,6 +82,7 @@ class qualification_checker():
         interior_cell_flag = False
         need_compacting = False
         new_wrld = False
+        edids = []
         with open(file, 'rb') as f:
             data = f.read()
         data_list = qualification_checker.create_data_list(data)
@@ -114,18 +119,35 @@ class qualification_checker():
                                 flags = form_to_check[offset+6]
                                 interior_cell_flag = (flags & 0x01) != 0
                             offset += field_size + 6
+
                 if record_type == b'WRLD':
                     new_wrld = True
+
+                if record_type in (b'CELL', b'CLMT', b'IMGS', b'LGTM', b'VOLI', b'WTHR'): # Get EDIDs for KreatE and whatever else may use them in the future
+                    flag_byte = form[10]
+                    compressed_flag = (flag_byte & 0x04) != 0
+                    form_to_check = form
+                    if compressed_flag:
+                        form_to_check = form[:24] + zlib.decompress(form[28:])
+                    if form_to_check[24:28] == b'EDID':
+                        offset = 28
+                        edid_len = struct.unpack("<H", form_to_check[offset:offset+2])[0]
+                        offset += 2
+                        edids.append(form_to_check[offset:offset+edid_len-1].decode())
+
                     
             if record_type == b'CELL' and form[15] >= master_count and str(form[12:15].hex()) not in cell_form_ids:
                 cell_form_ids.append(str(form[12:15].hex()))
-
+        
+        edids.sort()
+        if edids != []:
+            edid_file = os.path.join("ESLifier_Data/EDIDs", os.path.basename(file) + '_EDIDs.txt')
+            with open(edid_file, 'w', encoding='utf-8') as f:
+                for edid in edids:
+                    f.write(edid + '\n')
         cell_form_ids.sort()
         if cell_form_ids != []:
             cell_form_id_file = 'ESLifier_Data/Cell_IDs/' + os.path.basename(file) + '_CellFormIDs.txt'
-            with qualification_checker.lock:
-                if not os.path.exists(os.path.dirname(cell_form_id_file)):
-                    os.makedirs(os.path.dirname(cell_form_id_file))
             with open(cell_form_id_file, 'w', encoding='utf-8') as f:
                 for form_id in cell_form_ids:
                     f.write(form_id + '\n')
