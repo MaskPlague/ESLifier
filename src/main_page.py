@@ -9,8 +9,6 @@ from PyQt6.QtGui import QIcon
 from list_eslify import list_eslable
 from list_compact import list_compactable
 from scanner import scanner
-from plugin_qualification_checker import qualification_checker
-from dependency_getter import dependecy_getter
 from compact_form_ids import CFIDs
 from cell_changed_scanner import cell_scanner
 from full_form_processor import form_processor
@@ -364,11 +362,8 @@ class Worker(QObject):
 
     def scan_run(self):
         print('Scanning All Files:')
-        scanner(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.scan_esms, self.plugins_txt_path, self.bsab)
-        print('\nGettings Dependencies')
-        dependency_dictionary = dependecy_getter.scan(self.skyrim_folder_path)
-        print('\nScanning Plugins')
-        flag_dict = qualification_checker.scan(self.skyrim_folder_path, self.update_header,self.scan_esms)
+        flag_dict, dependency_dictionary = scanner.scan(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, 
+                                                   self.scan_esms, self.plugins_txt_path, self.bsab, self.update_header, True)
         print('Checking if New CELLs are Changed')
         plugins_with_cells = [plugin for plugin, flags in flag_dict.items() if 'new_cell' in flags]
         cell_scanner.scan(plugins_with_cells)

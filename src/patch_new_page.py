@@ -235,7 +235,7 @@ class Worker(QObject):
 
     def scan_run(self):
         print('Scanning All Files:')
-        scanner(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.scan_esms, self.plugins_txt_path, self.bsab)
+        scanner.scan(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.scan_esms, self.plugins_txt_path, self.bsab, False)
         print('Getting Dependencies')
         dependecy_getter.scan(self.skyrim_folder_path)
         self.finished_signal.emit()
