@@ -3,6 +3,7 @@ import json
 import threading
 import zlib
 import struct
+import shutil
 
 class qualification_checker():
     def scan(path, update_header, scan_esms):
@@ -12,6 +13,8 @@ class qualification_checker():
         qualification_checker.flag_dict = {}
         qualification_checker.max_record_number = 4096
         qualification_checker.scan_esms = scan_esms
+        if os.path.exists('ESLifier_Data/EDIDs'):
+            shutil.rmtree('ESLifier_Data/EDIDs')
         if not os.path.exists("ESLifier_Data/EDIDs"):
             os.makedirs("ESLifier_Data/EDIDs")
         if not os.path.exists('ESLifier_Data/Cell_IDs/'):
