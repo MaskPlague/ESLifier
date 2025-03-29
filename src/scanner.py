@@ -73,7 +73,8 @@ class scanner():
         end_time = timeit.default_timer()
         time_taken = end_time - start_time
         print(f'\033[F\033[K-  Time taken: ' + str(round(time_taken,2)) + ' seconds')
-        return flag_dict, dependency_dictionary
+        if full_scan:
+            return flag_dict, dependency_dictionary
     
     def sort_bsa_files(bsa_dict, plugins):
         def get_base_name(bsa_path):
