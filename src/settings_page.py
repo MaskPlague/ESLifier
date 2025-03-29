@@ -360,6 +360,8 @@ class settings(QWidget):
                 shutil.rmtree('ESLifier_Data/Form_ID_Maps')
             if os.path.exists('ESLifier_Data/Cell_IDs'):
                 shutil.rmtree('ESLifier_Data/Cell_IDs')
+            if os.path.exists('ESLifier_Data/EDIDs'):
+                shutil.rmtree('ESLifier_Data/EDIDs')
             if os.path.exists('ESLifier_Data/compacted_and_patched.json'):
                 try:
                     with open('ESLifier_Data/compacted_and_patched.json', 'r', encoding='utf-8') as fcp:
