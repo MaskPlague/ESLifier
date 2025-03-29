@@ -56,9 +56,9 @@ class scanner():
         print('\033[F\033[K-  Gathered ' + str(len(scanner.all_files)) +' total files.', end='\r')
 
         if full_scan:
-            print('\nGettings Dependencies')
+            print('Gettings Dependencies')
             dependency_dictionary = dependecy_getter.scan(path)
-            print('\nScanning Plugins')
+            print('Scanning Plugins')
             flag_dict = qualification_checker.scan(path, update_header, scan_esms)
 
         scanner.get_file_masters()
@@ -523,7 +523,7 @@ class scanner():
         chunks = [scanner.all_files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
         chunks.append(scanner.all_files[(split) * chunk_size:])
 
-        print('-  Getting masters of loose files...\n\n')
+        print('Getting masters of loose files...\n\n')
         for chunk in chunks:
             thread = threading.Thread(target=scanner.file_processor, args=(chunk, pattern, pattern3, pattern4, pattern5))
             scanner.threads.append(thread)
