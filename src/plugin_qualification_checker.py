@@ -17,6 +17,8 @@ class qualification_checker():
             shutil.rmtree('ESLifier_Data/EDIDs')
         if not os.path.exists("ESLifier_Data/EDIDs"):
             os.makedirs("ESLifier_Data/EDIDs")
+        if os.path.exists('ESLifier_Data/Cell_IDs'):
+            shutil.rmtree('ESLifier_Data/Cell_IDs')
         if not os.path.exists('ESLifier_Data/Cell_IDs/'):
             os.makedirs('ESLifier_Data/Cell_IDs/')
         if update_header:
