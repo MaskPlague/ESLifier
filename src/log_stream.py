@@ -23,7 +23,7 @@ class log_stream(QMainWindow):
         if not os.path.exists("ESLifier_Data/"):
             os.makedirs("ESLifier_Data/")
         self.log_file = open("ESLifier_Data/ESLifier.log", 'w', encoding='utf-8')
-        self.log_file.write('ESLifier Version v0.6.0-alpha\n')
+        self.log_file.write('ESLifier Version v0.6.1-alpha\n')
         self.log_file.write('Working directory is ' + os.getcwd())
         self.log_file.flush()
 
