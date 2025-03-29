@@ -9,7 +9,7 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
   
 # For Users
 ## External Requirements
-ESLifier relies on [BSA Browser](https://www.nexusmods.com/skyrimspecialedition/mods/1756) to extract scripts, facegen, and voice files from BSA files.
+ESLifier relies on [BSA Browser](https://www.nexusmods.com/skyrimspecialedition/mods/1756)'s bsab.exe (included in the zip version) to extract scripts, facegen, and voice files from BSA files.
 
 ## User Manual
 Notes:
