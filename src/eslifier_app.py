@@ -263,7 +263,7 @@ palette = app.palette()
 background_color = palette.color(QPalette.ColorRole.Window)
 
 # Determine if the mode is dark or light based on brightness
-if background_color.lightness() < 128:  # Darker backgrounds mean dark mode
+if background_color.lightness() < 128:
     COLOR_MODE = "Dark"
 else:
     COLOR_MODE = "Light"
