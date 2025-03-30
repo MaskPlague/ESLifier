@@ -1,6 +1,8 @@
 import sys
 import os
 import images_qr #do not remove, used for icons, it is a PyQt6 resource file
+import json
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPalette, QColor, QIcon
 from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMessageBox, QTabWidget, QVBoxLayout
@@ -9,18 +11,68 @@ from settings_page import settings
 from main_page import main
 from patch_new_page import patch_new
 from log_stream import log_stream
+
+CURRENT_VERSION = '0.6.3' #-alpha
+MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
+VERSION_TUPLE = (MAJOR, MINOR, PATCH)
+
+def verify_luhn_checksum(filename):
+    with open(filename, "rb") as f:
+        data = f.read()
+
+    original_data, stored_checksum = data[:-1], data[-1]
+    computed_checksum = luhn_checksum(original_data)
+
+    if computed_checksum != stored_checksum:
+        raise RuntimeError("File is corrupted! Checksum mismatch. Redownload the file, if the issue persists then report this to the GitHub.")
+    else:
+        if os.path.exists('ESLifier_Data/settings.json'):
+            with open('ESLifier_Data/settings.json', 'r+', encoding='utf-8') as f:
+                settings_data = json.load(f)
+                settings_data['version'] = CURRENT_VERSION
+                f.seek(0)
+                f.truncate(0)
+                json.dump(settings_data, f, ensure_ascii=False, indent=4)
+        else:
+            os.makedirs('ESLifier_Data/')
+            settings_data = {"version": CURRENT_VERSION}
+            with open('ESLifier_Data/settings.json', 'w', encoding='utf-8') as f:
+                json.dump(settings_data, f, ensure_ascii=False, indent=4)
+
+def luhn_checksum(data: bytes) -> int:
+    digits = [b for b in data]
+    digits.reverse()
+    total = 0
+    for i, digit in enumerate(digits):
+        if i % 2 == 0:
+            digit *= 2
+            if digit > 255:
+                digit -= 256
+        total += digit
+    return (256 - (total % 256)) % 256
+
+
 class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
         #TODO: Research into making a save patcher
         if getattr(sys, 'frozen', False):
             os.chdir(os.path.dirname(sys.executable))
-
+            if os.path.exists('ESLifier_Data/settings.json'):
+                with open('ESLifier_Data/settings.json', 'r', encoding='utf-8') as f:
+                    settings_data = json.load(f)
+                version = settings_data.get('version', '0.0.0')
+                major, minor, patch = [int(x, 10) for x in version.split('.')] 
+                version_tuple = (major, minor, patch)
+                if VERSION_TUPLE > version_tuple:
+                    verify_luhn_checksum('ESLifier.exe')
+            else:
+                verify_luhn_checksum('ESLifier.exe')
         self.setWindowTitle("ESLifier")
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.resize(1300, 500)
         self.move(100,50)
-        self.log_stream = log_stream(self)
+        self.log_stream = log_stream(self, CURRENT_VERSION)
         self.setWindowIcon(QIcon(":/images/ESLifier.png"))
         self.setFocus()
         if COLOR_MODE == 'Light':
