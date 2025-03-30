@@ -1318,7 +1318,7 @@ class form_processor():
         return [i, bytearray(form), lctn_offsets]
 
     def save_ligh_data(i, form): 
-        ligh_fields = [b'SNAM']
+        ligh_fields = [b'SNAM', b'LNAM']
         special_ligh_fields = [b'VMAD', b'DSTD', b'DMDS']
 
         ligh_offsets = [12]
