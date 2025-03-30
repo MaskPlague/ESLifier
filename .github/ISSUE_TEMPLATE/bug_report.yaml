@@ -18,13 +18,21 @@ body:
     attributes:
       label: What version of ESLifier are you using?
       options:
+        - Other (Specify in Description)
         - 0.6.1-alpha
         - 0.6.0-alpha
         - 0.5.21-alpha
         - 0.5.18-alpha
-        - Other (Specify in Description)
     validations:
       required: true
+      
+  - type: checkboxes
+    id: not-already-fixed-on-new-version
+    attributes:
+      label: Has the issue already been fixed?
+      options:
+        - label: I have verified that the issue is present or not fixed in the latest version.
+          required: true
 
   - type: textarea
     id: describe-the-problem
