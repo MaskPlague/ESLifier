@@ -567,7 +567,7 @@ class scanner():
         print("-  Sorting .seq files")
         scanner.seq_plugin_extension_processor(scanner.seq_files)
 
-        print("-  Scanning .bsa files\n\n")
+        print("-  Scanning .bsa files")
         scanner.file_count = len(scanner.bsa_files)
         scanner.count = 0
         if len(scanner.bsa_files) > 100:
@@ -587,7 +587,7 @@ class scanner():
         for thread in scanner.threads: thread.join()
         scanner.threads.clear()
 
-        print("-  Scanning Other files")
+        print("-  Scanning Other files\n\n")
         scanner.kreate_processor()
 
     def kreate_processor():
@@ -622,12 +622,11 @@ class scanner():
                                     scanner.file_dict[plugin].append(file)
                     break
         
-
     def bsa_processor(files):
         for file in files:
             scanner.count += 1
             scanner.percentage = (scanner.count/scanner.file_count) * 100
-            print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
+            #print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
             scanner.bsa_reader(file)
 
     def pex_processor(pattern2, files):
@@ -652,12 +651,15 @@ class scanner():
                 factor = 1
             if (scanner.count % factor) >= (factor-1):
                 print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
-            if (file_lower.endswith(('.ini', '.json', '.psc', '.jslot', '.toml', '_conditions.txt', '_srd.yaml'))
-                or (file_lower.endswith('config.txt') and 'plugins\\customskill' in file_lower)
-                and not ('modex\\user\\kits' in file_lower
-                        or 'nemesis_engine' in file_lower
-                        or 'quickarmorrebalance\\config\\' in file_lower
-                        or 'equipmenttoggle\\slotdata\\' in file_lower)):
+            if ((file_lower.endswith(('.ini', '.json', '.psc', '.jslot', '.toml', '_conditions.txt', '_srd.yaml'))
+                or (file_lower.endswith('config.txt') and 'plugins\\customskill' in file_lower))
+                    and not ('modex\\user\\kits' in file_lower
+                            or 'nemesis_engine' in file_lower
+                            or 'quickarmorrebalance\\config\\' in file_lower
+                            or 'equipmenttoggle\\slotdata\\' in file_lower
+                            or file_lower.endswith('enginefixes_snct.toml')
+                            )
+                ):
                 if 'kreate\\presets\\' in file_lower:
                     scanner.kreate_files.append(file)
                     continue
