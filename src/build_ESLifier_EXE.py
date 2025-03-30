@@ -2,11 +2,8 @@ import subprocess
 import os
 
 def luhn_checksum(data: bytes) -> int:
-    digits = [b for b in data]
-    digits.reverse()
-
     total = 0
-    for i, digit in enumerate(digits):
+    for i, digit in enumerate(reversed(data)):
         if i % 2 == 0:
             digit *= 2
             if digit > 255:
