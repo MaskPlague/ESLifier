@@ -11,7 +11,6 @@ from PyQt6.QtGui import QIcon
 from blacklist import blacklist_window
 
 from QToggle import QtToggle
-#TODO: popup when resetting bsa is complete
 class settings(QWidget):
     def __init__(self):
         super().__init__()
