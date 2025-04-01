@@ -1959,7 +1959,7 @@ class form_processor():
     def save_qust_data(i, form): 
         qust_fields = [b'QTGL', b'NAM0', b'ALCO', b'ALEQ', b'KNAM', b'ALRT', b'ALFL', b'ALFR', b'ALUA', b'CNTO', b'SPOR', b'OCOR', b'GWOR', b'ECOR', b'ALDN',
                         b'ALSP', b'ALFC', b'ALPC', b'VTCK', b'QSTA']
-        special_qust_fields = [b'VMAD', b'CTDA', b'KWDA' b'COED']
+        special_qust_fields = [b'VMAD', b'CTDA', b'KWDA', b'COED']
 
         qust_offsets = [12]
         offset = 24
