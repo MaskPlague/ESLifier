@@ -233,8 +233,10 @@ class form_processor():
                 saved_forms.append(form_processor.save_pack_data(i, form))
             elif b'PERK' == record_type:
                 saved_forms.append(form_processor.save_perk_data(i, form))
-            elif b'PGRE' == record_type:
-                saved_forms.append(form_processor.save_pgre_data(i, form))
+            elif record_type in (
+                b'PHZD', b'PGRE', b'PMIS', b'PARW',
+                b'PBAR', b'PCON', b'PFLA', b'BEAM',):
+                saved_forms.append(form_processor.save_placed_data(i, form))
             elif b'PHZD' == record_type:
                 saved_forms.append(form_processor.save_phzd_data(i, form))
             elif b'PROJ' == record_type:
@@ -313,8 +315,7 @@ class form_processor():
         return saved_forms
     
     def save_achr_data(i, form):
-        #XESP and XAPR are structs but FormID is in same offset as others
-        achr_fields = [b'NAME', b'XEZN', b'INAM', b'XAPR', b'XLRT', b'XHOR', b'XOWN', b'XESP', b'XLCN', b'XLRL']
+        achr_fields = [b'NAME', b'XEZN', b'INAM', b'XMRC', b'XAPR', b'XLRT', b'XHOR', b'XOWN', b'XESP', b'XLCN', b'XLRL', b'XEMI', b'XMBR']
         special_achr_fields = [b'PDTO', b'VMAD', b'XLKR']
 
         achr_offsets = [12]
@@ -366,6 +367,7 @@ class form_processor():
 
     def save_addn_data(i, form):
         addn_fields = [b'SNAM']
+        special_addn_fields = [b'MODS']
 
         addn_offsets = [12]
         offset = 24
@@ -374,13 +376,16 @@ class form_processor():
             field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in addn_fields:
                 addn_offsets.append(offset + 6)
+            elif field in special_addn_fields:
+                if field == b'MODS':
+                    addn_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), addn_offsets]
 
     def save_alch_data(i, form):
-        alch_fields = [b'YNAM', b'ZNAM', b'EFID']
-        special_alch_fields = [b'KWDA', b'ENIT', b'MODS', b'CTDA']
+        alch_fields = [b'YNAM', b'ZNAM', b'EFID', b'ETYP']
+        special_alch_fields = [b'KWDA', b'ENIT', b'MODS', b'CTDA', b'DSTD', b'DMDS']
 
         alch_offsets = [12]
         offset = 24
@@ -399,13 +404,18 @@ class form_processor():
                     alch_offsets.append(offset + 22) #UseSound SNDR 6 + 16
                 elif field == b'CTDA':
                     alch_offsets.extend(form_processor.ctda_reader(form, offset))
+                elif field == b'DSTD':
+                    alch_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
+                    alch_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
+                elif field == b'DMDS':
+                    alch_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), alch_offsets]
 
     def save_ammo_data(i, form):
         ammo_fields = [b'YNAM', b'ZNAM', b'DATA']
-        special_ammo_fields = [b'KWDA']
+        special_ammo_fields = [b'KWDA', b'MODS', b'DSTD', b'DMDS']
 
         ammo_offsets = [12]
         offset = 24
@@ -417,6 +427,13 @@ class form_processor():
             elif field in special_ammo_fields:
                 if field == b'KWDA':
                     ammo_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                elif field == b'MODS':
+                    ammo_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
+                elif field == b'DSTD':
+                    ammo_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
+                    ammo_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
+                elif field == b'DMDS':
+                    ammo_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), ammo_offsets]
@@ -438,7 +455,7 @@ class form_processor():
 
     def save_appa_data(i, form):
         appa_fields = [b'YNAM', b'ZNAM']
-        special_appa_fields = [b'DSTD', b'DMDS', b'VMAD']
+        special_appa_fields = [b'DSTD', b'DMDS', b'VMAD', b'MODS']
 
         appa_offsets = [12]
         offset = 24
@@ -455,6 +472,8 @@ class form_processor():
                     appa_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
                 elif field == b'VMAD':
                     appa_offsets.extend(form_processor.vmad_reader(form, offset))
+                elif field == b'MODS':
+                    appa_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), appa_offsets]
@@ -577,7 +596,7 @@ class form_processor():
         return [i, bytearray(form), book_offsets]
 
     def save_bptd_data(i, form):
-        bptd_fields = [b'RAGA']
+        bptd_fields = [b'RAGA'] # Might not be necessary
         special_bptd_fields = [b'MODS', b'BPND']
 
         bptd_offsets = [12]
@@ -604,6 +623,7 @@ class form_processor():
 
     def save_cams_data(i, form):
         cams_fields = [b'MNAM']
+        special_cams_fields = [b'MODS']
 
         cams_offsets = [12]
         offset = 24
@@ -612,6 +632,9 @@ class form_processor():
             field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in cams_fields:
                 cams_offsets.append(offset + 6)
+            elif field in special_cams_fields:
+                if field == b'MODS':
+                    cams_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), cams_offsets]
@@ -639,14 +662,13 @@ class form_processor():
         return [i, bytearray(form), cell_offsets]
 
     def save_clmt_data(i, form):
-        special_clmt_fields = [b'WLST']
+        special_clmt_fields = [b'WLST', b'MODS']
 
         clmt_offsets = [12]
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
             field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
-
             if field in special_clmt_fields:
                 if field == b'WLST':
                     array_size = field_size // 12
@@ -655,6 +677,8 @@ class form_processor():
                         clmt_offsets.append(in_field_offset)
                         clmt_offsets.append(in_field_offset + 8)
                         in_field_offset += 12
+                elif field == b'MODS':
+                    clmt_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), clmt_offsets]
@@ -703,7 +727,7 @@ class form_processor():
     
     def save_cont_data(i, form):
         cont_fields = [b'SNAM', b'QNAM', b'CNTO']
-        special_cont_fields = [b'MODS', b'VMAD', b'COED']
+        special_cont_fields = [b'MODS', b'VMAD', b'COED', b'DSTD', b'DMDS']
 
         cont_offsets = [12]
         offset = 24
@@ -720,6 +744,11 @@ class form_processor():
                 elif field == b'COED':
                     cont_offsets.append(offset + 6)
                     cont_offsets.append(offset + 10)
+                elif field == b'DSTD':
+                    cont_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
+                    cont_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
+                elif field == b'DMDS':
+                    cont_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), cont_offsets]
@@ -809,7 +838,7 @@ class form_processor():
 
     def save_door_data(i, form): 
         door_fields = [b'SNAM', b'ANAM', b'BNAM', b'TNAM']
-        special_door_fields = [b'VMAD', b'MODS']
+        special_door_fields = [b'VMAD', b'MODS', b'DSTD', b'DMDS']
 
         door_offsets = [12]
         offset = 24
@@ -823,6 +852,11 @@ class form_processor():
                     door_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
                 elif field == b'VMAD':
                     door_offsets.extend(form_processor.vmad_reader(form, offset))
+                elif field == b'DSTD':
+                    door_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
+                    door_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
+                elif field == b'DMDS':
+                    door_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), door_offsets]
@@ -924,7 +958,7 @@ class form_processor():
 
     def save_expl_data(i, form): 
         expl_fields = [b'EITM', b'MNAM']
-        special_FORM_fields = [b'DATA']
+        special_FORM_fields = [b'DATA', b'MODS']
 
         expl_offsets = [12]
         offset = 24
@@ -936,12 +970,14 @@ class form_processor():
             elif field in special_FORM_fields:
                 if field == b'DATA':                        #DATA description not present in uesp wiki
                     in_data_offset = offset + 6
-                    expl_offsets.append(in_data_offset)     # LIGH?
-                    expl_offsets.append(in_data_offset+ 4)  # SNDR 1?
-                    expl_offsets.append(in_data_offset+ 8)  # SNDR 2?
-                    expl_offsets.append(in_data_offset+ 12) # IPDS?
-                    expl_offsets.append(in_data_offset+ 16) # WEAP?
-                    expl_offsets.append(in_data_offset+ 20) # PROJ?
+                    expl_offsets.append(in_data_offset)     # LIGH
+                    expl_offsets.append(in_data_offset+ 4)  # SNDR 1
+                    expl_offsets.append(in_data_offset+ 8)  # SNDR 2
+                    expl_offsets.append(in_data_offset+ 12) # IPDS
+                    expl_offsets.append(in_data_offset+ 16) # WEAP
+                    expl_offsets.append(in_data_offset+ 20) # PROJ
+                elif field == b'MODS':
+                    expl_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), expl_offsets]
@@ -1068,7 +1104,7 @@ class form_processor():
         return [i, bytearray(form), furn_offsets]
 
     def save_glob_data(i, form): 
-        special_glob_fields = [b'VMAD']
+        special_glob_fields = [b'VMAD'] #probably not necessary
 
         glob_offsets = [12]
         offset = 24
@@ -1092,7 +1128,7 @@ class form_processor():
 
     def save_hazd_data(i, form): 
         hazd_fields = [b'MNAM']
-        special_hazd_fields = [b'DATA']
+        special_hazd_fields = [b'DATA', b'MODS']
 
         hazd_offsets = [12]
         offset = 24
@@ -1108,12 +1144,15 @@ class form_processor():
                     hazd_offsets.append(in_field_offset+ 28) #Light
                     hazd_offsets.append(in_field_offset+ 32) #Impact Data Set
                     hazd_offsets.append(in_field_offset+ 36) #Sound
+                elif field == b'MODS':
+                    hazd_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), hazd_offsets]
 
     def save_hdpt_data(i, form): 
         hdpt_fields = [b'HNAM', b'TNAM', b'RNAM', b'CNAM']
+        special_hdpt_fields = [b'MODS']
 
         hdpt_offsets = [12]
         offset = 24
@@ -1122,6 +1161,9 @@ class form_processor():
             field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in hdpt_fields:
                 hdpt_offsets.append(offset + 6)
+            elif field in special_hdpt_fields:
+                if field == b'MODS':
+                    hdpt_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), hdpt_offsets]
@@ -1145,7 +1187,7 @@ class form_processor():
         return [i, bytearray(form), idle_offsets]
 
     def save_idlm_data(i, form): 
-        special_idlm_fields = [b'IDLA']
+        special_idlm_fields = [b'IDLA', b'MODS']
 
         idlm_offsets = [12]
         offset = 24
@@ -1153,11 +1195,14 @@ class form_processor():
             field = form[offset:offset+4]
             field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in special_idlm_fields:
-                idla_length = field_size // 4
-                in_field_offset = offset + 6
-                for _ in range(idla_length):
-                    idlm_offsets.append(in_field_offset)
-                    in_field_offset += 4
+                if field == b'IDLA':
+                    idla_length = field_size // 4
+                    in_field_offset = offset + 6
+                    for _ in range(idla_length):
+                        idlm_offsets.append(in_field_offset)
+                        in_field_offset += 4
+                elif field == b'MODS':
+                    idlm_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), idlm_offsets]
@@ -1185,8 +1230,8 @@ class form_processor():
         return [i, bytearray(form), info_offsets]
 
     def save_ingr_data(i, form): 
-        ingr_fields = [b'YNAM', b'ZNAM', b'EFID']
-        special_ingr_fields = [b'VMAD', b'KWDA', b'CTDA']
+        ingr_fields = [b'YNAM', b'ZNAM', b'EFID', b'ETYP']
+        special_ingr_fields = [b'VMAD', b'KWDA', b'CTDA', b'MODS', b'DSTD', b'DMDS']
 
         ingr_offsets = [12]
         offset = 24
@@ -1202,12 +1247,20 @@ class form_processor():
                     ingr_offsets.extend(form_processor.get_kwda_offsets(offset, form))
                 elif field == b'CTDA':
                     ingr_offsets.extend(form_processor.ctda_reader(form, offset))
+                elif field == b'MODS':
+                    ingr_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
+                elif field == b'DSTD':
+                    ingr_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
+                    ingr_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
+                elif field == b'DMDS':
+                    ingr_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), ingr_offsets]
 
     def save_ipct_data(i, form): 
         ipct_fields = [b'DNAM', b'ENAM', b'SNAM', b'NAM1', b'NAM2']
+        special_ipct_fields = [b'MODS']
 
         ipct_offsets = [12]
         offset = 24
@@ -1216,6 +1269,9 @@ class form_processor():
             field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in ipct_fields:
                 ipct_offsets.append(offset + 6)
+            elif field in special_ipct_fields:
+                if field == b'MODS':
+                    ipct_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), ipct_offsets]
@@ -1238,7 +1294,7 @@ class form_processor():
 
     def save_keym_data(i, form): 
         keym_fields = [b'YNAM', b'ZNAM']
-        special_keym_fields = [b'VMAD', b'KWDA']
+        special_keym_fields = [b'VMAD', b'KWDA', b'MODS', b'DSTD', b'DMDS']
 
         keym_offsets = [12]
         offset = 24
@@ -1252,6 +1308,13 @@ class form_processor():
                     keym_offsets.extend(form_processor.vmad_reader(form, offset))
                 elif field == b'KWDA':
                     keym_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                elif field == b'MODS':
+                    keym_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
+                elif field == b'DSTD':
+                    keym_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
+                    keym_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
+                elif field == b'DMDS':
+                    keym_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), keym_offsets]
@@ -1319,7 +1382,7 @@ class form_processor():
 
     def save_ligh_data(i, form): 
         ligh_fields = [b'SNAM', b'LNAM']
-        special_ligh_fields = [b'VMAD', b'DSTD', b'DMDS']
+        special_ligh_fields = [b'VMAD', b'DSTD', b'DMDS', b'MODS']
 
         ligh_offsets = [12]
         offset = 24
@@ -1335,6 +1398,8 @@ class form_processor():
                     ligh_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
                     ligh_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
                 elif field == b'DMDS':
+                    ligh_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
+                elif field == b'MODS':
                     ligh_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
@@ -1374,7 +1439,7 @@ class form_processor():
     
     def save_lvli_data(i, form): 
         lvli_fields = [b'LVLG']
-        special_lvli_fields = [b'LVLO']
+        special_lvli_fields = [b'LVLO', b'COED']
 
         lvli_offsets = [12]
         offset = 24
@@ -1386,11 +1451,15 @@ class form_processor():
             elif field in special_lvli_fields:
                 if field == b'LVLO':
                     lvli_offsets.append(offset+ 10)
+                elif field == b'COED':
+                    lvli_offsets.append(offset+ 6)
+                    lvli_offsets.append(offset+ 10)
             offset += field_size + 6
 
         return [i, bytearray(form), lvli_offsets]
 
     def save_lvln_data(i, form): 
+        lvln_fields = [b'LVLG']
         special_lvln_fields = [b'MODS', b'LVLO', b'COED']
 
         lvln_offsets = [12]
@@ -1398,7 +1467,9 @@ class form_processor():
         while offset < len(form):
             field = form[offset:offset+4]
             field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
-            if field in special_lvln_fields:
+            if field in lvln_fields:
+                lvln_offsets.append(offset + 6)
+            elif field in special_lvln_fields:
                 if field == b'COED':
                     lvln_offsets.append(offset+ 6)
                     lvln_offsets.append(offset+ 10)
@@ -1440,7 +1511,7 @@ class form_processor():
         return [i, bytearray(form), matt_offsets]
 
     def save_mesg_data(i, form): 
-        mesg_fields = [b'QNAM']
+        mesg_fields = [b'QNAM', b'INAM']
         special_mesg_fields = [b'CTDA']
 
         mesg_offsets = [12]
@@ -1494,6 +1565,8 @@ class form_processor():
                     mgef_offsets.append(data_offset + 100)  # 64:ImpactDataID
                     mgef_offsets.append(data_offset + 108)  # 6C:DualCastID
                     mgef_offsets.append(data_offset + 116)  # 74:EnchantArtID
+                    mgef_offsets.append(data_offset + 120)  # Hit Visuals?
+                    mgef_offsets.append(data_offset + 124)  # Enchant Visuals?
                     mgef_offsets.append(data_offset + 128)  # 80:EquipAbility
                     mgef_offsets.append(data_offset + 132)  # 84:ImageSpaceModID
                     mgef_offsets.append(data_offset + 136)  # 88:PerkID
@@ -1530,7 +1603,7 @@ class form_processor():
 
     def save_mstt_data(i, form): 
         mstt_fields = [b'SNAM']
-        special_mstt_fields = [b'MODS', b'DSTD']
+        special_mstt_fields = [b'MODS', b'DSTD', b'DMDS']
 
         mstt_offsets = [12]
         offset = 24
@@ -1545,6 +1618,8 @@ class form_processor():
                 elif field == b'DSTD':
                     mstt_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
                     mstt_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
+                elif field == b'DMDS':
+                    mstt_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), mstt_offsets]
@@ -1759,7 +1834,7 @@ class form_processor():
         return [i, bytearray(form), otft_offsets]
     
     def save_pack_data(i, form): 
-        pack_fields = [b'QNAM', b'TPIC', b'INAM']
+        pack_fields = [b'CNAM', b'QNAM', b'TPIC', b'INAM']
         special_pack_fields = [b'VMAD', b'CTDA', b'IDLA', b'PKCU', b'PDTO', b'PLDT', b'PTDA']
 
         pack_offsets = [12]
@@ -1816,19 +1891,27 @@ class form_processor():
 
         return [i, bytearray(form), perk_offsets]
 
-    def save_pgre_data(i, form): 
-        pgre_fields = [b'NAME', b'XOWN', b'XESP']
+    def save_placed_data(i, form): 
+        placed_fields = [b'NAME', b'XEZN', b'XOWN', b'XPWR', b'XAPR', b'XESP', b'XEMI', b'XMBR', b'XLRL', b'XLRT']
+        special_placed_fields = [b'VMAD', b'XLKR']
 
-        pgre_offsets = [12]
+        placed_offsets = [12]
         offset = 24
         while offset < len(form):
             field = form[offset:offset+4]
             field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
-            if field in pgre_fields:
-                pgre_offsets.append(offset + 6)
+            if field in placed_fields:
+                placed_offsets.append(offset + 6)
+            elif field in special_placed_fields:
+                if field == b'VMAD':
+                    placed_offsets.extend(form_processor.vmad_reader(form, offset))
+                elif field == b'XLKR':
+                    placed_offsets.append(offset + 6)
+                    placed_offsets.append(offset + 10)
+                
             offset += field_size + 6
 
-        return [i, bytearray(form), pgre_offsets]
+        return [i, bytearray(form), placed_offsets]
 
     def save_phzd_data(i, form): 
         phzd_fields = [b'NAME', b'XESP', b'XLRL']
@@ -1845,7 +1928,7 @@ class form_processor():
         return [i, bytearray(form), phzd_offsets]
 
     def save_proj_data(i, form): 
-        special_proj_fields = [b'DSTD', b'DATA']
+        special_proj_fields = [b'DSTD', b'DATA', b'DMDS', b'MODS']
 
         proj_offsets = [12]
         offset = 24
@@ -1863,16 +1946,20 @@ class form_processor():
                     proj_offsets.append(data_offset+ 36)    # Explosion Type
                     proj_offsets.append(data_offset+ 40)    # Sound Record
                     proj_offsets.append(data_offset+ 56)    # Countdown Sound
+                    proj_offsets.append(data_offset+ 60)    # Disable Sound?
                     proj_offsets.append(data_offset+ 64)    # Default Weapon Source
                     proj_offsets.append(data_offset+ 84)    # Decal Data
                     proj_offsets.append(data_offset+ 88)    # Collision Layer
+                elif field in (b'MODS', b'DMDS'):
+                    proj_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), proj_offsets]
 
     def save_qust_data(i, form): 
-        qust_fields = [b'QTGL', b'NAM0', b'ALCO', b'ALEQ', b'KNAM', b'ALRT', b'ALFL', b'ALFR', b'ALUA', b'CNTO', b'SPOR', b'OCOR', b'GWOR', b'ECOR', b'ALDN', b'ALSP', b'ALFC', b'ALPC', b'VTCK']
-        special_qust_fields = [b'VMAD', b'CTDA', b'KWDA']
+        qust_fields = [b'QTGL', b'NAM0', b'ALCO', b'ALEQ', b'KNAM', b'ALRT', b'ALFL', b'ALFR', b'ALUA', b'CNTO', b'SPOR', b'OCOR', b'GWOR', b'ECOR', b'ALDN',
+                        b'ALSP', b'ALFC', b'ALPC', b'VTCK', b'QSTA']
+        special_qust_fields = [b'VMAD', b'CTDA', b'KWDA' b'COED']
 
         qust_offsets = [12]
         offset = 24
@@ -1888,14 +1975,17 @@ class form_processor():
                     qust_offsets.extend(form_processor.ctda_reader(form, offset))
                 elif field == b'KWDA':
                     qust_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                elif field == b'COED':
+                    qust_offsets.append(offset+ 6)
+                    qust_offsets.append(offset+ 10)
             offset += field_size + 6
 
         return [i, bytearray(form), qust_offsets]
 
     def save_race_data(i, form): 
-        race_fields = [b'SPLO', b'WNAM', b'ATKR', b'GNAM', b'NAM4', b'NAM5', b'NAM7', b'ONAM', b'LNAM', b'MTYP', b'QNAM', b'UNES', b'WKMV', b'HEAD', b'RPRF', b'DFTF',
-                        b'RNMV', b'SWMV', b'FLMV', b'SNMV', b'SPMV', b'RPRM', b'AHCM', b'FTSM', b'DFTM', b'TIND', b'TINC', b'NAM8', b'RNAM', b'AHCF', b'FTSF']
-        special_race_fields = [b'KWDA', b'VTCK', b'DNAM', b'HCLF', b'ATKD']
+        race_fields = [b'SPLO', b'WNAM', b'ATKR', b'GNAM', b'NAM4', b'NAM5', b'NAM7', b'ONAM', b'LNAM', b'MTYP', b'QNAM', b'UNES', b'WKMV', b'HEAD', b'RPRF', b'DFTF', b'ENAM',
+                        b'RNMV', b'SWMV', b'FLMV', b'SNMV', b'SPMV', b'RPRM', b'AHCM', b'FTSM', b'DFTM', b'TIND', b'TINC', b'NAM8', b'RNAM', b'AHCF', b'FTSF', b'HNAM']
+        special_race_fields = [b'KWDA', b'VTCK', b'DNAM', b'HCLF', b'ATKD', b'MODS']
 
         race_offsets = [12]
         offset = 24
@@ -1913,13 +2003,16 @@ class form_processor():
                 elif field == b'ATKD':
                     race_offsets.append(offset+ 14)     # Attack Spell
                     race_offsets.append(offset+ 32)     # Attack Type
+                elif field == b'MODS':
+                    race_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), race_offsets]
     
     def save_refr_data(i, form):
-        refr_fields = [b'NAME', b'LNAM', b'INAM', b'XLRM', b'XEMI', b'XLIB', b'XLRT', b'XOWN', b'XEZN', b'XMBR', b'XPWR', b'XATR', b'INAM', b'XLRL', b'XAPR',  b'XTEL', b'XNDP', b'XESP']
-        special_refr_fields = [b'PDTO', b'XLOC', b'XLKR', b'XPOD', b'VMAD']
+        refr_fields = [b'NAME', b'LNAM', b'INAM', b'XLRM', b'XEMI', b'XLIB', b'XLRT', b'XOWN', b'XEZN', b'XMBR', b'XPWR', b'XATR', b'INAM', b'XLRL', b'XAPR', 
+                       b'XTEL', b'XNDP', b'XESP', b'XLTW', b'XTNM', b'XCZC', b'XCZR', b'XSPC', b'XLCN']
+        special_refr_fields = [b'PDTO', b'XLOC', b'XLKR', b'XPOD', b'VMAD', b'XORD']
 
         refr_offsets = [12]
         offset = 24
@@ -1936,12 +2029,17 @@ class form_processor():
                     refr_offsets.append(offset + 10)
                 elif field == b'VMAD':
                     refr_offsets.extend(form_processor.vmad_reader(form, offset))
+                elif field == b'XORD':
+                    refr_offsets.append(offset + 6)
+                    refr_offsets.append(offset + 10)
+                    refr_offsets.append(offset + 14)
+                    refr_offsets.append(offset + 18)
             offset += field_size + 6
 
         return [i, bytearray(form), refr_offsets]
 
     def save_regn_data(i, form): 
-        regn_fields = [b'WNAM', b'RDMO']
+        regn_fields = [b'WNAM', b'RDMO', b'RDGS', b'RDOT']
         special_regn_fields = [b'RDSA', b'RDWT']
 
         regn_offsets = [12]
@@ -2026,7 +2124,7 @@ class form_processor():
 
     def save_scrl_data(i, form): 
         scrl_fields = [b'MDOB', b'ETYP', b'YNAM', b'ZNAM', b'EFID']
-        special_scrl_fields = [b'CTDA', b'KWDA', b'DSTD', b'DMDS']
+        special_scrl_fields = [b'CTDA', b'KWDA', b'SPIT', b'DSTD', b'DMDS', b'MODS']
 
         scrl_offsets = [12]
         offset = 24
@@ -2040,10 +2138,14 @@ class form_processor():
                     scrl_offsets.extend(form_processor.ctda_reader(form, offset))
                 elif field == b'KWDA':
                     scrl_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                elif field == b'SPIT':
+                    scrl_offsets.append(offset+38) #Half-cost Perk
                 elif field == b'DSTD':
                     scrl_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
                     scrl_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
                 elif field == b'DMDS':
+                    scrl_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
+                elif field == B'MODS':
                     scrl_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
@@ -2070,7 +2172,7 @@ class form_processor():
 
     def save_slgm_data(i, form): 
         slgm_fields = [b'NAM0', b'ZNAM', b'YNAM']
-        special_slgm_fields = [b'KWDA']
+        special_slgm_fields = [b'KWDA', b'MODS', b'DSTD', b'DMDS']
 
         slgm_offsets = [12]
         offset = 24
@@ -2082,6 +2184,13 @@ class form_processor():
             elif field in special_slgm_fields:
                 if field == b'KWDA':
                     slgm_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                elif field == b'MODS':
+                    slgm_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
+                elif field == b'DSTD':
+                    slgm_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
+                    slgm_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
+                elif field == b'DMDS':
+                    slgm_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), slgm_offsets]
@@ -2188,7 +2297,7 @@ class form_processor():
 
     def save_spel_data(i, form): 
         spel_fields = [b'MDOB', b'ETYP', b'EFID']
-        special_spel_fields = [b'CTDA', b'SPIT']
+        special_spel_fields = [b'CTDA', b'SPIT', b'KWDA']
 
         spel_offsets = [12]
         offset = 24
@@ -2202,6 +2311,8 @@ class form_processor():
                     spel_offsets.extend(form_processor.ctda_reader(form, offset))
                 elif field == b'SPIT':
                     spel_offsets.append(offset + 38)
+                elif field == b'KWDA':
+                    spel_offsets.extend(form_processor.get_kwda_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), spel_offsets]
@@ -2271,6 +2382,7 @@ class form_processor():
 
     def save_tree_data(i, form):
         tree_fields = [b'PFIG', b'SNAM']
+        special_tree_fields = [b'MODS']
 
         tree_offsets = [12]
         offset = 24
@@ -2279,6 +2391,9 @@ class form_processor():
             field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             if field in tree_fields:
                 tree_offsets.append(offset + 6)
+            elif field in special_tree_fields:
+                if field == b'MODS':
+                    tree_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), tree_offsets]
@@ -2299,7 +2414,7 @@ class form_processor():
 
     def save_weap_data(i, form): 
         weap_fields = [b'BAMT', b'BIDS', b'CNAM', b'EITM', b'ETYP', b'INAM', b'NAM7', b'NAM8', b'NAM9', b'SNAM', b'TNAM', b'UNAM', b'WNAM', b'XNAM', b'YNAM', b'ZNAM']
-        special_weap_fields = [b'CRDT', b'KWDA' , b'MODS', b'VMAD']
+        special_weap_fields = [b'CRDT', b'KWDA' , b'MODS', b'MO3S', b'VMAD', b'DSTD', b'DMDS']
 
         weap_offsets = [12]
         offset = 24
@@ -2311,7 +2426,7 @@ class form_processor():
             elif field in special_weap_fields:
                 if field == b'KWDA':
                     weap_offsets.extend(form_processor.get_kwda_offsets(offset, form))
-                elif field == b'MODS':
+                elif field in (b'MODS', b'MO3S'):
                     weap_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
                 elif field == b'VMAD':
                     weap_offsets.extend(form_processor.vmad_reader(form, offset))
@@ -2320,14 +2435,18 @@ class form_processor():
                         weap_offsets.append(offset+ 18) # Critical Spell Effect SPEL 6 + 12
                     elif field_size == 24:  # SSE
                         weap_offsets.append(offset+ 22) # Critical Spell Effect SPEL 6 + 16
-
+                elif field == b'DSTD':
+                    weap_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
+                    weap_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
+                elif field == b'DMDS':
+                    weap_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), weap_offsets]
 
     def save_wrld_data(i, form): 
         wrld_fields = [b'LTMP', b'XEZN', b'XLCN', b'CNAM', b'NAM2', b'NAM3', b'WNAM', b'PNAM', b'ZNAM']
-        special_wrld_fields = [b'RNAM']
+        special_wrld_fields = [b'RNAM', b'MODS']
 
         wrld_offsets = [12]
         offset = 24
@@ -2344,15 +2463,15 @@ class form_processor():
                     for _ in range(pair_count):
                         wrld_offsets.append(in_field_offset)
                         in_field_offset += 8
-
-
+                elif field == b'MODS':
+                    wrld_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), wrld_offsets]
 
     def save_wthr_data(i, form): 
         wthr_fields = [b'MNAM', b'NNAM', b'TNAM', b'SNAM', b'GNAM']
-        special_wthr_fields = [b'IMSP', b'HNAM']
+        special_wthr_fields = [b'IMSP', b'HNAM', b'MODS']
 
         wthr_offsets = [12]
         offset = 24
@@ -2367,6 +2486,8 @@ class form_processor():
                     wthr_offsets.append(offset + 10)
                     wthr_offsets.append(offset + 14)
                     wthr_offsets.append(offset + 18)
+                elif field == b'MODS':
+                    wthr_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
 
         return [i, bytearray(form), wthr_offsets]
