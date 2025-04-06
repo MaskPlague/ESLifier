@@ -412,8 +412,10 @@ class CFIDs():
                             patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
                         elif 'completionistdata\\' in new_file_lower:                                       # Completionist
                             patchers.ini_completionist_patcher(basename, new_file, form_id_map)
-                        elif 'kreate\\presets' in new_file_lower:
+                        elif 'kreate\\presets' in new_file_lower:                                           # KreatE
                             patchers.ini_kreate_patcher(basename, new_file, form_id_map)
+                        elif new_file_lower.endswith('thenewgentleman.ini'):                                # The New Gentleman
+                            patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
                         else:                                                                               # Might patch whatever else is using .ini?
                             print(f'Warn: Possible missing patcher for: {new_file}')
                     elif new_file_lower.endswith('_conditions.txt'):                                        # Dynamic Animation Replacer
@@ -462,6 +464,8 @@ class CFIDs():
                         elif 'sexlab\\animations' in new_file_lower:                                        # SL animations?
                             if not new_file_lower.endswith('arrokreversecowgirl.json'):
                                 patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map, int_type=True)
+                        elif 'configs\\dse-soulgem-oven' in new_file_lower:                                 # SoulGem Oven
+                            patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
                         else:
                             print(f'Warn: Possible missing patcher for: {new_file}')
                     elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
@@ -491,8 +495,7 @@ class CFIDs():
                         patchers.old_customskill_patcher(basename, new_file, form_id_map)
                     else:
                         print(f'Warn: Possible missing patcher for: {new_file}')
-
-                with CFIDs.lock:
+                        
                     CFIDs.compacted_and_patched[os.path.basename(master)].append(rel_path)
 
             except Exception as e:
