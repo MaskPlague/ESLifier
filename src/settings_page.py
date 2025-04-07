@@ -20,7 +20,7 @@ class settings(QWidget):
         widget_holder = QWidget()
         widget_holder.setLayout(settings_layout)
         h_base_layout.addStretch(1)
-        h_base_layout.addWidget(widgetHolder)
+        h_base_layout.addWidget(widget_holder)
         h_base_layout.addStretch(1)
         widgetHolder.setMaximumWidth(1000)
         widgetHolder.setMinimumWidth(700)
