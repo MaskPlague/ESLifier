@@ -22,8 +22,8 @@ class settings(QWidget):
         h_base_layout.addStretch(1)
         h_base_layout.addWidget(widget_holder)
         h_base_layout.addStretch(1)
-        widgetHolder.setMaximumWidth(1000)
-        widgetHolder.setMinimumWidth(700)
+        #widget_holder.setMaximumWidth(1000)
+        #widget_holder.setMinimumWidth(700)
         self.setLayout(h_base_layout)
 
         self.settings = self.get_settings_from_file()
