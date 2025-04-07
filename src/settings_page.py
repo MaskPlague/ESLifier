@@ -12,7 +12,7 @@ from blacklist import blacklist_window
 
 from QToggle import QtToggle
 class settings(QWidget):
-    def __init__(self):
+    def __init__(self, COLOR_MODE):
         super().__init__()
         self.setFocus()
         settings_layout = QVBoxLayout()
