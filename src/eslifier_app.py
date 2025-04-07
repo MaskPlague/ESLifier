@@ -180,6 +180,12 @@ class main_window(QMainWindow):
             self.tabs.blockSignals(False)
             return
         
+        if not self.settings_widget.output_folder_name_valid:
+            self.tabs.setCurrentIndex(2)
+            QMessageBox.warning(None, "Invalid Folder Name", f"Enter a valid output folder name.")
+            self.tabs.blockSignals(False)
+            return
+        
         output_path = self.settings_widget.settings['output_folder_path']
         data_path = self.settings_widget.settings['skyrim_folder_path']
         plugins_txt = self.settings_widget.settings['plugins_txt_path']
