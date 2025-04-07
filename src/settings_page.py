@@ -170,22 +170,46 @@ class settings(QWidget):
         settings_layout.addWidget(self.plugins_txt_path_widget)
         settings_layout.addWidget(self.mo2_modlist_txt_path_widget)
         settings_layout.addWidget(self.bsab_path_widget)
-        settings_layout.addWidget(self.update_header_widget)
-        settings_layout.addWidget(self.scan_esms_widget)
-        settings_layout.addWidget(self.show_plugins_with_cells_widget)
-        settings_layout.addWidget(self.enable_cell_changed_filter_widget)
-        settings_layout.addWidget(self.enable_interior_cell_filter_widget)
-        settings_layout.addWidget(self.enable_worldspaces_filter_widget)
-        settings_layout.addWidget(self.show_plugins_possibly_refd_by_dlls_widget)
-        settings_layout.addWidget(self.reset_extracted_bsa_list_widget)
-        settings_layout.addWidget(self.edit_blacklist_widget)
-        settings_layout.addWidget(self.open_eslifier_data_widget)
-        settings_layout.addWidget(self.clear_form_id_maps_and_compacted_and_patched_widget)
-        settings_layout.addWidget(self.reset_settings_widget)
-        settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.exclusions_layout = QHBoxLayout()
-        self.exclusions_label = QLabel("Excluded Plugins")
+        column_wrapper = QHBoxLayout()
+        column_wrapper_widget = QWidget()
+        column_wrapper_widget.setLayout(column_wrapper)
+        column_wrapper.setContentsMargins(0, 0, 0, 0)
+        column_1 = QVBoxLayout()
+        column_1.setContentsMargins(0, 0, 0, 0)
+        c_widget_1 = QWidget()
+        c_widget_1.setLayout(column_1)
+        line = QFrame()
+        line.setFrameStyle(QFrame.Shape.VLine | QFrame.Shadow.Sunken)
+        if COLOR_MODE:
+            line.setStyleSheet('QFrame{background-color: lightgrey;}')
+        column_2 = QVBoxLayout()
+        column_2.setContentsMargins(0, 0, 0, 0)
+        c_widget_2 = QWidget()
+        c_widget_2.setLayout(column_2)
+        column_wrapper.addWidget(c_widget_1)
+        column_wrapper.addSpacing(10)
+        column_wrapper.addWidget(line)
+        column_wrapper.addSpacing(10)
+        column_wrapper.addWidget(c_widget_2)
+        
+        settings_layout.addSpacing(20)
+        settings_layout.addWidget(column_wrapper_widget)
+
+        column_1.addWidget(self.update_header_widget)
+        column_1.addWidget(self.scan_esms_widget)
+        column_1.addWidget(self.show_plugins_with_cells_widget)
+        column_1.addWidget(self.enable_cell_changed_filter_widget)
+        column_1.addWidget(self.enable_interior_cell_filter_widget)
+        column_1.addWidget(self.enable_worldspaces_filter_widget)
+        column_1.addWidget(self.show_plugins_possibly_refd_by_dlls_widget)
+        column_2.addWidget(self.reset_extracted_bsa_list_widget)
+        column_2.addWidget(self.edit_blacklist_widget)
+        column_2.addWidget(self.open_eslifier_data_widget)
+        column_2.addWidget(self.clear_form_id_maps_and_compacted_and_patched_widget)
+        column_2.addWidget(self.reset_settings_widget)
+
+        settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
     def button_maker(self, text, function, width):
         button = QPushButton()
@@ -239,7 +263,7 @@ class settings(QWidget):
 
         line_edit.setPlaceholderText(placeholder)
         line_edit.setMinimumWidth(400)
-        line_edit.setMaximumWidth(420)
+        line_edit.setMaximumWidth(550)
         
         return widget, line_edit
     
@@ -473,7 +497,6 @@ class settings(QWidget):
         self.enable_interior_cell_filter_toggle.setChecked(self.settings.get('enable_interior_cell_filter', False))
         self.enable_worldspaces_filter_toggle.setChecked(self.settings.get('filter_worldspaces', True))
         self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(self.settings.get('show_dlls', False))
-        
 
     def save_settings_to_file(self):
         settings_file = 'ESLifier_Data/settings.json'
