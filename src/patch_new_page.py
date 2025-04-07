@@ -18,6 +18,7 @@ class patch_new(QWidget):
         super().__init__()
         self.skyrim_folder_path = ''
         self.output_folder_path = ''
+        self.output_folder_name = ''
         self.modlist_txt_path = ''
         self.plugins_txt_path = ''
         self.bsab = ''
@@ -203,7 +204,8 @@ class patch_new(QWidget):
             self.setEnabled(False)
             self.log_stream.show()
             self.thread_new = QThread()
-            self.worker = Worker2(checked, self.list_unpatched_files.dependencies_dictionary, self.list_unpatched_files.file_dictionary ,self.skyrim_folder_path, self.output_folder_path, self.update_header, self.mo2_mode)
+            self.worker = Worker2(checked, self.list_unpatched_files.dependencies_dictionary, self.list_unpatched_files.file_dictionary, self.skyrim_folder_path,
+                                  self.output_folder_path, self.output_folder_name, self.update_header, self.mo2_mode)
             self.worker.moveToThread(self.thread_new)
             self.thread_new.started.connect(self.worker.patch)
             self.worker.finished_signal.connect(lambda x = checked: self.finished_patching(x))
@@ -243,13 +245,14 @@ class Worker(QObject):
 
 class Worker2(QObject):
     finished_signal = pyqtSignal()
-    def __init__(self, files, dependencies_dictionary, file_dictionary, skyrim_folder_path, output_folder_path, update_header, mo2_mode):
+    def __init__(self, files, dependencies_dictionary, file_dictionary, skyrim_folder_path, output_folder_path, output_folder_name, update_header, mo2_mode):
         super().__init__()
         self.files = files
         self.dependencies_dictionary = dependencies_dictionary
         self.file_dictionary = file_dictionary
         self.skyrim_folder_path = skyrim_folder_path
         self.output_folder_path = output_folder_path
+        self.output_folder_name = output_folder_name
         self.update_header = update_header
         self.mo2_mode = mo2_mode
 
@@ -264,7 +267,8 @@ class Worker2(QObject):
             dependents = []
             if file in self.dependencies_dictionary:
                 dependents = self.dependencies_dictionary[file]
-            CFIDs.patch_new(fp, file, dependents, self.file_dictionary, self.skyrim_folder_path, self.output_folder_path, self.update_header, self.mo2_mode)
+            CFIDs.patch_new(fp, file, dependents, self.file_dictionary, self.skyrim_folder_path, self.output_folder_path,
+                            self.output_folder_name, self.update_header, self.mo2_mode)
         self.finished_signal.emit()
 
 

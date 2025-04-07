@@ -18,6 +18,7 @@ class main(QWidget):
         super().__init__()
         self.skyrim_folder_path = ''
         self.output_folder_path = ''
+        self.output_folder_name = ''
         self.modlist_txt_path = ''
         self.plugins_txt_path = ''
         self.bsab = ''
@@ -221,7 +222,8 @@ class main(QWidget):
                     self.list_compact.item(row,self.list_compact.MOD_COL).setFlags(self.list_compact.item(row,self.list_compact.MOD_COL).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
             self.log_stream.show()
             self.thread_new = QThread()
-            self.worker = Worker2(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, self.update_header, self.mo2_mode, self.bsab)
+            self.worker = Worker2(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, 
+                                  self.output_folder_name, self.update_header, self.mo2_mode, self.bsab)
             self.worker.moveToThread(self.thread_new)
             self.thread_new.started.connect(self.worker.run)
             self.worker.finished_signal.connect(self.thread_new.quit)
@@ -371,12 +373,13 @@ class Worker(QObject):
 
 class Worker2(QObject):
     finished_signal = pyqtSignal()
-    def __init__(self, checked, dependency_dictionary, skyrim_folder_path, output_folder_path, update_header, mo2_mode, bsab):
+    def __init__(self, checked, dependency_dictionary, skyrim_folder_path, output_folder_path, output_folder_name, update_header, mo2_mode, bsab):
         super().__init__()
         self.checked = checked
         self.dependency_dictionary = dependency_dictionary
         self.skyrim_folder_path = skyrim_folder_path
         self.output_folder_path = output_folder_path
+        self.output_folder_name = output_folder_name
         self.update_header = update_header
         self.mo2_mode = mo2_mode
         self.bsab = bsab
@@ -389,7 +392,8 @@ class Worker2(QObject):
             count +=1
             percent = round((count/total)*100,1)
             print(f'{percent}% Patching: {count}/{total}')
-            CFIDs.compact_and_patch(fp, file, self.dependency_dictionary[os.path.basename(file).lower()], self.skyrim_folder_path, self.output_folder_path, self.update_header, self.mo2_mode, self.bsab)
+            CFIDs.compact_and_patch(fp, file, self.dependency_dictionary[os.path.basename(file).lower()], self.skyrim_folder_path,
+                                     self.output_folder_path, self.output_folder_name, self.update_header, self.mo2_mode, self.bsab)
         print("Compacted and Patched")
         print('CLEAR')
         self.finished_signal.emit()
