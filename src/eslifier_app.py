@@ -105,7 +105,7 @@ class main_window(QMainWindow):
                 }
                 """)
             
-        self.settings_widget = settings()
+        self.settings_widget = settings(COLOR_MODE=COLOR_MODE)
         self.main_widget = main()
         self.patch_new_widget = patch_new()
         self.update_settings()
