@@ -4,8 +4,8 @@ import subprocess
 import shutil
 import threading
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QFileDialog
+from PyQt6.QtCore import Qt, QRegularExpression
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QFileDialog, QFrame
 from PyQt6.QtGui import QIcon
 
 from blacklist import blacklist_window
