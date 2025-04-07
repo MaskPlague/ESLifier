@@ -170,9 +170,11 @@ class main_window(QMainWindow):
 
     def path_validator(self):
         self.tabs.blockSignals(True)
-        if (self.settings_widget.settings['output_folder_path'] == '' or self.settings_widget.settings['skyrim_folder_path'] == '' or 
-            self.settings_widget.settings['plugins_txt_path'] == '' or self.settings_widget.settings['bsab_path'] == '' or
-            (self.settings_widget.settings['mo2_mode'] and self.settings_widget.settings['mo2_modlist_txt_path'] == '')):
+        if (self.settings_widget.settings['output_folder_path'] == ''
+            or self.settings_widget.settings['skyrim_folder_path'] == ''
+            or self.settings_widget.settings['plugins_txt_path'] == ''
+            or self.settings_widget.settings['bsab_path'] == ''
+            or (self.settings_widget.settings['mo2_mode'] and self.settings_widget.settings['mo2_modlist_txt_path'] == '')):
             self.tabs.setCurrentIndex(2)
             self.no_path_set()
             self.tabs.blockSignals(False)
