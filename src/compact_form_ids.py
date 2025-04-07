@@ -10,11 +10,12 @@ from file_patchers import patchers
 from intervaltree import IntervalTree
 
 class CFIDs():
-    def compact_and_patch(form_processor, file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header, mo2_mode, bsab):
+    def compact_and_patch(form_processor, file_to_compact, dependents, skyrim_folder_path, output_folder_path, output_folder_name, update_header, mo2_mode, bsab):
         CFIDs.lock = threading.Lock()
         CFIDs.compacted_and_patched = {}
         CFIDs.mo2_mode = mo2_mode
         CFIDs.form_processor = form_processor
+        CFIDs.output_folder_name = output_folder_name
         print(f"Compacting Plugin: {os.path.basename(file_to_compact)}...")
         CFIDs.compact_file(file_to_compact, skyrim_folder_path, output_folder_path, update_header)
         files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
@@ -170,9 +171,10 @@ class CFIDs():
             data = {}
         return data
     
-    def set_flag(file, skyrim_folder, output_folder, mo2_mode):
+    def set_flag(file, skyrim_folder, output_folder, output_folder_name, mo2_mode):
         CFIDs.mo2_mode = mo2_mode
         CFIDs.lock = threading.Lock()
+        CFIDs.output_folder_name = output_folder_name
         print("-  Changing ESL flag in: " + os.path.basename(file))
         new_file, _ = CFIDs.copy_file_to_output(file, skyrim_folder, output_folder)
         try:
@@ -225,7 +227,7 @@ class CFIDs():
                 end_path = os.path.join(*os.path.normpath(os.path.relpath(file, skyrim_folder_path)).split(os.sep)[1:])
             else:
                 end_path = os.path.normpath(os.path.relpath(file, skyrim_folder_path))
-        new_file = os.path.normpath(os.path.join(os.path.join(output_folder,'ESLifier Compactor Output'), end_path))
+        new_file = os.path.normpath(os.path.join(os.path.join(output_folder, CFIDs.output_folder_name), end_path))
         with CFIDs.lock:
             if not os.path.exists(os.path.dirname(new_file)):
                 os.makedirs(os.path.dirname(new_file))
