@@ -25,7 +25,7 @@ class settings(QWidget):
         #widget_holder.setMaximumWidth(1000)
         #widget_holder.setMinimumWidth(700)
         self.setLayout(h_base_layout)
-
+        self.output_folder_name_valid = True
         self.settings = self.get_settings_from_file()
 
         self.file_dialog = QFileDialog()
@@ -45,6 +45,11 @@ class settings(QWidget):
             "Set where you want the Output Folder 'ESLifier Compactor Ouput' to be generated.",
             'C:/Path/To/The/Output/Folder/',
             self.output_folder_path_clicked
+        )
+        self.output_folder_name_widget, self.output_folder_name = self.create_text_input_widget(
+            "Output Folder Name",
+            "Change this to what you want to be the name of the Output Folder.",
+            "ESLifier Compactor Output"
         )
         self.plugins_txt_path_widget, self.plugins_txt_path = self.create_path_widget(
             "Plugins.txt Path",
@@ -161,6 +166,7 @@ class settings(QWidget):
         settings_layout.addWidget(self.mo2_mode_widget)
         settings_layout.addWidget(self.skyrim_folder_path_widget)
         settings_layout.addWidget(self.output_folder_path_widget)
+        settings_layout.addWidget(self.output_folder_name_widget)
         settings_layout.addWidget(self.plugins_txt_path_widget)
         settings_layout.addWidget(self.mo2_modlist_txt_path_widget)
         settings_layout.addWidget(self.bsab_path_widget)
@@ -275,6 +281,48 @@ class settings(QWidget):
         layout.addWidget(label)
         layout.addWidget(button)
         return widget
+    
+    def create_text_input_widget(self, label_text, tooltip, placeholder):
+        layout = QHBoxLayout()
+        widget = QWidget()
+        widget.setToolTip(tooltip)
+        label = QLabel(label_text)
+        line_edit = QLineEdit()
+        regex = QRegularExpression(
+            r'^(?!'
+                r'(?i)(COM[1-9]|LPT[1-9]|CON|NUL|PRN|AUX)(?:\.|$)'  # Reserved names
+            r')'
+            r'(?![.\s])'                            # No leading dot or space
+            r'(?![.]{2,}$)'                         # Not just dots
+            r'[^\\\/:*"?<>|]{1,254}'                # Valid characters (spaces allowed!)
+            r'(?<![\s.])$'                          # No trailing space or dot
+        )
+        #line_edit.setValidator(QRegularExpressionValidator(regex))
+        def hard_validate():
+            line_edit.setText(line_edit.text().strip())
+            text = line_edit.text()
+            if regex.match(text).hasMatch():
+                self.output_folder_name_valid = True
+                self.update_settings()
+            else:
+                QMessageBox.warning(None, "Invalid Name", f"'{text}' is not a valid folder name.")
+                line_edit.setFocus()
+                self.output_folder_name_valid = False
+
+        line_edit.editingFinished.connect(hard_validate)
+
+        widget.setLayout(layout)
+        layout.addWidget(label)
+        layout.addSpacing(10)
+        layout.addWidget(line_edit)
+        layout.addSpacing(10)
+        layout.addSpacing(105)
+
+        line_edit.setPlaceholderText(placeholder)
+        line_edit.setMinimumWidth(400)
+        line_edit.setMaximumWidth(550)
+        
+        return widget, line_edit
     
     def reset_extracted_bsa_list_clicked(self):
         confirm = QMessageBox()
@@ -394,6 +442,7 @@ class settings(QWidget):
             self.settings.clear()
             self.skyrim_folder_path.clear()
             self.output_folder_path.clear()
+            self.output_folder_name.setText('ESLifier Compactor Output')
             self.plugins_txt_path.clear()
             self.bsab_path.clear()
             self.mo2_modlist_txt_path.clear()
@@ -412,6 +461,7 @@ class settings(QWidget):
     def set_init_widget_values(self):
         self.skyrim_folder_path.setText(self.settings.get('skyrim_folder_path', ''))
         self.output_folder_path.setText(self.settings.get('output_folder_path', ''))
+        self.output_folder_name.setText(self.settings.get('output_folder_name', 'ESLifier Compactor Output'))
         self.plugins_txt_path.setText(self.settings.get('plugins_txt_path', ''))
         self.bsab_path.setText(self.settings.get('bsab_path', ''))
         self.mo2_modlist_txt_path.setText(self.settings.get('mo2_modlist_txt_path' ,''))
@@ -435,6 +485,8 @@ class settings(QWidget):
     def update_settings(self):
         self.settings['skyrim_folder_path'] = self.skyrim_folder_path.text()
         self.settings['output_folder_path'] = self.output_folder_path.text()
+        if self.output_folder_name_valid:
+            self.settings['output_folder_name'] = self.output_folder_name.text()
         self.settings['plugins_txt_path'] = self.plugins_txt_path.text()
         self.settings['bsab_path'] = self.bsab_path.text()
         self.settings['mo2_modlist_txt_path'] = self.mo2_modlist_txt_path.text()
