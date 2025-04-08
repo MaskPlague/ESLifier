@@ -31,8 +31,8 @@ class scanner():
         scanner.kreate_files = []
         scanner.bsab = bsab
         scanner.lock = threading.Lock()
-        total_ram = psutil.virtual_memory().total
-        usable_ram = total_ram * 0.75
+        total_ram = psutil.virtual_memory().available
+        usable_ram = total_ram * 0.90
         thread_memory_usage = 10 * 1024 * 1024
         scanner.max_threads_by_ram = int(usable_ram / thread_memory_usage)
         thread_memory_usage = 2.5 * (1024**3)
