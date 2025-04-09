@@ -186,11 +186,12 @@ class CFIDs():
             print('!Error: Failed to set ESL flag in {file}')
             print(e)            
 
-    def patch_new(form_processor, compacted_file, dependents, files_to_patch, skyrim_folder_path, output_folder_path, update_header, mo2_mode):
+    def patch_new(form_processor, compacted_file, dependents, files_to_patch, skyrim_folder_path, output_folder_path, output_folder_name, update_header, mo2_mode):
         CFIDs.lock = threading.Lock()
         CFIDs.form_processor = form_processor
         CFIDs.compacted_and_patched = {}
         CFIDs.mo2_mode = mo2_mode
+        CFIDs.output_folder_name = output_folder_name
         print('Patching new plugins and files for ' + compacted_file + '...')
         CFIDs.compacted_and_patched[compacted_file] = []
         if dependents != []:
