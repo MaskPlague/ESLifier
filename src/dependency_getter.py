@@ -5,11 +5,11 @@ class dependecy_getter():
     bsa_list = []
     def scan(path):
         dependecy_getter.dependency_dictionary = {}
-        dependecy_getter.missing_skyrim_as_master = []
+        dependecy_getter.missing_skyrim_as_master = {}
         dependecy_getter.plugins = dependecy_getter.get_from_file("ESLifier_Data/plugin_list.json")
         dependecy_getter.create_dependency_dictionary()
         dependecy_getter.dump_to_file("ESLifier_Data/dependency_dictionary.json", dependecy_getter.dependency_dictionary)
-        dependecy_getter.dump_to_file("ESLifier_data/missing_skyrim_as_master.json", dependecy_getter.missing_skyrim_as_master)
+        dependecy_getter.dump_to_file("ESLifier_Data/missing_skyrim_as_master.json", dependecy_getter.missing_skyrim_as_master)
         return dependecy_getter.dependency_dictionary
     
     def dump_to_file(file, data):
@@ -42,7 +42,7 @@ class dependecy_getter():
                     if plugin not in dependecy_getter.dependency_dictionary[master.lower()]:
                         dependecy_getter.dependency_dictionary[master.lower()].append(plugin)
                 if masters[0] != 'Skyrim.esm':
-                    dependecy_getter.missing_skyrim_as_master.append(plugin)
+                    dependecy_getter.missing_skyrim_as_master[plugin] = masters[0]
 
     def get_masters(file):
         master_list = []

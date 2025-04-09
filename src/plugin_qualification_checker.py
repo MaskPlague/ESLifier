@@ -99,8 +99,8 @@ class qualification_checker():
         if update_header:
             dependents = qualification_checker.dependent_dict[os.path.basename(file).lower()]
             all_dependents_have_skyrim_esm_as_master = True
-            for plugin_without_skyrim_esm_as_master in qualification_checker.missing_skyrim_esm_as_master:
-                if plugin_without_skyrim_esm_as_master in dependents:
+            for plugin_without_skyrim_esm_as_master, master_0 in qualification_checker.missing_skyrim_esm_as_master.items():
+                if plugin_without_skyrim_esm_as_master in dependents and os.path.basename(file) == master_0:
                     all_dependents_have_skyrim_esm_as_master = False
                     break
         else:
