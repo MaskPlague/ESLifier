@@ -10,6 +10,9 @@ class qualification_checker():
         qualification_checker.lock = threading.Lock()
         all_plugins = qualification_checker.get_from_file("ESLifier_Data/plugin_list.json")
         plugins = [plugin for plugin in all_plugins if not plugin.lower().endswith('.esl')]
+        if update_header:
+            qualification_checker.missing_skyrim_esm_as_master = qualification_checker.get_from_file("ESLifier_Data/missing_skyrim_as_master.json")
+            qualification_checker.dependent_dict = qualification_checker.get_from_file("ESLifier_Data/dependency_dictionary.json")
         qualification_checker.flag_dict = {}
         qualification_checker.max_record_number = 4096
         qualification_checker.scan_esms = scan_esms
@@ -39,7 +42,7 @@ class qualification_checker():
 
         threads = []
         for chunk in chunks:
-            thread = threading.Thread(target=qualification_checker.plugin_scanner, args=(chunk,))
+            thread = threading.Thread(target=qualification_checker.plugin_scanner, args=(chunk, update_header,))
             threads.append(thread)
             thread.start()
             
@@ -47,11 +50,11 @@ class qualification_checker():
             thread.join()
         return qualification_checker.flag_dict
 
-    def plugin_scanner(plugins):
+    def plugin_scanner(plugins, update_header):
         flag_dict = {}
         for plugin in plugins:
             if not qualification_checker.already_esl(plugin):
-                esl_allowed, need_compacting, new_cell, interior_cell, new_wrld = qualification_checker.file_reader(plugin)
+                esl_allowed, need_compacting, new_cell, interior_cell, new_wrld = qualification_checker.file_reader(plugin, update_header)
                 if esl_allowed:
                     flag_dict[plugin] = []
                     if need_compacting:
@@ -81,7 +84,7 @@ class qualification_checker():
                 offset = offset_end
         return data_list      
 
-    def file_reader(file):
+    def file_reader(file, update_header):
         data_list = []
         new_cell = False
         interior_cell_flag = False
@@ -91,8 +94,19 @@ class qualification_checker():
         with open(file, 'rb') as f:
             data = f.read()
         data_list = qualification_checker.create_data_list(data)
-        master_count = qualification_checker.get_master_count(data_list)
-        if master_count == 0:
+        master_count, has_skyrim_esm_master = qualification_checker.get_master_count(data_list)
+
+        if update_header:
+            dependents = qualification_checker.dependent_dict[os.path.basename(file).lower()]
+            all_dependents_have_skyrim_esm_as_master = True
+            for plugin_without_skyrim_esm_as_master in qualification_checker.missing_skyrim_esm_as_master:
+                if plugin_without_skyrim_esm_as_master in dependents:
+                    all_dependents_have_skyrim_esm_as_master = False
+                    break
+        else:
+            all_dependents_have_skyrim_esm_as_master = True
+
+        if master_count == 0 or not has_skyrim_esm_master or not all_dependents_have_skyrim_esm_as_master:
             num_max_records = 2048
         else:
             num_max_records = qualification_checker.num_max_records
@@ -184,10 +198,15 @@ class qualification_checker():
         offset = 24
         data_len = len(tes4)
         master_count = 0
+        has_skyrim_esm_master = False
         while offset < data_len:
             field = tes4[offset:offset+4]
             field_size = struct.unpack("<H", tes4[offset+4:offset+6])[0]
             if field == b'MAST':
                 master_count += 1
+                if field_size == 11:
+                    if tes4[offset+6:offset+16] == b'Skyrim.esm':
+                        has_skyrim_esm_master = True
             offset += field_size + 6
-        return master_count
+
+        return master_count, has_skyrim_esm_master

@@ -10,14 +10,15 @@ from file_patchers import patchers
 from intervaltree import IntervalTree
 
 class CFIDs():
-    def compact_and_patch(form_processor, file_to_compact, dependents, skyrim_folder_path, output_folder_path, output_folder_name, update_header, mo2_mode, bsab):
+    def compact_and_patch(form_processor, file_to_compact, dependents, skyrim_folder_path, output_folder_path,
+                        output_folder_name, update_header, mo2_mode, bsab, all_dependents_have_skyrim_esm_as_master):
         CFIDs.lock = threading.Lock()
         CFIDs.compacted_and_patched = {}
         CFIDs.mo2_mode = mo2_mode
         CFIDs.form_processor = form_processor
         CFIDs.output_folder_name = output_folder_name
         print(f"Compacting Plugin: {os.path.basename(file_to_compact)}...")
-        CFIDs.compact_file(file_to_compact, skyrim_folder_path, output_folder_path, update_header)
+        CFIDs.compact_file(file_to_compact, skyrim_folder_path, output_folder_path, update_header, all_dependents_have_skyrim_esm_as_master)
         files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
         if dependents != []:
             print(f"-  Patching {len(dependents)} Dependent Plugins...")
@@ -585,7 +586,7 @@ class CFIDs():
         return data_list, grup_struct
     
     #Compacts master file and returns the new mod folder
-    def compact_file(file, skyrim_folder_path, output_folder, update_header):
+    def compact_file(file, skyrim_folder_path, output_folder, update_header, all_dependents_have_skyrim_esm_as_master):
         form_id_file_name = 'ESLifier_Data/Form_ID_Maps/' + os.path.basename(file).lower() + "_FormIdMap.txt"
         if not os.path.exists(os.path.dirname(form_id_file_name)):
             os.makedirs(os.path.dirname(form_id_file_name))
@@ -606,7 +607,7 @@ class CFIDs():
 
         data_list, grup_struct = CFIDs.create_data_list(data)
 
-        master_count = CFIDs.get_master_count(data_list)
+        master_count, has_skyrim_esm_master = CFIDs.get_master_count(data_list)
 
         data_list, sizes_list = CFIDs.decompress_data(data_list)
 
@@ -622,7 +623,7 @@ class CFIDs():
 
         form_id_list.sort(key= lambda x: struct.unpack('<I', x[0])[0])
 
-        if update_header and master_count != 0:
+        if update_header and master_count != 0 and has_skyrim_esm_master and all_dependents_have_skyrim_esm_as_master:
             new_id = binascii.unhexlify(master_count.to_bytes().hex() + '000000')
             new_range = 4096
         else:
@@ -811,10 +812,14 @@ class CFIDs():
         offset = 24
         data_len = len(tes4)
         master_list_count = 0
+        has_skyrim_esm_master = False
         while offset < data_len:
             field = tes4[offset:offset+4]
             field_size = struct.unpack("<H", tes4[offset+4:offset+6])[0]
             if field == b'MAST':
                 master_list_count  += 1
+                if field_size == 11:
+                    if tes4[offset+6:offset+16] == b'Skyrim.esm':
+                        has_skyrim_esm_master = True
             offset += field_size + 6
-        return master_list_count
+        return master_list_count, has_skyrim_esm_master

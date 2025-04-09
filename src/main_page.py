@@ -388,12 +388,31 @@ class Worker2(QObject):
         fp = form_processor()
         total = len(self.checked)
         count = 0
+        if self.update_header:
+            if os.path.exists("ESLifier_Data/missing_skyrim_as_master.json"):
+                try:
+                    with open("ESLifier_Data/missing_skyrim_as_master.json", 'r', encoding='utf-8') as f:
+                        missing_skyrim_esm = json.load(f)
+                except:
+                    missing_skyrim_esm = []
+            else:
+                missing_skyrim_esm = []
+
         for file in self.checked:
             count +=1
             percent = round((count/total)*100,1)
             print(f'{percent}% Patching: {count}/{total}')
-            CFIDs.compact_and_patch(fp, file, self.dependency_dictionary[os.path.basename(file).lower()], self.skyrim_folder_path,
-                                     self.output_folder_path, self.output_folder_name, self.update_header, self.mo2_mode, self.bsab)
+            dependents = self.dependency_dictionary[os.path.basename(file).lower()]
+            all_dependents_have_skyrim_esm_master = True
+            if self.update_header:
+                for plugin_without_skyrim_as_master in missing_skyrim_esm:
+                    if plugin_without_skyrim_as_master in dependents:
+                        all_dependents_have_skyrim_esm_master = False
+                        break
+            else:
+                all_dependents_have_skyrim_esm_master = True
+            CFIDs.compact_and_patch(fp, file, dependents, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name,
+                                    self.update_header, self.mo2_mode, self.bsab, all_dependents_have_skyrim_esm_master)
         print("Compacted and Patched")
         print('CLEAR')
         self.finished_signal.emit()
