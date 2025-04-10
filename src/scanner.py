@@ -7,6 +7,11 @@ import subprocess
 import mmap
 import psutil
 import struct
+import platform
+
+if platform.system() == 'Windows':
+    from win32 import win32file
+    win32file._setmaxstdio(8192)
 
 from plugin_qualification_checker import qualification_checker
 from dependency_getter import dependecy_getter
@@ -34,7 +39,12 @@ class scanner():
         total_ram = psutil.virtual_memory().available
         usable_ram = total_ram * 0.90
         thread_memory_usage = 10 * 1024 * 1024
-        scanner.max_threads_by_ram = int(usable_ram / thread_memory_usage)
+        max_threads = int(usable_ram / thread_memory_usage)
+        if max_threads > 8192:
+            scanner.max_threads_by_ram = 8192
+        else:
+            scanner.max_threads_by_ram = max_threads
+
         thread_memory_usage = 2.5 * (1024**3)
         scanner.bsa_threads_by_ram = int(usable_ram / thread_memory_usage) * 7
 
@@ -506,7 +516,7 @@ class scanner():
         for plugin in scanner.plugins: plugin_names.append(os.path.basename(plugin).lower())
         #pattern = re.compile(r'(?:~|:\s*|\||=|,|-|")\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\)?)\s*(?:\||,|"|$)')
         pattern = re.compile(r'(?:~|:\s*|\||=|,|-|"|\*)\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\)?)\s*(?:\||,|"|$|\n)')
-        pattern2 = re.compile(rb'\x00.([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\x00', flags=re.DOTALL)
+        pattern2 = re.compile(rb'\x00([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\x00', flags=re.DOTALL)
         pattern3 = re.compile(r'\\facegeom\\([a-zA-Z0-9_\-\'\?\!\(\)\[\]\,\s]+\.es[pml])\\')
         pattern4 = re.compile(r'\\facetint\\([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\\')
         pattern5 = re.compile(r'\\sound\\voice\\([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\\')
@@ -626,7 +636,6 @@ class scanner():
         for file in files:
             scanner.count += 1
             scanner.percentage = (scanner.count/scanner.file_count) * 100
-            #print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
             scanner.bsa_reader(file)
 
     def pex_processor(pattern2, files):
@@ -672,7 +681,7 @@ class scanner():
                     scanner.bsa_files.append(file)
             elif file_lower.endswith('.pex'):
                 scanner.pex_files.append(file)
-            elif file_lower.endswith('.dll'):
+            elif file_lower.endswith('.dll') and '\\skse\\plugins' in file_lower:
                 scanner.dll_files.append(file)
             elif file_lower.endswith('.seq'):
                 plugin = os.path.splitext(os.path.basename(file))[0]
@@ -772,14 +781,6 @@ class scanner():
                         with scanner.lock:
                             if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
                             if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
-                    #    r = re.findall(pattern,f.read().lower())
-                    #    f.close()
-                    #if r != []:
-                    #    for plugin in r:
-                    #        if 'NOT Is' not in plugin:
-                    #            with scanner.lock:
-                    #                if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
-                    #                if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
 
             elif reader_type == 'pex':
                 with open(file, 'rb') as f:
