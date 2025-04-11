@@ -9,28 +9,30 @@ from blacklist import blacklist
 class list_compactable(QTableWidget):
     def __init__(self):
         super().__init__()
-        self.COL_COUNT = 7
+        self.COL_COUNT = 8
         self.MOD_COL = 0
         self.CELL_COL = 1
         self.WRLD_COL = 2
         self.SKSE_COL = 3
-        self.DEP_COL = 4
-        self.DEP_DISP_COL = 5
-        self.HIDER_COL = 6
+        self.ESM_COL = 4
+        self.DEP_COL = 5
+        self.DEP_DISP_COL = 6
+        self.HIDER_COL = 7
         self.setColumnCount(self.COL_COUNT)
-        self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'WRLD Records', 'SKSE DLL', 'Dependencies', '', 'Hider'])
+        self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'WRLD Records', 'SKSE DLL', 'ESM', 'Dependencies', '', 'Hider'])
         self.horizontalHeaderItem(self.MOD_COL).setToolTip('This is the plugin name. Select which plugins you wish to compact.')
-        self.horizontalHeaderItem(self.CELL_COL).setToolTip('This is the CELL Record Flag. If an ESL plugin creates a new CELL\n'+
+        self.horizontalHeaderItem(self.CELL_COL).setToolTip('This is the CELL Record Flag. If an ESM+ESL plugin creates a new CELL\n'+
                                                 'and another mod changes that CELL then it may not work due to an engine bug.\n'+
                                                 'If an ESL plugin creates a new interior CELL then that cell may experience\n'+
                                                 'issues when reloading a save without restarting the game.\n'+
                                                 '"New  CELL" indicates the presence of a new CELL record.\n'+
                                                 '"!New Interior CELL!" indicates that a new CELL is an interior.\n'+
-                                                '"!!New CELL Changed!!" indicates that a new CELL record is changed by a dependent plugin.')
+                                                '"!!New CELL Changed!!" indicates that a new CELL record from an ESM is changed by a dependent plugin.')
         self.horizontalHeaderItem(self.WRLD_COL).setToolTip('This is the WRLD Record Flag. If an plugin is flagged ESL\n'+
                                                        'then the new worldspace may have landscape issues (no ground).')
         self.horizontalHeaderItem(self.SKSE_COL).setToolTip('This is the skse DLL flag. If a dll has the plugin name in it then it may\n'+
                                                 'have a LookUpForm() call that may break after compacting a flagged plugin.')
+        self.horizontalHeaderItem(self.ESM_COL).setToolTip('This is the ESM flag. If a plugin is an ESM then it will be flagged here.')
         self.horizontalHeaderItem(self.DEP_COL).setToolTip('If a plugin has other plugins with it as a master, they will appear when\n'+
                                                 'the button is clicked. These will also have their Form IDs patched to\n'+
                                                 'reflect the Master plugin\'s changes.')
@@ -49,6 +51,7 @@ class list_compactable(QTableWidget):
         self.flag_dict = {}
         self.show_cells = True
         self.show_dlls = True
+        self.show_esms = True
         self.filter_changed_cells = True
         self.filter_interior_cells = False
         self.filter_worldspaces = False
@@ -167,15 +170,14 @@ class list_compactable(QTableWidget):
             hide_row = False
             if 'new_cell' in flags:
                 item_cell_flag = QTableWidgetItem('New CELL')
-                item_cell_flag.setToolTip('This mod has a new CELL record and no mods currently modify it.\nIt is currently safe to ESL flag it.')
+                item_cell_flag.setToolTip('This mod has a new CELL record and no mods currently modify it.\n'+
+                                          'It is currently safe to ESL flag it.')
                 if not self.show_cells:
                     hide_row = True
                 if basename in self.cell_changed:
                     item_cell_flag.setText('!!New CELL Changed!!')
-                    item_cell_flag.setToolTip('This mod has at least one new CELL record that is an interior cell.\n'+
-                                              'ESL interior cells do not reload properly on save game load until\n'+
-                                              'the game has restarted.')
-                    item_cell_flag.setToolTip('This mod has a new CELL record\nand has a dependent plugin that modifies it.\nIt is NOT recommended to ESL flag it.')
+                    item_cell_flag.setToolTip('This mod is an ESM with a new CELL record that is modified by\n'+
+                                              'a dependent plugin. It is NOT recommended to ESL flag it.')
                     if self.filter_changed_cells:
                         hide_row = True
                 elif 'new_interior_cell' in flags:
@@ -202,6 +204,12 @@ class list_compactable(QTableWidget):
                 if not self.show_dlls:
                     hide_row = True
                 self.setItem(i, self.SKSE_COL, item_dll)
+            if 'is_esm' in flags:
+                item_esm_flag = QTableWidgetItem('ESM')
+                item_esm_flag.setToolTip('This mod is an ESM.')
+                if not self.show_esms:
+                    hide_row = True
+                self.setItem(i, self.ESM_COL, item_esm_flag)
             if self.dependency_list[basename.lower()] != []:
                 dL = QPushButton("Show")
                 dL.clicked.connect(lambda _, mod_key=basename.lower(): display_dependencies(mod_key))

@@ -9,15 +9,16 @@ from blacklist import blacklist
 
 class list_eslable(QTableWidget):
     def __init__(self):
-        self.COL_COUNT = 5
+        self.COL_COUNT = 6
         self.MOD_COL = 0
         self.CELL_COL = 1
         self.WRLD_COL = 2
-        self.SPACER_COL = 3
-        self.HIDER_COL = 4
+        self.ESM_COL = 3
+        self.SPACER_COL = 4
+        self.HIDER_COL = 5
         super().__init__()
         self.setColumnCount(self.COL_COUNT)
-        self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'WRLD Records', '', 'Hider'])
+        self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'WRLD Records', 'ESM', '', 'Hider'])
         self.horizontalHeaderItem(self.MOD_COL).setToolTip('This is the plugin name. Select which plugins you wish to flag as light.')
         self.horizontalHeaderItem(self.CELL_COL).setToolTip('This is the CELL Record Flag. If an ESL plugin creates a new CELL\n'+
                                                 'and another mod changes that CELL then it may not work due to an engine bug.\n'+
@@ -28,6 +29,7 @@ class list_eslable(QTableWidget):
                                                 '"!!New CELL Changed!!" indicates that a new CELL record is changed by a dependent plugin.')
         self.horizontalHeaderItem(self.WRLD_COL).setToolTip('This is the WRLD Record Flag. If an plugin is flagged ESL\n'+
                                                        'then the new worldspace may have landscape issues (no ground).')
+        self.horizontalHeaderItem(self.ESM_COL).setToolTip('This is the ESM flag.')
         self.setColumnHidden(self.HIDER_COL, True)
         self.horizontalHeader().sortIndicatorChanged.connect(self.hide_rows)
         self.verticalHeader().setHidden(True)
@@ -42,6 +44,7 @@ class list_eslable(QTableWidget):
         self.customContextMenuRequested.connect(self.contextMenu)
         self.flag_dict = {}
         self.show_cells = True
+        self.show_esms = True
         self.filter_changed_cells = True
         self.filter_interior_cells = False
         self.filter_worldspaces = False
@@ -130,6 +133,12 @@ class list_eslable(QTableWidget):
                 if self.filter_worldspaces:
                     hide_row = True
                 self.setItem(i, self.WRLD_COL, item_wrld_flag)
+            if 'is_esm' in flags:
+                item_esm_flag = QTableWidgetItem('ESM')
+                item_esm_flag.setToolTip('This mod is an ESM.')
+                if not self.show_esms:
+                    hide_row = True
+                self.setItem(i, self.ESM_COL, item_esm_flag)
             if hide_row:
                 self.setItem(i, self.HIDER_COL, QTableWidgetItem('hide me'))
 
