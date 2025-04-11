@@ -187,7 +187,8 @@ class list_compactable(QTableWidget):
                 if basename in self.cell_changed:
                     item_cell_flag.setText('!!New CELL Changed!!')
                     item_cell_flag.setToolTip('This mod is an ESM with a new CELL record that is modified by\n'+
-                                              'a dependent plugin. It is NOT recommended to ESL flag it.')
+                                              'a dependent plugin. It is NOT recommended to ESL flag it as doing so\n'+
+                                              'may break temporary child references in the new CELL.')
                     if self.filter_changed_cells:
                         hide_row = True
                 elif 'new_interior_cell' in flags:
