@@ -12,7 +12,7 @@ from main_page import main
 from patch_new_page import patch_new
 from log_stream import log_stream
 
-CURRENT_VERSION = '0.7.9' #-alpha
+CURRENT_VERSION = '0.8.0' #-alpha
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
@@ -281,15 +281,16 @@ class main_window(QMainWindow):
         self.main_widget.plugins_txt_path =                     self.settings_widget.settings['plugins_txt_path']
         self.main_widget.bsab =                                 self.settings_widget.settings['bsab_path']
         self.main_widget.update_header =                        self.settings_widget.settings['update_header']
-        self.main_widget.scan_esms =                            self.settings_widget.settings['scan_esms']
         self.main_widget.list_compact.filter_changed_cells =    self.settings_widget.settings['enable_cell_changed_filter']
         self.main_widget.list_compact.filter_interior_cells =   self.settings_widget.settings['enable_interior_cell_filter']
         self.main_widget.list_compact.show_cells =              self.settings_widget.settings['show_cells']
+        self.main_widget.list_compact.show_esms =               self.settings_widget.settings['show_esms']
         self.main_widget.list_compact.show_dlls =               self.settings_widget.settings['show_dlls']
         self.main_widget.list_compact.filter_worldspaces =      self.settings_widget.settings['filter_worldspaces']
         self.main_widget.list_eslify.filter_changed_cells =     self.settings_widget.settings['enable_cell_changed_filter']
         self.main_widget.list_eslify.filter_interior_cells =    self.settings_widget.settings['enable_interior_cell_filter']
         self.main_widget.list_eslify.show_cells =               self.settings_widget.settings['show_cells']
+        self.main_widget.list_eslify.show_esms =                self.settings_widget.settings['show_esms']
         self.main_widget.list_eslify.filter_worldspaces =       self.settings_widget.settings['filter_worldspaces']
         self.patch_new_widget.skyrim_folder_path =              self.settings_widget.settings['skyrim_folder_path']
         self.patch_new_widget.output_folder_path =              self.settings_widget.settings['output_folder_path']
@@ -299,7 +300,6 @@ class main_window(QMainWindow):
         self.patch_new_widget.modlist_txt_path =                self.settings_widget.settings['mo2_modlist_txt_path']
         self.patch_new_widget.mo2_mode =                        self.settings_widget.settings['mo2_mode']
         self.patch_new_widget.update_header =                   self.settings_widget.settings['update_header']
-        self.patch_new_widget.scan_esms =                       self.settings_widget.settings['scan_esms']
         self.main_widget.list_compact.create()
         self.main_widget.list_eslify.create()
         
