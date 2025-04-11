@@ -81,7 +81,7 @@ class list_compacted_unpatched(QTableWidget):
             
             if basename in cell_changed:
                 item_cell_changed_error = QTableWidgetItem('CELL Changed!')
-                item_cell_changed_error.setToolTip('This mod has a dependent plugin that changes a new CELL record.\nThis may break the mod\'s new CELL.')
+                item_cell_changed_error.setToolTip('This mod is an ESM that has a dependent plugin that changes a new CELL record.\nThis may break the mod\'s new CELL.')
                 self.setItem(i, 1, item_cell_changed_error)
             if basename.removeprefix('SKSE WARN - ').lower() in dll_dict:
                 item_dll_error = QTableWidgetItem('DLL!')
