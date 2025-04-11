@@ -6,7 +6,7 @@ import struct
 import shutil
 
 class qualification_checker():
-    def scan(path, update_header, scan_esms):
+    def scan(path, update_header):
         qualification_checker.lock = threading.Lock()
         all_plugins = qualification_checker.get_from_file("ESLifier_Data/plugin_list.json")
         plugins = [plugin for plugin in all_plugins if not plugin.lower().endswith('.esl')]
@@ -15,7 +15,6 @@ class qualification_checker():
             qualification_checker.dependent_dict = qualification_checker.get_from_file("ESLifier_Data/dependency_dictionary.json")
         qualification_checker.flag_dict = {}
         qualification_checker.max_record_number = 4096
-        qualification_checker.scan_esms = scan_esms
         if os.path.exists('ESLifier_Data/EDIDs'):
             shutil.rmtree('ESLifier_Data/EDIDs')
         if not os.path.exists("ESLifier_Data/EDIDs"):
@@ -53,8 +52,9 @@ class qualification_checker():
     def plugin_scanner(plugins, update_header):
         flag_dict = {}
         for plugin in plugins:
-            if not qualification_checker.already_esl(plugin):
-                esl_allowed, need_compacting, new_cell, interior_cell, new_wrld = qualification_checker.file_reader(plugin, update_header)
+            alread_esl, is_esm = qualification_checker.already_esl(plugin)
+            if not alread_esl:
+                esl_allowed, need_compacting, new_cell, interior_cell, new_wrld = qualification_checker.file_reader(plugin, update_header, is_esm)
                 if esl_allowed:
                     flag_dict[plugin] = []
                     if need_compacting:
@@ -65,6 +65,9 @@ class qualification_checker():
                             flag_dict[plugin].append('new_interior_cell')
                     if new_wrld:
                         flag_dict[plugin].append('new_wrld')
+                    if is_esm:
+                        flag_dict[plugin].append('is_esm')
+                        
         with qualification_checker.lock:
             for key, value in flag_dict.items():
                 if key not in qualification_checker.flag_dict:
@@ -84,7 +87,7 @@ class qualification_checker():
                 offset = offset_end
         return data_list      
 
-    def file_reader(file, update_header):
+    def file_reader(file, update_header, is_esm):
         data_list = []
         new_cell = False
         interior_cell_flag = False
@@ -165,7 +168,7 @@ class qualification_checker():
                 for edid in edids:
                     f.write(edid + '\n')
         cell_form_ids.sort()
-        if cell_form_ids != []:
+        if cell_form_ids != [] and is_esm:
             cell_form_id_file = 'ESLifier_Data/Cell_IDs/' + os.path.basename(file) + '_CellFormIDs.txt'
             with open(cell_form_id_file, 'w', encoding='utf-8') as f:
                 for form_id in cell_form_ids:
@@ -175,15 +178,19 @@ class qualification_checker():
 
     def already_esl(file):
         with open(file, 'rb') as f:
+            if file.lower().endswith('.esm'):
+                esm = True
+            else:
+                esm = False
             f.seek(8)
             esm_flag = f.read(1)
-            if esm_flag in (b'\x81', b'\x01') and not qualification_checker.scan_esms:
-                return True #return that the file does not qualify
+            if esm_flag in (b'\x81', b'\x01'):
+                esm = True
             esl_flag = f.read(1)
             if esl_flag == b'\x02':
-                return True
+                return True, esm
             else:
-                return False #not esl, so it does qualify for processing
+                return False, esm #not esl, so it does qualify for processing
             
     def get_from_file(file):
         try:
