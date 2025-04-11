@@ -17,7 +17,7 @@ from plugin_qualification_checker import qualification_checker
 from dependency_getter import dependecy_getter
 
 class scanner():
-    def scan(path, mo2_mode, modlist_txt_path, scan_esms, plugins_txt_path, bsab, update_header, full_scan):
+    def scan(path, mo2_mode, modlist_txt_path, plugins_txt_path, bsab, update_header, full_scan):
         scanner.bsa_blacklist = ['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
                     'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
                     'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa']
@@ -53,10 +53,10 @@ class scanner():
         plugins_list = scanner.get_plugins_list(plugins_txt_path)
         if mo2_mode:
             load_order, enabled_mods = scanner.get_modlist(modlist_txt_path)
-            scanner.all_files, scanner.plugins = scanner.get_winning_files(path, load_order, enabled_mods, scan_esms, plugins_list)
+            scanner.all_files, scanner.plugins = scanner.get_winning_files(path, load_order, enabled_mods, plugins_list)
             scanner.file_count = len(scanner.all_files)
         else:
-            scanner.get_files_from_skyrim_folder(path, scan_esms, plugins_list)
+            scanner.get_files_from_skyrim_folder(path, plugins_list)
 
         scanner.plugin_basename_list = [os.path.basename(plugin).lower() for plugin in scanner.plugins]
 
@@ -69,7 +69,7 @@ class scanner():
             print('Gettings Dependencies')
             dependency_dictionary = dependecy_getter.scan(path)
             print('Scanning Plugins')
-            flag_dict = qualification_checker.scan(path, update_header, scan_esms)
+            flag_dict = qualification_checker.scan(path, update_header)
 
         scanner.get_file_masters()
 
@@ -99,14 +99,11 @@ class scanner():
         
         return dict(sorted_bsa_items)
 
-    def get_files_from_skyrim_folder(path, scan_esms, plugins_list):
+    def get_files_from_skyrim_folder(path, plugins_list):
         path = os.path.normpath(path)
         path_level = len(path.split(os.sep))
         loop = 0
-        if scan_esms:
-            plugin_extensions = ('.esp', '.esm', '.esl')
-        else:
-            plugin_extensions = ('.esp', '.esl')
+        plugin_extensions = ('.esp', '.esm', '.esl')
         bsa_list = []
         temp_rel_paths = []
         for root, _, files in os.walk(path):
@@ -225,16 +222,13 @@ class scanner():
                 if relative_path not in temp_rel_paths:
                     scanner.all_files.append(full_path)
 
-    def get_files_from_mods(mods_folder, enabled_mods, scan_esms, plugins_list):
+    def get_files_from_mods(mods_folder, enabled_mods, plugins_list):
         if not os.path.exists('bsa_extracted/'):
             os.makedirs('bsa_extracted/')
         mod_files = {}
         cases_of_files = {}
         bsa_list = []
-        if scan_esms:
-            plugin_extensions = ('.esp', '.esl', '.esm')
-        else:
-            plugin_extensions = ('.esp', '.esl')
+        plugin_extensions = ('.esp', '.esl', '.esm')
         plugin_names = []
         loop = 0
         file_count = 0
@@ -448,10 +442,10 @@ class scanner():
             return []
         return active_plugins
 
-    def get_winning_files(mods_folder, load_order, enabled_mods, scan_esms, plugins_list):
+    def get_winning_files(mods_folder, load_order, enabled_mods, plugins_list):
         mods_folder = os.path.normpath(mods_folder)
         mod_folder_level = len(mods_folder.split(os.sep))
-        mod_files, plugin_names, cases = scanner.get_files_from_mods(mods_folder, enabled_mods, scan_esms, plugins_list)
+        mod_files, plugin_names, cases = scanner.get_files_from_mods(mods_folder, enabled_mods, plugins_list)
         winning_files = []
         file_count = 0
         loop = 0
@@ -481,10 +475,7 @@ class scanner():
                 else:
                     file_path = os.path.join(mods_folder, mods_sorted[-1], cases[file])
                 winning_files.append(file_path)
-        if scan_esms:
-            plugin_extensions = ('.esp', '.esl', '.esm')
-        else:
-            plugin_extensions = ('.esp', '.esl')
+        plugin_extensions = ('.esp', '.esl', '.esm')
         plugins = []
         plugin_names_lowered = [plugin.lower() for plugin in plugin_names]
         for file in winning_files:
