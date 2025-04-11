@@ -87,11 +87,10 @@ class settings(QWidget):
             "Changing this settings requires a re-scan.",
             "update_header"
         )
-        self.scan_esms_widget, self.scan_esms_toggle = self.create_toggle_widget(
-            "Scan ESM Plugins",
-            "Scan and include ESM plugins (.esm/ESM flagged).\n"+
-            "Changing this setting will require a re-scan.",
-            "scan_esms"
+        self.show_esms_widget, self.show_esms_toggle = self.create_toggle_widget(
+            "Show ESM Plugins",
+            "Show ESM plugins (.esm/ESM flagged).",
+            "show_esms"
         )
         self.show_plugins_with_cells_widget, self.show_plugins_with_cells_toggle = self.create_toggle_widget(
             "Show plugins with new CELL records",
@@ -99,8 +98,8 @@ class settings(QWidget):
             "show_cells"
         )
         self.enable_cell_changed_filter_widget, self.enable_cell_changed_filter_toggle = self.create_toggle_widget(
-            "Hide plugins with new CELL records that are overwriten",
-            "Hide plugins with new CELL records that have been changed by a dependent plugin.",
+            "Hide ESM plugins with new CELL records that are overwritten",
+            "Hide ESM plugins with new CELL records that have been changed by a dependent plugin.",
             "enable_cell_changed_filter"
         )
         self.enable_interior_cell_filter_widget, self.enable_interior_cell_filter_toggle = self.create_toggle_widget(
@@ -197,7 +196,7 @@ class settings(QWidget):
         settings_layout.addWidget(column_wrapper_widget)
 
         column_1.addWidget(self.update_header_widget)
-        column_1.addWidget(self.scan_esms_widget)
+        column_1.addWidget(self.show_esms_widget)
         column_1.addWidget(self.show_plugins_with_cells_widget)
         column_1.addWidget(self.enable_cell_changed_filter_widget)
         column_1.addWidget(self.enable_interior_cell_filter_widget)
@@ -474,7 +473,7 @@ class settings(QWidget):
             self.mo2_modlist_txt_path.clear()
             self.mo2_mode_toggle.setChecked(False)
             self.update_header_toggle.setChecked(True)
-            self.scan_esms_toggle.setChecked(False)
+            self.show_esms_toggle.setChecked(True)
             self.show_plugins_with_cells_toggle.setChecked(True)
             self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(False)
             self.enable_cell_changed_filter_toggle.setChecked(True)
@@ -493,7 +492,7 @@ class settings(QWidget):
         self.mo2_modlist_txt_path.setText(self.settings.get('mo2_modlist_txt_path' ,''))
         self.mo2_mode_toggle.setChecked(self.settings.get('mo2_mode', False))
         self.update_header_toggle.setChecked(self.settings.get('update_header', True))
-        self.scan_esms_toggle.setChecked(self.settings.get('scan_esms', False))
+        self.show_esms_toggle.setChecked(self.settings.get('show_esms', True))
         self.show_plugins_with_cells_toggle.setChecked(self.settings.get('show_cells', True))
         self.enable_cell_changed_filter_toggle.setChecked(self.settings.get('enable_cell_changed_filter', True))
         self.enable_interior_cell_filter_toggle.setChecked(self.settings.get('enable_interior_cell_filter', False))
@@ -517,7 +516,7 @@ class settings(QWidget):
         self.settings['mo2_modlist_txt_path'] = self.mo2_modlist_txt_path.text()
         self.settings['mo2_mode'] = self.mo2_mode_toggle.isChecked()
         self.settings['update_header'] = self.update_header_toggle.isChecked()
-        self.settings['scan_esms'] = self.scan_esms_toggle.isChecked()
+        self.settings['show_esms'] = self.show_esms_toggle.isChecked()
         self.settings['show_cells'] = self.show_plugins_with_cells_toggle.isChecked()
         self.settings['enable_cell_changed_filter'] = self.enable_cell_changed_filter_toggle.isChecked()
         self.settings['enable_interior_cell_filter'] = self.enable_interior_cell_filter_toggle.isChecked()
