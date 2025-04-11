@@ -24,7 +24,6 @@ class patch_new(QWidget):
         self.bsab = ''
         self.mo2_mode = False
         self.update_header = True
-        self.scan_esms = False
         self.scanned = False
         self.create()
 
@@ -87,7 +86,7 @@ class patch_new(QWidget):
         def run_scan():
             self.log_stream.show()
             self.thread_new = QThread()
-            self.worker = Worker(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.scan_esms, self.plugins_txt_path, self.bsab, self.update_header)
+            self.worker = Worker(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.plugins_txt_path, self.bsab, self.update_header)
             self.worker.moveToThread(self.thread_new)
             self.thread_new.started.connect(self.worker.scan_run)
             self.worker.finished_signal.connect(self.completed_scan)
@@ -226,19 +225,18 @@ class patch_new(QWidget):
 
 class Worker(QObject):
     finished_signal = pyqtSignal()
-    def __init__(self, path, mo2_mode, modlist_txt_path, scan_esms, plugins_txt_path, bsab, update):
+    def __init__(self, path, mo2_mode, modlist_txt_path, plugins_txt_path, bsab, update):
         super().__init__()
         self.skyrim_folder_path = path
         self.mo2_mode = mo2_mode
         self.modlist_txt_path = modlist_txt_path
-        self.scan_esms = scan_esms
         self.plugins_txt_path = plugins_txt_path
         self.bsab = bsab
         self.update_header = update
 
     def scan_run(self):
         print('Scanning All Files:')
-        scanner.scan(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.scan_esms, self.plugins_txt_path, self.bsab, self.update_header, False)
+        scanner.scan(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.plugins_txt_path, self.bsab, self.update_header, False)
         print('Getting Dependencies')
         dependecy_getter.scan(self.skyrim_folder_path)
         self.finished_signal.emit()

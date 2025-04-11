@@ -25,7 +25,6 @@ class main(QWidget):
         self.scanned = False
         self.mo2_mode = False
         self.update_header = True
-        self.scan_esms = False
         self.eslify_dictionary = {}
         self.dependency_dictionary = {}
         for window in QApplication.allWidgets():
@@ -307,7 +306,7 @@ class main(QWidget):
         def run_scan():
             self.log_stream.show()
             self.thread_new = QThread()
-            self.worker = Worker(self.skyrim_folder_path, self.update_header, self.scan_esms, self.mo2_mode,
+            self.worker = Worker(self.skyrim_folder_path, self.update_header, self.mo2_mode,
                                   self.modlist_txt_path, self.plugins_txt_path, self.bsab)
             self.worker.moveToThread(self.thread_new)
             self.thread_new.started.connect(self.worker.scan_run)
@@ -352,11 +351,10 @@ class main(QWidget):
 
 class Worker(QObject):
     finished_signal = pyqtSignal(dict, dict)
-    def __init__(self, path, update, scan_esms, mo2_mode, modlist_txt_path, plugins_txt_path, bsab):
+    def __init__(self, path, update, mo2_mode, modlist_txt_path, plugins_txt_path, bsab):
         super().__init__()
         self.skyrim_folder_path = path
         self.update_header = update
-        self.scan_esms = scan_esms
         self.mo2_mode = mo2_mode
         self.modlist_txt_path = modlist_txt_path
         self.plugins_txt_path = plugins_txt_path
@@ -364,8 +362,8 @@ class Worker(QObject):
 
     def scan_run(self):
         print('Scanning All Files:')
-        flag_dict, dependency_dictionary = scanner.scan(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, 
-                                                   self.scan_esms, self.plugins_txt_path, self.bsab, self.update_header, True)
+        flag_dict, dependency_dictionary = scanner.scan(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path,
+                                                         self.plugins_txt_path, self.bsab, self.update_header, True)
         print('Checking if New CELLs are Changed')
         plugins_with_cells = [plugin for plugin, flags in flag_dict.items() if 'new_cell' in flags]
         cell_scanner.scan(plugins_with_cells)
