@@ -117,7 +117,6 @@ class list_compactable(QTableWidget):
         def display_dependencies(mod_key):
             index = self.currentRow()
             if self.cellWidget(index, self.DEP_DISP_COL):
-                check_state = self.item(index, self.MOD_COL).checkState()
                 self.item(index, self.MOD_COL).setTextAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
                 if self.item(index, self.CELL_COL):
                     self.item(index, self.CELL_COL).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignVCenter)
@@ -131,9 +130,7 @@ class list_compactable(QTableWidget):
                         border: none;
                     }""")
                 self.removeCellWidget(index, self.DEP_DISP_COL)
-                self.item(index, self.MOD_COL).setCheckState(check_state)
             else:
-                check_state = self.item(index, self.MOD_COL).checkState()
                 self.item(index, self.MOD_COL).setTextAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
                 if self.item(index, self.CELL_COL):
                     self.item(index, self.CELL_COL).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignTop)
@@ -149,13 +146,22 @@ class list_compactable(QTableWidget):
                         border-radius: none;
                     }""")
                 list_widget_dependency_list = QListWidget()
+                count = 0
+                cumulative_tooltip = ''
                 for dependency in self.dependency_list[mod_key]:
-                    item = QListWidgetItem(os.path.basename(dependency))
-                    item.setToolTip(dependency)
+                    count += 1
+                    if count <= 15:
+                        item = QListWidgetItem(os.path.basename(dependency))
+                        item.setToolTip(dependency)
+                        list_widget_dependency_list.addItem(item)
+                    else:
+                        cumulative_tooltip += os.path.basename(dependency) + '\n'
+                if count > 15:
+                    item = QListWidgetItem(f'+{count-15} more...')
+                    item.setToolTip(cumulative_tooltip.strip())
                     list_widget_dependency_list.addItem(item)
                 list_widget_dependency_list.setSizeAdjustPolicy(QTableWidget.SizeAdjustPolicy.AdjustToContents)
                 self.setCellWidget(index, self.DEP_DISP_COL, list_widget_dependency_list)
-                self.item(index, self.MOD_COL).setCheckState(check_state)
             self.resizeRowToContents(index)
 
         for i, (plugin, flags) in enumerate(self.flag_dict.items()):
