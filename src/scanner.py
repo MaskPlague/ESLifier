@@ -269,32 +269,34 @@ class scanner():
 
         #Get files from MO2's overwrite folder
         overwrite_path = os.path.join(os.path.split(mods_folder)[0], 'overwrite')
-        for root, dirs, files in os.walk(overwrite_path):
-            file_count += len(files)
-            if loop == 50: #prevent spamming stdout and slowing down the program
-                loop = 0
-                print(f'\033[F\033[K-  Gathered: {file_count}\n-', end='\r')
-            else:
-                loop += 1
-            for file in files:
-                full_path = os.path.join(root, file)
-                cased = os.path.relpath(full_path, overwrite_path)
-                relative_path = cased.lower()
-                if '.mohidden' in relative_path:
-                    continue
-                if relative_path not in mod_files:
-                    mod_files[relative_path] = []
-                    cases_of_files[relative_path] = cased
-                mod_files[relative_path].append('overwrite_eslifier_scan')
-                if file.lower().endswith(plugin_extensions):
-                    plugin_names.append(file)
-                if file.lower().endswith('.bsa') and file.lower() not in scanner.bsa_blacklist:
-                    file = file[:-4]
-                    if ' - textures' in file.lower():
-                        index = file.lower().index(' - textures')
-                        file = file[:index]
-                    bsa_list.append([file.lower(), full_path])
-
+        if os.path.exists(overwrite_path):
+            for root, dirs, files in os.walk(overwrite_path):
+                file_count += len(files)
+                if loop == 50: #prevent spamming stdout and slowing down the program
+                    loop = 0
+                    print(f'\033[F\033[K-  Gathered: {file_count}\n-', end='\r')
+                else:
+                    loop += 1
+                for file in files:
+                    full_path = os.path.join(root, file)
+                    cased = os.path.relpath(full_path, overwrite_path)
+                    relative_path = cased.lower()
+                    if '.mohidden' in relative_path:
+                        continue
+                    if relative_path not in mod_files:
+                        mod_files[relative_path] = []
+                        cases_of_files[relative_path] = cased
+                    mod_files[relative_path].append('overwrite_eslifier_scan')
+                    if file.lower().endswith(plugin_extensions):
+                        plugin_names.append(file)
+                    if file.lower().endswith('.bsa') and file.lower() not in scanner.bsa_blacklist:
+                        file = file[:-4]
+                        if ' - textures' in file.lower():
+                            index = file.lower().index(' - textures')
+                            file = file[:index]
+                        bsa_list.append([file.lower(), full_path])
+        else:
+            print('Overwrite folder not found.\n')
 
         order_map = {plugin: index for index, plugin in enumerate(plugins_list)}
         filtered_bsa_list = [item for item in bsa_list if item[0] in order_map]
