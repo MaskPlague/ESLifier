@@ -83,6 +83,10 @@ class list_eslable(QTableWidget):
             self.hideColumn(self.WRLD_COL)
         else:
             self.showColumn(self.WRLD_COL)
+        if not self.show_esms:
+            self.hideColumn(self.ESM_COL)
+        else:
+            self.showColumn(self.ESM_COL)
         self.compacted = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json")
         blacklist = self.get_data_from_file('ESLifier_Data/blacklist.json')
         self.cell_changed = self.get_data_from_file("ESLifier_Data/cell_changed.json")
