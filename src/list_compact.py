@@ -95,6 +95,10 @@ class list_compactable(QTableWidget):
             self.hideColumn(self.WRLD_COL)
         else:
             self.showColumn(self.WRLD_COL)
+        if not self.show_esms:
+            self.hideColumn(self.ESM_COL)
+        else:
+            self.showColumn(self.ESM_COL)
         self.dependency_list = self.get_data_from_file("ESLifier_Data/dependency_dictionary.json")
         self.compacted = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json")
         self.dll_dict = self.get_data_from_file("ESLifier_Data/dll_dict.json")
