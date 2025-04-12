@@ -375,7 +375,7 @@ class scanner():
                 print(f'\033[F\033[K')
 
         mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
-        #Get files from overwrite
+        #Get files that were extracted from BSA
         for root, dirs, files in os.walk('bsa_extracted/'):
             file_count += len(files)
             if loop == 50: #prevent spamming stdout and slowing down the program
