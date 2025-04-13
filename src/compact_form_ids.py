@@ -9,6 +9,21 @@ import struct
 from file_patchers import patchers
 from intervaltree import IntervalTree
 
+import platform
+import psutil
+if platform.system() == 'Windows':
+    from win32 import win32file
+    win32file._setmaxstdio(8192)
+
+total_ram = psutil.virtual_memory().available
+usable_ram = total_ram * 0.90
+thread_memory_usage = 50 * 1024 * 1024
+max_threads = int(usable_ram / thread_memory_usage)
+if max_threads > 8192:
+    MAX_THREADS = 8192
+else:
+    MAX_THREADS = max_threads
+
 class CFIDs():
     def compact_and_patch(form_processor, file_to_compact, dependents, skyrim_folder_path, output_folder_path,
                         output_folder_name, overwrite_path, update_header, mo2_mode, bsab, all_dependents_have_skyrim_esm_as_master):
@@ -273,12 +288,9 @@ class CFIDs():
 
     def rename_files_threader(master, files, form_id_map, skyrim_folder_path, output_folder_path):
         threads = []
-        if len(files) > 100:
-            split = 100
-        elif len(files) > 50:
-            split = 50
-        else:
-            split = 1
+        split = len(files)
+        if split > MAX_THREADS:
+            split = MAX_THREADS
 
         chunk_size = len(files) // split
         chunks = [files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
@@ -355,12 +367,9 @@ class CFIDs():
 
     def patch_files_threader(master, files, form_id_map, skyrim_folder_path, output_folder_path, flag):
         threads = []
-        if len(files) > 50:
-            split = 50
-        elif len(files) > 5:
-            split = 5
-        else:
-            split = 1
+        split = len(files)
+        if split > MAX_THREADS:
+            split = MAX_THREADS
 
         chunk_size = len(files) // split
         chunks = [files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
