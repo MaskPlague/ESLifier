@@ -141,16 +141,10 @@ class main_window(QMainWindow):
         self.tabs.addTab(self.settings_widget, "  Settings  ")
         self.tabs.setTabToolTip(2, "This is the settings page. Certain settings will effect what plugins will display after scanning.")
         self.tabs.addTab(QWidget(), "  Help?  ")
-        
-        if (self.settings_widget.settings['output_folder_path'] == ''
-            or self.settings_widget.settings['skyrim_folder_path'] == ''
-            or not self.settings_widget.output_folder_name_valid):
-            self.tabs.setCurrentIndex(2)
-            self.previous_tab = 2
-        else:
-            self.tabs.setCurrentIndex(0)
-            self.previous_tab = 0
+        self.initial = True
         self.tabs.currentChanged.connect(self.tab_changed)
+        self.previous_tab = 0
+        self.tab_changed(0)
         self.layout().setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         display_widget = QWidget()
@@ -174,12 +168,17 @@ class main_window(QMainWindow):
             or self.settings_widget.settings['skyrim_folder_path'] == ''
             or self.settings_widget.settings['plugins_txt_path'] == ''
             or self.settings_widget.settings['bsab_path'] == ''
-            or (self.settings_widget.settings['mo2_mode'] and self.settings_widget.settings['mo2_modlist_txt_path'] == '')):
+            or (self.settings_widget.settings['mo2_mode'] 
+                and (self.settings_widget.settings['mo2_modlist_txt_path'] == '' 
+                     or self.settings_widget.settings['overwrite_path'] == ''))):
             self.tabs.setCurrentIndex(2)
-            self.no_path_set()
             self.tabs.blockSignals(False)
+            if not self.initial:
+                self.no_path_set()
+            else:
+                self.initial = False
             return
-        
+        self.initial = False
         if not self.settings_widget.output_folder_name_valid:
             self.tabs.setCurrentIndex(2)
             QMessageBox.warning(None, "Invalid Folder Name", f"Enter a valid output folder name.")
@@ -193,6 +192,7 @@ class main_window(QMainWindow):
         mo2_mode = self.settings_widget.settings['mo2_mode']
         if mo2_mode:
             mo2_path = self.settings_widget.settings['mo2_modlist_txt_path']
+            overwrite_path = self.settings_widget.settings['overwrite_path']
 
         error_message = ''
         if not os.path.exists(output_path):
@@ -210,6 +210,8 @@ class main_window(QMainWindow):
             error_message += "Invalid bsab.exe, the path should be to the file not directory\n"
         if not os.path.exists(bsab):
             error_message += "Invalid bsab.exe, the file does not exist.\n"
+        if mo2_mode and not os.path.exists(overwrite_path):
+            error_message += "Invalid Overwrite Directory, it does not exist.\n'"
         if mo2_mode and not mo2_path.lower().endswith('modlist.txt'):
             error_message += "Invalid MO2 modlist.txt, the path should be to the file not directory.\n"
         if mo2_mode and not os.path.exists(mo2_path):
@@ -261,10 +263,7 @@ class main_window(QMainWindow):
                 background-color: lightcoral;
             }""")
         message.setText(
-            "All three paths must be set to leave the settings page!")
-        if self.settings_widget.settings['mo2_mode']:
-            message.setText(
-            "All four paths must be set to leave the settings page!")
+            "All paths must be set to leave the settings page!")
         message.addButton(QMessageBox.StandardButton.Ok)
         def close():
             message.close()
@@ -279,6 +278,7 @@ class main_window(QMainWindow):
         self.main_widget.mo2_mode =                             self.settings_widget.settings['mo2_mode']
         self.main_widget.modlist_txt_path =                     self.settings_widget.settings['mo2_modlist_txt_path']
         self.main_widget.plugins_txt_path =                     self.settings_widget.settings['plugins_txt_path']
+        self.main_widget.overwrite_path =                       self.settings_widget.settings['overwrite_path']
         self.main_widget.bsab =                                 self.settings_widget.settings['bsab_path']
         self.main_widget.update_header =                        self.settings_widget.settings['update_header']
         self.main_widget.list_compact.filter_changed_cells =    self.settings_widget.settings['enable_cell_changed_filter']
@@ -296,6 +296,7 @@ class main_window(QMainWindow):
         self.patch_new_widget.output_folder_path =              self.settings_widget.settings['output_folder_path']
         self.patch_new_widget.output_folder_name =              self.settings_widget.settings['output_folder_name']
         self.patch_new_widget.plugins_txt_path =                self.settings_widget.settings['plugins_txt_path']
+        self.patch_new_widget.overwrite_path =                  self.settings_widget.settings['overwrite_path']
         self.patch_new_widget.bsab =                            self.settings_widget.settings['bsab_path']
         self.patch_new_widget.modlist_txt_path =                self.settings_widget.settings['mo2_modlist_txt_path']
         self.patch_new_widget.mo2_mode =                        self.settings_widget.settings['mo2_mode']

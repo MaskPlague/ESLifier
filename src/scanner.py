@@ -17,7 +17,7 @@ from plugin_qualification_checker import qualification_checker
 from dependency_getter import dependecy_getter
 
 class scanner():
-    def scan(path, mo2_mode, modlist_txt_path, plugins_txt_path, bsab, update_header, full_scan):
+    def scan(path, mo2_mode, modlist_txt_path, plugins_txt_path, overwrite_path, bsab, update_header, full_scan):
         scanner.bsa_blacklist = ['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
                     'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
                     'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa']
@@ -53,7 +53,7 @@ class scanner():
         plugins_list = scanner.get_plugins_list(plugins_txt_path)
         if mo2_mode:
             load_order, enabled_mods = scanner.get_modlist(modlist_txt_path)
-            scanner.all_files, scanner.plugins = scanner.get_winning_files(path, load_order, enabled_mods, plugins_list)
+            scanner.all_files, scanner.plugins = scanner.get_winning_files(path, load_order, enabled_mods, plugins_list, overwrite_path)
             scanner.file_count = len(scanner.all_files)
         else:
             scanner.get_files_from_skyrim_folder(path, plugins_list)
@@ -222,7 +222,7 @@ class scanner():
                 if relative_path not in temp_rel_paths:
                     scanner.all_files.append(full_path)
 
-    def get_files_from_mods(mods_folder, enabled_mods, plugins_list):
+    def get_files_from_mods(mods_folder, enabled_mods, plugins_list, overwrite_path):
         if not os.path.exists('bsa_extracted/'):
             os.makedirs('bsa_extracted/')
         mod_files = {}
@@ -268,7 +268,7 @@ class scanner():
                                 bsa_list.append([file.lower(), full_path])
 
         #Get files from MO2's overwrite folder
-        overwrite_path = os.path.join(os.path.split(mods_folder)[0], 'overwrite')
+        #overwrite_path = os.path.join(os.path.split(mods_folder)[0], 'overwrite')
         if os.path.exists(overwrite_path):
             for root, dirs, files in os.walk(overwrite_path):
                 file_count += len(files)
@@ -444,10 +444,11 @@ class scanner():
             return []
         return active_plugins
 
-    def get_winning_files(mods_folder, load_order, enabled_mods, plugins_list):
+    def get_winning_files(mods_folder, load_order, enabled_mods, plugins_list, overwrite_path):
         mods_folder = os.path.normpath(mods_folder)
+        overwrite_path = os.path.normpath(overwrite_path)
         mod_folder_level = len(mods_folder.split(os.sep))
-        mod_files, plugin_names, cases = scanner.get_files_from_mods(mods_folder, enabled_mods, plugins_list)
+        mod_files, plugin_names, cases = scanner.get_files_from_mods(mods_folder, enabled_mods, plugins_list, overwrite_path)
         winning_files = []
         file_count = 0
         loop = 0

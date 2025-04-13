@@ -11,12 +11,13 @@ from intervaltree import IntervalTree
 
 class CFIDs():
     def compact_and_patch(form_processor, file_to_compact, dependents, skyrim_folder_path, output_folder_path,
-                        output_folder_name, update_header, mo2_mode, bsab, all_dependents_have_skyrim_esm_as_master):
+                        output_folder_name, overwrite_path, update_header, mo2_mode, bsab, all_dependents_have_skyrim_esm_as_master):
         CFIDs.lock = threading.Lock()
         CFIDs.compacted_and_patched = {}
         CFIDs.mo2_mode = mo2_mode
         CFIDs.form_processor = form_processor
         CFIDs.output_folder_name = output_folder_name
+        CFIDs.overwrite_path = os.path.normpath(overwrite_path)
         print(f"Compacting Plugin: {os.path.basename(file_to_compact)}...")
         CFIDs.compact_file(file_to_compact, skyrim_folder_path, output_folder_path, update_header, all_dependents_have_skyrim_esm_as_master)
         files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
@@ -172,10 +173,11 @@ class CFIDs():
             data = {}
         return data
     
-    def set_flag(file, skyrim_folder, output_folder, output_folder_name, mo2_mode):
+    def set_flag(file, skyrim_folder, output_folder, output_folder_name, overwrite_path, mo2_mode):
         CFIDs.mo2_mode = mo2_mode
         CFIDs.lock = threading.Lock()
         CFIDs.output_folder_name = output_folder_name
+        CFIDs.overwrite_path = os.path.normpath(overwrite_path)
         print("-  Changing ESL flag in: " + os.path.basename(file))
         new_file, _ = CFIDs.copy_file_to_output(file, skyrim_folder, output_folder)
         try:
@@ -186,12 +188,14 @@ class CFIDs():
             print('!Error: Failed to set ESL flag in {file}')
             print(e)            
 
-    def patch_new(form_processor, compacted_file, dependents, files_to_patch, skyrim_folder_path, output_folder_path, output_folder_name, update_header, mo2_mode):
+    def patch_new(form_processor, compacted_file, dependents, files_to_patch, skyrim_folder_path, output_folder_path, 
+                  output_folder_name, overwrite_path, update_header, mo2_mode):
         CFIDs.lock = threading.Lock()
         CFIDs.form_processor = form_processor
         CFIDs.compacted_and_patched = {}
         CFIDs.mo2_mode = mo2_mode
         CFIDs.output_folder_name = output_folder_name
+        CFIDs.overwrite_path = os.path.normpath(overwrite_path)
         print('Patching new plugins and files for ' + compacted_file + '...')
         CFIDs.compacted_and_patched[compacted_file] = []
         if dependents != []:
@@ -221,9 +225,8 @@ class CFIDs():
             else:
                 start = os.path.join(os.getcwd(), 'bsa_extracted/')
             end_path = os.path.normpath(os.path.relpath(file, start))
-        elif CFIDs.mo2_mode and '\\overwrite\\' in file:
-            overwrite_path = os.path.join(os.path.split(skyrim_folder_path)[0], 'overwrite')
-            end_path = os.path.normpath(os.path.relpath(file, overwrite_path))
+        elif CFIDs.mo2_mode and file.lower().startswith(CFIDs.overwrite_path.lower()):
+            end_path = os.path.normpath(os.path.relpath(file, CFIDs.overwrite_path))
         else:
             if CFIDs.mo2_mode:
                 end_path = os.path.join(*os.path.normpath(os.path.relpath(file, skyrim_folder_path)).split(os.sep)[1:])

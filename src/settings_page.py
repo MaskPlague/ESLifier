@@ -22,8 +22,6 @@ class settings(QWidget):
         h_base_layout.addStretch(1)
         h_base_layout.addWidget(widget_holder)
         h_base_layout.addStretch(1)
-        #widget_holder.setMaximumWidth(1000)
-        #widget_holder.setMinimumWidth(700)
         self.setLayout(h_base_layout)
         self.output_folder_name_valid = True
         self.settings = self.get_settings_from_file()
@@ -50,6 +48,12 @@ class settings(QWidget):
             "Output Folder Name",
             "Change this to what you want to be the name of the Output Folder.",
             "ESLifier Compactor Output"
+        )
+        self.overwrite_path_widget, self.overwrite_path = self.create_path_widget(
+            "Overwrite Path",
+            "Set this to your modlist\'s overwrite folder",
+            'C:/Path/To/Overwrite',
+            self.overwrite_path_clicked
         )
         self.plugins_txt_path_widget, self.plugins_txt_path = self.create_path_widget(
             "Plugins.txt Path",
@@ -80,6 +84,7 @@ class settings(QWidget):
         )
         self.mo2_mode_widget.layout().itemAt(2).widget().clicked.connect(self.mo2_mode_clicked)
         self.mo2_mode_widget.layout().itemAt(2).widget().clicked.connect(self.skyrim_folder_path.clear)
+        self.mo2_mode_widget.layout().itemAt(2).widget().clicked.connect(self.overwrite_path.clear)
         self.update_header_widget, self.update_header_toggle = self.create_toggle_widget(
             "Allow Form IDs below 0x000800 + Update plugin headers to 1.71",
             "Allow scanning and patching to use the new 1.71 header.\n"+
@@ -166,6 +171,7 @@ class settings(QWidget):
         settings_layout.addWidget(self.skyrim_folder_path_widget)
         settings_layout.addWidget(self.output_folder_path_widget)
         settings_layout.addWidget(self.output_folder_name_widget)
+        settings_layout.addWidget(self.overwrite_path_widget)
         settings_layout.addWidget(self.plugins_txt_path_widget)
         settings_layout.addWidget(self.mo2_modlist_txt_path_widget)
         settings_layout.addWidget(self.bsab_path_widget)
@@ -234,6 +240,9 @@ class settings(QWidget):
 
     def output_folder_path_clicked(self):
         self.select_file_path(self.file_dialog, "Select where you want the output folder", 'output_folder_path', self.output_folder_path, None)
+
+    def overwrite_path_clicked(self):
+        self.select_file_path(self.file_dialog, "Select your MO2 overwrite folder", 'overwrite_path', self.overwrite_path, None)
 
     def mo2_modlist_txt_path_clicked(self):
         self.select_file_path(self.file_dialog_2, "Select your MO2 profile\'s modlist.txt", 'mo2_modlist_txt_path', self.mo2_modlist_txt_path, "Modlist (modlist.txt)")
@@ -322,7 +331,6 @@ class settings(QWidget):
             r'[^\\\/:*"?<>|]{1,254}'                # Valid characters (spaces allowed!)
             r'(?<![\s.])$'                          # No trailing space or dot
         )
-        #line_edit.setValidator(QRegularExpressionValidator(regex))
         def hard_validate():
             line_edit.setText(line_edit.text().strip())
             text = line_edit.text()
@@ -487,6 +495,7 @@ class settings(QWidget):
         self.skyrim_folder_path.setText(self.settings.get('skyrim_folder_path', ''))
         self.output_folder_path.setText(self.settings.get('output_folder_path', ''))
         self.output_folder_name.setText(self.settings.get('output_folder_name', 'ESLifier Compactor Output'))
+        self.overwrite_path.setText(self.settings.get('overwrite_path', ''))
         self.plugins_txt_path.setText(self.settings.get('plugins_txt_path', ''))
         self.bsab_path.setText(self.settings.get('bsab_path', ''))
         self.mo2_modlist_txt_path.setText(self.settings.get('mo2_modlist_txt_path' ,''))
@@ -511,6 +520,7 @@ class settings(QWidget):
         self.settings['output_folder_path'] = self.output_folder_path.text()
         if self.output_folder_name_valid:
             self.settings['output_folder_name'] = self.output_folder_name.text()
+        self.settings['overwrite_path'] = self.overwrite_path.text()
         self.settings['plugins_txt_path'] = self.plugins_txt_path.text()
         self.settings['bsab_path'] = self.bsab_path.text()
         self.settings['mo2_modlist_txt_path'] = self.mo2_modlist_txt_path.text()
@@ -526,8 +536,10 @@ class settings(QWidget):
         self.mo2_mode_clicked()
         if self.mo2_mode_toggle.isChecked():
             self.mo2_modlist_txt_path_widget.show()
+            self.overwrite_path.show()
         else:
             self.mo2_modlist_txt_path_widget.hide()
+            self.overwrite_path.hide()
         self.save_settings_to_file()
         
     def get_settings_from_file(self):

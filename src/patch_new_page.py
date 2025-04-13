@@ -21,6 +21,7 @@ class patch_new(QWidget):
         self.output_folder_name = ''
         self.modlist_txt_path = ''
         self.plugins_txt_path = ''
+        self.overwrite_path = ''
         self.bsab = ''
         self.mo2_mode = False
         self.update_header = True
@@ -86,7 +87,7 @@ class patch_new(QWidget):
         def run_scan():
             self.log_stream.show()
             self.thread_new = QThread()
-            self.worker = Worker(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.plugins_txt_path, self.bsab, self.update_header)
+            self.worker = Worker(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.plugins_txt_path, self.overwrite_path, self.bsab, self.update_header)
             self.worker.moveToThread(self.thread_new)
             self.thread_new.started.connect(self.worker.scan_run)
             self.worker.finished_signal.connect(self.completed_scan)
@@ -204,7 +205,7 @@ class patch_new(QWidget):
             self.log_stream.show()
             self.thread_new = QThread()
             self.worker = Worker2(checked, self.list_unpatched_files.dependencies_dictionary, self.list_unpatched_files.file_dictionary, self.skyrim_folder_path,
-                                  self.output_folder_path, self.output_folder_name, self.update_header, self.mo2_mode)
+                                  self.output_folder_path, self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode)
             self.worker.moveToThread(self.thread_new)
             self.thread_new.started.connect(self.worker.patch)
             self.worker.finished_signal.connect(lambda x = checked: self.finished_patching(x))
@@ -225,25 +226,28 @@ class patch_new(QWidget):
 
 class Worker(QObject):
     finished_signal = pyqtSignal()
-    def __init__(self, path, mo2_mode, modlist_txt_path, plugins_txt_path, bsab, update):
+    def __init__(self, path, mo2_mode, modlist_txt_path, plugins_txt_path, overwrite_path, bsab, update):
         super().__init__()
         self.skyrim_folder_path = path
         self.mo2_mode = mo2_mode
         self.modlist_txt_path = modlist_txt_path
         self.plugins_txt_path = plugins_txt_path
+        self.overwrite_path = overwrite_path
         self.bsab = bsab
         self.update_header = update
 
     def scan_run(self):
         print('Scanning All Files:')
-        scanner.scan(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.plugins_txt_path, self.bsab, self.update_header, False)
+        scanner.scan(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.plugins_txt_path, 
+                     self.overwrite_path, self.bsab, self.update_header, False)
         print('Getting Dependencies')
         dependecy_getter.scan(self.skyrim_folder_path)
         self.finished_signal.emit()
 
 class Worker2(QObject):
     finished_signal = pyqtSignal()
-    def __init__(self, files, dependencies_dictionary, file_dictionary, skyrim_folder_path, output_folder_path, output_folder_name, update_header, mo2_mode):
+    def __init__(self, files, dependencies_dictionary, file_dictionary, skyrim_folder_path, output_folder_path, 
+                 output_folder_name, overwrite_path, update_header, mo2_mode):
         super().__init__()
         self.files = files
         self.dependencies_dictionary = dependencies_dictionary
@@ -251,6 +255,7 @@ class Worker2(QObject):
         self.skyrim_folder_path = skyrim_folder_path
         self.output_folder_path = output_folder_path
         self.output_folder_name = output_folder_name
+        self.overwrite_path = overwrite_path
         self.update_header = update_header
         self.mo2_mode = mo2_mode
 
@@ -266,7 +271,7 @@ class Worker2(QObject):
             if file in self.dependencies_dictionary:
                 dependents = self.dependencies_dictionary[file]
             CFIDs.patch_new(fp, file, dependents, self.file_dictionary, self.skyrim_folder_path, self.output_folder_path,
-                            self.output_folder_name, self.update_header, self.mo2_mode)
+                            self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode)
         self.finished_signal.emit()
 
 

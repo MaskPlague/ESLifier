@@ -21,6 +21,7 @@ class main(QWidget):
         self.output_folder_name = ''
         self.modlist_txt_path = ''
         self.plugins_txt_path = ''
+        self.overwrite_path = ''
         self.bsab = ''
         self.scanned = False
         self.mo2_mode = False
@@ -222,7 +223,7 @@ class main(QWidget):
             self.log_stream.show()
             self.thread_new = QThread()
             self.worker = Worker2(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, 
-                                  self.output_folder_name, self.update_header, self.mo2_mode, self.bsab)
+                                  self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.bsab)
             self.worker.moveToThread(self.thread_new)
             self.thread_new.started.connect(self.worker.run)
             self.worker.finished_signal.connect(self.thread_new.quit)
@@ -273,7 +274,7 @@ class main(QWidget):
                 self.list_eslify.item(row, self.list_eslify.MOD_COL).setFlags(self.list_eslify.item(row, self.list_eslify.MOD_COL).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
         self.log_stream.show()
         for file in checked:
-            CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.mo2_mode)
+            CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, self.mo2_mode)
         print("Flag(s) Changed")
         print("CLEAR")
         self.finished_button_action('eslify', checked)
@@ -306,8 +307,8 @@ class main(QWidget):
         def run_scan():
             self.log_stream.show()
             self.thread_new = QThread()
-            self.worker = Worker(self.skyrim_folder_path, self.update_header, self.mo2_mode,
-                                  self.modlist_txt_path, self.plugins_txt_path, self.bsab)
+            self.worker = Worker(self.skyrim_folder_path, self.update_header, self.mo2_mode, self.modlist_txt_path,
+                                 self.plugins_txt_path, self.overwrite_path, self.bsab)
             self.worker.moveToThread(self.thread_new)
             self.thread_new.started.connect(self.worker.scan_run)
             self.worker.finished_signal.connect(self.completed_scan)
@@ -351,19 +352,20 @@ class main(QWidget):
 
 class Worker(QObject):
     finished_signal = pyqtSignal(dict, dict)
-    def __init__(self, path, update, mo2_mode, modlist_txt_path, plugins_txt_path, bsab):
+    def __init__(self, path, update, mo2_mode, modlist_txt_path, plugins_txt_path, overwrite_path, bsab):
         super().__init__()
         self.skyrim_folder_path = path
         self.update_header = update
         self.mo2_mode = mo2_mode
         self.modlist_txt_path = modlist_txt_path
         self.plugins_txt_path = plugins_txt_path
+        self.overwrite_path = overwrite_path
         self.bsab = bsab
 
     def scan_run(self):
         print('Scanning All Files:')
-        flag_dict, dependency_dictionary = scanner.scan(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path,
-                                                         self.plugins_txt_path, self.bsab, self.update_header, True)
+        flag_dict, dependency_dictionary = scanner.scan(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.plugins_txt_path,
+                                                        self.overwrite_path, self.bsab, self.update_header, True)
         print('Checking if New CELLs are Changed')
         plugins_with_cells = [plugin for plugin, flags in flag_dict.items() if 'new_cell' in flags]
         cell_scanner.scan(plugins_with_cells)
@@ -371,13 +373,14 @@ class Worker(QObject):
 
 class Worker2(QObject):
     finished_signal = pyqtSignal()
-    def __init__(self, checked, dependency_dictionary, skyrim_folder_path, output_folder_path, output_folder_name, update_header, mo2_mode, bsab):
+    def __init__(self, checked, dependency_dictionary, skyrim_folder_path, output_folder_path, output_folder_name, overwrite_path, update_header, mo2_mode, bsab):
         super().__init__()
         self.checked = checked
         self.dependency_dictionary = dependency_dictionary
         self.skyrim_folder_path = skyrim_folder_path
         self.output_folder_path = output_folder_path
         self.output_folder_name = output_folder_name
+        self.overwrite_path = overwrite_path
         self.update_header = update_header
         self.mo2_mode = mo2_mode
         self.bsab = bsab
@@ -410,7 +413,7 @@ class Worker2(QObject):
             else:
                 all_dependents_have_skyrim_esm_as_master = True
 
-            CFIDs.compact_and_patch(fp, file, dependents, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name,
+            CFIDs.compact_and_patch(fp, file, dependents, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path,
                                     self.update_header, self.mo2_mode, self.bsab, all_dependents_have_skyrim_esm_as_master)
         print("Compacted and Patched")
         print('CLEAR')
