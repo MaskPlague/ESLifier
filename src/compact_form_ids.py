@@ -17,7 +17,7 @@ if platform.system() == 'Windows':
 
 total_ram = psutil.virtual_memory().available
 usable_ram = total_ram * 0.90
-thread_memory_usage = 50 * 1024 * 1024
+thread_memory_usage = 40 * 1024 * 1024
 max_threads = int(usable_ram / thread_memory_usage)
 if max_threads > 8192:
     MAX_THREADS = 8192
