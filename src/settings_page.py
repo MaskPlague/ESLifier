@@ -476,6 +476,7 @@ class settings(QWidget):
             self.skyrim_folder_path.clear()
             self.output_folder_path.clear()
             self.output_folder_name.setText('ESLifier Compactor Output')
+            self.overwrite_path.clear()
             self.plugins_txt_path.clear()
             self.bsab_path.clear()
             self.mo2_modlist_txt_path.clear()
