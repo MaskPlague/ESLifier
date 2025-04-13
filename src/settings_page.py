@@ -516,14 +516,14 @@ class settings(QWidget):
             json.dump(self.settings, f, ensure_ascii=False, indent=4)
 
     def update_settings(self):
-        self.settings['skyrim_folder_path'] = self.skyrim_folder_path.text()
-        self.settings['output_folder_path'] = self.output_folder_path.text()
+        self.settings['skyrim_folder_path'] = os.path.normpath(self.skyrim_folder_path.text()) if self.skyrim_folder_path.text() != '' else ''
+        self.settings['output_folder_path'] = os.path.normpath(self.output_folder_path.text()) if self.output_folder_path.text() != '' else ''
         if self.output_folder_name_valid:
             self.settings['output_folder_name'] = self.output_folder_name.text()
-        self.settings['overwrite_path'] = self.overwrite_path.text()
-        self.settings['plugins_txt_path'] = self.plugins_txt_path.text()
-        self.settings['bsab_path'] = self.bsab_path.text()
-        self.settings['mo2_modlist_txt_path'] = self.mo2_modlist_txt_path.text()
+        self.settings['overwrite_path'] = os.path.normpath(self.overwrite_path.text()) if self.overwrite_path.text() != '' else ''
+        self.settings['plugins_txt_path'] = os.path.normpath(self.plugins_txt_path.text()) if self.plugins_txt_path.text() != '' else ''
+        self.settings['bsab_path'] = os.path.normpath(self.bsab_path.text()) if self.bsab_path.text() != '' else ''
+        self.settings['mo2_modlist_txt_path'] = os.path.normpath(self.mo2_modlist_txt_path.text()) if self.mo2_modlist_txt_path.text() != '' else ''
         self.settings['mo2_mode'] = self.mo2_mode_toggle.isChecked()
         self.settings['update_header'] = self.update_header_toggle.isChecked()
         self.settings['show_esms'] = self.show_esms_toggle.isChecked()
@@ -536,10 +536,10 @@ class settings(QWidget):
         self.mo2_mode_clicked()
         if self.mo2_mode_toggle.isChecked():
             self.mo2_modlist_txt_path_widget.show()
-            self.overwrite_path.show()
+            self.overwrite_path_widget.show()
         else:
             self.mo2_modlist_txt_path_widget.hide()
-            self.overwrite_path.hide()
+            self.overwrite_path_widget.hide()
         self.save_settings_to_file()
         
     def get_settings_from_file(self):
