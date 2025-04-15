@@ -46,7 +46,7 @@ class scanner():
             scanner.max_threads_by_ram = max_threads
 
         thread_memory_usage = 2.5 * (1024**3)
-        scanner.bsa_threads_by_ram = max(1, int(usable_ram / thread_memory_usage)) * 7
+        scanner.bsa_threads_by_ram = max(1, int(usable_ram / thread_memory_usage) * 7)
 
         scanner.extracted = scanner.get_from_file('ESLifier_Data/extracted_bsa.json')
         print('\n')
