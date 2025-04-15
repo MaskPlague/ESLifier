@@ -39,14 +39,14 @@ class scanner():
         total_ram = psutil.virtual_memory().available
         usable_ram = total_ram * 0.90
         thread_memory_usage = 10 * 1024 * 1024
-        max_threads = int(usable_ram / thread_memory_usage)
+        max_threads = max(1, int(usable_ram / thread_memory_usage))
         if max_threads > 8192:
             scanner.max_threads_by_ram = 8192
         else:
             scanner.max_threads_by_ram = max_threads
 
         thread_memory_usage = 2.5 * (1024**3)
-        scanner.bsa_threads_by_ram = int(usable_ram / thread_memory_usage) * 7
+        scanner.bsa_threads_by_ram = max(1, int(usable_ram / thread_memory_usage)) * 7
 
         scanner.extracted = scanner.get_from_file('ESLifier_Data/extracted_bsa.json')
         print('\n')
