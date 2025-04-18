@@ -354,13 +354,13 @@ class CFIDs():
         for form_id_history in form_id_file_data:
             form_id_conversion = form_id_history.split('|')
 
-            from_id = bytes.fromhex(form_id_conversion[0])[::-1].hex()[2:].lstrip('0').upper()
-            from_id_with_leading_0s = bytes.fromhex(form_id_conversion[0])[::-1].hex()[2:].upper()
-            to_id = bytes.fromhex(form_id_conversion[1])[::-1].hex()[2:].lstrip('0').upper()
+            from_id = bytes.fromhex(form_id_conversion[0])[::-1].hex()[2:].lstrip('0').upper()          #0
+            from_id_with_leading_0s = bytes.fromhex(form_id_conversion[0])[::-1].hex()[2:].upper()      #1
+            to_id = bytes.fromhex(form_id_conversion[1])[::-1].hex()[2:].lstrip('0').upper()            #2
             if to_id == '': to_id = '0'
-            to_id_with_leading_0s = bytes.fromhex(form_id_conversion[1])[::-1].hex()[2:].upper()
-            from_id_little_endian = bytes.fromhex(form_id_conversion[0])
-            to_id_little_endian = bytes.fromhex(form_id_conversion[1])
+            to_id_with_leading_0s = bytes.fromhex(form_id_conversion[1])[::-1].hex()[2:].upper()        #3
+            from_id_little_endian = bytes.fromhex(form_id_conversion[0])                                #4
+            to_id_little_endian = bytes.fromhex(form_id_conversion[1])                                  #5
 
             form_id_map.append([from_id, from_id_with_leading_0s, to_id, to_id_with_leading_0s, from_id_little_endian, to_id_little_endian])
         return form_id_map
@@ -406,7 +406,7 @@ class CFIDs():
                 with CFIDs.lock:
                     if new_file_lower.endswith('.ini'):
                         if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini', '_enbl.ini',     # PO3's SPID, KID, BOS, ENBL
-                                                    '_desc.ini', '_flm.ini', '_llos.ini', '_ipm.ini', '_mus.ini ')): # Description Framework, FLM, LLOS, IPM, MTD
+                                                    '_desc.ini', '_flm.ini', '_llos.ini', '_ipm.ini', '_mus.ini')): # Description Framework, FLM, LLOS, IPM, MTD
                             patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
                         elif 'seasons\\' in new_file_lower:                                                 # Po3's Seasons of Skyrim
                             patchers.ini_season_patcher(basename, new_file, form_id_map)
@@ -459,6 +459,8 @@ class CFIDs():
                             patchers.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
                         elif '\\customskills\\' in new_file_lower:                                          # Custom Skills Framework
                             patchers.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
+                        elif 'plugins\\rain extinguishes fires\\' in new_file_lower:                        # Rain Extinguishes Fires
+                            patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
                         elif '\\skyrimunbound\\' in new_file_lower:                                         # Skyrim Unbound
                             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
                         elif '\\playerequipmentmanager\\' in new_file_lower:                                # Player Equipment Manager
