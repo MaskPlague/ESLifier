@@ -5,14 +5,7 @@ except ImportError:
 import json
 import os
 
-class patchers():
-    def form_id_replacer(form_id, form_id_map):
-        form_id_int = int(form_id, 16)
-        for form_ids in form_id_map:
-            if form_id_int == int(form_ids[0], 16):
-                return form_ids[2]
-        return form_id
-    
+class patchers():    
     def find_prev_non_alphanumeric(text, start_index):
         for i in range(start_index, 0, -1):
             if not text[i].isalnum() and text[i] != ' ':
@@ -26,17 +19,21 @@ class patchers():
         return len(text)
     
     def psc_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+', encoding="utf-8") as f:
-            lines = f.readlines()
-            for i, line in enumerate(lines):
-                if basename in line.lower() and 'getformfromfile' in line.lower():
-                    for form_ids in form_id_map:
-                        if form_ids[0].lower() in line.lower():
-                            lines[i] = re.sub(r'0x0*' + re.escape(form_ids[0]) + r'\b', '0x' + form_ids[2], line, flags=re.IGNORECASE)
-            f.seek(0)
-            f.truncate(0)
-            f.write(''.join(lines))
-            f.close()
+        try:
+            with open(new_file, 'r+', encoding="utf-8") as f:
+                lines = f.readlines()
+                for i, line in enumerate(lines):
+                    if basename in line.lower() and 'getformfromfile' in line.lower():
+                        for form_ids in form_id_map:
+                            if form_ids[0].lower() in line.lower():
+                                lines[i] = re.sub(r'0x0*' + re.escape(form_ids[0]) + r'\b', '0x' + form_ids[2], line, flags=re.IGNORECASE)
+                f.seek(0)
+                f.truncate(0)
+                f.write(''.join(lines))
+                f.close()
+        except Exception as e:
+            print(f'!Error: Failed to patch file: {new_file}')
+            print(e)
     
     def facegeom_mesh_patcher(basename, new_file, form_id_map):
         with open(new_file, 'rb+') as f:
@@ -50,18 +47,22 @@ class patchers():
             f.writelines(data)
     
     def seq_patcher(new_file, form_id_map, dependent=False):
-        with open(new_file, 'rb+') as f:
-            data = f.read()
-            seq_form_id_list = [data[i:i+4] for i in range(0, len(data), 4)]
-            if not dependent:
-                form_id_dict = {form_ids[4]: form_ids[5] for form_ids in form_id_map}
-            else:
-                form_id_dict = {old_id: new_id for old_id, new_id in form_id_map}
-            new_seq_form_id_list = [form_id_dict.get(fid, fid) for fid in seq_form_id_list]
-            f.seek(0)
-            f.truncate(0)
-            f.write(b''.join(new_seq_form_id_list))
-            f.close()
+        try:
+            with open(new_file, 'rb+') as f:
+                data = f.read()
+                seq_form_id_list = [data[i:i+4] for i in range(0, len(data), 4)]
+                if not dependent:
+                    form_id_dict = {form_ids[4]: form_ids[5] for form_ids in form_id_map}
+                else:
+                    form_id_dict = {old_id: new_id for old_id, new_id in form_id_map}
+                new_seq_form_id_list = [form_id_dict.get(fid, fid) for fid in seq_form_id_list]
+                f.seek(0)
+                f.truncate(0)
+                f.write(b''.join(new_seq_form_id_list))
+                f.close()
+        except Exception as e:
+            print(f'!Error: Failed to patch file: {new_file}')
+            print(e)
         
     def pex_patcher(basename, new_file, form_id_map):
         with open(new_file,'rb+') as f:
@@ -171,12 +172,17 @@ class patchers():
                 f.write(''.join(lines))
                 f.close()
         except Exception as e:
-            if encoding_method == 'utf-8':
-                patchers.ini_season_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-            elif encoding_method == 'ansi':
-                raise UnicodeDecodeError('Failed to decode file via utf-8 and ANSI.')
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.ini_season_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
             else:
-                print(f'!Error Failed to patch file: {new_file}')
+                print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
             
     def ini_pi_dtry_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
@@ -199,12 +205,17 @@ class patchers():
                 f.write(''.join(lines))
                 f.close()
         except Exception as e:
-            if encoding_method == 'utf-8':
-                patchers.ini_pi_dtry_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-            elif encoding_method == 'ansi':
-                raise UnicodeDecodeError('Failed to decode file via utf-8 and ANSI.')
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.ini_pi_dtry_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
             else:
-                print(f'!Error Failed to patch file: {new_file}')
+                print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
 
     def ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
@@ -241,14 +252,19 @@ class patchers():
                 f.write(''.join(lines))
                 f.close()
         except Exception as e:
-            if encoding_method == 'utf-8':
-                patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-            elif encoding_method == 'ansi':
-                raise UnicodeDecodeError('Failed to decode file via utf-8 and ANSI.')
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
             else:
-                print(f'!Error Failed to patch file: {new_file}')
+                print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
-    
+            
     def ini_mu_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         try:
             with open(new_file, 'r+', encoding=encoding_method) as f:
@@ -277,14 +293,19 @@ class patchers():
                 f.write(''.join(lines))
                 f.close()
         except Exception as e:
-            if encoding_method == 'utf-8':
-                patchers.ini_mu_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-            elif encoding_method == 'ansi':
-                raise UnicodeDecodeError('Failed to decode file via utf-8 and ANSI.')
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.ini_mu_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
             else:
-                print(f'!Error Failed to patch file: {new_file}')
+                print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
-
+            
     def ini_sp_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         try:
             with open(new_file, 'r+', encoding=encoding_method) as f:
@@ -327,12 +348,17 @@ class patchers():
                 f.write(''.join(lines))
                 f.close()
         except Exception as e:
-            if encoding_method == 'utf-8':
-                patchers.ini_sp_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-            elif encoding_method == 'ansi':
-                raise UnicodeDecodeError('Failed to decode file via utf-8 and ANSI.')
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.ini_sp_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
             else:
-                print(f'!Error Failed to patch file: {new_file}')
+                print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
     
     def ini_pb_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
@@ -355,12 +381,17 @@ class patchers():
                 f.write(''.join(lines))
                 f.close()
         except Exception as e:
-            if encoding_method == 'utf-8':
-                patchers.ini_pb_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-            elif encoding_method == 'ansi':
-                raise UnicodeDecodeError('Failed to decode file via utf-8 and ANSI.')
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.ini_pb_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
             else:
-                print(f'!Error Failed to patch file: {new_file}')
+                print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
 
     def ini_vc_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
@@ -383,12 +414,17 @@ class patchers():
                 f.write(''.join(lines))
                 f.close()
         except Exception as e:
-            if encoding_method == 'utf-8':
-                patchers.ini_vc_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-            elif encoding_method == 'ansi':
-                raise UnicodeDecodeError('Failed to decode file via utf-8 and ANSI.')
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.ini_vc_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
             else:
-                print(f'!Error Failed to patch file: {new_file}')
+                print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
 
     def ini_ab_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
@@ -411,15 +447,21 @@ class patchers():
                 f.write(''.join(lines))
                 f.close()
         except Exception as e:
-            if encoding_method == 'utf-8':
-                patchers.ini_ab_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-            elif encoding_method == 'ansi':
-                raise UnicodeDecodeError('Failed to decode file via utf-8 and ANSI.')
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.ini_ab_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
             else:
-                print(f'!Error Failed to patch file: {new_file}')
+                print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
 
-    def ini_completionist_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+#Old Completionist patcher until update
+    def oldini_completionist_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         try:
             with open(new_file, 'r+', encoding=encoding_method) as f:
                 lines = f.readlines()
@@ -441,30 +483,46 @@ class patchers():
                             end_tag = line[index:].strip()
                             continue
                         else:
-                            lines[i] = patchers.comp_layout_3_processor(global_replace, basename, line, form_id_map)
+                            lines[i] = patchers.oldcomp_layout_3_processor(global_replace, basename, line, form_id_map)
                     if in_form_ids and line.strip() == end_tag:
                         in_form_ids = False
                     
                     if in_form_ids:
-                        lines[i] = patchers.comp_form_id_processor(line, basename, global_replace, form_id_map, True)
+                        lines[i] = patchers.oldcomp_form_id_processor(line, basename, global_replace, form_id_map, True)
 
                     if not in_form_ids and line.startswith('0x') and '=' in line:
-                        lines[i] = patchers.comp_variable_from_id(line, basename, global_replace, form_id_map)
+                        lines[i] = patchers.oldcomp_variable_from_id(line, basename, global_replace, form_id_map)
 
                 f.seek(0)
                 f.truncate(0)
                 f.write(''.join(lines))
                 f.close()
         except Exception as e:
-            if encoding_method == 'utf-8':
-                patchers.ini_completionist_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-            elif encoding_method == 'ansi':
-                raise UnicodeDecodeError('Failed to decode file via utf-8 and ANSI.')
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.ini_completionist_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
+            elif exception_type == ValueError:
+                print(f'!Error: Failed to patch file: {new_file}')
+                print('Possibly due to error in ini file.')
+                print(e)
             else:
-                print(f'!Error Failed to patch file: {new_file}')
+                print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
 
-    def comp_variable_from_id(line, basename, global_replace, form_id_map):
+    def oldcomp_form_id_replacer(form_id, form_id_map):
+        form_id_int = int(form_id, 16)
+        for form_ids in form_id_map:
+            if form_id_int == int(form_ids[0], 16):
+                return form_ids[3]
+        return form_id
+
+    def oldcomp_variable_from_id(line, basename, global_replace, form_id_map):
         equal_index = line.index('=')
         variable = line[:equal_index]
         var_end = False
@@ -476,17 +534,17 @@ class patchers():
         else:
             form_id = variable
         if global_replace:
-            form_id = patchers.form_id_replacer(form_id, form_id_map)
+            form_id = patchers.oldcomp_form_id_replacer(form_id, form_id_map)
             variable = '0x' + form_id
             if var_end:
                 variable += variable_end
             else:
                 variable += ' '
         line = variable + line[equal_index:]
-        line = patchers.comp_layout_3_processor(global_replace, basename, line, form_id_map)
+        line = patchers.oldcomp_layout_3_processor(global_replace, basename, line, form_id_map)
         return line
 
-    def comp_layout_3_processor(global_replace, basename, line, form_id_map):
+    def oldcomp_layout_3_processor(global_replace, basename, line, form_id_map):
         # This assumes that no plugin name has a comma. If one does then it probably breaks completionist anyways.
         start_index = line.index('=')+1
         parts = [part for part in line[start_index:].split(',') if part]
@@ -495,13 +553,13 @@ class patchers():
             append_newline = True
             parts.pop()
         for i, form_id_string in enumerate(parts):
-            parts[i] = patchers.comp_form_id_processor(form_id_string, basename, global_replace, form_id_map, False)
+            parts[i] = patchers.oldcomp_form_id_processor(form_id_string, basename, global_replace, form_id_map, False)
         return_string = line[:start_index] + ' ' + ', '.join(parts) + ','
         if append_newline:
             return_string += '\n'
         return return_string
 
-    def comp_form_id_processor(form_id_string, basename, global_replace, form_id_map, has_comma):
+    def oldcomp_form_id_processor(form_id_string, basename, global_replace, form_id_map, has_comma):
         if has_comma:
             index = form_id_string.index(',')
             end_of_line = form_id_string[index:]
@@ -517,7 +575,7 @@ class patchers():
             plugin = form_id_string[index+1:end_index].strip()
             if plugin.lower() == basename:
                 form_id = form_id_string[:index]
-                form_id = patchers.form_id_replacer(form_id, form_id_map)
+                form_id = patchers.oldcomp_form_id_replacer(form_id, form_id_map)
                 if add_end:
                     end = form_id_string[end_index:]
                     form_id_string = '0x' + form_id + '*' + plugin + end
@@ -527,16 +585,185 @@ class patchers():
             end_index = form_id_string.index('<')
             form_id = form_id_string[:end_index]
             end = form_id_string[end_index:]
-            form_id = patchers.form_id_replacer(form_id, form_id_map)
+            form_id = patchers.oldcomp_form_id_replacer(form_id, form_id_map)
             form_id_string = '0x' + form_id + end
             
         elif global_replace:
-            form_id = patchers.form_id_replacer(form_id_string, form_id_map)
+            form_id = patchers.oldcomp_form_id_replacer(form_id_string, form_id_map)
             form_id_string = '0x' + form_id
             
         if has_comma:
             form_id_string += end_of_line
         return form_id_string
+
+#New Completionist Patcher for after update
+    def ini_completionist_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        try:
+            with open(new_file, 'r+', encoding=encoding_method) as f:
+                lines = f.readlines()
+                start_patching = False
+                plugin_to_patch = ''
+                global_replace = False
+                in_form_ids = False
+                end_tag = 'ENDTAG'
+                install_from = ''
+                local_replace = False
+                local_defined = False
+                for i, line in enumerate(lines):
+                    if not start_patching and line.startswith('PluginFileName'):
+                        index = line.index('=')+1
+                        plugin_to_patch = line[index:].strip().lower()
+                        if plugin_to_patch == basename:
+                            global_replace = True
+                    if line.startswith('[') and line.strip().endswith(']'):
+                        install_from = ''
+                        local_replace = False
+                        local_defined = False
+                    if install_from == '' and line.startswith('InstallFrom'):
+                        index = line.index('=')+1
+                        install_from = line[index:].strip().lower()
+                        local_defined = True
+                        if install_from == basename:
+                            local_replace = True
+                    if not in_form_ids and line.startswith('FormIDs'):
+                        if '<<<' in line:
+                            in_form_ids = True
+                            index = line.index('<<<')+3
+                            end_tag = line[index:].strip()
+                            continue
+                        else:
+                            lines[i] = patchers.comp_layout_3_processor(global_replace, local_replace, local_defined, basename, line, form_id_map)
+                    if in_form_ids and line.strip() == end_tag:
+                        in_form_ids = False
+                    if in_form_ids:
+                        lines[i] = patchers.comp_form_id_processor(line, basename, global_replace, local_replace, local_defined, form_id_map, True)
+                    if not in_form_ids and line.startswith('0x') and '=' in line:
+                        lines[i] = patchers.comp_variable_form_id(line, basename, global_replace, local_replace, local_defined, form_id_map)
+                f.seek(0)
+                f.truncate(0)
+                f.write(''.join(lines))
+                f.close()
+        except Exception as e:
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.ini_completionist_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
+            elif exception_type == ValueError:
+                print(f'!Error: Failed to patch file: {new_file}')
+                print('Possibly due to error in ini file.')
+                print(e)
+            else:
+                print(f'!Error: Failed to patch file: {new_file}')
+                print(e)
+
+    def comp_form_id_replacer(form_id, form_id_map):
+        if '0x' in form_id.lower():
+            form_id_int = int(form_id, 16)
+            for form_ids in form_id_map:
+                if form_id_int == int(form_ids[0], 16):
+                    return '0x' + form_ids[3]
+            return form_id
+        else:
+            return form_id
+
+    def comp_variable_form_id(line, basename, global_replace, local_replace, local_defined, form_id_map):
+        equal_index = line.index('=')
+        variable = line[:equal_index].strip()
+        var_end = False
+        patch_this = False
+        if variable.endswith(('_DisplayName','_Highlight', '_Visibility', '_InstallCondition', '_MuseumDisplayable', '_Type', '_Stage', '_OptionalStage', '_PickupEnabled')):
+            index = variable.rindex('_')
+            form_id_string = variable[:index]
+            if '*' in form_id_string:
+                index = form_id_string.index('*')
+                form_id = form_id_string[:index]
+                plugin = form_id_string[index+1:].strip().lower()
+                if plugin == basename:
+                    patch_this = True
+            else:
+                form_id = form_id_string
+            var_end = True
+            variable_end = variable[index:]
+        else:
+            if '*' in variable:
+                index = variable.index('*')
+                form_id = variable[:index]
+                plugin = variable[index+1:].strip().lower()
+                if plugin == basename:
+                    patch_this = True
+                var_end = True
+                variable_end = variable[index:]
+            else:
+                form_id = variable
+
+        if (global_replace and not local_defined) or local_replace or patch_this:
+            form_id = patchers.comp_form_id_replacer(form_id, form_id_map)
+            variable = form_id
+            if var_end:
+                variable += variable_end + ' '
+            else:
+                variable += ' '
+
+            line = variable + line[equal_index:]
+        line = patchers.comp_layout_3_processor(global_replace, local_replace, local_defined, basename, line, form_id_map)
+        return line
+
+    def comp_layout_3_processor(global_replace, local_replace, local_defined, basename, line, form_id_map):
+        # This assumes that no plugin name has a comma. If one does then it might break completionist anyways.
+        start_index = line.index('=')+1
+        append_newline = False
+        if line.endswith('\n'):
+            append_newline = True
+        parts = [part.strip() for part in line[start_index:].split(',') if part.strip() != '']
+        for i, form_id_string in enumerate(parts):
+            parts[i] = patchers.comp_form_id_processor(form_id_string, basename, global_replace, local_replace, local_defined, form_id_map, False)
+        return_string = line[:start_index] + ' ' + ', '.join(parts)
+        if append_newline:
+            return_string += '\n'
+        return return_string
+
+    def comp_form_id_processor(form_id_string, basename, global_replace, local_replace, local_defined, form_id_map, has_comma):
+        if has_comma:
+            index = form_id_string.index(',')
+            end_of_line = form_id_string[index:]
+            form_id_string = form_id_string[:index]
+        if '*' in form_id_string:
+            index = form_id_string.index('*')
+            if '<' in form_id_string:
+                add_end = True
+                end_index = form_id_string.index('<')
+            else:
+                add_end = False
+                end_index = len(form_id_string)
+            plugin = form_id_string[index+1:end_index].strip()
+            if plugin.lower() == basename:
+                form_id = form_id_string[:index]
+                form_id = patchers.comp_form_id_replacer(form_id, form_id_map)
+                if add_end:
+                    end = form_id_string[end_index:]
+                    form_id_string = form_id + '*' + plugin + end
+                else:
+                    form_id_string = form_id + '*' + plugin
+        elif '<' in form_id_string:
+            end_index = form_id_string.index('<')
+            form_id = form_id_string[:end_index]
+            end = form_id_string[end_index:]
+            form_id = patchers.comp_form_id_replacer(form_id, form_id_map)
+            form_id_string = form_id + end
+            
+        elif (global_replace and not local_defined) or local_replace:
+            form_id = patchers.comp_form_id_replacer(form_id_string, form_id_map)
+            form_id_string = form_id
+
+        if has_comma:
+            form_id_string += end_of_line
+        return form_id_string
+#End of new Completionist Patcher
 
     def ini_kreate_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         edid_file = 'ESLifier_Data\\EDIDs\\' + basename + '_EDIDs.txt'
@@ -569,12 +796,17 @@ class patchers():
                 f.write(''.join(lines))
                 f.close()
         except Exception as e:
-            if encoding_method == 'utf-8':
-                patchers.ini_kreate_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-            elif encoding_method == 'ansi':
-                raise UnicodeDecodeError('Failed to decode file via utf-8 and ANSI.')
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.ini_kreate_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
             else:
-                print(f'!Error Failed to patch file: {new_file}')
+                print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
 
     def toml_dac_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
@@ -656,12 +888,17 @@ class patchers():
                 f.write(''.join(lines))
                 f.close()
         except Exception as e:
-            if encoding_method == 'utf-8':
-                patchers.toml_dac_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-            elif encoding_method == 'ansi':
-                raise UnicodeDecodeError('!Failed to decode file via utf-8 and ANSI.')
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.toml_dac_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
             else:
-                print(f'!Error Failed to patch file: {new_file}')
+                print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
 
     def toml_precision_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
@@ -693,12 +930,17 @@ class patchers():
                 f.write(''.join(lines))
                 f.close()
         except Exception as e:
-            if encoding_method == 'utf-8':
-                patchers.toml_precision_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-            elif encoding_method == 'ansi':
-                raise UnicodeDecodeError('!Failed to decode file via utf-8 and ANSI.')
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.toml_precision_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
             else:
-                print(f'!Error Failed to patch file: {new_file}')
+                print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
 
     def toml_loki_tdm_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
@@ -723,12 +965,17 @@ class patchers():
                 f.write(''.join(lines))
                 f.close()
         except Exception as e:
-            if encoding_method == 'utf-8':
-                patchers.toml_loki_tdm_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-            elif encoding_method == 'ansi':
-                raise UnicodeDecodeError('!Failed to decode file via utf-8 and ANSI.')
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.toml_loki_tdm_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
             else:
-                print(f'!Error Failed to patch file: {new_file}')
+                print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
 
     def json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map):
@@ -912,12 +1159,17 @@ class patchers():
                 f.write(''.join(lines))
                 f.close()
         except Exception as e:
-            if encoding_method == 'utf-8':
-                patchers.dar_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-            elif encoding_method == 'ansi':
-                raise UnicodeDecodeError('!Failed to decode file via utf-8 and ANSI.')
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.dar_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
             else:
-                print(f'!Error Failed to patch file: {new_file}')
+                print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
 
     def srd_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
@@ -939,12 +1191,17 @@ class patchers():
                 f.write(''.join(lines))
                 f.close()
         except Exception as e:
-            if encoding_method == 'utf-8':
-                patchers.srd_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-            elif encoding_method == 'ansi':
-                raise UnicodeDecodeError('!Failed to decode file via utf-8 and ANSI.')
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.srd_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
             else:
-                print(f'!Error Failed to patch file: {new_file}')
+                print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
 
     def jslot_patcher(basename, new_file, form_id_map):
@@ -1238,10 +1495,15 @@ class patchers():
                 f.write(''.join(lines))
                 f.close()
         except Exception as e:
-            if encoding_method == 'utf-8':
-                patchers.old_customskill_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-            elif encoding_method == 'ansi':
-                raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.old_customskill_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
             else:
                 print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
