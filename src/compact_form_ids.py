@@ -704,10 +704,15 @@ class CFIDs():
         data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
 
         data_list = CFIDs.update_grup_sizes(data_list, grup_struct, sizes_list)
+        
 
-        if struct.unpack('<I', form_id_replacements[-1][1])[0] > struct.unpack('<I', new_next_available_object_id)[0]:
-            new_next_available_object_id = (struct.unpack('<I', form_id_replacements[-1][1])[0] + 1).to_bytes(4, 'little')
-        else:
+        #Something about the below code has issues only sometimes I don't get it.
+        try:
+            if struct.unpack('<I', form_id_replacements[-1][1])[0] > struct.unpack('<I', new_next_available_object_id)[0]:
+                new_next_available_object_id = (struct.unpack('<I', form_id_replacements[-1][1])[0] + 1).to_bytes(4, 'little')
+            else:
+                new_next_available_object_id = (struct.unpack('<I', new_next_available_object_id)[0] + 1).to_bytes(4, 'little')
+        except:
             new_next_available_object_id = (struct.unpack('<I', new_next_available_object_id)[0] + 1).to_bytes(4, 'little')
 
         data_list[0] = data_list[0][:38] + new_next_available_object_id[:3] + b'\x00' + data_list[0][42:]
