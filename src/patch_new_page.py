@@ -130,6 +130,20 @@ class patch_new(QWidget):
             self.no_new_files_message.show()
         self.setEnabled(True)
 
+    def get_rel_path(self, file, skyrim_folder_path):
+        if 'bsa_extracted' in file:
+            if 'bsa_extracted_temp' in file:
+                start = os.path.join(os.getcwd(), 'bsa_extracted_temp/')
+            else:
+                start = os.path.join(os.getcwd(), 'bsa_extracted/')
+            rel_path = os.path.normpath(os.path.relpath(file, start))
+        else:
+            if self.mo2_mode:
+                rel_path = os.path.join(*os.path.normpath(os.path.relpath(file, skyrim_folder_path)).split(os.sep)[1:])
+            else:
+                rel_path = os.path.normpath(os.path.relpath(file, skyrim_folder_path))
+        return rel_path
+    
     def find(self):
         try:
             with open("ESLifier_Data/compacted_and_patched.json", 'r', encoding='utf-8') as f:
@@ -157,22 +171,14 @@ class patch_new(QWidget):
                 dependencies_list = dependencies[master.lower()]
             
             for file in file_masters_list:
-                if self.mo2_mode:
-                    parts = os.path.relpath(file, self.skyrim_folder_path).split(os.sep)
-                    rel_path = os.path.join(*parts[1:])
-                else:
-                    rel_path = os.path.relpath(file, self.skyrim_folder_path)
+                rel_path = self.get_rel_path(file, self.skyrim_folder_path)
                 if rel_path.lower() not in patched_files: 
                     if master not in new_files:
                         new_files[master] = []
                     new_files[master].append(file)
 
             for file in dependencies_list:
-                if self.mo2_mode:
-                    parts = os.path.relpath(file, self.skyrim_folder_path).split(os.sep)
-                    rel_path = os.path.join(*parts[1:])
-                else:
-                    rel_path = os.path.relpath(file, self.skyrim_folder_path)
+                rel_path = self.get_rel_path(file, self.skyrim_folder_path)
                 if rel_path.lower() not in patched_files: 
                     if master not in new_dependencies:
                         new_dependencies[master] = []
