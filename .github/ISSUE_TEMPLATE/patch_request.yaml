@@ -65,6 +65,8 @@ body:
           - OBody NG  
           - SL Configs
           - OStim Standalone
+          - Race Compatibility SKSE
+          - Rain Extinguishes Fires
           
         - **.toml:**  
           - Dynamic Animation Casting  
