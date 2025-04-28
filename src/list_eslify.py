@@ -146,13 +146,10 @@ class list_eslable(QTableWidget):
             if hide_row:
                 self.setItem(i, self.HIDER_COL, QTableWidgetItem('hide me'))
 
-        def somethingChanged(itemChanged):
+        def somethingChanged(item_changed):
             self.blockSignals(True)
-            multi_check = True
-            if len(self.selectedItems()) < 2:
-                multi_check = False
-            if multi_check:
-                if itemChanged.checkState() == Qt.CheckState.Checked:
+            if item_changed in self.selectedItems():
+                if item_changed.checkState() == Qt.CheckState.Checked:
                     for x in self.selectedItems():
                         if x.column() == self.MOD_COL:
                             x.setCheckState(Qt.CheckState.Checked)

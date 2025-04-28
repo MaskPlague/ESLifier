@@ -48,6 +48,7 @@ class list_compactable(QTableWidget):
         self.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignLeft)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenu)
+        self.storedSelection = QItemSelection()
         self.flag_dict = {}
         self.show_cells = True
         self.show_dlls = True
@@ -246,10 +247,7 @@ class list_compactable(QTableWidget):
 
         def somethingChanged(item_changed):
             self.blockSignals(True)
-            multi_check = True
-            if len(self.selectedItems()) < 2:
-                multi_check = False
-            if multi_check:
+            if item_changed in self.selectedItems():
                 if item_changed.checkState() == Qt.CheckState.Checked:
                     for x in self.selectedItems():
                         if x.column() == self.MOD_COL:
