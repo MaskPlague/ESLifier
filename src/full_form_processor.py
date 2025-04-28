@@ -1,12 +1,6 @@
-import os
-import threading
 import struct
 
 class form_processor():
-    def __init__(self):
-        form_processor.lock = threading.Lock()
-        form_processor.temp_form_offsets = {}
-
     def get_kwda_offsets(offset, form):
         offsets = []
         ksiz = struct.unpack("<H", form[offset+4:offset+6])[0] // 4
@@ -48,12 +42,7 @@ class form_processor():
             data_list[i] = bytes(form)
         return data_list
     
-    def save_all_form_data(self, data_list, mod):
-        mod_name = os.path.basename(mod).lower()
-        if mod_name in form_processor.temp_form_offsets:
-            temp_form_offsets = form_processor.temp_form_offsets[mod_name]
-            return [[i, bytearray(form), temp_form_offsets[i]] for i, form in enumerate(data_list)]
-
+    def save_all_form_data(self, data_list):
         saved_forms = []
         for i, form in enumerate(data_list):
             record_type = form[:4]
@@ -308,9 +297,6 @@ class form_processor():
                 saved_forms.append([i, bytearray(form), [12]])
             else:
                 print(f'Missing form processing for record type: {record_type}')
-
-        with self.lock:
-            form_processor.temp_form_offsets[mod_name] = [saved[2] for saved in saved_forms]
 
         return saved_forms
     

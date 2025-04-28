@@ -11,7 +11,6 @@ from list_compacted_unpatched import list_compacted_unpatched
 from list_unpatched_files import list_unpatched
 from compact_form_ids import CFIDs
 from cell_changed_scanner import cell_scanner
-from full_form_processor import form_processor
 
 class patch_new(QWidget):
     def __init__(self):
@@ -266,7 +265,6 @@ class Worker2(QObject):
         self.mo2_mode = mo2_mode
 
     def patch(self):
-        fp = form_processor()
         total = len(self.files)
         count = 0
         for file in self.files:
@@ -276,7 +274,7 @@ class Worker2(QObject):
             dependents = []
             if file in self.dependencies_dictionary:
                 dependents = self.dependencies_dictionary[file]
-            CFIDs.patch_new(fp, file, dependents, self.file_dictionary, self.skyrim_folder_path, self.output_folder_path,
+            CFIDs.patch_new(file, dependents, self.file_dictionary, self.skyrim_folder_path, self.output_folder_path,
                             self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode)
         self.finished_signal.emit()
 

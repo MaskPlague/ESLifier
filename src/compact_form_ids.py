@@ -8,6 +8,7 @@ import subprocess
 import struct
 from file_patchers import patchers
 from intervaltree import IntervalTree
+from full_form_processor import form_processor
 
 import platform
 import psutil
@@ -25,12 +26,11 @@ else:
     MAX_THREADS = max_threads
 
 class CFIDs():
-    def compact_and_patch(form_processor, file_to_compact, dependents, skyrim_folder_path, output_folder_path,
+    def compact_and_patch(file_to_compact, dependents, skyrim_folder_path, output_folder_path,
                         output_folder_name, overwrite_path, update_header, mo2_mode, bsab, all_dependents_have_skyrim_esm_as_master):
         CFIDs.lock = threading.Lock()
         CFIDs.compacted_and_patched = {}
         CFIDs.mo2_mode = mo2_mode
-        CFIDs.form_processor = form_processor
         CFIDs.output_folder_name = output_folder_name
         CFIDs.overwrite_path = os.path.normpath(overwrite_path)
         print(f"Compacting Plugin: {os.path.basename(file_to_compact)}...")
@@ -203,10 +203,9 @@ class CFIDs():
             print('!Error: Failed to set ESL flag in {file}')
             print(e)            
 
-    def patch_new(form_processor, compacted_file, dependents, files_to_patch, skyrim_folder_path, output_folder_path, 
+    def patch_new(compacted_file, dependents, files_to_patch, skyrim_folder_path, output_folder_path, 
                   output_folder_name, overwrite_path, update_header, mo2_mode):
         CFIDs.lock = threading.Lock()
-        CFIDs.form_processor = form_processor
         CFIDs.compacted_and_patched = {}
         CFIDs.mo2_mode = mo2_mode
         CFIDs.output_folder_name = output_folder_name
@@ -634,7 +633,7 @@ class CFIDs():
 
         master_byte = master_count.to_bytes()
 
-        saved_forms = CFIDs.form_processor.save_all_form_data(data_list, new_file)
+        saved_forms = form_processor.save_all_form_data(data_list)
 
         form_id_list.sort(key= lambda x: struct.unpack('<I', x[0])[0])
 
@@ -699,7 +698,7 @@ class CFIDs():
 
         form_id_replacements_no_master_byte = [[old_id[:3], new_id[:3]] for old_id, new_id in form_id_replacements]
 
-        data_list = CFIDs.form_processor.patch_form_data(data_list, saved_forms, form_id_replacements_no_master_byte, master_byte)
+        data_list = form_processor.patch_form_data(data_list, saved_forms, form_id_replacements_no_master_byte, master_byte)
 
         data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
 
@@ -773,7 +772,7 @@ class CFIDs():
 
                 master_byte = master_index.to_bytes()
 
-                saved_forms = CFIDs.form_processor.save_all_form_data(data_list, new_file)
+                saved_forms = form_processor.save_all_form_data(data_list)
                 
                 for i in range(len(form_id_file_data)):
                     form_id_conversion = form_id_file_data[i].split('|')
@@ -781,7 +780,7 @@ class CFIDs():
                     to_id = bytes.fromhex(form_id_conversion[1])[:3]
                     form_id_replacements.append([from_id, to_id])
 
-                data_list = CFIDs.form_processor.patch_form_data_dependent(data_list, saved_forms, form_id_replacements, master_byte)
+                data_list = form_processor.patch_form_data_dependent(data_list, saved_forms, form_id_replacements, master_byte)
 
                 data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
                 

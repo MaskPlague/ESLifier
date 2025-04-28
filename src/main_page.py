@@ -11,7 +11,6 @@ from list_compact import list_compactable
 from scanner import scanner
 from compact_form_ids import CFIDs
 from cell_changed_scanner import cell_scanner
-from full_form_processor import form_processor
 
 class main(QWidget):
     def __init__(self):
@@ -386,7 +385,6 @@ class Worker2(QObject):
         self.bsab = bsab
         
     def run(self):
-        fp = form_processor()
         total = len(self.checked)
         count = 0
         if self.update_header:
@@ -413,7 +411,7 @@ class Worker2(QObject):
             else:
                 all_dependents_have_skyrim_esm_as_master = True
 
-            CFIDs.compact_and_patch(fp, file, dependents, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path,
+            CFIDs.compact_and_patch(file, dependents, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path,
                                     self.update_header, self.mo2_mode, self.bsab, all_dependents_have_skyrim_esm_as_master)
         print("Compacted and Patched")
         print('CLEAR')
