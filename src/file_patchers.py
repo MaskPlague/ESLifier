@@ -460,143 +460,6 @@ class patchers():
                 print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
 
-#Old Completionist patcher until update
-    def oldini_completionist_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
-        try:
-            with open(new_file, 'r+', encoding=encoding_method) as f:
-                lines = f.readlines()
-                start_patching = False
-                plugin_to_patch = ''
-                global_replace = False
-                in_form_ids = False
-                end_tag = 'ENDTAG'
-                for i, line in enumerate(lines):
-                    if not start_patching and line.startswith('PluginFileName'):
-                        index = line.index('=')+1
-                        plugin_to_patch = line[index:].strip().lower()
-                        if plugin_to_patch == basename:
-                            global_replace = True
-                    if not in_form_ids and line.startswith('FormIDs'):
-                        if '<<<' in line:
-                            in_form_ids = True
-                            index = line.index('<<<')+3
-                            end_tag = line[index:].strip()
-                            continue
-                        else:
-                            lines[i] = patchers.oldcomp_layout_3_processor(global_replace, basename, line, form_id_map)
-                    if in_form_ids and line.strip() == end_tag:
-                        in_form_ids = False
-                    
-                    if in_form_ids:
-                        lines[i] = patchers.oldcomp_form_id_processor(line, basename, global_replace, form_id_map, True)
-
-                    if not in_form_ids and line.startswith('0x') and '=' in line:
-                        lines[i] = patchers.oldcomp_variable_from_id(line, basename, global_replace, form_id_map)
-
-                f.seek(0)
-                f.truncate(0)
-                f.write(''.join(lines))
-                f.close()
-        except Exception as e:
-            exception_type = type(e)
-            if exception_type == UnicodeDecodeError:
-                if encoding_method == 'utf-8':
-                    patchers.ini_completionist_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-                elif encoding_method == 'ansi':
-                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
-                else:
-                    print(f'!Error: Failed to patch file: {new_file}')
-                    print(e)
-            elif exception_type == ValueError:
-                print(f'!Error: Failed to patch file: {new_file}')
-                print('Possibly due to error in ini file.')
-                print(e)
-            else:
-                print(f'!Error: Failed to patch file: {new_file}')
-                print(e)
-
-    def oldcomp_form_id_replacer(form_id, form_id_map):
-        form_id_int = int(form_id, 16)
-        for form_ids in form_id_map:
-            if form_id_int == int(form_ids[0], 16):
-                return form_ids[3]
-        return form_id
-
-    def oldcomp_variable_from_id(line, basename, global_replace, form_id_map):
-        equal_index = line.index('=')
-        variable = line[:equal_index]
-        var_end = False
-        if '_' in variable:
-            index = variable.index('_')
-            form_id = variable[:index]
-            var_end = True
-            variable_end = variable[index:]
-        else:
-            form_id = variable
-        if global_replace:
-            form_id = patchers.oldcomp_form_id_replacer(form_id, form_id_map)
-            variable = '0x' + form_id
-            if var_end:
-                variable += variable_end
-            else:
-                variable += ' '
-        line = variable + line[equal_index:]
-        line = patchers.oldcomp_layout_3_processor(global_replace, basename, line, form_id_map)
-        return line
-
-    def oldcomp_layout_3_processor(global_replace, basename, line, form_id_map):
-        # This assumes that no plugin name has a comma. If one does then it probably breaks completionist anyways.
-        start_index = line.index('=')+1
-        parts = [part for part in line[start_index:].split(',') if part]
-        append_newline = False
-        if parts[-1] == '\n':
-            append_newline = True
-            parts.pop()
-        for i, form_id_string in enumerate(parts):
-            parts[i] = patchers.oldcomp_form_id_processor(form_id_string, basename, global_replace, form_id_map, False)
-        return_string = line[:start_index] + ' ' + ', '.join(parts) + ','
-        if append_newline:
-            return_string += '\n'
-        return return_string
-
-    def oldcomp_form_id_processor(form_id_string, basename, global_replace, form_id_map, has_comma):
-        if has_comma:
-            index = form_id_string.index(',')
-            end_of_line = form_id_string[index:]
-            form_id_string = form_id_string[:index]
-        if '*' in form_id_string:
-            index = form_id_string.index('*')
-            if '<' in form_id_string:
-                add_end = True
-                end_index = form_id_string.index('<')
-            else:
-                add_end = False
-                end_index = len(form_id_string)
-            plugin = form_id_string[index+1:end_index].strip()
-            if plugin.lower() == basename:
-                form_id = form_id_string[:index]
-                form_id = patchers.oldcomp_form_id_replacer(form_id, form_id_map)
-                if add_end:
-                    end = form_id_string[end_index:]
-                    form_id_string = '0x' + form_id + '*' + plugin + end
-                else:
-                    form_id_string = '0x' + form_id + '*' + plugin
-        elif '<' in form_id_string:
-            end_index = form_id_string.index('<')
-            form_id = form_id_string[:end_index]
-            end = form_id_string[end_index:]
-            form_id = patchers.oldcomp_form_id_replacer(form_id, form_id_map)
-            form_id_string = '0x' + form_id + end
-            
-        elif global_replace:
-            form_id = patchers.oldcomp_form_id_replacer(form_id_string, form_id_map)
-            form_id_string = '0x' + form_id
-            
-        if has_comma:
-            form_id_string += end_of_line
-        return form_id_string
-
-#New Completionist Patcher for after update
     def ini_completionist_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         try:
             with open(new_file, 'r+', encoding=encoding_method) as f:
@@ -606,25 +469,12 @@ class patchers():
                 global_replace = False
                 in_form_ids = False
                 end_tag = 'ENDTAG'
-                install_from = ''
-                local_replace = False
-                local_defined = False
                 for i, line in enumerate(lines):
                     if not start_patching and line.startswith('PluginFileName'):
                         index = line.index('=')+1
                         plugin_to_patch = line[index:].strip().lower()
                         if plugin_to_patch == basename:
                             global_replace = True
-                    if line.startswith('[') and line.strip().endswith(']'):
-                        install_from = ''
-                        local_replace = False
-                        local_defined = False
-                    if install_from == '' and line.startswith('InstallFrom'):
-                        index = line.index('=')+1
-                        install_from = line[index:].strip().lower()
-                        local_defined = True
-                        if install_from == basename:
-                            local_replace = True
                     if not in_form_ids and line.startswith('FormIDs'):
                         if '<<<' in line:
                             in_form_ids = True
@@ -632,13 +482,16 @@ class patchers():
                             end_tag = line[index:].strip()
                             continue
                         else:
-                            lines[i] = patchers.comp_layout_3_processor(global_replace, local_replace, local_defined, basename, line, form_id_map)
+                            lines[i] = patchers.comp_layout_3_processor(global_replace, basename, line, form_id_map)
                     if in_form_ids and line.strip() == end_tag:
                         in_form_ids = False
+                    
                     if in_form_ids:
-                        lines[i] = patchers.comp_form_id_processor(line, basename, global_replace, local_replace, local_defined, form_id_map, True)
+                        lines[i] = patchers.comp_form_id_processor(line, basename, global_replace, form_id_map, True)
+
                     if not in_form_ids and line.startswith('0x') and '=' in line:
-                        lines[i] = patchers.comp_variable_form_id(line, basename, global_replace, local_replace, local_defined, form_id_map)
+                        lines[i] = patchers.comp_variable_from_id(line, basename, global_replace, form_id_map)
+
                 f.seek(0)
                 f.truncate(0)
                 f.write(''.join(lines))
@@ -662,72 +515,50 @@ class patchers():
                 print(e)
 
     def comp_form_id_replacer(form_id, form_id_map):
-        if '0x' in form_id.lower():
-            form_id_int = int(form_id, 16)
-            for form_ids in form_id_map:
-                if form_id_int == int(form_ids[0], 16):
-                    return '0x' + form_ids[3]
-            return form_id
-        else:
-            return form_id
+        form_id_int = int(form_id, 16)
+        for form_ids in form_id_map:
+            if form_id_int == int(form_ids[0], 16):
+                return form_ids[3]
+        return form_id
 
-    def comp_variable_form_id(line, basename, global_replace, local_replace, local_defined, form_id_map):
+    def comp_variable_from_id(line, basename, global_replace, form_id_map):
         equal_index = line.index('=')
-        variable = line[:equal_index].strip()
+        variable = line[:equal_index]
         var_end = False
-        patch_this = False
-        if variable.endswith(('_DisplayName','_Highlight', '_Visibility', '_InstallCondition', '_MuseumDisplayable', '_Type', '_Stage', '_OptionalStage', '_PickupEnabled')):
-            index = variable.rindex('_')
-            form_id_string = variable[:index]
-            if '*' in form_id_string:
-                index = form_id_string.index('*')
-                form_id = form_id_string[:index]
-                plugin = form_id_string[index+1:].strip().lower()
-                if plugin == basename:
-                    patch_this = True
-            else:
-                form_id = form_id_string
+        if '_' in variable:
+            index = variable.index('_')
+            form_id = variable[:index]
             var_end = True
             variable_end = variable[index:]
         else:
-            if '*' in variable:
-                index = variable.index('*')
-                form_id = variable[:index]
-                plugin = variable[index+1:].strip().lower()
-                if plugin == basename:
-                    patch_this = True
-                var_end = True
-                variable_end = variable[index:]
-            else:
-                form_id = variable
-
-        if (global_replace and not local_defined) or local_replace or patch_this:
+            form_id = variable
+        if global_replace:
             form_id = patchers.comp_form_id_replacer(form_id, form_id_map)
-            variable = form_id
+            variable = '0x' + form_id
             if var_end:
-                variable += variable_end + ' '
+                variable += variable_end
             else:
                 variable += ' '
-
-            line = variable + line[equal_index:]
-        line = patchers.comp_layout_3_processor(global_replace, local_replace, local_defined, basename, line, form_id_map)
+        line = variable + line[equal_index:]
+        line = patchers.comp_layout_3_processor(global_replace, basename, line, form_id_map)
         return line
 
-    def comp_layout_3_processor(global_replace, local_replace, local_defined, basename, line, form_id_map):
-        # This assumes that no plugin name has a comma. If one does then it might break completionist anyways.
+    def comp_layout_3_processor(global_replace, basename, line, form_id_map):
+        # This assumes that no plugin name has a comma. If one does then it probably breaks completionist anyways.
         start_index = line.index('=')+1
+        parts = [part for part in line[start_index:].split(',') if part]
         append_newline = False
-        if line.endswith('\n'):
+        if parts[-1] == '\n':
             append_newline = True
-        parts = [part.strip() for part in line[start_index:].split(',') if part.strip() != '']
+            parts.pop()
         for i, form_id_string in enumerate(parts):
-            parts[i] = patchers.comp_form_id_processor(form_id_string, basename, global_replace, local_replace, local_defined, form_id_map, False)
-        return_string = line[:start_index] + ' ' + ', '.join(parts)
+            parts[i] = patchers.comp_form_id_processor(form_id_string, basename, global_replace, form_id_map, False)
+        return_string = line[:start_index] + ' ' + ', '.join(parts) + ','
         if append_newline:
             return_string += '\n'
         return return_string
 
-    def comp_form_id_processor(form_id_string, basename, global_replace, local_replace, local_defined, form_id_map, has_comma):
+    def comp_form_id_processor(form_id_string, basename, global_replace, form_id_map, has_comma):
         if has_comma:
             index = form_id_string.index(',')
             end_of_line = form_id_string[index:]
@@ -746,24 +577,23 @@ class patchers():
                 form_id = patchers.comp_form_id_replacer(form_id, form_id_map)
                 if add_end:
                     end = form_id_string[end_index:]
-                    form_id_string = form_id + '*' + plugin + end
+                    form_id_string = '0x' + form_id + '*' + plugin + end
                 else:
-                    form_id_string = form_id + '*' + plugin
+                    form_id_string = '0x' + form_id + '*' + plugin
         elif '<' in form_id_string:
             end_index = form_id_string.index('<')
             form_id = form_id_string[:end_index]
             end = form_id_string[end_index:]
             form_id = patchers.comp_form_id_replacer(form_id, form_id_map)
-            form_id_string = form_id + end
+            form_id_string = '0x' + form_id + end
             
-        elif (global_replace and not local_defined) or local_replace:
+        elif global_replace:
             form_id = patchers.comp_form_id_replacer(form_id_string, form_id_map)
-            form_id_string = form_id
-
+            form_id_string = '0x' + form_id
+            
         if has_comma:
             form_id_string += end_of_line
         return form_id_string
-#End of new Completionist Patcher
 
     def ini_kreate_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         edid_file = 'ESLifier_Data\\EDIDs\\' + basename + '_EDIDs.txt'
