@@ -20,7 +20,7 @@ class form_processor():
             offset += 12 + alt_tex_size 
         return offsets
         
-    def patch_form_data(self, data_list, forms, form_id_replacements, master_byte):
+    def patch_form_data(data_list, forms, form_id_replacements, master_byte):
         for i, form, offsets in forms:
             for offset in offsets:
                 if form[offset+3:offset+4] >= master_byte:
@@ -31,7 +31,7 @@ class form_processor():
             data_list[i] = bytes(form)
         return data_list
     
-    def patch_form_data_dependent(self, data_list, forms, form_id_replacements, master_byte):
+    def patch_form_data_dependent(data_list, forms, form_id_replacements, master_byte):
         for i, form, offsets in forms:
             for offset in offsets:
                 if form[offset+3:offset+4] == master_byte:
@@ -42,7 +42,7 @@ class form_processor():
             data_list[i] = bytes(form)
         return data_list
     
-    def save_all_form_data(self, data_list):
+    def save_all_form_data(data_list):
         saved_forms = []
         for i, form in enumerate(data_list):
             record_type = form[:4]
