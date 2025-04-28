@@ -711,8 +711,10 @@ class CFIDs():
                 new_next_available_object_id = (struct.unpack('<I', form_id_replacements[-1][1])[0] + 1).to_bytes(4, 'little')
             else:
                 new_next_available_object_id = (struct.unpack('<I', new_next_available_object_id)[0] + 1).to_bytes(4, 'little')
-        except:
+        except Exception as e:
             new_next_available_object_id = (struct.unpack('<I', new_next_available_object_id)[0] + 1).to_bytes(4, 'little')
+            print('!Warn: line 710 issue. Something may or may not have gone wrong in compacting. IDK.')
+            print(e)
 
         data_list[0] = data_list[0][:38] + new_next_available_object_id[:3] + b'\x00' + data_list[0][42:]
 
