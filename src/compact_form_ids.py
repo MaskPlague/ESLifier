@@ -149,7 +149,7 @@ class CFIDs():
                 print(f"-  Patching {len(to_patch)} Dependent Files...")
                 if len(to_patch) > 20:
                     print('\n')
-                CFIDs.patch_files_threader(file_to_compact, to_patch, form_id_map, skyrim_folder_path, output_folder_path, True)
+                CFIDs.patch_files_threader(file_to_compact, to_patch, form_id_map, skyrim_folder_path, output_folder_path)
             if len(to_rename) > 0:
                 print(f"-  Renaming/Patching {len(to_rename)} Dependent Files...")
                 if len(to_rename) > 20:
@@ -222,7 +222,7 @@ class CFIDs():
                 print(f"-  Patching {len(to_patch)} New Dependent Files...")
                 if len(to_patch) > 20:
                     print('\n')
-                CFIDs.patch_files_threader(compacted_file, to_patch, form_id_map, skyrim_folder_path, output_folder_path, True)
+                CFIDs.patch_files_threader(compacted_file, to_patch, form_id_map, skyrim_folder_path, output_folder_path)
             if len(to_rename) > 0:
                 print(f"-  Renaming/Patching {len(to_rename)} New Dependent Files...")
                 if len(to_rename) > 20:
@@ -364,7 +364,7 @@ class CFIDs():
             form_id_map.append([from_id, from_id_with_leading_0s, to_id, to_id_with_leading_0s, from_id_little_endian, to_id_little_endian])
         return form_id_map
 
-    def patch_files_threader(master, files, form_id_map, skyrim_folder_path, output_folder_path, flag):
+    def patch_files_threader(master, files, form_id_map, skyrim_folder_path, output_folder_path):
         threads = []
         split = len(files)
         if split > MAX_THREADS:
@@ -384,7 +384,7 @@ class CFIDs():
                     factor = 1
                 if (CFIDs.count % factor) >= (factor-1) or CFIDs.count >= CFIDs.file_count:
                     print('\033[F\033[K-  Percentage: ' + str(round(percent,1)) +'%\n-  Files: ' + str(CFIDs.count) + '/' + str(CFIDs.file_count), end='\r')
-            thread = threading.Thread(target=CFIDs.patch_files, args=(master, chunk, form_id_map, skyrim_folder_path, output_folder_path, flag))
+            thread = threading.Thread(target=CFIDs.patch_files, args=(master, chunk, form_id_map, skyrim_folder_path, output_folder_path))
             threads.append(thread)
             thread.start()
         
@@ -392,13 +392,9 @@ class CFIDs():
             thread.join()
 
     #Patches each file type in a different way as each has Form IDs present in a different format
-    def patch_files(master, files, form_id_map, skyrim_folder_path, output_folder_path, flag):
+    def patch_files(master, files, form_id_map, skyrim_folder_path, output_folder_path):
         for file in files:
-            if flag:
-                new_file, rel_path = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
-            else:
-                rel_path = CFIDs.get_rel_path(file, output_folder_path)
-                new_file = file
+            new_file, rel_path = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
             new_file_lower = new_file.lower()
             basename = os.path.basename(master).lower()
             try:
