@@ -328,7 +328,7 @@ class CFIDs():
                     break
             CFIDs.compacted_and_patched[master_base_name].append(rel_path.lower())
         if facegeom_meshes != []:
-            CFIDs.patch_files(master, facegeom_meshes, form_id_map, skyrim_folder_path, output_folder_path, False)
+            CFIDs.patch_files(master, facegeom_meshes, form_id_map, skyrim_folder_path, output_folder_path)
         return
 
     #Create the Form ID map which is a list of tuples that holds four Form Ids that are in \xMASTER\x00\x00\x00 order:
