@@ -453,7 +453,6 @@ class scanner():
         file_count = 0
         loop = 0
         cwd = os.getcwd()
-        overwrite_path = os.path.join(os.path.split(mods_folder)[0], 'overwrite')
         for file, mods in mod_files.items():
             file_count += 1
             if loop == 500:
