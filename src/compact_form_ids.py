@@ -233,19 +233,7 @@ class CFIDs():
 
     #Create a copy of the mod plugin we're compacting
     def copy_file_to_output(file, skyrim_folder_path, output_folder):
-        if 'bsa_extracted' in file:
-            if 'bsa_extracted_temp' in file:
-                start = os.path.join(os.getcwd(), 'bsa_extracted_temp/')
-            else:
-                start = os.path.join(os.getcwd(), 'bsa_extracted/')
-            end_path = os.path.normpath(os.path.relpath(file, start))
-        elif CFIDs.mo2_mode and file.lower().startswith(CFIDs.overwrite_path.lower()):
-            end_path = os.path.normpath(os.path.relpath(file, CFIDs.overwrite_path))
-        else:
-            if CFIDs.mo2_mode:
-                end_path = os.path.join(*os.path.normpath(os.path.relpath(file, skyrim_folder_path)).split(os.sep)[1:])
-            else:
-                end_path = os.path.normpath(os.path.relpath(file, skyrim_folder_path))
+        end_path = CFIDs.get_rel_path(file, skyrim_folder_path)
         new_file = os.path.normpath(os.path.join(os.path.join(output_folder, CFIDs.output_folder_name), end_path))
         with CFIDs.lock:
             if not os.path.exists(os.path.dirname(new_file)):
@@ -261,6 +249,8 @@ class CFIDs():
             else:
                 start = os.path.join(os.getcwd(), 'bsa_extracted/')
             rel_path = os.path.normpath(os.path.relpath(file, start))
+        elif CFIDs.mo2_mode and file.lower().startswith(CFIDs.overwrite_path.lower()):
+            rel_path = os.path.normpath(os.path.relpath(file, CFIDs.overwrite_path))
         else:
             if CFIDs.mo2_mode:
                 rel_path = os.path.join(*os.path.normpath(os.path.relpath(file, skyrim_folder_path)).split(os.sep)[1:])
