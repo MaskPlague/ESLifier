@@ -136,6 +136,8 @@ class patch_new(QWidget):
             else:
                 start = os.path.join(os.getcwd(), 'bsa_extracted/')
             rel_path = os.path.normpath(os.path.relpath(file, start))
+        elif self.mo2_mode and file.lower().startswith(self.overwrite_path.lower()):
+            rel_path = os.path.normpath(os.path.relpath(file, self.overwrite_path))
         else:
             if self.mo2_mode:
                 rel_path = os.path.join(*os.path.normpath(os.path.relpath(file, skyrim_folder_path)).split(os.sep)[1:])
