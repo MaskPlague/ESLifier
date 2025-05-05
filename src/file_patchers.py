@@ -969,7 +969,43 @@ class patchers():
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
-        
+
+    def json_sum_patcher(basename, new_file, form_id_map):
+        with open(new_file, 'r+', encoding='utf-8') as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = patchers.remove_trailing_commas_from_json(string)
+            json_dict = patchers.extract_values_and_keys(data)
+            for path, value in json_dict:
+                if type(value) is str and '|' + basename in value.lower():
+                    count = value.lower().count('|'+basename)
+                    start_index = 0
+                    changed = False
+                    for _ in range(count):
+                        plugin_index = value.lower().index('|'+basename, start_index)
+                        plugin = value[plugin_index+1:plugin_index+len(basename)+1]
+                        start_index = plugin_index + 4
+                        if plugin.lower() == basename:
+                            form_id_index = patchers.find_prev_non_alphanumeric(value,plugin_index-1) + 1
+                            start = value[:form_id_index]
+                            end = value[plugin_index:]
+                            form_id = value[form_id_index:plugin_index]
+                            form_id_int = int(form_id, 16)
+                            for form_ids in form_id_map:
+                                if form_id_int == int(form_ids[0], 16):
+                                    value = start + '0x' + form_ids[2] + end
+                                    changed = True
+                                    break
+                    if changed:
+                        data = patchers.change_json_element(data, path, value)
+            f.seek(0)
+            f.truncate(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
+            f.close()
+
     def dar_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         try:
             with open(new_file, 'r+', encoding=encoding_method) as f:
