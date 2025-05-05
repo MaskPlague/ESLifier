@@ -469,6 +469,10 @@ class CFIDs():
                                 patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map, int_type=True)
                         elif 'configs\\dse-soulgem-oven' in new_file_lower:                                 # SoulGem Oven
                             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
+                        elif 'plugins\\ypsfashion\\' in new_file_lower:                                     # Immersive Hair Growth and Styling
+                            patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map, int_type=True)
+                        elif 'plugins\\skyrim - utility mod\\' in new_file_lower:                           # Inte's Skyrim - Utility Mod
+                            patchers.json_sum_patcher(basename, new_file, form_id_map)
                         else:
                             print(f'Warn: Possible missing patcher for: {new_file}')
                     elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
