@@ -662,6 +662,7 @@ class scanner():
                             or file_lower.endswith('revealingarmo_tng.ini')
                             or file_lower.endswith('enginefixes_snct.toml')
                             or file_lower.endswith('placed light.ini')
+                            or file_lower.endswith('vortex.deployment.json')
                             )
                 ):
                 if 'kreate\\presets\\' in file_lower:
