@@ -81,6 +81,7 @@ Run "build_ESLifier_EXE.py" either via a terminal opened in the _ESLifier_ direc
   - Music Type Distributor
   - Completionist
   - KreatE (with caveats)
+  - Remember Lockpick Angle - Updated
 - .json:
   - Open Animation Replacer
   - MCM Helper
@@ -88,11 +89,13 @@ Run "build_ESLifier_EXE.py" either via a terminal opened in the _ESLifier_ direc
   - Smart Harvest Auto NG AutoLoot
   - PapyrusUtil's StorageDataUtil
   - Custom Skills Framework
+  - Core Impact Framework
   - Dynamic String Distributor
   - Dynamic Armor Variants
   - Inventory Injector
   - Immersive Equipment Display
   - Light Placer
+  - Perk Adjuster
   - Player Equipment Manager
   - Skyrim Unbound
   - Creature Framework
