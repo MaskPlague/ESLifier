@@ -448,6 +448,7 @@ class scanner():
         mods_folder = os.path.normpath(mods_folder)
         overwrite_path = os.path.normpath(overwrite_path)
         mod_folder_level = len(mods_folder.split(os.sep))
+        overwrite_level = len(overwrite_path.split(os.sep)) - 1
         mod_files, plugin_names, cases = scanner.get_files_from_mods(mods_folder, enabled_mods, plugins_list, overwrite_path)
         winning_files = []
         file_count = 0
@@ -461,32 +462,40 @@ class scanner():
             else:
                 loop += 1
             if len(mods) == 1:
+                overwrite = False
                 if mods[0] == 'bsa_extracted_eslifier_scan':
                     file_path = os.path.join(cwd, 'bsa_extracted', cases[file])
                 elif mods[0] == 'overwrite_eslifier_scan':
                     file_path = os.path.join(overwrite_path, cases[file])
+                    overwrite = True
                 else:
                     file_path = os.path.join(mods_folder, mods[0], cases[file])
-                winning_files.append(file_path)
+                winning_files.append([file_path, overwrite])
             else:
                 mods_sorted = sorted(mods, key=lambda mod: load_order.index(mod))
+                overwrite = False
                 if mods_sorted[-1] == 'bsa_extracted_eslifier_scan':
                     file_path = os.path.join(cwd, 'bsa_extracted', cases[file])
                 elif mods_sorted[-1] == 'overwrite_eslifier_scan':
                     file_path = os.path.join(overwrite_path, cases[file])
+                    overwrite = True
                 else:
                     file_path = os.path.join(mods_folder, mods_sorted[-1], cases[file])
-                winning_files.append(file_path)
+                winning_files.append([file_path, overwrite])
         plugin_extensions = ('.esp', '.esl', '.esm')
         plugins = []
         plugin_names_lowered = [plugin.lower() for plugin in plugin_names]
-        for file in winning_files:
+        for file, overwrite in winning_files:
             file_level = len(file.split(os.sep))
-            if file_level == mod_folder_level + 2 and file.lower().endswith(plugin_extensions):
+            if overwrite:
+                level = overwrite_level
+            else:
+                level = mod_folder_level
+            if file_level == level + 2 and file.lower().endswith(plugin_extensions):
                 plugin = os.path.join(os.path.dirname(file), plugin_names[plugin_names_lowered.index(os.path.basename(file.lower()))])
                 plugins.append(plugin)
-
-        return winning_files, plugins
+        return_list = [winning_file for winning_file, _ in winning_files]
+        return return_list, plugins
 
     def dump_to_file(file, data):
         try:

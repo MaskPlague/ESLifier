@@ -173,7 +173,6 @@ class qualification_checker():
             with open(cell_form_id_file, 'w', encoding='utf-8') as f:
                 for form_id in cell_form_ids:
                     f.write(form_id + '\n')
-
         return True, need_compacting, new_cell, interior_cell_flag, new_wrld
 
     def already_esl(file):
