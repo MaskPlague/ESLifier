@@ -460,6 +460,42 @@ class patchers():
                 print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
 
+    def ini_rla_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        try:
+            with open(new_file, 'r+', encoding=encoding_method) as f:
+                lines = f.readlines()
+                required_perk = ''
+                rpi = 0
+                for i, line in enumerate(lines):
+                    if line.startswith('requiredPerk'):
+                        required_perk = line.removeprefix('requiredPerk =').strip()
+                        rpi = i
+                    if line.startswith('modName'):
+                        mod_name = line.removeprefix('modName =').strip().lower()
+                        if mod_name == basename:
+                            form_id_int = int(required_perk, 16)
+                            for form_ids in form_id_map:
+                                if form_id_int == int(form_ids[0], 16):
+                                    lines[rpi] = 'requiredPerk = ' + form_ids[2] + '\n'
+                                    break
+                f.seek(0)
+                f.truncate(0)
+                f.write(''.join(lines))
+                f.close()
+        except Exception as e:
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.ini_rla_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
+            else:
+                print(f'!Error: Failed to patch file: {new_file}')
+                print(e)
+
     def ini_completionist_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         try:
             with open(new_file, 'r+', encoding=encoding_method) as f:
