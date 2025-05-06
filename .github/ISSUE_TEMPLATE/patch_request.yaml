@@ -44,6 +44,7 @@ body:
           - Music Type Distributor
           - Completionist
           - KreatE (with caveats)
+          - Remember Lockpick Angle - Updated
           
         - **.json:**  
           - Open Animation Replacer (OAR)  
@@ -52,11 +53,13 @@ body:
           - Smart Harvest Auto NG AutoLoot  
           - PapyrusUtil's StorageDataUtil  
           - Custom Skills Framework (old format CustomSkill.<name>.config.txt supported)
+          - Core Impact Framework
           - Dynamic String Distributor  
           - Dynamic Armor Variants  
           - Inventory Injector  
           - Immersive Equipment Display  
           - Light Placer  
+          - Perk Adjuster
           - Player Equipment Manager  
           - Skyrim Unbound  
           - Creature Framework  
