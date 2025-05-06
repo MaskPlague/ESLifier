@@ -2,10 +2,11 @@ import sys
 import os
 import traceback
 import threading
+import webbrowser
 
-from PyQt6.QtWidgets import QMainWindow, QTextEdit
+from PyQt6.QtWidgets import QMainWindow, QTextEdit, QMessageBox
 from PyQt6.QtCore import Qt, QTimer
-
+from PyQt6.QtGui import QIcon, QAction
 
 class log_stream(QMainWindow):
     def __init__(self, parent=None, version='0.0.0'):
@@ -15,6 +16,8 @@ class log_stream(QMainWindow):
         self.setFixedSize(400, 300)
         self.center_on_parent()
         self.hide()
+        self.missing_patchers = []
+        self.errors = []
         self.text_edit = QTextEdit()
         self.text_edit.setReadOnly(True)
         self.setCentralWidget(self.text_edit)
@@ -23,7 +26,7 @@ class log_stream(QMainWindow):
         if not os.path.exists("ESLifier_Data/"):
             os.makedirs("ESLifier_Data/")
         self.log_file = open("ESLifier_Data/ESLifier.log", 'w', encoding='utf-8')
-        self.log_file.write(f'ESLifier Version v{version}-alpha\n')
+        self.log_file.write(f'ESLifier Version v{version}\n')
         self.log_file.write('Working directory is ' + os.getcwd() + '\n')
         self.log_file.flush()
 
@@ -57,7 +60,76 @@ class log_stream(QMainWindow):
             'Extracting:' not in text and 'CLEAR' not in text and text != '\033[F\033[K' and text != ''):
             self.log_file.write(text.removeprefix('~') + '\n')
             self.log_file.flush()
-    
+        if text.startswith('Warn:') and not 'red' in self.text_edit.styleSheet() and not 'lightblue' in self.text_edit.styleSheet():
+            self.text_edit.setStyleSheet("background-color: lightblue")
+        if text.startswith('Warn:'):
+            missing = text[36:]
+            if missing not in self.missing_patchers:
+                self.missing_patchers.append(missing)
+        if text.startswith('!Error'):
+            self.errors.append(text.removeprefix('!Error'))
+            
+    def missing_patcher_warning(self):
+        patcher_message = QMessageBox()
+        patcher_message.setWindowTitle("Possible Missing Patcher")
+        patcher_message.setIcon(QMessageBox.Icon.Warning)
+        patcher_message.setWindowIcon(QIcon(":/images/ESLifier.png"))
+        patcher_message.setStyleSheet("""
+            QMessageBox {
+                background-color: lightblue;
+            }""")
+        text = ("ESLifier has come across one or more files it currently doesn't have a patcher or exclusion for.\n"+
+                "Check the ESLifier.log for more details.\n"+
+                "Please create a patcher request in the GitHub.\n\n")
+        count = 0
+        for line in self.missing_patchers:
+            count += 1
+            if count <= 10:
+                text += '\n' + line.strip()
+        if count > 10:
+            text += '\nand ' + str(count - 10) + ' more.'
+        patcher_message.setText(text)
+        patcher_message.addButton(QMessageBox.StandardButton.Ok)
+        github_button = patcher_message.addButton("Open GitHub Issue Page", QMessageBox.ButtonRole.NoRole)
+        def close():
+            patcher_message.close()
+        def open_github():
+            webbrowser.open("https://github.com/MaskPlague/ESLifier/issues")
+        patcher_message.accepted.connect(close)
+        github_button.clicked.connect(open_github)
+        self.missing_patchers.clear()
+        patcher_message.show()
+
+    def error_warning(self):
+        error_message = QMessageBox()
+        error_message.setWindowTitle("Possible Missing Patcher")
+        error_message.setIcon(QMessageBox.Icon.Warning)
+        error_message.setWindowIcon(QIcon(":/images/ESLifier.png"))
+        error_message.setStyleSheet("""
+            QMessageBox {
+                background-color: lightcoral;
+            }""")
+        text = ("ESLifier has experienced one or more errors.\n"+
+                "Check the ESLifier.log for more details.\n\n")
+        count = 0
+        for line in self.errors:
+            count += 1
+            if count <= 10:
+                text += '\n' + line.strip()
+        if count > 10:
+            text += '\nand ' + str(count - 10) + ' more.'
+        error_message.setText(text)
+        error_message.addButton(QMessageBox.StandardButton.Ok)
+        github_button = error_message.addButton("Open GitHub Issue Page", QMessageBox.ButtonRole.NoRole)
+        def close():
+            error_message.close()
+        def open_github():
+            webbrowser.open("https://github.com/MaskPlague/ESLifier/issues")
+        error_message.accepted.connect(close)
+        github_button.clicked.connect(open_github)
+        self.errors.clear()
+        error_message.show()
+
     def exception_hook(self, exc_type, exc_value, exc_traceback):
         self.crash = True
         self.show()
@@ -109,6 +181,10 @@ class log_stream(QMainWindow):
         elif 'CLEAR' == text:
             self.log_file.flush()
             self.timer_clear.start(1500)
+            if len(self.missing_patchers) > 0:
+                self.missing_patcher_warning()
+            if len(self.errors) > 0:
+                self.error_warning()
         elif 'CLEAR ALT' == text:
             self.clear_alt()
         else:
