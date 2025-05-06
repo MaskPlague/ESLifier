@@ -825,7 +825,7 @@ class patchers():
                     if plugin.lower() == basename:
                         form_id = value[index+1:]
                         form_id_int = int(form_id, 16)
-                        if not ox and '0x' in form_id:
+                        if not ox and '0x' in form_id.lower():
                             ox = True
                         for form_ids in form_id_map:
                             if form_id_int == int(form_ids[0], 16):
@@ -848,35 +848,33 @@ class patchers():
                 string = f.read()
                 data = patchers.remove_trailing_commas_from_json(string)
             json_dict = patchers.extract_values_and_keys(data)
-            if not int_type:
-                ox = False
-                for path, value in json_dict:
-                    if type(value) is str and '|' in value:
-                        index = value.index('|')
-                        plugin = value[index+1:]
-                        if plugin.lower() == basename:
-                            form_id = value[:index]
+            for path, value in json_dict:
+                if type(value) is str and '|' in value:
+                    ox = False
+                    int_type_actual = int_type
+                    index = value.index('|')
+                    plugin = value[index+1:]
+                    if plugin.lower() == basename:
+                        form_id = value[:index]
+                        if '0x' in form_id.lower():
+                            ox = True
+                        if ox or not int_type:
                             form_id_int = int(form_id, 16)
-                            if not ox and '0x' in form_id:
-                                ox = True
-                            for form_ids in form_id_map:
-                                if form_id_int == int(form_ids[0], 16):
-                                    if not ox:
-                                        data = patchers.change_json_element(data, path, form_ids[2] + '|' + plugin)
-                                    else:
-                                        data = patchers.change_json_element(data, path, '0x' + form_ids[2] + '|' + plugin)
-                                    break
-            else:
-                for path, value in json_dict:
-                    if type(value) is str and '|' in value:
-                        index = value.index('|')
-                        plugin = value[index+1:]
-                        if plugin.lower() == basename:
-                            form_id_int = value[:index]
-                            for form_ids in form_id_map:
-                                if form_id_int == int(form_ids[0], 16):
+                        else:
+                            try:
+                                form_id_int = int(form_id)
+                            except:
+                                form_id_int = int(form_id, 16)
+                                int_type_actual = False
+                        for form_ids in form_id_map:
+                            if form_id_int == int(form_ids[0], 16):
+                                if not ox and not int_type_actual:
+                                    data = patchers.change_json_element(data, path, form_ids[2] + '|' + plugin)
+                                elif ox:
+                                    data = patchers.change_json_element(data, path, '0x' + form_ids[2] + '|' + plugin)
+                                else: # not ox and int_type
                                     data = patchers.change_json_element(data, path, str(int(form_ids[2], 16)) + '|' + plugin)
-                                    break
+                                break
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
