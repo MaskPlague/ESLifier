@@ -551,11 +551,14 @@ class patchers():
                 print(e)
 
     def comp_form_id_replacer(form_id, form_id_map):
-        form_id_int = int(form_id, 16)
-        for form_ids in form_id_map:
-            if form_id_int == int(form_ids[0], 16):
-                return form_ids[3]
-        return form_id
+        if '0x' in form_id.lower():
+            form_id_int = int(form_id, 16)
+            for form_ids in form_id_map:
+                if form_id_int == int(form_ids[0], 16):
+                    return '0x' + form_ids[3]
+            return form_id
+        else:
+            return form_id
 
     def comp_variable_from_id(line, basename, global_replace, form_id_map):
         equal_index = line.index('=')
@@ -570,7 +573,7 @@ class patchers():
             form_id = variable
         if global_replace:
             form_id = patchers.comp_form_id_replacer(form_id, form_id_map)
-            variable = '0x' + form_id
+            variable = form_id
             if var_end:
                 variable += variable_end
             else:
@@ -613,19 +616,19 @@ class patchers():
                 form_id = patchers.comp_form_id_replacer(form_id, form_id_map)
                 if add_end:
                     end = form_id_string[end_index:]
-                    form_id_string = '0x' + form_id + '*' + plugin + end
+                    form_id_string = form_id + '*' + plugin + end
                 else:
-                    form_id_string = '0x' + form_id + '*' + plugin
+                    form_id_string = form_id + '*' + plugin
         elif '<' in form_id_string:
             end_index = form_id_string.index('<')
             form_id = form_id_string[:end_index]
             end = form_id_string[end_index:]
             form_id = patchers.comp_form_id_replacer(form_id, form_id_map)
-            form_id_string = '0x' + form_id + end
+            form_id_string = form_id + end
             
         elif global_replace:
             form_id = patchers.comp_form_id_replacer(form_id_string, form_id_map)
-            form_id_string = '0x' + form_id
+            form_id_string = form_id
             
         if has_comma:
             form_id_string += end_of_line
