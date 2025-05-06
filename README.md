@@ -101,6 +101,10 @@ Run "build_ESLifier_EXE.py" either via a terminal opened in the _ESLifier_ direc
   - SL Configs
   - OStim Standalone
   - Race Compatibility SKSE
+  - Rain Extinguished Fires
+  - Immersive Hair Growth and Styling
+  - Inte's Skyrim - Utility Mod
+  - dse-display-model
 - .toml:
   - Dynamic Animation Casting
   - Precision
