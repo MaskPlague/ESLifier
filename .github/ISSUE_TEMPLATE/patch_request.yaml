@@ -18,8 +18,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Below is a list of currently patched file types. If you're making a request for one of them because it is not being patched correctly then please make a bug
-        report instead. 
+        Below is a list of currently patched file types. If you're making a request for one of them because it is not being patched correctly then please make a bug report instead. 
 
         
         **Currently Patched File Types:**
@@ -67,6 +66,9 @@ body:
           - OStim Standalone
           - Race Compatibility SKSE
           - Rain Extinguishes Fires
+          - Immersive Hair Growth and Styling
+          - Inte's Skyrim - Utility Mod
+          - dse-display-model
           
         - **.toml:**  
           - Dynamic Animation Casting  
