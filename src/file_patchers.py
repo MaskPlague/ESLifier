@@ -1041,9 +1041,16 @@ class patchers():
             with open(new_file, 'r+', encoding=encoding_method) as f:
                 lines = f.readlines()
                 for i, line in enumerate(lines):
-                    if basename in line.lower() and '|' in line:
+                    if basename in line.lower() and '|' in line and not line.startswith('#'):
+                        if '#' in line:
+                            comment_index = line.index('#')
+                            comment = True
+                        else:
+                            comment = False
                         index = line.index('|')
                         end_index = patchers.find_next_non_alphanumeric(line, index+1)
+                        if comment and (index > comment_index or end_index > comment_index):
+                            continue
                         end_of_line = line[end_index:]
                         form_id_int = int(line[index+1:], 16)
                         for form_ids in form_id_map:
