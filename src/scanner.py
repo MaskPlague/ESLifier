@@ -674,6 +674,7 @@ class scanner():
                             or file_lower.endswith('placed light.ini')
                             or file_lower.endswith('vortex.deployment.json')
                             or file_lower.endswith('aiprocessfixmodpatch.ini')
+                            or file_lower.endswith('grasscontrol.ini')
                             )
                 ):
                 if 'kreate\\presets\\' in file_lower:
@@ -692,7 +693,7 @@ class scanner():
             elif file_lower.endswith('.seq'):
                 plugin = os.path.splitext(os.path.basename(file))[0]
                 scanner.seq_files.append([plugin.lower(), file])
-            elif ('\\facegeom\\' in file_lower and '.nif' in file_lower):
+            elif ('\\facegeom\\' in file_lower and file_lower.endswith('.nif')):
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
                         plugin = re.search(pattern3, file_lower).group(1)
@@ -702,7 +703,7 @@ class scanner():
                             local_dict[plugin].append(file)
                     except Exception as e:
                         pass
-            elif '\\facetint\\' in file_lower and '.dds' in file_lower:
+            elif '\\facetint\\' in file_lower and file_lower.endswith('.dds'):
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
                         plugin = re.search(pattern4, file_lower).group(1)
