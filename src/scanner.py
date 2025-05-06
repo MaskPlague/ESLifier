@@ -659,6 +659,7 @@ class scanner():
                             or 'nemesis_engine' in file_lower
                             or 'quickarmorrebalance\\config\\' in file_lower
                             or 'equipmenttoggle\\slotdata\\' in file_lower
+                            or '\\headpartwhitelist\\' in file_lower
                             or file_lower.endswith('revealingarmo_tng.ini')
                             or file_lower.endswith('enginefixes_snct.toml')
                             or file_lower.endswith('placed light.ini')
