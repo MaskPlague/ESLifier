@@ -425,7 +425,7 @@ class CFIDs():
                         if 'animationreplacer\\' in new_file_lower and ('config.json' in new_file_lower or 'user.json' in new_file_lower): # Open Animation Replacer
                             patchers.json_oar_patcher(basename, new_file, form_id_map)
                         elif 'mcm\\config' in new_file_lower and 'config.json' in new_file_lower:           # MCM helper
-                            patchers.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
+                            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
                         elif '\\storageutildata\\' in new_file_lower:                                       # PapyrusUtil's StorageDataUtil
                             patchers.json_sud_patcher(basename, new_file, form_id_map)
                         elif '\\dynamicstringdistributor\\' in new_file_lower:                              # Dynamic String Distributor
@@ -441,23 +441,27 @@ class CFIDs():
                         elif '\\creatures.d\\' in new_file_lower:                                           # Creature Framework
                             patchers.json_cf_patcher(basename, new_file, form_id_map)
                         elif '\\inventoryinjector\\' in new_file_lower:                                     # Inventory Injector
-                            patchers.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
+                            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
                         elif '\\customskills\\' in new_file_lower:                                          # Custom Skills Framework
-                            patchers.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
+                            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
                         elif 'plugins\\rain extinguishes fires\\' in new_file_lower:                        # Rain Extinguishes Fires
                             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
+                        elif '\\coreimpactframework\\' in new_file_lower:                                   # Core Impact Framework
+                            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, ':')
                         elif '\\skyrimunbound\\' in new_file_lower:                                         # Skyrim Unbound
                             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
                         elif '\\playerequipmentmanager\\' in new_file_lower:                                # Player Equipment Manager
                             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
                         elif '\\mapmarker\\' in new_file_lower:                                             # CoMAP
-                            patchers.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
+                            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
                         elif new_file_lower.endswith('obody_presetdistributionconfig.json'):                # OBody NG
                             patchers.json_obody_patcher(basename, new_file, form_id_map)
                         elif os.path.basename(new_file_lower).startswith('shse.'):                          # Smart Harvest
                             patchers.json_shse_patcher(basename, new_file, form_id_map)
                         elif 'plugins\\rcs\\' in new_file_lower:                                            # Race Compatibility SKSE
-                            patchers.json_generic_plugin_pipe_formid_patcher(basename, new_file, form_id_map)
+                            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
+                        elif 'plugins\\perkadjuster' in new_file_lower:                                     # Perk Adjuster
+                            patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
                         elif 'plugins\\ostim\\' in new_file_lower:                                          # OStim
                             patchers.json_ostim_patcher(basename, new_file, form_id_map)
                         elif os.path.basename(new_file_lower) == 'sexlabconfig.json':                       # SL MCM Generated config
