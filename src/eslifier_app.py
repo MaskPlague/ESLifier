@@ -49,7 +49,6 @@ def luhn_checksum(data: bytes) -> int:
         total += digit
     return (256 - (total % 256)) % 256
 
-
 class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
