@@ -64,7 +64,7 @@ class main_window(QMainWindow):
                     verify_luhn_checksum('ESLifier.exe')
             else:
                 verify_luhn_checksum('ESLifier.exe')
-        self.setWindowTitle("ESLifier")
+        self.setWindowTitle("ESLifier v" + CURRENT_VERSION)
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.resize(1300, 500)
         self.move(100,50)
