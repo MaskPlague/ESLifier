@@ -994,7 +994,7 @@ class patchers():
                             form_id_int = int(form_id, 16)
                             for form_ids in form_id_map:
                                 if form_id_int == int(form_ids[0], 16):
-                                    value = start + '0x' + form_ids[2] + end
+                                    value = start + '0x' + form_ids[3] + end
                                     changed = True
                                     break
                     if changed:
