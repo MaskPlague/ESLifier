@@ -12,7 +12,7 @@ from main_page import main
 from patch_new_page import patch_new
 from log_stream import log_stream
 
-CURRENT_VERSION = '0.8.10'
+CURRENT_VERSION = '0.8.11'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
@@ -52,7 +52,6 @@ def luhn_checksum(data: bytes) -> int:
 class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
-        #TODO: Research into making a save patcher
         if getattr(sys, 'frozen', False):
             os.chdir(os.path.dirname(sys.executable))
             if os.path.exists('ESLifier_Data/settings.json'):
@@ -208,8 +207,8 @@ class main_window(QMainWindow):
         else:
             data_path_exists = True
         if output_path_exists and data_path_exists:
-            output_path_drive = os.path.splitdrive(output_path)
-            data_path_drive = os.path.splitdrive(data_path)
+            output_path_drive, _ = os.path.splitdrive(output_path)
+            data_path_drive, _ = os.path.splitdrive(data_path)
             if output_path_drive != data_path_drive:
                 error_message += "The Mods/Data Folder Path and the Output Folder Path must be on the same drive.\n"
         if not plugins_txt.lower().endswith('.txt'):
