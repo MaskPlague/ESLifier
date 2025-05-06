@@ -110,7 +110,8 @@ class log_stream(QMainWindow):
                 background-color: lightcoral;
             }""")
         text = ("ESLifier has experienced one or more errors.\n"+
-                "Check the ESLifier.log for more details.\n\n")
+                "Check the ESLifier.log for more details.\n"+
+                "Any .pex files listed are likely corrupt and you need to find a patch to fix them.\n\n")
         count = 0
         for line in self.errors:
             count += 1
