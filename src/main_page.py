@@ -30,7 +30,7 @@ class main(QWidget):
         for window in QApplication.allWidgets():
             if window.windowTitle() == 'Log Stream':
                 self.log_stream = window
-            if window.windowTitle() == 'ESLifier':
+            if 'ESLifier v' in window.windowTitle():
                 self.eslifier = window
         self.create()
 

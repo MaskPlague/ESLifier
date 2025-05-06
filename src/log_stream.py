@@ -102,7 +102,7 @@ class log_stream(QMainWindow):
 
     def error_warning(self):
         error_message = QMessageBox()
-        error_message.setWindowTitle("Possible Missing Patcher")
+        error_message.setWindowTitle("Errors Encountered")
         error_message.setIcon(QMessageBox.Icon.Warning)
         error_message.setWindowIcon(QIcon(":/images/ESLifier.png"))
         error_message.setStyleSheet("""
