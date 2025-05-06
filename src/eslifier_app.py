@@ -12,7 +12,7 @@ from main_page import main
 from patch_new_page import patch_new
 from log_stream import log_stream
 
-CURRENT_VERSION = '0.8.9'
+CURRENT_VERSION = '0.8.10'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
@@ -195,13 +195,24 @@ class main_window(QMainWindow):
             overwrite_path = self.settings_widget.settings['overwrite_path']
 
         error_message = ''
+        output_path_exists = False
+        data_path_exists = False
         if not os.path.exists(output_path):
             error_message += "Invalid Output Directory, it does not exist.\n"
+        else:
+            output_path_exists = True
         if not os.path.exists(data_path):
             if mo2_mode:
                 error_message += "Invalid MO2 Mods Directory, it does not exist.\n"
             else:
                 error_message += "Invalid Skyrim Data Directory, it does not exist.\n"
+        else:
+            data_path_exists = True
+        if output_path_exists and data_path_exists:
+            output_path_drive = os.path.splitdrive(output_path)
+            data_path_drive = os.path.splitdrive(data_path)
+            if output_path_drive != data_path_drive:
+                error_message += "The Mods/Data Folder Path and the Output Folder Path must be on the same drive.\n"
         if not plugins_txt.lower().endswith('.txt'):
             error_message += "Invalid plugins.txt, the path should be to the file not directory.\n"
         if not os.path.exists(plugins_txt):
