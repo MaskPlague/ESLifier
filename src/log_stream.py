@@ -97,8 +97,8 @@ class log_stream(QMainWindow):
             webbrowser.open("https://github.com/MaskPlague/ESLifier/issues")
         patcher_message.accepted.connect(close)
         github_button.clicked.connect(open_github)
-        self.missing_patchers.clear()
         patcher_message.show()
+        self.missing_patchers.clear()
 
     def error_warning(self):
         error_message = QMessageBox()
@@ -128,8 +128,8 @@ class log_stream(QMainWindow):
             webbrowser.open("https://github.com/MaskPlague/ESLifier/issues")
         error_message.accepted.connect(close)
         github_button.clicked.connect(open_github)
-        self.errors.clear()
         error_message.show()
+        self.errors.clear()
 
     def exception_hook(self, exc_type, exc_value, exc_traceback):
         self.crash = True
@@ -182,10 +182,6 @@ class log_stream(QMainWindow):
         elif 'CLEAR' == text:
             self.log_file.flush()
             self.timer_clear.start(1500)
-            if len(self.missing_patchers) > 0:
-                self.missing_patcher_warning()
-            if len(self.errors) > 0:
-                self.error_warning()
         elif 'CLEAR ALT' == text:
             self.clear_alt()
         else:
@@ -201,6 +197,10 @@ class log_stream(QMainWindow):
         if not self.crash:
             self.text_edit.setPlainText(None)
             self.hide()
+        if len(self.missing_patchers) > 0:
+            self.missing_patcher_warning()
+        if len(self.errors) > 0:
+            self.error_warning()
     
     def clear_alt(self):
         if not self.crash:
