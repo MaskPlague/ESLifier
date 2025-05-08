@@ -450,6 +450,8 @@ class CFIDs():
                             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
                         elif '\\coreimpactframework\\' in new_file_lower:                                   # Core Impact Framework
                             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, ':')
+                        elif 'plugins\\objectimpactframework' in new_file_lower:
+                            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, ':')
                         elif '\\skyrimunbound\\' in new_file_lower:                                         # Skyrim Unbound
                             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
                         elif '\\playerequipmentmanager\\' in new_file_lower:                                # Player Equipment Manager
