@@ -100,6 +100,8 @@ class scanner():
         return dict(sorted_bsa_items)
 
     def get_files_from_skyrim_folder(path, plugins_list):
+        if not os.path.exists('bsa_extracted/'):
+            os.makedirs('bsa_extracted/')
         path = os.path.normpath(path)
         path_level = len(path.split(os.sep))
         loop = 0
