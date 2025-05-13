@@ -136,73 +136,20 @@ class scanner():
         bsa_length = len(filtered_bsa_list)
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        last = 0
         update_time = 0.1
         for i, tup in enumerate(filtered_bsa_list):
             file = tup[1]
             if file not in scanner.extracted:
-                print(f'\033[F\033[K-  Extracting {i}/{bsa_length} BSA files\n-', end='\r')
+                print(f'\033[F\033[K-  Extracting {i}/{bsa_length} BSA files ({os.path.basename(file)})\n\n', end='\r')
                 try:
                     try:
-                        with subprocess.Popen(
-                            [scanner.bsab, file, "--encoding", "utf7", "-f", ".pex", "-e", "-o", "bsa_extracted"],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            startupinfo=startupinfo,
-                            text=True
-                            ) as p:
-                                for line in p.stdout:
-                                    if line.startswith('An error'):
-                                        print(f'\033[F\033[K{line}', end='\r')
-                                        raise EncodingWarning(f'~utf-7 failed switching to utf-8 for {file}')
-                                    if timeit.default_timer() - last > update_time:
-                                        last = timeit.default_timer()
-                                        print(f'\033[F\033[K{line}', end='\r')
-                        with subprocess.Popen(
-                            [scanner.bsab, file, "--encoding", "utf7", "-f", ".seq", "-e", "-o", "bsa_extracted"],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            startupinfo=startupinfo,
-                            text=True
-                            ) as p:
-                                for line in p.stdout:
-                                    if line.startswith('An error'):
-                                        print(f'\033[F\033[K{line}', end='\r')
-                                        raise EncodingWarning(f'~utf-7 failed switching to utf-8 for {file}')
-                                    if timeit.default_timer() - last > update_time:
-                                        last = timeit.default_timer()
-                                        print(f'\033[F\033[K{line}', end='\r')
-                        
+                        scanner.extract_bsa(file, startupinfo, update_time, "utf7", ".pex")
+                        scanner.extract_bsa(file, startupinfo, update_time, "utf7", ".seq")
                         scanner.extracted.append(file)
                     except Exception as e:
                         print(e)
-                        with subprocess.Popen(
-                            [scanner.bsab, file, "--encoding", "utf8", "-f", ".pex", "-e", "-o", "bsa_extracted"],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            startupinfo=startupinfo,
-                            text=True
-                            ) as p:
-                                for line in p.stdout:
-                                    if line.startswith('An error'):
-                                        raise EncodingWarning(f'~utf-8 failed for {file}')
-                                    if timeit.default_timer() - last > update_time:
-                                        last = timeit.default_timer()
-                                        print(f'\033[F\033[K{line}', end='\r')
-                        with subprocess.Popen(
-                            [scanner.bsab, file, "--encoding", "utf8", "-f", ".seq", "-e", "-o", "bsa_extracted"],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            startupinfo=startupinfo,
-                            text=True
-                            ) as p:
-                                for line in p.stdout:
-                                    if line.startswith('An error'):
-                                        raise EncodingWarning(f'~utf-8 failed for {file}')
-                                    if timeit.default_timer() - last > update_time:
-                                        last = timeit.default_timer()
-                                        print(f'\033[F\033[K{line}', end='\r')
-                        
+                        scanner.extract_bsa(file, startupinfo, update_time, "utf8", ".pex")
+                        scanner.extract_bsa(file, startupinfo, update_time, "utf8", ".seq")
                         scanner.extracted.append(file)
                 except Exception as e:
                     print(f'!Error Reading BSA: {file}')
@@ -223,6 +170,23 @@ class scanner():
                 relative_path = os.path.relpath(full_path, mod_folder).lower()
                 if relative_path not in temp_rel_paths:
                     scanner.all_files.append(full_path)
+
+    def extract_bsa(file, startupinfo, update_time, encoding, filter):
+        last = 0
+        with subprocess.Popen(
+            [scanner.bsab, file, "--encoding", encoding, "-f", filter, "-e", "-o", "bsa_extracted"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            startupinfo=startupinfo,
+            text=True
+            ) as p:
+                for line in p.stdout:
+                    if line.startswith('An error'):
+                        print(f'\033[F\033[K{line}', end='\r')
+                        raise EncodingWarning(f'~encoding {encoding} failed for {file}')
+                    if timeit.default_timer() - last > update_time:
+                        last = timeit.default_timer()
+                        print(f'\033[F\033[K{line}', end='\r')
 
     def get_files_from_mods(mods_folder, enabled_mods, plugins_list, overwrite_path):
         if not os.path.exists('bsa_extracted/'):
@@ -306,7 +270,6 @@ class scanner():
         bsa_length = len(filtered_bsa_list)
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        last = 0
         update_time = 0.1
         #Extract Files from BSA
         for i, tup in enumerate(filtered_bsa_list):
@@ -315,63 +278,13 @@ class scanner():
                 print(f'\033[F\033[K-  Extracting {i}/{bsa_length} BSA files ({os.path.basename(file)})\n\n', end='\r')
                 try:
                     try:
-                        with subprocess.Popen(
-                            [scanner.bsab, file, "--encoding", "utf7", "-f", ".pex", "-e", "-o", "bsa_extracted"],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            startupinfo=startupinfo,
-                            text=True
-                            ) as p:
-                                for line in p.stdout:
-                                    if line.startswith('An error'):
-                                        raise EncodingWarning(f'~utf-7 failed switching to utf-8 for {file}')
-                                    if timeit.default_timer() - last > update_time:
-                                        last = timeit.default_timer()
-                                        print(f'\033[F\033[K{line}', end='\r')
-                        with subprocess.Popen(
-                            [scanner.bsab, file, "--encoding", "utf7", "-f", ".seq", "-e", "-o", "bsa_extracted"],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            startupinfo=startupinfo,
-                            text=True
-                            ) as p:
-                                for line in p.stdout:
-                                    if line.startswith('An error'):
-                                        raise EncodingWarning(f'~utf-7 failed switching to utf-8 for {file}')
-                                    if timeit.default_timer() - last > update_time:
-                                        last = timeit.default_timer()
-                                        print(f'\033[F\033[K{line}', end='\r')
-                        
+                        scanner.extract_bsa(file, startupinfo, update_time, "utf7", ".pex")
+                        scanner.extract_bsa(file, startupinfo, update_time, "utf7", ".seq")
                         scanner.extracted.append(file)
                     except Exception as e:
                         print(e)
-                        with subprocess.Popen(
-                            [scanner.bsab, file, "--encoding", "utf8", "-f", ".pex", "-e", "-o", "bsa_extracted"],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            startupinfo=startupinfo,
-                            text=True
-                            ) as p:
-                                for line in p.stdout:
-                                    if line.startswith('An error'):
-                                        raise EncodingWarning(f'~utf-8 failed for {file}')
-                                    if timeit.default_timer() - last > update_time:
-                                        last = timeit.default_timer()
-                                        print(f'\033[F\033[K{line}', end='\r')
-                        with subprocess.Popen(
-                            [scanner.bsab, file, "--encoding", "utf8", "-f", ".seq", "-e", "-o", "bsa_extracted"],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            startupinfo=startupinfo,
-                            text=True
-                            ) as p:
-                                for line in p.stdout:
-                                    if line.startswith('An error'):
-                                        raise EncodingWarning(f'~utf-8 failed for {file}')
-                                    if timeit.default_timer() - last > update_time:
-                                        last = timeit.default_timer()
-                                        print(f'\033[F\033[K{line}', end='\r')
-                        
+                        scanner.extract_bsa(file, startupinfo, update_time, "utf8", ".pex")
+                        scanner.extract_bsa(file, startupinfo, update_time, "utf8", ".seq")
                         scanner.extracted.append(file)
                 except Exception as e:
                     print(f'!Error Reading BSA: {file}')
