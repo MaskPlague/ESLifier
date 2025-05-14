@@ -90,6 +90,7 @@ Run "build_ESLifier_EXE.py" either via a terminal opened in the _ESLifier_ direc
   - PapyrusUtil's StorageDataUtil
   - Custom Skills Framework
   - Core Impact Framework
+  - Object Impact Framework
   - Dynamic String Distributor
   - Dynamic Armor Variants
   - Inventory Injector
