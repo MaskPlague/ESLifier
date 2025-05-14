@@ -54,6 +54,7 @@ body:
           - PapyrusUtil's StorageDataUtil  
           - Custom Skills Framework (old format CustomSkill.<name>.config.txt supported)
           - Core Impact Framework
+          - Object Impact Framework
           - Dynamic String Distributor  
           - Dynamic Armor Variants  
           - Inventory Injector  
