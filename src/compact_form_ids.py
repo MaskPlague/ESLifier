@@ -63,68 +63,14 @@ class CFIDs():
                     if name in values:
                         try:
                             try:
-                                with subprocess.Popen(
-                                    [bsab, bsa_file, "--encoding", "utf8", "-f", "\\voice\\" + name, "-e", "-o", "bsa_extracted_temp"],
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    startupinfo=startupinfo,
-                                    text=True
-                                    ) as p:
-                                        for line in p.stdout:
-                                            if line.startswith('An error'):
-                                                raise EncodingWarning(f'~utf-8 failed switching to utf-7 for {file}')
-                                with subprocess.Popen(
-                                    [bsab, bsa_file, "--encoding", "utf8", "-f", "\\facetint\\" + name, "-e", "-o", "bsa_extracted_temp"],
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    startupinfo=startupinfo,
-                                    text=True
-                                    ) as p:
-                                        for line in p.stdout:
-                                            if line.startswith('An error'):
-                                                raise EncodingWarning(f'~utf-8 failed switching to utf-7 for {file}')
-                                with subprocess.Popen(
-                                    [bsab, bsa_file, "--encoding", "utf8", "-f", "\\facegeom\\" + name, "-e", "-o", "bsa_extracted_temp"],
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    startupinfo=startupinfo,
-                                    text=True
-                                    ) as p:
-                                        for line in p.stdout:
-                                            if line.startswith('An error'):
-                                                raise EncodingWarning(f'~utf-8 failed switching to utf-7 for {file}')
+                                CFIDs.bsa_temp_extract(bsab, bsa_file, 'utf8', "\\voice\\", name, startupinfo)
+                                CFIDs.bsa_temp_extract(bsab, bsa_file, 'utf8', "\\facetint\\", name, startupinfo)
+                                CFIDs.bsa_temp_extract(bsab, bsa_file, 'utf8', "\\facegeom\\", name, startupinfo)
                             except Exception as e:
                                 print(e)
-                                with subprocess.Popen(
-                                    [bsab, bsa_file, "--encoding", "utf7", "-f", "\\voice\\" + name, "-e", "-o", "bsa_extracted_temp"],
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    startupinfo=startupinfo,
-                                    text=True
-                                    ) as p:
-                                        for line in p.stdout:
-                                            if line.startswith('An error'):
-                                                raise EncodingWarning(f'~utf-7 failed for {file}')
-                                with subprocess.Popen(
-                                    [bsab, bsa_file, "--encoding", "utf7", "-f", "\\facetint\\" + name, "-e", "-o", "bsa_extracted_temp"],
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    startupinfo=startupinfo,
-                                    text=True
-                                    ) as p:
-                                        for line in p.stdout:
-                                            if line.startswith('An error'):
-                                                raise EncodingWarning(f'~utf-7 failed for {file}')
-                                with subprocess.Popen(
-                                    [bsab, bsa_file, "--encoding", "utf7", "-f", "\\facegeom\\" + name, "-e", "-o", "bsa_extracted_temp"],
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    startupinfo=startupinfo,
-                                    text=True
-                                    ) as p:
-                                        for line in p.stdout:
-                                            if line.startswith('An error'):
-                                                raise EncodingWarning(f'~utf-7 failed for {file}')
+                                CFIDs.bsa_temp_extract(bsab, bsa_file, 'utf7', "\\voice\\", name, startupinfo)
+                                CFIDs.bsa_temp_extract(bsab, bsa_file, 'utf7', "\\facetint\\", name, startupinfo)
+                                CFIDs.bsa_temp_extract(bsab, bsa_file, 'utf7', "\\facegeom\\", name, startupinfo)
                         except Exception as e:
                             print(f'!Error Reading BSA: {file}')
                             print(e)
@@ -155,14 +101,14 @@ class CFIDs():
                 if len(to_rename) > 20:
                     print('\n')
                 CFIDs.rename_files_threader(file_to_compact, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
-        CFIDs.dump_to_file('ESLifier_Data/compacted_and_patched.json')
+        CFIDs.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json')
         if os.path.exists('bsa_extracted_temp/'):
             print('-  Deleting temporarily Extracted FaceGen/Voice Files...')
             shutil.rmtree('bsa_extracted_temp/')
         print('CLEAR ALT')
         return
     
-    def dump_to_file(file):
+    def dump_compacted_and_patched(file):
         try:
             data = CFIDs.get_from_file(file)
         except:
@@ -188,6 +134,18 @@ class CFIDs():
             data = {}
         return data
     
+    def bsa_temp_extract(bsab, bsa_file, encoding, type, name, startupinfo):
+        with subprocess.Popen(
+            [bsab, bsa_file, "--encoding", "utf8", "-f", type + name, "-e", "-o", "bsa_extracted_temp"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            startupinfo=startupinfo,
+            text=True
+            ) as p:
+                for line in p.stdout:
+                    if line.startswith('An error'):
+                        raise EncodingWarning(f'~encoding {encoding} failed for {bsa_file}')
+                    
     def set_flag(file, skyrim_folder, output_folder, output_folder_name, overwrite_path, mo2_mode):
         CFIDs.mo2_mode = mo2_mode
         CFIDs.lock = threading.Lock()
@@ -228,7 +186,7 @@ class CFIDs():
                 if len(to_rename) > 20:
                     print('\n')
                 CFIDs.rename_files_threader(compacted_file, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
-        CFIDs.dump_to_file('ESLifier_Data/compacted_and_patched.json')
+        CFIDs.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json')
         print('CLEAR ALT')
 
     #Create a copy of the mod plugin we're compacting
@@ -450,7 +408,7 @@ class CFIDs():
                             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
                         elif '\\coreimpactframework\\' in new_file_lower:                                   # Core Impact Framework
                             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, ':')
-                        elif 'plugins\\objectimpactframework' in new_file_lower:
+                        elif 'plugins\\objectimpactframework' in new_file_lower:                            # Object Impact Framework
                             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, ':')
                         elif '\\skyrimunbound\\' in new_file_lower:                                         # Skyrim Unbound
                             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
