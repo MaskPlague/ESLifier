@@ -52,10 +52,6 @@ The third page, _Settings_, mostly controls what is displayed in the _Main_ page
 - _Hide plugins with new WRLD (worldspace) records_ hides plugins that have a new WRLD record as they lose landscape data when ESL flagged (the ground will disappear in the new worldspace).
 - _Show plugins that are in SKSE dlls_ will display plugins that have their name present in SKSE dlls. This is off by default and should probably be left off. If a plugin has its name in a dll then it is likely that its form IDs are hard-coded in a FormLookup() call which will fail if the form IDs are changed via compacting.
 
-Other important settings:
-- _Reset Extracted BSA List and Delete Extracted Files_ This setting should be used when you remove a mod that has a BSA file or update a mod that has a BSA file.
-- _Delete All Form ID Maps and Compacted/Patched History_ This setting deletes the Form ID Maps that ESLifier uses to patch new dependent plugins and files. It also deletes the Compacted/Patched History which ESLifier uses to track what mods it has compacted/patched. Use this when you update compacted mods. You'll also want to manually delete the ESLifier Output folder's contents. A list of previously compacted mods will be generated upon deleting your compacted/patched history and the right click context menu for the compactable list on the main page can use this to tick all previously compacted mods.
-
 # Documentation
 ## How to Build
 Fork this project and install python 3.13 then install these libraries via pip: _PyQt6_, _Regex_, _mmap_, _intervalTree_, and _pyinstaller_.
@@ -82,6 +78,7 @@ Run "build_ESLifier_EXE.py" either via a terminal opened in the _ESLifier_ direc
   - Completionist
   - KreatE (with caveats)
   - Remember Lockpick Angle - Updated
+  - Experience
 - .json:
   - Open Animation Replacer
   - MCM Helper
