@@ -13,7 +13,7 @@ from main_page import main
 from patch_new_page import patch_new
 from log_stream import log_stream
 
-CURRENT_VERSION = '0.9.0'
+CURRENT_VERSION = '0.9.2'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
@@ -157,6 +157,7 @@ class main_window(QMainWindow):
         tabs_layout.addWidget(self.tabs)
         display_widget.setLayout(tabs_layout)
         self.setCentralWidget(display_widget)
+        self.main_widget.calculate_stats()
 
     def tab_changed(self, index):
         self.update_settings()

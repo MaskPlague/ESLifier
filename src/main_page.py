@@ -151,7 +151,6 @@ class main(QWidget):
         self.stats.setReadOnly(True)
         self.stats.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         self.stats.setFixedHeight(200)
-        self.calculate_stats()
 
         #Left Column
         self.v_layout0.addSpacing(55)
@@ -189,6 +188,7 @@ class main(QWidget):
         
         self.setLayout(self.main_layout)
         splitter.setSizes([300,1200,1200])
+        self.calculate_stats()
     
     def search_eslify(self):
         if len(self.filter_eslify.text()) > 0:
