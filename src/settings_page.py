@@ -5,14 +5,14 @@ import shutil
 import threading
 
 from PyQt6.QtCore import Qt, QRegularExpression
-from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QFileDialog, QFrame
-from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QFileDialog, QFrame, QColorDialog
+from PyQt6.QtGui import QIcon, QColor
 
 from blacklist import blacklist_window
 
 from QToggle import QtToggle
 class settings(QWidget):
-    def __init__(self, COLOR_MODE):
+    def __init__(self, COLOR_MODE, eslifier):
         super().__init__()
         self.setFocus()
         settings_layout = QVBoxLayout()
@@ -25,6 +25,7 @@ class settings(QWidget):
         self.setLayout(h_base_layout)
         self.output_folder_name_valid = True
         self.settings = self.get_settings_from_file()
+        self.eslifier = eslifier
 
         self.file_dialog = QFileDialog()
         self.file_dialog.setFileMode(QFileDialog.FileMode.Directory)
@@ -124,15 +125,6 @@ class settings(QWidget):
             "Show or hide plugins that may have Form IDs hard-coded in SKSE dlls.",
             "show_dlls"
         )
-        self.reset_extracted_bsa_list_widget = self.create_button_widget(
-            "Reset Extracted BSA List and Delete Extracted Files",
-            'ESLifier uses the Extracted BSA list to ensure that it does not need to\n'+
-            'go through the tedious process of extracting all releveant files in BSAs\n'+
-            'each time it scans. Use this button if a BSA has new files or you have\n'+
-            'deleted a mod that had a BSA.',
-            'Reset BSA',
-            self.reset_extracted_bsa_list_clicked
-        )
         self.blacklist_window = blacklist_window()
         self.edit_blacklist_widget = self.create_button_widget(
             "Remove Plugins From Blacklist",
@@ -146,15 +138,6 @@ class settings(QWidget):
             "This opens the folder where all of the dictionaries and Form ID maps are stored.",
             "Open Folder",
             self.open_eslifier_data
-        )
-        self.clear_form_id_maps_and_compacted_and_patched_widget = self.create_button_widget(
-            "Delete All Form ID Maps and Compacted/Patched History",
-            "The Form ID Maps are used for patching any new files and plugins.\n" +
-            "The Compacted and Patched History is for getting what files and plugins\n" +
-            "are newly added after a mod was compacted and its dependents patched.\n\n" +
-            "Only use this button when you have updated a mod and/or deleted the ESLifier Compactor Ouput.",
-            "Delete All",
-            self.clear_form_id_maps_and_compacted_and_patched_clicked
         )
         self.reset_settings_widget = self.create_button_widget(
             "Reset All Settings",
@@ -186,7 +169,7 @@ class settings(QWidget):
         c_widget_1.setLayout(column_1)
         line = QFrame()
         line.setFrameStyle(QFrame.Shape.VLine | QFrame.Shadow.Sunken)
-        if COLOR_MODE:
+        if COLOR_MODE == 'Light':
             line.setStyleSheet('QFrame{background-color: lightgrey;}')
         column_2 = QVBoxLayout()
         column_2.setContentsMargins(0, 0, 0, 0)
@@ -211,7 +194,6 @@ class settings(QWidget):
         column_2.addWidget(self.reset_extracted_bsa_list_widget)
         column_2.addWidget(self.edit_blacklist_widget)
         column_2.addWidget(self.open_eslifier_data_widget)
-        column_2.addWidget(self.clear_form_id_maps_and_compacted_and_patched_widget)
         column_2.addWidget(self.reset_settings_widget)
 
         settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -356,51 +338,6 @@ class settings(QWidget):
         line_edit.setMaximumWidth(550)
         
         return widget, line_edit
-    
-    def reset_extracted_bsa_list_clicked(self):
-        confirm = QMessageBox()
-        confirm.setIcon(QMessageBox.Icon.Warning)
-        confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
-        confirm.setStyleSheet("""
-            QMessageBox {
-                background-color: lightcoral;
-            }""")
-        confirm.setText(
-            "Are you sure you want to reset the Extracted BSA List?\n" +
-            "This will cause the next scan to take significantly longer as the BSA files will\n"+ 
-            "need to be extracted again and irrelevant script files will need to be filtered.\n\n"+
-            "This can take a short bit and will freeze the UI\n"+
-            "or you can manually delete the \"bsa_extracted/\" folder\n"+
-            "and then click this button.")
-        confirm.setWindowTitle("Confirmation")
-        confirm.addButton(QMessageBox.StandardButton.Yes)
-        confirm.addButton(QMessageBox.StandardButton.Cancel)
-        confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
-        def accepted():
-            confirm.hide()
-            if os.path.exists('ESLifier_Data/extracted_bsa.json'):
-                os.remove('ESLifier_Data/extracted_bsa.json')
-            if os.path.exists('bsa_extracted/'):
-                def delete_directory(dir_path):
-                    try:
-                        shutil.rmtree(dir_path)
-                    except Exception as e:
-                        pass
-
-                def delete_subdirectories_threaded(parent_dir):
-                    threads = []
-                    for item in os.listdir(parent_dir):
-                        item_path = os.path.join(parent_dir, item)
-                        if os.path.isdir(item_path):
-                            thread = threading.Thread(target=delete_directory, args=(item_path,))
-                            threads.append(thread)
-                            thread.start()
-
-                    for thread in threads:
-                        thread.join()
-                delete_subdirectories_threaded('bsa_extracted/')
-        confirm.accepted.connect(accepted)
-        confirm.show()
 
     def edit_blacklist_button_clicked(self):
         self.blacklist_window.blacklist.create()
@@ -417,43 +354,6 @@ class settings(QWidget):
                 subprocess.Popen(['open', os.path.dirname(directory)])
         except Exception as e:
             print(f"Error opening file explorer: {e}")
-
-    def clear_form_id_maps_and_compacted_and_patched_clicked(self):
-        confirm = QMessageBox()
-        confirm.setIcon(QMessageBox.Icon.Warning)
-        confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
-        confirm.setStyleSheet("""
-            QMessageBox {
-                background-color: lightcoral;
-            }""")
-        confirm.setText(
-            "Are you sure you want to delete all of the Form ID Maps and the Compacted and Patched History?\n" +
-            "This will prevent the 'Patch New' functionality from working and will require you to manually " +
-            "delete the ESLifier Compactor Ouput to continue using the program without issue.\n")
-        confirm.setWindowTitle("Confirmation")
-        confirm.addButton(QMessageBox.StandardButton.Yes)
-        confirm.addButton(QMessageBox.StandardButton.Cancel)
-        confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
-        def accepted():
-            confirm.hide()
-            if os.path.exists('ESLifier_Data/Form_ID_Maps'):
-                shutil.rmtree('ESLifier_Data/Form_ID_Maps')
-            if os.path.exists('ESLifier_Data/compacted_and_patched.json'):
-                try:
-                    with open('ESLifier_Data/compacted_and_patched.json', 'r', encoding='utf-8') as fcp:
-                        compacted_and_patched_dict = json.load(fcp)
-                        with open('ESLifier_Data/previously_compacted.json', 'w', encoding='utf-8') as fpc:
-                            previously_compacted = [key for key in compacted_and_patched_dict.keys()]
-                            json.dump(previously_compacted, fpc, ensure_ascii=False, indent=4)
-                            fpc.close()
-                        fcp.close()
-                    os.remove('ESLifier_Data/compacted_and_patched.json')
-                except Exception as e:
-                    print("!Error: Failed in Compacted and Patched deletion process.")
-                    print(e)
-
-        confirm.accepted.connect(accepted)
-        confirm.show()
 
     def reset_settings_clicked(self):
         confirm = QMessageBox()
