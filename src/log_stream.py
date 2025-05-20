@@ -21,6 +21,7 @@ class log_stream(QMainWindow):
         self.text_edit = QTextEdit()
         self.text_edit.setReadOnly(True)
         self.setCentralWidget(self.text_edit)
+        self.text_edit.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         self.list = []
         self.crash = False
         if not os.path.exists("ESLifier_Data/"):
