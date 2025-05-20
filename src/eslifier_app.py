@@ -71,6 +71,7 @@ class main_window(QMainWindow):
         self.log_stream = log_stream(self, CURRENT_VERSION)
         self.setWindowIcon(QIcon(":/images/ESLifier.png"))
         self.setFocus()
+        self.settings_widget = settings(COLOR_MODE, self)
         if COLOR_MODE == 'Light':
             palette = QPalette()
             palette.setColor(QPalette.ColorRole.Window, QColor("Gray"))
@@ -78,33 +79,8 @@ class main_window(QMainWindow):
             palette.setColor(QPalette.ColorRole.Button, QColor("Light Grey"))
             palette.setColor(QPalette.ColorRole.WindowText, QColor("White"))
             self.setPalette(palette)
-            self.setStyleSheet("""
-                QLineEdit {
-                    border: 1px solid grey;
-                    border-radius: 5px;
-                }
-                QLineEdit::focus {
-                    border: 1px solid black;
-                    border-radius: 5px;
-                }
-                QPushButton {
-                    border: 1px solid LightGrey;
-                    border-radius: 5px;
-                    background-color: LightGrey;
-                }
-                QPushButton::hover{
-                    border: 1px solid ghostwhite;
-                    border-radius: 5px;
-                    background-color: ghostwhite;
-                    color: black
-                }
-                QLabel{
-                    color: White
-                }
-                """)
             
-        self.settings_widget = settings(COLOR_MODE=COLOR_MODE)
-        self.main_widget = main()
+        self.main_widget = main(self.log_stream, self, COLOR_MODE)
         self.patch_new_widget = patch_new()
         self.update_settings()
         self.tabs = QTabWidget()
@@ -128,6 +104,11 @@ class main_window(QMainWindow):
                     background-color: ghostwhite
                 }
                 """)
+        else:
+            self.tabs.setStyleSheet("""
+                QTabWidget::pane { /* The tab widget frame */
+                    border-top: 1px solid rgb(255,255,255);
+                }""")
 
         self.tabs.addTab(self.main_widget, "  Main  ")
         self.tabs.setTabToolTip(0, "This is the Main Page, scan your skyrim folder and select plugins to flag or compress.")
@@ -177,7 +158,7 @@ class main_window(QMainWindow):
                 self.initial = False
             return
         self.initial = False
-        if not self.settings_widget.output_folder_name_valid:
+        if not self.settings_widget.output_folder_name_valid or not 'eslifier' in self.settings_widget.settings['output_folder_name'].lower():
             self.tabs.setCurrentIndex(2)
             QMessageBox.warning(None, "Invalid Folder Name", f"Enter a valid output folder name.")
             self.tabs.blockSignals(False)
@@ -312,6 +293,52 @@ class main_window(QMainWindow):
         self.patch_new_widget.update_header =                   self.settings_widget.settings['update_header']
         self.main_widget.list_compact.create()
         self.main_widget.list_eslify.create()
+        self.set_colors()
+
+    def set_colors(self):
+        inner_color = self.settings_widget.settings['inner_color']
+        outer_color = self.settings_widget.settings['outer_color']
+        if COLOR_MODE == 'Light':
+            self.setStyleSheet("""
+                QMainWindow{           
+                    background-color: qradialgradient(
+                                cx: 0.5, cy: 0.5, radius: 0.8,
+                                fx: 0.5, fy: 0.5,
+                                stop: 0 """+ inner_color +""", stop: 1 """+ outer_color +"""
+                                );
+                }
+                QLineEdit {
+                    border: 1px solid grey;
+                    border-radius: 5px;
+                }
+                QLineEdit::focus {
+                    border: 1px solid black;
+                    border-radius: 5px;
+                }
+                QPushButton {
+                    border: 1px solid LightGrey;
+                    border-radius: 5px;
+                    background-color: LightGrey;
+                }
+                QPushButton::hover{
+                    border: 1px solid ghostwhite;
+                    border-radius: 5px;
+                    background-color: ghostwhite;
+                    color: black
+                }
+                QLabel{
+                    color: White
+                }
+                """)
+        else:
+            self.setStyleSheet("""
+                QMainWindow{           
+                    background-color: qradialgradient(
+                                cx: 0.5, cy: 0.5, radius: 0.8,
+                                fx: 0.5, fy: 0.5,
+                                stop: 0 """+ inner_color +""", stop: 1 """+ outer_color +"""
+                                );
+                }""")
         
     def closeEvent(self, a0):
         sys.stdout.flush()
