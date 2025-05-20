@@ -26,19 +26,13 @@ After that simply install the ESLifier Output as a mod to your mod manager. MO2 
 
 The patch new page uses the Compacted and Patched history to check for new files that need patching as said files refer to Form IDs in ESLifier compacted plugins. The left list is what mods you have compacted that either have a warning flag (explained in the flag's tooltips) or new files that need patching which can be done by checking them off and selecting the button below the list. The right list is simply a display of the new files that will be patched for each mod.
 
-
-The settings page has several important buttons: Reset BSA, Edit Blacklist, and the Delete All button.
-
-- The Delete All button is _very_ important. It will delete your compacted and patched history and the Form ID maps that ESLifier uses to patch new files. This button should be used whenever you change anything about your modlist and or delete the ESLifier Output. This will also allow you to right click and choose Check Previously Compacted which will check off all mods that were in the compacted history, allowing you to easily re-do your compacting. If you see green indicators instead of check boxes then you have either not installed the ESLifier output as a mod or you have deleted/cleared the ESLifer output but haven't clicked the Delete All button yet.
-
-- The Reset BSA button will delete the aforementioned _bsa_extracted_ folder. This should be done whenever you delete a mod that has a BSA file or when you add a mod with a BSA that holds files that should be overwritten by an existing BSA (or just when you add a BSA in general if you don't want to get too detailed about it).
-
-- The Edit Blacklist button allows you to edit the blacklist. Plugins in this list will not appear in the Main page lists. You can add mods to the blacklist via the right click context menu on the main page.
-
-
 ### More in Depth Page Descriptions:
 
 The first page, _Main_, is where one can select plugins to patch or compact. Select the _Scan Mod Files_ button and wait for the scan to complete. Then the left and right lists will populate. The plugins in the left list are ready to be ESL flagged with almost no worries. The plugins in the right list are one of the main features of ESLifier, these are able to be compacted via the program and all files and plugins that rely on the compacted plugins will have any form IDs in them patched to reflect the form ID changes. You can check off each plugin you want to flag/compact. You can right click for various functions including adding a mod to the blacklist. Pushing Space Bar with multiple mods highlighted will toggle their checkboxes.
+As of v0.9.0 there are three new buttons:
+- _Scan and Rebuild ESLifier's Output_ which deletes the existing output folder contents, scans mod files, and re-flags and compacts any files that were previously flagged/compacted and fit the current filters in settings.
+- _Reset ESLifier's Ouput_ which deletes the exising output folder contents and all data used to patch new files and plugins.
+- _Delete extracted BSA files Rescan BSA on next Scan_ which deletes all extracted BSA files and makes ESLifier re-extract seq and scripts on the next mod file scan.
 
 The second page, _Patch New Plugins/Files_, is another main feature of ESLifier. It allows you to scan for any new files and plugins that rely on a compacted plugin and are not already patched. This means you can install mods that rely on a compacted mod and not worry about the new mods not working properly as this page will allow you to patch them in a couple of clicks. For example you can install a Spell Perk Item Distributor ini file for a previous form ID compacted armor mod, open ESLifier, patch the new ini file, and it will function normally in game. Select the _Find Unpatched Files_ button and wait for the scan to complete. If there are any new files that depend on a previously compacted mod then the mod will appear in the left list and you can select the mod to show a list of unpatched files in the right list. Additionally two warnings can be displayed in the left list. A nNew Cell Changed warning, which means an installed mod is currently overwritting the new cell of the compacted mod possibly breaking the new cell, or a SKSE DLL warning, which means that there is a dll with the plugin name present that may have a broken FormLookup() call as they require hard-coded Form IDs.
 
@@ -52,13 +46,9 @@ The third page, _Settings_, mostly controls what is displayed in the _Main_ page
 - _Hide plugins with new WRLD (worldspace) records_ hides plugins that have a new WRLD record as they lose landscape data when ESL flagged (the ground will disappear in the new worldspace).
 - _Show plugins that are in SKSE dlls_ will display plugins that have their name present in SKSE dlls. This is off by default and should probably be left off. If a plugin has its name in a dll then it is likely that its form IDs are hard-coded in a FormLookup() call which will fail if the form IDs are changed via compacting.
 
-Other important settings:
-- _Reset Extracted BSA List and Delete Extracted Files_ This setting should be used when you remove a mod that has a BSA file or update a mod that has a BSA file.
-- _Delete All Form ID Maps and Compacted/Patched History_ This setting deletes the Form ID Maps that ESLifier uses to patch new dependent plugins and files. It also deletes the Compacted/Patched History which ESLifier uses to track what mods it has compacted/patched. Use this when you update compacted mods. You'll also want to manually delete the ESLifier Output folder's contents. A list of previously compacted mods will be generated upon deleting your compacted/patched history and the right click context menu for the compactable list on the main page can use this to tick all previously compacted mods.
-
 # Documentation
 ## How to Build
-Fork this project and install python 3.13 then install these libraries via pip: _PyQt6_, _Regex_, _mmap_, _intervalTree_, and _pyinstaller_.
+Fork this project and install python 3.13 then install these libraries via pip: _PyQt6_, _Regex_, _mmap_, _intervalTree_, _requests_, and _pyinstaller_.
 Run "build_ESLifier_EXE.py" either via a terminal opened in the _ESLifier_ directory or via your IDE.
 ## Files that are patched by ESLifier
 - .ini:
@@ -82,6 +72,7 @@ Run "build_ESLifier_EXE.py" either via a terminal opened in the _ESLifier_ direc
   - Completionist
   - KreatE (with caveats)
   - Remember Lockpick Angle - Updated
+  - Experience
 - .json:
   - Open Animation Replacer
   - MCM Helper
