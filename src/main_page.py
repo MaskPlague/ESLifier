@@ -371,6 +371,7 @@ class main(QWidget):
                 self.list_eslify.flag_dict.pop(mod)
             self.list_eslify.create()
         self.eslifier.update_settings()
+        self.calculate_stats()
         if not self.redoing_output:
             self.setEnabled(True)
         
@@ -596,7 +597,8 @@ class main(QWidget):
                 item_path = os.path.join(output_folder, item)
                 if os.path.isdir(item_path):
                     shutil.rmtree(item_path)
-    
+        self.calculate_stats()
+
     def calculate_stats(self):
         _, size, file_count=  self.calculate_existing_output(os.path.join(self.output_folder_path, self.output_folder_name))
         if size > 1024 ** 3:
