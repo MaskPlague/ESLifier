@@ -496,6 +496,41 @@ class patchers():
                 print(f'!Error: Failed to patch file: {new_file}')
                 print(e)
 
+    def ini_exp_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        try:
+            with open(new_file, 'r+', encoding=encoding_method) as f:
+                lines = f.readlines()
+                patch_following = False
+                for i, line in enumerate(lines):
+                    if line.startswith('[') and basename in line.lower():
+                        patch_following = True
+                    elif line.startswith('['):
+                        patch_following = False
+                    if patch_following and line.startswith('00'):
+                        index = line.index('=')
+                        form_id_int = int(line[:index], 16)
+                        for form_ids in form_id_map:
+                            if form_id_int == int(form_ids[0], 16):
+                                lines[i] = '00' + form_ids[3] + line[index-1:]
+                                break
+                f.seek(0)
+                f.truncate(0)
+                f.write(''.join(lines))
+                f.close()
+        except Exception as e:
+            exception_type = type(e)
+            if exception_type == UnicodeDecodeError:
+                if encoding_method == 'utf-8':
+                    patchers.ini_exp_patcher(basename, new_file, form_id_map, encoding_method='ansi')
+                elif encoding_method == 'ansi':
+                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
+                else:
+                    print(f'!Error: Failed to patch file: {new_file}')
+                    print(e)
+            else:
+                print(f'!Error: Failed to patch file: {new_file}')
+                print(e)
+
     def ini_completionist_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         try:
             with open(new_file, 'r+', encoding=encoding_method) as f:

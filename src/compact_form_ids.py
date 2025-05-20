@@ -377,6 +377,8 @@ class CFIDs():
                             patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
                         elif new_file_lower.endswith('rememberlockpickangle.ini'):                          # Remember Lockpicking Angle - Updated
                             patchers.ini_rla_patcher(basename, new_file, form_id_map)
+                        elif 'plugins\\experience\\' in new_file_lower:
+                            patchers.ini_exp_patcher(basename, new_file, form_id_map)
                         else:                                                                               # Might patch whatever else is using .ini?
                             print(f'Warn: Possible missing patcher for: {new_file}')
                     elif new_file_lower.endswith('_conditions.txt'):                                        # Dynamic Animation Replacer
