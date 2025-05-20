@@ -1,8 +1,6 @@
 import json
 import os
 import subprocess
-import shutil
-import threading
 
 from PyQt6.QtCore import Qt, QRegularExpression
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QFileDialog, QFrame, QColorDialog
