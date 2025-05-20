@@ -54,7 +54,7 @@ The third page, _Settings_, mostly controls what is displayed in the _Main_ page
 
 # Documentation
 ## How to Build
-Fork this project and install python 3.13 then install these libraries via pip: _PyQt6_, _Regex_, _mmap_, _intervalTree_, and _pyinstaller_.
+Fork this project and install python 3.13 then install these libraries via pip: _PyQt6_, _Regex_, _mmap_, _intervalTree_, _requests_, and _pyinstaller_.
 Run "build_ESLifier_EXE.py" either via a terminal opened in the _ESLifier_ directory or via your IDE.
 ## Files that are patched by ESLifier
 - .ini:
