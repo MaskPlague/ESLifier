@@ -1,9 +1,10 @@
 import os
 import json
 import shutil
+import threading
 
 from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal
-from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QApplication, QSplitter
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QApplication, QSplitter, QFrame
 from PyQt6.QtGui import QIcon
 
 from list_eslify import list_eslable
@@ -13,7 +14,7 @@ from compact_form_ids import CFIDs
 from cell_changed_scanner import cell_scanner
 
 class main(QWidget):
-    def __init__(self):
+    def __init__(self, log_stream, eslifier, COLOR_MODE):
         super().__init__()
         self.skyrim_folder_path = ''
         self.output_folder_path = ''
@@ -27,11 +28,10 @@ class main(QWidget):
         self.update_header = True
         self.eslify_dictionary = {}
         self.dependency_dictionary = {}
-        for window in QApplication.allWidgets():
-            if window.windowTitle() == 'Log Stream':
-                self.log_stream = window
-            if 'ESLifier v' in window.windowTitle():
-                self.eslifier = window
+        self.redoing_output = False
+        self.log_stream = log_stream
+        self.eslifier = eslifier
+        self.COLOR_MODE = COLOR_MODE
         self.create()
 
     def create(self):
@@ -59,13 +59,38 @@ class main(QWidget):
             "headers of the compacted and dependent plugins to 1.71.")
         self.button_compact.clicked.connect(self.compact_selected_clicked)
 
-        self.button_scan = QPushButton("Scan Mod Files")
-        self.button_scan.setToolTip(
+        self.button_scan = self.create_button(
+            " Scan Mod Files ",
             "This will scan the entire Skyrim Special Edition folder.\n"+
             "Depending on the cell and header settings, what is displayed\n" +
-            "in the below lists will change.")
-        self.button_scan.clicked.connect(self.scan)
-        
+            "in the below lists will change.",
+            self.scan
+        )
+
+        self.rebuild_output_button = self.create_button(
+            " Scan and Rebuild \n ESLifier's Output ",
+            "This will delete the existing output folder's contents\n"\
+            "then scan and re-patch all curently ESLified mods\n"\
+            "that fit the current filters in the settings.",
+            self.rebuild_output
+        )
+
+        self.reset_output_button = self.create_button(
+            " Reset ESLifier's Output ",
+            "This will delete the existing output folder's contents and\n"\
+            "the data used to patch new files.",
+            self.reset_output
+        )
+
+        self.reset_bsa_button= self.create_button(
+            ' Delete extracted BSA files \n Rescan BSA on next Scan ',
+            'ESLifier only extracts seq and script files from a BSA once so as not to\n'\
+            'go through the tedious process of extracting the releveant files in BSAs\n'\
+            'each time it scans (others are extracted during patching). Use this button\n'\
+            'if a BSA has new files or you have deleted a mod that had a BSA.',
+            self.reset_bsa
+        )
+
         self.filter_eslify = QLineEdit()
         self.filter_eslify.setPlaceholderText("Filter ")
         self.filter_eslify.setToolTip("Search Bar")
@@ -87,21 +112,24 @@ class main(QWidget):
         self.main_layout = QVBoxLayout()
         self.settings_layout = QVBoxLayout()
 
-        self.v_layout1 =  QVBoxLayout()
-        self.v_layout2 =  QVBoxLayout()
+        self.v_layout0 = QVBoxLayout()
+        self.v_layout1 = QVBoxLayout()
+        self.v_layout2 = QVBoxLayout()
         
         splitter = QSplitter()
+        column_widget_0 = QWidget()
         column_widget_1 = QWidget()
         column_widget_2 = QWidget()
+        column_widget_0.setLayout(self.v_layout0)
         column_widget_1.setLayout(self.v_layout1)
         column_widget_2.setLayout(self.v_layout2)
+        splitter.addWidget(column_widget_0)
         splitter.addWidget(column_widget_1)
         splitter.addWidget(column_widget_2)
         splitter.setHandleWidth(26)
         splitter.setStyleSheet("QSplitter::handle { background: transparent; border: none; }")
-        splitter.setSizes([1,1])
 
-        #Bottom of left Column
+        #Bottom of center Column
         self.h_layout3 = QHBoxLayout()
         self.h_layout3.addWidget(self.button_eslify)
         self.h_layout3.addWidget(self.filter_eslify)
@@ -111,7 +139,28 @@ class main(QWidget):
         self.h_layout5.addWidget(self.button_compact)
         self.h_layout5.addWidget(self.filter_compact)
 
+        line = QFrame()
+        line.setFrameStyle(QFrame.Shape.HLine | QFrame.Shadow.Sunken)
+        line1 = QFrame()
+        line1.setFrameStyle(QFrame.Shape.HLine | QFrame.Shadow.Sunken)
+        if self.COLOR_MODE == 'Light':
+            line.setStyleSheet('QFrame{background-color: lightgrey;}')
+            line1.setStyleSheet('QFrame{background-color: lightgrey;}')
+
         #Left Column
+        self.v_layout0.addSpacing(50)
+        self.v_layout0.addWidget(self.button_scan)
+        self.v_layout0.addWidget(line)
+        self.v_layout0.addSpacing(25)
+        self.v_layout0.addWidget(self.rebuild_output_button)
+        self.v_layout0.addWidget(line1)
+        self.v_layout0.addSpacing(25)
+        self.v_layout0.addWidget(self.reset_output_button)
+        self.v_layout0.addSpacing(5)
+        self.v_layout0.addWidget(self.reset_bsa_button)
+        self.v_layout0.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        #Center Column
         self.v_layout1.addWidget(self.eslify)
         self.v_layout1.addWidget(self.list_eslify)
         self.v_layout1.addLayout(self.h_layout3)
@@ -121,16 +170,17 @@ class main(QWidget):
         self.v_layout2.addWidget(self.list_compact)
         self.v_layout2.addLayout(self.h_layout5)
 
-        self.main_layout.addWidget(self.button_scan)
+        #self.main_layout.addWidget(self.button_scan)
         self.main_layout.addWidget(splitter)
-        
+
         self.v_layout1.setContentsMargins(0,11,0,11)
         self.v_layout2.setContentsMargins(0,11,0,11)
 
         self.main_layout.setContentsMargins(21,11,21,11)
         
         self.setLayout(self.main_layout)
-        
+        splitter.setSizes([300,1200,1200])
+
     def search_eslify(self):
         if len(self.filter_eslify.text()) > 0:
             items = self.list_eslify.findItems(self.filter_eslify.text(), Qt.MatchFlag.MatchContains)
@@ -159,7 +209,7 @@ class main(QWidget):
             if self.list_compact.item(row, self.list_compact.MOD_COL).checkState() == Qt.CheckState.Checked and not self.list_compact.item(row, self.list_compact.HIDER_COL):
                 checked.append(self.list_compact.item(row, self.list_compact.MOD_COL).toolTip())
         if checked != []:
-            file_masters = main.get_from_file('ESLifier_Data/file_masters.json')
+            file_masters = self.get_from_file('ESLifier_Data/file_masters.json')
             self.confirm = QMessageBox()
             self.confirm.setIcon(QMessageBox.Icon.Information)
             self.confirm.setWindowTitle("Getting estimated disk usage...")
@@ -167,8 +217,14 @@ class main(QWidget):
             self.confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
             self.confirm.addButton(QMessageBox.StandardButton.Yes)
             self.confirm.addButton(QMessageBox.StandardButton.Cancel)
+            self.confirm.accepted.connect(lambda x = checked: self.compact_confirmed(x))
+            if not self.redoing_output:
+                self.confirm.show()
+            else:
+                self.confirm.accept()
+                return
             self.confirm.setEnabled(False)
-            self.confirm.show()
+            
             size = 0
             counted = set()
 
@@ -206,30 +262,32 @@ class main(QWidget):
                 self.confirm.removeButton(QMessageBox.StandardButton.Yes)
             self.confirm.setWindowTitle(f"Confirmation: Patching {len(checked)} Mod(s)")
             self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
-            self.confirm.accepted.connect(lambda x = checked: self.compact_confirmed(x))
             self.confirm.rejected.connect(lambda:self.setEnabled(True))
             self.confirm.setEnabled(True)
         else:
             self.setEnabled(True)
 
     def compact_confirmed(self, checked):
-            self.confirm.hide()
-            self.confirm.deleteLater()
-            for row in range(self.list_compact.rowCount()):
-                if self.list_compact.item(row,self.list_compact.MOD_COL).checkState() == Qt.CheckState.Checked:
-                    self.list_compact.item(row,self.list_compact.MOD_COL).setCheckState(Qt.CheckState.PartiallyChecked)
-                    self.list_compact.item(row,self.list_compact.MOD_COL).setFlags(self.list_compact.item(row,self.list_compact.MOD_COL).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
-            self.log_stream.show()
-            self.thread_new = QThread()
-            self.worker = Worker2(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, 
-                                  self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.bsab)
-            self.worker.moveToThread(self.thread_new)
-            self.thread_new.started.connect(self.worker.run)
-            self.worker.finished_signal.connect(self.thread_new.quit)
-            self.worker.finished_signal.connect(self.thread_new.deleteLater)
-            self.worker.finished_signal.connect(self.worker.deleteLater)
-            self.worker.finished_signal.connect(lambda sender = 'compact', checked_list = checked: self.finished_button_action(sender, checked_list))
-            self.thread_new.start()
+        self.confirm.hide()
+        self.confirm.deleteLater()
+        for row in range(self.list_compact.rowCount()):
+            if self.list_compact.item(row,self.list_compact.MOD_COL).checkState() == Qt.CheckState.Checked:
+                self.list_compact.item(row,self.list_compact.MOD_COL).setCheckState(Qt.CheckState.PartiallyChecked)
+                self.list_compact.item(row,self.list_compact.MOD_COL).setFlags(self.list_compact.item(row,self.list_compact.MOD_COL).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
+        self.log_stream.show()
+        self.compact_thread = QThread()
+        self.worker = Worker2(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, 
+                                self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.bsab)
+        self.worker.moveToThread(self.compact_thread)
+        self.compact_thread.started.connect(self.worker.run)
+        self.worker.finished_signal.connect(self.compact_thread.quit)
+        self.worker.finished_signal.connect(self.compact_thread.deleteLater)
+        self.worker.finished_signal.connect(self.worker.deleteLater)
+        self.worker.finished_signal.connect(
+            lambda sender = 'compact', 
+            checked_list = checked:
+            self.finished_button_action(sender, checked_list,))
+        self.compact_thread.start()
         
     def eslify_selected_clicked(self):
         self.setEnabled(False)
@@ -260,7 +318,10 @@ class main(QWidget):
             self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
             self.confirm.accepted.connect(lambda x = checked: self.eslify_confirmed(x))
             self.confirm.rejected.connect(lambda:self.setEnabled(True))
-            self.confirm.show()
+            if not self.redoing_output:
+                self.confirm.show()
+            else:
+                self.confirm.accept()
         else:
             self.setEnabled(True)
 
@@ -275,21 +336,23 @@ class main(QWidget):
         for file in checked:
             CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, self.mo2_mode)
         print("Flag(s) Changed")
-        print("CLEAR")
+        if not self.redoing_output:
+            print("CLEAR")
         self.finished_button_action('eslify', checked)
 
     def finished_button_action(self, sender, checked_list):
-        message = QMessageBox()
-        message.setWindowTitle("Finished")
-        message.setWindowIcon(QIcon(":/images/ESLifier.png"))
-        message.setText("If you're using MO2 or Vortex then make sure the ESLifier Output is installed as a mod and let it win any file conflicts. "+
-                        "For MO2 users: If you generate the output folder in your mods folder for the first time, then make sure to hit "+
-                        "refresh in MO2.\n"+
-                        "For Vortex users: Make sure to redeploy before using this program again.")
-        def shown():
-            message.hide()
-        message.accepted.connect(shown)
-        message.show()
+        if not self.redoing_output:
+            message = QMessageBox()
+            message.setWindowTitle("Finished")
+            message.setWindowIcon(QIcon(":/images/ESLifier.png"))
+            message.setText("If you're using MO2 or Vortex then make sure the ESLifier Output is installed as a mod and let it win any file conflicts. "+
+                            "For MO2 users: If you generate the output folder in your mods folder for the first time, then make sure to hit "+
+                            "refresh in MO2.\n"+
+                            "For Vortex users: Make sure to redeploy before using this program again.")
+            def shown():
+                message.hide()
+            message.accepted.connect(shown)
+            message.show()
         if sender == 'compact':
             for mod in checked_list:
                 self.list_compact.flag_dict.pop(mod)
@@ -299,21 +362,23 @@ class main(QWidget):
                 self.list_eslify.flag_dict.pop(mod)
             self.list_eslify.create()
         self.eslifier.update_settings()
-        self.setEnabled(True)
+        if not self.redoing_output:
+            self.setEnabled(True)
         
     def scan(self):
-        self.button_scan.setEnabled(False)
+        self.setEnabled(False)
         def run_scan():
             self.log_stream.show()
-            self.thread_new = QThread()
+            self.scan_thread = QThread()
             self.worker = Worker(self.skyrim_folder_path, self.update_header, self.mo2_mode, self.modlist_txt_path,
                                  self.plugins_txt_path, self.overwrite_path, self.bsab)
-            self.worker.moveToThread(self.thread_new)
-            self.thread_new.started.connect(self.worker.scan_run)
+            self.worker.moveToThread(self.scan_thread)
+            self.scan_thread.started.connect(self.worker.scan_run)
             self.worker.finished_signal.connect(self.completed_scan)
-            self.worker.finished_signal.connect(self.thread_new.quit)
-            self.worker.finished_signal.connect(self.thread_new.deleteLater)
-            self.thread_new.start()
+            self.worker.finished_signal.connect(self.scan_thread.quit)
+            self.worker.finished_signal.connect(self.scan_thread.deleteLater)
+            self.worker.finished_signal.connect(self.worker.deleteLater)
+            self.scan_thread.start()
         if not self.scanned:
             self.scanned = True
             run_scan()
@@ -327,8 +392,11 @@ class main(QWidget):
             self.confirm.addButton(QMessageBox.StandardButton.Cancel)
             self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
             self.confirm.accepted.connect(run_scan)
-            self.confirm.rejected.connect(lambda:self.button_scan.setEnabled(True))
-            self.confirm.show()
+            self.confirm.rejected.connect(lambda:self.setEnabled(True))
+            if self.redoing_output:
+                self.confirm.accept()
+            else:
+                self.confirm.show()
         
     def completed_scan(self, flag_dict, dependency_dictionary):
         self.list_eslify.flag_dict = {p: f for p, f in flag_dict.items() if 'need_compacting' not in f}
@@ -336,18 +404,187 @@ class main(QWidget):
         self.dependency_dictionary = dependency_dictionary
         print('Populating Tables')
         self.eslifier.update_settings()
-        self.button_scan.setEnabled(True)
         print('Done Scanning')
-        print('CLEAR')
+        if self.redoing_output:
+            if os.path.exists('ESLifier_Data/esl_flagged.json'):
+                self.list_eslify.check_previously_esl_flagged()
+                os.remove('ESLifier_Data/esl_flagged.json')
+                self.eslify_selected_clicked()
+            if os.path.exists('ESLifier_Data/previously_compacted.json'):
+                self.list_compact.check_previously_compacted()
+                self.compact_selected_clicked()
+            self.redoing_output = False
+        else:
+            print('CLEAR')
+        self.setEnabled(True)
 
-    def get_from_file(file):
+    def get_from_file(self, file):
         try:
             with open(file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
         except:
             data = {}
         return data
+    
+    def reset_output(self):
+        output_folder = os.path.join(self.output_folder_path, self.output_folder_name)
+        if output_folder.lower() == self.skyrim_folder_path.lower() or output_folder.lower() == self.output_folder_path.lower():
+            self.log_stream.show()
+            print('!Error: Issue occured getting the output folder during output reset.')
+            return
+        files_to_remove, size, file_count = self.calculate_remove(output_folder)
+        confirm = self.create_confirmation('lightcoral')
+        calculated_size = round(size / 1048576, 2)
+        confirm.setText(
+            f"Are you sure you want to delete the output folder {self.output_folder_name}'s contents and all data used to patch new files?\n" \
+            f"This action will delete {file_count} files and {calculated_size} MBs of data from the output."
+            )
+        def accepted():
+            confirm.hide()
+            if os.path.exists('ESLifier_Data/compacted_and_patched.json'):
+                try:
+                    compacted_and_patched_dict = {}
+                    with open('ESLifier_Data/compacted_and_patched.json', 'r', encoding='utf-8') as fcp:
+                        compacted_and_patched_dict = json.load(fcp)
+                        with open('ESLifier_Data/previously_compacted.json', 'w', encoding='utf-8') as fpc:
+                            previously_compacted = [key for key in compacted_and_patched_dict.keys()]
+                            json.dump(previously_compacted, fpc, ensure_ascii=False, indent=4)
+                            fpc.close()
+                        fcp.close()
+                    os.remove('ESLifier_Data/compacted_and_patched.json')
+                except Exception as e:
+                    print("!Error: Failed in Compacted and Patched deletion process.")
+                    print(e)
+            if os.path.exists('ESLifier_Data/esl_flagged.json'):
+                os.remove('ESLifier_Data/esl_flagged.json')
+            self.delete_output(output_folder, files_to_remove)
+        confirm.accepted.connect(accepted)
+        confirm.show()
 
+    def rebuild_output(self):
+        output_folder = os.path.join(self.output_folder_path, self.output_folder_name)
+        if output_folder.lower() == self.skyrim_folder_path.lower() or output_folder.lower() == self.output_folder_path.lower():
+            self.log_stream.show()
+            print('!Error: Issue occured getting the output folder during output rebuild.')
+            return
+        files_to_remove, size, file_count = self.calculate_remove(output_folder)
+        confirm = self.create_confirmation('skyblue')
+        calculated_size = round(size / 1048576, 2)
+        confirm.setText(
+            f"Are you sure you want to recreate the output folder {self.output_folder_name}?\n" \
+            f"This action will delete {file_count} files and {calculated_size} MBs of data from the output and\n" \
+            "re-scan, flag, compact, and patch all previously output files that fit the current filters."
+            )
+        def accepted():
+            confirm.hide()
+            previously_compacted = []
+            previously_esl_flagged = []
+            if os.path.exists('ESLifier_Data/compacted_and_patched.json'):
+                with open('ESLifier_Data/compacted_and_patched.json', 'r', encoding='utf-8') as fcp:
+                    compacted_and_patched_dict = json.load(fcp)
+                    with open('ESLifier_Data/previously_compacted.json', 'w', encoding='utf-8') as fpc:
+                        previously_compacted = [key for key in compacted_and_patched_dict.keys()]
+                        json.dump(previously_compacted, fpc, ensure_ascii=False, indent=4)
+                        fpc.close()
+                    fcp.close()
+                os.remove('ESLifier_Data/compacted_and_patched.json')
+            if os.path.exists('ESLifier_Data/esl_flagged.json'):
+                with open('ESLifier_Data/esl_flagged.json', 'r', encoding='utf-8') as fef:
+                    previously_esl_flagged = json.load(fef)
+                    fef.close()
+            if len(previously_compacted) == 0 and len(previously_esl_flagged) == 0:
+                QMessageBox.warning(None, "No Existing Output Data", f"There is no existing output data for ESLifier to use.")
+                return
+            self.delete_output(output_folder, files_to_remove)
+            self.redoing_output = True
+            self.scan()
+
+        confirm.accepted.connect(accepted)
+        confirm.show()
+
+    def reset_bsa(self):
+        confirm = self.create_confirmation('lightcoral')
+        confirm.setText(
+            "Are you sure you want to reset the Extracted BSA List?\n" +
+            "This will cause the next scan to take significantly longer as the BSA files will\n"+ 
+            "need to be extracted again and irrelevant script files will need to be filtered.\n\n"+
+            "This can take a short bit and will freeze the UI\n"+
+            "or you can manually delete the \"bsa_extracted/\" folder\n"+
+            "and then click this button.")
+        def accepted():
+            confirm.hide()
+            if os.path.exists('ESLifier_Data/extracted_bsa.json'):
+                os.remove('ESLifier_Data/extracted_bsa.json')
+            if os.path.exists('bsa_extracted/'):
+                def delete_directory(dir_path):
+                    try:
+                        shutil.rmtree(dir_path)
+                    except Exception as e:
+                        pass
+
+                def delete_subdirectories_threaded(parent_dir):
+                    threads = []
+                    for item in os.listdir(parent_dir):
+                        item_path = os.path.join(parent_dir, item)
+                        if os.path.isdir(item_path):
+                            thread = threading.Thread(target=delete_directory, args=(item_path,))
+                            threads.append(thread)
+                            thread.start()
+
+                    for thread in threads:
+                        thread.join()
+                delete_subdirectories_threaded('bsa_extracted/')
+        confirm.accepted.connect(accepted)
+        confirm.show()
+
+    def create_button(self, button_text, tooltip, click_function):
+        button = QPushButton(button_text)
+        button.clicked.connect(click_function)
+        button.setToolTip(tooltip)
+        return button
+    
+    def create_confirmation(self, color):
+        confirm = QMessageBox()
+        confirm.setIcon(QMessageBox.Icon.Warning)
+        confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
+
+        confirm.setStyleSheet("""
+            QMessageBox {
+                background-color: """+color+""";
+            }""")
+        confirm.setWindowTitle("Confirmation")
+        confirm.addButton(QMessageBox.StandardButton.Yes)
+        confirm.addButton(QMessageBox.StandardButton.Cancel)
+        confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
+        return confirm
+
+    def calculate_remove(self, output_folder):
+        size = 0
+        file_count = 0
+        files_to_remove = []
+        for root, _, files in os.walk(output_folder):
+            file_count += len(files)
+            for file in files:
+                full_path = os.path.join(root, file)
+                files_to_remove.append(full_path)
+                size += os.path.getsize(full_path)
+        return files_to_remove, size, file_count
+    
+    def delete_output(self, output_folder, files_to_remove):
+        if os.path.exists('ESLifier_Data/Form_ID_Maps'):
+            shutil.rmtree('ESLifier_Data/Form_ID_Maps')
+        if os.path.exists('ESLifier_Data/EDIDs'):
+            shutil.rmtree('ESLifier_Data/EDIDs')
+        if os.path.exists('ESLifier_Data/Cell_IDs'):
+            shutil.rmtree('ESLifier_Data/Cell_IDs')
+        if os.path.exists(output_folder) and 'eslifier' in output_folder.lower():
+            for file in files_to_remove:
+                if os.path.exists(file):
+                    os.remove(file)
+            for item in os.listdir(output_folder):
+                item_path = os.path.join(output_folder, item)
+                if os.path.isdir(item_path):
+                    shutil.rmtree(item_path)
 
 class Worker(QObject):
     finished_signal = pyqtSignal(dict, dict)
