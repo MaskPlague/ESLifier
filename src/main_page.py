@@ -149,6 +149,7 @@ class main(QWidget):
         
         self.stats = QTextEdit()
         self.stats.setReadOnly(True)
+        self.stats.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         self.stats.setFixedHeight(200)
         self.calculate_stats()
 
