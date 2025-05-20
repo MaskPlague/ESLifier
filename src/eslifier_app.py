@@ -2,6 +2,7 @@ import sys
 import os
 import images_qr #do not remove, used for icons, it is a PyQt6 resource file
 import json
+import requests
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPalette, QColor, QIcon
@@ -49,6 +50,24 @@ def luhn_checksum(data: bytes) -> int:
         total += digit
     return (256 - (total % 256)) % 256
 
+def check_is_latest_version():
+    try:
+        api_url = f"https://api.github.com/repos/MaskPlague/ESLifier/releases/latest"
+        response = requests.get(api_url)
+        response.raise_for_status()
+
+        latest_release_info = response.json()
+        latest_version = latest_release_info["tag_name"]
+        latest_version = latest_version.removeprefix('v')
+        major, minor, patch = [int(x, 10) for x in latest_version.split('.')]
+        latest_version_tuple = (major, minor, patch)
+        if latest_version_tuple > VERSION_TUPLE:
+            return False, latest_version
+        else:
+            return True, latest_version
+    except:
+        return True, '0'
+
 class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -64,6 +83,13 @@ class main_window(QMainWindow):
                     verify_luhn_checksum('ESLifier.exe')
             else:
                 verify_luhn_checksum('ESLifier.exe')
+
+        is_latest, latest_version = check_is_latest_version()
+        if not is_latest:
+            QMessageBox.warning(None, 'ESLifier Outdated', f"There exists a new version of ESLifier (v{latest_version}).\n"\
+                                                            "It is recommended to update as it could contain critical changes,\n"\
+                                                            "bug fixes, or additional file patchers.")
+        
         self.setWindowTitle("ESLifier v" + CURRENT_VERSION)
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.resize(1300, 500)

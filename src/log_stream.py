@@ -23,6 +23,7 @@ class log_stream(QMainWindow):
         self.percentage = 0
         self.progress_bar = QProgressBar()
         self.progress_bar.setTextVisible(False)
+        self.hide()
         main_widget = QWidget()
         main_layout = QVBoxLayout()
         main_widget.setLayout(main_layout)
@@ -30,7 +31,6 @@ class log_stream(QMainWindow):
         main_layout.addSpacing(10)
         main_layout.addWidget(self.text_edit)
         self.setCentralWidget(main_widget)
-        self.hide()
         self.list = []
         self.crash = False
         if not os.path.exists("ESLifier_Data/"):
