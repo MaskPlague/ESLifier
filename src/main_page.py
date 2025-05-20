@@ -468,7 +468,12 @@ class main(QWidget):
             if os.path.exists('ESLifier_Data/esl_flagged.json'):
                 os.remove('ESLifier_Data/esl_flagged.json')
             self.delete_output(output_folder, files_to_remove)
+            self.list_compact.flag_dict = {}
+            self.list_eslify.flag_dict = {}
+            self.list_compact.create()
+            self.list_eslify.create()
             self.calculate_stats()
+
         confirm.accepted.connect(accepted)
         confirm.show()
 
@@ -546,6 +551,10 @@ class main(QWidget):
                     for thread in threads:
                         thread.join()
                 delete_subdirectories_threaded('bsa_extracted/')
+            self.list_compact.flag_dict = {}
+            self.list_eslify.flag_dict = {}
+            self.list_compact.create()
+            self.list_eslify.create()
         confirm.accepted.connect(accepted)
         confirm.show()
 
