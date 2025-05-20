@@ -145,6 +145,12 @@ class settings(QWidget):
             "Reset",
             self.reset_settings_clicked
         )
+        self.colors_select_widget = self.create_button_widget(
+            "Change Background Colors",
+            "This opens a color picker for the background colors",
+            "Open Color Picker",
+            self.open_color_dialog
+        )
 
         self.set_init_widget_values()
         
@@ -191,12 +197,21 @@ class settings(QWidget):
         column_1.addWidget(self.enable_interior_cell_filter_widget)
         column_1.addWidget(self.enable_worldspaces_filter_widget)
         column_1.addWidget(self.show_plugins_possibly_refd_by_dlls_widget)
-        column_2.addWidget(self.reset_extracted_bsa_list_widget)
         column_2.addWidget(self.edit_blacklist_widget)
         column_2.addWidget(self.open_eslifier_data_widget)
+        column_2.addWidget(self.colors_select_widget)
         column_2.addWidget(self.reset_settings_widget)
 
         settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+    def open_color_dialog(self):
+        inner_color = QColorDialog.getColor(QColor(self.inner_color), self, "Select Inner Color")
+        if inner_color.isValid():
+            self.inner_color = inner_color.name()
+        outer_color = QColorDialog.getColor(QColor(self.outer_color), self, "Select Outer Color")
+        if outer_color.isValid():
+            self.outer_color = outer_color.name()
+        self.eslifier.update_settings()
 
     def button_maker(self, text, function, width):
         button = QPushButton()
@@ -391,6 +406,8 @@ class settings(QWidget):
             self.enable_cell_changed_filter_toggle.setChecked(True)
             self.enable_interior_cell_filter_toggle.setChecked(False)
             self.enable_worldspaces_filter_toggle.setChecked(True)
+            self.inner_color = '#713585'
+            self.outer_color = 'Gray'
             self.update_settings()
         confirm.accepted.connect(acccepted)
         confirm.show()
@@ -411,6 +428,8 @@ class settings(QWidget):
         self.enable_interior_cell_filter_toggle.setChecked(self.settings.get('enable_interior_cell_filter', False))
         self.enable_worldspaces_filter_toggle.setChecked(self.settings.get('filter_worldspaces', True))
         self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(self.settings.get('show_dlls', False))
+        self.inner_color = self.settings.get('inner_color', '#713585')
+        self.outer_color = self.settings.get('outer_color', 'Gray')
 
     def save_settings_to_file(self):
         settings_file = 'ESLifier_Data/settings.json'
@@ -436,6 +455,8 @@ class settings(QWidget):
         self.settings['enable_interior_cell_filter'] = self.enable_interior_cell_filter_toggle.isChecked()
         self.settings['filter_worldspaces'] = self.enable_worldspaces_filter_toggle.isChecked()
         self.settings['show_dlls'] = self.show_plugins_possibly_refd_by_dlls_toggle.isChecked()
+        self.settings['inner_color'] = self.inner_color
+        self.settings['outer_color'] = self.outer_color
 
         self.mo2_mode_clicked()
         if self.mo2_mode_toggle.isChecked():
