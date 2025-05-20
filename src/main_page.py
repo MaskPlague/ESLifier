@@ -4,7 +4,7 @@ import shutil
 import threading
 
 from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal
-from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QApplication, QSplitter, QFrame
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QSplitter, QFrame, QTextEdit
 from PyQt6.QtGui import QIcon
 
 from list_eslify import list_eslable
@@ -83,7 +83,7 @@ class main(QWidget):
         )
 
         self.reset_bsa_button= self.create_button(
-            ' Delete extracted BSA files \n Rescan BSA on next Scan ',
+            ' Delete extracted BSA files  \n Rescan BSA on next Scan ',
             'ESLifier only extracts seq and script files from a BSA once so as not to\n'\
             'go through the tedious process of extracting the releveant files in BSAs\n'\
             'each time it scans (others are extracted during patching). Use this button\n'\
@@ -146,9 +146,14 @@ class main(QWidget):
         if self.COLOR_MODE == 'Light':
             line.setStyleSheet('QFrame{background-color: lightgrey;}')
             line1.setStyleSheet('QFrame{background-color: lightgrey;}')
+        
+        self.stats = QTextEdit()
+        self.stats.setReadOnly(True)
+        self.stats.setFixedHeight(200)
+        self.calculate_stats()
 
         #Left Column
-        self.v_layout0.addSpacing(50)
+        self.v_layout0.addSpacing(55)
         self.v_layout0.addWidget(self.button_scan)
         self.v_layout0.addWidget(line)
         self.v_layout0.addSpacing(25)
@@ -156,8 +161,11 @@ class main(QWidget):
         self.v_layout0.addWidget(line1)
         self.v_layout0.addSpacing(25)
         self.v_layout0.addWidget(self.reset_output_button)
-        self.v_layout0.addSpacing(5)
+        self.v_layout0.addSpacing(10)
         self.v_layout0.addWidget(self.reset_bsa_button)
+        self.v_layout0.addStretch()
+        self.v_layout0.addWidget(self.stats)
+        self.v_layout0.addSpacing(29)
         self.v_layout0.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         #Center Column
@@ -180,7 +188,7 @@ class main(QWidget):
         
         self.setLayout(self.main_layout)
         splitter.setSizes([300,1200,1200])
-
+    
     def search_eslify(self):
         if len(self.filter_eslify.text()) > 0:
             items = self.list_eslify.findItems(self.filter_eslify.text(), Qt.MatchFlag.MatchContains)
@@ -432,7 +440,7 @@ class main(QWidget):
             self.log_stream.show()
             print('!Error: Issue occured getting the output folder during output reset.')
             return
-        files_to_remove, size, file_count = self.calculate_remove(output_folder)
+        files_to_remove, size, file_count = self.calculate_existing_output(output_folder)
         confirm = self.create_confirmation('lightcoral')
         calculated_size = round(size / 1048576, 2)
         confirm.setText(
@@ -458,6 +466,7 @@ class main(QWidget):
             if os.path.exists('ESLifier_Data/esl_flagged.json'):
                 os.remove('ESLifier_Data/esl_flagged.json')
             self.delete_output(output_folder, files_to_remove)
+            self.calculate_stats()
         confirm.accepted.connect(accepted)
         confirm.show()
 
@@ -467,7 +476,7 @@ class main(QWidget):
             self.log_stream.show()
             print('!Error: Issue occured getting the output folder during output rebuild.')
             return
-        files_to_remove, size, file_count = self.calculate_remove(output_folder)
+        files_to_remove, size, file_count = self.calculate_existing_output(output_folder)
         confirm = self.create_confirmation('skyblue')
         calculated_size = round(size / 1048576, 2)
         confirm.setText(
@@ -496,6 +505,7 @@ class main(QWidget):
                 QMessageBox.warning(None, "No Existing Output Data", f"There is no existing output data for ESLifier to use.")
                 return
             self.delete_output(output_folder, files_to_remove)
+            self.calculate_stats()
             self.redoing_output = True
             self.scan()
 
@@ -558,7 +568,7 @@ class main(QWidget):
         confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
         return confirm
 
-    def calculate_remove(self, output_folder):
+    def calculate_existing_output(self, output_folder):
         size = 0
         file_count = 0
         files_to_remove = []
@@ -585,6 +595,39 @@ class main(QWidget):
                 item_path = os.path.join(output_folder, item)
                 if os.path.isdir(item_path):
                     shutil.rmtree(item_path)
+    
+    def calculate_stats(self):
+        _, size, file_count=  self.calculate_existing_output(os.path.join(self.output_folder_path, self.output_folder_name))
+        if size > 1024 ** 3:
+            calculated_size = str(round(size / (1024 ** 3), 3)) + ' GBs'
+        elif size > 1048576:
+            calculated_size = str(round(size / 1048576, 2)) + ' MBs'
+        else:
+            calculated_size = str(round(size / 1024, 2)) + ' KBs'
+        flaggable_count = 0
+        row_count = self.list_eslify.rowCount()
+        for row in range(0,row_count):
+            if not self.list_eslify.isRowHidden(row):
+                flaggable_count += 1
+        compactible_count = 0
+        row_count = self.list_compact.rowCount()
+        for row in range(0, row_count):
+            if not self.list_eslify.isRowHidden(row):
+                compactible_count += 1
+
+        stats_text = "Output Stats:\n"\
+                    "  Size:\n"\
+                    f"    > {calculated_size}\n"\
+                    "  File Count:\n"\
+                    f"    > {file_count}"
+        if self.scanned:
+            stats_text += "\n\n"\
+                    "Scanned Stats:\n"\
+                    "  Flaggable:\n"\
+                    f"    > {flaggable_count}\n"\
+                    "  Compactible:\n"\
+                    f"    > {compactible_count}"
+        self.stats.setText(stats_text)
 
 class Worker(QObject):
     finished_signal = pyqtSignal(dict, dict)

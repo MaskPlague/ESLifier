@@ -262,6 +262,7 @@ class main_window(QMainWindow):
 
     def update_settings(self):
         self.settings_widget.update_settings()
+        self.set_colors()
         self.main_widget.skyrim_folder_path =                   self.settings_widget.settings['skyrim_folder_path']
         self.main_widget.output_folder_path =                   self.settings_widget.settings['output_folder_path']
         self.main_widget.output_folder_name =                   self.settings_widget.settings['output_folder_name']
@@ -293,7 +294,7 @@ class main_window(QMainWindow):
         self.patch_new_widget.update_header =                   self.settings_widget.settings['update_header']
         self.main_widget.list_compact.create()
         self.main_widget.list_eslify.create()
-        self.set_colors()
+        self.main_widget.calculate_stats()
 
     def set_colors(self):
         inner_color = self.settings_widget.settings['inner_color']
