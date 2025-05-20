@@ -4,7 +4,7 @@ import traceback
 import threading
 import webbrowser
 
-from PyQt6.QtWidgets import QMainWindow, QTextEdit, QMessageBox
+from PyQt6.QtWidgets import QMainWindow, QTextEdit, QMessageBox, QProgressBar, QWidget, QVBoxLayout
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon, QAction
 
@@ -15,13 +15,22 @@ class log_stream(QMainWindow):
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowCloseButtonHint & ~Qt.WindowType.Dialog)
         self.setFixedSize(400, 300)
         self.center_on_parent()
-        self.hide()
         self.missing_patchers = []
         self.errors = []
         self.text_edit = QTextEdit()
         self.text_edit.setReadOnly(True)
-        self.setCentralWidget(self.text_edit)
         self.text_edit.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+        self.percentage = 0
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setTextVisible(False)
+        main_widget = QWidget()
+        main_layout = QVBoxLayout()
+        main_widget.setLayout(main_layout)
+        main_layout.addWidget(self.progress_bar)
+        main_layout.addSpacing(10)
+        main_layout.addWidget(self.text_edit)
+        self.setCentralWidget(main_widget)
+        self.hide()
         self.list = []
         self.crash = False
         if not os.path.exists("ESLifier_Data/"):
@@ -51,7 +60,12 @@ class log_stream(QMainWindow):
     def show(self):
         self.raise_()
         #self.hide()
+        self.percentage = 0
         return super().show()
+    
+    def hide(self):
+        self.progress_bar.reset()
+        return super().hide()
 
     def write(self, text):
         if not text.startswith('~'):
@@ -69,6 +83,16 @@ class log_stream(QMainWindow):
                 self.missing_patchers.append(missing)
         if text.startswith('!Error'):
             self.errors.append(text.removeprefix('!Error'))
+        if '%' in text and '.' in text and ('-    Processed:' in text or '% Patching:' in text):
+            pindex = text.index('.')
+            if ':' in text:
+                cindex = text.index(':')
+                if cindex < pindex:
+                    self.percentage = int(text[cindex+1:pindex])
+                else:
+                    self.percentage = int(text[:pindex])
+            else:
+                self.percentage = int(text[:pindex])
             
     def missing_patcher_warning(self):
         patcher_message = QMessageBox()
@@ -162,12 +186,43 @@ class log_stream(QMainWindow):
         self.timer.stop()
         length = len(self.list)
         count = 0
-
+        if not self.isHidden():
+            if self.percentage == 0:
+                self.progress_bar.setRange(0,0)
+                self.progress_bar.setStyleSheet("""
+                    QProgressBar {
+                        background-color: #999999;
+                        border: 0px;
+                        padding: 0px;
+                        max-height: 10px;
+                    }
+                    QProgressBar::chunk {
+                        background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0.5, y2:0, stop:0 #999999, stop:1 #03f8fc);
+                    }""")
+            else:
+                self.progress_bar.setRange(0,100)
+                self.progress_bar.setStyleSheet("""
+                    QProgressBar {
+                        background-color: #999999;
+                        border: 0px;
+                        padding: 0px;
+                        max-height: 10px;
+                    }
+                        QProgressBar::chunk {
+                        background: #03f8fc;
+                        width:1px
+                    }
+                """)
+                if not self.progress_bar.paintingActive() and self.progress_bar.value() != self.percentage:
+                    self.progress_bar.setValue(self.percentage)
         for _ in range(length):
             line = self.list.pop(0)
             self.update_text_widget(line)
             count += 1
             if count > 1000:
+                for line in self.list:
+                    if line.startswith("\033[F\033[K"):
+                        self.list.remove(line)
                 break
 
         self.timer.start(50)
@@ -176,11 +231,12 @@ class log_stream(QMainWindow):
         cursor = self.text_edit.textCursor()
         cursor.movePosition(cursor.MoveOperation.End)
 
-        if "\033[F\033[K" in text:
+        if text.startswith("\033[F\033[K"):
             lines = self.text_edit.toPlainText().split('\n')[:-3]
             lines.append(text.removeprefix('\033[F\033[K'))
             self.text_edit.setPlainText('\n'.join(lines))
         elif 'CLEAR' == text:
+            self.percentage = 100
             self.log_file.flush()
             self.timer_clear.start(1500)
         elif 'CLEAR ALT' == text:
