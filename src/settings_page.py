@@ -316,11 +316,14 @@ class settings(QWidget):
         def hard_validate():
             line_edit.setText(line_edit.text().strip())
             text = line_edit.text()
-            if regex.match(text).hasMatch():
+            if regex.match(text).hasMatch() and 'eslifier' in text.lower():
                 self.output_folder_name_valid = True
                 self.update_settings()
             else:
-                QMessageBox.warning(None, "Invalid Name", f"'{text}' is not a valid folder name.")
+                if 'eslifier' in text.lower():
+                    QMessageBox.warning(None, "Invalid Name", f"'{text}' is not a valid folder name.")
+                else:
+                    QMessageBox.warning(None, "Name missing 'ESLifier'", "The name must have 'ESLifier' (case insenstive) in it for safety purposes.")
                 line_edit.setFocus()
                 self.output_folder_name_valid = False
 
