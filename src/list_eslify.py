@@ -260,3 +260,18 @@ class list_eslable(QTableWidget):
         mods = [item.text() for item in selected_items if item.column() == self.MOD_COL]
         self.blacklist.add_to_blacklist(mods)
         self.create()
+
+    def check_previously_esl_flagged(self):
+        self.blockSignals(True)
+        if os.path.exists('ESLifier_Data/esl_flagged.json'):
+            try:
+                with open('ESLifier_Data/esl_flagged.json', 'r', encoding='utf-8') as f:
+                    esl_flagged = json.load(f)
+                    f.close()
+                for row in range(self.rowCount()):
+                    if self.isRowHidden(row) == False and self.item(row, self.MOD_COL).checkState() == Qt.CheckState.Unchecked and self.item(row, self.MOD_COL).text() in esl_flagged:
+                        self.item(row, self.MOD_COL).setCheckState(Qt.CheckState.Checked)
+            except Exception as e:
+                print('!Error: Failed to get esl_flagged.json')
+                print(e)
+        self.blockSignals(False)
