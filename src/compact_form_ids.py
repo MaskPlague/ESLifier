@@ -27,12 +27,15 @@ else:
 
 class CFIDs():
     def compact_and_patch(file_to_compact, dependents, skyrim_folder_path, output_folder_path,
-                        output_folder_name, overwrite_path, update_header, mo2_mode, bsab, all_dependents_have_skyrim_esm_as_master):
+                          output_folder_name, overwrite_path, update_header, mo2_mode, bsab,
+                          all_dependents_have_skyrim_esm_as_master, create_cell_master, add_cell_to_master):
         CFIDs.lock = threading.Lock()
         CFIDs.compacted_and_patched = {}
         CFIDs.mo2_mode = mo2_mode
         CFIDs.output_folder_name = output_folder_name
         CFIDs.overwrite_path = os.path.normpath(overwrite_path)
+        CFIDs.create_cell_master = create_cell_master
+        CFIDs.generate_cell_master = add_cell_to_master
         print(f"Compacting Plugin: {os.path.basename(file_to_compact)}...")
         CFIDs.compact_file(file_to_compact, skyrim_folder_path, output_folder_path, update_header, all_dependents_have_skyrim_esm_as_master)
         files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
@@ -101,6 +104,8 @@ class CFIDs():
                 if len(to_rename) > 20:
                     print('\n')
                 CFIDs.rename_files_threader(file_to_compact, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
+        if CFIDs.generate_cell_master:
+            CFIDs.create_cell_master.finalize_plugin()
         CFIDs.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json')
         if os.path.exists('bsa_extracted_temp/'):
             print('-  Deleting temporarily Extracted FaceGen/Voice Files...')
@@ -595,6 +600,9 @@ class CFIDs():
         master_count, has_skyrim_esm_master = CFIDs.get_master_count(data_list)
 
         data_list, sizes_list = CFIDs.decompress_data(data_list)
+        if CFIDs.generate_cell_master:
+            new_cell_form_ids = CFIDs.create_cell_master.add_cells(data_list, grup_struct, master_count)
+            data_list = CFIDs.add_cell_master_to_masters(data_list)
 
         form_id_list = []
         #Get all new form ids in plugin
@@ -656,15 +664,23 @@ class CFIDs():
                 _, new_id = new_form_ids.pop(0)
                 form_id_replacements.append([form_id, new_id])
 
-        form_id_replacements.sort(key= lambda x: struct.unpack('<I', x[0])[0])
+        if CFIDs.generate_cell_master:
+            for old_id, new_id in new_cell_form_ids:
+                copy = form_id_replacements.copy()
+                for replacement in copy:
+                    if old_id == replacement[0]:
+                        form_id_replacements.remove(replacement)
+                        form_id_replacements.append([old_id, new_id + master_byte + b'\xFF'])
 
+        form_id_replacements.sort(key= lambda x: struct.unpack('<I', x[0])[0])
         with open(form_id_file_name, 'w', encoding='utf-8') as fidf:
             for form_id, new_id in form_id_replacements:
                 fidf.write(str(form_id.hex()) + '|' + str(new_id.hex()) + '\n')
 
-        form_id_replacements_no_master_byte = [[old_id[:3], new_id[:3]] for old_id, new_id in form_id_replacements]
+        form_id_replacements_no_master_byte = [[old_id[:3], new_id[:3]] if len(new_id) <= 4 else [old_id[:3], new_id[:4]] for old_id, new_id in form_id_replacements]
 
-        data_list = form_processor.patch_form_data(data_list, saved_forms, form_id_replacements_no_master_byte, master_byte)
+        data_list = form_processor.patch_form_data(data_list, saved_forms, form_id_replacements_no_master_byte,
+                                                    master_byte, [form_id for form_id, _ in form_id_list])
 
         data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
 
@@ -731,9 +747,12 @@ class CFIDs():
                 for i in range(len(form_id_file_data)):
                     form_id_conversion = form_id_file_data[i].split('|')
                     from_id = bytes.fromhex(form_id_conversion[0])[:3]
-                    to_id = bytes.fromhex(form_id_conversion[1])[:3]
+                    if len(bytes.fromhex(form_id_conversion[1])) == 4:
+                        to_id = bytes.fromhex(form_id_conversion[1])[:3]
+                    else:
+                        to_id = bytes.fromhex(form_id_conversion[1])[:4]
                     form_id_replacements.append([from_id, to_id])
-
+                #TODO: need to add eslifier_cell_masters,esm a master :/ and then have the patch target the cell there
                 data_list = form_processor.patch_form_data_dependent(data_list, saved_forms, form_id_replacements, master_byte)
 
                 data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
@@ -796,3 +815,37 @@ class CFIDs():
                         has_skyrim_esm_master = True
             offset += field_size + 6
         return master_list_count, has_skyrim_esm_master
+    
+    def add_cell_master_to_masters(data_list):
+        new_master_data = (
+            b'\x4D\x41\x53\x54\x19\x00\x45\x53\x4C\x69\x66\x69' +
+            b'\x65\x72\x5F\x43\x65\x6C\x6C\x5F\x4D\x61\x73\x74' +
+            b'\x65\x72\x2E\x65\x73\x6D\x00\x44\x41\x54\x41\x08' +
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            )
+        tes4 = data_list[0]
+        offset = 24
+        data_len = len(tes4)
+        data_len = len(tes4)
+        master_exists = False
+        cnam_offset = 0
+        while offset < data_len:
+            field = tes4[offset:offset+4]
+            field_size = struct.unpack("<H", tes4[offset+4:offset+6])[0]
+            if field == b'CNAM':
+                cnam_offset = offset
+            if field == b'MAST':
+                master_exists = True
+            elif field != b'DATA' and master_exists:
+                break
+            offset += field_size + 6
+        tes4_size = struct.unpack("<I", tes4[4:8])[0] + 45
+        if master_exists:
+            tes4 = b'TES4' + tes4_size.to_bytes(4,'little') + tes4[8:offset] + new_master_data + tes4[offset:]
+        else:
+            field_size = struct.unpack("<H", tes4[cnam_offset+4:cnam_offset+6])[0]
+            offset = cnam_offset + 6 + field_size
+            tes4 = b'TES4' + tes4_size.to_bytes(4,'little') + tes4[8:offset] + new_master_data + tes4[offset:]
+
+        data_list[0] = tes4
+        return data_list
