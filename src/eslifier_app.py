@@ -13,7 +13,7 @@ from main_page import main
 from patch_new_page import patch_new
 from log_stream import log_stream
 
-CURRENT_VERSION = '0.9.2'
+CURRENT_VERSION = '0.9.3'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
@@ -299,6 +299,7 @@ class main_window(QMainWindow):
         self.main_widget.overwrite_path =                       self.settings_widget.settings['overwrite_path']
         self.main_widget.bsab =                                 self.settings_widget.settings['bsab_path']
         self.main_widget.update_header =                        self.settings_widget.settings['update_header']
+        self.main_widget.generate_cell_master =                 self.settings_widget.settings['generate_cell_master']
         self.main_widget.list_compact.filter_changed_cells =    self.settings_widget.settings['enable_cell_changed_filter']
         self.main_widget.list_compact.filter_interior_cells =   self.settings_widget.settings['enable_interior_cell_filter']
         self.main_widget.list_compact.show_cells =              self.settings_widget.settings['show_cells']

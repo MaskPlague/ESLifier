@@ -241,7 +241,6 @@ class list_compactable(QTableWidget):
                 item_hidden = QTableWidgetItem('')
                 self.setCellWidget(i, self.DEP_COL,dL)
                 self.setItem(i, self.DEP_COL,item_hidden)
-
             if hide_row:
                 self.setItem(i, self.HIDER_COL, QTableWidgetItem('hide me'))
 

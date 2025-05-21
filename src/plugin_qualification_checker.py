@@ -47,6 +47,8 @@ class qualification_checker():
             
         for thread in threads:
             thread.join()
+        with open('ESLifier_Data/flag_dictionary.json', 'w', encoding='utf-8') as f:
+            json.dump(qualification_checker.flag_dict, f, ensure_ascii=False, indent=4)
         return qualification_checker.flag_dict
 
     def plugin_scanner(plugins, update_header):

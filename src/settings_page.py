@@ -149,6 +149,15 @@ class settings(QWidget):
             "Open Color Picker",
             self.open_color_dialog
         )
+        self.generate_cell_master_widget, self.generate_cell_master_toggle = self.create_toggle_widget(
+            "Generate Cell Master",
+            "DISABLED. This will eventually generate a master cell plugin\n"+
+            "to circumvent the ESL cell bug for master files\n"+
+            "(not sure how useful this might be for the amount of effort it is)",
+            "generate_cell_master"            
+        )
+        self.generate_cell_master_widget.setDisabled(True)
+        
 
         self.set_init_widget_values()
         
@@ -199,6 +208,8 @@ class settings(QWidget):
         column_2.addWidget(self.open_eslifier_data_widget)
         column_2.addWidget(self.colors_select_widget)
         column_2.addWidget(self.reset_settings_widget)
+        column_2.addWidget(self.generate_cell_master_widget)
+        self.generate_cell_master_toggle.setChecked(False)
 
         settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -404,6 +415,7 @@ class settings(QWidget):
             self.enable_cell_changed_filter_toggle.setChecked(True)
             self.enable_interior_cell_filter_toggle.setChecked(False)
             self.enable_worldspaces_filter_toggle.setChecked(True)
+            self.generate_cell_master_toggle.setChecked(False)
             self.inner_color = '#713585'
             self.outer_color = 'Gray'
             self.update_settings()
@@ -426,6 +438,7 @@ class settings(QWidget):
         self.enable_interior_cell_filter_toggle.setChecked(self.settings.get('enable_interior_cell_filter', False))
         self.enable_worldspaces_filter_toggle.setChecked(self.settings.get('filter_worldspaces', True))
         self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(self.settings.get('show_dlls', False))
+        self.generate_cell_master_toggle.setChecked(self.settings.get('generate_cell_master', False))
         self.inner_color = self.settings.get('inner_color', '#713585')
         self.outer_color = self.settings.get('outer_color', 'Gray')
 
@@ -453,6 +466,7 @@ class settings(QWidget):
         self.settings['enable_interior_cell_filter'] = self.enable_interior_cell_filter_toggle.isChecked()
         self.settings['filter_worldspaces'] = self.enable_worldspaces_filter_toggle.isChecked()
         self.settings['show_dlls'] = self.show_plugins_possibly_refd_by_dlls_toggle.isChecked()
+        self.settings['generate_cell_master'] = self.generate_cell_master_toggle.isChecked()
         self.settings['inner_color'] = self.inner_color
         self.settings['outer_color'] = self.outer_color
 
