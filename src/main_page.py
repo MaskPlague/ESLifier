@@ -12,6 +12,7 @@ from list_compact import list_compactable
 from scanner import scanner
 from compact_form_ids import CFIDs
 from cell_changed_scanner import cell_scanner
+from create_cell_master import create_new_cell_plugin
 
 class main(QWidget):
     def __init__(self, log_stream, eslifier, COLOR_MODE):
@@ -29,6 +30,7 @@ class main(QWidget):
         self.eslify_dictionary = {}
         self.dependency_dictionary = {}
         self.redoing_output = False
+        self.generate_cell_master = False
         self.log_stream = log_stream
         self.eslifier = eslifier
         self.COLOR_MODE = COLOR_MODE
@@ -284,8 +286,8 @@ class main(QWidget):
                 self.list_compact.item(row,self.list_compact.MOD_COL).setFlags(self.list_compact.item(row,self.list_compact.MOD_COL).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
         self.log_stream.show()
         self.compact_thread = QThread()
-        self.worker = Worker2(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, 
-                                self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.bsab)
+        self.worker = CompactorWorker(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, 
+                                self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.bsab, self.generate_cell_master)
         self.worker.moveToThread(self.compact_thread)
         self.compact_thread.started.connect(self.worker.run)
         self.worker.finished_signal.connect(self.compact_thread.quit)
@@ -379,7 +381,7 @@ class main(QWidget):
         def run_scan():
             self.log_stream.show()
             self.scan_thread = QThread()
-            self.worker = Worker(self.skyrim_folder_path, self.update_header, self.mo2_mode, self.modlist_txt_path,
+            self.worker = ScannerWorker(self.skyrim_folder_path, self.update_header, self.mo2_mode, self.modlist_txt_path,
                                  self.plugins_txt_path, self.overwrite_path, self.bsab)
             self.worker.moveToThread(self.scan_thread)
             self.scan_thread.started.connect(self.worker.scan_run)
@@ -425,6 +427,7 @@ class main(QWidget):
             self.redoing_output = False
         else:
             print('CLEAR')
+        self.calculate_stats()
         self.setEnabled(True)
 
     def get_from_file(self, file):
@@ -597,6 +600,8 @@ class main(QWidget):
             shutil.rmtree('ESLifier_Data/EDIDs')
         if os.path.exists('ESLifier_Data/Cell_IDs'):
             shutil.rmtree('ESLifier_Data/Cell_IDs')
+        if os.path.exists('ESLifier_data/cell_master_info.json'):
+            os.remove('ESLifier_Data/cell_master_info.json')
         if os.path.exists(output_folder) and 'eslifier' in output_folder.lower():
             for file in files_to_remove:
                 if os.path.exists(file):
@@ -640,7 +645,7 @@ class main(QWidget):
                     f"    > {compactible_count}"
         self.stats.setText(stats_text)
 
-class Worker(QObject):
+class ScannerWorker(QObject):
     finished_signal = pyqtSignal(dict, dict)
     def __init__(self, path, update, mo2_mode, modlist_txt_path, plugins_txt_path, overwrite_path, bsab):
         super().__init__()
@@ -661,9 +666,10 @@ class Worker(QObject):
         cell_scanner.scan(plugins_with_cells)
         self.finished_signal.emit(flag_dict, dependency_dictionary)
 
-class Worker2(QObject):
+class CompactorWorker(QObject):
     finished_signal = pyqtSignal()
-    def __init__(self, checked, dependency_dictionary, skyrim_folder_path, output_folder_path, output_folder_name, overwrite_path, update_header, mo2_mode, bsab):
+    def __init__(self, checked, dependency_dictionary, skyrim_folder_path, output_folder_path, output_folder_name, overwrite_path,
+                  update_header, mo2_mode, bsab, generate_cell_master):
         super().__init__()
         self.checked = checked
         self.dependency_dictionary = dependency_dictionary
@@ -674,20 +680,22 @@ class Worker2(QObject):
         self.update_header = update_header
         self.mo2_mode = mo2_mode
         self.bsab = bsab
+        self.create_new_cell_plugin = create_new_cell_plugin()
+        self.generate_cell_master = generate_cell_master
         
     def run(self):
         total = len(self.checked)
         count = 0
         if self.update_header:
-            if os.path.exists("ESLifier_Data/missing_skyrim_as_master.json"):
-                try:
-                    with open("ESLifier_Data/missing_skyrim_as_master.json", 'r', encoding='utf-8') as f:
-                        missing_skyrim_esm = json.load(f)
-                except:
-                    missing_skyrim_esm = {}
-            else:
+            try:
+                with open("ESLifier_Data/missing_skyrim_as_master.json", 'r', encoding='utf-8') as f:
+                    missing_skyrim_esm = json.load(f)
+            except:
                 missing_skyrim_esm = {}
-
+        with open("ESLifier_Data/flag_dictionary.json", 'r', encoding='utf-8') as f:
+            flag_dict = json.load(f)
+        if self.generate_cell_master:
+            self.create_new_cell_plugin.generate(os.path.join(self.output_folder_path, self.output_folder_name))
         for file in self.checked:
             count +=1
             percent = round((count/total)*100,1)
@@ -701,9 +709,16 @@ class Worker2(QObject):
                         break
             else:
                 all_dependents_have_skyrim_esm_as_master = True
-
-            CFIDs.compact_and_patch(file, dependents, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path,
-                                    self.update_header, self.mo2_mode, self.bsab, all_dependents_have_skyrim_esm_as_master)
+            if self.generate_cell_master:
+                flags = flag_dict[file]
+                add_cell_to_master = False
+                if 'is_esm' in flags and 'new_cell' in flags:
+                    add_cell_to_master = True
+            else:
+                add_cell_to_master = False
+            CFIDs.compact_and_patch(file, dependents, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name,
+                                     self.overwrite_path, self.update_header, self.mo2_mode, self.bsab, all_dependents_have_skyrim_esm_as_master, 
+                                     self.create_new_cell_plugin, add_cell_to_master)
         print("Compacted and Patched")
         print('CLEAR')
         self.finished_signal.emit()
