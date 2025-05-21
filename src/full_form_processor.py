@@ -20,25 +20,58 @@ class form_processor():
             offset += 12 + alt_tex_size 
         return offsets
         
-    def patch_form_data(data_list, forms, form_id_replacements, master_byte):
+    def patch_form_data(data_list, forms, form_id_replacements, master_byte, form_ids = []):
+        #TODO: update dependent patcher
+        if any(len(to_id) == 4 for _, to_id in form_id_replacements):
+            update_masters = True
+            updated_master_byte = (int.from_bytes(master_byte) + 1).to_bytes()
+        else:
+            update_masters = False
         for i, form, offsets in forms:
             for offset in offsets:
                 if form[offset+3:offset+4] >= master_byte:
-                    for from_id, to_id in form_id_replacements:
-                        if form[offset:offset+3] == from_id:
-                            form[offset:offset+3] = to_id
-                            break
+                    if not update_masters:
+                        for from_id, to_id in form_id_replacements:
+                            if form[offset:offset+3] == from_id:
+                                form[offset:offset+3] = to_id
+                                break
+                    else: # update master byte to be + 1 on everything except for newly defined cells
+                        updated = False
+                        for from_id, to_id in form_id_replacements:
+                            if form[offset:offset+3] == from_id:
+                                if len(to_id) == 4:
+                                    form[offset:offset+4] = to_id
+                                    updated = True
+                                    break
+                                else:
+                                    form[offset:offset+4] = to_id + updated_master_byte
+                                    updated = True
+                                    break
+                        if not updated and form[offset:offset+4] in form_ids:
+                            form[offset:offset+4] = form[offset:offset+3] + updated_master_byte
             data_list[i] = bytes(form)
         return data_list
     
     def patch_form_data_dependent(data_list, forms, form_id_replacements, master_byte):
+        if False: #any(len(to_id) > 3 for _, to_id in form_id_replacements):
+            update_masters = True
+            updated_master_byte = 0 #Not sure how to go about this yet, need to update owned forms but also patched forms,
+                                    #Might just be a copy of above
+        else:
+            update_masters = False
         for i, form, offsets in forms:
             for offset in offsets:
                 if form[offset+3:offset+4] == master_byte:
-                    for from_id, to_id in form_id_replacements:
-                        if form[offset:offset+3] == from_id:
-                            form[offset:offset+3] = to_id
-                            break
+                    if not update_masters:
+                        for from_id, to_id in form_id_replacements:
+                            if form[offset:offset+3] == from_id:
+                                form[offset:offset+3] = to_id
+                                break
+                    else:
+                        for from_id, to_id in form_id_replacements:
+                            if form[offset:offset+3] == from_id:
+                                form[offset:offset+3] = to_id[:3] #+ updated_master_byte
+                                break
             data_list[i] = bytes(form)
         return data_list
     
