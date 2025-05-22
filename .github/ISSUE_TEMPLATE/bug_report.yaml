@@ -19,9 +19,10 @@ body:
       label: What version of ESLifier are you using?
       options:
         - Other (Specify in Description)
+        - 0.9.3
         - 0.9.1
         - 0.9.0
-        - 0.8.17
+        - 0.8.1
         - 0.8.16
     validations:
       required: true
