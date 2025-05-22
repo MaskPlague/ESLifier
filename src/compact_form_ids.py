@@ -389,7 +389,7 @@ class CFIDs():
                             patchers.ini_completionist_patcher(basename, new_file, form_id_map)
                         elif 'kreate\\presets' in new_file_lower:                                           # KreatE
                             patchers.ini_kreate_patcher(basename, new_file, form_id_map)
-                        elif new_file_lower.endswith('thenewgentleman.ini'):                                # The New Gentleman
+                        elif new_file_lower.endswith('thenewgentleman.ini', 'thenewgentleman5.ini', '_tng.ini'): # The New Gentleman
                             patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map)
                         elif new_file_lower.endswith('rememberlockpickangle.ini'):                          # Remember Lockpicking Angle - Updated
                             patchers.ini_rla_patcher(basename, new_file, form_id_map)
