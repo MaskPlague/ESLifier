@@ -587,7 +587,6 @@ class scanner():
                             or '\\headpartwhitelist\\' in file_lower
                             or file_lower.endswith('revealingarmo_tng.ini')
                             or file_lower.endswith('enginefixes_snct.toml')
-                            or file_lower.endswith('placed light.ini')
                             or file_lower.endswith('vortex.deployment.json')
                             or file_lower.endswith('aiprocessfixmodpatch.ini')
                             or file_lower.endswith('grasscontrol.ini')
