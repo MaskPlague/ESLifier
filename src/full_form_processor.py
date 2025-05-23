@@ -22,20 +22,24 @@ class form_processor():
         
     def patch_form_data(data_list, forms, form_id_replacements, master_byte, form_ids = []):
         #TODO: update dependent patcher
-        if any(len(to_id) == 4 for _, to_id in form_id_replacements):
+        if False: #if any(len(to_id) == 4 for _, to_id in form_id_replacements):
             update_masters = True
             updated_master_byte = (int.from_bytes(master_byte) + 1).to_bytes()
         else:
             update_masters = False
-        for i, form, offsets in forms:
-            for offset in offsets:
-                if form[offset+3:offset+4] >= master_byte:
-                    if not update_masters:
+        if not update_masters:
+            for i, form, offsets in forms:
+                for offset in offsets:
+                    if form[offset+3:offset+4] >= master_byte:
                         for from_id, to_id in form_id_replacements:
                             if form[offset:offset+3] == from_id:
                                 form[offset:offset+3] = to_id
                                 break
-                    else: # update master byte to be + 1 on everything except for newly defined cells
+                data_list[i] = bytes(form)
+        else:
+            for i, form, offsets in forms:
+                for offset in offsets:
+                    if form[offset+3:offset+4] >= master_byte:
                         updated = False
                         for from_id, to_id in form_id_replacements:
                             if form[offset:offset+3] == from_id:
@@ -49,7 +53,7 @@ class form_processor():
                                     break
                         if not updated and form[offset:offset+4] in form_ids:
                             form[offset:offset+4] = form[offset:offset+3] + updated_master_byte
-            data_list[i] = bytes(form)
+                data_list[i] = bytes(form)
         return data_list
     
     def patch_form_data_dependent(data_list, forms, form_id_replacements, master_byte):
@@ -59,20 +63,24 @@ class form_processor():
                                     #Might just be a copy of above
         else:
             update_masters = False
-        for i, form, offsets in forms:
-            for offset in offsets:
-                if form[offset+3:offset+4] == master_byte:
-                    if not update_masters:
+        if not update_masters:
+            for i, form, offsets in forms:
+                for offset in offsets:
+                    if form[offset+3:offset+4] == master_byte:
                         for from_id, to_id in form_id_replacements:
                             if form[offset:offset+3] == from_id:
                                 form[offset:offset+3] = to_id
                                 break
-                    else:
+                data_list[i] = bytes(form)
+        else:
+            for i, form, offsets in forms:
+                for offset in offsets:
+                    if form[offset+3:offset+4] == master_byte:
                         for from_id, to_id in form_id_replacements:
                             if form[offset:offset+3] == from_id:
                                 form[offset:offset+3] = to_id[:3] #+ updated_master_byte
                                 break
-            data_list[i] = bytes(form)
+                data_list[i] = bytes(form)
         return data_list
     
     def save_all_form_data(data_list):
