@@ -48,11 +48,11 @@ class form_processor():
                                     updated = True
                                     break
                                 else:
-                                    form[offset:offset+4] = to_id + updated_master_byte
+                                    form[offset:offset+4] = to_id# + updated_master_byte
                                     updated = True
                                     break
                         if not updated and form[offset:offset+4] in form_ids:
-                            form[offset:offset+4] = form[offset:offset+3] + updated_master_byte
+                            form[offset:offset+4] = form[offset:offset+3]# + updated_master_byte
                 data_list[i] = bytes(form)
         return data_list
     
