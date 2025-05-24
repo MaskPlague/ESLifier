@@ -585,11 +585,8 @@ class scanner():
                             or 'quickarmorrebalance\\config\\' in file_lower
                             or 'equipmenttoggle\\slotdata\\' in file_lower
                             or '\\headpartwhitelist\\' in file_lower
-                            or file_lower.endswith('revealingarmo_tng.ini')
-                            or file_lower.endswith('enginefixes_snct.toml')
-                            or file_lower.endswith('vortex.deployment.json')
-                            or file_lower.endswith('aiprocessfixmodpatch.ini')
-                            or file_lower.endswith('grasscontrol.ini')
+                            or file_lower.endswith(('revealingarmo_tng.ini','enginefixes_snct.toml', 'vortex.deployment.json', 
+                                                   'aiprocessfixmodpatch.ini', 'grasscontrol.ini', 'gearspreader.ini'))
                             )
                 ):
                 if 'kreate\\presets\\' in file_lower:
