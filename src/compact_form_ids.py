@@ -418,7 +418,7 @@ class CFIDs():
         elif new_file_lower.endswith('.json'):
             if 'animationreplacer\\' in new_file_lower and ('config.json' in new_file_lower or 'user.json' in new_file_lower): # Open Animation Replacer
                 patchers.json_oar_patcher(basename, new_file, form_id_map)
-            elif 'mcm\\config' in new_file_lower and 'config.json' in new_file_lower:           # MCM helper
+            elif 'mcm\\config' in new_file_lower and new_file_lower.endswith(('config.json', 'keybinds.json')): # MCM helper
                 patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
             elif '\\storageutildata\\' in new_file_lower:                                       # PapyrusUtil's StorageDataUtil
                 patchers.json_sud_patcher(basename, new_file, form_id_map)
@@ -431,7 +431,9 @@ class CFIDs():
             elif '\\ied\\' in new_file_lower:                                                   # Immersive Equipment Display
                 patchers.json_ied_patcher(basename, new_file, form_id_map)
             elif '\\creatures.d\\' in new_file_lower:                                           # Creature Framework
-                patchers.json_cf_patcher(basename, new_file, form_id_map)
+                patchers.json_cf_sr_patcher(basename, new_file, form_id_map)
+            elif '\\spell research\\' in new_file_lower or '\\spellresearch' in new_file_lower: # Spell Research
+                patchers.json_cf_sr_patcher(basename, new_file, form_id_map)
             elif '\\inventoryinjector\\' in new_file_lower:                                     # Inventory Injector
                 patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
             elif '\\customskills\\' in new_file_lower:                                          # Custom Skills Framework
@@ -485,7 +487,9 @@ class CFIDs():
             elif '\\loki_poise\\' in new_file_lower:                                            # Loki Poise
                 patchers.toml_loki_tdm_patcher(basename, new_file, form_id_map, encoding_method=encoding)
             elif '\\truedirectionalmovement\\' in new_file_lower:                               # TDM
-                patchers.toml_loki_tdm_patcher(basename,new_file, form_id_map, encoding_method=encoding)
+                patchers.toml_loki_tdm_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+            elif new_file_lower.endswith('_avg.toml'):                                          # Actor Value Generator
+                patchers.toml_avg_patcher(basename, new_file, form_id_map, encoding_method=encoding)
             else:
                 print(f'Warn: Possible missing patcher for: {new_file}')
         elif new_file_lower.endswith('_srd.yaml'):                                              # Sound record distributor
@@ -498,7 +502,7 @@ class CFIDs():
             patchers.seq_patcher(new_file, form_id_map)
         elif new_file_lower.endswith('.jslot'):                                                 # Racemenu Presets
             patchers.jslot_patcher(basename, new_file, form_id_map)
-        elif new_file_lower.endswith('config.txt') and 'plugin\\customskill' in new_file_lower: # CSF's old txt format
+        elif new_file_lower.endswith('config.txt') and 'plugins\\customskill' in new_file_lower: # CSF's old txt format
             patchers.old_customskill_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         else:
             print(f'Warn: Possible missing patcher for: {new_file}')
