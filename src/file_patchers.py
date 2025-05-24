@@ -660,6 +660,27 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
+    def toml_avg_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if basename in line.lower() and 'object:' in line.lower() and '::' in line.lower():
+                    index = line.lower().index('::0x') + 2
+                    end_index = patchers.find_next_non_alphanumeric(line, index)
+                    form_id = line[index:end_index]
+                    if form_id != '0x':
+                        start_of_line = line[:index]
+                        end_of_line = line[end_index:]
+                        form_id_int = int(form_id,16)
+                        for form_ids in form_id_map:
+                            if form_id_int == int(form_ids[0],16):
+                                lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                break
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+
     def json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, symbol = '|'):
         with open(new_file, 'r+', encoding='utf-8') as f:
             try:
