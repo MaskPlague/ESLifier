@@ -711,14 +711,14 @@ class CompactorWorker(QObject):
                 all_dependents_have_skyrim_esm_as_master = True
             if self.generate_cell_master:
                 flags = flag_dict[file]
-                add_cell_to_master = False
+                generate_cell_master = False
                 if 'is_esm' in flags and 'new_cell' in flags:
-                    add_cell_to_master = True
+                    generate_cell_master = True
             else:
-                add_cell_to_master = False
+                generate_cell_master = False
             CFIDs.compact_and_patch(file, dependents, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name,
                                      self.overwrite_path, self.update_header, self.mo2_mode, self.bsab, all_dependents_have_skyrim_esm_as_master, 
-                                     self.create_new_cell_plugin, add_cell_to_master)
+                                     self.create_new_cell_plugin, generate_cell_master)
         print("Compacted and Patched")
         print('CLEAR')
         self.finished_signal.emit()
