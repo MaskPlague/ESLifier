@@ -45,6 +45,7 @@ body:
           - Completionist
           - KreatE (with caveats)
           - Remember Lockpick Angle - Updated
+          - Light Placer  
           
         - **.json:**  
           - Open Animation Replacer (OAR)  
@@ -59,7 +60,7 @@ body:
           - Dynamic Armor Variants  
           - Inventory Injector  
           - Immersive Equipment Display  
-          - Light Placer  
+          - Spell Research
           - Perk Adjuster
           - Player Equipment Manager  
           - Skyrim Unbound  
@@ -79,6 +80,7 @@ body:
           - Precision  
           - Loki Poise  
           - True Directional Movement 
+          - Actor Value Generator
           
         - **.psc:**  
           - Source Scripts  
