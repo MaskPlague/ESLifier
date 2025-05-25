@@ -12,6 +12,9 @@ import platform
 if platform.system() == 'Windows':
     from win32 import win32file
     win32file._setmaxstdio(8192)
+    WINDOWS = True
+else:
+    WINDOWS = False
 
 from plugin_qualification_checker import qualification_checker
 from dependency_getter import dependecy_getter
@@ -36,15 +39,36 @@ class scanner():
         scanner.kreate_files = []
         scanner.bsab = bsab
         scanner.lock = threading.Lock()
+        scanner.file_extensions = ('.ini', '.json', '.psc', '.jslot', '.toml', '_conditions.txt', '_srd.yaml')
+        scanner.exclude_contains = (
+            'modex\\user\\kits',
+            'nemesis_engine',
+            'quickarmorrebalance\\config\\',
+            'equipmenttoggle\\slotdata\\',
+            '\\headpartwhitelist\\'
+            )
+        scanner.exclude_endswith = (
+            '\\revealingarmo_tng.ini',
+            '\\enginefixes_snct.toml', 
+            '\\vortex.deployment.json', 
+            '\\aiprocessfixmodpatch.ini', 
+            '\\grasscontrol.ini',
+            '\\gearspreader.ini',
+            '\\merge.json', '\\map.json', '\\fidcache.json' #zMerge
+            )
         total_ram = psutil.virtual_memory().available
         usable_ram = total_ram * 0.90
-        thread_memory_usage = 10 * 1024 * 1024
-        max_threads = max(1, int(usable_ram / thread_memory_usage))
-        if max_threads > 8192:
+        thread_memory_usage = 10 * 1024 * 1024 # assume each file is about 10 MB
+        max_threads = max(100, int(usable_ram / thread_memory_usage))
+        if max_threads > 8192 and WINDOWS:
             scanner.max_threads_by_ram = 8192
+            win32file._setmaxstdio(8192)
+        elif max_threads > 1024 and not WINDOWS:
+            scanner.max_threads_by_ram = 1024
         else:
             scanner.max_threads_by_ram = max_threads
 
+        scanner.file_semaphore = threading.Semaphore(scanner.max_threads_by_ram)
         thread_memory_usage = 2.5 * (1024**3)
         scanner.bsa_threads_by_ram = max(1, int(usable_ram / thread_memory_usage) * 7)
 
@@ -317,6 +341,7 @@ class scanner():
         try:
             with open(path, 'r', encoding='utf-8') as f:
                 load_order = f.readlines()
+                f.close()
         except Exception as e:
             print(f"!Error: failed to get modlist at {path}")
             print(e)
@@ -349,6 +374,7 @@ class scanner():
         try:
             with open(path, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
+                f.close()
             active_plugins = []
             for line in lines:
                 if line.startswith('*'):
@@ -439,14 +465,13 @@ class scanner():
         pattern5 = re.compile(r'\\sound\\voice\\([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\\')
         scanner.file_dict = {plugin: [] for plugin in plugin_names}
         scanner.count = 0
-        
         if len(scanner.all_files) > 500000:
-            split = scanner.max_threads_by_ram // 2
+            split = max(1, scanner.max_threads_by_ram)
         elif len(scanner.all_files) > 50000:
             split = 50
         else:
             split = 5
-
+        scanner.file_semaphore = threading.Semaphore(1000)
         chunk_size = len(scanner.all_files) // split
         chunks = [scanner.all_files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
         chunks.append(scanner.all_files[(split) * chunk_size:])
@@ -527,6 +552,7 @@ class scanner():
                 with open(file, 'r', encoding='utf-8') as f:
                     for line in f.readlines():
                         plugin_edid_dict[plugin_name].append(line.strip())
+                    f.close()
 
         for plugin, edids in plugin_edid_dict.items():
             for kreate_file in scanner.kreate_files:
@@ -578,16 +604,8 @@ class scanner():
             if (scanner.count % factor) >= (factor-1):
                 print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + 
                       '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
-            if ((file_lower.endswith(('.ini', '.json', '.psc', '.jslot', '.toml', '_conditions.txt', '_srd.yaml'))
-                or (file_lower.endswith('config.txt') and 'plugins\\customskill' in file_lower)) #The files below contain plugin names but no form ids
-                    and not ('modex\\user\\kits' in file_lower
-                            or 'nemesis_engine' in file_lower
-                            or 'quickarmorrebalance\\config\\' in file_lower
-                            or 'equipmenttoggle\\slotdata\\' in file_lower
-                            or '\\headpartwhitelist\\' in file_lower
-                            or file_lower.endswith(('revealingarmo_tng.ini','enginefixes_snct.toml', 'vortex.deployment.json', 
-                                                   'aiprocessfixmodpatch.ini', 'grasscontrol.ini', 'gearspreader.ini'))
-                            )
+            if ((file_lower.endswith(scanner.file_extensions) or (file_lower.endswith('config.txt') and 'plugins\\customskill' in file_lower))
+                and not (any(exclusion in file_lower for exclusion in scanner.exclude_contains) or file_lower.endswith(scanner.exclude_endswith))
                 ):
                 if 'kreate\\presets\\' in file_lower:
                     scanner.kreate_files.append(file)
@@ -605,7 +623,7 @@ class scanner():
             elif file_lower.endswith('.seq'):
                 plugin = os.path.splitext(os.path.basename(file))[0]
                 scanner.seq_files.append([plugin.lower(), file])
-            elif ('\\facegeom\\' in file_lower and file_lower.endswith('.nif')):
+            elif file_lower.endswith('.nif') and '\\facegeom\\' in file_lower:
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
                         plugin = re.search(pattern3, file_lower).group(1)
@@ -615,7 +633,7 @@ class scanner():
                             local_dict[plugin].append(file)
                     except Exception as e:
                         pass
-            elif '\\facetint\\' in file_lower and file_lower.endswith('.dds'):
+            elif file_lower.endswith('.dds') and '\\facetint\\' in file_lower :
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
                         plugin = re.search(pattern4, file_lower).group(1)
@@ -625,7 +643,7 @@ class scanner():
                             local_dict[plugin].append(file)
                     except Exception as e:
                         pass
-            elif '\\sound\\' in file_lower and '\\voice\\' in file_lower:
+            elif '\\sound\\voice\\' in file_lower:
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
                         plugin = re.search(pattern5, file_lower).group(1)
@@ -635,11 +653,11 @@ class scanner():
                             local_dict[plugin].append(file)
                     except Exception as e:
                         pass
-                        
-        for key, values_list in local_dict.items():
-            with scanner.lock:
-                if key not in scanner.file_dict: scanner.file_dict.update({key: []})
-                scanner.file_dict[key].extend(values_list)
+        with scanner.lock:           
+            for key, values_list in local_dict.items():
+                if key in scanner.plugin_basename_list:
+                    if key not in scanner.file_dict: scanner.file_dict.update({key: []})
+                    scanner.file_dict[key].extend(values_list)
 
     def seq_plugin_extension_processor(files):
         for file in files:
@@ -656,9 +674,10 @@ class scanner():
             file_lower = file.lower()
             if reader_type == 'r':
                 if file_lower.endswith('.jslot'):
-                    with open(file, 'r', encoding='utf-8', errors='ignore') as f:
-                        data = json.load(f)
-                        f.close()
+                    with scanner.file_semaphore:
+                        with open(file, 'r', encoding='utf-8', errors='ignore') as f:
+                            data = json.load(f)
+                            f.close()
                     plugins = []
                     if 'actor' in data and 'headTexture' in data['actor']:
                         plugin_and_fid = data['actor']['headTexture']
@@ -669,70 +688,84 @@ class scanner():
                             if 'formIdentifier' in part:
                                 formIdentifier = part['formIdentifier']
                                 plugins.append(formIdentifier[:-7].lower())
-                    for plugin in plugins:
-                        with scanner.lock:
-                            if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
-                            if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+                    with scanner.lock:
+                        for plugin in plugins:
+                            if plugin in scanner.plugin_basename_list:
+                                if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
+                                if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
                 elif file_lower.endswith('.psc'):
-                    with open(file, 'r', encoding='utf-8', errors='ignore') as f:
-                        data = f.read().lower()
-                        f.close()
+                    with scanner.file_semaphore:
+                        with open(file, 'r', encoding='utf-8', errors='ignore') as f:
+                            normal_data = f.read()
+                            f.close()
+                    data = normal_data.lower()
                     if 'getformfromfile' in data:
                         r = re.findall(pattern, data)
                         if r != []:
-                            for plugin in r:
-                                with scanner.lock:
-                                    if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
-                                    if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+                            with scanner.lock:
+                                for plugin in r:
+                                    if plugin in scanner.plugin_basename_list:
+                                        if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
+                                        if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
                     elif 'bsa_extracted\\' in file:
                         os.remove(file)
                 else:
-                    with open(file, 'r', encoding='utf-8', errors='ignore') as f:
-                        lines = [line.lower() for line in f.readlines()]
+                    with scanner.file_semaphore:
+                        with open(file, 'r', encoding='utf-8', errors='ignore') as f:
+                            normal_lines = f.readlines()
+                            f.close()
+                    lines = [line.lower() for line in normal_lines]
                     found_plugins = set()
                     for line in lines:
                         if '.es' in line:
+                            plugins_in_line = []
                             for plugin in scanner.plugin_basename_list:
                                 if plugin in line:
+                                    index = line.index(plugin)
+                                    plugins_in_line.append([plugin, index, index+len(plugin)])
+                            for plugin, start, end in plugins_in_line:
+                                if not any(plugin_start < start < plugin_end for _, plugin_start, plugin_end in plugins_in_line):
                                     found_plugins.add(plugin)
-                                        
-                    for plugin in found_plugins:
-                        with scanner.lock:
+                    with scanner.lock:                  
+                        for plugin in found_plugins:
                             if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
                             if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
 
             elif reader_type == 'pex':
-                with open(file, 'rb') as f:
-                    data = f.read()
-                    offset = 18 + struct.unpack('>H', data[16:18])[0]
-                    offset += 2 + struct.unpack('>H', data[offset:offset+2])[0]
-                    offset += 2 + struct.unpack('>H', data[offset:offset+2])[0]
-                    string_count = struct.unpack('>H', data[offset:offset+2])[0]
-                    offset += 2
-                    strings = []
-                    for _ in range(string_count):
-                        string_length = struct.unpack('>H', data[offset:offset+2])[0]
-                        strings.append(data[offset+2:offset+2+string_length].lower().decode())
-                        offset += 2 + string_length
-                    f.close()
+                with scanner.file_semaphore:
+                    with open(file, 'rb') as f:
+                        data = f.read()
+                        f.close()
+                offset = 18 + struct.unpack('>H', data[16:18])[0]
+                offset += 2 + struct.unpack('>H', data[offset:offset+2])[0]
+                offset += 2 + struct.unpack('>H', data[offset:offset+2])[0]
+                string_count = struct.unpack('>H', data[offset:offset+2])[0]
+                offset += 2
+                strings = []
+                for _ in range(string_count):
+                    string_length = struct.unpack('>H', data[offset:offset+2])[0]
+                    strings.append(data[offset+2:offset+2+string_length].lower().decode())
+                    offset += 2 + string_length
                 if 'getformfromfile' in strings:
                     for string in strings:
-                        if string.endswith(('.esp', '.esl', '.esm')) and not ':' in string and not '/' in string and not '\\' in string:
+                        if string.endswith(('.esp', '.esl', '.esm')) and string in scanner.plugin_basename_list:#not ':' in string and not '/' in string and not '\\' in string:
                             with scanner.lock:
                                 if string not in scanner.file_dict: scanner.file_dict.update({string: []})
                                 if file not in scanner.file_dict[string]: scanner.file_dict[string].append(file)
                 elif 'bsa_extracted\\' in file:
                     os.remove(file)
             elif reader_type == 'dll':
-                with open(file, 'rb') as f:
-                    r = re.findall(pattern,f.read().lower())
-                    f.close()
+                with scanner.file_semaphore:
+                    with open(file, 'rb') as f:
+                        r = re.findall(pattern,f.read().lower())
+                        f.close()
                 if r != []:
-                    for plugin in r:
-                        plugin = plugin.decode('utf-8')
-                        with scanner.lock:
-                            if plugin not in scanner.dll_dict: scanner.dll_dict.update({plugin: []})
-                            if file not in scanner.dll_dict[plugin]: scanner.dll_dict[plugin].append(file)
+                    with scanner.lock:
+                        for plugin in r:
+                            plugin = plugin.decode('utf-8')
+                            if plugin in scanner.plugin_basename_list:
+                                if plugin not in scanner.dll_dict: scanner.dll_dict.update({plugin: []})
+                                if file not in scanner.dll_dict[plugin]: scanner.dll_dict[plugin].append(file)
             else:
                 print(f'!Warn: Missing file scan type for {file}')
 
@@ -746,40 +779,43 @@ class scanner():
         plugins = []
         pattern_1 = re.compile(rb'([^\\]+\.es[pml])')
         try:
-            with open(bsa_file, 'rb') as f:
-                with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
-                    folder_count = struct.unpack('<I', mm[16:20])[0]
-                    version = struct.unpack('<I', mm[4:8])[0]
-                    if version == 105:
-                        folder_record_size = 24
-                        file_record_offset = 16
-                    else:
-                        folder_record_size = 16
-                        file_record_offset = 12
-                    total_file_name_length = struct.unpack('<I', mm[28:32])[0]
+            with scanner.file_semaphore:
+                with open(bsa_file, 'rb') as f:
+                    with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+                        folder_count = struct.unpack('<I', mm[16:20])[0]
+                        version = struct.unpack('<I', mm[4:8])[0]
+                        if version == 105:
+                            folder_record_size = 24
+                            file_record_offset = 16
+                        else:
+                            folder_record_size = 16
+                            file_record_offset = 12
+                        total_file_name_length = struct.unpack('<I', mm[28:32])[0]
 
-                    end_of_folder_records = (folder_count * folder_record_size) + 36
-                    offset = 36
-                    max_time = 5
-                    time = 0
-                    start_time = timeit.default_timer()
-                    if end_of_folder_records > len(mm) + 1:
-                        raise ValueError('Possibly Corrupt BSA')
-                    while offset < end_of_folder_records and time < max_time:
-                        location = int.from_bytes(mm[offset+file_record_offset:offset+file_record_offset+4][::-1]) - total_file_name_length
-                        folder_length = int.from_bytes(mm[location:location+1])
-                        folder_path = mm[location+1:location+folder_length].decode(errors='ignore')
+                        end_of_folder_records = (folder_count * folder_record_size) + 36
+                        offset = 36
+                        max_time = 5
+                        time = 0
+                        start_time = timeit.default_timer()
+                        if end_of_folder_records > len(mm) + 1:
+                            raise ValueError('Possibly Corrupt BSA')
+                        while offset < end_of_folder_records and time < max_time:
+                            location = int.from_bytes(mm[offset+file_record_offset:offset+file_record_offset+4][::-1]) - total_file_name_length
+                            folder_length = int.from_bytes(mm[location:location+1])
+                            folder_path = mm[location+1:location+folder_length].decode(errors='ignore')
 
-                        if ('facegeom\\' in folder_path or 'facetint\\' in folder_path or 'sound\\voice' in folder_path) and ('.esp' in folder_path or '.esl' in folder_path or '.esm' in folder_path):
-                            match = re.search(pattern_1, folder_path.encode())
-                            if match:
-                                plugin = match.group(0).decode()
-                                if plugin not in plugins:
-                                    plugins.append(plugin)
-                        time = timeit.default_timer() - start_time
-                        offset += folder_record_size
-                    if time > max_time:
-                        raise ValueError('Exceeded max processing time')
+                            if ('facegeom\\' in folder_path or 'facetint\\' in folder_path or 'sound\\voice' in folder_path) and ('.esp' in folder_path or '.esl' in folder_path or '.esm' in folder_path):
+                                match = re.search(pattern_1, folder_path.encode())
+                                if match:
+                                    plugin = match.group(0).decode()
+                                    if plugin not in plugins:
+                                        plugins.append(plugin)
+                            time = timeit.default_timer() - start_time
+                            offset += folder_record_size
+                        if time > max_time:
+                            raise ValueError('Exceeded max processing time')
+                        mm.close()
+                    f.close()
 
             if plugins != []:
                 with scanner.lock:
