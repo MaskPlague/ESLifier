@@ -436,7 +436,7 @@ class CFIDs():
                 patchers.json_cf_sr_patcher(basename, new_file, form_id_map)
             elif '\\inventoryinjector\\' in new_file_lower:                                     # Inventory Injector
                 patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
-            elif '\\customskills\\' in new_file_lower:                                          # Custom Skills Framework
+            elif '\\customskills\\' in new_file_lower or new_file_lower.endswith('\\metaskillsmenu\\rawdata.json'): # Custom Skills Framework
                 patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
             elif 'plugins\\rain extinguishes fires\\' in new_file_lower:                        # Rain Extinguishes Fires
                 patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
@@ -475,8 +475,6 @@ class CFIDs():
                 patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map, int_type=True)
             elif 'plugins\\skyrim - utility mod\\' in new_file_lower:                           # Inte's Skyrim - Utility Mod
                 patchers.json_sum_patcher(basename, new_file, form_id_map)
-            elif new_file_lower.endswith('interface\\metaskillsmenu\\rawdata.json'):
-                patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
             else:
                 print(f'Warn: Possible missing patcher for: {new_file}')
         elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
