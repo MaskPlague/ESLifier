@@ -13,7 +13,7 @@ from main_page import main
 from patch_new_page import patch_new
 from log_stream import log_stream
 
-CURRENT_VERSION = '0.9.5'
+CURRENT_VERSION = '0.9.6'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
@@ -53,7 +53,7 @@ def luhn_checksum(data: bytes) -> int:
 def check_is_latest_version():
     try:
         api_url = f"https://api.github.com/repos/MaskPlague/ESLifier/releases/latest"
-        response = requests.get(api_url)
+        response = requests.get(api_url, timeout=5)
         response.raise_for_status()
 
         latest_release_info = response.json()
@@ -83,12 +83,6 @@ class main_window(QMainWindow):
                     verify_luhn_checksum('ESLifier.exe')
             else:
                 verify_luhn_checksum('ESLifier.exe')
-
-        is_latest, latest_version = check_is_latest_version()
-        if not is_latest:
-            QMessageBox.warning(None, 'ESLifier Outdated', f"There exists a new version of ESLifier (v{latest_version}).\n"\
-                                                            "It is recommended to update as it could contain critical changes,\n"\
-                                                            "bug fixes, or additional file patchers.")
         
         self.setWindowTitle("ESLifier v" + CURRENT_VERSION)
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
@@ -158,6 +152,12 @@ class main_window(QMainWindow):
         display_widget.setLayout(tabs_layout)
         self.setCentralWidget(display_widget)
         self.main_widget.calculate_stats()
+
+        is_latest, latest_version = check_is_latest_version()
+        if not is_latest:
+            QMessageBox.warning(None, 'ESLifier Outdated', f"There exists a new version of ESLifier (v{latest_version}).\n"\
+                                                            "It is recommended to update as it could contain critical changes,\n"\
+                                                            "bug fixes, or additional file patchers.")
 
     def tab_changed(self, index):
         self.update_settings()
