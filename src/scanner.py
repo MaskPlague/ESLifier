@@ -62,13 +62,12 @@ class scanner():
         max_threads = max(100, int(usable_ram / thread_memory_usage))
         if max_threads > 8192 and WINDOWS:
             scanner.max_threads_by_ram = 8192
-            win32file._setmaxstdio(8192)
         elif max_threads > 1024 and not WINDOWS:
             scanner.max_threads_by_ram = 1024
         else:
             scanner.max_threads_by_ram = max_threads
 
-        scanner.file_semaphore = threading.Semaphore(scanner.max_threads_by_ram)
+        #scanner.file_semaphore = threading.Semaphore(scanner.max_threads_by_ram)
         thread_memory_usage = 2.5 * (1024**3)
         scanner.bsa_threads_by_ram = max(1, int(usable_ram / thread_memory_usage) * 7)
 
