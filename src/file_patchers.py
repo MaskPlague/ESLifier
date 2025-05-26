@@ -886,36 +886,22 @@ class patchers():
             f.close()
 
     def dar_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
-        try:
-            with open(new_file, 'r+', encoding=encoding_method) as f:
-                lines = f.readlines()
-                for i, line in enumerate(lines):
-                    if '"'+basename+'"' in line.lower() and '|' in line:
-                        index = line.index('|')
-                        end_index = patchers.find_next_non_alphanumeric(line, index+2)
-                        if end_index != -1:
-                            form_id_int = int(line[index+1:end_index], 16)
-                            for form_ids in form_id_map:
-                                if form_id_int == int(form_ids[0], 16):
-                                    lines[i] = line[:index+1] + '0x' + form_ids[3] + line[end_index:]
-                                    break
-                f.seek(0)
-                f.truncate(0)
-                f.write(''.join(lines))
-                f.close()
-        except Exception as e:
-            exception_type = type(e)
-            if exception_type == UnicodeDecodeError:
-                if encoding_method == 'utf-8':
-                    patchers.dar_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-                elif encoding_method == 'ansi':
-                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
-                else:
-                    print(f'!Error: Failed to patch file: {new_file}')
-                    print(e)
-            else:
-                print(f'!Error: Failed to patch file: {new_file}')
-                print(e)
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if '"'+basename+'"' in line.lower() and '|' in line:
+                    index = line.index('|')
+                    end_index = patchers.find_next_non_alphanumeric(line, index+2)
+                    if end_index != -1:
+                        form_id_int = int(line[index+1:end_index], 16)
+                        for form_ids in form_id_map:
+                            if form_id_int == int(form_ids[0], 16):
+                                lines[i] = line[:index+1] + '0x' + form_ids[3] + line[end_index:]
+                                break
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
 
     def srd_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
