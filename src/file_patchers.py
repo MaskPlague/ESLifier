@@ -145,13 +145,13 @@ class patchers():
                     plugin_2 = line[index_3+1:]
                     form_id_1 = line[:index_1]
                     form_id_2 = line[index_2+1:index_3]
-                    if basename in plugin_1.lower():
+                    if basename == plugin_1.lower().strip():
                         form_id_int_1 = int(form_id_1, 16)
                         for form_ids in form_id_map:
                             if form_id_int_1 == int(form_ids[0], 16): 
                                 form_id_1 = '0x' + form_ids[2]
                                 break
-                    if basename in plugin_2.lower():
+                    if basename == plugin_2.lower().strip():
                         form_id_int_2 = int(form_id_2, 16)
                         for form_ids in form_id_map:
                             if form_id_int_2 == int(form_ids[0], 16):
@@ -173,10 +173,12 @@ class patchers():
                     start_of_line = line[:start_index+1]
                     end_of_line = line[end_index:]
                     form_id_int = int(line[start_index+1:end_index],16)
-                    for form_ids in form_id_map:
-                        if form_id_int == int(form_ids[0], 16):
-                            lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
-                            break
+                    plugin = line[end_index+1:].strip().lower()
+                    if plugin == basename:
+                        for form_ids in form_id_map:
+                            if form_id_int == int(form_ids[0], 16):
+                                lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                break
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -312,10 +314,13 @@ class patchers():
                     start_of_line = line[:middle_index+1]
                     end_of_line = line[end_index:]
                     form_id_int = int(line[middle_index+1:end_index], 16)
-                    for form_ids in form_id_map:
-                        if form_id_int == int(form_ids[0], 16):
-                            lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
-                            break
+                    plugin_index = line.index('=') + 1
+                    plugin = line[plugin_index:middle_index].lower().strip()
+                    if plugin == basename:
+                        for form_ids in form_id_map:
+                            if form_id_int == int(form_ids[0], 16):
+                                lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                break
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -643,7 +648,7 @@ class patchers():
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
-                if basename in line.lower() and line.lower().startswith('plugin'):
+                if '"'+basename+'"' in line.lower() and line.lower().startswith('plugin'):
                     i = i - 1
                     line = lines[i]
                     index = line.lower().index('0x')
@@ -666,16 +671,19 @@ class patchers():
             for i, line in enumerate(lines):
                 if basename in line.lower() and 'object:' in line.lower() and '::' in line.lower():
                     index = line.lower().index('::0x') + 2
+                    object_index = line.lower().index("object: ") + 7
                     end_index = patchers.find_next_non_alphanumeric(line, index)
                     form_id = line[index:end_index]
-                    if form_id != '0x':
-                        start_of_line = line[:index]
-                        end_of_line = line[end_index:]
-                        form_id_int = int(form_id,16)
-                        for form_ids in form_id_map:
-                            if form_id_int == int(form_ids[0],16):
-                                lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
-                                break
+                    plugin = line[object_index:index-2].lower().strip()
+                    if plugin == basename:
+                        if form_id != '0x':
+                            start_of_line = line[:index]
+                            end_of_line = line[end_index:]
+                            form_id_int = int(form_id,16)
+                            for form_ids in form_id_map:
+                                if form_id_int == int(form_ids[0],16):
+                                    lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                    break
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -882,7 +890,7 @@ class patchers():
             with open(new_file, 'r+', encoding=encoding_method) as f:
                 lines = f.readlines()
                 for i, line in enumerate(lines):
-                    if basename in line.lower() and '|' in line:
+                    if '"'+basename+'"' in line.lower() and '|' in line:
                         index = line.index('|')
                         end_index = patchers.find_next_non_alphanumeric(line, index+2)
                         if end_index != -1:
@@ -910,43 +918,32 @@ class patchers():
                 print(e)
 
     def srd_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
-        try:
-            with open(new_file, 'r+', encoding=encoding_method) as f:
-                lines = f.readlines()
-                for i, line in enumerate(lines):
-                    if basename in line.lower() and '|' in line and not line.startswith('#'):
-                        if '#' in line:
-                            comment_index = line.index('#')
-                            comment = True
-                        else:
-                            comment = False
-                        index = line.index('|')
-                        end_index = patchers.find_next_non_alphanumeric(line, index+1)
-                        if comment and (index > comment_index or end_index > comment_index):
-                            continue
-                        end_of_line = line[end_index:]
-                        form_id_int = int(line[index+1:], 16)
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if basename in line.lower() and '|' in line and not line.startswith('#'):
+                    if '#' in line:
+                        comment_index = line.index('#')
+                        comment = True
+                    else:
+                        comment = False
+                    index = line.index('|')
+                    end_index = patchers.find_next_non_alphanumeric(line, index+1)
+                    if comment and (index > comment_index or end_index > comment_index):
+                        continue
+                    end_of_line = line[end_index:]
+                    form_id_int = int(line[index+1:], 16)
+                    plugin_index = line.index(':')+1
+                    plugin = line[plugin_index:index].lower().strip()
+                    if plugin == basename:
                         for form_ids in form_id_map:
                             if form_id_int == int(form_ids[0], 16):
                                 lines[i] = line[:index+1] + form_ids[3] + end_of_line
                                 break
-                f.seek(0)
-                f.truncate(0)
-                f.write(''.join(lines))
-                f.close()
-        except Exception as e:
-            exception_type = type(e)
-            if exception_type == UnicodeDecodeError:
-                if encoding_method == 'utf-8':
-                    patchers.srd_patcher(basename, new_file, form_id_map, encoding_method='ansi')
-                elif encoding_method == 'ansi':
-                    raise UnicodeDecodeError('!Error: Failed to decode file via utf-8 and ANSI.')
-                else:
-                    print(f'!Error: Failed to patch file: {new_file}')
-                    print(e)
-            else:
-                print(f'!Error: Failed to patch file: {new_file}')
-                print(e)
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
 
     def jslot_patcher(basename, new_file, form_id_map):
         with open(new_file, 'r+', encoding='utf-8') as f:
