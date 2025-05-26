@@ -448,7 +448,7 @@ class CFIDs():
                 patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
             elif '\\playerequipmentmanager\\' in new_file_lower:                                # Player Equipment Manager
                 patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
-            elif '\\mapmarker\\' in new_file_lower:                                             # CoMAP
+            elif '\\mapmarkers\\' in new_file_lower:                                            # CoMAP
                 patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
             elif new_file_lower.endswith('obody_presetdistributionconfig.json'):                # OBody NG
                 patchers.json_obody_patcher(basename, new_file, form_id_map)
