@@ -146,7 +146,7 @@ class scanner():
                 temp_rel_paths.append(rel_path)
                 if path_level == root_level and file.lower().endswith(plugin_extensions):
                     scanner.plugins.append(full_path)
-                if file.lower().endswith('.bsa') and file.lower() not in scanner.bsa_blacklist:
+                if path_level == root_level and file.lower().endswith('.bsa') and file.lower() not in scanner.bsa_blacklist:
                     file = file[:-4]
                     if ' - textures' in file.lower():
                         index = file.lower().index(' - textures')
@@ -224,9 +224,11 @@ class scanner():
         #Get file from MO2's mods folder
         for mod_folder in os.listdir(mods_folder):
             mod_path = os.path.join(mods_folder, mod_folder)
+            mod_folder_level = len(mod_path.split(os.sep))
             if os.path.isdir(mod_path) and mod_folder in enabled_mods:
                 for root, dirs, files in os.walk(mod_path):
                     file_count += len(files)
+                    root_level = len(root.split(os.sep))
                     if loop == 50: #prevent spamming stdout and slowing down the program
                         loop = 0
                         print(f'\033[F\033[K-  Gathered: {file_count}\n-', end='\r')
@@ -249,7 +251,7 @@ class scanner():
                             mod_files[relative_path].append(mod_folder)
                             if file.lower().endswith(plugin_extensions):
                                 plugin_names.append(file)
-                            if file.lower().endswith('.bsa') and file.lower() not in scanner.bsa_blacklist:
+                            if file.lower().endswith('.bsa') and root_level == mod_folder_level and file.lower() not in scanner.bsa_blacklist:
                                 file = file[:-4]
                                 if ' - textures' in file.lower():
                                     index = file.lower().index(' - textures')
@@ -257,7 +259,6 @@ class scanner():
                                 bsa_list.append([file.lower(), full_path])
 
         #Get files from MO2's overwrite folder
-        #overwrite_path = os.path.join(os.path.split(mods_folder)[0], 'overwrite')
         if os.path.exists(overwrite_path):
             for root, dirs, files in os.walk(overwrite_path):
                 file_count += len(files)
