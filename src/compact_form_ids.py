@@ -768,10 +768,11 @@ class CFIDs():
                 for i in range(len(form_id_file_data)):
                     form_id_conversion = form_id_file_data[i].split('|')
                     from_id = bytes.fromhex(form_id_conversion[0])[:3]
-                    if len(bytes.fromhex(form_id_conversion[1])) == 4:
-                        to_id = bytes.fromhex(form_id_conversion[1])[:3]
+                    id = bytes.fromhex(form_id_conversion[1])
+                    if len(id) == 4:
+                        to_id = id[:3]
                     else:
-                        to_id = bytes.fromhex(form_id_conversion[1])[:4]
+                        to_id = id[:4]
                     form_id_replacements.append([from_id, to_id])
                 #TODO: need to add eslifier_cell_masters,esm a master :/ and then have the patch target the cell there
                 data_list = form_processor.patch_form_data_dependent(data_list, saved_forms, form_id_replacements, master_byte)
