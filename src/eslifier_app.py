@@ -336,6 +336,7 @@ class main_window(QMainWindow):
         self.patch_new_widget.modlist_txt_path =                self.settings_widget.settings['mo2_modlist_txt_path']
         self.patch_new_widget.mo2_mode =                        self.settings_widget.settings['mo2_mode']
         self.patch_new_widget.update_header =                   self.settings_widget.settings['update_header']
+        self.patch_new_widget.generate_cell_master =            self.settings_widget.settings['generate_cell_master']
         self.main_widget.list_compact.create()
         self.main_widget.list_eslify.create()
 
