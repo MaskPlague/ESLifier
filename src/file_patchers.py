@@ -174,6 +174,8 @@ class patchers():
                     end_of_line = line[end_index:]
                     form_id_int = int(line[start_index+1:end_index],16)
                     plugin = line[end_index+1:].strip().lower()
+                    if '|' in plugin:
+                        plugin = plugin.split('|')[0].strip()
                     if plugin == basename:
                         for form_ids in form_id_map:
                             if form_id_int == int(form_ids[0], 16):
@@ -304,28 +306,37 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
-    def ini_vc_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def ini_vc_ser_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
-                if basename in line.lower() and '|' in line and not line.startswith(';'):
+                if basename in line.lower() and '|' in line and '=' in line and not line.startswith(';'):
+                    ox = False
                     middle_index = line.index('|')
-                    end_index = patchers.find_next_non_alphanumeric(line, middle_index+1)
-                    start_of_line = line[:middle_index+1]
-                    end_of_line = line[end_index:]
-                    form_id_int = int(line[middle_index+1:end_index], 16)
                     plugin_index = line.index('=') + 1
                     plugin = line[plugin_index:middle_index].lower().strip()
                     if plugin == basename:
+                        end_index = patchers.find_next_non_alphanumeric(line, middle_index+1)
+                        start_of_line = line[:middle_index+1]
+                        end_of_line = line[end_index:]
+                        form_id = line[middle_index+1:end_index].lower().strip()
+                        if form_id.startswith('0x'):
+                            ox = True
+                        form_id_int = int(form_id, 16)
+                    
                         for form_ids in form_id_map:
                             if form_id_int == int(form_ids[0], 16):
-                                lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                if ox:
+                                    lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                else:
+                                    lines[i] = start_of_line + form_ids[2] + end_of_line
                                 break
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
             f.close()
 
+    #TODO: make stricter
     def ini_ab_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
