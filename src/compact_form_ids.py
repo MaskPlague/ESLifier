@@ -18,7 +18,7 @@ if platform.system() == 'Windows':
 
 total_ram = psutil.virtual_memory().available
 usable_ram = total_ram * 0.90
-thread_memory_usage = 40 * 1024 * 1024
+thread_memory_usage = 30 * 1024 * 1024
 max_threads = max(1, int(usable_ram / thread_memory_usage))
 if max_threads > 8192:
     MAX_THREADS = 8192
@@ -30,6 +30,7 @@ class CFIDs():
                           output_folder_name, overwrite_path, update_header, mo2_mode, bsab,
                           all_dependents_have_skyrim_esm_as_master, create_cell_master, add_cell_to_master):
         CFIDs.lock = threading.Lock()
+        CFIDs.semaphore = threading.Semaphore(1000)
         CFIDs.compacted_and_patched = {}
         CFIDs.mo2_mode = mo2_mode
         CFIDs.output_folder_name = output_folder_name
@@ -180,6 +181,7 @@ class CFIDs():
     def patch_new(compacted_file, dependents, files_to_patch, skyrim_folder_path, output_folder_path, 
                   output_folder_name, overwrite_path, update_header, mo2_mode):
         CFIDs.lock = threading.Lock()
+        CFIDs.semaphore = threading.Semaphore(1000)
         CFIDs.compacted_and_patched = {}
         CFIDs.mo2_mode = mo2_mode
         CFIDs.output_folder_name = output_folder_name
@@ -283,23 +285,24 @@ class CFIDs():
                     print('\033[F\033[K-    Percentage: ' + str(round(percent,1)) +'%\n-    Files: ' + str(CFIDs.count) + '/' + str(CFIDs.file_count), end='\r')
             
             rel_path = CFIDs.get_rel_path(file, skyrim_folder_path)
-            for form_ids in form_id_map:
-                if form_ids[1].lower() in file.lower():
-                    new_file, rel_path_new_file = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
-                    index = new_file.lower().index(form_ids[1].lower())
-                    renamed_file = new_file[:index] + form_ids[3].upper() + new_file[index+6:]
-                    with CFIDs.lock:
-                        os.replace(new_file, renamed_file)
-                    index = rel_path_new_file.lower().index(form_ids[1].lower())
-                    rel_path_renamed_file = rel_path_new_file[:index] + form_ids[3].upper() + rel_path_new_file[index+6:]
-                    with CFIDs.lock:
-                        if rel_path_new_file not in CFIDs.compacted_and_patched[master_base_name]:
-                            CFIDs.compacted_and_patched[master_base_name].append(rel_path_new_file)
-                        if rel_path_renamed_file not in CFIDs.compacted_and_patched[master_base_name]:
-                            CFIDs.compacted_and_patched[master_base_name].append(rel_path_renamed_file)
-                        if 'facegeom' in new_file.lower() and master_base_name.lower() in new_file.lower():
-                            facegeom_meshes.append(renamed_file)
-                    break
+            with CFIDs.semaphore:
+                for form_ids in form_id_map:
+                    if form_ids[1].lower() in file.lower():
+                        new_file, rel_path_new_file = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
+                        index = new_file.lower().index(form_ids[1].lower())
+                        renamed_file = new_file[:index] + form_ids[3].upper() + new_file[index+6:]
+                        with CFIDs.lock:
+                            os.replace(new_file, renamed_file)
+                        index = rel_path_new_file.lower().index(form_ids[1].lower())
+                        rel_path_renamed_file = rel_path_new_file[:index] + form_ids[3].upper() + rel_path_new_file[index+6:]
+                        with CFIDs.lock:
+                            if rel_path_new_file not in CFIDs.compacted_and_patched[master_base_name]:
+                                CFIDs.compacted_and_patched[master_base_name].append(rel_path_new_file)
+                            if rel_path_renamed_file not in CFIDs.compacted_and_patched[master_base_name]:
+                                CFIDs.compacted_and_patched[master_base_name].append(rel_path_renamed_file)
+                            if 'facegeom' in new_file.lower() and master_base_name.lower() in new_file.lower():
+                                facegeom_meshes.append(renamed_file)
+                        break
             CFIDs.compacted_and_patched[master_base_name].append(rel_path.lower())
         if facegeom_meshes != []:
             CFIDs.patch_files(master, facegeom_meshes, form_id_map, skyrim_folder_path, output_folder_path)
@@ -362,16 +365,17 @@ class CFIDs():
             new_file_lower = new_file.lower()
             basename = os.path.basename(master).lower()
             try:
-                with CFIDs.lock:
-                    try:
-                        CFIDs.patch_file_conditions(master, rel_path, new_file_lower, new_file, basename, form_id_map, 'utf-8')
-                    except Exception as e:
-                        exception_type = type(e)
-                        if exception_type == UnicodeDecodeError:
-                            CFIDs.patch_file_conditions(master, rel_path, new_file_lower, new_file, basename, form_id_map, 'ansi')
-                        else:
-                            print(f'!Error: Failed to patch file: {new_file}')
-                            print(e)
+                with CFIDs.semaphore:
+                    with CFIDs.lock:
+                        try:
+                            CFIDs.patch_file_conditions(master, rel_path, new_file_lower, new_file, basename, form_id_map, 'utf-8')
+                        except Exception as e:
+                            exception_type = type(e)
+                            if exception_type == UnicodeDecodeError:
+                                CFIDs.patch_file_conditions(master, rel_path, new_file_lower, new_file, basename, form_id_map, 'ansi')
+                            else:
+                                print(f'!Error: Failed to patch file: {new_file}')
+                                print(e)
             except Exception as e:
                 print(f'!Error: Failed to patch file: {new_file}')
                 print(e)    
@@ -394,7 +398,7 @@ class CFIDs():
             elif 'skypatcher\\' in new_file_lower:                                              # Sky Patcher
                 patchers.ini_sp_patcher(basename, new_file, form_id_map, encoding_method=encoding)
             elif 'valhallacombat\\' in new_file_lower:                                          # Valhalla Combat
-                patchers.ini_vc_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+                patchers.ini_vc_ser_patcher(basename, new_file, form_id_map, encoding_method=encoding)
             elif '\\autobody\\' in new_file_lower:                                              # AutoBody
                 patchers.ini_ab_patcher(basename, new_file, form_id_map, encoding_method=encoding)
             elif 'vsu\\' in new_file_lower:                                                     # VSU
@@ -411,14 +415,16 @@ class CFIDs():
                 patchers.ini_exp_patcher(basename, new_file, form_id_map, encoding_method=encoding)
             elif '\\lightplacer\\' in new_file_lower:                                           # Light Placer
                 patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            else:                                                                               # Might patch whatever else is using .ini?
+            elif new_file_lower.endswith('\\simpleedgeremoverng.ini'):                          # Simple Edge Glow Remover NG
+                patchers.ini_vc_ser_patcher(basename, form_id_map, encoding_method=encoding)
+            else:                                                                               
                 print(f'Warn: Possible missing patcher for: {new_file}')
         elif new_file_lower.endswith('_conditions.txt'):                                        # Dynamic Animation Replacer
             patchers.dar_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('.json'):
-            if 'animationreplacer\\' in new_file_lower and ('config.json' in new_file_lower or 'user.json' in new_file_lower): # Open Animation Replacer
+            if new_file_lower.endswith(('config.json', 'user.json')) and 'animationreplacer\\' in new_file_lower: # Open Animation Replacer
                 patchers.json_oar_patcher(basename, new_file, form_id_map)
-            elif 'mcm\\config' in new_file_lower and new_file_lower.endswith(('config.json', 'keybinds.json')): # MCM helper
+            elif new_file_lower.endswith(('config.json', 'keybinds.json')) and 'mcm\\config' in new_file_lower: # MCM helper
                 patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
             elif '\\storageutildata\\' in new_file_lower:                                       # PapyrusUtil's StorageDataUtil
                 patchers.json_sud_patcher(basename, new_file, form_id_map)
