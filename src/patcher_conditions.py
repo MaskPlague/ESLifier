@@ -33,9 +33,11 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, encod
         elif new_file_lower.endswith('rememberlockpickangle.ini'):                          # Remember Lockpicking Angle - Updated
             patchers.ini_rla_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'plugins\\experience\\' in new_file_lower:                                     # Experience
-            patchers.ini_exp_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+            patchers.ini_exp_knt_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\lightplacer\\' in new_file_lower:                                           # Light Placer
             patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+        elif '\\knotwork\\' in new_file_lower:                                              # Knotwork
+            patchers.ini_exp_knt_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('\\simpleedgeremoverng.ini'):                          # Simple Edge Glow Remover NG
             patchers.ini_vc_ser_patcher(basename, form_id_map, encoding_method=encoding)
         else:                                                                               
@@ -46,6 +48,8 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, encod
         if new_file_lower.endswith(('config.json', 'user.json')) and 'animationreplacer\\' in new_file_lower: # Open Animation Replacer
             patchers.json_oar_patcher(basename, new_file, form_id_map)
         elif new_file_lower.endswith(('config.json', 'keybinds.json')) and 'mcm\\config' in new_file_lower: # MCM helper
+            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
+        elif new_file_lower.endswith('_srd.json'):                                          # Sound Record Distributor JSON
             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
         elif '\\storageutildata\\' in new_file_lower:                                       # PapyrusUtil's StorageDataUtil
             patchers.json_sud_patcher(basename, new_file, form_id_map)
@@ -119,7 +123,7 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, encod
             patchers.toml_avg_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         else:
             print(f'Warn: Possible missing patcher for: {new_file}')
-    elif new_file_lower.endswith('_srd.yaml'):                                              # Sound record distributor
+    elif new_file_lower.endswith('_srd.yaml'):                                              # Sound record distributor YAML
         patchers.srd_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     elif new_file_lower.endswith('.psc'):                                                   # Script source file patching, this doesn't take into account form ids being passed as variables
         patchers.psc_patcher(basename, new_file, form_id_map)
