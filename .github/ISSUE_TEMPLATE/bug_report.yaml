@@ -14,11 +14,11 @@ body:
           required: true
       
   - type: checkboxes
-    id: not-already-fixed-on-new-version
+    id: latest-version
     attributes:
-      label: Has the issue already been fixed?
-      options:
-        - label: I have verified that the issue is present or not fixed in the latest version.
+      label: Are you on the latest version?
+      options: I have double checked that I am on the latest version of ESLifier.
+        - label: 
           required: true
 
   - type: textarea
@@ -37,7 +37,8 @@ body:
     attributes:
       label: Provide Relevant Files
       description: |
-        If it is an issue with ESLifier crashing the ESLifier.log file should be submitted.
+        General issues need to provide the ESLifier.log located in the ESLifier_Data folder. Make sure the log is not empty and contains the issue.
+        Note that the log is reset each time ESLifier is started.
         If you want you can include the entire ESLifier_Data folder zipped.
       placeholder: |
         ESLifier.log 
