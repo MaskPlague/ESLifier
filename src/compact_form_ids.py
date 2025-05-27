@@ -9,6 +9,7 @@ import struct
 from file_patchers import patchers
 from intervaltree import IntervalTree
 from full_form_processor import form_processor
+import patcher_conditions
 
 import platform
 import psutil
@@ -28,15 +29,15 @@ else:
 class CFIDs():
     def compact_and_patch(file_to_compact, dependents, skyrim_folder_path, output_folder_path,
                           output_folder_name, overwrite_path, update_header, mo2_mode, bsab,
-                          all_dependents_have_skyrim_esm_as_master, create_cell_master, add_cell_to_master):
+                          all_dependents_have_skyrim_esm_as_master, create_cell_master_class, add_cell_to_master):
         CFIDs.lock = threading.Lock()
         CFIDs.semaphore = threading.Semaphore(1000)
         CFIDs.compacted_and_patched = {}
         CFIDs.mo2_mode = mo2_mode
         CFIDs.output_folder_name = output_folder_name
         CFIDs.overwrite_path = os.path.normpath(overwrite_path)
-        CFIDs.create_cell_master = create_cell_master
-        CFIDs.generate_cell_master = add_cell_to_master
+        CFIDs.create_cell_master_class = create_cell_master_class
+        CFIDs.do_generate_cell_master = add_cell_to_master
         print(f"Compacting Plugin: {os.path.basename(file_to_compact)}...")
         CFIDs.compact_file(file_to_compact, skyrim_folder_path, output_folder_path, update_header, all_dependents_have_skyrim_esm_as_master)
         files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
@@ -105,8 +106,8 @@ class CFIDs():
                 if len(to_rename) > 20:
                     print('\n')
                 CFIDs.rename_files_threader(file_to_compact, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
-        if CFIDs.generate_cell_master:
-            CFIDs.create_cell_master.finalize_plugin()
+        if CFIDs.do_generate_cell_master:
+            CFIDs.create_cell_master_class.finalize_plugin()
         CFIDs.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json')
         if os.path.exists('bsa_extracted_temp/'):
             print('-  Deleting temporarily Extracted FaceGen/Voice Files...')
@@ -378,143 +379,7 @@ class CFIDs():
                                 print(e)
             except Exception as e:
                 print(f'!Error: Failed to patch file: {new_file}')
-                print(e)    
-
-    def patch_file_conditions(master, rel_path, new_file_lower, new_file, basename, form_id_map, encoding):
-        if new_file_lower.endswith('.ini'):
-            if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini', '_enbl.ini',     # PO3's SPID, KID, BOS, ENBL
-                                        '_desc.ini', '_flm.ini', '_llos.ini', '_ipm.ini', '_mus.ini')): # Description Framework, FLM, LLOS, IPM, MTD
-                patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif 'seasons\\' in new_file_lower:                                                 # Po3's Seasons of Skyrim
-                patchers.ini_season_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif 'payloadinterpreter\\' in new_file_lower:                                      # Payload Interpreter
-                patchers.ini_pi_dtry_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif 'dtrykeyutil\\' in new_file_lower:                                             # DtryKeyUtil
-                patchers.ini_pi_dtry_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif 'muimpactframework\\' in new_file_lower or 'muskeletoneditor\\' in new_file_lower: # MU
-                patchers.ini_mu_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif '\\poisebreaker' in new_file_lower:                                            # Poise Breaker
-                patchers.ini_pb_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif 'skypatcher\\' in new_file_lower:                                              # Sky Patcher
-                patchers.ini_sp_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif 'valhallacombat\\' in new_file_lower:                                          # Valhalla Combat
-                patchers.ini_vc_ser_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif '\\autobody\\' in new_file_lower:                                              # AutoBody
-                patchers.ini_ab_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif 'vsu\\' in new_file_lower:                                                     # VSU
-                patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif 'completionistdata\\' in new_file_lower:                                       # Completionist
-                patchers.ini_completionist_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif 'kreate\\presets' in new_file_lower:                                           # KreatE
-                patchers.ini_kreate_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif new_file_lower.endswith(('thenewgentleman.ini', 'thenewgentleman5.ini', '_tng.ini')): # The New Gentleman
-                patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif new_file_lower.endswith('rememberlockpickangle.ini'):                          # Remember Lockpicking Angle - Updated
-                patchers.ini_rla_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif 'plugins\\experience\\' in new_file_lower:                                     # Experience
-                patchers.ini_exp_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif '\\lightplacer\\' in new_file_lower:                                           # Light Placer
-                patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif new_file_lower.endswith('\\simpleedgeremoverng.ini'):                          # Simple Edge Glow Remover NG
-                patchers.ini_vc_ser_patcher(basename, form_id_map, encoding_method=encoding)
-            else:                                                                               
-                print(f'Warn: Possible missing patcher for: {new_file}')
-        elif new_file_lower.endswith('_conditions.txt'):                                        # Dynamic Animation Replacer
-            patchers.dar_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-        elif new_file_lower.endswith('.json'):
-            if new_file_lower.endswith(('config.json', 'user.json')) and 'animationreplacer\\' in new_file_lower: # Open Animation Replacer
-                patchers.json_oar_patcher(basename, new_file, form_id_map)
-            elif new_file_lower.endswith(('config.json', 'keybinds.json')) and 'mcm\\config' in new_file_lower: # MCM helper
-                patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
-            elif '\\storageutildata\\' in new_file_lower:                                       # PapyrusUtil's StorageDataUtil
-                patchers.json_sud_patcher(basename, new_file, form_id_map)
-            elif '\\dynamicstringdistributor\\' in new_file_lower:                              # Dynamic String Distributor
-                patchers.json_dsd_patcher(basename, new_file, form_id_map)
-            elif '\\dkaf\\' in new_file_lower:                                                  # Dynamic Key Activation Framework NG
-                patchers.json_dkaf_patcher(basename, new_file, form_id_map)
-            elif '\\dynamicarmorvariants\\' in new_file_lower:                                  # Dynamic Armor Variants
-                patchers.json_dav_patcher(basename, new_file, form_id_map)
-            elif '\\ied\\' in new_file_lower:                                                   # Immersive Equipment Display
-                patchers.json_ied_patcher(basename, new_file, form_id_map)
-            elif '\\creatures.d\\' in new_file_lower:                                           # Creature Framework
-                patchers.json_cf_sr_patcher(basename, new_file, form_id_map)
-            elif '\\spell research\\' in new_file_lower or '\\spellresearch' in new_file_lower: # Spell Research
-                patchers.json_cf_sr_patcher(basename, new_file, form_id_map)
-            elif '\\inventoryinjector\\' in new_file_lower:                                     # Inventory Injector
-                patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
-            elif '\\customskills\\' in new_file_lower or new_file_lower.endswith('\\metaskillsmenu\\rawdata.json'): # Custom Skills Framework
-                patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
-            elif 'plugins\\rain extinguishes fires\\' in new_file_lower:                        # Rain Extinguishes Fires
-                patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
-            elif '\\coreimpactframework\\' in new_file_lower:                                   # Core Impact Framework
-                patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, ':')
-            elif 'plugins\\objectimpactframework' in new_file_lower:                            # Object Impact Framework
-                patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, ':')
-            elif '\\skyrimunbound\\' in new_file_lower:                                         # Skyrim Unbound
-                patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
-            elif '\\playerequipmentmanager\\' in new_file_lower:                                # Player Equipment Manager
-                patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
-            elif '\\mapmarkers\\' in new_file_lower:                                            # CoMAP
-                patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
-            elif new_file_lower.endswith('obody_presetdistributionconfig.json'):                # OBody NG
-                patchers.json_obody_patcher(basename, new_file, form_id_map)
-            elif os.path.basename(new_file_lower).startswith('shse.'):                          # Smart Harvest
-                patchers.json_shse_patcher(basename, new_file, form_id_map)
-            elif 'plugins\\rcs\\' in new_file_lower:                                            # Race Compatibility SKSE
-                patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
-            elif 'plugins\\perkadjuster' in new_file_lower:                                     # Perk Adjuster
-                patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
-            elif 'plugins\\ostim\\' in new_file_lower:                                          # OStim
-                patchers.json_ostim_patcher(basename, new_file, form_id_map)
-            elif os.path.basename(new_file_lower) == 'sexlabconfig.json':                       # SL MCM Generated config
-                patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
-            elif 'sexlab\\expression_' in new_file_lower:                                       # SL expressions
-                patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
-            elif 'sexlab\\animations' in new_file_lower:                                        # SL animations?
-                if not new_file_lower.endswith('arrokreversecowgirl.json'):
-                    patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map, int_type=True)
-            elif 'configs\\dse-soulgem-oven' in new_file_lower:                                 # SoulGem Oven
-                patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
-            elif 'configs\\dse-display-model' in new_file_lower:                                # dse-display-model
-                patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map, int_type=True)
-            elif 'plugins\\ypsfashion\\' in new_file_lower:                                     # Immersive Hair Growth and Styling
-                patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map, int_type=True)
-            elif 'plugins\\skyrim - utility mod\\' in new_file_lower:                           # Inte's Skyrim - Utility Mod
-                patchers.json_sum_patcher(basename, new_file, form_id_map)
-            else:
-                print(f'Warn: Possible missing patcher for: {new_file}')
-        elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
-            patchers.pex_patcher(basename, new_file, form_id_map)
-        elif new_file_lower.endswith('.toml'):
-            if '\\_dynamicanimationcasting\\' in new_file_lower:                                # Dynamic Animation Casting (Original/NG)
-                patchers.toml_dac_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif '\\precision\\' in new_file_lower:                                             # Precision
-                patchers.toml_precision_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif '\\loki_poise\\' in new_file_lower:                                            # Loki Poise
-                patchers.toml_loki_tdm_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif '\\truedirectionalmovement\\' in new_file_lower:                               # TDM
-                patchers.toml_loki_tdm_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            elif new_file_lower.endswith('_avg.toml'):                                          # Actor Value Generator
-                patchers.toml_avg_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-            else:
-                print(f'Warn: Possible missing patcher for: {new_file}')
-        elif new_file_lower.endswith('_srd.yaml'):                                              # Sound record distributor
-            patchers.srd_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-        elif new_file_lower.endswith('.psc'):                                                   # Script source file patching, this doesn't take into account form ids being passed as variables
-            patchers.psc_patcher(basename, new_file, form_id_map)
-        elif 'facegeom' in new_file_lower and new_file_lower.endswith('.nif'):                  # FaceGeom mesh patching
-            patchers.facegeom_mesh_patcher(basename, new_file, form_id_map)
-        elif new_file_lower.endswith('.seq'):                                                   # SEQ file patching
-            patchers.seq_patcher(new_file, form_id_map)
-        elif new_file_lower.endswith('.jslot'):                                                 # Racemenu Presets
-            patchers.jslot_patcher(basename, new_file, form_id_map)
-        elif new_file_lower.endswith('config.txt') and 'plugins\\customskill' in new_file_lower: # CSF's old txt format
-            patchers.old_customskill_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-        else:
-            print(f'Warn: Possible missing patcher for: {new_file}')
-
-        CFIDs.compacted_and_patched[os.path.basename(master)].append(rel_path)
-            
+                print(e)      
 
     def decompress_data(data_list):
         sizes_list = [[] for _ in range(len(data_list))]
@@ -621,8 +486,8 @@ class CFIDs():
         master_count, has_skyrim_esm_master = CFIDs.get_master_count(data_list)
 
         data_list, sizes_list = CFIDs.decompress_data(data_list)
-        if CFIDs.generate_cell_master:
-            new_cell_form_ids = CFIDs.create_cell_master.add_cells(data_list, grup_struct, master_count)
+        if CFIDs.do_generate_cell_master:
+            new_cell_form_ids = CFIDs.create_cell_master_class.add_cells(data_list, grup_struct, master_count)
             data_list = CFIDs.add_cell_master_to_masters(data_list)
 
         form_id_list = []
@@ -685,7 +550,7 @@ class CFIDs():
                 _, new_id = new_form_ids.pop(0)
                 form_id_replacements.append([form_id, new_id])
 
-        if CFIDs.generate_cell_master:
+        if CFIDs.do_generate_cell_master:
             for old_id, new_id in new_cell_form_ids:
                 copy = form_id_replacements.copy()
                 for replacement in copy:
@@ -700,8 +565,8 @@ class CFIDs():
 
         form_id_replacements_no_master_byte = [[old_id[:3], new_id[:3]] if len(new_id) <= 4 else [old_id[:3], new_id[:4]] for old_id, new_id in form_id_replacements]
 
-        data_list = form_processor.patch_form_data(data_list, saved_forms, form_id_replacements_no_master_byte,
-                                                    master_byte, [form_id for form_id, _ in form_id_list])
+        data_list = form_processor.patch_form_data(data_list, saved_forms, form_id_replacements_no_master_byte, master_byte, 
+                                                   [form_id for form_id, _ in form_id_list], CFIDs.do_generate_cell_master)
 
         data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
 
@@ -764,7 +629,7 @@ class CFIDs():
                 master_byte = master_index.to_bytes()
 
                 saved_forms = form_processor.save_all_form_data(data_list)
-                
+
                 for i in range(len(form_id_file_data)):
                     form_id_conversion = form_id_file_data[i].split('|')
                     from_id = bytes.fromhex(form_id_conversion[0])[:3]
