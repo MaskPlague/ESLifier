@@ -3,6 +3,7 @@ try:
 except ImportError:
     import re
 import json
+import json5
 import os
 
 class patchers():    
@@ -378,21 +379,28 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
-    def ini_exp_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def ini_exp_knt_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             patch_following = False
             for i, line in enumerate(lines):
-                if line.startswith('[') and basename in line.lower():
+                if line.startswith('[') and '['+basename+']' in line.lower():
                     patch_following = True
                 elif line.startswith('['):
                     patch_following = False
-                if patch_following and line.startswith('00'):
+                if patch_following and line.startswith('00') or line.lower().startswith('0x'):
                     index = line.index('=')
                     form_id_int = int(line[:index], 16)
+                    if line.lower().startswith('0x'):
+                        ox = True
+                    else:
+                        ox = False
                     for form_ids in form_id_map:
                         if form_id_int == int(form_ids[0], 16):
-                            lines[i] = '00' + form_ids[3] + line[index-1:]
+                            if not ox:
+                                lines[i] = '00' + form_ids[3] + line[index-1:]
+                            else:
+                                lines[i] = '0x' + form_ids[3] + line[index-1:]
                             break
             f.seek(0)
             f.truncate(0)
@@ -707,7 +715,7 @@ class patchers():
             except:
                 f.seek(0)
                 string = f.read()
-                data = patchers.remove_trailing_commas_from_json(string)
+                data = patchers.use_json5(string)
             json_dict = patchers.extract_values_and_keys(data)
             ox = False
             for path, value in json_dict:
@@ -724,7 +732,7 @@ class patchers():
                                 if not ox:
                                     data = patchers.change_json_element(data, path, plugin + symbol + form_ids[2])
                                 else:
-                                    data = patchers.change_json_element(data, path, plugin + symbol +'0x' + form_ids[2])
+                                    data = patchers.change_json_element(data, path, plugin + symbol + '0x' + form_ids[2])
                                 break
             f.seek(0)
             f.truncate(0)
@@ -738,7 +746,7 @@ class patchers():
             except:
                 f.seek(0)
                 string = f.read()
-                data = patchers.remove_trailing_commas_from_json(string)
+                data = patchers.use_json5(string)
             json_dict = patchers.extract_values_and_keys(data)
             for path, value in json_dict:
                 if type(value) is str and '|' in value:
@@ -779,7 +787,7 @@ class patchers():
             except:
                 f.seek(0)
                 string = f.read()
-                data = patchers.remove_trailing_commas_from_json(string)
+                data = patchers.use_json5(string)
             json_dict = patchers.extract_values_and_keys(data)
             plugin = False
             for path, value in json_dict:
@@ -805,7 +813,7 @@ class patchers():
             except:
                 f.seek(0)
                 string = f.read()
-                data = patchers.remove_trailing_commas_from_json(string)
+                data = patchers.use_json5(string)
             json_dict = patchers.extract_values_and_keys(data)
             for path, value in json_dict:
                 if type(value) is str and '|' in value:
@@ -839,7 +847,7 @@ class patchers():
             except:
                 f.seek(0)
                 string = f.read()
-                data = patchers.remove_trailing_commas_from_json(string)
+                data = patchers.use_json5(string)
             json_dict = patchers.extract_values_and_keys(data)
             for path, value in json_dict:
                 if len(path) > 2 and type(path[-3]) is str and basename == path[-3].lower():
@@ -867,7 +875,7 @@ class patchers():
             except:
                 f.seek(0)
                 string = f.read()
-                data = patchers.remove_trailing_commas_from_json(string)
+                data = patchers.use_json5(string)
             json_dict = patchers.extract_values_and_keys(data)
             for path, value in json_dict:
                 if type(value) is str and '|' + basename in value.lower():
@@ -979,7 +987,7 @@ class patchers():
             except:
                 f.seek(0)
                 string = f.read()
-                data = patchers.remove_trailing_commas_from_json(string)
+                data = patchers.use_json5(string)
             json_dict = patchers.extract_values_and_keys(data)
             plugin = False
             for path, value in json_dict:
@@ -1004,7 +1012,7 @@ class patchers():
             except:
                 f.seek(0)
                 string = f.read()
-                data = patchers.remove_trailing_commas_from_json(string)
+                data = patchers.use_json5(string)
             json_dict = patchers.extract_values_and_keys(data)
             for path, value in json_dict:
                 if path[-1] == 'form_id':
@@ -1028,7 +1036,7 @@ class patchers():
             except:
                 f.seek(0)
                 string = f.read()
-                data = patchers.remove_trailing_commas_from_json(string)
+                data = patchers.use_json5(string)
             json_dict = patchers.extract_values_and_keys(data)
             for path, value in json_dict:
                 if type(value) is str and '|' in value:
@@ -1052,7 +1060,7 @@ class patchers():
             except:
                 f.seek(0)
                 string = f.read()
-                data = patchers.remove_trailing_commas_from_json(string)
+                data = patchers.use_json5(string)
             json_dict = patchers.extract_values_and_keys(data)
             for path, value in json_dict:
                 if len(path) > 2 and type(path[-2]) is str and 'replace' in path[-2]:
@@ -1085,7 +1093,7 @@ class patchers():
             except:
                 f.seek(0)
                 string = f.read()
-                data = patchers.remove_trailing_commas_from_json(string)
+                data = patchers.use_json5(string)
             json_dict = patchers.extract_values_and_keys(data)
             for path, value in json_dict:
                 if type(value) is str and '__formdata' in value.lower():
@@ -1109,7 +1117,7 @@ class patchers():
             except:
                 f.seek(0)
                 string = f.read()
-                data = patchers.remove_trailing_commas_from_json(string)
+                data = patchers.use_json5(string)
             json_dict = patchers.extract_values_and_keys(data)
             form_id_int = 0
             form_id_path = []
@@ -1134,7 +1142,7 @@ class patchers():
             except:
                 f.seek(0)
                 string = f.read()
-                data = patchers.remove_trailing_commas_from_json(string)
+                data = patchers.use_json5(string)
             json_dict = patchers.extract_values_and_keys(data)
             plugin = False
             for path, value in json_dict:
@@ -1153,12 +1161,8 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def remove_trailing_commas_from_json(json_string):
-        try:
-            return json.loads(json_string)
-        except json.JSONDecodeError as e:
-            json_string = re.sub(r',\s*([\]}])', r'\1', json_string)
-            return json.loads(json_string)
+    def use_json5(json_string):
+        return json5.loads(json_string)
 
     def extract_values_and_keys(json_data, path=[]):
         results = []
