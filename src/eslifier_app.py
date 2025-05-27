@@ -13,7 +13,7 @@ from main_page import main
 from patch_new_page import patch_new
 from log_stream import log_stream
 
-CURRENT_VERSION = '0.9.7'
+CURRENT_VERSION = '0.9.8'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
@@ -51,7 +51,6 @@ def luhn_checksum(data: bytes) -> int:
     return (256 - (total % 256)) % 256
 
 def connection_result(is_latest, latest_version):
-    print(is_latest)
     if not is_latest:
         QMessageBox.warning(None, 'ESLifier Outdated', f"There exists a new version of ESLifier (v{latest_version}).\n"\
                                                         "It is recommended to update as it could contain critical changes,\n"\
