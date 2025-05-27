@@ -251,7 +251,7 @@ class scanner():
                             mod_files[relative_path].append(mod_folder)
                             if file.lower().endswith(plugin_extensions):
                                 plugin_names.append(file)
-                            if file.lower().endswith('.bsa') and root_level == mod_folder_level and file.lower() not in scanner.bsa_blacklist:
+                            if root_level == mod_folder_level and file.lower().endswith('.bsa') and file.lower() not in scanner.bsa_blacklist:
                                 file = file[:-4]
                                 if ' - textures' in file.lower():
                                     index = file.lower().index(' - textures')
