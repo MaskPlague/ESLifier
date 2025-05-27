@@ -17,8 +17,8 @@ body:
     id: latest-version
     attributes:
       label: Are you on the latest version?
-      options: I have double checked that I am on the latest version of ESLifier.
-        - label: 
+      options: 
+        - label: I have double checked that I am on the latest version of ESLifier.
           required: true
 
   - type: textarea
