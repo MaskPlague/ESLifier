@@ -25,6 +25,7 @@ class patch_new(QWidget):
         self.mo2_mode = False
         self.update_header = True
         self.scanned = False
+        self.generate_cell_master = False
         self.create()
 
     def create(self):
@@ -86,7 +87,7 @@ class patch_new(QWidget):
         def run_scan():
             self.log_stream.show()
             self.thread_new = QThread()
-            self.worker = Worker(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.plugins_txt_path, self.overwrite_path, self.bsab, self.update_header)
+            self.worker = ScannerWorker(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.plugins_txt_path, self.overwrite_path, self.bsab, self.update_header)
             self.worker.moveToThread(self.thread_new)
             self.thread_new.started.connect(self.worker.scan_run)
             self.worker.finished_signal.connect(self.completed_scan)
@@ -211,8 +212,8 @@ class patch_new(QWidget):
             self.setEnabled(False)
             self.log_stream.show()
             self.thread_new = QThread()
-            self.worker = Worker2(checked, self.list_unpatched_files.dependencies_dictionary, self.list_unpatched_files.file_dictionary, self.skyrim_folder_path,
-                                  self.output_folder_path, self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode)
+            self.worker = PatchNewWorker(checked, self.list_unpatched_files.dependencies_dictionary, self.list_unpatched_files.file_dictionary, self.skyrim_folder_path,
+                                  self.output_folder_path, self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.generate_cell_master)
             self.worker.moveToThread(self.thread_new)
             self.thread_new.started.connect(self.worker.patch)
             self.worker.finished_signal.connect(lambda x = checked: self.finished_patching(x))
@@ -231,7 +232,7 @@ class patch_new(QWidget):
         self.setEnabled(True)
 
 
-class Worker(QObject):
+class ScannerWorker(QObject):
     finished_signal = pyqtSignal()
     def __init__(self, path, mo2_mode, modlist_txt_path, plugins_txt_path, overwrite_path, bsab, update):
         super().__init__()
@@ -251,10 +252,10 @@ class Worker(QObject):
         dependecy_getter.scan(self.skyrim_folder_path)
         self.finished_signal.emit()
 
-class Worker2(QObject):
+class PatchNewWorker(QObject):
     finished_signal = pyqtSignal()
     def __init__(self, files, dependencies_dictionary, file_dictionary, skyrim_folder_path, output_folder_path, 
-                 output_folder_name, overwrite_path, update_header, mo2_mode):
+                 output_folder_name, overwrite_path, update_header, mo2_mode, generate_cell_master):
         super().__init__()
         self.files = files
         self.dependencies_dictionary = dependencies_dictionary
@@ -265,6 +266,7 @@ class Worker2(QObject):
         self.overwrite_path = overwrite_path
         self.update_header = update_header
         self.mo2_mode = mo2_mode
+        self.generate_cell_master = generate_cell_master
 
     def patch(self):
         total = len(self.files)
@@ -277,7 +279,7 @@ class Worker2(QObject):
             if file in self.dependencies_dictionary:
                 dependents = self.dependencies_dictionary[file]
             CFIDs.patch_new(file, dependents, self.file_dictionary, self.skyrim_folder_path, self.output_folder_path,
-                            self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode)
+                            self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.generate_cell_master)
         self.finished_signal.emit()
 
 

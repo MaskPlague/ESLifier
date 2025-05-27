@@ -156,7 +156,6 @@ class settings(QWidget):
             "(not sure how useful this might be for the amount of effort it is)",
             "generate_cell_master"            
         )
-        self.generate_cell_master_widget.setDisabled(True)
         
 
         self.set_init_widget_values()
@@ -209,7 +208,9 @@ class settings(QWidget):
         column_2.addWidget(self.colors_select_widget)
         column_2.addWidget(self.reset_settings_widget)
         column_2.addWidget(self.generate_cell_master_widget)
-        self.generate_cell_master_toggle.setChecked(False)
+
+        #self.generate_cell_master_widget.setDisabled(True)
+        #self.generate_cell_master_toggle.setChecked(False)
 
         settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 

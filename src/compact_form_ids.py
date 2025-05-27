@@ -180,13 +180,14 @@ class CFIDs():
                 f.close()
 
     def patch_new(compacted_file, dependents, files_to_patch, skyrim_folder_path, output_folder_path, 
-                  output_folder_name, overwrite_path, update_header, mo2_mode):
+                  output_folder_name, overwrite_path, update_header, mo2_mode, add_cell_to_master):
         CFIDs.lock = threading.Lock()
         CFIDs.semaphore = threading.Semaphore(1000)
         CFIDs.compacted_and_patched = {}
         CFIDs.mo2_mode = mo2_mode
         CFIDs.output_folder_name = output_folder_name
         CFIDs.overwrite_path = os.path.normpath(overwrite_path)
+        CFIDs.do_generate_cell_master = add_cell_to_master
         print('Patching new plugins and files for ' + compacted_file + '...')
         CFIDs.compacted_and_patched[compacted_file] = []
         if dependents != []:
@@ -369,14 +370,15 @@ class CFIDs():
                 with CFIDs.semaphore:
                     with CFIDs.lock:
                         try:
-                            CFIDs.patch_file_conditions(master, rel_path, new_file_lower, new_file, basename, form_id_map, 'utf-8')
+                            patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, form_id_map, 'utf-8')
                         except Exception as e:
                             exception_type = type(e)
                             if exception_type == UnicodeDecodeError:
-                                CFIDs.patch_file_conditions(master, rel_path, new_file_lower, new_file, basename, form_id_map, 'ansi')
+                                patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, form_id_map, 'ansi')
                             else:
                                 print(f'!Error: Failed to patch file: {new_file}')
                                 print(e)
+                        CFIDs.compacted_and_patched[os.path.basename(master)].append(rel_path)
             except Exception as e:
                 print(f'!Error: Failed to patch file: {new_file}')
                 print(e)      
@@ -626,7 +628,18 @@ class CFIDs():
 
                 master_index = CFIDs.get_master_index(file, data_list)
 
-                master_byte = master_index.to_bytes()
+                master_index_byte = master_index.to_bytes()
+
+                form_id_list = []
+                master_byte = b''
+                if CFIDs.do_generate_cell_master:
+                    #Get all new form ids in plugin
+                    for form in data_list:
+                        if form[:4] not in (b'GRUP', b'TES4') and form[15] >= master_index and form[12:16] not in form_id_list:
+                            form_id_list.append(form[12:16])
+                    master_byte = CFIDs.get_master_count(data_list)[0].to_bytes()
+                    #updated_master_byte = (int.from_bytes(master_index_byte) + 1).to_bytes()
+                    data_list = CFIDs.add_cell_master_to_masters(data_list)
 
                 saved_forms = form_processor.save_all_form_data(data_list)
 
@@ -634,13 +647,14 @@ class CFIDs():
                     form_id_conversion = form_id_file_data[i].split('|')
                     from_id = bytes.fromhex(form_id_conversion[0])[:3]
                     id = bytes.fromhex(form_id_conversion[1])
-                    if len(id) == 4:
-                        to_id = id[:3]
+                    if len(id) > 4 and CFIDs.do_generate_cell_master:
+                        to_id = id[:3] + master_byte
                     else:
-                        to_id = id[:4]
+                        to_id = id[:3]
                     form_id_replacements.append([from_id, to_id])
-                #TODO: need to add eslifier_cell_masters,esm a master :/ and then have the patch target the cell there
-                data_list = form_processor.patch_form_data_dependent(data_list, saved_forms, form_id_replacements, master_byte)
+                
+                data_list = form_processor.patch_form_data_dependent(data_list, saved_forms, form_id_replacements, master_index_byte, master_byte,
+                                                                    form_id_list, CFIDs.do_generate_cell_master)
 
                 data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
                 
