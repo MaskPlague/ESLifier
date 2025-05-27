@@ -1,3 +1,4 @@
+import os
 from file_patchers import patchers
 
 def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, encoding):
@@ -86,7 +87,7 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, encod
             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
         elif 'plugins\\ostim\\' in new_file_lower:                                          # OStim
             patchers.json_ostim_patcher(basename, new_file, form_id_map)
-        elif os.path.basename(new_file_lower) == 'sexlabconfig.json':                       # SL MCM Generated config
+        elif new_file_lower.endswith('sexlabconfig.json'):                                  # SL MCM Generated config
             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
         elif 'sexlab\\expression_' in new_file_lower:                                       # SL expressions
             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
