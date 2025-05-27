@@ -12,18 +12,6 @@ body:
       options:
         - label: I have verified that there are no open duplicate issues.
           required: true
-
-  - type: dropdown
-    id: version
-    attributes:
-      label: What version of ESLifier are you using?
-      options:
-        - Other (Specify in Description)
-        - 0.9.7
-        - 0.9.6
-        - 0.9.5
-    validations:
-      required: true
       
   - type: checkboxes
     id: not-already-fixed-on-new-version
