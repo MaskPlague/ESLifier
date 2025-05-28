@@ -86,6 +86,8 @@ class patchers():
                     integer_variable = data[offset+2:offset+5]
                     for form_ids in form_id_map:
                         if integer_variable == form_ids[4][::-1][1:]:
+                            if form_ids[6]:
+                                print(f'~Inelligble: {basename} | {new_file}')
                             data[offset+2:offset+5] = form_ids[5][::-1][1:]
                             offset += 6
                             break
@@ -126,6 +128,8 @@ class patchers():
                         for int_offset, integer in array['integers']:
                             for form_ids in form_id_map:
                                 if integer == form_ids[4][::-1][1:]:
+                                    if form_ids[6]:
+                                        print(f'~Inelligble: {basename} | {new_file}')
                                     data[int_offset:int_offset+3] = form_ids[5][::-1][1:]
                                     break
             data = bytes(data)
@@ -137,6 +141,7 @@ class patchers():
     def ini_season_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
+            print_replace = True
             for i, line in enumerate(lines):
                 if not ';' in line and basename in line.lower():
                     index_1 = line.find('~')
@@ -146,19 +151,36 @@ class patchers():
                     plugin_2 = line[index_3+1:]
                     form_id_1 = line[:index_1]
                     form_id_2 = line[index_2+1:index_3]
+                    replace_1 = False
+                    replace_2 = False
                     if basename == plugin_1.lower().strip():
                         form_id_int_1 = int(form_id_1, 16)
                         for form_ids in form_id_map:
                             if form_id_int_1 == int(form_ids[0], 16): 
+                                if form_ids[6]:
+                                    replace_1 = True
                                 form_id_1 = '0x' + form_ids[2]
                                 break
                     if basename == plugin_2.lower().strip():
                         form_id_int_2 = int(form_id_2, 16)
                         for form_ids in form_id_map:
                             if form_id_int_2 == int(form_ids[0], 16):
+                                if form_ids[6]:
+                                    replace_2 = True
                                 form_id_2 = '0x' + form_ids[2]
                                 break
-                    lines[i] = form_id_1 + '~' + plugin_1 + '|' + form_id_2 + '~' + plugin_2
+
+                    if not replace_1 and not replace_2:
+                        lines[i] = form_id_1 + '~' + plugin_1 + '|' + form_id_2 + '~' + plugin_2
+                    elif replace_1 and not replace_2:
+                        lines[i] = form_id_1 + '~' + "ESLifier_Cell_Master.esm|" + form_id_2 + '~' + plugin_2
+                    elif not replace_1 and replace_2:
+                        lines[i] = form_id_1 + '~' + plugin_1 + '|' + form_id_2 + "~ESLifier_Cell_Master.esm" + '\n'
+                    else:
+                        lines[i] = form_id_1 + '~' + "ESLifier_Cell_Master.esm|" + form_id_2 + "~ESLifier_Cell_Master.esm" + '\n'
+                    if replace_1 or replace_2 and print_replace:
+                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                        print_replace = False
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -167,6 +189,7 @@ class patchers():
     def ini_pi_dtry_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
+            print_replace = True
             for i, line in enumerate(lines):
                 if basename in line.lower() and '|' in line and not line.startswith(';'):
                     end_index = line.rfind('|', 0, line.lower().index(basename))
@@ -176,11 +199,24 @@ class patchers():
                     form_id_int = int(line[start_index+1:end_index],16)
                     plugin = line[end_index+1:].strip().lower()
                     if '|' in plugin:
-                        plugin = plugin.split('|')[0].strip()
+                        split_string = plugin.split('|', 1)
+                        plugin = split_string[0].strip()
+                        end = '|' + split_string[1]
+                    else:
+                        end = ''
+                    if line.endswith('\n'):
+                        end += '\n'
+
                     if plugin == basename:
                         for form_ids in form_id_map:
                             if form_id_int == int(form_ids[0], 16):
-                                lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                if not form_ids[6]:
+                                    lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                else:
+                                    if print_replace:
+                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                        print_replace = False
+                                    lines[i] = start_of_line + '0x' + form_ids[2] + "|ESLifier_Cell_Master.esm" + end
                                 break
             f.seek(0)
             f.truncate(0)
@@ -190,6 +226,7 @@ class patchers():
     def ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
+            print_replace = True
             for i, line in enumerate(lines):
                 if basename in line.lower() and '~' in line and not line.startswith(';'):
                     count = line.lower().count('~')
@@ -213,7 +250,13 @@ class patchers():
                         if basename == plugin:
                             for form_ids in form_id_map:
                                 if form_id_int == int(form_ids[0], 16):
-                                    lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                    if not form_ids[6]:
+                                        lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                    else:
+                                        if print_replace:
+                                            print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                            print_replace = False
+                                        lines[i] = start_of_line + '0x' + form_ids[2] + "~ESLifier_Cell_Master.esm" + line[end_index:]
                                     break
             f.seek(0)
             f.truncate(0)
@@ -223,6 +266,7 @@ class patchers():
     def ini_mu_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
+            print_replace = True
             for i, line in enumerate(lines):
                 if basename in line.lower() and '|' in line and not line.startswith(';'):
                     count = line.lower().count('|')
@@ -240,7 +284,13 @@ class patchers():
                         if plugin == basename:
                             for form_ids in form_id_map:
                                 if form_id_int == int(form_ids[0], 16):
-                                    lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                    if not form_ids[6]:
+                                        lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                    else:
+                                        if print_replace:
+                                            print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                            print_replace = False
+                                        lines[i] = line[:start_index] + "ESLifier_Cell_Master.esm|" + '0x' + form_ids[2] + end_of_line
                                     break
             f.seek(0)
             f.truncate(0)
@@ -250,6 +300,7 @@ class patchers():
     def ini_sp_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
+            print_replace = True
             for i, line in enumerate(lines):
                 if basename in line.lower() and '|' in line and not line.startswith(';'):
                     count = line.lower().count('|')
@@ -264,8 +315,8 @@ class patchers():
                                 plugin_start_index = j + 1
                                 break
                         end_index = patchers.find_next_non_alphanumeric(line, middle_index+1)
-                        plugin = line.lower()[plugin_start_index:middle_index].strip()
-                        start_of_line = line[:middle_index+1]
+                        plugin = line[plugin_start_index:middle_index]
+                        start_of_line = line[:plugin_start_index]
                         end_of_line = line[end_index:]
                         form_id = line[middle_index+1:end_index]
                         if len(form_id) > 6:
@@ -276,10 +327,17 @@ class patchers():
                         try:
                             form_id_int = int(form_id, 16)
                             start = start_index+3
-                            if plugin == basename:
+                            if plugin.lower().strip() == basename:
                                 for form_ids in form_id_map:
                                     if form_id_int == int(form_ids[0], 16):
-                                        lines[i] = start_of_line + form_ids[2] + end_of_line
+                                        if not form_ids[6]:
+                                            lines[i] = start_of_line + plugin + '|' + form_ids[2] + end_of_line
+                                        else:
+                                            if print_replace:
+                                                print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                                print_replace = False
+                                            lines[i] = start_of_line + "ESLifier_Cell_Master.esm|" + form_ids[2] + end_of_line
+                                            start += len('ESLifier_Cell_Master.esm') - len(plugin)
                                         break
                         except:
                             start = start_index+3
@@ -287,33 +345,15 @@ class patchers():
             f.truncate(0)
             f.write(''.join(lines))
             f.close()
-    
-    def ini_pb_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
-        with open(new_file, 'r+', encoding=encoding_method) as f:
-            lines = f.readlines()
-            for i, line in enumerate(lines):
-                if basename in line.lower() and ':' in line and not line.startswith(';'):
-                    index = line.index(':')
-                    end_index = patchers.find_next_non_alphanumeric(line, index+1)
-                    start_of_line = line[:index+1]
-                    end_of_line = line[end_index:]
-                    form_id_int = int(line[index+1:end_index], 16)
-                    for form_ids in form_id_map:
-                        if form_id_int == int(form_ids[0], 16):
-                            lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
-                            break
-            f.seek(0)
-            f.truncate(0)
-            f.write(''.join(lines))
-            f.close()
 
-    def ini_vc_ser_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def ini_eq_plugin_sep_fid_patcher(basename, new_file, form_id_map, sep='|', encoding_method='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
+            print_replace = True
             for i, line in enumerate(lines):
-                if basename in line.lower() and '|' in line and '=' in line and not line.startswith(';'):
+                if basename in line.lower() and sep in line and '=' in line and not line.startswith(';'):
                     ox = False
-                    middle_index = line.index('|')
+                    middle_index = line.index(sep)
                     plugin_index = line.index('=') + 1
                     plugin = line[plugin_index:middle_index].lower().strip()
                     if plugin == basename:
@@ -324,25 +364,35 @@ class patchers():
                         if form_id.startswith('0x'):
                             ox = True
                         form_id_int = int(form_id, 16)
-                    
                         for form_ids in form_id_map:
                             if form_id_int == int(form_ids[0], 16):
                                 if ox:
-                                    lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                    if not form_ids[6]:
+                                        lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
+                                    else:
+                                        if print_replace:
+                                            print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                            print_replace = False   
+                                        lines[i] = line[:plugin_index+1] + "ESLifier_Cell_Master.esm" + sep +"0x" + form_ids[2] + end_of_line
                                 else:
-                                    lines[i] = start_of_line + form_ids[2] + end_of_line
+                                    if not form_ids[6]:
+                                        lines[i] = start_of_line + '00' + form_ids[3] + end_of_line
+                                    else:
+                                        if print_replace:
+                                            print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                            print_replace = False
+                                        lines[i] = line[:plugin_index+1] + "ESLifier_Cell_Master.esm" + sep + "00" + form_ids[3] + end_of_line
                                 break
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
             f.close()
 
-    #TODO: make stricter
     def ini_ab_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
-                if basename in line.lower() and '|' in line and not line.startswith(';'):
+                if line.lower().startswith(basename) and '|' in line and not line.startswith(';'):
                     middle_index = line.index('|')
                     end_index = patchers.find_next_non_alphanumeric(line, middle_index+1)
                     start_of_line = line[:middle_index+1]
@@ -407,6 +457,7 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
+    comp_print_warning = True
     def ini_completionist_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -443,11 +494,14 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
-    def comp_form_id_replacer(form_id, form_id_map):
+    def comp_form_id_replacer(form_id, form_id_map, basename):
         if '0x' in form_id.lower():
             form_id_int = int(form_id, 16)
             for form_ids in form_id_map:
                 if form_id_int == int(form_ids[0], 16):
+                    if form_ids[6] and patchers.comp_print_warning:
+                        print(f'~Inelligible: {basename} | A Completionist File')
+                        patchers.comp_print_warning = False
                     return '0x' + form_ids[3]
             return form_id
         else:
@@ -465,7 +519,7 @@ class patchers():
         else:
             form_id = variable
         if global_replace:
-            form_id = patchers.comp_form_id_replacer(form_id, form_id_map)
+            form_id = patchers.comp_form_id_replacer(form_id, form_id_map, basename)
             variable = form_id
             if var_end:
                 variable += variable_end
@@ -506,7 +560,7 @@ class patchers():
             plugin = form_id_string[index+1:end_index].strip()
             if plugin.lower() == basename:
                 form_id = form_id_string[:index]
-                form_id = patchers.comp_form_id_replacer(form_id, form_id_map)
+                form_id = patchers.comp_form_id_replacer(form_id, form_id_map, basename)
                 if add_end:
                     end = form_id_string[end_index:]
                     form_id_string = form_id + '*' + plugin + end
@@ -516,11 +570,11 @@ class patchers():
             end_index = form_id_string.index('<')
             form_id = form_id_string[:end_index]
             end = form_id_string[end_index:]
-            form_id = patchers.comp_form_id_replacer(form_id, form_id_map)
+            form_id = patchers.comp_form_id_replacer(form_id, form_id_map, basename)
             form_id_string = form_id + end
             
         elif global_replace:
-            form_id = patchers.comp_form_id_replacer(form_id_string, form_id_map)
+            form_id = patchers.comp_form_id_replacer(form_id_string, form_id_map, basename)
             form_id_string = form_id
             
         if has_comma:
@@ -557,6 +611,7 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
+    #TODO: Am here in adding name replacement
     def toml_dac_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
