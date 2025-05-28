@@ -6,7 +6,7 @@ import webbrowser
 
 from PyQt6.QtWidgets import QMainWindow, QTextEdit, QMessageBox, QProgressBar, QWidget, QVBoxLayout
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QIcon, QAction
+from PyQt6.QtGui import QIcon
 
 class log_stream(QMainWindow):
     def __init__(self, parent=None, version='0.0.0'):
