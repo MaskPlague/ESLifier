@@ -14,15 +14,15 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, encod
             patchers.ini_pi_dtry_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'muimpactframework\\' in new_file_lower or 'muskeletoneditor\\' in new_file_lower: # MU
             patchers.ini_mu_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-        elif '\\poisebreaker' in new_file_lower:                                            # Poise Breaker
-            patchers.ini_pb_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+        elif '\\poisebreaker_' in new_file_lower:                                            # Poise Breaker
+            patchers.ini_eq_plugin_sep_fid_patcher(basename, new_file, form_id_map, sep=':', encoding_method=encoding)
         elif 'skypatcher\\' in new_file_lower:                                              # Sky Patcher
             patchers.ini_sp_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'valhallacombat\\' in new_file_lower:                                          # Valhalla Combat
-            patchers.ini_vc_ser_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+            patchers.ini_eq_plugin_sep_fid_patcher(basename, new_file, form_id_map, sep='|', encoding_method=encoding)
         elif '\\autobody\\' in new_file_lower:                                              # AutoBody
             patchers.ini_ab_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-        elif 'vsu\\' in new_file_lower:                                                     # VSU
+        elif '\\vsu\\' in new_file_lower:                                                     # VSU
             patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'completionistdata\\' in new_file_lower:                                       # Completionist
             patchers.ini_completionist_patcher(basename, new_file, form_id_map, encoding_method=encoding)
@@ -36,10 +36,10 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, encod
             patchers.ini_exp_knt_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\lightplacer\\' in new_file_lower:                                           # Light Placer
             patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-        elif '\\knotwork\\' in new_file_lower:                                              # Knotwork
+        elif 'plugins\\knotwork\\' in new_file_lower:                                       # Knotwork
             patchers.ini_exp_knt_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('\\simpleedgeremoverng.ini'):                          # Simple Edge Glow Remover NG
-            patchers.ini_vc_ser_patcher(basename, form_id_map, encoding_method=encoding)
+            patchers.ini_eq_plugin_sep_fid_patcher(basename, new_file, form_id_map, sep='|',encoding_method=encoding)
         else:                                                                               
             print(f'Warn: Possible missing patcher for: {new_file}')
     elif new_file_lower.endswith('_conditions.txt'):                                        # Dynamic Animation Replacer
