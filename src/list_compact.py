@@ -298,7 +298,7 @@ class list_compactable(QTableWidget):
             invert_selection_action = menu.addAction("Invert Selection Checks")
             check_previously_compacted_action = menu.addAction("Check Previously Compacted")
             open_explorer_action = menu.addAction("Open in File Explorer")
-            add_to_blacklist_action = menu.addAction("Add Mod(s) to Blacklist")
+            add_to_blacklist_action = menu.addAction("Add Highlighted Mod(s) to Blacklist")
             action = menu.exec(self.viewport().mapToGlobal(position))
             if action == open_explorer_action:
                 self.open_in_explorer(selected_item)
