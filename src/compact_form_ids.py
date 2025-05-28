@@ -44,7 +44,7 @@ class CFIDs():
         if dependents != []:
             print(f"-  Patching {len(dependents)} Dependent Plugins...")
             CFIDs.patch_dependent_plugins(file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header, files_to_patch)
-        
+
         bsa_dict = CFIDs.get_from_file('ESLifier_Data/bsa_dict.json')
         name = os.path.basename(file_to_compact).lower()
         bsa_masters = []
@@ -321,16 +321,24 @@ class CFIDs():
             form_id_file_data = fidf.readlines()
         for form_id_history in form_id_file_data:
             form_id_conversion = form_id_history.split('|')
+            from_id_bytes = bytes.fromhex(form_id_conversion[0])                                        #4
 
-            from_id = bytes.fromhex(form_id_conversion[0])[::-1].hex()[2:].lstrip('0').upper()          #0
-            from_id_with_leading_0s = bytes.fromhex(form_id_conversion[0])[::-1].hex()[2:].upper()      #1
-            to_id = bytes.fromhex(form_id_conversion[1])[::-1].hex()[2:].lstrip('0').upper()            #2
+            from_id = from_id_bytes[::-1].hex()[2:].lstrip('0').upper()                                 #0
+            from_id_with_leading_0s = from_id_bytes[::-1].hex()[2:].upper()                             #1
+            to_id_bytes = bytes.fromhex(form_id_conversion[1])                                          #5
+
+            if len(to_id_bytes) == 4:
+                to_id = to_id_bytes[::-1].hex()[2:].lstrip('0').upper()                                 #2
+                to_id_with_leading_0s = to_id_bytes[::-1].hex()[2:].upper()                             #3
+                update_plugin_name = False                                                              #6
+            else:
+                to_id = to_id_bytes[::-1].hex()[4:].lstrip('0').upper()                                 #2
+                to_id_with_leading_0s = to_id_bytes[::-1].hex()[4:].upper()                             #3
+                update_plugin_name = True                                                               #6
+                
             if to_id == '': to_id = '0'
-            to_id_with_leading_0s = bytes.fromhex(form_id_conversion[1])[::-1].hex()[2:].upper()        #3
-            from_id_little_endian = bytes.fromhex(form_id_conversion[0])                                #4
-            to_id_little_endian = bytes.fromhex(form_id_conversion[1])                                  #5
-
-            form_id_map.append([from_id, from_id_with_leading_0s, to_id, to_id_with_leading_0s, from_id_little_endian, to_id_little_endian])
+            
+            form_id_map.append([from_id, from_id_with_leading_0s, to_id, to_id_with_leading_0s, from_id_bytes, to_id_bytes, update_plugin_name])
         return form_id_map
 
     def patch_files_threader(master, files, form_id_map, skyrim_folder_path, output_folder_path):
