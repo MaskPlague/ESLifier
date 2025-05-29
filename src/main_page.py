@@ -712,6 +712,7 @@ class CompactorWorker(QObject):
             if self.generate_cell_master:
                 flags = flag_dict[file]
                 generate_cell_master = False
+                #TODO: investigate why using only 'new_cell' causes xedit to load infinitely
                 if 'is_esm' in flags and 'new_cell' in flags:
                     generate_cell_master = True
             else:
