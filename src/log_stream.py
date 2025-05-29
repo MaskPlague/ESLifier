@@ -17,6 +17,7 @@ class log_stream(QMainWindow):
         self.center_on_parent()
         self.missing_patchers = []
         self.errors = []
+        self.ineligible = []
         self.text_edit = QTextEdit()
         self.text_edit.setReadOnly(True)
         self.text_edit.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
@@ -93,6 +94,10 @@ class log_stream(QMainWindow):
                     self.percentage = int(text[:pindex])
             else:
                 self.percentage = int(text[:pindex])
+        if text.startswith('~Ineligible:'):
+            ineligible = text[12:]
+            self.ineligible.append(ineligible)
+            pass
             
     def missing_patcher_warning(self):
         patcher_message = QMessageBox()
@@ -155,6 +160,25 @@ class log_stream(QMainWindow):
         github_button.clicked.connect(open_github)
         error_message.show()
         self.errors.clear()
+
+    def ineligible_warning(self):
+        eligibility_warning = QMessageBox()
+        eligibility_warning.setWindowTitle("Cell Master (Release Candidate) Patching Warning")
+        text = ("ESLifier has come across one or more pex files that are currently unpatchable.\n"+
+                "This is because there is currently no programmed method to replace a necessary\n"+
+                "plugin name with ESLifier_Cell_Master.esm. The errors show the plugin name\n"+
+                "that needs replacing and the pex file that isn't patched yet.\n\n")
+        count = 0
+        for line in self.errors:
+            count += 1
+            if count <= 10:
+                text += '\n' + line.strip()
+        if count > 10:
+            text += '\nand ' + str(count - 10) + ' more.'
+        eligibility_warning.setText(text)
+        eligibility_warning.addButton(QMessageBox.StandardButton.Ok)
+        self.ineligible.clear()
+
 
     def exception_hook(self, exc_type, exc_value, exc_traceback):
         self.crash = True
@@ -259,6 +283,8 @@ class log_stream(QMainWindow):
             self.missing_patcher_warning()
         if len(self.errors) > 0:
             self.error_warning()
+        if len(self.ineligible) > 0:
+            self.ineligible_warning()
     
     def clear_alt(self):
         if not self.crash:
