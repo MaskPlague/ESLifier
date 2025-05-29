@@ -432,7 +432,7 @@ class scanner():
                 level = overwrite_level
             else:
                 level = mod_folder_level
-            if file_level == level + 2 and file.lower().endswith(plugin_extensions):
+            if file_level == level + 2 and file.lower().endswith(plugin_extensions) and not file.endswith("ESLifier_Cell_Master.esm"):
                 plugin = os.path.join(os.path.dirname(file), plugin_names[plugin_names_lowered.index(os.path.basename(file.lower()))])
                 plugins.append(plugin)
         return_list = [winning_file for winning_file, _ in winning_files]
