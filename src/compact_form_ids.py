@@ -512,6 +512,8 @@ class CFIDs():
 
         form_id_list.sort(key= lambda x: struct.unpack('<I', x[0])[0])
 
+        all_form_ids_list = [form_id for form_id, record_type in form_id_list]
+
         if update_header and master_count != 0 and has_skyrim_esm_master and all_dependents_have_skyrim_esm_as_master:
             new_id = binascii.unhexlify(master_count.to_bytes().hex() + '000000')
             new_range = 4096
@@ -576,7 +578,7 @@ class CFIDs():
         form_id_replacements_no_master_byte = [[old_id[:3], new_id[:3]] if len(new_id) <= 4 else [old_id[:3], new_id[:4]] for old_id, new_id in form_id_replacements]
 
         data_list = form_processor.patch_form_data(data_list, saved_forms, form_id_replacements_no_master_byte, master_byte, 
-                                                   [form_id for form_id, _ in form_id_list], CFIDs.do_generate_cell_master)
+                                                   all_form_ids_list, CFIDs.do_generate_cell_master)
 
         data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
 
