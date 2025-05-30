@@ -32,10 +32,13 @@ class create_new_cell_plugin():
         if update_header:
             self.new_data_list[0] = self.new_data_list[0][:30] + b'\x48\xE1\xDA\x3F' + self.new_data_list[0][34:]
         self.new_grup_struct = {}
+        self.counter = 1
         if os.path.exists(self.output_file) and os.path.exists('ESLifier_Data/cell_master_info.json'):
             with open('ESLifier_Data/cell_master_info.json', 'r', encoding='utf-8')as f:
-                str_new_grup_struct = json.load(f)
-            # Convert strings back to bytes
+                dict = json.load(f)
+            # Convert strings back to 
+            str_new_grup_struct = dict["grup_struct"]
+            self.counter = dict["counter"]
             for grup_block in str_new_grup_struct:
                 str_grup_dict = str_new_grup_struct[grup_block]
                 self.new_grup_struct[bytes.fromhex(grup_block)] = {"data": bytes.fromhex(str_grup_dict["data"]),
@@ -78,7 +81,8 @@ class create_new_cell_plugin():
                             "sub_blocks": {}
                             }
                     if sub_block:
-                        new_form_id = (len(self.new_grup_struct) + 2048).to_bytes(3, 'little')
+                        new_form_id = (self.counter + 2048).to_bytes(3, 'little')
+                        self.counter += 1
                         form_id_map.append([form[12:16], new_form_id])
                         cell_data = (b'CELL\x12\x00\x00\x00\x00\x00\x00\x00' + new_form_id +
                                      b'\x01'+ data_list[i][16:24] + b'\x44\x41\x54\x41\x02\x00' +
@@ -154,9 +158,12 @@ class create_new_cell_plugin():
                                                                                     "cells": []}
                 for cell in sub_dict["cells"]:
                     str_new_grup_struct[str_grup_block]["sub_blocks"][str_sub_block]["cells"].append(cell.hex())
-
+        dump_dict = {
+            "counter": self.counter,
+            "grup_struct": str_new_grup_struct
+        }
         with open('ESLifier_Data/cell_master_info.json', 'w', encoding='utf-8')as f:
-            json.dump(str_new_grup_struct, f , ensure_ascii=False, indent=4)
+            json.dump(dump_dict, f , ensure_ascii=False, indent=4)
         with open(self.output_file, 'wb') as f:
             f.write(b''.join(self.new_data_list))
             f.close()
