@@ -713,7 +713,7 @@ class CompactorWorker(QObject):
             if self.generate_cell_master:
                 flags = flag_dict[file]
                 generate_cell_master = False
-                if 'new_cell' in flags: #'is_esm' in flags and 'new_cell' in flags:
+                if 'new_interior_cell' in flags: #'is_esm' in flags and 'new_cell' in flags:
                     generate_cell_master = True
                     finalize = True
             else:
