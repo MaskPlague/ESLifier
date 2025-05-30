@@ -25,10 +25,9 @@ class form_processor():
             for i, form, offsets in forms:
                 for offset in offsets:
                     if form[offset+3:offset+4] >= master_byte:
-                        for from_id, to_id in form_id_replacements:
-                            if form[offset:offset+3] == from_id:
-                                form[offset:offset+3] = to_id
-                                break
+                        to_id = form_id_replacements.get(bytes(form[offset:offset+3]))
+                        if to_id is not None:
+                            form[offset:offset+3] = to_id
                 data_list[i] = bytes(form)
         else:
             updated_master_byte = (int.from_bytes(master_byte) + 1).to_bytes()
@@ -36,17 +35,15 @@ class form_processor():
                 for offset in offsets:
                     if form[offset+3:offset+4] >= master_byte:
                         updated = False
-                        for from_id, to_id in form_id_replacements:
-                            if form[offset:offset+3] == from_id:
-                                if len(to_id) == 4:
-                                    form[offset:offset+4] = to_id
-                                    updated = True
-                                    break
-                                else:
-                                    form[offset:offset+4] = to_id + updated_master_byte
-                                    updated = True
-                                    break
-                        if not updated and form[offset:offset+4] in form_ids:
+                        to_id = form_id_replacements.get(bytes(form[offset:offset+3]))
+                        if to_id is not None:
+                            if len(to_id) == 4:
+                                form[offset:offset+4] = to_id
+                                updated = True
+                            else:
+                                form[offset:offset+4] = to_id + updated_master_byte
+                                updated = True
+                        if not updated and bytes(form[offset:offset+4]) in form_ids:
                             form[offset:offset+4] = form[offset:offset+3] + updated_master_byte
                 data_list[i] = bytes(form)
         return data_list
@@ -56,30 +53,28 @@ class form_processor():
             for i, form, offsets in forms:
                 for offset in offsets:
                     if form[offset+3:offset+4] == master_index_byte:
-                        for from_id, to_id in form_id_replacements:
-                            if form[offset:offset+3] == from_id:
-                                form[offset:offset+3] = to_id
-                                break
+                        to_id = form_id_replacements.get(bytes(form[offset:offset+3]))
+                        if to_id is not None:
+                            form[offset:offset+3] = to_id
                 data_list[i] = bytes(form)
         else:
             updated_master_byte = (int.from_bytes(master_byte) + 1).to_bytes()
             for i, form, offsets in forms:
                 for offset in offsets:
-                    is_being_patched = form[offset+3:offset+4] == master_index_byte
-                    is_being_updated = form[offset+3:offset+4] >= master_byte
+                    form_master_byte = form[offset+3:offset+4]
+                    is_being_patched = form_master_byte == master_index_byte
+                    is_being_updated = form_master_byte >= master_byte
                     if is_being_patched or is_being_updated:
                         updated = False if is_being_updated else True
-                        for from_id, to_id in form_id_replacements:
-                            if form[offset:offset+3] == from_id:
-                                if len(to_id) == 4:
-                                    form[offset:offset+4] = to_id
-                                    updated = True
-                                    break
-                                elif is_being_updated:
-                                    form[offset:offset+4] = to_id + updated_master_byte
-                                    updated = True
-                                    break
-                        if not updated and form[offset:offset+4] in form_ids:
+                        to_id = form_id_replacements.get(bytes(form[offset:offset+3]))
+                        if to_id is not None:
+                            if len(to_id) == 4:
+                                form[offset:offset+4] = to_id
+                                updated = True
+                            elif is_being_updated:
+                                form[offset:offset+4] = to_id + updated_master_byte
+                                updated = True
+                        if not updated and bytes(form[offset:offset+4]) in form_ids:
                             form[offset:offset+4] = form[offset:offset+3] + updated_master_byte
                 data_list[i] = bytes(form)
         return data_list
