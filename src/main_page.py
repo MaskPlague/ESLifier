@@ -696,6 +696,7 @@ class CompactorWorker(QObject):
             flag_dict = json.load(f)
         if self.generate_cell_master:
             self.create_new_cell_plugin.generate(os.path.join(self.output_folder_path, self.output_folder_name))
+        finalize = False
         for file in self.checked:
             count +=1
             percent = round((count/total)*100,1)
@@ -712,15 +713,15 @@ class CompactorWorker(QObject):
             if self.generate_cell_master:
                 flags = flag_dict[file]
                 generate_cell_master = False
-                #TODO: investigate why using only 'new_cell' causes xedit to load infinitely
-                if 'is_esm' in flags and 'new_cell' in flags:
+                if 'new_cell' in flags: #'is_esm' in flags and 'new_cell' in flags:
                     generate_cell_master = True
+                    finalize = True
             else:
                 generate_cell_master = False
             CFIDs.compact_and_patch(file, dependents, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name,
                                      self.overwrite_path, self.update_header, self.mo2_mode, self.bsab, all_dependents_have_skyrim_esm_as_master, 
                                      self.create_new_cell_plugin, generate_cell_master)
-        if generate_cell_master:
+        if finalize:
             self.create_new_cell_plugin.finalize_plugin()
         print("Compacted and Patched")
         print('CLEAR')
