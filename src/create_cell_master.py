@@ -62,6 +62,7 @@ class create_new_cell_plugin():
                         prev_grup_block = grup_block
                         self.new_grup_struct[grup_block] = {
                             "data": new_grup,
+                            "name": name,
                             "sub_blocks": {}
                             }
                         sub_block = True
@@ -74,6 +75,7 @@ class create_new_cell_plugin():
                         if grup_block not in self.new_grup_struct[prev_grup_block]["sub_blocks"]:
                             self.new_grup_struct[prev_grup_block]["sub_blocks"][grup_block] = {
                                 "data": new_grup,
+                                "name": name,
                                 "cells": [cell_data]}
                         else:
                             self.new_grup_struct[prev_grup_block]["sub_blocks"][grup_block]["cells"].append(cell_data)
@@ -129,12 +131,14 @@ class create_new_cell_plugin():
             str_grup_block = grup_block.hex()
             str_new_grup_struct[str_grup_block] = {"data": grup_dict["data"].hex(),
                                                      "size": int.from_bytes(grup_dict["size"], 'little'),
+                                                     "name": grup_dict["name"],
                                                      "sub_blocks": {}}
             for sub_block in grup_dict["sub_blocks"]:
                 sub_dict = grup_dict["sub_blocks"][sub_block]
                 str_sub_block = sub_block.hex()
                 str_new_grup_struct[str_grup_block]["sub_blocks"][str_sub_block] = {"data": sub_dict["data"].hex(),
                                                                                     "size": int.from_bytes(sub_dict["size"],'little'),
+                                                                                    "name": sub_dict["name"],
                                                                                     "cells": []}
                 for cell in sub_dict["cells"]:
                     str_new_grup_struct[str_grup_block]["sub_blocks"][str_sub_block]["cells"].append(cell.hex())

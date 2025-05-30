@@ -495,7 +495,7 @@ class CFIDs():
 
         data_list, sizes_list = CFIDs.decompress_data(data_list)
         if CFIDs.do_generate_cell_master:
-            new_cell_form_ids = CFIDs.create_cell_master_class.add_cells(data_list, grup_struct, master_count)
+            new_cell_form_ids = CFIDs.create_cell_master_class.add_cells(data_list, grup_struct, master_count, os.path.basename(file))
             data_list = CFIDs.add_cell_master_to_masters(data_list)
 
         form_id_list = []
