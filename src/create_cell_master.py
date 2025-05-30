@@ -49,8 +49,6 @@ class create_new_cell_plugin():
                     for cell in str_sub_dict["cells"]:
                         self.new_grup_struct[byte_grup_block]["sub_blocks"][byte_sub_block]["cells"].append(bytes.fromhex(cell))
 
-        self.form_ids = [i.to_bytes(3, 'little') for i in range(2048, 4096)]
-
     def add_cells(self, data_list, grup_struct, master_count):
         form_id_map = []
         for i, form in enumerate(data_list):
@@ -68,14 +66,11 @@ class create_new_cell_plugin():
                             }
                         sub_block = True
                     elif sub_block:
-                        current_index = len(self.new_grup_struct)
-                        form_id_map.append([form[12:16], self.form_ids[current_index]])
-                        cell_data = (b'CELL\x12\x00\x00\x00\x00\x00\x00\x00' + 
-                                     self.form_ids[current_index] +
-                                     b'\x01'+ data_list[i][16:24] +
-                                     b'\x44\x41\x54\x41\x02\x00'+
-                                     b'\x01\x00\x4C\x54\x4D\x50'+
-                                     b'\x04\x00\x00\x00\x00\x00')
+                        new_form_id = (len(self.new_grup_struct) + 2048).to_bytes(3, 'little')
+                        form_id_map.append([form[12:16], new_form_id])
+                        cell_data = (b'CELL\x12\x00\x00\x00\x00\x00\x00\x00' + new_form_id +
+                                     b'\x01'+ data_list[i][16:24] + b'\x44\x41\x54\x41\x02\x00' +
+                                     b'\x01\x00\x4C\x54\x4D\x50\x04\x00\x00\x00\x00\x00')
                         if grup_block not in self.new_grup_struct[prev_grup_block]["sub_blocks"]:
                             self.new_grup_struct[prev_grup_block]["sub_blocks"][grup_block] = {
                                 "data": new_grup,
