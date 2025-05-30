@@ -106,8 +106,6 @@ class CFIDs():
                 if len(to_rename) > 20:
                     print('\n')
                 CFIDs.rename_files_threader(file_to_compact, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
-        if CFIDs.do_generate_cell_master:
-            CFIDs.create_cell_master_class.finalize_plugin()
         CFIDs.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json')
         if os.path.exists('bsa_extracted_temp/'):
             print('-  Deleting temporarily Extracted FaceGen/Voice Files...')

@@ -600,7 +600,7 @@ class main(QWidget):
             shutil.rmtree('ESLifier_Data/EDIDs')
         if os.path.exists('ESLifier_Data/Cell_IDs'):
             shutil.rmtree('ESLifier_Data/Cell_IDs')
-        if os.path.exists('ESLifier_data/cell_master_info.json'):
+        if os.path.exists('ESLifier_Data/cell_master_info.json'):
             os.remove('ESLifier_Data/cell_master_info.json')
         if os.path.exists(output_folder) and 'eslifier' in output_folder.lower():
             for file in files_to_remove:
@@ -720,6 +720,8 @@ class CompactorWorker(QObject):
             CFIDs.compact_and_patch(file, dependents, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name,
                                      self.overwrite_path, self.update_header, self.mo2_mode, self.bsab, all_dependents_have_skyrim_esm_as_master, 
                                      self.create_new_cell_plugin, generate_cell_master)
+        if generate_cell_master:
+            self.create_new_cell_plugin.finalize_plugin()
         print("Compacted and Patched")
         print('CLEAR')
         self.finished_signal.emit()
