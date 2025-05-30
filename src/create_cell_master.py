@@ -1,7 +1,6 @@
 import os
 import struct
 import json
-import zlib
 
 class create_new_cell_plugin():
     def generate(self, output_folder, update_header = True):
@@ -42,12 +41,14 @@ class create_new_cell_plugin():
             for grup_block in str_new_grup_struct:
                 str_grup_dict = str_new_grup_struct[grup_block]
                 self.new_grup_struct[bytes.fromhex(grup_block)] = {"data": bytes.fromhex(str_grup_dict["data"]),
+                                                                   "name": str_grup_dict["name"],
                                                                    "sub_blocks": {}}
                 byte_grup_block = bytes.fromhex(grup_block)
                 for sub_block in str_grup_dict["sub_blocks"]:
                     str_sub_dict = str_grup_dict["sub_blocks"][sub_block]
                     byte_sub_block = bytes.fromhex(sub_block)
                     self.new_grup_struct[byte_grup_block]["sub_blocks"][byte_sub_block]= {"data": bytes.fromhex(str_sub_dict["data"]),
+                                                                                          "name": str_sub_dict["name"],
                                                                                           "cells": []}
                     for cell in str_sub_dict["cells"]:
                         self.new_grup_struct[byte_grup_block]["sub_blocks"][byte_sub_block]["cells"].append(bytes.fromhex(cell))
@@ -106,7 +107,7 @@ class create_new_cell_plugin():
             grup_dict = self.new_grup_struct[grup_block]
             grup_count += 1
             for sub_block in grup_dict["sub_blocks"]:
-                sub_dict = self.new_grup_struct[grup_block]["sub_blocks"][sub_block]
+                sub_dict = grup_dict["sub_blocks"][sub_block]
                 grup_count += 1
                 for cell in sub_dict["cells"]:
                     cell_count += 1
