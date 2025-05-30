@@ -151,9 +151,10 @@ class settings(QWidget):
         )
         self.generate_cell_master_widget, self.generate_cell_master_toggle = self.create_toggle_widget(
             "Generate Cell Master",
-            "DISABLED. This will eventually generate a master cell plugin\n"+
-            "to circumvent the ESL cell bug for master files\n"+
-            "(not sure how useful this might be for the amount of effort it is)",
+            "This generates a master cell plugin to circumvent\n"+
+            "the interior ESL cell bug. Requires a plugin slot.\n"+
+            "Do not forget to activate the new ESLifier_Cell_Master.esm\n"+
+            "that is generated. You'll also need to re-sort your plugins.",
             "generate_cell_master"            
         )
         
