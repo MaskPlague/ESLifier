@@ -361,6 +361,17 @@ class main(QWidget):
                             "For Vortex users: Make sure to redeploy before using this program again.")
             def shown():
                 message.hide()
+                if self.generate_cell_master:
+                    cell_master_message = QMessageBox()
+                    cell_master_message.setWindowTitle("Activate ESLifier_Cell_Master.esm and Sort Your Plugins")
+                    cell_master_message.setWindowIcon(QIcon(":/images/ESLifier.png"))
+                    cell_master_message.setText("Do not forget to activate ESLifier_Cell_Master.esm and re-sort\n"+
+                                                "your plugins to put the ESM above all of it's dependents. You\n"+
+                                                "likely can put it at the top of your plugins list.")
+                    def hide_message():
+                        cell_master_message.hide()
+                    cell_master_message.accepted.connect(hide_message)
+                    cell_master_message.show()
             message.accepted.connect(shown)
             message.show()
         if sender == 'compact':
