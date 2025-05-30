@@ -311,6 +311,7 @@ class CFIDs():
     #Create the Form ID map which is a list of tuples that holds four Form Ids that are in \xMASTER\x00\x00\x00 order:
     #original Form ID w/o leading 0s, original Form ID w/ leading 0s, new Form ID w/o 0s, new Form ID w/ 0s, 
     #the orginal Form ID in \x00\x00\x00\xMASTER order, and the new Form ID in the same order.
+    #TODO: Convert to a dictionary for even faster patching
     def get_form_id_map(file):
         form_id_file_name = "ESLifier_Data/Form_ID_Maps/" + os.path.basename(file).lower() + "_FormIdMap.txt"
         form_id_file_data = ''
@@ -579,10 +580,10 @@ class CFIDs():
             for form_id, new_id in form_id_replacements:
                 fidf.write(str(form_id.hex()) + '|' + str(new_id.hex()) + '\n')
 
-        form_id_replacements_no_master_byte = [[old_id[:3], new_id[:3]] if len(new_id) <= 4 else [old_id[:3], new_id[:4]] for old_id, new_id in form_id_replacements]
-
+        form_id_replacements_no_master_byte = {old_id[:3]: new_id[:3] if len(new_id) <= 4 else new_id[:4] for old_id, new_id in form_id_replacements}
+        
         data_list = form_processor.patch_form_data(data_list, saved_forms, form_id_replacements_no_master_byte, master_byte, 
-                                                   all_form_ids_list, CFIDs.do_generate_cell_master)
+                                                   set(all_form_ids_list), CFIDs.do_generate_cell_master)
 
         data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
 
@@ -666,9 +667,9 @@ class CFIDs():
                     else:
                         to_id = id[:3]
                     form_id_replacements.append([from_id, to_id])
-                
-                data_list = form_processor.patch_form_data_dependent(data_list, saved_forms, form_id_replacements, master_index_byte, master_byte,
-                                                                    form_id_list, CFIDs.do_generate_cell_master)
+                form_id_replacements_dict = {key: value for key, value in form_id_replacements}
+                data_list = form_processor.patch_form_data_dependent(data_list, saved_forms, form_id_replacements_dict, master_index_byte, master_byte,
+                                                                    set(form_id_list), CFIDs.do_generate_cell_master)
 
                 data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
                 
@@ -683,6 +684,7 @@ class CFIDs():
                 CFIDs.compacted_and_patched[os.path.basename(file)].append(rel_path)
         except Exception as e:
             print(f'!Error: Failed to patch depdendent: {new_file}')
+            print(e)
 
         if new_seq_file:
             try:
