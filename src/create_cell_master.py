@@ -136,7 +136,7 @@ class create_new_cell_plugin():
                                                      "size": int.from_bytes(grup_dict["size"], 'little'),
                                                      "sub_blocks": {}}
             for sub_block in grup_dict["sub_blocks"]:
-                sub_dict = self.new_grup_struct[grup_block]["sub_blocks"][sub_block]
+                sub_dict = grup_dict["sub_blocks"][sub_block]
                 str_sub_block = sub_block.hex()
                 str_new_grup_struct[str_grup_block]["sub_blocks"][str_sub_block] = {"data": sub_dict["data"].hex(),
                                                                                     "size": int.from_bytes(sub_dict["size"],'little'),
