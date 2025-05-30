@@ -1,7 +1,7 @@
 import os
 import struct
 import json
-from intervaltree import IntervalTree
+import zlib
 
 class create_new_cell_plugin():
     def generate(self, output_folder, update_header = True):
@@ -49,10 +49,23 @@ class create_new_cell_plugin():
                     for cell in str_sub_dict["cells"]:
                         self.new_grup_struct[byte_grup_block]["sub_blocks"][byte_sub_block]["cells"].append(bytes.fromhex(cell))
 
-    def add_cells(self, data_list, grup_struct, master_count):
+    def add_cells(self, data_list, grup_struct, master_count, name):
         form_id_map = []
         for i, form in enumerate(data_list):
             if form[:4] == b'CELL' and form[15] >= master_count:
+                interior_cell_flag = False
+                offset = 24
+                form_size = len(form)
+                while offset < form_size:
+                    field = form[offset:offset+4]
+                    field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
+                    if field == b'DATA':
+                        flags = form[offset+6]
+                        interior_cell_flag = (flags & 0x01) != 0
+                        break
+                    offset += field_size + 6
+                if not interior_cell_flag:
+                    continue
                 sub_block = False
                 prev_grup_block = b''
                 for grup_index in grup_struct[i][1:]:
