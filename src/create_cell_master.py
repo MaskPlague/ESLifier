@@ -71,15 +71,13 @@ class create_new_cell_plugin():
                 for grup_index in grup_struct[i][1:]:
                     new_grup = b'GRUP\x00\x00\x00\x00' + data_list[grup_index][8:]
                     grup_block = data_list[grup_index][8:12]
-                    if not sub_block and grup_block not in self.new_grup_struct:
-                        prev_grup_block = grup_block
+                    if not sub_block and grup_block not in self.new_grup_struct:  
                         self.new_grup_struct[grup_block] = {
                             "data": new_grup,
                             "name": name,
                             "sub_blocks": {}
                             }
-                        sub_block = True
-                    elif sub_block:
+                    if sub_block:
                         new_form_id = (len(self.new_grup_struct) + 2048).to_bytes(3, 'little')
                         form_id_map.append([form[12:16], new_form_id])
                         cell_data = (b'CELL\x12\x00\x00\x00\x00\x00\x00\x00' + new_form_id +
@@ -89,9 +87,11 @@ class create_new_cell_plugin():
                             self.new_grup_struct[prev_grup_block]["sub_blocks"][grup_block] = {
                                 "data": new_grup,
                                 "name": name,
-                                "cells": [cell_data]}
-                        else:
-                            self.new_grup_struct[prev_grup_block]["sub_blocks"][grup_block]["cells"].append(cell_data)
+                                "cells": []}
+                        self.new_grup_struct[prev_grup_block]["sub_blocks"][grup_block]["cells"].append(cell_data)
+                    if not sub_block:
+                        sub_block = True
+                        prev_grup_block = grup_block
         return form_id_map
 
     def finalize_plugin(self):
@@ -136,7 +136,6 @@ class create_new_cell_plugin():
                 self.new_data_list.append(b'GRUP' + sub_dict["size"] + sub_dict["data"][8:])
                 for cell in sub_dict["cells"]:
                     self.new_data_list.append(cell)
-
         # Convert keys to strings from byte strings
         str_new_grup_struct = {}
         for grup_block in self.new_grup_struct:
