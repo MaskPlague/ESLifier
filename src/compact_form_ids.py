@@ -563,10 +563,16 @@ class CFIDs():
         if CFIDs.do_generate_cell_master:
             for old_id, new_id in new_cell_form_ids:
                 copy = form_id_replacements.copy()
+                added = False
                 for replacement in copy:
                     if old_id == replacement[0]:
                         form_id_replacements.remove(replacement)
                         form_id_replacements.append([old_id, new_id + master_byte + b'\xFF'])
+                        added = True
+                        break
+                if not added:
+                    form_id_replacements.append([old_id, new_id + master_byte + b'\xFF'])
+                
 
         form_id_replacements.sort(key= lambda x: struct.unpack('<I', x[0])[0])
         with open(form_id_file_name, 'w', encoding='utf-8') as fidf:
