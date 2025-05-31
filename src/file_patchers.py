@@ -25,8 +25,8 @@ class patchers():
             for i, line in enumerate(lines):
                 if basename in line.lower() and 'getformfromfile' in line.lower():
                     for form_ids in form_id_map:
-                        if form_ids[0].lower() in line.lower():
-                            lines[i] = re.sub(r'0x0*' + re.escape(form_ids[0]) + r'\b', '0x' + form_ids[2], line, flags=re.IGNORECASE)
+                        if form_ids[0].lstrip(0).lower() in line.lower():
+                            lines[i] = re.sub(r'0x0*' + re.escape(form_ids[0].lstrip('0')) + r'\b', '0x' + form_ids[1].lstrip('0'), line, flags=re.IGNORECASE)
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -39,7 +39,7 @@ class patchers():
             for i in range(len(data)):
                 if bytes_basename in data[i].lower(): #check for plugin name, in file path, in line of nif file.
                     for form_ids in form_id_map:
-                        data[i] = data[i].replace(form_ids[1].encode(), form_ids[3].encode()).replace(form_ids[1].encode().lower(), form_ids[3].encode().lower())
+                        data[i] = data[i].replace(form_ids[0].encode(), form_ids[1].encode()).replace(form_ids[0].encode().lower(), form_ids[1].encode().lower())
             f.seek(0)
             f.writelines(data)
     
@@ -48,7 +48,7 @@ class patchers():
             data = f.read()
             seq_form_id_list = [data[i:i+4] for i in range(0, len(data), 4)]
             if not dependent:
-                form_id_dict = {form_ids[4]: form_ids[5] for form_ids in form_id_map}
+                form_id_dict = form_id_map
             else:
                 form_id_dict = {old_id: new_id for old_id, new_id in form_id_map}
             new_seq_form_id_list = [form_id_dict.get(fid, fid) for fid in seq_form_id_list]
@@ -84,13 +84,12 @@ class patchers():
             while offset < data_size:
                 if data[offset:offset+1] == b'\x03' and data[offset+5:offset+6] == b'\x02' and int.from_bytes(data[offset+6:offset+8]) == index:
                     integer_variable = data[offset+2:offset+5]
-                    for form_ids in form_id_map:
-                        if integer_variable == form_ids[4][::-1][1:]:
-                            if form_ids[6]:
-                                print(f'~Inelligble: {basename} | {new_file}')
-                            data[offset+2:offset+5] = form_ids[5][::-1][1:]
-                            offset += 6
-                            break
+                    to_id_data = form_id_map.get(int.from_bytes(integer_variable))
+                    if to_id_data is not None:
+                        data[offset+2:offset+5] = to_id_data["bytes"][::-1][1:]
+                        offset += 6
+                        if to_id_data["update_name"]:
+                            print(f'~Ineligible: {basename} | 0x{to_id_data["hex"]} | {new_file}')
                 elif not patch_arrays and data[offset:offset+2] == b'\x1E\x01':
                     patch_arrays = True
                 offset += 1
@@ -126,12 +125,11 @@ class patchers():
                 for array in arrays:
                     if array['patch'] == True:
                         for int_offset, integer in array['integers']:
-                            for form_ids in form_id_map:
-                                if integer == form_ids[4][::-1][1:]:
-                                    if form_ids[6]:
-                                        print(f'~Ineligible: {basename} | 0x{form_ids[3]} | {new_file}')
-                                    data[int_offset:int_offset+3] = form_ids[5][::-1][1:]
-                                    break
+                            to_id_data = form_id_map.get(integer)
+                            if to_id_data is not None:
+                                data[int_offset:int_offset+3] = to_id_data["bytes"][::-1][1:]
+                                if to_id_data["update_name"]:
+                                    print(f'~Ineligible: {basename} | 0x{to_id_data["hex"]} | {new_file}')
             data = bytes(data)
             f.seek(0)
             f.truncate(0)
@@ -155,20 +153,16 @@ class patchers():
                     replace_2 = False
                     if basename == plugin_1.lower().strip():
                         form_id_int_1 = int(form_id_1, 16)
-                        for form_ids in form_id_map:
-                            if form_id_int_1 == int(form_ids[0], 16): 
-                                if form_ids[6]:
-                                    replace_1 = True
-                                form_id_1 = '0x' + form_ids[2]
-                                break
+                        to_id_data = form_id_map.get(form_id_int_1)
+                        if to_id_data is not None:
+                            form_id_1 = '0x' + to_id_data['hex_no_0']
+                            replace_1 = to_id_data["update_name"]
                     if basename == plugin_2.lower().strip():
                         form_id_int_2 = int(form_id_2, 16)
-                        for form_ids in form_id_map:
-                            if form_id_int_2 == int(form_ids[0], 16):
-                                if form_ids[6]:
-                                    replace_2 = True
-                                form_id_2 = '0x' + form_ids[2]
-                                break
+                        to_id_data = form_id_map.get(form_id_int_2)
+                        if to_id_data is not None:
+                            form_id_2 = '0x' + to_id_data['hex_no_0']
+                            replace_2 = to_id_data["update_name"]
 
                     if not replace_1 and not replace_2:
                         lines[i] = form_id_1 + '~' + plugin_1 + '|' + form_id_2 + '~' + plugin_2
@@ -206,18 +200,16 @@ class patchers():
                         end = ''
                     if line.endswith('\n'):
                         end += '\n'
-
                     if plugin == basename:
-                        for form_ids in form_id_map:
-                            if form_id_int == int(form_ids[0], 16):
-                                if not form_ids[6]:
-                                    lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
-                                else:
-                                    if print_replace:
-                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                        print_replace = False
-                                    lines[i] = start_of_line + '0x' + form_ids[2] + "|ESLifier_Cell_Master.esm" + end
-                                break
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            if not to_id_data["update_name"]:
+                                lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
+                            else:
+                                if print_replace:
+                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    print_replace = False
+                                lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + "|ESLifier_Cell_Master.esm" + end
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -248,16 +240,15 @@ class patchers():
                         form_id_int = int(form_id, 16)
                         start = middle_index+1
                         if basename == plugin:
-                            for form_ids in form_id_map:
-                                if form_id_int == int(form_ids[0], 16):
-                                    if not form_ids[6]:
-                                        lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
-                                    else:
-                                        if print_replace:
-                                            print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                            print_replace = False
-                                        lines[i] = start_of_line + '0x' + form_ids[2] + "~ESLifier_Cell_Master.esm" + line[end_index:]
-                                    break
+                            to_id_data = form_id_map.get(form_id_int)
+                            if to_id_data is not None:
+                                if not to_id_data["update_name"]:
+                                    lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
+                                else:
+                                    if print_replace:
+                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                        print_replace = False
+                                    lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + "~ESLifier_Cell_Master.esm" + line[end_index:]
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -282,16 +273,15 @@ class patchers():
                         form_id_int = int(line[middle_index+1:end_index], 16)
                         start = start_index + 1
                         if plugin == basename:
-                            for form_ids in form_id_map:
-                                if form_id_int == int(form_ids[0], 16):
-                                    if not form_ids[6]:
-                                        lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
-                                    else:
-                                        if print_replace:
-                                            print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                            print_replace = False
-                                        lines[i] = line[:start_index] + "ESLifier_Cell_Master.esm|" + '0x' + form_ids[2] + end_of_line
-                                    break
+                            to_id_data = form_id_map.get(form_id_int)
+                            if to_id_data is not None:
+                                if not to_id_data["update_name"]:
+                                    lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
+                                else:
+                                    if print_replace:
+                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                        print_replace = False
+                                    lines[i] = line[:start_index] + "ESLifier_Cell_Master.esm|" + '0x' + to_id_data["hex_no_0"] + end_of_line
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -328,17 +318,16 @@ class patchers():
                             form_id_int = int(form_id, 16)
                             start = start_index+3
                             if plugin.lower().strip() == basename:
-                                for form_ids in form_id_map:
-                                    if form_id_int == int(form_ids[0], 16):
-                                        if not form_ids[6]:
-                                            lines[i] = start_of_line + plugin + '|' + form_ids[2] + end_of_line
-                                        else:
-                                            if print_replace:
-                                                print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                                print_replace = False
-                                            lines[i] = start_of_line + "ESLifier_Cell_Master.esm|" + form_ids[2] + end_of_line
-                                            start += len('ESLifier_Cell_Master.esm') - len(plugin)
-                                        break
+                                to_id_data = form_id_map.get(form_id_int)
+                                if to_id_data is not None:
+                                    if not to_id_data["update_name"]:
+                                        lines[i] = start_of_line + plugin + '|' + to_id_data["hex_no_0"] + end_of_line
+                                    else:
+                                        if print_replace:
+                                            print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                            print_replace = False
+                                        lines[i] = start_of_line + "ESLifier_Cell_Master.esm|" + to_id_data["hex_no_0"] + end_of_line
+                                        start += len('ESLifier_Cell_Master.esm') - len(plugin)
                         except:
                             start = start_index+3
             f.seek(0)
@@ -364,25 +353,24 @@ class patchers():
                         if form_id.startswith('0x'):
                             ox = True
                         form_id_int = int(form_id, 16)
-                        for form_ids in form_id_map:
-                            if form_id_int == int(form_ids[0], 16):
-                                if ox:
-                                    if not form_ids[6]:
-                                        lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
-                                    else:
-                                        if print_replace:
-                                            print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                            print_replace = False   
-                                        lines[i] = line[:plugin_index+1] + "ESLifier_Cell_Master.esm" + sep +"0x" + form_ids[2] + end_of_line
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            if ox:
+                                if not to_id_data["update_name"]:
+                                    lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
                                 else:
-                                    if not form_ids[6]:
-                                        lines[i] = start_of_line + '00' + form_ids[3] + end_of_line
-                                    else:
-                                        if print_replace:
-                                            print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                            print_replace = False
-                                        lines[i] = line[:plugin_index+1] + "ESLifier_Cell_Master.esm" + sep + "00" + form_ids[3] + end_of_line
-                                break
+                                    if print_replace:
+                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                        print_replace = False   
+                                    lines[i] = line[:plugin_index+1] + "ESLifier_Cell_Master.esm" + sep + "0x" + to_id_data["hex_no_0"] + end_of_line
+                            else:
+                                if not to_id_data["update_name"]:
+                                    lines[i] = start_of_line + '00' + to_id_data["hex"] + end_of_line
+                                else:
+                                    if print_replace:
+                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                        print_replace = False
+                                    lines[i] = line[:plugin_index+1] + "ESLifier_Cell_Master.esm" + sep + "00" + to_id_data["hex"] + end_of_line
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -399,10 +387,9 @@ class patchers():
                     start_of_line = line[:middle_index+1]
                     end_of_line = line[end_index:]
                     form_id_int = int(line[middle_index+1:end_index], 16)
-                    for form_ids in form_id_map:
-                        if form_id_int == int(form_ids[0], 16):
-                            lines[i] = start_of_line + form_ids[2] + end_of_line
-                            break
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        lines[i] = start_of_line + to_id_data["hex_no_0"] + end_of_line
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -422,10 +409,9 @@ class patchers():
                     mod_name = line.removeprefix('modName =').strip().lower()
                     if mod_name == basename:
                         form_id_int = int(required_perk, 16)
-                        for form_ids in form_id_map:
-                            if form_id_int == int(form_ids[0], 16):
-                                lines[rpi] = 'requiredPerk = ' + form_ids[2] + '\n'
-                                break
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            lines[rpi] = 'requiredPerk = ' + to_id_data["hex_no_0"] + '\n'
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -448,13 +434,12 @@ class patchers():
                         ox = True
                     else:
                         ox = False
-                    for form_ids in form_id_map:
-                        if form_id_int == int(form_ids[0], 16):
-                            if not ox:
-                                lines[i] = '00' + form_ids[3] + line[index-1:]
-                            else:
-                                lines[i] = '0x' + form_ids[3] + line[index-1:]
-                            break
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        if not ox:
+                            lines[i] = '00' + to_id_data["hex"] + line[index-1:]
+                        else:
+                            lines[i] = '0x' + to_id_data["hex"] + line[index-1:]
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -502,11 +487,11 @@ class patchers():
     def comp_form_id_replacer(form_id, form_id_map):
         if '0x' in form_id.lower():
             form_id_int = int(form_id, 16)
-            for form_ids in form_id_map:
-                if form_id_int == int(form_ids[0], 16):
-                    if form_ids[6] and patchers.comp_print_replace:
-                        patchers.comp_print_replace = False
-                    return '0x' + form_ids[3], form_ids[6]
+            to_id_data = form_id_map.get(form_id_int)
+            if to_id_data is not None:
+                if to_id_data["update_name"] and patchers.comp_print_replace:
+                    patchers.comp_print_replace = False
+                return '0x' + to_id_data["hex"], to_id_data["update_name"]
             return form_id, False
         else:
             return form_id, False
@@ -610,17 +595,15 @@ class patchers():
                 if line.startswith('ID =') and edid_name in edids:
                     index = line.index('=')
                     form_id_int = int(line[index+1:],16)
-                    for form_ids in form_id_map:
-                        if form_id_int == int(form_ids[0], 16):
-                            lines[i] = 'ID = 0xFE' + form_ids[3] + '\n'
-                            break
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        lines[i] = 'ID = 0xFE' + to_id_data["hex"] + '\n'
                 elif 'ID' in line and '= 0x' in line:
                     index = line.index('=')
                     form_id_int = int(line[index+1:], 16)
-                    for form_ids in form_id_map:
-                        if form_id_int == int(form_ids[0], 16):
-                            lines[i] = line[:index+1] + ' 0xFE' + form_ids[3] + '\n'
-                            break
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        lines[i] = line[:index+1] + ' 0xFE' + to_id_data["hex"] + '\n'
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -659,10 +642,9 @@ class patchers():
                                 start_of_line = line[:middle_index+1]
                                 end_of_line = line[end_index:]
                                 form_id_int = int(line[middle_index+1:end_index], 16)
-                                for form_ids in form_id_map:
-                                    if form_id_int == int(form_ids[0], 16):
-                                        lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
-                                        break
+                                to_id_data = form_id_map.get(form_id_int)
+                                if to_id_data is not None:
+                                    lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
             else:
                 plugin_offsets = [3, 5, 9, 11, 13, 15]
                 for event in events:
@@ -680,10 +662,9 @@ class patchers():
                                     end_index = patchers.find_next_non_alphanumeric(line, index + 3)
                                     end_of_line = line[end_index:]
                                     form_id_int = int(line[index+1:], 16)
-                                    for form_ids in form_id_map:
-                                        if form_id_int == int(form_ids[0], 16):
-                                            lines[form_id_offset] = start_of_line + ' 0x' + form_ids[2] + end_of_line
-                                            break
+                                    to_id_data = form_id_map.get(form_id_int)
+                                    if to_id_data is not None:
+                                        lines[form_id_offset] = start_of_line + ' 0x' + to_id_data["hex_no_0"] + end_of_line
                             else:
                                 form_id_offset = form_id_offsets[0]
                                 count = lines[form_id_offset].count(',') + 1
@@ -695,10 +676,9 @@ class patchers():
                                     end_of_line = line[end_index:]
                                     id = line[start_index+1:end_index]
                                     form_id_int = int(id, 16)
-                                    for form_ids in form_id_map:
-                                        if form_id_int == int(form_ids[0], 16):
-                                            lines[form_id_offset] = start_of_line + '0x' + form_ids[2] + end_of_line
-                                            break
+                                    to_id_data = form_id_map.get(form_id_int)
+                                    if to_id_data is not None:
+                                        lines[form_id_offset] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
                                     start_index = patchers.find_next_non_alphanumeric(lines[form_id_offset], start_index+1) + 1
             f.seek(0)
             f.truncate(0)
@@ -724,10 +704,9 @@ class patchers():
                             form_id_int = int(line[formid_index:formid_end_index], 16)
                             start_of_line = line[:formid_index]
                             end_of_line = line[formid_end_index:]
-                            for form_ids in form_id_map:
-                                if form_id_int == int(form_ids[0], 16):
-                                    lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
-                                    break
+                            to_id_data = form_id_map.get(form_id_int)
+                            if to_id_data is not None:
+                                lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
                         start = formid_index + 1
             f.seek(0)
             f.truncate(0)
@@ -747,10 +726,9 @@ class patchers():
                     start_of_line = line[:index]
                     end_of_line = line[end_index:]
                     form_id_int = int(line[index:end_index],16)
-                    for form_ids in form_id_map:
-                        if form_id_int == int(form_ids[0],16):
-                            lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
-                            break
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -772,10 +750,9 @@ class patchers():
                             start_of_line = line[:index]
                             end_of_line = line[end_index:]
                             form_id_int = int(form_id,16)
-                            for form_ids in form_id_map:
-                                if form_id_int == int(form_ids[0],16):
-                                    lines[i] = start_of_line + '0x' + form_ids[2] + end_of_line
-                                    break
+                            to_id_data = form_id_map.get(form_id_int)
+                            if to_id_data is not None:
+                                lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -801,22 +778,21 @@ class patchers():
                         form_id_int = int(form_id, 16)
                         if not ox and '0x' in form_id.lower():
                             ox = True
-                        for form_ids in form_id_map:
-                            if form_id_int == int(form_ids[0], 16):
-                                if not form_ids[6]:
-                                    if not ox:
-                                        data = patchers.change_json_element(data, path, plugin + symbol + form_ids[2])
-                                    else:
-                                        data = patchers.change_json_element(data, path, plugin + symbol + '0x' + form_ids[2])
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            if not to_id_data["update_name"]:
+                                if not ox:
+                                    data = patchers.change_json_element(data, path, plugin + symbol + to_id_data["hex_no_0"])
                                 else:
-                                    if print_replace:
-                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                        print_replace = False  
-                                    if not ox:
-                                        data = patchers.change_json_element(data, path, "ESLifier_Cell_Master.esm" + symbol + form_ids[2])
-                                    else:
-                                        data = patchers.change_json_element(data, path, "ESLifier_Cell_Master.esm" + symbol + '0x' + form_ids[2])
-                                break
+                                    data = patchers.change_json_element(data, path, plugin + symbol + '0x' + to_id_data["hex_no_0"])
+                            else:
+                                if print_replace:
+                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    print_replace = False  
+                                if not ox:
+                                    data = patchers.change_json_element(data, path, "ESLifier_Cell_Master.esm" + symbol + to_id_data["hex_no_0"])
+                                else:
+                                    data = patchers.change_json_element(data, path, "ESLifier_Cell_Master.esm" + symbol + '0x' + to_id_data["hex_no_0"])
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
@@ -850,26 +826,25 @@ class patchers():
                             except:
                                 form_id_int = int(form_id, 16)
                                 int_type_actual = False
-                        for form_ids in form_id_map:
-                            if form_id_int == int(form_ids[0], 16):
-                                if not form_ids[6]:
-                                    if not ox and not int_type_actual:
-                                        data = patchers.change_json_element(data, path, form_ids[2] + '|' + plugin)
-                                    elif ox:
-                                        data = patchers.change_json_element(data, path, '0x' + form_ids[2] + '|' + plugin)
-                                    else: # not ox and int_type
-                                        data = patchers.change_json_element(data, path, str(int(form_ids[2], 16)) + '|' + plugin)
-                                else:
-                                    if print_replace:
-                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                        print_replace = False  
-                                    if not ox and not int_type_actual:
-                                        data = patchers.change_json_element(data, path, form_ids[2] + "|ESLifier_Cell_Master.esm")
-                                    elif ox:
-                                        data = patchers.change_json_element(data, path, '0x' + form_ids[2] + "|ESLifier_Cell_Master.esm")
-                                    else: # not ox and int_type
-                                        data = patchers.change_json_element(data, path, str(int(form_ids[2], 16)) + "|ESLifier_Cell_Master.esm")
-                                break
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            if not to_id_data["update_name"]:
+                                if not ox and not int_type_actual:
+                                    data = patchers.change_json_element(data, path, to_id_data["hex_no_0"] + '|' + plugin)
+                                elif ox:
+                                    data = patchers.change_json_element(data, path, '0x' + to_id_data["hex_no_0"] + '|' + plugin)
+                                else: # not ox and int_type
+                                    data = patchers.change_json_element(data, path, str(int(to_id_data["hex_no_0"], 16)) + '|' + plugin)
+                            else:
+                                if print_replace:
+                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    print_replace = False  
+                                if not ox and not int_type_actual:
+                                    data = patchers.change_json_element(data, path, to_id_data["hex_no_0"] + "|ESLifier_Cell_Master.esm")
+                                elif ox:
+                                    data = patchers.change_json_element(data, path, '0x' + to_id_data["hex_no_0"] + "|ESLifier_Cell_Master.esm")
+                                else: # not ox and int_type
+                                    data = patchers.change_json_element(data, path, str(int(to_id_data["hex_no_0"], 16)) + "|ESLifier_Cell_Master.esm")
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
@@ -893,15 +868,14 @@ class patchers():
                     plugin_name_path = path
                 elif plugin and type(path[-1]) is str and 'formid' == path[-1].lower():
                     form_id_int = int(value, 16)
-                    for form_ids in form_id_map:
-                        if form_id_int == int(form_ids[0], 16):
-                            data = patchers.change_json_element(data, path, form_ids[2])
-                            if form_ids[6]:
-                                if print_replace:
-                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                    print_replace = False  
-                                data = patchers.change_json_element(data, plugin_name_path, "ESLifier_Cell_Master.esm")
-                            break
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        data = patchers.change_json_element(data, path, to_id_data["hex_no_0"])
+                        if to_id_data["update_name"]:
+                            if print_replace:
+                                print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                print_replace = False  
+                            data = patchers.change_json_element(data, plugin_name_path, "ESLifier_Cell_Master.esm")
                 else:
                     plugin = False
                     plugin_name_path = []
@@ -932,22 +906,21 @@ class patchers():
                         else:
                             ox = False
                             form_id_int = int(value[:index])
-                        for form_ids in form_id_map:
-                            if form_id_int == int(form_ids[0], 16):
-                                if not form_ids[6]:
-                                    if ox:
-                                        data = patchers.change_json_element(data, path, '0x'+form_ids[2] + '|' + plugin)
-                                    else:
-                                        data = patchers.change_json_element(data, path, str(int(form_ids[2], 16)) + '|' + plugin)
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            if not to_id_data["update_name"]:
+                                if ox:
+                                    data = patchers.change_json_element(data, path, '0x'+ to_id_data["hex_no_0"] + '|' + plugin)
                                 else:
-                                    if print_replace:
-                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                        print_replace = False  
-                                    if ox:
-                                        data = patchers.change_json_element(data, path, '0x'+form_ids[2] + '|' + "ESLifier_Cell_Master.esm")
-                                    else:
-                                        data = patchers.change_json_element(data, path, str(int(form_ids[2], 16)) + '|' + "ESLifier_Cell_Master.esm")
-                                break
+                                    data = patchers.change_json_element(data, path, str(to_id_data["int"]) + '|' + plugin)
+                            else:
+                                if print_replace:
+                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    print_replace = False  
+                                if ox:
+                                    data = patchers.change_json_element(data, path, '0x'+ to_id_data["hex_no_0"] + '|' + "ESLifier_Cell_Master.esm")
+                                else:
+                                    data = patchers.change_json_element(data, path, str(to_id_data["int"]) + '|' + "ESLifier_Cell_Master.esm")
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
@@ -973,10 +946,9 @@ class patchers():
                         fid_start = ''
                         form_id = path[-2]
                     form_id_int = int(form_id, 16)
-                    for form_ids in form_id_map:
-                        if form_id_int == int(form_ids[0], 16):
-                            data = patchers.change_json_key(data, fid_start + form_id, fid_start + form_ids[3])
-                            break
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        data = patchers.change_json_key(data, fid_start + form_id, fid_start + to_id_data["hex"])
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
@@ -1007,17 +979,16 @@ class patchers():
                             end = value[plugin_index:]
                             form_id = value[form_id_index:plugin_index]
                             form_id_int = int(form_id, 16)
-                            for form_ids in form_id_map:
-                                if form_id_int == int(form_ids[0], 16):
-                                    if not form_ids[6]:
-                                        value = start + '0x' + form_ids[3] + end
-                                    else:
-                                        if print_replace:
-                                            print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                            print_replace = False  
-                                        value = start + '0x' + form_ids[3] + '|ESLifier_Cell_Master.esm' + value[plugin_index+len(basename)+1:]
-                                    changed = True
-                                    break
+                            to_id_data = form_id_map.get(form_id_int)
+                            if to_id_data is not None:
+                                if not to_id_data["update_name"]:
+                                    value = start + '0x' + to_id_data["hex"] + end
+                                else:
+                                    if print_replace:
+                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                        print_replace = False  
+                                    value = start + '0x' + to_id_data["hex"] + '|ESLifier_Cell_Master.esm' + value[plugin_index+len(basename)+1:]
+                                changed = True
                     if changed:
                         data = patchers.change_json_element(data, path, value)
             f.seek(0)
@@ -1036,16 +1007,15 @@ class patchers():
                     plugin_index = line.lower().index(basename)
                     if end_index != -1:
                         form_id_int = int(line[index+1:end_index], 16)
-                        for form_ids in form_id_map:
-                            if form_id_int == int(form_ids[0], 16):
-                                if not form_ids[6]:
-                                    lines[i] = line[:index+1] + '0x' + form_ids[3] + line[end_index:]
-                                else:
-                                    if print_replace:
-                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                        print_replace = False
-                                    lines[i] = line[:plugin_index] + 'ESLifier_Cell_Master.esm' + '" | 0x' + form_ids[3] + line[end_index:]
-                                break
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            if not to_id_data["update_name"]:
+                                lines[i] = line[:index+1] + '0x' + to_id_data["hex"] + line[end_index:]
+                            else:
+                                if print_replace:
+                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    print_replace = False
+                                lines[i] = line[:plugin_index] + 'ESLifier_Cell_Master.esm' + '" | 0x' + to_id_data["hex"] + line[end_index:]
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -1071,16 +1041,15 @@ class patchers():
                     plugin_index = line.index(':')+1
                     plugin = line[plugin_index:index].lower().strip()
                     if plugin == basename:
-                        for form_ids in form_id_map:
-                            if form_id_int == int(form_ids[0], 16):
-                                if not form_ids[6]:
-                                    lines[i] = line[:index+1] + form_ids[3] + end_of_line
-                                else:
-                                    if print_replace:
-                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                        print_replace = False
-                                    lines[i] = line[:plugin_index] + " ESLifier_Cell_Master.esm" + '|' + form_ids[3] + end_of_line
-                                break
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            if not to_id_data["update_name"]:
+                                lines[i] = line[:index+1] + to_id_data["hex"] + end_of_line
+                            else:
+                                if print_replace:
+                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    print_replace = False
+                                lines[i] = line[:plugin_index] + " ESLifier_Cell_Master.esm" + '|' + to_id_data["hex"] + end_of_line
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -1093,12 +1062,11 @@ class patchers():
             if 'actor' in data and 'headTexture' in data['actor']:
                 plugin_and_fid = data['actor']['headTexture']
                 if plugin_and_fid[:-7].lower() == basename:
-                    old_id = plugin_and_fid[-6:]
-                    for form_ids in form_id_map:
-                        if old_id == form_ids[1]:
-                            if not form_ids[6]:
-                                data['actor']['headTexture'] = plugin_and_fid[:-6] + form_ids[3]
-                            break
+                    form_id_int = int(plugin_and_fid[-6:],16)
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        if not to_id_data["update_name"]:
+                            data['actor']['headTexture'] = plugin_and_fid[:-6] + to_id_data["hex"]
 
             if 'headParts' in data:
                 for i, part in enumerate(data['headParts']):
@@ -1106,13 +1074,12 @@ class patchers():
                         formIdentifier = part['formIdentifier']
                         if formIdentifier[:-7].lower() == basename:
                             formId = part['formId'].to_bytes(4)
-                            old_id = formIdentifier[-6:]
-                            for form_ids in form_id_map:
-                                if old_id == form_ids[1]:
-                                    new_form_id = formId[:1] + bytes.fromhex(form_ids[3])
-                                    data['headParts'][i]['formId'] = int.from_bytes(new_form_id)
-                                    data['headParts'][i]['formIdentifier'] = formIdentifier[:-6] + form_ids[3]
-                                    break
+                            form_id_int = int.from_bytes(formIdentifier[-6:])
+                            to_id_data = form_id_map.get(form_id_int)
+                            if to_id_data is not None:
+                                new_form_id = formId[:1] + bytes.fromhex(to_id_data["hex"])
+                                data['headParts'][i]['formId'] = int.from_bytes(new_form_id)
+                                data['headParts'][i]['formIdentifier'] = formIdentifier[:-6] + to_id_data["hex"]
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3, separators=(',', ' : '))
@@ -1135,15 +1102,15 @@ class patchers():
                     plugin = True
                     plugin_path = path
                 elif plugin == True and path[-2] == 'form':
-                    for form_ids in form_id_map:
-                        if value ==  '00' + form_ids[1]:
-                            data = patchers.change_json_element(data, path, '00' + form_ids[3])
-                            if form_ids[6]:
-                                if print_replace:
-                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                    print_replace = False  
-                                data = patchers.change_json_element(data, plugin_path, "ESLifier_Cell_Master.esm")
-                            break
+                    form_id_int = int(value,16)
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        data = patchers.change_json_element(data, path, '00' + to_id_data["hex"])
+                        if to_id_data["update_name"]:
+                            if print_replace:
+                                print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                print_replace = False  
+                            data = patchers.change_json_element(data, plugin_path, "ESLifier_Cell_Master.esm")
                 else:
                     plugin = False
                     plugin_path = []
@@ -1168,16 +1135,16 @@ class patchers():
                     form_id = value[2:8]
                     plugin = value[9:]
                     if plugin.lower() == basename:
-                        for form_ids in form_id_map:
-                            if form_id == form_ids[1]:
-                                if not form_ids[6]:
-                                    data = patchers.change_json_element(data, path, form_id_start + form_ids[3] + '|' + plugin)
-                                else:
-                                    if print_replace:
-                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                        print_replace = False  
-                                    data = patchers.change_json_element(data, path, form_id_start + form_ids[3] + '|' + "ESLifier_Cell_Master.esm")
-                                break
+                        form_id_int = int(form_id,16)
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            if not to_id_data["update_name"]:
+                                data = patchers.change_json_element(data, path, form_id_start + to_id_data["hex"] + '|' + plugin)
+                            else:
+                                if print_replace:
+                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    print_replace = False  
+                                data = patchers.change_json_element(data, path, form_id_start + to_id_data["hex"] + '|' + "ESLifier_Cell_Master.esm")
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
@@ -1199,16 +1166,15 @@ class patchers():
                     plugin = value[:index]
                     form_id_int = int(value[index+1:], 16)
                     if plugin.lower() == basename:
-                        for form_ids in form_id_map:
-                            if form_id_int == int(form_ids[0], 16):
-                                if not form_ids[6]:
-                                    data = patchers.change_json_element(data, path, plugin + '|0x' + form_ids[2])
-                                else:
-                                    if print_replace:
-                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                        print_replace = False  
-                                    data = patchers.change_json_element(data, path, "ESLifier_Cell_Master.esm" + '|0x' + form_ids[2])
-                                break
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            if not to_id_data["update_name"]:
+                                data = patchers.change_json_element(data, path, plugin + '|0x' + to_id_data["hex_no_0"])
+                            else:
+                                if print_replace:
+                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    print_replace = False  
+                                data = patchers.change_json_element(data, path, "ESLifier_Cell_Master.esm" + '|0x' + to_id_data["hex_no_0"])
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
@@ -1231,30 +1197,28 @@ class patchers():
                         plugin = path[-1][:index]
                         form_id_int = int(path[-1][index+1:], 16)
                         if plugin.lower() == basename:
-                            for form_ids in form_id_map:
-                                if form_id_int == int(form_ids[0], 16):
-                                    if not form_ids[6]:
-                                        data = patchers.change_json_key(data, path[-1], plugin + '|' + form_ids[2])
-                                    else:
-                                        if print_replace:
-                                            print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                            print_replace = False
-                                        data = patchers.change_json_key(data, path[-1], "ESLifier_Cell_Master.esm" + '|' + form_ids[2])
-                                    break
-                    index = value.index('|')
-                    plugin = value[:index]
-                    form_id_int = int(value[index+1:], 16)
-                    if plugin.lower() == basename:
-                        for form_ids in form_id_map:
-                            if form_id_int == int(form_ids[0], 16):
-                                if not form_ids[6]:
-                                    data = patchers.change_json_element(data, path, plugin + '|' + form_ids[2])
+                            to_id_data = form_id_map.get(form_id_int)
+                            if to_id_data is not None:
+                                if not to_id_data["update_name"]:
+                                    data = patchers.change_json_key(data, path[-1], plugin + '|' + to_id_data["hex_no_0"])
                                 else:
                                     if print_replace:
                                         print(f'~Plugin Name Replaced: {basename} | {new_file}')
                                         print_replace = False
-                                    data = patchers.change_json_element(data, path, "ESLifier_Cell_Master.esm" + '|' + form_ids[2])
-                                break
+                                    data = patchers.change_json_key(data, path[-1], "ESLifier_Cell_Master.esm" + '|' + to_id_data["hex_no_0"])
+                    index = value.index('|')
+                    plugin = value[:index]
+                    form_id_int = int(value[index+1:], 16)
+                    if plugin.lower() == basename:
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            if not to_id_data["update_name"]:
+                                data = patchers.change_json_element(data, path, plugin + '|' + to_id_data["hex_no_0"])
+                            else:
+                                if print_replace:
+                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    print_replace = False
+                                data = patchers.change_json_element(data, path, "ESLifier_Cell_Master.esm" + '|' + to_id_data["hex_no_0"])
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
@@ -1277,9 +1241,9 @@ class patchers():
                     plugin = value[formData_index+1:index]
                     if plugin.lower() == basename:
                         form_id_int = int(value[index+1:],16)
-                        for form_ids in form_id_map:
-                            if form_id_int == int(form_ids[0], 16):
-                                data = patchers.change_json_element(data, path, value[:index+1] + '0x' + form_ids[2])
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            data = patchers.change_json_element(data, path, value[:index+1] + '0x' + to_id_data["hex_no_0"])
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
@@ -1302,15 +1266,14 @@ class patchers():
                     form_id_int = value
                     form_id_path = path
                 if path[-1].lower() == 'plugin' and value.lower() == basename:
-                    for form_ids in form_id_map:
-                        if form_id_int == int(form_ids[0], 16):
-                            data = patchers.change_json_element(data, form_id_path, int(form_ids[2], 16))
-                            if form_ids[6]:
-                                if print_replace:
-                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                    print_replace = False
-                                data = patchers.change_json_element(data, path, "ESLifier_Cell_Master.esm")
-                            break
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        data = patchers.change_json_element(data, form_id_path, to_id_data["int"])
+                        if to_id_data["update_name"]:
+                            if print_replace:
+                                print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                print_replace = False
+                            data = patchers.change_json_element(data, path, "ESLifier_Cell_Master.esm")
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False)
@@ -1334,15 +1297,14 @@ class patchers():
                     plugin_path = path
                 elif plugin and type(path[-1]) is str and 'formid' == path[-1].lower():
                     form_id_int = int(value, 16)
-                    for form_ids in form_id_map:
-                        if form_id_int == int(form_ids[0], 16):
-                            data = patchers.change_json_element(data, path, "0x"+form_ids[2])
-                            if form_ids[6]:
-                                if print_replace:
-                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
-                                    print_replace = False
-                                data = patchers.change_json_element(data, plugin_path, "ESLifier_Cell_Master.esm")
-                            break
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        data = patchers.change_json_element(data, path, "0x" + to_id_data["hex_no_0"])
+                        if to_id_data["update_name"]:
+                            if print_replace:
+                                print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                print_replace = False
+                            data = patchers.change_json_element(data, plugin_path, "ESLifier_Cell_Master.esm")
                 else:
                     plugin = False
                     plugin_path = []
@@ -1414,9 +1376,9 @@ class patchers():
                     if form_id.strip() != '':
                         form_id_int = int(form_id, 16)
                         if form_id_int != 0:
-                            for form_ids in form_id_map:
-                                if form_id_int == int(form_ids[0], 16):
-                                    lines[i] = start_of_line + ' 0x' + form_ids[2] + end_of_line
+                            to_id_data = form_id_map.get(form_id_int)
+                            if to_id_data is not None:
+                                lines[i] = start_of_line + ' 0x' + to_id_data["hex_no_0"] + end_of_line
                             
                 if 'File' in line and basename in line.lower():
                     patch_next_line = True
