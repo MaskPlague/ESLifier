@@ -1074,10 +1074,10 @@ class patchers():
                         formIdentifier = part['formIdentifier']
                         if formIdentifier[:-7].lower() == basename:
                             formId = part['formId'].to_bytes(4)
-                            form_id_int = int.from_bytes(formIdentifier[-6:])
+                            form_id_int = int(formIdentifier[-6:],16)
                             to_id_data = form_id_map.get(form_id_int)
                             if to_id_data is not None:
-                                new_form_id = formId[:1] + bytes.fromhex(to_id_data["hex"])
+                                new_form_id = formId[:1] + to_id_data["bytes"][::-1][1:]
                                 data['headParts'][i]['formId'] = int.from_bytes(new_form_id)
                                 data['headParts'][i]['formIdentifier'] = formIdentifier[:-6] + to_id_data["hex"]
             f.seek(0)
