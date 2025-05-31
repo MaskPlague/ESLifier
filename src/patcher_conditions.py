@@ -125,8 +125,6 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_
             print(f'Warn: Possible missing patcher for: {new_file}')
     elif new_file_lower.endswith('_srd.yaml'):                                              # Sound record distributor YAML
         patchers.srd_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-    elif new_file_lower.endswith('.psc'):                                                   # Script source file patching, this doesn't take into account form ids being passed as variables
-        patchers.psc_patcher(basename, new_file, form_id_rename_map)
     elif 'facegeom' in new_file_lower and new_file_lower.endswith('.nif'):                  # FaceGeom mesh patching
         patchers.facegeom_mesh_patcher(basename, new_file, form_id_rename_map)
     elif new_file_lower.endswith('.seq'):                                                   # SEQ file patching

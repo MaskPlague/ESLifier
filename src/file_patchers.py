@@ -19,19 +19,6 @@ class patchers():
                 return i
         return len(text)
     
-    def psc_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+', encoding="utf-8") as f:
-            lines = f.readlines()
-            for i, line in enumerate(lines):
-                if basename in line.lower() and 'getformfromfile' in line.lower():
-                    for form_ids in form_id_map:
-                        if form_ids[0].lstrip(0).lower() in line.lower():
-                            lines[i] = re.sub(r'0x0*' + re.escape(form_ids[0].lstrip('0')) + r'\b', '0x' + form_ids[1].lstrip('0'), line, flags=re.IGNORECASE)
-            f.seek(0)
-            f.truncate(0)
-            f.write(''.join(lines))
-            f.close()
-    
     def facegeom_mesh_patcher(basename, new_file, form_id_map):
         with open(new_file, 'rb+') as f:
             data = f.readlines()
