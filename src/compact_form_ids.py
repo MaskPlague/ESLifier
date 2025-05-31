@@ -38,6 +38,8 @@ class CFIDs():
         CFIDs.overwrite_path = os.path.normpath(overwrite_path)
         CFIDs.create_cell_master_class = create_cell_master_class
         CFIDs.do_generate_cell_master = add_cell_to_master
+        CFIDs.form_id_map = {}
+        CFIDs.form_id_rename_map = []
         print(f"Compacting Plugin: {os.path.basename(file_to_compact)}...")
         CFIDs.compact_file(file_to_compact, skyrim_folder_path, output_folder_path, update_header, all_dependents_have_skyrim_esm_as_master)
         files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
@@ -95,17 +97,17 @@ class CFIDs():
                             rel_paths.append(rel_path)
                 
             to_patch, to_rename = CFIDs.sort_files_to_patch_or_rename(file_to_compact, patch_or_rename) #function to get files that need to be edited in some way to function correctly.
-            form_id_map = CFIDs.get_form_id_map(file_to_compact)
+            CFIDs.get_form_id_map(file_to_compact)
             if len(to_patch) > 0:
                 print(f"-  Patching {len(to_patch)} Dependent Files...")
                 if len(to_patch) > 20:
                     print('\n')
-                CFIDs.patch_files_threader(file_to_compact, to_patch, form_id_map, skyrim_folder_path, output_folder_path)
+                CFIDs.patch_files_threader(file_to_compact, to_patch, skyrim_folder_path, output_folder_path)
             if len(to_rename) > 0:
                 print(f"-  Renaming/Patching {len(to_rename)} Dependent Files...")
                 if len(to_rename) > 20:
                     print('\n')
-                CFIDs.rename_files_threader(file_to_compact, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
+                CFIDs.rename_files_threader(file_to_compact, to_rename, skyrim_folder_path, output_folder_path)
         CFIDs.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json')
         if os.path.exists('bsa_extracted_temp/'):
             print('-  Deleting temporarily Extracted FaceGen/Voice Files...')
@@ -186,6 +188,8 @@ class CFIDs():
         CFIDs.output_folder_name = output_folder_name
         CFIDs.overwrite_path = os.path.normpath(overwrite_path)
         CFIDs.do_generate_cell_master = add_cell_to_master
+        CFIDs.form_id_map = {}
+        CFIDs.form_id_rename_map = []
         print('Patching new plugins and files for ' + compacted_file + '...')
         CFIDs.compacted_and_patched[compacted_file] = []
         if dependents != []:
@@ -193,17 +197,17 @@ class CFIDs():
             CFIDs.patch_dependent_plugins(compacted_file, dependents, skyrim_folder_path, output_folder_path, update_header, files_to_patch)
         if os.path.basename(compacted_file) in files_to_patch:
             to_patch, to_rename = CFIDs.sort_files_to_patch_or_rename(compacted_file, files_to_patch[os.path.basename(compacted_file)])
-            form_id_map = CFIDs.get_form_id_map(compacted_file)
+            CFIDs.get_form_id_map(compacted_file)
             if len(to_patch) > 0:
                 print(f"-  Patching {len(to_patch)} New Dependent Files...")
                 if len(to_patch) > 20:
                     print('\n')
-                CFIDs.patch_files_threader(compacted_file, to_patch, form_id_map, skyrim_folder_path, output_folder_path)
+                CFIDs.patch_files_threader(compacted_file, to_patch, skyrim_folder_path, output_folder_path)
             if len(to_rename) > 0:
                 print(f"-  Renaming/Patching {len(to_rename)} New Dependent Files...")
                 if len(to_rename) > 20:
                     print('\n')
-                CFIDs.rename_files_threader(compacted_file, to_rename, form_id_map, skyrim_folder_path, output_folder_path)
+                CFIDs.rename_files_threader(compacted_file, to_rename, skyrim_folder_path, output_folder_path)
         CFIDs.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json')
         print('CLEAR ALT')
 
@@ -251,7 +255,7 @@ class CFIDs():
                 raise TypeError(f"{os.path.basename(master).lower()} - File: {file} \nhas no patching method but it is in file_masters...")
         return files_to_patch, files_to_rename
 
-    def rename_files_threader(master, files, form_id_map, skyrim_folder_path, output_folder_path):
+    def rename_files_threader(master, files, skyrim_folder_path, output_folder_path):
         threads = []
         split = len(files)
         if split > MAX_THREADS:
@@ -263,7 +267,7 @@ class CFIDs():
         CFIDs.count = 0
         CFIDs.file_count = len(files)
         for chunk in chunks:
-            thread = threading.Thread(target=CFIDs.rename_files, args=(master, chunk, form_id_map, skyrim_folder_path, output_folder_path))
+            thread = threading.Thread(target=CFIDs.rename_files, args=(master, chunk, skyrim_folder_path, output_folder_path))
             threads.append(thread)
             thread.start()
         
@@ -271,7 +275,7 @@ class CFIDs():
             thread.join()
 
     #Rename each file in the list of files from the old Form IDs to the new Form IDs
-    def rename_files(master, files, form_id_map, skyrim_folder_path, output_folder_path):
+    def rename_files(master, files, skyrim_folder_path, output_folder_path):
         facegeom_meshes = []
         master_base_name = os.path.basename(master)
         for file in files:
@@ -286,15 +290,15 @@ class CFIDs():
             
             rel_path = CFIDs.get_rel_path(file, skyrim_folder_path)
             with CFIDs.semaphore:
-                for form_ids in form_id_map:
-                    if form_ids[1].lower() in file.lower():
+                for form_ids in CFIDs.form_id_rename_map:
+                    if form_ids[0].lower() in file.lower():
                         new_file, rel_path_new_file = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
-                        index = new_file.lower().index(form_ids[1].lower())
-                        renamed_file = new_file[:index] + form_ids[3].upper() + new_file[index+6:]
+                        index = new_file.lower().index(form_ids[0].lower())
+                        renamed_file = new_file[:index] + form_ids[1].upper() + new_file[index+6:]
                         with CFIDs.lock:
                             os.replace(new_file, renamed_file)
-                        index = rel_path_new_file.lower().index(form_ids[1].lower())
-                        rel_path_renamed_file = rel_path_new_file[:index] + form_ids[3].upper() + rel_path_new_file[index+6:]
+                        index = rel_path_new_file.lower().index(form_ids[0].lower())
+                        rel_path_renamed_file = rel_path_new_file[:index] + form_ids[1].upper() + rel_path_new_file[index+6:]
                         with CFIDs.lock:
                             if rel_path_new_file not in CFIDs.compacted_and_patched[master_base_name]:
                                 CFIDs.compacted_and_patched[master_base_name].append(rel_path_new_file)
@@ -305,7 +309,7 @@ class CFIDs():
                         break
             CFIDs.compacted_and_patched[master_base_name].append(rel_path.lower())
         if facegeom_meshes != []:
-            CFIDs.patch_files(master, facegeom_meshes, form_id_map, skyrim_folder_path, output_folder_path)
+            CFIDs.patch_files(master, facegeom_meshes, skyrim_folder_path, output_folder_path)
         return
 
     #Create the Form ID map which is a list of tuples that holds four Form Ids that are in \xMASTER\x00\x00\x00 order:
@@ -315,32 +319,41 @@ class CFIDs():
     def get_form_id_map(file):
         form_id_file_name = "ESLifier_Data/Form_ID_Maps/" + os.path.basename(file).lower() + "_FormIdMap.txt"
         form_id_file_data = ''
-        form_id_map = []
         with open(form_id_file_name, 'r') as fidf:
             form_id_file_data = fidf.readlines()
         for form_id_history in form_id_file_data:
             form_id_conversion = form_id_history.split('|')
-            from_id_bytes = bytes.fromhex(form_id_conversion[0])                                        #4
 
-            from_id = from_id_bytes[::-1].hex()[2:].lstrip('0').upper()                                 #0
-            from_id_with_leading_0s = from_id_bytes[::-1].hex()[2:].upper()                             #1
-            to_id_bytes = bytes.fromhex(form_id_conversion[1])                                          #5
+            from_id_hex = bytes.fromhex(form_id_conversion[0])[:3][::-1].hex().upper()
+            from_id_int = int.from_bytes(bytes.fromhex(form_id_conversion[0])[:3], byteorder='little')
+            from_id_bytes = bytes.fromhex(form_id_conversion[0])
+
+            to_id_hex = bytes.fromhex(form_id_conversion[1])[:3][::-1].hex().upper()
+            to_id_int = int.from_bytes(bytes.fromhex(form_id_conversion[1])[:3], byteorder='little')
+            to_id_bytes = bytes.fromhex(form_id_conversion[1])
+            to_id_hex_no_0 = to_id_hex.lstrip('0')
+            if to_id_hex_no_0 == '':
+                to_id_hex_no_0 = '0'
+
+            CFIDs.form_id_rename_map.append([from_id_hex, to_id_hex])
+            
 
             if len(to_id_bytes) == 4:
-                to_id = to_id_bytes[::-1].hex()[2:].lstrip('0').upper()                                 #2
-                to_id_with_leading_0s = to_id_bytes[::-1].hex()[2:].upper()                             #3
-                update_plugin_name = False                                                              #6
+                update_plugin_name = False
             else:
-                to_id = to_id_bytes[::-1].hex()[4:].lstrip('0').upper()                                 #2
-                to_id_with_leading_0s = to_id_bytes[::-1].hex()[4:].upper()                             #3
-                update_plugin_name = True                                                               #6
-                
-            if to_id == '': to_id = '0'
-            
-            form_id_map.append([from_id, from_id_with_leading_0s, to_id, to_id_with_leading_0s, from_id_bytes, to_id_bytes, update_plugin_name])
-        return form_id_map
+                to_id_bytes = to_id_bytes[:4]
+                update_plugin_name = True
 
-    def patch_files_threader(master, files, form_id_map, skyrim_folder_path, output_folder_path):
+            CFIDs.form_id_map[from_id_int]   = {"hex": to_id_hex,
+                                                "int": to_id_int,
+                                                "hex_no_0": to_id_hex_no_0,
+                                                "bytes": to_id_bytes,
+                                                "update_name": update_plugin_name
+                                                }
+            
+            CFIDs.form_id_map[from_id_bytes] = to_id_bytes
+
+    def patch_files_threader(master, files, skyrim_folder_path, output_folder_path):
         threads = []
         split = len(files)
         if split > MAX_THREADS:
@@ -360,7 +373,7 @@ class CFIDs():
                     factor = 1
                 if (CFIDs.count % factor) >= (factor-1) or CFIDs.count >= CFIDs.file_count:
                     print('\033[F\033[K-  Percentage: ' + str(round(percent,1)) +'%\n-  Files: ' + str(CFIDs.count) + '/' + str(CFIDs.file_count), end='\r')
-            thread = threading.Thread(target=CFIDs.patch_files, args=(master, chunk, form_id_map, skyrim_folder_path, output_folder_path))
+            thread = threading.Thread(target=CFIDs.patch_files, args=(master, chunk, skyrim_folder_path, output_folder_path))
             threads.append(thread)
             thread.start()
         
@@ -368,7 +381,7 @@ class CFIDs():
             thread.join()
 
     #Patches each file type in a different way as each has Form IDs present in a different format
-    def patch_files(master, files, form_id_map, skyrim_folder_path, output_folder_path):
+    def patch_files(master, files, skyrim_folder_path, output_folder_path):
         for file in files:
             new_file, rel_path = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
             new_file_lower = new_file.lower()
@@ -377,11 +390,11 @@ class CFIDs():
                 with CFIDs.semaphore:
                     with CFIDs.lock:
                         try:
-                            patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, form_id_map, 'utf-8')
+                            patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, CFIDs.form_id_map, CFIDs.form_id_rename_map, 'utf-8')
                         except Exception as e:
                             exception_type = type(e)
                             if exception_type == UnicodeDecodeError:
-                                patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, form_id_map, 'ansi')
+                                patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, CFIDs.form_id_map, CFIDs.form_id_rename_map, 'ansi')
                             else:
                                 print(f'!Error: Failed to patch file: {new_file}')
                                 print(e)
@@ -766,3 +779,8 @@ class CFIDs():
 
         data_list[0] = tes4
         return data_list
+    
+
+#CFIDs.form_id_map = {}
+#CFIDs.form_id_rename_map = []
+#CFIDs.get_form_id_map("test-cell2.esm")
