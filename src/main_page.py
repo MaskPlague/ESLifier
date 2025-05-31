@@ -84,13 +84,19 @@ class main(QWidget):
             self.reset_output
         )
 
-        self.reset_bsa_button= self.create_button(
+        self.reset_bsa_button = self.create_button(
             ' Delete extracted BSA files  \n Rescan BSA on next Scan ',
             'ESLifier only extracts seq and script files from a BSA once so as not to\n'\
             'go through the tedious process of extracting the releveant files in BSAs\n'\
             'each time it scans (others are extracted during patching). Use this button\n'\
             'if a BSA has new files or you have deleted a mod that had a BSA.',
             self.reset_bsa
+        )
+
+        self.open_log_button = self.create_button(
+            " Open Log ",
+            "Opens ESLifier.log",
+            self.open_log
         )
 
         self.filter_eslify = QLineEdit()
@@ -145,9 +151,12 @@ class main(QWidget):
         line.setFrameStyle(QFrame.Shape.HLine | QFrame.Shadow.Sunken)
         line1 = QFrame()
         line1.setFrameStyle(QFrame.Shape.HLine | QFrame.Shadow.Sunken)
+        line2 = QFrame()
+        line2.setFrameStyle(QFrame.Shape.HLine | QFrame.Shadow.Sunken)
         if self.COLOR_MODE == 'Light':
             line.setStyleSheet('QFrame{background-color: lightgrey;}')
             line1.setStyleSheet('QFrame{background-color: lightgrey;}')
+            line2.setStyleSheet('QFrame{background-color: lightgrey;}')
         
         self.stats = QTextEdit()
         self.stats.setReadOnly(True)
@@ -165,6 +174,9 @@ class main(QWidget):
         self.v_layout0.addWidget(self.reset_output_button)
         self.v_layout0.addSpacing(10)
         self.v_layout0.addWidget(self.reset_bsa_button)
+        self.v_layout0.addWidget(line2)
+        self.v_layout0.addSpacing(25)
+        self.v_layout0.addWidget(self.open_log_button)
         self.v_layout0.addStretch()
         self.v_layout0.addWidget(self.stats)
         self.v_layout0.addSpacing(29)
@@ -570,6 +582,19 @@ class main(QWidget):
             self.list_eslify.create()
         confirm.accepted.connect(accepted)
         confirm.show()
+
+    def open_log(self):
+        log_file = os.path.join(os.getcwd(), "ESLifier_Data/ESLifier.log")
+        if os.path.exists(log_file):
+            try:
+                if os.name == 'nt':
+                    os.startfile(log_file)
+                elif os.name == 'posix':
+                    subprocess.Popen(['xdg-open', os.path.dirname(log_file)])
+                else:
+                    subprocess.Popen(['open', os.path.dirname(log_file)])
+            except Exception as e:
+                print(f"Error opening file: {e}")
 
     def create_button(self, button_text, tooltip, click_function):
         button = QPushButton(button_text)
