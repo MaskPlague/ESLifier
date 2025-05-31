@@ -39,7 +39,7 @@ class scanner():
         scanner.kreate_files = []
         scanner.bsab = bsab
         scanner.lock = threading.Lock()
-        scanner.file_extensions = ('.ini', '.json', '.psc', '.jslot', '.toml', '_conditions.txt', '_srd.yaml')
+        scanner.file_extensions = ('.ini', '.json', '.jslot', '.toml', '_conditions.txt', '_srd.yaml')
         scanner.exclude_contains = (
             'modex\\user\\kits',
             'nemesis_engine',
@@ -693,22 +693,6 @@ class scanner():
                             if plugin in scanner.plugin_basename_list:
                                 if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
                                 if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
-                elif file_lower.endswith('.psc'):
-                    with scanner.file_semaphore:
-                        with open(file, 'r', encoding='utf-8', errors='ignore') as f:
-                            normal_data = f.read()
-                            f.close()
-                    data = normal_data.lower()
-                    if 'getformfromfile' in data:
-                        r = re.findall(pattern, data)
-                        if r != []:
-                            with scanner.lock:
-                                for plugin in r:
-                                    if plugin in scanner.plugin_basename_list:
-                                        if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
-                                        if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
-                    elif 'bsa_extracted\\' in file:
-                        os.remove(file)
                 else:
                     with scanner.file_semaphore:
                         with open(file, 'r', encoding='utf-8', errors='ignore') as f:
