@@ -20,17 +20,22 @@ class form_processor():
             offset += 12 + alt_tex_size 
         return offsets
         
-    def patch_form_data(data_list, forms, form_id_replacements, master_byte, form_ids, update_masters):
+    def patch_form_data(data_list, forms, form_id_replacements, master_byte, form_ids, update_masters, updated_master_index):
         if not update_masters:
             for i, form, offsets in forms:
                 for offset in offsets:
                     if form[offset+3:offset+4] >= master_byte:
                         to_id = form_id_replacements.get(bytes(form[offset:offset+3]))
-                        if to_id is not None:
+                        if to_id is not None and len(to_id) == 3:
                             form[offset:offset+3] = to_id
+                        elif to_id is not None:
+                            form[offset:offset+3] = to_id[:3]
                 data_list[i] = bytes(form)
         else:
-            updated_master_byte = (int.from_bytes(master_byte) + 1).to_bytes()
+            if updated_master_index == -1:
+                updated_master_byte = (int.from_bytes(master_byte) + 1).to_bytes()
+            else:
+                updated_master_byte = master_byte
             for i, form, offsets in forms:
                 for offset in offsets:
                     if form[offset+3:offset+4] >= master_byte:
@@ -48,17 +53,22 @@ class form_processor():
                 data_list[i] = bytes(form)
         return data_list
     
-    def patch_form_data_dependent(data_list, forms, form_id_replacements, master_index_byte, master_byte, form_ids, update_masters):
+    def patch_form_data_dependent(data_list, forms, form_id_replacements, master_index_byte, master_byte, form_ids, update_masters, updated_master_index):
         if not update_masters:
             for i, form, offsets in forms:
                 for offset in offsets:
                     if form[offset+3:offset+4] == master_index_byte:
                         to_id = form_id_replacements.get(bytes(form[offset:offset+3]))
-                        if to_id is not None:
+                        if to_id is not None and len(to_id) == 3:
                             form[offset:offset+3] = to_id
+                        elif to_id is not None:
+                            form[offset:offset+3] = to_id[:3]
                 data_list[i] = bytes(form)
         else:
-            updated_master_byte = (int.from_bytes(master_byte) + 1).to_bytes()
+            if updated_master_index == -1:
+                updated_master_byte = (int.from_bytes(master_byte) + 1).to_bytes()
+            else:
+                updated_master_byte = master_byte
             for i, form, offsets in forms:
                 for offset in offsets:
                     form_master_byte = form[offset+3:offset+4]
