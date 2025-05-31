@@ -1,7 +1,7 @@
 import os
 from file_patchers import patchers
 
-def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, encoding):
+def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_id_rename_map, encoding):
     if new_file_lower.endswith('.ini'):
         if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini', '_enbl.ini',     # PO3's SPID, KID, BOS, ENBL
                                     '_desc.ini', '_flm.ini', '_llos.ini', '_ipm.ini', '_mus.ini')): # Description Framework, FLM, LLOS, IPM, MTD
@@ -67,7 +67,7 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, encod
             patchers.json_cf_sr_patcher(basename, new_file, form_id_map)
         elif '\\inventoryinjector\\' in new_file_lower:                                     # Inventory Injector
             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
-        elif '\\customskills\\' in new_file_lower or new_file_lower.endswith('\\metaskillsmenu\\rawdata.json'): # Custom Skills Framework
+        elif '\\customskills\\' in new_file_lower or '\\metaskillsmenu\\' in new_file_lower:# Custom Skills Framework
             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
         elif 'plugins\\rain extinguishes fires\\' in new_file_lower:                        # Rain Extinguishes Fires
             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
@@ -126,9 +126,9 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, encod
     elif new_file_lower.endswith('_srd.yaml'):                                              # Sound record distributor YAML
         patchers.srd_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     elif new_file_lower.endswith('.psc'):                                                   # Script source file patching, this doesn't take into account form ids being passed as variables
-        patchers.psc_patcher(basename, new_file, form_id_map)
+        patchers.psc_patcher(basename, new_file, form_id_rename_map)
     elif 'facegeom' in new_file_lower and new_file_lower.endswith('.nif'):                  # FaceGeom mesh patching
-        patchers.facegeom_mesh_patcher(basename, new_file, form_id_map)
+        patchers.facegeom_mesh_patcher(basename, new_file, form_id_rename_map)
     elif new_file_lower.endswith('.seq'):                                                   # SEQ file patching
         patchers.seq_patcher(new_file, form_id_map)
     elif new_file_lower.endswith('.jslot'):                                                 # Racemenu Presets
