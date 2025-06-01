@@ -56,6 +56,7 @@ class list_compactable(QTableWidget):
         self.filter_changed_cells = True
         self.filter_interior_cells = False
         self.filter_worldspaces = False
+        self.cell_master = False
         self.blacklist = blacklist()
 
         self.setStyleSheet("""
@@ -84,7 +85,7 @@ class list_compactable(QTableWidget):
     def create(self):
         self.setSortingEnabled(False)
         self.clearContents()
-        if not self.show_cells: 
+        if not self.show_cells or self.cell_master: 
             self.hideColumn(self.CELL_COL)
         else:
             self.showColumn(self.CELL_COL)
@@ -183,7 +184,7 @@ class list_compactable(QTableWidget):
             self.setItem(i, self.MOD_COL, item)
             self.setRowHidden(i, False)
             hide_row = False
-            if 'new_cell' in flags:
+            if 'new_cell' in flags and not self.cell_changed:
                 item_cell_flag = QTableWidgetItem('New CELL')
                 item_cell_flag.setToolTip('This mod has a new CELL record and no mods currently modify it.\n'+
                                           'It is currently safe to ESL flag it.')
