@@ -27,7 +27,6 @@ class main(QWidget):
         self.scanned = False
         self.mo2_mode = False
         self.update_header = True
-        self.eslify_dictionary = {}
         self.dependency_dictionary = {}
         self.redoing_output = False
         self.generate_cell_master = False
@@ -749,7 +748,7 @@ class CompactorWorker(QObject):
             if self.generate_cell_master:
                 flags = flag_dict[file]
                 generate_cell_master = False
-                if 'new_interior_cell' in flags: #'is_esm' in flags and 'new_cell' in flags:
+                if 'new_interior_cell' in flags: #'new_cell' in flags:
                     generate_cell_master = True
                     finalize = True
             else:
