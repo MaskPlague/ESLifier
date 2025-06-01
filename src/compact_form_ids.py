@@ -40,8 +40,9 @@ class CFIDs():
         CFIDs.do_generate_cell_master = add_cell_to_master
         CFIDs.form_id_map = {}
         CFIDs.form_id_rename_map = []
-        print(f"Compacting Plugin: {os.path.basename(file_to_compact)}...")
+        print(f"Editing Plugin: {os.path.basename(file_to_compact)}...")
         CFIDs.compact_file(file_to_compact, skyrim_folder_path, output_folder_path, update_header, all_dependents_have_skyrim_esm_as_master)
+        CFIDs.get_form_id_map(file_to_compact)
         files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
         if dependents != []:
             print(f"-  Patching {len(dependents)} Dependent Plugins...")
@@ -97,7 +98,6 @@ class CFIDs():
                             rel_paths.append(rel_path)
                 
             to_patch, to_rename = CFIDs.sort_files_to_patch_or_rename(file_to_compact, patch_or_rename) #function to get files that need to be edited in some way to function correctly.
-            CFIDs.get_form_id_map(file_to_compact)
             if len(to_patch) > 0:
                 print(f"-  Patching {len(to_patch)} Dependent Files...")
                 if len(to_patch) > 20:
@@ -508,9 +508,10 @@ class CFIDs():
         master_count, has_skyrim_esm_master = CFIDs.get_master_count(data_list)
 
         data_list, sizes_list = CFIDs.decompress_data(data_list)
+        updated_master_index = -1
         if CFIDs.do_generate_cell_master:
             new_cell_form_ids = CFIDs.create_cell_master_class.add_cells(data_list, grup_struct, master_count, os.path.basename(file))
-            data_list = CFIDs.add_cell_master_to_masters(data_list)
+            data_list, updated_master_index = CFIDs.add_cell_master_to_masters(data_list)
 
         form_id_list = []
         #Get all new form ids in plugin
@@ -581,11 +582,17 @@ class CFIDs():
                 for replacement in copy:
                     if old_id == replacement[0]:
                         form_id_replacements.remove(replacement)
-                        form_id_replacements.append([old_id, new_id + master_byte + b'\xFF'])
+                        if updated_master_index == -1:
+                            form_id_replacements.append([old_id, new_id + master_byte + b'\xFF'])
+                        else:
+                            form_id_replacements.append([old_id, new_id + updated_master_index.to_bytes() + b'\xFF'])
                         added = True
                         break
                 if not added:
-                    form_id_replacements.append([old_id, new_id + master_byte + b'\xFF'])
+                    if updated_master_index == -1:
+                        form_id_replacements.append([old_id, new_id + master_byte + b'\xFF'])
+                    else:
+                        form_id_replacements.append([old_id, new_id + updated_master_index.to_bytes() + b'\xFF'])
                 
 
         form_id_replacements.sort(key= lambda x: struct.unpack('<I', x[0])[0])
@@ -596,7 +603,7 @@ class CFIDs():
         form_id_replacements_no_master_byte = {old_id[:3]: new_id[:3] if len(new_id) <= 4 else new_id[:4] for old_id, new_id in form_id_replacements}
         
         data_list = form_processor.patch_form_data(data_list, saved_forms, form_id_replacements_no_master_byte, master_byte, 
-                                                   set(all_form_ids_list), CFIDs.do_generate_cell_master)
+                                                   set(all_form_ids_list), CFIDs.do_generate_cell_master, updated_master_index)
 
         data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
 
@@ -626,9 +633,9 @@ class CFIDs():
                 new_seq_file, rel_path_seq = CFIDs.copy_file_to_output(file_masters[basename_lower][-1], skyrim_folder_path, output_folder_path)
             else:
                 new_seq_file, rel_path_seq = None, None
-            if new_seq_file:
+            if new_seq_file and len(CFIDs.form_id_map) > 0:
                 print(f'-    {basename} + .seq')
-            else:
+            elif len(CFIDs.form_id_map) > 0:
                 print(f'-    {basename}')
             thread = threading.Thread(target=CFIDs.patch_dependent, args=(new_file, update_header, file, form_id_file_data, rel_path, new_seq_file, rel_path_seq))
             threads.append(thread)
@@ -660,14 +667,14 @@ class CFIDs():
 
                 form_id_list = []
                 master_byte = b''
+                updated_master_index = -1
                 if CFIDs.do_generate_cell_master:
                     #Get all new form ids in plugin
                     for form in data_list:
                         if form[:4] not in (b'GRUP', b'TES4') and form[15] >= master_index and form[12:16] not in form_id_list:
                             form_id_list.append(form[12:16])
                     master_byte = CFIDs.get_master_count(data_list)[0].to_bytes()
-                    #updated_master_byte = (int.from_bytes(master_index_byte) + 1).to_bytes()
-                    data_list = CFIDs.add_cell_master_to_masters(data_list)
+                    data_list, updated_master_index = CFIDs.add_cell_master_to_masters(data_list)
 
                 saved_forms = form_processor.save_all_form_data(data_list)
 
@@ -676,13 +683,16 @@ class CFIDs():
                     from_id = bytes.fromhex(form_id_conversion[0])[:3]
                     id = bytes.fromhex(form_id_conversion[1])
                     if len(id) > 4 and CFIDs.do_generate_cell_master:
-                        to_id = id[:3] + master_byte
+                        if updated_master_index == -1:
+                            to_id = id[:3] + master_byte
+                        else:
+                            to_id = id[:3] + updated_master_index.to_bytes()
                     else:
                         to_id = id[:3]
                     form_id_replacements.append([from_id, to_id])
                 form_id_replacements_dict = {key: value for key, value in form_id_replacements}
                 data_list = form_processor.patch_form_data_dependent(data_list, saved_forms, form_id_replacements_dict, master_index_byte, master_byte,
-                                                                    set(form_id_list), CFIDs.do_generate_cell_master)
+                                                                    set(form_id_list), CFIDs.do_generate_cell_master, updated_master_index)
 
                 data_list, sizes_list = CFIDs.recompress_data(data_list, sizes_list)
                 
@@ -747,16 +757,25 @@ class CFIDs():
         return master_list_count, has_skyrim_esm_master
     
     def add_cell_master_to_masters(data_list):
+        tes4 = data_list[0]
         new_master_data = (
             b'\x4D\x41\x53\x54\x19\x00\x45\x53\x4C\x69\x66\x69' +
             b'\x65\x72\x5F\x43\x65\x6C\x6C\x5F\x4D\x61\x73\x74' +
             b'\x65\x72\x2E\x65\x73\x6D\x00\x44\x41\x54\x41\x08' +
             b'\x00\x00\x00\x00\x00\x00\x00\x00\x00'
             )
-        tes4 = data_list[0]
         offset = 24
         data_len = len(tes4)
-        data_len = len(tes4)
+        if new_master_data in tes4:
+            master_index = 0
+            while offset < data_len:
+                field = tes4[offset:offset+4]
+                field_size = struct.unpack("<H", tes4[offset+4:offset+6])[0]
+                if field == b'MAST':
+                    if b'ESLifier_Cell_Master.esm' in tes4[offset+6:offset+6+field_size]:
+                        return data_list, master_index
+                    master_index += 1
+                offset += field_size + 6
         master_exists = False
         cnam_offset = 0
         while offset < data_len:
@@ -778,9 +797,4 @@ class CFIDs():
             tes4 = b'TES4' + tes4_size.to_bytes(4,'little') + tes4[8:offset] + new_master_data + tes4[offset:]
 
         data_list[0] = tes4
-        return data_list
-    
-
-#CFIDs.form_id_map = {}
-#CFIDs.form_id_rename_map = []
-#CFIDs.get_form_id_map("test-cell2.esm")
+        return data_list, -1
