@@ -739,13 +739,13 @@ class main(QWidget):
             calculated_size = str(round(size / 1024, 2)) + ' KBs'
         flaggable_count = 0
         row_count = self.list_eslify.rowCount()
-        for row in range(0,row_count):
+        for row in range(0, row_count):
             if not self.list_eslify.isRowHidden(row):
                 flaggable_count += 1
         compactible_count = 0
         row_count = self.list_compact.rowCount()
         for row in range(0, row_count):
-            if not self.list_eslify.isRowHidden(row):
+            if not self.list_compact.isRowHidden(row):
                 compactible_count += 1
 
         stats_text = "Output Stats:\n"\
