@@ -326,31 +326,63 @@ class main(QWidget):
             if self.list_eslify.item(row, self.list_eslify.MOD_COL).checkState() == Qt.CheckState.Checked and not self.list_eslify.item(row, self.list_eslify.HIDER_COL):
                 checked.append(self.list_eslify.item(row, self.list_eslify.MOD_COL).toolTip())
         if checked != []:
+            file_masters = self.get_from_file('ESLifier_Data/file_masters.json')
             self.confirm = QMessageBox()
             self.confirm.setIcon(QMessageBox.Icon.Information)
-            size = 0
-            counted = []
-            for mod in checked:
-                if mod not in counted:
-                    size += os.path.getsize(mod)
-                    counted.append(mod)
-            if size > 1048576:
-                calculated_size = round(size / 1048576, 2)
-                self.confirm.setText(f"This may generate up to {calculated_size} MBs of new files.\nAre you sure you want to continue?")
-            else:
-                calculated_size = round(size / 1024,2)
-                self.confirm.setText(f"This may generate up to {calculated_size} KBs of new files.\nAre you sure you want to continue?")
-            self.confirm.setWindowTitle(f"Confirmation: ESL Flagging {len(checked)} Mod(s)")
+            self.confirm.setWindowTitle("Getting estimated disk usage...")
+            self.confirm.setText('Getting estimated disk usage...')
             self.confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
             self.confirm.addButton(QMessageBox.StandardButton.Yes)
             self.confirm.addButton(QMessageBox.StandardButton.Cancel)
-            self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
             self.confirm.accepted.connect(lambda x = checked: self.eslify_confirmed(x))
-            self.confirm.rejected.connect(lambda:self.setEnabled(True))
             if not self.redoing_output:
                 self.confirm.show()
             else:
                 self.confirm.accept()
+                return
+            self.confirm.setEnabled(False)
+
+            size = 0
+            counted = set()
+
+            for mod in checked:
+                mod_lower = mod.lower()
+                if mod_lower not in counted:
+                    size += os.path.getsize(mod)
+                    counted.add(mod_lower)
+                if not 'new_interior_cell' in self.list_eslify.flag_dict[mod]:
+                    continue
+                mod_basename = os.path.basename(mod_lower)
+                if mod_basename in self.dependency_dictionary:
+                    for dependent_mod in self.dependency_dictionary[mod_basename]:
+                        dep_lower = dependent_mod.lower()
+                        if dep_lower not in counted:
+                            size += os.path.getsize(dependent_mod)
+                            counted.add(dep_lower)
+                if mod_basename in file_masters:
+                    for file in file_masters[mod_basename]:
+                        file_lower = file.lower()
+                        if file_lower not in counted:
+                            size += os.path.getsize(file)
+                            counted.add(file_lower)
+            total, used, free = shutil.disk_usage(self.output_folder_path)
+            free_space = round(free / (1024**3), 3)
+            if size > 1024 ** 3:
+                calculated_size = round(size / (1024 ** 3), 3)
+                self.confirm.setText(f"This may generate up to {calculated_size} GBs of new files\nand you have {free_space} GBs of space left.\nAre you sure you want to continue?")
+            elif size > 1048576:
+                calculated_size = round(size / 1048576, 2)
+                self.confirm.setText(f"This may generate up to {calculated_size} MBs of new files\nand you have {free_space} GBs of space left.\nAre you sure you want to continue?")
+            else:
+                calculated_size = round(size / 1024, 2)
+                self.confirm.setText(f"This may generate up to {calculated_size} KBs of new files\nand you have {free_space} GBs of space left.\nAre you sure you want to continue?")
+            if size >= free:
+                self.confirm.setText(f'Not enough space!\nNeeded space: {round(size / (1024**3),3)}\nSpace left: {free_space} GBs')
+                self.confirm.removeButton(QMessageBox.StandardButton.Yes)
+            self.confirm.setWindowTitle(f"Confirmation: ESL Flagging {len(checked)} Mod(s)")
+            self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
+            self.confirm.rejected.connect(lambda:self.setEnabled(True))
+            self.confirm.setEnabled(True)
         else:
             self.setEnabled(True)
 
@@ -362,12 +394,41 @@ class main(QWidget):
                 self.list_eslify.item(row, self.list_eslify.MOD_COL).setCheckState(Qt.CheckState.PartiallyChecked)
                 self.list_eslify.item(row, self.list_eslify.MOD_COL).setFlags(self.list_eslify.item(row, self.list_eslify.MOD_COL).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
         self.log_stream.show()
-        for file in checked:
-            CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, self.mo2_mode)
-        print("Flag(s) Changed")
-        if not self.redoing_output:
-            print("CLEAR")
-        self.finished_button_action('eslify', checked)
+        if self.generate_cell_master:
+            flag_only = [file for file in checked if not 'new_interior_cell' in self.list_eslify.flag_dict[file]]
+            patch_and_flag = [file for file in checked if 'new_interior_cell' in self.list_eslify.flag_dict[file]]
+            for file in flag_only:
+                CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, self.mo2_mode)
+            if len(patch_and_flag) > 0:
+                self.flag_and_patch_thread = QThread()
+                self.worker = CompactorWorker(patch_and_flag, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, 
+                                        self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.bsab, self.generate_cell_master)
+                self.worker.moveToThread(self.flag_and_patch_thread)
+                self.flag_and_patch_thread.started.connect(self.worker.run)
+                self.worker.finished_signal.connect(self.flag_and_patch_thread.quit)
+                self.worker.finished_signal.connect(self.flag_and_patch_thread.deleteLater)
+                self.worker.finished_signal.connect(self.worker.deleteLater)
+                self.worker.finished_signal.connect(
+                    lambda sender = 'eslify', 
+                    checked_list = checked:
+                    self.finished_button_action(sender, checked_list,))
+                self.flag_and_patch_thread.start()
+            else:
+                self.finished_button_action('eslify', checked)
+                print("File(s) ESL Flagged")
+                if self.redoing_output:
+                    print("ALT CLEAR")
+                else:
+                    print("CLEAR")
+        else:
+            for file in checked:
+                CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, self.mo2_mode)
+            self.finished_button_action('eslify', checked)
+            print("File(s) ESL Flagged")
+            if self.redoing_output:
+                print("ALT CLEAR")
+            else:
+                print("CLEAR")
 
     def finished_button_action(self, sender, checked_list):
         if not self.redoing_output:
@@ -779,6 +840,6 @@ class CompactorWorker(QObject):
                                      self.create_new_cell_plugin, generate_cell_master)
         if finalize:
             self.create_new_cell_plugin.finalize_plugin()
-        print("Compacted and Patched")
+        print("Patching Complete")
         print('CLEAR')
         self.finished_signal.emit()
