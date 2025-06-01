@@ -92,6 +92,12 @@ class main(QWidget):
             self.reset_bsa
         )
 
+        self.open_output_button = self.create_button(
+            " Open Output",
+            "Opens the Output Folder",
+            self.open_output
+        )
+
         self.open_log_button = self.create_button(
             " Open Log ",
             "Opens ESLifier.log",
@@ -175,6 +181,8 @@ class main(QWidget):
         self.v_layout0.addWidget(self.reset_bsa_button)
         self.v_layout0.addWidget(line2)
         self.v_layout0.addSpacing(25)
+        self.v_layout0.addWidget(self.open_output_button)
+        self.v_layout0.addSpacing(10)
         self.v_layout0.addWidget(self.open_log_button)
         self.v_layout0.addStretch()
         self.v_layout0.addWidget(self.stats)
@@ -581,6 +589,19 @@ class main(QWidget):
             self.list_eslify.create()
         confirm.accepted.connect(accepted)
         confirm.show()
+
+    def open_output(self):
+        output_folder = os.path.join(self.output_folder_path, self.output_folder_name)
+        if os.path.exists(output_folder):
+            try:
+                if os.name == 'nt':
+                    os.startfile(output_folder)
+                elif os.name == 'posix':
+                    subprocess.Popen(['xdg-open', os.path.dirname(output_folder)])
+                else:
+                    subprocess.Popen(['open', os.path.dirname(output_folder)])
+            except Exception as e:
+                print(f"Error opening folder: {e}")
 
     def open_log(self):
         log_file = os.path.join(os.getcwd(), "ESLifier_Data/ESLifier.log")
