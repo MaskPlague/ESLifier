@@ -74,13 +74,16 @@ class form_processor():
                         updated = False if is_being_updated else True
                         to_id = form_id_replacements.get(bytes(form[offset:offset+3]))
                         if to_id is not None:
-                            if len(to_id) == 4: # Update Cell masters
+                            if len(to_id) == 4:                         # Update Cell masters
                                 form[offset:offset+4] = to_id
                                 updated = True
-                            elif is_being_updated: # Update own new records
+                            elif is_being_updated and is_being_patched: # Update own new records and master byte
                                 form[offset:offset+4] = to_id + updated_master_byte
                                 updated = True
-                            else: # Update compacted master records
+                            elif is_being_updated:                      # Update master byte only
+                                form[offset+3:offset+4] = updated_master_byte
+                                updated = True
+                            else:                                       # Update compacted master records
                                 form[offset:offset+3] = to_id
                                 updated = True
                         if not updated and bytes(form[offset:offset+4]) in form_ids:
