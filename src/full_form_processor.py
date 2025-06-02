@@ -26,9 +26,7 @@ class form_processor():
                 for offset in offsets:
                     if form[offset+3:offset+4] >= master_byte:
                         to_id = form_id_replacements.get(bytes(form[offset:offset+3]))
-                        if to_id is not None and len(to_id) == 3:
-                            form[offset:offset+3] = to_id
-                        elif to_id is not None:
+                        if to_id is not None:
                             form[offset:offset+3] = to_id[:3]
                 data_list[i] = bytes(form)
         else:
@@ -59,9 +57,7 @@ class form_processor():
                 for offset in offsets:
                     if form[offset+3:offset+4] == master_index_byte:
                         to_id = form_id_replacements.get(bytes(form[offset:offset+3]))
-                        if to_id is not None and len(to_id) == 3:
-                            form[offset:offset+3] = to_id
-                        elif to_id is not None:
+                        if to_id is not None:
                             form[offset:offset+3] = to_id[:3]
                 data_list[i] = bytes(form)
         else:
@@ -78,11 +74,14 @@ class form_processor():
                         updated = False if is_being_updated else True
                         to_id = form_id_replacements.get(bytes(form[offset:offset+3]))
                         if to_id is not None:
-                            if len(to_id) == 4:
+                            if len(to_id) == 4: # Update Cell masters
                                 form[offset:offset+4] = to_id
                                 updated = True
-                            elif is_being_updated:
+                            elif is_being_updated: # Update own new records
                                 form[offset:offset+4] = to_id + updated_master_byte
+                                updated = True
+                            else: # Update compacted master records
+                                form[offset:offset+3] = to_id
                                 updated = True
                         if not updated and bytes(form[offset:offset+4]) in form_ids:
                             form[offset:offset+4] = form[offset:offset+3] + updated_master_byte
