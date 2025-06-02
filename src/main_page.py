@@ -396,8 +396,13 @@ class main(QWidget):
                 self.list_eslify.item(row, self.list_eslify.MOD_COL).setFlags(self.list_eslify.item(row, self.list_eslify.MOD_COL).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
         self.log_stream.show()
         if self.generate_cell_master:
-            flag_only = [file for file in checked if not 'new_interior_cell' in self.list_eslify.flag_dict[file]]
-            patch_and_flag = [file for file in checked if 'new_interior_cell' in self.list_eslify.flag_dict[file]]
+            flag_only = []
+            patch_and_flag = []
+            for file in checked:
+                if 'new_interior_cell' in self.list_eslify.flag_dict[file] and 'is_esm' in self.list_eslify.flag_dict[file]:
+                    patch_and_flag.append(file)
+                else:
+                    flag_only.append(file) 
             for file in flag_only:
                 CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, self.mo2_mode)
             if len(patch_and_flag) > 0:
@@ -844,7 +849,7 @@ class CompactorWorker(QObject):
             if self.generate_cell_master:
                 flags = flag_dict[file]
                 generate_cell_master = False
-                if 'new_interior_cell' in flags: #'new_cell' in flags:
+                if 'new_interior_cell' in flags and 'is_esm' in flags:
                     generate_cell_master = True
                     finalize = True
             else:

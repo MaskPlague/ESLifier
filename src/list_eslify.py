@@ -76,7 +76,7 @@ class list_eslable(QTableWidget):
     def create(self):
         self.setSortingEnabled(False)
         self.clearContents()
-        if not self.show_cells or self.cell_master:
+        if not self.show_cells:
             self.hideColumn(self.CELL_COL)
         else:
             self.showColumn(self.CELL_COL)
@@ -113,12 +113,12 @@ class list_eslable(QTableWidget):
             self.setItem(i, self.MOD_COL, item)
             self.setRowHidden(i, False)
             hide_row = False
-            if 'new_cell' in flags and not self.cell_master:
+            if 'new_cell' in flags:
                 item_cell_flag = QTableWidgetItem('New CELL')
                 item_cell_flag.setToolTip('This mod has a new CELL record.')
                 if not self.show_cells:
                     hide_row = True
-                if basename in self.cell_changed:
+                if basename in self.cell_changed and not self.cell_master:
                     item_cell_flag.setText('!!New CELL Changed!!')
                     item_cell_flag.setToolTip('This mod has a new CELL record\nand has a dependent plugin that modifies it.\nIt is NOT recommended to esl it.')
                     if self.filter_changed_cells:

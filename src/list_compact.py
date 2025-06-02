@@ -85,7 +85,7 @@ class list_compactable(QTableWidget):
     def create(self):
         self.setSortingEnabled(False)
         self.clearContents()
-        if not self.show_cells or self.cell_master: 
+        if not self.show_cells: 
             self.hideColumn(self.CELL_COL)
         else:
             self.showColumn(self.CELL_COL)
@@ -184,13 +184,13 @@ class list_compactable(QTableWidget):
             self.setItem(i, self.MOD_COL, item)
             self.setRowHidden(i, False)
             hide_row = False
-            if 'new_cell' in flags and not self.cell_changed:
+            if 'new_cell' in flags:
                 item_cell_flag = QTableWidgetItem('New CELL')
                 item_cell_flag.setToolTip('This mod has a new CELL record and no mods currently modify it.\n'+
                                           'It is currently safe to ESL flag it.')
                 if not self.show_cells:
                     hide_row = True
-                if basename in self.cell_changed:
+                if basename in self.cell_changed and not self.cell_changed:
                     item_cell_flag.setText('!!New CELL Changed!!')
                     item_cell_flag.setToolTip('This mod is an ESM with a new CELL record that is modified by\n'+
                                               'a dependent plugin. It is NOT recommended to ESL flag it as doing so\n'+
