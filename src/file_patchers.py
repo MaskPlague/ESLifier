@@ -76,7 +76,7 @@ class patchers():
                         data[offset+2:offset+5] = to_id_data["bytes"][::-1][1:]
                         offset += 6
                         if to_id_data["update_name"]:
-                            print(f'~Ineligible: {basename} | 0x{to_id_data["hex"]} | {new_file}')
+                            print(f'~Ineligible: {basename} -> ESLifier_Cell_Master.esm | 0x{integer_variable.hex()} -> 0x{to_id_data["hex_no_0"]} | {new_file}')
                 elif not patch_arrays and data[offset:offset+2] == b'\x1E\x01':
                     patch_arrays = True
                 offset += 1
@@ -116,7 +116,7 @@ class patchers():
                             if to_id_data is not None:
                                 data[int_offset:int_offset+3] = to_id_data["bytes"][::-1][1:]
                                 if to_id_data["update_name"]:
-                                    print(f'~Ineligible: {basename} | 0x{to_id_data["hex"]} | {new_file}')
+                                    print(f'~Ineligible: {basename} -> ESLifier_Cell_Master.esm | 0x{integer.to_bytes(4).hex()} -> 0x{to_id_data["hex_no_0"]} | {new_file}')
             data = bytes(data)
             f.seek(0)
             f.truncate(0)
