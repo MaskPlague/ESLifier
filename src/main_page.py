@@ -25,6 +25,7 @@ class main(QWidget):
         self.overwrite_path = ''
         self.bsab = ''
         self.scanned = False
+        self.cell_master_warned = False
         self.mo2_mode = False
         self.update_header = True
         self.dependency_dictionary = {}
@@ -429,6 +430,18 @@ class main(QWidget):
                 print("ALT CLEAR")
             else:
                 print("CLEAR")
+        try:
+            with open('ESLifier_Data/esl_flagged.json', 'r', encoding='utf-8') as f:
+                esl_flagged_data = json.load(f)
+        except:
+            esl_flagged_data = []
+        for file in checked:
+            basename = os.path.basename(file)
+            if basename not in esl_flagged_data:
+                esl_flagged_data.append(basename)
+        with open('ESLifier_Data/esl_flagged.json', 'w', encoding='utf-8') as f:
+            json.dump(esl_flagged_data, f, ensure_ascii=False, indent=4)
+            f.close()
 
     def finished_button_action(self, sender, checked_list):
         if not self.redoing_output:
@@ -441,7 +454,7 @@ class main(QWidget):
                             "For Vortex users: Make sure to redeploy before using this program again.")
             def shown():
                 message.hide()
-                if self.generate_cell_master:
+                if self.generate_cell_master and not self.cell_master_warned:
                     cell_master_message = QMessageBox()
                     cell_master_message.setWindowTitle("Activate ESLifier_Cell_Master.esm and Sort Your Plugins")
                     cell_master_message.setWindowIcon(QIcon(":/images/ESLifier.png"))
@@ -452,6 +465,7 @@ class main(QWidget):
                         cell_master_message.hide()
                     cell_master_message.accepted.connect(hide_message)
                     cell_master_message.show()
+                    self.cell_master_warned = True
             message.accepted.connect(shown)
             message.show()
         if sender == 'compact':
