@@ -163,13 +163,17 @@ class log_stream(QMainWindow):
 
     def ineligible_warning(self):
         eligibility_warning = QMessageBox()
-        eligibility_warning.setWindowTitle("Cell Master (Release Candidate) Patching Warning")
+        eligibility_warning.setStyleSheet("""
+            QMessageBox {
+                background-color: lightcoral;
+            }""")
+        eligibility_warning.setWindowTitle("Cell Master Patching Warning")
         text = ("ESLifier has come across one or more pex files that are currently unpatchable.\n"+
                 "This is because there is currently no programmed method to replace a necessary\n"+
                 "plugin name with ESLifier_Cell_Master.esm. The errors show the plugin name\n"+
                 "that needs replacing and the pex file that isn't patched yet.\n\n")
         count = 0
-        for line in self.errors:
+        for line in self.ineligible:
             count += 1
             if count <= 10:
                 text += '\n' + line.strip()
@@ -177,6 +181,10 @@ class log_stream(QMainWindow):
             text += '\nand ' + str(count - 10) + ' more.'
         eligibility_warning.setText(text)
         eligibility_warning.addButton(QMessageBox.StandardButton.Ok)
+        def close():
+            eligibility_warning.hide()
+        eligibility_warning.accepted.connect(close)
+        eligibility_warning.show()
         self.ineligible.clear()
 
 
