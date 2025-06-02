@@ -77,13 +77,13 @@ class form_processor():
                             if len(to_id) == 4:                         # Update Cell masters
                                 form[offset:offset+4] = to_id
                                 updated = True
-                            elif is_being_updated and is_being_patched: # Update own new records and master byte
+                            elif is_being_updated and is_being_patched: # Update master byte and patch form id
                                 form[offset:offset+4] = to_id + updated_master_byte
                                 updated = True
                             elif is_being_updated:                      # Update master byte only
                                 form[offset+3:offset+4] = updated_master_byte
                                 updated = True
-                            else:                                       # Update compacted master records
+                            else:                                       # Patch compacted master form id
                                 form[offset:offset+3] = to_id
                                 updated = True
                         if not updated and bytes(form[offset:offset+4]) in form_ids:
