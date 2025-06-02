@@ -279,7 +279,7 @@ class settings(QWidget):
 
         line_edit.setPlaceholderText(placeholder)
         line_edit.setMinimumWidth(400)
-        line_edit.setMaximumWidth(550)
+        line_edit.setMaximumWidth(460)
         
         return widget, line_edit
     
@@ -364,7 +364,7 @@ class settings(QWidget):
 
         line_edit.setPlaceholderText(placeholder)
         line_edit.setMinimumWidth(400)
-        line_edit.setMaximumWidth(550)
+        line_edit.setMaximumWidth(460)
         
         return widget, line_edit
 
