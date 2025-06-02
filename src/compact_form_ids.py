@@ -167,17 +167,6 @@ class CFIDs():
         except Exception as e:
             print('!Error: Failed to set ESL flag in {file}')
             print(e)           
-        try:
-            with open('ESLifier_Data/esl_flagged.json', 'r', encoding='utf-8') as f:
-                data = json.load(f)
-        except:
-            data = []
-        basename = os.path.basename(file)
-        if basename not in data:
-            data.append(basename)
-            with open('ESLifier_Data/esl_flagged.json', 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=4)
-                f.close()
 
     def patch_new(compacted_file, dependents, files_to_patch, skyrim_folder_path, output_folder_path, 
                   output_folder_name, overwrite_path, update_header, mo2_mode, add_cell_to_master):
