@@ -266,6 +266,9 @@ class create_new_cell_plugin():
                 for cell in sub_dict["cells"]:
                     self.new_data_list.insert(len(self.new_data_list) - 1, cell)
 
+        if len(self.new_interior_cell_dict) == 0:
+            self.new_data_list.pop(1)
+
         # Add WRLD grups, wrlds, persistent cell, blocks, sub-blocks, and cells to data list
         for wrld_id in self.wrld_dict:
             wrld_dict = self.wrld_dict[wrld_id]
@@ -280,6 +283,8 @@ class create_new_cell_plugin():
                     self.new_data_list.append(b'GRUP' + sub_dict["size"] + sub_dict["data"][8:])
                     for cell in sub_dict["cells"]:
                         self.new_data_list.append(cell)
+        if len(self.wrld_dict) == 0:
+            self.new_data_list.pop()
 
         # Convert keys to strings from byte strings for interior cell dict
         str_new_interior_dict = {}
