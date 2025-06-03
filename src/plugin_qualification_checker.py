@@ -66,11 +66,7 @@ class qualification_checker():
                         flag_dict[plugin].append('new_cell')
                         if interior_cell:
                             flag_dict[plugin].append('new_interior_cell')
-                    if new_wrld:
-                        flag_dict[plugin].append('new_wrld')
-                    if is_esm:
-                        flag_dict[plugin].append('is_esm')
-                    if is_esm and interior_cell:
+                            
                         basename = os.path.basename(plugin).lower()
                         if plugin in qualification_checker.maxed_masters:
                             flag_dict[plugin].append('maxed_masters')
@@ -79,6 +75,11 @@ class qualification_checker():
                                 if dependent in qualification_checker.maxed_masters:
                                     flag_dict[plugin].append('maxed_masters')
                                     break
+                    if new_wrld:
+                        flag_dict[plugin].append('new_wrld')
+                    if is_esm:
+                        flag_dict[plugin].append('is_esm')
+                        
                         
         with qualification_checker.lock:
             for key, value in flag_dict.items():
