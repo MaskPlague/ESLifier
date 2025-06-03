@@ -157,8 +157,8 @@ class settings(QWidget):
         self.generate_cell_master_widget, self.generate_cell_master_toggle = self.create_toggle_widget(
             "Generate Cell Master",
             "This generates a master cell plugin to circumvent\n"+
-            "the ESM + ESL cell bug and ESL worldspace bug.\n"+
-            "(This does not fix the interior ESL reload bug).\n"+
+            "the ESM + ESL cell bug and the ESL worldspace bug.\n"+
+            "(This does not fix the interior ESL save reload bug).\n"+
             "Requires an ESM plugin slot and is only useful if you\n"+
             "need to ESL flag more than one such plugin. Do not\n"
             "forget to activate the new ESLifier_Cell_Master.esm that\n"+
