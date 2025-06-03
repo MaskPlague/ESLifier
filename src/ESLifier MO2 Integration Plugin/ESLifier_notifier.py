@@ -160,8 +160,9 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
         if os.path.exists(blacklist_path):
             with open(blacklist_path, 'r', encoding='utf-8') as f:
                 ignore_list = json.load(f)
+                ignore_list.append("ESLifier_Cell_Master.esm")
         else:
-            ignore_list = []
+            ignore_list = ["ESLifier_Cell_Master.esm"]
         new_header = self._organizer.pluginSetting("ESLifier", "Use 1.71 Header Range")
         if scan_esms:
             filter = "*.es[pm]"
