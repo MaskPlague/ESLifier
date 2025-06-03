@@ -123,6 +123,11 @@ class settings(QWidget):
             "Show or hide plugins that may have Form IDs hard-coded in SKSE dlls.",
             "show_dlls"
         )
+        self.check_for_updates_widget, self.check_for_updates_toggle = self.create_toggle_widget(
+            "Check for updates on start",
+            "Connect to GitHub on program start to check for updates",
+            "check_for_updates"
+        )
         self.blacklist_window = blacklist_window()
         self.edit_blacklist_widget = self.create_button_widget(
             "Remove Plugins From Blacklist",
@@ -209,6 +214,7 @@ class settings(QWidget):
         column_1.addWidget(self.enable_interior_cell_filter_widget)
         column_1.addWidget(self.enable_worldspaces_filter_widget)
         column_1.addWidget(self.show_plugins_possibly_refd_by_dlls_widget)
+        column_2.addWidget(self.check_for_updates_widget)
         column_2.addWidget(self.edit_blacklist_widget)
         column_2.addWidget(self.open_eslifier_data_widget)
         column_2.addWidget(self.colors_select_widget)
@@ -420,6 +426,7 @@ class settings(QWidget):
             self.enable_interior_cell_filter_toggle.setChecked(False)
             self.enable_worldspaces_filter_toggle.setChecked(True)
             self.generate_cell_master_toggle.setChecked(False)
+            self.check_for_updates_toggle.setChecked(True)
             self.inner_color = '#713585'
             self.outer_color = 'Gray'
             self.update_settings()
@@ -443,6 +450,7 @@ class settings(QWidget):
         self.enable_worldspaces_filter_toggle.setChecked(self.settings.get('filter_worldspaces', True))
         self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(self.settings.get('show_dlls', False))
         self.generate_cell_master_toggle.setChecked(self.settings.get('generate_cell_master', False))
+        self.check_for_updates_toggle.setChecked(self.settings.get('check_for_updates', True))
         self.inner_color = self.settings.get('inner_color', '#713585')
         self.outer_color = self.settings.get('outer_color', 'Gray')
 
@@ -471,6 +479,7 @@ class settings(QWidget):
         self.settings['filter_worldspaces'] = self.enable_worldspaces_filter_toggle.isChecked()
         self.settings['show_dlls'] = self.show_plugins_possibly_refd_by_dlls_toggle.isChecked()
         self.settings['generate_cell_master'] = self.generate_cell_master_toggle.isChecked()
+        self.settings['check_for_updates'] = self.check_for_updates_toggle.isChecked()
         self.settings['inner_color'] = self.inner_color
         self.settings['outer_color'] = self.outer_color
 
