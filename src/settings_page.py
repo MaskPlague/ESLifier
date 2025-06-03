@@ -152,7 +152,8 @@ class settings(QWidget):
         self.generate_cell_master_widget, self.generate_cell_master_toggle = self.create_toggle_widget(
             "Generate Cell Master",
             "This generates a master cell plugin to circumvent\n"+
-            "the interior ESM + ESL cell bug. Requires a plugin slot.\n"+
+            "the interior ESM + ESL cell bug. Requires a plugin slot\n"+
+            "and is only useful if you need to ESL flag more than one ESM.\n"
             "Do not forget to activate the new ESLifier_Cell_Master.esm\n"+
             "that is generated. You'll also need to re-sort your plugins.\n"+
             "This disables the new cell changed flag for ESMs.",

@@ -25,8 +25,10 @@ class list_eslable(QTableWidget):
                                                 'If an ESL plugin creates a new interior CELL then that cell may experience\n'+
                                                 'issues when reloading a save without restarting the game.\n'+
                                                 '"New  CELL" indicates the presence of a new CELL record.\n'+
-                                                '"!New Interior CELL!" indicates that a new CELL is an interior.\n'+
-                                                '"!!New CELL Changed!!" indicates that a new CELL record is changed by a dependent plugin.')
+                                                '"!!New CELL Changed!!" indicates that a new CELL record from an ESM is changed\n'+
+                                                'by a dependent plugin.\n'+
+                                                '"!!Maxed Masters!!" indicates that an ESM or its plugins have maximum masters (254)\n'+
+                                                'and cannot add ESLifier_Cell_Master.esm as a master for the ESL+ESM cell bug workaround.')
         self.horizontalHeaderItem(self.WRLD_COL).setToolTip('This is the WRLD Record Flag. If an plugin is flagged ESL\n'+
                                                        'then the new worldspace may have landscape issues (no ground).')
         self.horizontalHeaderItem(self.ESM_COL).setToolTip('This is the ESM flag.')
