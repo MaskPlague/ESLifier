@@ -399,7 +399,7 @@ class main(QWidget):
             flag_only = []
             patch_and_flag = []
             for file in checked:
-                if 'new_interior_cell' in self.list_eslify.flag_dict[file] and 'is_esm' in self.list_eslify.flag_dict[file]:
+                if 'new_cell' in self.list_eslify.flag_dict[file] and not 'maxed_masters' in self.list_eslify.flag_dict[file]:
                     patch_and_flag.append(file)
                 else:
                     flag_only.append(file) 
