@@ -29,8 +29,9 @@ class list_compactable(QTableWidget):
                                                 '"!New Interior CELL!" indicates that a new CELL is an interior.\n'+
                                                 '"!!New CELL Changed!!" indicates that a new CELL record from an ESM is changed\n'+
                                                 'by a dependent plugin.\n'+
-                                                '"!!Maxed Masters!!" indicates that an ESM or its plugins have maximum masters (254)\n'+
-                                                'and cannot add ESLifier_Cell_Master.esm as a master for the ESL+ESM cell bug workaround.')
+                                                '"!!Maxed Masters!!" indicates that a plugin or its dependent plugins have the\n'+
+                                                'maximum amount of masters (254) and cannot add ESLifier_Cell_Master.esm as a master\n'+
+                                                'for the ESL+ESM cell bug and ESL worldspace bug workarounds.')
         self.horizontalHeaderItem(self.WRLD_COL).setToolTip('This is the WRLD Record Flag. If an plugin is flagged ESL\n'+
                                                        'then the new worldspace may have landscape issues (no ground).')
         self.horizontalHeaderItem(self.SKSE_COL).setToolTip('This is the skse DLL flag. If a dll has the plugin name in it then it may\n'+
@@ -96,7 +97,7 @@ class list_compactable(QTableWidget):
             self.hideColumn(self.SKSE_COL)
         else:
             self.showColumn(self.SKSE_COL)
-        if self.filter_worldspaces: 
+        if self.filter_worldspaces or self.cell_master: 
             self.hideColumn(self.WRLD_COL)
         else:
             self.showColumn(self.WRLD_COL)
@@ -189,8 +190,11 @@ class list_compactable(QTableWidget):
             hide_row = False
             if 'new_cell' in flags:
                 item_cell_flag = QTableWidgetItem('New CELL')
-                item_cell_flag.setToolTip('This mod has a new CELL record and no mods currently modify it.\n'+
-                                          'It is currently safe to ESL flag it.')
+                if not self.cell_master:
+                    item_cell_flag.setToolTip('This mod has a new CELL record and no mods currently modify it.\n'+
+                                            'It is currently safe to ESL flag it.')
+                else:
+                    item_cell_flag.setToolTip('This mod has a new CELL record. It is currently safe to ESL flag it')
                 if not self.show_cells:
                     hide_row = True
                 if basename in self.cell_changed and not self.cell_master:
@@ -217,7 +221,7 @@ class list_compactable(QTableWidget):
                         hide_row = True
                 item_cell_flag.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.setItem(i, self.CELL_COL, item_cell_flag)
-            if 'new_wrld' in flags:
+            if 'new_wrld' in flags and not self.cell_master:
                 item_wrld_flag = QTableWidgetItem('!!New WRLD!!')
                 item_wrld_flag.setToolTip('This mod has a new WRLD (worldspace) record which may lose landscape (the ground) when ESL flagged.')
                 if self.filter_worldspaces:
