@@ -106,7 +106,6 @@ Run "build_ESLifier_EXE.py" either via a terminal opened in the _ESLifier_ direc
   - Precision
   - Loki Poise
   - True Directional Movment
-- .psc: Source Scripts
 - .pex: Compiled script files
 - _conditions.txt: Dynamic Animation Replacer
 - _srd.: Sound Record Distributor
