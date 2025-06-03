@@ -216,7 +216,7 @@ class list_compactable(QTableWidget):
                     item_cell_flag.setText('!New Interior CELL!')
                     item_cell_flag.setToolTip('This mod has at least one new CELL record that is an interior cell.\n'+
                                               'ESL interior cells do not reload gameplay changed references properly\n'+
-                                              'on a save game load, until the game itself has restarted.')
+                                              'on a save game load unless the game itself has restarted.')
                     if self.filter_interior_cells:
                         hide_row = True
                 item_cell_flag.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
