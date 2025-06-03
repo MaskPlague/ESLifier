@@ -45,10 +45,10 @@ class create_new_cell_plugin():
             self.counter = dict["counter"]
             for grup_block in str_new_interior_cell_dict:
                 str_grup_dict = str_new_interior_cell_dict[grup_block]
-                self.new_interior_cell_dict[bytes.fromhex(grup_block)] = {"data": bytes.fromhex(str_grup_dict["data"]),
+                byte_grup_block = bytes.fromhex(grup_block)
+                self.new_interior_cell_dict[byte_grup_block] = {"data": bytes.fromhex(str_grup_dict["data"]),
                                                                    "source_plugin": str_grup_dict["source_plugin"],
                                                                    "sub_blocks": {}}
-                byte_grup_block = bytes.fromhex(grup_block)
                 for sub_block in str_grup_dict["sub_blocks"]:
                     str_sub_dict = str_grup_dict["sub_blocks"][sub_block]
                     byte_sub_block = bytes.fromhex(sub_block)
@@ -57,6 +57,31 @@ class create_new_cell_plugin():
                                                                                           "cells": []}
                     for cell in str_sub_dict["cells"]:
                         self.new_interior_cell_dict[byte_grup_block]["sub_blocks"][byte_sub_block]["cells"].append(bytes.fromhex(cell))
+            
+            str_hex_wrld_dict = dict["wrld_dict"]
+            for world_id in str_hex_wrld_dict:
+                str_wrld_dict = str_hex_wrld_dict[world_id]
+                byte_wrld_id = bytes.fromhex(world_id)
+                self.wrld_dict[byte_wrld_id] = {"data": bytes.fromhex(str_wrld_dict["data"]),
+                                                "grup_data": bytes.fromhex(str_wrld_dict["grup_data"]),
+                                                "persistent_cell_data": bytes.fromhex(str_wrld_dict["persistent_cell_data"]),
+                                                "source_plugin": str_wrld_dict["source_plugin"],
+                                                "blocks": {}}
+                for grup_block in str_wrld_dict['blocks']:
+                    str_grup_dict = str_wrld_dict['blocks'][grup_block]
+                    byte_grup_block = bytes.fromhex(grup_block)
+                    self.wrld_dict[byte_wrld_id]['blocks'][byte_grup_block] = {"data": bytes.fromhex(str_grup_dict["data"]),
+                                                                               "source_plugin": str_grup_dict["source_plugin"],
+                                                                               "sub_blocks": {}}
+                    
+                    for sub_block in str_grup_dict["sub_blocks"]:
+                        str_sub_dict = str_grup_dict["sub_blocks"][sub_block]
+                        byte_sub_block = bytes.fromhex(sub_block)
+                        self.wrld_dict[byte_wrld_id]['blocks'][byte_grup_block]["sub_blocks"][byte_sub_block]= {"data": bytes.fromhex(str_sub_dict["data"]),
+                                                                                                                "source_plugin": str_sub_dict["source_plugin"],
+                                                                                                                "cells": []}
+                        for cell in str_sub_dict["cells"]:
+                            self.wrld_dict[byte_wrld_id]['blocks'][byte_grup_block]["sub_blocks"][byte_sub_block]["cells"].append(bytes.fromhex(cell))
 
     def add_cells(self, data_list, grup_struct, master_count, name):
         form_id_map = []
@@ -104,7 +129,7 @@ class create_new_cell_plugin():
                             sub_block = True
                             prev_grup_block = grup_block
 
-            if form[:4] == b'CELL' and form[15] >= master_count and not interior_cell_flag:
+            if form[:4] == b'CELL' and form[15] >= master_count and not interior_cell_flag and not current_wrld_id == b'':
                 if first_exterior_cell_in_world:
                     first_exterior_cell_in_world = False
                     new_form_id = (self.counter + 2048).to_bytes(3, 'little')
