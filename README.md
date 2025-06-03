@@ -45,6 +45,7 @@ The third page, _Settings_, mostly controls what is displayed in the _Main_ page
 - _Hide plugins with new interior CELL records_ hides plugins that have new interior CELLs as they can have issues with not reloading properly on save load if the player doesn't restart the game. This is off by default. The user should decide if they think these kinds of plugins are safe to ESL.
 - _Hide plugins with new WRLD (worldspace) records_ hides plugins that have a new WRLD record as they lose landscape data when ESL flagged (the ground will disappear in the new worldspace).
 - _Show plugins that are in SKSE dlls_ will display plugins that have their name present in SKSE dlls. This is off by default and should probably be left off. If a plugin has its name in a dll then it is likely that its form IDs are hard-coded in a FormLookup() call which will fail if the form IDs are changed via compacting.
+- _Generate Cell Master_ will create a new plugin called ESLifier_Cell_Master.esm which is used to define new cells and worldspaces in ESLifier ESL flagged/compacted plugins. This circumvents the ESL + ESM cell bug and the ESL worldspace bug. This is disabled by default as you may need to enable the new plugin and re-sort your plugins or move the cell master plugin to the top of your plugins list.
 
 # Documentation
 ## How to Build

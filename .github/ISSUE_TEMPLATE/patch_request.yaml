@@ -82,9 +82,6 @@ body:
           - True Directional Movement 
           - Actor Value Generator
           
-        - **.psc:**  
-          - Source Scripts  
-          
         - **.pex:**  
           - Compiled script files  
           
