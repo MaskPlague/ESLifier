@@ -67,7 +67,7 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_
             patchers.json_cf_sr_patcher(basename, new_file, form_id_map)
         elif '\\inventoryinjector\\' in new_file_lower:                                     # Inventory Injector
             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
-        elif '\\customskills\\' in new_file_lower or '\\metaskillsmenu\\' in new_file_lower:# Custom Skills Framework
+        elif '\\customskills\\' in new_file_lower or 'interface\\metaskillsmenu\\' in new_file_lower: # Custom Skills Framework
             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
         elif 'plugins\\rain extinguishes fires\\' in new_file_lower:                        # Rain Extinguishes Fires
             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
