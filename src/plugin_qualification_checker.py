@@ -9,6 +9,7 @@ class qualification_checker():
     def scan(path, update_header):
         qualification_checker.lock = threading.Lock()
         all_plugins = qualification_checker.get_from_file("ESLifier_Data/plugin_list.json")
+        qualification_checker.maxed_masters = qualification_checker.get_from_file("ESLifier_Data/maxed_masters.json")
         plugins = [plugin for plugin in all_plugins if not plugin.lower().endswith('.esl')]
         if update_header:
             qualification_checker.missing_skyrim_esm_as_master = qualification_checker.get_from_file("ESLifier_Data/missing_skyrim_as_master.json")
@@ -69,6 +70,15 @@ class qualification_checker():
                         flag_dict[plugin].append('new_wrld')
                     if is_esm:
                         flag_dict[plugin].append('is_esm')
+                    if is_esm and interior_cell:
+                        basename = os.path.basename(plugin).lower()
+                        if plugin in qualification_checker.maxed_masters:
+                            flag_dict[plugin].append('maxed_masters')
+                        else:
+                            for dependent in qualification_checker.dependent_dict.get(basename, []):
+                                if dependent in qualification_checker.maxed_masters:
+                                    flag_dict[plugin].append('maxed_masters')
+                                    break
                         
         with qualification_checker.lock:
             for key, value in flag_dict.items():

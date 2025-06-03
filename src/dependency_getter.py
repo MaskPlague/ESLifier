@@ -6,10 +6,12 @@ class dependecy_getter():
     def scan(path):
         dependecy_getter.dependency_dictionary = {}
         dependecy_getter.missing_skyrim_as_master = {}
+        dependecy_getter.maxed_masters = []
         dependecy_getter.plugins = dependecy_getter.get_from_file("ESLifier_Data/plugin_list.json")
         dependecy_getter.create_dependency_dictionary()
         dependecy_getter.dump_to_file("ESLifier_Data/dependency_dictionary.json", dependecy_getter.dependency_dictionary)
         dependecy_getter.dump_to_file("ESLifier_Data/missing_skyrim_as_master.json", dependecy_getter.missing_skyrim_as_master)
+        dependecy_getter.dump_to_file("ESLifier_Data/maxed_masters.json", dependecy_getter.maxed_masters)
         return dependecy_getter.dependency_dictionary
     
     def dump_to_file(file, data):
@@ -43,7 +45,8 @@ class dependecy_getter():
                         dependecy_getter.dependency_dictionary[master.lower()].append(plugin)
                 if masters[0] != 'Skyrim.esm':
                     dependecy_getter.missing_skyrim_as_master[plugin] = masters[0]
-
+            if len(masters) >= 254 and 'ESLifier_Cell_Master.esm' not in masters:
+                dependecy_getter.maxed_masters.append(plugin)
     def get_masters(file):
         master_list = []
         try:

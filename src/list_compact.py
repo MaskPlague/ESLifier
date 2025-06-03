@@ -190,18 +190,26 @@ class list_compactable(QTableWidget):
                                           'It is currently safe to ESL flag it.')
                 if not self.show_cells:
                     hide_row = True
-                if basename in self.cell_changed and not self.cell_changed:
+                if basename in self.cell_changed and not self.cell_master:
                     item_cell_flag.setText('!!New CELL Changed!!')
                     item_cell_flag.setToolTip('This mod is an ESM with a new CELL record that is modified by\n'+
                                               'a dependent plugin. It is NOT recommended to ESL flag it as doing so\n'+
-                                              'may break temporary child references in the new CELL.')
+                                              'will break temporary references in the new CELL.')
                     if self.filter_changed_cells:
                         hide_row = True
+                elif self.cell_master and 'maxed_masters' in flags and basename in self.cell_changed:
+                    item_cell_flag.setText('!!Maxed Masters!!')
+                    item_cell_flag.setToolTip('This mod is an ESM with a new CELL record that is modified by\n'+
+                                              'a dependent plugin. It or one of its dependents has the max of\n'+
+                                              '254 masters and cannot have the ESLifier_Cell_Master.esm plugin\n'+
+                                              'added as a master and thus the ESM + ESL cell bug workaround cannot\n'+
+                                              'be applied. It is NOT recommended to ESL flag it as doing so may\n'+
+                                              'break temporary references in its new CELL(s).')
                 elif 'new_interior_cell' in flags:
                     item_cell_flag.setText('!New Interior CELL!')
                     item_cell_flag.setToolTip('This mod has at least one new CELL record that is an interior cell.\n'+
-                                              'ESL created interior cells sometimes do not reload properly on a save\n'+
-                                              'game load, until the game itself has restarted.')
+                                              'ESL interior cells do not reload gameplay changed references properly\n'+
+                                              'on a save game load, until the game itself has restarted.')
                     if self.filter_interior_cells:
                         hide_row = True
                 item_cell_flag.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
