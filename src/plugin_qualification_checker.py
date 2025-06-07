@@ -11,9 +11,8 @@ class qualification_checker():
         all_plugins = qualification_checker.get_from_file("ESLifier_Data/plugin_list.json")
         qualification_checker.maxed_masters = qualification_checker.get_from_file("ESLifier_Data/maxed_masters.json")
         plugins = [plugin for plugin in all_plugins if not plugin.lower().endswith('.esl')]
-        if update_header:
-            qualification_checker.missing_skyrim_esm_as_master = qualification_checker.get_from_file("ESLifier_Data/missing_skyrim_as_master.json")
-            qualification_checker.dependent_dict = qualification_checker.get_from_file("ESLifier_Data/dependency_dictionary.json")
+        qualification_checker.missing_skyrim_esm_as_master = qualification_checker.get_from_file("ESLifier_Data/missing_skyrim_as_master.json")
+        qualification_checker.dependent_dict = qualification_checker.get_from_file("ESLifier_Data/dependency_dictionary.json")
         qualification_checker.flag_dict = {}
         qualification_checker.max_record_number = 4096
         if os.path.exists('ESLifier_Data/EDIDs'):

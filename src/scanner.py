@@ -730,7 +730,7 @@ class scanner():
                     string_length = struct.unpack('>H', data[offset:offset+2])[0]
                     strings.append(data[offset+2:offset+2+string_length].lower().decode())
                     offset += 2 + string_length
-                if 'getformfromfile' in strings:
+                if 'getformfromfile' in strings: #or 'getmodbyname' in strings:
                     for string in strings:
                         if string.endswith(('.esp', '.esl', '.esm')) and string in scanner.plugin_basename_list:#not ':' in string and not '/' in string and not '\\' in string:
                             with scanner.lock:
