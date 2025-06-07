@@ -62,9 +62,9 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_
         elif '\\ied\\' in new_file_lower:                                                   # Immersive Equipment Display
             patchers.json_ied_patcher(basename, new_file, form_id_map)
         elif '\\creatures.d\\' in new_file_lower:                                           # Creature Framework
-            patchers.json_cf_sr_patcher(basename, new_file, form_id_map)
+            patchers.json_jcontainer_patcher(basename, new_file, form_id_map)
         elif '\\spell research\\' in new_file_lower or '\\spellresearch' in new_file_lower: # Spell Research
-            patchers.json_cf_sr_patcher(basename, new_file, form_id_map)
+            patchers.json_jcontainer_patcher(basename, new_file, form_id_map)
         elif '\\inventoryinjector\\' in new_file_lower:                                     # Inventory Injector
             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
         elif '\\customskills\\' in new_file_lower or 'interface\\metaskillsmenu\\' in new_file_lower: # Custom Skills Framework
@@ -106,6 +106,8 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_
             patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map, int_type=True)
         elif 'plugins\\skyrim - utility mod\\' in new_file_lower:                           # Inte's Skyrim - Utility Mod
             patchers.json_sum_patcher(basename, new_file, form_id_map)
+        elif 'plugins\\captivefollowers' in new_file_lower:                                 # Captive Followers
+            patchers.json_jcontainer_patcher(basename, new_file, form_id_map)
         else:
             print(f'Warn: Possible missing patcher for: {new_file}')
     elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching

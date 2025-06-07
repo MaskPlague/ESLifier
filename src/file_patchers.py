@@ -1212,7 +1212,7 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
-    def json_cf_sr_patcher(basename, new_file, form_id_map):
+    def json_jcontainer_patcher(basename, new_file, form_id_map):
         with open(new_file, 'r+', encoding='utf-8') as f:
             try:
                 data = json.load(f)
