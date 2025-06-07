@@ -22,6 +22,7 @@ class list_compacted_unpatched(QTableWidget):
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenu)
         self.mod_list = []
+        self.cell_master = False
 
         self.setStyleSheet("""
             QTableWidget::item{
@@ -79,7 +80,7 @@ class list_compacted_unpatched(QTableWidget):
                 item.setToolTip(None)
             self.setItem(i, 0, item)
             
-            if basename in cell_changed:
+            if basename in cell_changed and not self.cell_master:
                 item_cell_changed_error = QTableWidgetItem('CELL Changed!')
                 item_cell_changed_error.setToolTip('This mod is an ESM that has a dependent plugin that changes a new CELL record.\nThis may break the mod\'s new CELL.')
                 self.setItem(i, 1, item_cell_changed_error)

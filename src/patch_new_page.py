@@ -42,6 +42,7 @@ class patch_new(QWidget):
         unpatched_files_label = QLabel("Unpatched Files")
 
         self.list_compacted_unpatched = list_compacted_unpatched()
+        self.list_compacted_unpatched.cell_master = self.generate_cell_master
         self.list_unpatched_files = list_unpatched()
 
         h_layout = QHBoxLayout()
