@@ -785,7 +785,7 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map, int_type=False):
+    def json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, int_type=False, symbol = '|'):
         with open(new_file, 'r+', encoding='utf-8') as f:
             try:
                 data = json.load(f)
@@ -796,10 +796,10 @@ class patchers():
             json_dict = patchers.extract_values_and_keys(data)
             print_replace = True
             for path, value in json_dict:
-                if type(value) is str and '|' in value:
+                if type(value) is str and symbol in value:
                     ox = False
                     int_type_actual = int_type
-                    index = value.index('|')
+                    index = value.index(symbol)
                     plugin = value[index+1:]
                     if plugin.lower() == basename:
                         form_id = value[:index]
@@ -817,21 +817,21 @@ class patchers():
                         if to_id_data is not None:
                             if not to_id_data["update_name"]:
                                 if not ox and not int_type_actual:
-                                    data = patchers.change_json_element(data, path, to_id_data["hex_no_0"] + '|' + plugin)
+                                    data = patchers.change_json_element(data, path, to_id_data["hex_no_0"] + symbol + plugin)
                                 elif ox:
-                                    data = patchers.change_json_element(data, path, '0x' + to_id_data["hex_no_0"] + '|' + plugin)
+                                    data = patchers.change_json_element(data, path, '0x' + to_id_data["hex_no_0"] + symbol + plugin)
                                 else: # not ox and int_type
-                                    data = patchers.change_json_element(data, path, str(int(to_id_data["hex_no_0"], 16)) + '|' + plugin)
+                                    data = patchers.change_json_element(data, path, str(int(to_id_data["hex_no_0"], 16)) + symbol + plugin)
                             else:
                                 if print_replace:
                                     print(f'~Plugin Name Replaced: {basename} | {new_file}')
                                     print_replace = False  
                                 if not ox and not int_type_actual:
-                                    data = patchers.change_json_element(data, path, to_id_data["hex_no_0"] + "|ESLifier_Cell_Master.esm")
+                                    data = patchers.change_json_element(data, path, to_id_data["hex_no_0"] + symbol + "ESLifier_Cell_Master.esm")
                                 elif ox:
-                                    data = patchers.change_json_element(data, path, '0x' + to_id_data["hex_no_0"] + "|ESLifier_Cell_Master.esm")
+                                    data = patchers.change_json_element(data, path, '0x' + to_id_data["hex_no_0"] + symbol + "ESLifier_Cell_Master.esm")
                                 else: # not ox and int_type
-                                    data = patchers.change_json_element(data, path, str(int(to_id_data["hex_no_0"], 16)) + "|ESLifier_Cell_Master.esm")
+                                    data = patchers.change_json_element(data, path, str(int(to_id_data["hex_no_0"], 16)) + symbol +"ESLifier_Cell_Master.esm")
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
