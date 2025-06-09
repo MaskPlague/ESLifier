@@ -13,7 +13,7 @@ from main_page import main
 from patch_new_page import patch_new
 from log_stream import log_stream
 
-CURRENT_VERSION = '0.10.2'
+CURRENT_VERSION = '0.10.3'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
