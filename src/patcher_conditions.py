@@ -70,15 +70,15 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_
         elif '\\customskills\\' in new_file_lower or 'interface\\metaskillsmenu\\' in new_file_lower: # Custom Skills Framework
             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
         elif 'plugins\\rain extinguishes fires\\' in new_file_lower:                        # Rain Extinguishes Fires
-            patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map)
         elif '\\coreimpactframework\\' in new_file_lower:                                   # Core Impact Framework
             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, ':')
         elif 'plugins\\objectimpactframework' in new_file_lower:                            # Object Impact Framework
             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, ':')
         elif '\\skyrimunbound\\' in new_file_lower:                                         # Skyrim Unbound
-            patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map)
         elif '\\playerequipmentmanager\\' in new_file_lower:                                # Player Equipment Manager
-            patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map)
         elif '\\mapmarkers\\' in new_file_lower:                                            # CoMAP
             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
         elif new_file_lower.endswith('obody_presetdistributionconfig.json'):                # OBody NG
@@ -88,26 +88,28 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_
         elif 'plugins\\rcs\\' in new_file_lower:                                            # Race Compatibility SKSE
             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
         elif 'plugins\\perkadjuster' in new_file_lower:                                     # Perk Adjuster
-            patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map)
         elif 'plugins\\ostim\\' in new_file_lower:                                          # OStim
             patchers.json_ostim_patcher(basename, new_file, form_id_map)
         elif new_file_lower.endswith('sexlabconfig.json'):                                  # SL MCM Generated config
-            patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map)
         elif 'sexlab\\expression_' in new_file_lower:                                       # SL expressions
-            patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map)
         elif 'sexlab\\animations' in new_file_lower:                                        # SL animations?
             if not new_file_lower.endswith('arrokreversecowgirl.json'):
-                patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map, int_type=True)
+                patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, int_type=True)
         elif 'configs\\dse-soulgem-oven' in new_file_lower:                                 # SoulGem Oven
-            patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map)
         elif 'configs\\dse-display-model' in new_file_lower:                                # dse-display-model
-            patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map, int_type=True)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, int_type=True)
         elif 'plugins\\ypsfashion\\' in new_file_lower:                                     # Immersive Hair Growth and Styling
-            patchers.json_generic_formid_pipe_plugin_patcher(basename, new_file, form_id_map, int_type=True)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, int_type=True)
         elif 'plugins\\skyrim - utility mod\\' in new_file_lower:                           # Inte's Skyrim - Utility Mod
             patchers.json_sum_patcher(basename, new_file, form_id_map)
         elif 'plugins\\captivefollowers' in new_file_lower:                                 # Captive Followers
             patchers.json_jcontainer_patcher(basename, new_file, form_id_map)
+        elif '\\gsp\\' in new_file_lower:                                                   # Generic Synthesis Patcher
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, symbol= ':') 
         else:
             print(f'Warn: Possible missing patcher for: {new_file}')
     elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
