@@ -1117,21 +1117,21 @@ class patchers():
             json_dict = patchers.extract_values_and_keys(data)
             print_replace = True
             for path, value in json_dict:
-                if path[-1] == 'form_id':
-                    form_id_start = value[2:]
-                    form_id = value[2:8]
-                    plugin = value[9:]
+                if path[-1] == 'form_id' and '|' in value:
+                    index = value.index('|')
+                    form_id = value[:index]
+                    plugin = value[index+1:]
                     if plugin.lower() == basename:
                         form_id_int = int(form_id,16)
                         to_id_data = form_id_map.get(form_id_int)
                         if to_id_data is not None:
                             if not to_id_data["update_name"]:
-                                data = patchers.change_json_element(data, path, form_id_start + to_id_data["hex"] + '|' + plugin)
+                                data = patchers.change_json_element(data, path, to_id_data["hex"] + '|' + plugin)
                             else:
                                 if print_replace:
                                     print(f'~Plugin Name Replaced: {basename} | {new_file}')
                                     print_replace = False  
-                                data = patchers.change_json_element(data, path, form_id_start + to_id_data["hex"] + '|' + "ESLifier_Cell_Master.esm")
+                                data = patchers.change_json_element(data, path, to_id_data["hex"] + '|' + "ESLifier_Cell_Master.esm")
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
