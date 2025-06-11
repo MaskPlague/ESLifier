@@ -39,77 +39,76 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_
         elif 'plugins\\knotwork\\' in new_file_lower:                                       # Knotwork
             patchers.ini_exp_knt_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('\\simpleedgeremoverng.ini'):                          # Simple Edge Glow Remover NG
-            patchers.ini_eq_plugin_sep_fid_patcher(basename, new_file, form_id_map, sep='|',encoding_method=encoding)
+            patchers.ini_eq_plugin_sep_fid_patcher(basename, new_file, form_id_map, sep='|', encoding_method=encoding)
         else:                                                                               
             print(f'Warn: Possible missing patcher for: {new_file}')
     elif new_file_lower.endswith('_conditions.txt'):                                        # Dynamic Animation Replacer
         patchers.dar_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     elif new_file_lower.endswith('.json'):
         if new_file_lower.endswith(('config.json', 'user.json')) and 'animationreplacer\\' in new_file_lower: # Open Animation Replacer
-            patchers.json_oar_patcher(basename, new_file, form_id_map)
+            patchers.json_oar_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith(('config.json', 'keybinds.json')) and 'mcm\\config' in new_file_lower: # MCM helper
-            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('_srd.json'):                                          # Sound Record Distributor JSON
-            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\storageutildata\\' in new_file_lower:                                       # PapyrusUtil's StorageDataUtil
-            patchers.json_sud_patcher(basename, new_file, form_id_map)
+            patchers.json_sud_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\dynamicstringdistributor\\' in new_file_lower:                              # Dynamic String Distributor
-            patchers.json_dsd_patcher(basename, new_file, form_id_map)
+            patchers.json_dsd_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\dkaf\\' in new_file_lower:                                                  # Dynamic Key Activation Framework NG
-            patchers.json_dkaf_patcher(basename, new_file, form_id_map)
+            patchers.json_dkaf_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\dynamicarmorvariants\\' in new_file_lower:                                  # Dynamic Armor Variants
-            patchers.json_dav_patcher(basename, new_file, form_id_map)
+            patchers.json_dav_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\ied\\' in new_file_lower:                                                   # Immersive Equipment Display
-            patchers.json_ied_patcher(basename, new_file, form_id_map)
+            patchers.json_ied_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\creatures.d\\' in new_file_lower:                                           # Creature Framework
-            patchers.json_jcontainer_patcher(basename, new_file, form_id_map)
+            patchers.json_jcontainer_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\spell research\\' in new_file_lower or '\\spellresearch' in new_file_lower: # Spell Research
-            patchers.json_jcontainer_patcher(basename, new_file, form_id_map)
+            patchers.json_jcontainer_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\inventoryinjector\\' in new_file_lower:                                     # Inventory Injector
-            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\customskills\\' in new_file_lower or 'interface\\metaskillsmenu\\' in new_file_lower: # Custom Skills Framework
-            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'plugins\\rain extinguishes fires\\' in new_file_lower:                        # Rain Extinguishes Fires
-            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\coreimpactframework\\' in new_file_lower:                                   # Core Impact Framework
-            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, ':')
+            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, symbol=':', encoding_method=encoding)
         elif 'plugins\\objectimpactframework' in new_file_lower:                            # Object Impact Framework
-            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, ':')
+            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, symbol=':', encoding_method=encoding)
         elif '\\skyrimunbound\\' in new_file_lower:                                         # Skyrim Unbound
-            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\playerequipmentmanager\\' in new_file_lower:                                # Player Equipment Manager
-            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\mapmarkers\\' in new_file_lower:                                            # CoMAP
-            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('obody_presetdistributionconfig.json'):                # OBody NG
-            patchers.json_obody_patcher(basename, new_file, form_id_map)
+            patchers.json_obody_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif os.path.basename(new_file_lower).startswith('shse.'):                          # Smart Harvest
-            patchers.json_shse_patcher(basename, new_file, form_id_map)
+            patchers.json_shse_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'plugins\\rcs\\' in new_file_lower:                                            # Race Compatibility SKSE
-            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'plugins\\perkadjuster' in new_file_lower:                                     # Perk Adjuster
-            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'plugins\\ostim\\' in new_file_lower:                                          # OStim
-            patchers.json_ostim_patcher(basename, new_file, form_id_map)
+            patchers.json_ostim_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('sexlabconfig.json'):                                  # SL MCM Generated config
-            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'sexlab\\expression_' in new_file_lower:                                       # SL expressions
-            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'sexlab\\animations' in new_file_lower:                                        # SL animations?
-            if not new_file_lower.endswith('arrokreversecowgirl.json'):
-                patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, int_type=True)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, int_type=True, encoding_method=encoding)
         elif 'configs\\dse-soulgem-oven' in new_file_lower:                                 # SoulGem Oven
-            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'configs\\dse-display-model' in new_file_lower:                                # dse-display-model
-            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, int_type=True)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, int_type=True, encoding_method=encoding)
         elif 'plugins\\ypsfashion\\' in new_file_lower:                                     # Immersive Hair Growth and Styling
-            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, int_type=True)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, int_type=True, encoding_method=encoding)
         elif 'plugins\\skyrim - utility mod\\' in new_file_lower:                           # Inte's Skyrim - Utility Mod
-            patchers.json_sum_patcher(basename, new_file, form_id_map)
+            patchers.json_sum_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'plugins\\captivefollowers' in new_file_lower:                                 # Captive Followers
-            patchers.json_jcontainer_patcher(basename, new_file, form_id_map)
+            patchers.json_jcontainer_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\gsp\\' in new_file_lower:                                                   # Generic Synthesis Patcher
-            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, symbol= ':') 
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, symbol= ':', encoding_method=encoding) 
         else:
             print(f'Warn: Possible missing patcher for: {new_file}')
     elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
@@ -134,7 +133,7 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_
     elif new_file_lower.endswith('.seq'):                                                   # SEQ file patching
         patchers.seq_patcher(new_file, form_id_map)
     elif new_file_lower.endswith('.jslot'):                                                 # Racemenu Presets
-        patchers.jslot_patcher(basename, new_file, form_id_map)
+        patchers.jslot_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     elif new_file_lower.endswith('config.txt') and 'plugins\\customskill' in new_file_lower: # CSF's old txt format
         patchers.old_customskill_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     else:
