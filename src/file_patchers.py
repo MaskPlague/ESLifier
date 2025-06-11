@@ -431,6 +431,29 @@ class patchers():
             f.truncate(0)
             f.write(''.join(lines))
             f.close()
+    
+    # No Cell Form IDs possible
+    def ini_nup_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if ','+basename+'>' in line.lower() and not line.startswith(';'):
+                    count = line.count('<')
+                    start = 0
+                    for _ in range(count):
+                        line = lines[i]
+                        start_index = line.index('<', start) + 1
+                        end_index = line.index(',', start_index)
+                        start = start_index+2
+                        if line[end_index+1:].lower().startswith(basename):
+                            form_id_int = int(line[start_index:end_index], 16)
+                            to_id_data = form_id_map.get(form_id_int)
+                            if to_id_data is not None:
+                                lines[i] = line[:start_index] + to_id_data["hex_no_0"] + line[end_index:]
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
 
     comp_print_replace = True
     def ini_completionist_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
@@ -1295,6 +1318,31 @@ class patchers():
                 else:
                     plugin = False
                     plugin_path = []
+            f.seek(0)
+            f.truncate(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
+            f.close()
+
+    # No Cell Form IDs possible
+    def json_dressuplovers_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = patchers.use_json5(string)
+            json_dict = patchers.extract_values_and_keys(data)
+            patch_next_index = False
+            for path, value in json_dict:
+                if patch_next_index:
+                    patch_next_index = False
+                    form_id_int = int(value, 16)
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        data = patchers.change_json_element(data, path, to_id_data["hex"])
+                if type(path[-1]) is int and path[-1] == 0 and value.lower() == basename:
+                    patch_next_index = True
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
