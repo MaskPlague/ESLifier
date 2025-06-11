@@ -74,6 +74,8 @@ Run "build_ESLifier_EXE.py" either via a terminal opened in the _ESLifier_ direc
   - KreatE (with caveats)
   - Remember Lockpick Angle - Updated
   - Experience
+  - Light Placer
+  - NPCs Use Potions
 - .json:
   - Open Animation Replacer
   - MCM Helper
@@ -87,7 +89,6 @@ Run "build_ESLifier_EXE.py" either via a terminal opened in the _ESLifier_ direc
   - Dynamic Armor Variants
   - Inventory Injector
   - Immersive Equipment Display
-  - Light Placer
   - Perk Adjuster
   - Player Equipment Manager
   - Skyrim Unbound
@@ -101,6 +102,9 @@ Run "build_ESLifier_EXE.py" either via a terminal opened in the _ESLifier_ direc
   - Immersive Hair Growth and Styling
   - Inte's Skyrim - Utility Mod
   - dse-display-model
+  - CaptiveFollowers
+  - Generic Synthesis Patcher (GSP)
+  - Dress Up Lover's NPC Outfit Changer
 - .toml:
   - Dynamic Animation Casting
   - Precision
