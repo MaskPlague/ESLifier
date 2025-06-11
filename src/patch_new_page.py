@@ -95,6 +95,17 @@ class patch_new(QWidget):
             self.worker.finished_signal.connect(self.thread_new.quit)
             self.worker.finished_signal.connect(self.thread_new.deleteLater)
             self.thread_new.start()
+        if not os.path.exists('ESLifier_Data/compacted_and_patched.json'):
+            self.no_data_warning = QMessageBox()
+            self.no_data_warning.setIcon(QMessageBox.Icon.Information)
+            self.no_data_warning.setWindowTitle("No Compacted/Patched Mods")
+            self.no_data_warning.setText("There are no existing compacted/patched mods for\n"+
+                                         "ESLifier to check for new files that need patching.")
+            self.no_data_warning.setWindowIcon(QIcon(":/images/ESLifier.png"))
+            self.no_data_warning.addButton(QMessageBox.StandardButton.Ok)
+            self.no_data_warning.show()
+            self.setEnabled(True)
+            return
         if not self.scanned:
             self.scanned = True
             run_scan()
