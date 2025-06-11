@@ -100,7 +100,10 @@ class patch_new(QWidget):
             self.no_data_warning.setIcon(QMessageBox.Icon.Information)
             self.no_data_warning.setWindowTitle("No Compacted/Patched Mods")
             self.no_data_warning.setText("There are no existing compacted/patched mods for\n"+
-                                         "ESLifier to check for new files that need patching.")
+                                         "ESLifier to check for new files that need patching.\n"+
+                                         "Compact a mod on the Main page first. This page is for\n"+
+                                         "when you install a new mod and don't feel like rebuilding\n"+
+                                         "the entire output.")
             self.no_data_warning.setWindowIcon(QIcon(":/images/ESLifier.png"))
             self.no_data_warning.addButton(QMessageBox.StandardButton.Ok)
             self.no_data_warning.show()
