@@ -745,8 +745,8 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
-    def json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, symbol = '|'):
-        with open(new_file, 'r+', encoding='utf-8') as f:
+    def json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, symbol = '|', encoding_method='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
             except:
@@ -785,8 +785,8 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, int_type=False, symbol = '|'):
-        with open(new_file, 'r+', encoding='utf-8') as f:
+    def json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, int_type=False, symbol = '|', encoding_method='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
             except:
@@ -837,8 +837,8 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
     
-    def json_oar_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+', encoding='utf-8') as f:
+    def json_oar_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
             except:
@@ -871,8 +871,8 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def json_sud_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+', encoding='utf-8') as f:
+    def json_sud_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
             except:
@@ -914,8 +914,8 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
-    def json_obody_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+', encoding='utf-8') as f:
+    def json_obody_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
             except:
@@ -941,8 +941,8 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def json_sum_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+', encoding='utf-8') as f:
+    def json_sum_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
             except:
@@ -1043,8 +1043,8 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
-    def jslot_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+', encoding='utf-8') as f:
+    def jslot_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
             data = json.load(f)
             if 'actor' in data and 'headTexture' in data['actor']:
                 plugin_and_fid = data['actor']['headTexture']
@@ -1072,8 +1072,8 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3, separators=(',', ' : '))
             f.close()
 
-    def json_shse_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+', encoding='utf-8') as f:
+    def json_shse_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
             except:
@@ -1106,8 +1106,8 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def json_dsd_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+', encoding='utf-8') as f:
+    def json_dsd_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
             except:
@@ -1137,8 +1137,8 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def json_dkaf_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+', encoding='utf-8') as f:
+    def json_dkaf_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
             except:
@@ -1167,8 +1167,8 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def json_dav_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+', encoding='utf-8') as f:
+    def json_dav_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
             except:
@@ -1212,8 +1212,8 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
-    def json_jcontainer_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+', encoding='utf-8') as f:
+    def json_jcontainer_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
             except:
@@ -1236,8 +1236,8 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def json_ied_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+', encoding='utf-8') as f:
+    def json_ied_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
             except:
@@ -1266,8 +1266,8 @@ class patchers():
             json.dump(data, f, ensure_ascii=False)
             f.close()
 
-    def json_ostim_patcher(basename, new_file, form_id_map):
-        with open(new_file, 'r+', encoding='utf-8') as f:
+    def json_ostim_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
             except:
