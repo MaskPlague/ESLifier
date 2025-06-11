@@ -443,9 +443,10 @@ class patchers():
                     for _ in range(count):
                         line = lines[i]
                         start_index = line.index('<', start) + 1
-                        end_index = line.index(',', start_index)
+                        stop_index = line.index('>', start_index)
+                        end_index = line.find(',', start_index, stop_index)
                         start = start_index+2
-                        if line[end_index+1:].lower().startswith(basename):
+                        if end_index != -1 and line[end_index+1:].lower().startswith(basename):
                             form_id_int = int(line[start_index:end_index], 16)
                             to_id_data = form_id_map.get(form_id_int)
                             if to_id_data is not None:
