@@ -46,6 +46,7 @@ body:
           - KreatE (with caveats)
           - Remember Lockpick Angle - Updated
           - Light Placer  
+          - NPCs Use Potions
           
         - **.json:**  
           - Open Animation Replacer (OAR)  
@@ -76,6 +77,7 @@ body:
           - dse-display-model
           - CaptiveFollowers
           - Generic Synthesis Patcher (GSP)
+          - Dress Up Lover's NPC Outfit Changer
           
         - **.toml:**  
           - Dynamic Animation Casting  
