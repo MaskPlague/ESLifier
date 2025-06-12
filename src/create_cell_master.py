@@ -223,11 +223,12 @@ class create_new_cell_plugin():
 
         # Calculate size of top level WRLD GRUP
         wrld_grup_count = 1 # start at 1 as the top grup is not in the dict
-        wrld_grup_cell_count = 1 # start at 1 for the one cell outside of the blocks
+        wrld_grup_cell_count = 0
         wrld_count = 0
         for wrld_id in self.wrld_dict:
             wrld_dict = self.wrld_dict[wrld_id]['blocks']
             wrld_grup_count += 1
+            wrld_grup_cell_count += 1
             wrld_count += 1
             for grup_block in wrld_dict:
                 grup_dict = wrld_dict[grup_block]
@@ -237,8 +238,11 @@ class create_new_cell_plugin():
                     wrld_grup_count += 1
                     for cell in sub_dict["cells"]:
                         wrld_grup_cell_count += 1
-                
-        record_count = wrld_grup_count + wrld_grup_cell_count + cell_grup_count + cell_grup_cell_count
+        if wrld_grup_count == 1:
+            wrld_grup_count = 0
+        if cell_grup_count == 1:
+            cell_grup_count = 0
+        record_count = wrld_grup_count + wrld_grup_cell_count + cell_grup_count + cell_grup_cell_count + wrld_count
         self.new_data_list[0] = self.new_data_list[0][:34] + record_count.to_bytes(4, 'little') + self.new_data_list[0][38:]
         size = ((wrld_count * (24 + 155)) + (wrld_grup_count * 24) + (wrld_grup_cell_count * (36 + 24))).to_bytes(4, 'little')
         self.new_data_list[2] = b'GRUP' + size + self.new_data_list[2][8:]
