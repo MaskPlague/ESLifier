@@ -20,6 +20,7 @@ class dependecy_getter():
                 json.dump(data, f, ensure_ascii=False, indent=4)
         except Exception as e:
             print(f"!Error: Failed to dump data to {file}")
+            print(e)
     
     def get_from_file(file):
         try:
@@ -47,6 +48,7 @@ class dependecy_getter():
                     dependecy_getter.missing_skyrim_as_master[plugin] = masters[0]
             if len(masters) >= 254 and 'ESLifier_Cell_Master.esm' not in masters:
                 dependecy_getter.maxed_masters.append(plugin)
+
     def get_masters(file):
         master_list = []
         try:
