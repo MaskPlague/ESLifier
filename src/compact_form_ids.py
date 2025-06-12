@@ -645,7 +645,7 @@ class CFIDs():
                     dependent_file.seek(0)
 
                 dependent_data = dependent_file.read()
-                
+
                 data_list, grup_struct = CFIDs.create_data_list(dependent_data)
             
                 data_list, sizes_list = CFIDs.decompress_data(data_list)
@@ -663,7 +663,8 @@ class CFIDs():
                         if form[:4] not in (b'GRUP', b'TES4') and form[15] >= master_index and form[12:16] not in form_id_list:
                             form_id_list.append(form[12:16])
                     master_byte = CFIDs.get_master_count(data_list)[0].to_bytes()
-                    data_list, updated_master_index = CFIDs.add_cell_master_to_masters(data_list)
+                    with CFIDs.lock:
+                        data_list, updated_master_index = CFIDs.add_cell_master_to_masters(data_list)
 
                 saved_forms = form_processor.save_all_form_data(data_list)
 
