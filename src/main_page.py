@@ -51,6 +51,7 @@ class main(QWidget):
         self.button_eslify.setToolTip(
             "This button will ESL flag all selected files. If the update plugin headers setting\n"+
             "is on then it will also update the plugin headers to 1.71.")
+        self.button_eslify.clicked.connect(self.set_false_redoing_output)
         self.button_eslify.clicked.connect(self.eslify_selected_clicked)
 
         self.button_compact = QPushButton("Compact/ESLify Selected")
@@ -59,6 +60,7 @@ class main(QWidget):
             "master, then patch and rename loose files that are dependent on the compacted plugin.\n"+
             "If the update plugin headers setting is enabled then it will also update the plugin\n"+
             "headers of the compacted and dependent plugins to 1.71.")
+        self.button_compact.clicked.connect(self.set_false_redoing_output)
         self.button_compact.clicked.connect(self.compact_selected_clicked)
 
         self.button_scan = self.create_button(
@@ -68,6 +70,7 @@ class main(QWidget):
             "in the below lists will change.",
             self.scan
         )
+        self.button_scan.clicked.connect(self.set_false_redoing_output)
 
         self.rebuild_output_button = self.create_button(
             " Scan and Rebuild \n ESLifier's Output ",
@@ -230,6 +233,9 @@ class main(QWidget):
         else:
             for i in range(self.list_compact.rowCount()):
                 self.list_compact.setRowHidden(i, True if self.list_compact.item(i, self.list_compact.HIDER_COL) else False)
+
+    def set_false_redoing_output(self):
+        self.redoing_output = False
 
     def compact_selected_clicked(self):
         self.setEnabled(False)
@@ -477,10 +483,25 @@ class main(QWidget):
             for mod in checked_list:
                 self.list_compact.flag_dict.pop(mod)
             self.list_compact.create()
+            print("CLEAR")
         elif sender == 'eslify':
             for mod in checked_list:
                 self.list_eslify.flag_dict.pop(mod)
             self.list_eslify.create()
+            if not self.redoing_output:
+                print("CLEAR")
+            elif self.redoing_output and os.path.exists('ESLifier_Data/previously_compacted.json'):
+                self.list_compact.check_previously_compacted()
+                checked = 0
+                for i in range(self.list_compact.rowCount()):
+                    if self.list_compact.item(i, self.list_compact.MOD_COL).checkState() == Qt.CheckState.Checked:
+                        checked += 1
+                if checked > 0:
+                    self.compact_selected_clicked()
+                else:
+                    print("CLEAR")
+            else:
+                print("CLEAR")
         self.eslifier.update_settings()
         self.calculate_stats()
         if not self.redoing_output:
@@ -531,10 +552,9 @@ class main(QWidget):
                 self.list_eslify.check_previously_esl_flagged()
                 os.remove('ESLifier_Data/esl_flagged.json')
                 self.eslify_selected_clicked()
-            if os.path.exists('ESLifier_Data/previously_compacted.json'):
+            elif os.path.exists('ESLifier_Data/previously_compacted.json'):
                 self.list_compact.check_previously_compacted()
                 self.compact_selected_clicked()
-            self.redoing_output = False
         else:
             print('CLEAR')
         self.calculate_stats()
@@ -860,5 +880,4 @@ class CompactorWorker(QObject):
         if finalize:
             self.create_new_cell_plugin.finalize_plugin()
         print("Patching Complete")
-        print('CLEAR')
         self.finished_signal.emit()
