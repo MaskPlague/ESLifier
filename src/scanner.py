@@ -193,6 +193,9 @@ class scanner():
                 relative_path = os.path.relpath(full_path, mod_folder).lower()
                 if relative_path not in temp_rel_paths:
                     scanner.all_files.append(full_path)
+                else:
+                    if os.path.exists(full_path):
+                        os.remove(full_path)
 
     def extract_bsa(file, startupinfo, update_time, encoding, filter):
         last = 0
@@ -332,6 +335,9 @@ class scanner():
                 if relative_path not in mod_files:
                     mod_files[relative_path] = []
                     cases_of_files[relative_path] = relative_path
+                else:
+                    if os.path.exists(full_path):
+                        os.remove(full_path)
                 mod_files[relative_path].append('bsa_extracted_eslifier_scan')
 
         return mod_files, plugin_names, cases_of_files
