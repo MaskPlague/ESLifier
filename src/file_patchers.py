@@ -1069,7 +1069,10 @@ class patchers():
     # No Cell Form IDs possible
     def jslot_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            data = json.load(f)
+            read_string = f.read()
+            while read_string[-1] != '}':
+                read_string = read_string.removesuffix(read_string[-1])
+            data = json.loads(read_string)
             if 'actor' in data and 'headTexture' in data['actor']:
                 plugin_and_fid = data['actor']['headTexture']
                 if plugin_and_fid[:-7].lower() == basename:

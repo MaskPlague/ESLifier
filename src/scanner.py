@@ -676,7 +676,10 @@ class scanner():
                 if file_lower.endswith('.jslot'):
                     with scanner.file_semaphore:
                         with open(file, 'r', encoding='utf-8', errors='ignore') as f:
-                            data = json.load(f)
+                            read_string = f.read()
+                            while read_string[-1] != '}':
+                                read_string = read_string.removesuffix(read_string[-1])
+                            data = json.loads(read_string)
                             f.close()
                     plugins = []
                     if 'actor' in data and 'headTexture' in data['actor']:
