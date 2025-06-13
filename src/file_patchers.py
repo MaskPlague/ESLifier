@@ -1468,8 +1468,3 @@ class patchers():
             f.truncate(0)
             f.write(''.join(lines))
             f.close()
-
-
-patchers.ini_flm_patcher('mihailvampirelordsandbeasts.esp'.lower(), 
-                         os.path.normpath(r"C:\Users\s34ke\Downloads\SpellResearchSynthesizer_FLM.ini.txt"),
-                         {292503:{'hex_no_0': 'AAA', 'update_name': False}})
