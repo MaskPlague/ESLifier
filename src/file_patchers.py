@@ -240,6 +240,46 @@ class patchers():
             f.truncate(0)
             f.write(''.join(lines))
             f.close()
+
+    def ini_flm_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            lines = f.readlines()
+            print_replace = True
+            for i, line in enumerate(lines):
+                if basename in line.lower() and '~' in line and not line.startswith(';'):
+                    count = line.lower().count('~')
+                    start = 0
+                    for _ in range(count):
+                        line = lines[i]
+                        middle_index = line.index('~', start)
+                        start_index = patchers.find_prev_non_alphanumeric(line, middle_index-2)
+                        end_index = line.index('.es', middle_index) + 3
+                        plugin = line.lower()[middle_index+1:end_index+1].strip()
+                        start_of_line = line[:start_index+1]
+                        end_of_line = line[middle_index:]
+                        form_id = line[start_index+1:middle_index].strip()
+                        if form_id.lower().startswith('0x'):
+                            form_id_int = int(form_id, 16)
+                            is_form_id = True
+                        else:
+                            is_form_id = False
+                        start = middle_index+5
+                        if basename == plugin and is_form_id:
+                            to_id_data = form_id_map.get(form_id_int)
+                            if to_id_data is not None:
+                                if not to_id_data["update_name"]:
+                                    lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
+                                    start = len(start_of_line) + 6
+                                else:
+                                    if print_replace:
+                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                        print_replace = False
+                                    lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + "~ESLifier_Cell_Master.esm" + line[end_index:]
+                                    start = len(start_of_line) + 6 + 20
+            #f.seek(0)
+            #f.truncate(0)
+            #f.write(''.join(lines))
+            f.close()
        
     def ini_mu_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
@@ -1428,3 +1468,8 @@ class patchers():
             f.truncate(0)
             f.write(''.join(lines))
             f.close()
+
+
+patchers.ini_flm_patcher('mihailvampirelordsandbeasts.esp'.lower(), 
+                         os.path.normpath(r"C:\Users\s34ke\Downloads\SpellResearchSynthesizer_FLM.ini.txt"),
+                         {292503:{'hex_no_0': 'AAA', 'update_name': False}})

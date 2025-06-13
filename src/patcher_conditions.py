@@ -4,8 +4,10 @@ from file_patchers import patchers
 def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_id_rename_map, encoding):
     if new_file_lower.endswith('.ini'):
         if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini', '_enbl.ini',     # PO3's SPID, KID, BOS, ENBL
-                                    '_desc.ini', '_flm.ini', '_llos.ini', '_ipm.ini', '_mus.ini')): # Description Framework, FLM, LLOS, IPM, MTD
+                                    '_desc.ini', '_llos.ini', '_ipm.ini', '_mus.ini')):     # Description Framework, LLOS, IPM, MTD
             patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+        elif new_file_lower.endswith('_flm.ini'):                                           # Form List Manipulator
+            patchers.ini_flm_patcher(basename, new_file_lower, form_id_map, encoding_method=encoding)
         elif 'seasons\\' in new_file_lower:                                                 # Po3's Seasons of Skyrim
             patchers.ini_season_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'payloadinterpreter\\' in new_file_lower:                                      # Payload Interpreter
