@@ -79,6 +79,8 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_
             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, symbol=':', encoding_method=encoding)
         elif 'plugins\\objectimpactframework' in new_file_lower:                            # Object Impact Framework
             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, symbol=':', encoding_method=encoding)
+        elif '\\lightplacer\\' in new_file_lower:                                           # Light Placer
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, symbol='~', encoding_method=encoding)
         elif '\\skyrimunbound\\' in new_file_lower:                                         # Skyrim Unbound
             patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\playerequipmentmanager\\' in new_file_lower:                                # Player Equipment Manager
