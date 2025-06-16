@@ -28,7 +28,7 @@ else:
 
 class CFIDs():
     def compact_and_patch(file_to_compact, dependents, skyrim_folder_path, output_folder_path,
-                          output_folder_name, overwrite_path, update_header, mo2_mode, bsab,
+                          output_folder_name, overwrite_path, update_header, mo2_mode,
                           all_dependents_have_skyrim_esm_as_master, create_cell_master_class, add_cell_to_master):
         CFIDs.lock = threading.Lock()
         CFIDs.semaphore = threading.Semaphore(1000)
