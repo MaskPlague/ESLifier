@@ -70,15 +70,9 @@ class CFIDs():
                 for bsa_file, values in bsa_dict.items():
                     if name in values:
                         try:
-                            try:
-                                CFIDs.bsa_temp_extract(bsab, bsa_file, 'utf8', "\\voice\\", name, startupinfo)
-                                CFIDs.bsa_temp_extract(bsab, bsa_file, 'utf8', "\\facetint\\", name, startupinfo)
-                                CFIDs.bsa_temp_extract(bsab, bsa_file, 'utf8', "\\facegeom\\", name, startupinfo)
-                            except Exception as e:
-                                print(e)
-                                CFIDs.bsa_temp_extract(bsab, bsa_file, 'utf7', "\\voice\\", name, startupinfo)
-                                CFIDs.bsa_temp_extract(bsab, bsa_file, 'utf7', "\\facetint\\", name, startupinfo)
-                                CFIDs.bsa_temp_extract(bsab, bsa_file, 'utf7', "\\facegeom\\", name, startupinfo)
+                            CFIDs.bsa_temp_extract(bsa_file, "\\voice\\", name, startupinfo)
+                            CFIDs.bsa_temp_extract(bsa_file, "\\facetint\\", name, startupinfo)
+                            CFIDs.bsa_temp_extract(bsa_file, "\\facegeom\\", name, startupinfo)
                         except Exception as e:
                             print(f'!Error Reading BSA: {file}')
                             print(e)
@@ -141,17 +135,17 @@ class CFIDs():
             data = {}
         return data
     
-    def bsa_temp_extract(bsab, bsa_file, encoding, type, name, startupinfo):
+    def bsa_temp_extract(bsa_file, type, name, startupinfo):
         with subprocess.Popen(
-            [bsab, bsa_file, "--encoding", "utf8", "-f", type + name, "-e", "-o", "bsa_extracted_temp"],
+            ["bsarch/bsarch.exe", "unpack", bsa_file, "bsa_extracted_temp", type + name],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             startupinfo=startupinfo,
             text=True
             ) as p:
                 for line in p.stdout:
-                    if line.startswith('An error'):
-                        raise EncodingWarning(f'~encoding {encoding} failed for {bsa_file}')
+                    if line.startswith('Unpacking error'):
+                        raise Exception(f"During Temp Extraction, {line}")
                     
     def set_flag(file, skyrim_folder, output_folder, output_folder_name, overwrite_path, mo2_mode):
         CFIDs.mo2_mode = mo2_mode
