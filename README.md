@@ -8,8 +8,8 @@ Nexus Mods [ESLifier](https://www.nexusmods.com/skyrimspecialedition/mods/145168
 Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspecialedition/mods/126298)
   
 # For Users
-## External Requirements
-ESLifier relies on [BSA Browser](https://www.nexusmods.com/skyrimspecialedition/mods/1756)'s bsab.exe (included in the zip version) to extract scripts, facegen, and voice files from BSA files.
+## BSArch.exe
+ESLifier uses a modfied BSArch.exe (from TES5Edit) to extract pex, seq, facetint, facegeom, and voice files. The modified .dpr file is included in the repo [here](https://github.com/MaskPlague/ESLifier/blob/main/bsarch/BSArch.dpr).
 
 ## User Manual
 Notes:
@@ -51,6 +51,7 @@ The third page, _Settings_, mostly controls what is displayed in the _Main_ page
 ## How to Build
 Fork this project and install python 3.13 then install these libraries via pip: _PyQt6_, _Regex_, _mmap_, _intervalTree_, _requests_, and _pyinstaller_.
 Run "build_ESLifier_EXE.py" either via a terminal opened in the _ESLifier_ directory or via your IDE.
+
 ## Files that are patched by ESLifier
 - .ini:
   - Keyword Item Distributor
