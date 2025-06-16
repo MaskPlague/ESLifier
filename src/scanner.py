@@ -207,7 +207,7 @@ class scanner():
                         raise Exception(f"Occured during unpacking via modified BSArch.exe")
                     if timeit.default_timer() - last > update_time:
                         last = timeit.default_timer()
-                        print(f'\033[F\033[K- Extracting: {line}', end='\n')
+                        print(f'\033[F\033[K-  Extracting: {line}', end='\n')
 
     def get_files_from_mods(mods_folder, enabled_mods, plugins_list, overwrite_path):
         if not os.path.exists('bsa_extracted/'):
