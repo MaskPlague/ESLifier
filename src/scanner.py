@@ -163,23 +163,17 @@ class scanner():
         update_time = 0.1
         for i, tup in enumerate(filtered_bsa_list):
             file = tup[1]
+            print(f'\033[F\033[K-  Extracting {i}/{bsa_length} BSA files ({os.path.basename(file)})\n\n', end='\r')
             if file not in scanner.extracted:
-                print(f'\033[F\033[K-  Extracting {i}/{bsa_length} BSA files ({os.path.basename(file)})\n\n', end='\r')
                 try:
-                    try:
-                        scanner.extract_bsa(file, startupinfo, update_time, "utf7", ".pex")
-                        scanner.extract_bsa(file, startupinfo, update_time, "utf7", ".seq")
-                        scanner.extracted.append(file)
-                    except Exception as e:
-                        print(e)
-                        scanner.extract_bsa(file, startupinfo, update_time, "utf8", ".pex")
-                        scanner.extract_bsa(file, startupinfo, update_time, "utf8", ".seq")
-                        scanner.extracted.append(file)
+                    scanner.extract_bsa(file, startupinfo, update_time, ".pex")
+                    scanner.extract_bsa(file, startupinfo, update_time, ".seq")
+                    scanner.extracted.append(file)
                 except Exception as e:
                     print(f'!Error Reading BSA: {file}')
                     print(e)
-                print(f'\033[F\033[K')
-        
+            print(f'\033[F\033[K')
+
         mod_folder = os.path.join(os.getcwd(), 'bsa_extracted')
 
         for root, dirs, files in os.walk('bsa_extracted/'):
@@ -198,22 +192,22 @@ class scanner():
                     if os.path.exists(full_path):
                         os.remove(full_path)
 
-    def extract_bsa(file, startupinfo, update_time, encoding, filter):
+    def extract_bsa(file, startupinfo, update_time, filter):
         last = 0
         with subprocess.Popen(
-            [scanner.bsab, file, "--encoding", encoding, "-f", filter, "-e", "-o", "bsa_extracted"],
+            ["bsarch/bsarch.exe", "unpack", file, "bsa_extracted", filter],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             startupinfo=startupinfo,
             text=True
             ) as p:
                 for line in p.stdout:
-                    if line.startswith('An error'):
+                    if line.startswith('Unpacking error'):
                         print(f'\033[F\033[K{line}', end='\r')
-                        raise EncodingWarning(f'~encoding {encoding} failed for {file}')
+                        raise Exception(f"Occured during unpacking via modified BSArch.exe")
                     if timeit.default_timer() - last > update_time:
                         last = timeit.default_timer()
-                        print(f'\033[F\033[K{line}', end='\r')
+                        print(f'\033[F\033[K- Extracting: {line}', end='\n')
 
     def get_files_from_mods(mods_folder, enabled_mods, plugins_list, overwrite_path):
         if not os.path.exists('bsa_extracted/'):
@@ -303,17 +297,11 @@ class scanner():
         for i, tup in enumerate(filtered_bsa_list):
             file = tup[1]
             if file not in scanner.extracted:
-                print(f'\033[F\033[K-  Extracting {i}/{bsa_length} BSA files ({os.path.basename(file)})\n\n', end='\r')
+                print(f'\033[F\033[K-  Extracting {i+1}/{bsa_length} BSA files ({os.path.basename(file)})\n\n', end='\r')
                 try:
-                    try:
-                        scanner.extract_bsa(file, startupinfo, update_time, "utf7", ".pex")
-                        scanner.extract_bsa(file, startupinfo, update_time, "utf7", ".seq")
-                        scanner.extracted.append(file)
-                    except Exception as e:
-                        print(e)
-                        scanner.extract_bsa(file, startupinfo, update_time, "utf8", ".pex")
-                        scanner.extract_bsa(file, startupinfo, update_time, "utf8", ".seq")
-                        scanner.extracted.append(file)
+                    scanner.extract_bsa(file, startupinfo, update_time, ".pex")
+                    scanner.extract_bsa(file, startupinfo, update_time, ".seq")
+                    scanner.extracted.append(file)
                 except Exception as e:
                     print(f'!Error Reading BSA: {file}')
                     print(e)
