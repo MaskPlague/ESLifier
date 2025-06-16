@@ -20,7 +20,7 @@ from plugin_qualification_checker import qualification_checker
 from dependency_getter import dependecy_getter
 
 class scanner():
-    def scan(path, mo2_mode, modlist_txt_path, plugins_txt_path, overwrite_path, bsab, update_header, full_scan):
+    def scan(path, mo2_mode, modlist_txt_path, plugins_txt_path, overwrite_path, update_header, full_scan):
         scanner.bsa_blacklist = ['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
                     'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
                     'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa']
@@ -37,7 +37,6 @@ class scanner():
         scanner.pex_files = []
         scanner.dll_files = []
         scanner.kreate_files = []
-        scanner.bsab = bsab
         scanner.lock = threading.Lock()
         scanner.file_extensions = ('.ini', '.json', '.jslot', '.toml', '_conditions.txt', '_srd.yaml')
         scanner.exclude_contains = (
