@@ -217,6 +217,13 @@ class main_window(QMainWindow):
         error_message = ''
         output_path_exists = False
         data_path_exists = False
+        if not os.path.exists('bsarch/bsarch.exe'):
+            error_message += ("The included BSArch.exe must be present in a folder\nnamed bsarch adjactent to ESLifier:\n\n"+
+                              f"{os.path.split(os.getcwd())[1]}/\n"+
+                              "├─── bsarch/\n"
+                              "│        └── BSArch.exe\n"
+                              "└─── ESLifier.exe\n\n")
+                              
         if not os.path.exists(output_path):
             error_message += "Invalid Output Directory, it does not exist.\n"
         else:
