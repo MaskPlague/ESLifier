@@ -44,7 +44,8 @@ class scanner():
             'nemesis_engine',
             'quickarmorrebalance\\config\\',
             'equipmenttoggle\\slotdata\\',
-            '\\headpartwhitelist\\'
+            '\\headpartwhitelist\\',
+            '\\interface\\quests\\'
             )
         scanner.exclude_endswith = (
             '\\revealingarmo_tng.ini',
@@ -53,7 +54,8 @@ class scanner():
             '\\aiprocessfixmodpatch.ini', 
             '\\grasscontrol.ini',
             '\\gearspreader.ini',
-            '\\merge.json', '\\map.json', '\\fidcache.json' #zMerge
+            '\\merge.json', '\\map.json', '\\fidcache.json', #zMerge
+            '\\ParallaxGen_Diff.json'
             )
         total_ram = psutil.virtual_memory().available
         usable_ram = total_ram * 0.90
