@@ -23,7 +23,6 @@ class main(QWidget):
         self.modlist_txt_path = ''
         self.plugins_txt_path = ''
         self.overwrite_path = ''
-        self.bsab = ''
         self.scanned = False
         self.cell_master_warned = False
         self.mo2_mode = False
@@ -313,7 +312,7 @@ class main(QWidget):
         self.log_stream.show()
         self.compact_thread = QThread()
         self.worker = CompactorWorker(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, 
-                                self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.bsab, self.generate_cell_master)
+                                self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.generate_cell_master)
         self.worker.moveToThread(self.compact_thread)
         self.compact_thread.started.connect(self.worker.run)
         self.worker.finished_signal.connect(self.compact_thread.quit)
@@ -414,7 +413,7 @@ class main(QWidget):
             if len(patch_and_flag) > 0:
                 self.flag_and_patch_thread = QThread()
                 self.worker = CompactorWorker(patch_and_flag, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, 
-                                        self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.bsab, self.generate_cell_master)
+                                        self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.generate_cell_master)
                 self.worker.moveToThread(self.flag_and_patch_thread)
                 self.flag_and_patch_thread.started.connect(self.worker.run)
                 self.worker.finished_signal.connect(self.flag_and_patch_thread.quit)
@@ -513,7 +512,7 @@ class main(QWidget):
             self.log_stream.show()
             self.scan_thread = QThread()
             self.worker = ScannerWorker(self.skyrim_folder_path, self.update_header, self.mo2_mode, self.modlist_txt_path,
-                                 self.plugins_txt_path, self.overwrite_path, self.bsab)
+                                 self.plugins_txt_path, self.overwrite_path)
             self.worker.moveToThread(self.scan_thread)
             self.scan_thread.started.connect(self.worker.scan_run)
             self.worker.finished_signal.connect(self.completed_scan)
@@ -803,7 +802,7 @@ class main(QWidget):
 
 class ScannerWorker(QObject):
     finished_signal = pyqtSignal(dict, dict)
-    def __init__(self, path, update, mo2_mode, modlist_txt_path, plugins_txt_path, overwrite_path, bsab):
+    def __init__(self, path, update, mo2_mode, modlist_txt_path, plugins_txt_path, overwrite_path):
         super().__init__()
         self.skyrim_folder_path = path
         self.update_header = update
@@ -811,12 +810,11 @@ class ScannerWorker(QObject):
         self.modlist_txt_path = modlist_txt_path
         self.plugins_txt_path = plugins_txt_path
         self.overwrite_path = overwrite_path
-        self.bsab = bsab
 
     def scan_run(self):
         print('Scanning All Files:')
         flag_dict, dependency_dictionary = scanner.scan(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.plugins_txt_path,
-                                                        self.overwrite_path, self.bsab, self.update_header, True)
+                                                        self.overwrite_path, self.update_header, True)
         print('Checking if New CELLs are Changed')
         plugins_with_cells = [plugin for plugin, flags in flag_dict.items() if 'new_cell' in flags]
         cell_scanner.scan(plugins_with_cells)
@@ -825,7 +823,7 @@ class ScannerWorker(QObject):
 class CompactorWorker(QObject):
     finished_signal = pyqtSignal()
     def __init__(self, checked, dependency_dictionary, skyrim_folder_path, output_folder_path, output_folder_name, overwrite_path,
-                  update_header, mo2_mode, bsab, generate_cell_master):
+                  update_header, mo2_mode, generate_cell_master):
         super().__init__()
         self.checked = checked
         self.dependency_dictionary = dependency_dictionary
@@ -835,7 +833,6 @@ class CompactorWorker(QObject):
         self.overwrite_path = overwrite_path
         self.update_header = update_header
         self.mo2_mode = mo2_mode
-        self.bsab = bsab
         self.create_new_cell_plugin = create_new_cell_plugin()
         self.generate_cell_master = generate_cell_master
         
@@ -875,7 +872,7 @@ class CompactorWorker(QObject):
             else:
                 generate_cell_master = False
             CFIDs.compact_and_patch(file, dependents, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name,
-                                     self.overwrite_path, self.update_header, self.mo2_mode, self.bsab, all_dependents_have_skyrim_esm_as_master, 
+                                     self.overwrite_path, self.update_header, self.mo2_mode, all_dependents_have_skyrim_esm_as_master, 
                                      self.create_new_cell_plugin, generate_cell_master)
         if finalize:
             self.create_new_cell_plugin.finalize_plugin()

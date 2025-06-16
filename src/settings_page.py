@@ -60,13 +60,6 @@ class settings(QWidget):
             'C:/Path/To/plugins.txt',
             self.plugins_txt_path_clicked
         )
-        self.bsab_path_widget, self.bsab_path = self.create_path_widget(
-            "bsab.exe Path",
-            "Set this to BSA Browser's CLI: bsab.exe\n"+
-            "Do NOT rename 'BSA Browser.exe' to bsab.exe",
-            'C:/Path/To/BSA Browser\'s/bsab.exe',
-            self.bsab_path_clicked
-        )
         self.mo2_modlist_txt_path_widget, self.mo2_modlist_txt_path = self.create_path_widget(
             "Modlist.txt Path",
             "Set this to your profile's modlist.txt",
@@ -180,7 +173,6 @@ class settings(QWidget):
         settings_layout.addWidget(self.overwrite_path_widget)
         settings_layout.addWidget(self.plugins_txt_path_widget)
         settings_layout.addWidget(self.mo2_modlist_txt_path_widget)
-        settings_layout.addWidget(self.bsab_path_widget)
 
         column_wrapper = QHBoxLayout()
         column_wrapper_widget = QWidget()
@@ -265,9 +257,6 @@ class settings(QWidget):
 
     def plugins_txt_path_clicked(self):
         self.select_file_path(self.file_dialog_2, "Select your plugins.txt", 'plugins_txt_path', self.plugins_txt_path, "Load Order (plugins.txt)")
-
-    def bsab_path_clicked(self):
-        self.select_file_path(self.file_dialog_2, "Select BSA Browser's bsab.exe", 'bsab_path', self.bsab_path, "BSA Browser CLI (bsab.exe)")
 
     def create_path_widget(self, label_text, tooltip, placeholder, click_function):
         layout = QHBoxLayout()
@@ -415,7 +404,6 @@ class settings(QWidget):
             self.output_folder_name.setText('ESLifier Compactor Output')
             self.overwrite_path.clear()
             self.plugins_txt_path.clear()
-            self.bsab_path.clear()
             self.mo2_modlist_txt_path.clear()
             self.mo2_mode_toggle.setChecked(False)
             self.update_header_toggle.setChecked(True)
@@ -439,7 +427,6 @@ class settings(QWidget):
         self.output_folder_name.setText(self.settings.get('output_folder_name', 'ESLifier Compactor Output'))
         self.overwrite_path.setText(self.settings.get('overwrite_path', ''))
         self.plugins_txt_path.setText(self.settings.get('plugins_txt_path', ''))
-        self.bsab_path.setText(self.settings.get('bsab_path', ''))
         self.mo2_modlist_txt_path.setText(self.settings.get('mo2_modlist_txt_path' ,''))
         self.mo2_mode_toggle.setChecked(self.settings.get('mo2_mode', False))
         self.update_header_toggle.setChecked(self.settings.get('update_header', True))
@@ -468,7 +455,6 @@ class settings(QWidget):
             self.settings['output_folder_name'] = self.output_folder_name.text()
         self.settings['overwrite_path'] = os.path.normpath(self.overwrite_path.text()) if self.overwrite_path.text() != '' else ''
         self.settings['plugins_txt_path'] = os.path.normpath(self.plugins_txt_path.text()) if self.plugins_txt_path.text() != '' else ''
-        self.settings['bsab_path'] = os.path.normpath(self.bsab_path.text()) if self.bsab_path.text() != '' else ''
         self.settings['mo2_modlist_txt_path'] = os.path.normpath(self.mo2_modlist_txt_path.text()) if self.mo2_modlist_txt_path.text() != '' else ''
         self.settings['mo2_mode'] = self.mo2_mode_toggle.isChecked()
         self.settings['update_header'] = self.update_header_toggle.isChecked()

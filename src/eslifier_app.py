@@ -13,7 +13,7 @@ from main_page import main
 from patch_new_page import patch_new
 from log_stream import log_stream
 
-CURRENT_VERSION = '0.10.8'
+CURRENT_VERSION = '0.11.0'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
@@ -189,7 +189,6 @@ class main_window(QMainWindow):
         if (self.settings_widget.settings['output_folder_path'] == ''
             or self.settings_widget.settings['skyrim_folder_path'] == ''
             or self.settings_widget.settings['plugins_txt_path'] == ''
-            or self.settings_widget.settings['bsab_path'] == ''
             or (self.settings_widget.settings['mo2_mode'] 
                 and (self.settings_widget.settings['mo2_modlist_txt_path'] == '' 
                      or self.settings_widget.settings['overwrite_path'] == ''))):
@@ -210,7 +209,6 @@ class main_window(QMainWindow):
         output_path = self.settings_widget.settings['output_folder_path']
         data_path = self.settings_widget.settings['skyrim_folder_path']
         plugins_txt = self.settings_widget.settings['plugins_txt_path']
-        bsab = self.settings_widget.settings['bsab_path']
         mo2_mode = self.settings_widget.settings['mo2_mode']
         if mo2_mode:
             mo2_path = self.settings_widget.settings['mo2_modlist_txt_path']
@@ -239,10 +237,6 @@ class main_window(QMainWindow):
             error_message += "Invalid plugins.txt, the path should be to the file not directory.\n"
         if not os.path.exists(plugins_txt):
             error_message += "Invalid plugins.txt, the file does not exist.\n"
-        if not bsab.lower().endswith('bsab.exe'):
-            error_message += "Invalid bsab.exe, the path should be to the file not directory\n"
-        if not os.path.exists(bsab):
-            error_message += "Invalid bsab.exe, the file does not exist.\n"
         if mo2_mode and not os.path.exists(overwrite_path):
             error_message += "Invalid Overwrite Directory, it does not exist.\n'"
         if mo2_mode and not mo2_path.lower().endswith('modlist.txt'):
@@ -313,7 +307,6 @@ class main_window(QMainWindow):
         self.main_widget.modlist_txt_path =                     self.settings_widget.settings['mo2_modlist_txt_path']
         self.main_widget.plugins_txt_path =                     self.settings_widget.settings['plugins_txt_path']
         self.main_widget.overwrite_path =                       self.settings_widget.settings['overwrite_path']
-        self.main_widget.bsab =                                 self.settings_widget.settings['bsab_path']
         self.main_widget.update_header =                        self.settings_widget.settings['update_header']
         self.main_widget.generate_cell_master =                 self.settings_widget.settings['generate_cell_master']
         self.main_widget.list_compact.filter_changed_cells =    self.settings_widget.settings['enable_cell_changed_filter']
@@ -334,7 +327,6 @@ class main_window(QMainWindow):
         self.patch_new_widget.output_folder_name =              self.settings_widget.settings['output_folder_name']
         self.patch_new_widget.plugins_txt_path =                self.settings_widget.settings['plugins_txt_path']
         self.patch_new_widget.overwrite_path =                  self.settings_widget.settings['overwrite_path']
-        self.patch_new_widget.bsab =                            self.settings_widget.settings['bsab_path']
         self.patch_new_widget.modlist_txt_path =                self.settings_widget.settings['mo2_modlist_txt_path']
         self.patch_new_widget.mo2_mode =                        self.settings_widget.settings['mo2_mode']
         self.patch_new_widget.update_header =                   self.settings_widget.settings['update_header']
