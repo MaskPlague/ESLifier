@@ -9,7 +9,7 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
   
 # For Users
 ## BSArch.exe
-ESLifier uses a modified BSArch.exe (from TES5Edit) to extract pex, seq, facetint, facegeom, and voice files. The modified .dpr file is included in the repo [here](https://github.com/MaskPlague/ESLifier/blob/main/bsarch/BSArch.dpr).
+ESLifier uses a modified BSArch.exe (from [TES5Edit](https://github.com/TES5Edit/TES5Edit/tree/master/Tools/BSArchive)) to extract pex, seq, facetint, facegeom, and voice files. The modified .dpr file is included in the repo [here](https://github.com/MaskPlague/ESLifier/blob/main/bsarch/BSArch.dpr).
 
 ## User Manual
 Notes:
