@@ -11,9 +11,9 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_
         elif 'seasons\\' in new_file_lower:                                                 # Po3's Seasons of Skyrim
             patchers.ini_seasons_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'payloadinterpreter\\' in new_file_lower:                                      # Payload Interpreter
-            patchers.ini_payload_interpreter_dtry_key_util_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+            patchers.ini_payload_interpreter_dtrys_key_utils_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'dtrykeyutil\\' in new_file_lower:                                             # DtryKeyUtil
-            patchers.ini_payload_interpreter_dtry_key_util_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+            patchers.ini_payload_interpreter_dtrys_key_utils_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'muimpactframework\\' in new_file_lower or 'muskeletoneditor\\' in new_file_lower: # MU
             patchers.ini_mu_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\poisebreaker_' in new_file_lower:                                           # Poise Breaker
