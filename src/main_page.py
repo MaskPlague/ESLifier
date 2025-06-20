@@ -428,7 +428,7 @@ class main(QWidget):
                 self.finished_button_action('eslify', checked)
                 print("File(s) ESL Flagged")
                 if self.redoing_output:
-                    print("ALT CLEAR")
+                    print("CLEAR ALT")
                 else:
                     print("CLEAR")
         else:
