@@ -157,6 +157,7 @@ class scanner():
         order_map = {plugin: index for index, plugin in enumerate(plugins_list)}
         filtered_bsa_list = [item for item in bsa_list if item[0] in order_map]
         filtered_bsa_list.sort(key=lambda x: order_map.get(x[0], float('inf')))
+        scanner.bsa_files = [file for _, file in filtered_bsa_list]
         bsa_length = len(filtered_bsa_list)
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -289,6 +290,7 @@ class scanner():
         order_map = {plugin: index for index, plugin in enumerate(plugins_list)}
         filtered_bsa_list = [item for item in bsa_list if item[0] in order_map]
         filtered_bsa_list.sort(key=lambda x: order_map.get(x[0], float('inf')))
+        scanner.bsa_files = [file for _, file in filtered_bsa_list]
         bsa_length = len(filtered_bsa_list)
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -608,9 +610,6 @@ class scanner():
                 thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
                 scanner.threads.append(thread)
                 thread.start()
-            elif file_lower.endswith('.bsa'):
-                if os.path.basename(file_lower) not in scanner.bsa_blacklist:
-                    scanner.bsa_files.append(file)
             elif file_lower.endswith('.pex'):
                 scanner.pex_files.append(file)
             elif file_lower.endswith('.dll') and '\\skse\\plugins' in file_lower:
@@ -648,6 +647,9 @@ class scanner():
                             local_dict[plugin].append(file)
                     except Exception as e:
                         pass
+            #elif file_lower.endswith('.bsa'):
+            #    if os.path.basename(file_lower) not in scanner.bsa_blacklist:
+            #        scanner.bsa_files.append(file)
         with scanner.lock:           
             for key, values_list in local_dict.items():
                 if key in scanner.plugin_basename_list:
@@ -764,6 +766,10 @@ class scanner():
             with scanner.file_semaphore:
                 with open(bsa_file, 'rb') as f:
                     with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+                        if mm[:3] != b'BSA': # Confirm .BSA file is actually a BSA and not something renamed
+                            mm.close()
+                            f.close()
+                            return
                         folder_count = struct.unpack('<I', mm[16:20])[0]
                         version = struct.unpack('<I', mm[4:8])[0]
                         if version == 105:
