@@ -20,7 +20,7 @@ from plugin_qualification_checker import qualification_checker
 from dependency_getter import dependecy_getter
 
 class scanner():
-    def scan(path, mo2_mode, modlist_txt_path, plugins_txt_path, overwrite_path, update_header, full_scan):
+    def scan(path: str, mo2_mode: bool, modlist_txt_path: str, plugins_txt_path: str, overwrite_path: str, update_header: bool, full_scan: bool) -> tuple[dict, dict] | None:
         scanner.bsa_blacklist = ['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
                     'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
                     'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa']
@@ -110,8 +110,8 @@ class scanner():
         if full_scan:
             return flag_dict, dependency_dictionary
     
-    def sort_bsa_files(bsa_dict, plugins):
-        def get_base_name(bsa_path):
+    def sort_bsa_files(bsa_dict: dict, plugins: list) -> dict:
+        def get_base_name(bsa_path: str) -> str:
             bsa_name = bsa_path.rsplit('\\', 1)[-1].rsplit('/', 1)[-1]
             bsa_name = bsa_name.lower().removesuffix('.bsa')
             bsa_name = re.sub(r' - textures\d*$', '', bsa_name)
@@ -123,7 +123,7 @@ class scanner():
         
         return dict(sorted_bsa_items)
 
-    def get_files_from_skyrim_folder(path, plugins_list):
+    def get_files_from_skyrim_folder(path: str, plugins_list: list):
         if not os.path.exists('bsa_extracted/'):
             os.makedirs('bsa_extracted/')
         path = os.path.normpath(path)
@@ -193,7 +193,7 @@ class scanner():
                     if os.path.exists(full_path):
                         os.remove(full_path)
 
-    def extract_bsa(file, startupinfo, update_time, filter):
+    def extract_bsa(file: str, startupinfo: subprocess.STARTUPINFO, update_time: float, filter: str):
         last = 0
         with subprocess.Popen(
             ["bsarch/bsarch.exe", "unpack", file, "bsa_extracted", filter],
@@ -210,7 +210,7 @@ class scanner():
                         last = timeit.default_timer()
                         print(f'\033[F\033[K-  Extracting: {line}', end='\n')
 
-    def get_files_from_mods(mods_folder, enabled_mods, plugins_list, overwrite_path):
+    def get_files_from_mods(mods_folder: str, enabled_mods: list, plugins_list: list, overwrite_path: str) -> tuple[dict, list, dict]:
         if not os.path.exists('bsa_extracted/'):
             os.makedirs('bsa_extracted/')
         mod_files = {}
@@ -333,7 +333,7 @@ class scanner():
 
         return mod_files, plugin_names, cases_of_files
 
-    def get_modlist(path):
+    def get_modlist(path: str) -> tuple[list[str], list[str]]:
         load_order = []
         try:
             with open(path, 'r', encoding='utf-8') as f:
@@ -366,7 +366,7 @@ class scanner():
         load_order.append('overwrite_eslifier_scan')
         return load_order, enabled_mods
     
-    def get_plugins_list(path):
+    def get_plugins_list(path: str) -> list:
         lines = []
         try:
             with open(path, 'r', encoding='utf-8') as f:
@@ -382,7 +382,7 @@ class scanner():
             return []
         return active_plugins
 
-    def get_winning_files(mods_folder, load_order, enabled_mods, plugins_list, overwrite_path):
+    def get_winning_files(mods_folder: str, load_order: list, enabled_mods: list, plugins_list: list, overwrite_path: str) -> tuple[list, list]:
         mods_folder = os.path.normpath(mods_folder)
         overwrite_path = os.path.normpath(overwrite_path)
         mod_folder_level = len(mods_folder.split(os.sep))
@@ -435,7 +435,7 @@ class scanner():
         return_list = [winning_file for winning_file, _ in winning_files]
         return return_list, plugins
 
-    def dump_to_file(file, data):
+    def dump_to_file(file: str, data: list | dict):
         try:
             with open(file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
@@ -443,7 +443,7 @@ class scanner():
             print(f'!Error: Failed to dump data to: {file}')
             print(e)
     
-    def get_from_file(file):
+    def get_from_file(file: str) -> list:
         try:
             with open(file, 'r', encoding='utf-8') as f:
                 data = json.load(f)

@@ -14,7 +14,7 @@ class dependecy_getter():
         dependecy_getter.dump_to_file("ESLifier_Data/maxed_masters.json", dependecy_getter.maxed_masters)
         return dependecy_getter.dependency_dictionary
     
-    def dump_to_file(file, data):
+    def dump_to_file(file: str, data: list | dict):
         try:
             with open(file, 'w+', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
@@ -22,7 +22,7 @@ class dependecy_getter():
             print(f"!Error: Failed to dump data to {file}")
             print(e)
     
-    def get_from_file(file):
+    def get_from_file(file: str):
         try:
             with open(file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
@@ -49,7 +49,7 @@ class dependecy_getter():
             if len(masters) >= 254 and 'ESLifier_Cell_Master.esm' not in masters:
                 dependecy_getter.maxed_masters.append(plugin)
 
-    def get_masters(file):
+    def get_masters(file: str):
         master_list = []
         try:
             with open(file, 'rb') as f:

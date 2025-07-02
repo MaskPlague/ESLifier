@@ -9,6 +9,7 @@ import struct
 from file_patchers import patchers
 from intervaltree import IntervalTree
 from full_form_processor import form_processor
+from create_cell_master import create_new_cell_plugin
 import patcher_conditions
 
 import platform
@@ -27,9 +28,9 @@ else:
     MAX_THREADS = max_threads
 
 class CFIDs():
-    def compact_and_patch(file_to_compact, dependents, skyrim_folder_path, output_folder_path,
-                          output_folder_name, overwrite_path, update_header, mo2_mode,
-                          all_dependents_have_skyrim_esm_as_master, create_cell_master_class, add_cell_to_master):
+    def compact_and_patch(file_to_compact: str, dependents: list, skyrim_folder_path: str, output_folder_path: str,
+                          output_folder_name: str, overwrite_path: str, update_header: bool, mo2_mode: bool,
+                          all_dependents_have_skyrim_esm_as_master: bool, create_cell_master_class: create_new_cell_plugin, add_cell_to_master: bool):
         CFIDs.lock = threading.Lock()
         CFIDs.semaphore = threading.Semaphore(1000)
         CFIDs.compacted_and_patched = {}
@@ -110,10 +111,7 @@ class CFIDs():
         return
     
     def dump_compacted_and_patched(file):
-        try:
-            data = CFIDs.get_from_file(file)
-        except:
-            data = {}
+        data = CFIDs.get_from_file(file)
         for key, value in CFIDs.compacted_and_patched.items():
             if key not in data:
                 data[key] = []
@@ -127,7 +125,7 @@ class CFIDs():
             print('!Error: Failed to dump data to {file}')
             print(e)
 
-    def get_from_file(file):
+    def get_from_file(file: str) -> dict:
         try:
             with open(file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
@@ -135,7 +133,7 @@ class CFIDs():
             data = {}
         return data
     
-    def bsa_temp_extract(bsa_file, type, name, startupinfo):
+    def bsa_temp_extract(bsa_file: str, type: str, name:str, startupinfo: subprocess.STARTUPINFO):
         with subprocess.Popen(
             ["bsarch/bsarch.exe", "unpack", bsa_file, "bsa_extracted_temp", type + name],
             stdout=subprocess.PIPE,
@@ -147,7 +145,7 @@ class CFIDs():
                     if line.startswith('Unpacking error'):
                         raise Exception(f"During Temp Extraction, {line}")
                     
-    def set_flag(file, skyrim_folder, output_folder, output_folder_name, overwrite_path, mo2_mode):
+    def set_flag(file: str, skyrim_folder: str, output_folder: str, output_folder_name: str, overwrite_path: str, mo2_mode: bool):
         CFIDs.mo2_mode = mo2_mode
         CFIDs.lock = threading.Lock()
         CFIDs.output_folder_name = output_folder_name
@@ -162,8 +160,8 @@ class CFIDs():
             print('!Error: Failed to set ESL flag in {file}')
             print(e)           
 
-    def patch_new(compacted_file, dependents, files_to_patch, skyrim_folder_path, output_folder_path, 
-                  output_folder_name, overwrite_path, update_header, mo2_mode, add_cell_to_master):
+    def patch_new(compacted_file: str, dependents: list, files_to_patch: list, skyrim_folder_path: str, output_folder_path: str, 
+                  output_folder_name: str, overwrite_path: str, update_header: bool, mo2_mode: bool, add_cell_to_master: bool):
         CFIDs.lock = threading.Lock()
         CFIDs.semaphore = threading.Semaphore(1000)
         CFIDs.compacted_and_patched = {}
@@ -195,7 +193,7 @@ class CFIDs():
         print('CLEAR ALT')
 
     #Create a copy of the mod plugin we're compacting
-    def copy_file_to_output(file, skyrim_folder_path, output_folder):
+    def copy_file_to_output(file: str, skyrim_folder_path: str, output_folder: str) -> tuple[str, str]:
         end_path = CFIDs.get_rel_path(file, skyrim_folder_path)
         new_file = os.path.normpath(os.path.join(os.path.join(output_folder, CFIDs.output_folder_name), end_path))
         with CFIDs.lock:
@@ -205,7 +203,7 @@ class CFIDs():
                 shutil.copy(file, new_file)
         return new_file, end_path
     
-    def get_rel_path(file, skyrim_folder_path):
+    def get_rel_path(file: str, skyrim_folder_path: str) -> str:
         if 'bsa_extracted' in file:
             if 'bsa_extracted_temp' in file:
                 start = os.path.join(os.getcwd(), 'bsa_extracted_temp/')
@@ -222,7 +220,7 @@ class CFIDs():
         return rel_path
     
     #Sort the file masters list into files that only need patching and files that need renaming and maybe patching
-    def sort_files_to_patch_or_rename(master, files):
+    def sort_files_to_patch_or_rename(master: str, files: list[str]) -> tuple[list[str], list[str]]:
         files_to_patch = []
         files_to_rename = []
         split_name = os.path.splitext(os.path.basename(master))[0].lower()
@@ -238,7 +236,7 @@ class CFIDs():
                 raise TypeError(f"{os.path.basename(master).lower()} - File: {file} \nhas no patching method but it is in file_masters...")
         return files_to_patch, files_to_rename
 
-    def rename_files_threader(master, files, skyrim_folder_path, output_folder_path):
+    def rename_files_threader(master: str, files: list[str], skyrim_folder_path: str, output_folder_path: str):
         threads = []
         split = len(files)
         if split > MAX_THREADS:
@@ -258,7 +256,7 @@ class CFIDs():
             thread.join()
 
     #Rename each file in the list of files from the old Form IDs to the new Form IDs
-    def rename_files(master, files, skyrim_folder_path, output_folder_path):
+    def rename_files(master: str, files: list[str], skyrim_folder_path: str, output_folder_path: str) -> None:
         facegeom_meshes = []
         master_base_name = os.path.basename(master)
         for file in files:
@@ -299,7 +297,7 @@ class CFIDs():
     #original Form ID w/o leading 0s, original Form ID w/ leading 0s, new Form ID w/o 0s, new Form ID w/ 0s, 
     #the orginal Form ID in \x00\x00\x00\xMASTER order, and the new Form ID in the same order.
     #TODO: Convert to a dictionary for even faster patching
-    def get_form_id_map(file):
+    def get_form_id_map(file: str):
         form_id_file_name = "ESLifier_Data/Form_ID_Maps/" + os.path.basename(file).lower() + "_FormIdMap.txt"
         form_id_file_data = ''
         with open(form_id_file_name, 'r') as fidf:
@@ -336,7 +334,7 @@ class CFIDs():
             
             CFIDs.form_id_map[from_id_bytes] = to_id_bytes
 
-    def patch_files_threader(master, files, skyrim_folder_path, output_folder_path):
+    def patch_files_threader(master: str, files: list[str], skyrim_folder_path: str, output_folder_path: str):
         threads = []
         split = len(files)
         if split > MAX_THREADS:
@@ -364,7 +362,7 @@ class CFIDs():
             thread.join()
 
     #Patches each file type in a different way as each has Form IDs present in a different format
-    def patch_files(master, files, skyrim_folder_path, output_folder_path):
+    def patch_files(master: str, files: list[str], skyrim_folder_path: str, output_folder_path: str):
         for file in files:
             new_file, rel_path = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
             new_file_lower = new_file.lower()
@@ -386,7 +384,7 @@ class CFIDs():
                 print(f'!Error: Failed to patch file: {new_file}')
                 print(e)      
 
-    def decompress_data(data_list):
+    def decompress_data(data_list: list) -> tuple[list, list]:
         sizes_list = [[] for _ in range(len(data_list))]
 
         for i in range(len(data_list)):
@@ -404,7 +402,7 @@ class CFIDs():
 
         return data_list, sizes_list
     
-    def recompress_data(data_list, sizes_list):
+    def recompress_data(data_list: list, sizes_list: list) -> tuple[list, list]:
         for i in range(len(data_list)):
             flag_byte = data_list[i][10]
             compressed_flag = (flag_byte & 0x04) != 0
@@ -423,7 +421,7 @@ class CFIDs():
                 data_list[i] = bytes(formatted)
         return data_list, sizes_list
     
-    def update_grup_sizes(data_list, grup_struct, sizes_list):
+    def update_grup_sizes(data_list: list, grup_struct: dict, sizes_list: list) -> list:
         byte_array_data_list = [bytearray(form) for form in data_list]
         for i, size_info in enumerate(sizes_list):
             if size_info and size_info[1] != 0:
@@ -434,7 +432,7 @@ class CFIDs():
         data_list = [bytes(form) for form in byte_array_data_list]
         return data_list
     
-    def create_data_list(data):
+    def create_data_list(data: bytes) -> tuple[list[bytes], dict]:
         data_list = []
         data_list_offsets = []
         offset = 0
@@ -467,7 +465,7 @@ class CFIDs():
         return data_list, grup_struct
     
     #Compacts master file and returns the new mod folder
-    def compact_file(file, skyrim_folder_path, output_folder, update_header, all_dependents_have_skyrim_esm_as_master):
+    def compact_file(file: str, skyrim_folder_path: str, output_folder: str, update_header: bool, all_dependents_have_skyrim_esm_as_master: bool):
         form_id_file_name = 'ESLifier_Data/Form_ID_Maps/' + os.path.basename(file).lower() + "_FormIdMap.txt"
         if not os.path.exists(os.path.dirname(form_id_file_name)):
             os.makedirs(os.path.dirname(form_id_file_name))
@@ -599,7 +597,7 @@ class CFIDs():
         CFIDs.compacted_and_patched[os.path.basename(new_file)] = []
         
     #replaced the old form ids with the new ones in all files that have the comapacted file as a master
-    def patch_dependent_plugins(file, dependents, skyrim_folder_path, output_folder_path, update_header, file_masters):
+    def patch_dependent_plugins(file: str, dependents: list, skyrim_folder_path: str, output_folder_path: str, update_header: bool, file_masters: dict):
         form_id_file_name = "ESLifier_Data/Form_ID_Maps/" + os.path.basename(file).lower() + "_FormIdMap.txt"
         form_id_file_data = ''
         
@@ -627,7 +625,7 @@ class CFIDs():
         for thread in threads:
             thread.join()
 
-    def patch_dependent(new_file, update_header, file, form_id_file_data, rel_path, new_seq_file, rel_path_seq):
+    def patch_dependent(new_file: str, update_header: bool, file: str, form_id_file_data: list, rel_path: str, new_seq_file: str, rel_path_seq: str):
         form_id_replacements = []
         try:
             with open(new_file, 'rb+') as dependent_file:
@@ -662,6 +660,7 @@ class CFIDs():
 
                 saved_forms = form_processor.save_all_form_data(data_list)
 
+                #TODO: Optimize this, there is no point in splitting the form id map data each dependent
                 for i in range(len(form_id_file_data)):
                     form_id_conversion = form_id_file_data[i].split('|')
                     from_id = bytes.fromhex(form_id_conversion[0])[:3]
@@ -704,7 +703,7 @@ class CFIDs():
         return
 
     #gets what master index the file is in inside of the dependent's data
-    def get_master_index(file, data_list):
+    def get_master_index(file: str, data_list: list[bytes]) -> int:
         tes4 = data_list[0]
         offset = 24
         data_len = len(tes4)
@@ -723,7 +722,7 @@ class CFIDs():
             else:
                 master_index += 1
     
-    def get_master_count(data_list):
+    def get_master_count(data_list: list[bytes]) -> tuple[int, bool]:
         tes4 = data_list[0]
         offset = 24
         data_len = len(tes4)
@@ -740,7 +739,7 @@ class CFIDs():
             offset += field_size + 6
         return master_list_count, has_skyrim_esm_master
     
-    def add_cell_master_to_masters(data_list):
+    def add_cell_master_to_masters(data_list: list[bytes]):
         tes4 = data_list[0]
         new_master_data = (
             b'\x4D\x41\x53\x54\x19\x00\x45\x53\x4C\x69\x66\x69' +

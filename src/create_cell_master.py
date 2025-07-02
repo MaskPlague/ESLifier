@@ -3,7 +3,7 @@ import struct
 import json
 
 class create_new_cell_plugin():
-    def generate(self, output_folder, update_header = True):
+    def generate(self, output_folder: str, update_header: bool = True):
         self.output_file = os.path.join(output_folder, 'ESLifier_Cell_Master.esm')
         self.new_data_list = [
             bytes([
@@ -83,7 +83,7 @@ class create_new_cell_plugin():
                         for cell in str_sub_dict["cells"]:
                             self.wrld_dict[byte_wrld_id]['blocks'][byte_grup_block]["sub_blocks"][byte_sub_block]["cells"].append(bytes.fromhex(cell))
 
-    def add_cells(self, data_list, grup_struct, master_count, name):
+    def add_cells(self, data_list: list[bytes], grup_struct: dict, master_count: int, name: str):
         form_id_map = []
         first_exterior_cell_in_world = True
         current_wrld_id = b''

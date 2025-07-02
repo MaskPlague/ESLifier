@@ -7,19 +7,19 @@ import json5
 import os
 
 class patchers():    
-    def find_prev_non_alphanumeric(text, start_index):
+    def find_prev_non_alphanumeric(text: str, start_index: int):
         for i in range(start_index, 0, -1):
             if not text[i].isalnum() and text[i] != ' ':
                 return i
         return -1
 
-    def find_next_non_alphanumeric(text, start_index):
+    def find_next_non_alphanumeric(text: str, start_index: int):
         for i in range(start_index, len(text)):
             if not text[i].isalnum():
                 return i
         return len(text)
     
-    def facegeom_mesh_patcher(basename, new_file, form_id_map):
+    def facegeom_mesh_patcher(basename: str, new_file: str, form_id_map: dict):
         with open(new_file, 'rb+') as f:
             data = f.readlines()
             bytes_basename = bytes(basename, 'utf-8')
@@ -30,7 +30,7 @@ class patchers():
             f.seek(0)
             f.writelines(data)
     
-    def seq_patcher(new_file, form_id_map, dependent=False):
+    def seq_patcher(new_file: str, form_id_map: dict, dependent: bool =False):
         with open(new_file, 'rb+') as f:
             data = f.read()
             seq_form_id_list = [data[i:i+4] for i in range(0, len(data), 4)]
@@ -44,7 +44,7 @@ class patchers():
             f.write(b''.join(new_seq_form_id_list))
             f.close()
         
-    def pex_patcher(basename, new_file, form_id_map):
+    def pex_patcher(basename: str, new_file: str, form_id_map: dict):
         with open(new_file,'rb+') as f:
             data = f.read()
             data = bytearray(data)
@@ -123,7 +123,7 @@ class patchers():
             f.write(data)
             f.close()
 
-    def ini_seasons_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def ini_seasons_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             print_replace = True
@@ -167,7 +167,7 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
-    def ini_payload_interpreter_dtrys_key_utils_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def ini_payload_interpreter_dtrys_key_utils_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             print_replace = True
@@ -202,7 +202,7 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
-    def ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def ini_0xfid_tilde_plugin_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             print_replace = True
@@ -243,7 +243,7 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
-    def ini_form_list_manipulator_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def ini_form_list_manipulator_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             print_replace = True
@@ -283,7 +283,7 @@ class patchers():
             #f.write(''.join(lines))
             f.close()
        
-    def ini_mu_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def ini_mu_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             print_replace = True
@@ -316,7 +316,7 @@ class patchers():
             f.write(''.join(lines))
             f.close()
         
-    def ini_sky_patcher_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def ini_sky_patcher_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             print_replace = True
@@ -364,7 +364,7 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
-    def ini_eq_plugin_sep_fid_patcher(basename, new_file, form_id_map, sep='|', encoding_method='utf-8'):
+    def ini_eq_plugin_sep_fid_patcher(basename: str, new_file: str, form_id_map: dict, sep: str ='|', encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             print_replace = True
@@ -406,7 +406,7 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
-    def ini_auto_body_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def ini_auto_body_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
@@ -425,7 +425,7 @@ class patchers():
             f.close()
             
     # No Cell Form IDs possible
-    def ini_remember_lockpick_angle_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def ini_remember_lockpick_angle_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             required_perk = ''
@@ -447,7 +447,7 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
-    def ini_experience_knotwork_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def ini_experience_knotwork_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             patch_following = False
@@ -475,7 +475,7 @@ class patchers():
             f.close()
     
     # No Cell Form IDs possible
-    def ini_npcs_use_potions_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def ini_npcs_use_potions_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
@@ -499,7 +499,7 @@ class patchers():
             f.close()
 
     comp_print_replace = True
-    def ini_completionist_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def ini_completionist_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             start_patching = False
@@ -537,7 +537,7 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
-    def comp_form_id_replacer(form_id, form_id_map):
+    def comp_form_id_replacer(form_id: str, form_id_map: dict):
         if '0x' in form_id.lower():
             form_id_int = int(form_id, 16)
             to_id_data = form_id_map.get(form_id_int)
@@ -549,7 +549,7 @@ class patchers():
         else:
             return form_id, False
 
-    def comp_variable_from_id(line, basename, global_replace, form_id_map):
+    def comp_variable_from_id(line: str, basename: str, global_replace: bool, form_id_map: dict):
         equal_index = line.index('=')
         variable = line[:equal_index]
         var_end = False
@@ -571,7 +571,7 @@ class patchers():
         line = patchers.comp_layout_3_processor(global_replace, basename, line, form_id_map)
         return line
 
-    def comp_layout_3_processor(global_replace, basename, line, form_id_map):
+    def comp_layout_3_processor(global_replace: bool, basename: str, line: str, form_id_map: dict):
         # This assumes that no plugin name has a comma. If one does then it probably breaks completionist anyways.
         start_index = line.index('=')+1
         parts = [part for part in line[start_index:].split(',') if part]
@@ -586,7 +586,7 @@ class patchers():
             return_string += '\n'
         return return_string
 
-    def comp_form_id_processor(form_id_string, basename, global_replace, form_id_map, has_comma):
+    def comp_form_id_processor(form_id_string: str, basename: str, global_replace: bool, form_id_map: str, has_comma: bool):
         if has_comma:
             index = form_id_string.index(',')
             end_of_line = form_id_string[index:]
@@ -634,7 +634,7 @@ class patchers():
             form_id_string += end_of_line
         return form_id_string
 
-    def ini_kreate_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def ini_kreate_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         edid_file = 'ESLifier_Data\\EDIDs\\' + basename + '_EDIDs.txt'
         edids = []
         with open(edid_file, 'r', encoding='utf-8') as f:
@@ -663,7 +663,7 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
-    def toml_dynamic_animation_casting_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def toml_dynamic_animation_casting_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             dac_toml_type = 'new'
@@ -739,7 +739,7 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
-    def toml_precision_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def toml_precision_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
@@ -767,7 +767,7 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
-    def toml_loki_tdm_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def toml_loki_tdm_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
@@ -788,7 +788,7 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
-    def toml_actor_value_generator_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def toml_actor_value_generator_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
@@ -811,7 +811,7 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
-    def json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, symbol = '|', encoding_method='utf-8'):
+    def json_generic_plugin_sep_formid_patcher(basename: str, new_file: str, form_id_map: dict, symbol: str = '|', encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
@@ -851,7 +851,7 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, int_type=False, symbol = '|', encoding_method='utf-8'):
+    def json_generic_formid_sep_plugin_patcher(basename: str, new_file: str, form_id_map: dict, int_type: bool = False, symbol: str = '|', encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
@@ -903,7 +903,7 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
     
-    def json_open_animation_replacer_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def json_open_animation_replacer_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
@@ -937,7 +937,7 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def json_storage_util_data_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def json_storage_util_data_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
@@ -980,7 +980,7 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
-    def json_obody_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def json_obody_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
@@ -1007,7 +1007,7 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def json_skyrim_utility_mod_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def json_skyrim_utility_mod_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
@@ -1049,7 +1049,7 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def dynamic_animation_replacer_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def dynamic_animation_replacer_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             print_replace = True
@@ -1074,7 +1074,7 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
-    def sound_record_distributor_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def sound_record_distributor_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             print_replace = True
@@ -1109,7 +1109,7 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
-    def jslot_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def jslot_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             read_string = f.read()
             while read_string[-1] != '}':
@@ -1141,7 +1141,7 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3, separators=(',', ' : '))
             f.close()
 
-    def json_smart_harvest_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def json_smart_harvest_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
@@ -1175,7 +1175,7 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def json_dynamic_string_distributor_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def json_dynamic_string_distributor_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
@@ -1206,7 +1206,7 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def json_dynamic_key_activation_framework_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def json_dynamic_key_activation_framework_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
@@ -1236,7 +1236,7 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def json_dyanmic_armor_varients_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def json_dyanmic_armor_varients_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
@@ -1281,7 +1281,7 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
-    def json_jcontainer_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def json_jcontainer_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
@@ -1305,7 +1305,7 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def json_immersive_equipment_displays_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def json_immersive_equipment_displays_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
@@ -1335,7 +1335,7 @@ class patchers():
             json.dump(data, f, ensure_ascii=False)
             f.close()
 
-    def json_ostim_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def json_ostim_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
@@ -1370,7 +1370,7 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
-    def json_dressuplovers_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def json_dressuplovers_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
@@ -1394,7 +1394,7 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def json_dismembering_framework_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def json_dismembering_framework_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
@@ -1425,7 +1425,7 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def use_json5(json_string):
+    def use_json5(json_string: str):
         return json5.loads(json_string)
 
     def extract_values_and_keys(json_data, path=[]):
@@ -1474,7 +1474,7 @@ class patchers():
                 patchers.change_json_key(item, old_key, new_key)
         return data
     
-    def old_customskill_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+    def old_customskill_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             patch_next_line = False

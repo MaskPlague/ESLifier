@@ -4,7 +4,7 @@ import threading
 import struct
 
 class cell_scanner():
-    def scan(mods_with_new_cells):
+    def scan(mods_with_new_cells: list[str]):
         cell_scanner.cell_changed_list = []
         cell_scanner.lock = threading.Lock()
         cell_scanner.dependency_dict = cell_scanner.get_from_file('ESLifier_Data/dependency_dictionary.json')
@@ -19,7 +19,7 @@ class cell_scanner():
 
         cell_scanner.dump_to_file('ESLifier_Data/cell_changed.json')
 
-    def scan_new_dependents(mods, dependency_dict):
+    def scan_new_dependents(mods: list[str], dependency_dict: dict):
         cell_scanner.dependency_dict = {}
         cell_scanner.cell_changed_list = []
         for key, value in dependency_dict.items():
@@ -30,7 +30,7 @@ class cell_scanner():
 
         cell_scanner.dump_to_file('ESLifier_Data/cell_changed.json')
 
-    def check_if_dependents_modify_new_cells(mod):
+    def check_if_dependents_modify_new_cells(mod: str):
         cell_form_id_file = 'ESLifier_Data/Cell_IDs/' + os.path.basename(mod) + '_CellFormIDs.txt'
         if not os.path.exists(cell_form_id_file) or not os.path.basename(mod).lower() in cell_scanner.dependency_dict:
             return
@@ -41,7 +41,7 @@ class cell_scanner():
             for dependent in dependents:
                 cell_scanner.scan_dependent(mod, dependent, cell_form_ids)
 
-    def scan_dependent(mod, dependent, cell_form_ids):
+    def scan_dependent(mod: str, dependent: str, cell_form_ids: list[str]) -> None:
         dependent_data = b''
         try:
             with open(dependent, 'rb') as f:
@@ -57,7 +57,7 @@ class cell_scanner():
                         cell_scanner.cell_changed_list.append(os.path.basename(mod))
                 return
                     
-    def get_master_index(file, data_list):
+    def get_master_index(file: str, data_list: list) -> int:
         tes4 = data_list[0]
         offset = 24
         data_len = len(tes4)
@@ -77,7 +77,7 @@ class cell_scanner():
             else:
                 master_index += 1
 
-    def get_from_file(file):
+    def get_from_file(file: str) -> dict:
         try:
             with open(file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
@@ -85,14 +85,14 @@ class cell_scanner():
             data = {}
         return data
     
-    def dump_to_file(file):
+    def dump_to_file(file: str):
         try:
             with open(file, 'w', encoding='utf-8') as f:
                 json.dump(cell_scanner.cell_changed_list, f, ensure_ascii=False, indent=4)
         except Exception as e:
             print(f'!Error: Failed to dump data to {file}')
 
-    def create_data_list(data):
+    def create_data_list(data: bytes) -> list[bytes]:
         data_list = []
         offset = 0
         while offset < len(data):

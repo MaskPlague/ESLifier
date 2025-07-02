@@ -6,7 +6,7 @@ import struct
 import shutil
 
 class qualification_checker():
-    def scan(path, update_header):
+    def scan(path: str, update_header: bool) -> dict:
         qualification_checker.lock = threading.Lock()
         all_plugins = qualification_checker.get_from_file("ESLifier_Data/plugin_list.json")
         qualification_checker.maxed_masters = qualification_checker.get_from_file("ESLifier_Data/maxed_masters.json")
@@ -51,7 +51,7 @@ class qualification_checker():
             json.dump(qualification_checker.flag_dict, f, ensure_ascii=False, indent=4)
         return qualification_checker.flag_dict
 
-    def plugin_scanner(plugins, update_header):
+    def plugin_scanner(plugins: list, update_header: bool):
         flag_dict = {}
         for plugin in plugins:
             alread_esl, is_esm = qualification_checker.already_esl(plugin)
@@ -85,7 +85,7 @@ class qualification_checker():
                 if key not in qualification_checker.flag_dict:
                     qualification_checker.flag_dict[key] = value
 
-    def create_data_list(data):
+    def create_data_list(data: bytes) -> list:
         data_list = []
         offset = 0
         while offset < len(data):
@@ -99,7 +99,7 @@ class qualification_checker():
                 offset = offset_end
         return data_list      
 
-    def file_reader(file, update_header, is_esm):
+    def file_reader(file: str, update_header: bool, is_esm: bool) -> tuple[bool, bool, bool, bool, bool]:
         data_list = []
         new_cell = False
         interior_cell_flag = False
@@ -187,7 +187,7 @@ class qualification_checker():
                     f.write(form_id + '\n')
         return True, need_compacting, new_cell, interior_cell_flag, new_wrld
 
-    def already_esl(file):
+    def already_esl(file: str) -> tuple[bool, bool]:
         with open(file, 'rb') as f:
             if file.lower().endswith('.esm'):
                 esm = True
@@ -203,7 +203,7 @@ class qualification_checker():
             else:
                 return False, esm #not esl, so it does qualify for processing
             
-    def get_from_file(file):
+    def get_from_file(file: str) -> list | dict:
         try:
             with open(file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
@@ -211,7 +211,7 @@ class qualification_checker():
             data = []
         return data
     
-    def get_master_count(data_list):
+    def get_master_count(data_list: list) -> tuple[int, bool]:
         tes4 = data_list[0]
         offset = 24
         data_len = len(tes4)
