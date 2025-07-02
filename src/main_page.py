@@ -2,6 +2,7 @@ import os
 import json
 import shutil
 import threading
+import timeit
 
 from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QSplitter, QFrame, QTextEdit
@@ -33,6 +34,7 @@ class main(QWidget):
         self.log_stream = log_stream
         self.eslifier = eslifier
         self.COLOR_MODE = COLOR_MODE
+        self.start_time = timeit.default_timer()
         self.create()
 
     def create(self):
@@ -305,6 +307,7 @@ class main(QWidget):
     def compact_confirmed(self, checked):
         self.confirm.hide()
         self.confirm.deleteLater()
+        self.start_time = timeit.default_timer()
         for row in range(self.list_compact.rowCount()):
             if self.list_compact.item(row,self.list_compact.MOD_COL).checkState() == Qt.CheckState.Checked:
                 self.list_compact.item(row,self.list_compact.MOD_COL).setCheckState(Qt.CheckState.PartiallyChecked)
@@ -482,6 +485,7 @@ class main(QWidget):
             for mod in checked_list:
                 self.list_compact.flag_dict.pop(mod)
             self.list_compact.create()
+            print(f"Total Elapsed Time: {timeit.default_timer() - self.start_time:.2f} Seconds")
             print("CLEAR")
         elif sender == 'eslify':
             for mod in checked_list:
