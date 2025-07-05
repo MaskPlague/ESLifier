@@ -143,19 +143,27 @@ class log_stream(QMainWindow):
                 "Check the ESLifier.log for more details.\n"+
                 "Any .pex files listed are likely corrupt and you need to find a patch to fix them.\n\n")
         count = 0
+        github_button = error_message.addButton("Open GitHub Issue Page", QMessageBox.ButtonRole.NoRole)
+        github_link = "https://github.com/MaskPlague/ESLifier/issues"
         for line in self.errors:
             count += 1
+            if line.strip().lower().endswith('cwhcm_setchangeonquestprog_03.pex'):
+                text += '\n' + ("User needs to download and install the following mod and then re-scan:\n" +
+                                "   OCW - Script Fix - cwhcm_setchangeonquestprog_03")
+                github_button.setText("Open OCW Script Fix mod page")
+                github_link = "https://www.nexusmods.com/skyrimspecialedition/mods/62720"
+                continue
             if count <= 10:
                 text += '\n' + line.strip()
+
         if count > 10:
             text += '\nand ' + str(count - 10) + ' more.'
         error_message.setText(text)
         error_message.addButton(QMessageBox.StandardButton.Ok)
-        github_button = error_message.addButton("Open GitHub Issue Page", QMessageBox.ButtonRole.NoRole)
         def close():
             error_message.close()
         def open_github():
-            webbrowser.open("https://github.com/MaskPlague/ESLifier/issues")
+            webbrowser.open(github_link)
         error_message.accepted.connect(close)
         github_button.clicked.connect(open_github)
         error_message.show()
