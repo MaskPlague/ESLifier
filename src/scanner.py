@@ -591,6 +591,9 @@ class scanner():
 
     def file_processor(files, pattern, pattern3, pattern4, pattern5):
         local_dict = {}
+        local_pex = []
+        local_dll = []
+        local_seq = []
         for file in files:
             scanner.count += 1
             scanner.percentage = (scanner.count / scanner.file_count) * 100
@@ -611,12 +614,12 @@ class scanner():
                 scanner.threads.append(thread)
                 thread.start()
             elif file_lower.endswith('.pex'):
-                scanner.pex_files.append(file)
+                local_pex.append(file)
             elif file_lower.endswith('.dll') and '\\skse\\plugins' in file_lower:
-                scanner.dll_files.append(file)
+                local_dll.append(file)
             elif file_lower.endswith('.seq'):
                 plugin = os.path.splitext(os.path.basename(file))[0]
-                scanner.seq_files.append([plugin.lower(), file])
+                local_seq.append([plugin.lower(), file])
             elif file_lower.endswith('.nif') and '\\facegeom\\' in file_lower:
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
@@ -647,13 +650,14 @@ class scanner():
                             local_dict[plugin].append(file)
                     except Exception as e:
                         pass
-            #elif file_lower.endswith('.bsa'):
-            #    if os.path.basename(file_lower) not in scanner.bsa_blacklist:
-            #        scanner.bsa_files.append(file)
-        with scanner.lock:           
+        with scanner.lock:     
+            scanner.pex_files.extend(local_pex)
+            scanner.seq_files.extend(local_seq)
+            scanner.dll_files.extend(local_dll)      
             for key, values_list in local_dict.items():
                 if key in scanner.plugin_basename_list:
-                    if key not in scanner.file_dict: scanner.file_dict.update({key: []})
+                    if key not in scanner.file_dict:
+                        scanner.file_dict.update({key: []})
                     scanner.file_dict[key].extend(values_list)
 
     def seq_plugin_extension_processor(files):
