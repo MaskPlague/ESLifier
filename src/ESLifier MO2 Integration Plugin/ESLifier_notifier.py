@@ -2,6 +2,7 @@ import mobase
 import os
 import json
 import threading
+import hashlib
 
 from .ESLifier_qualification_checker import qualification_checker as light_check
 
@@ -19,6 +20,7 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
     def init(self, organiser = mobase.IOrganizer):
         self._organizer = organiser
         self.flag_dict = {}
+        self.hash_mismatches = []
         self._problems = [0]
         self._finished = False
         self.any_esl = False
@@ -67,6 +69,17 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
     def fullDescription(self, key):
         if self._problems == [0]:
             output_string = ""
+            if len(self.hash_mismatches) > 0:
+                output_string += self.tr(f"The following plugin files have been altered or\n")
+                output_string += self.tr("removed since ESLifier last ran:\n")
+                for file in self.hash_mismatches:
+                    if len(file) > 50:
+                        output_string += self.tr(f" ‣ ...{file[-50:]}\n")
+                    else:
+                        output_string += self.tr(f" ‣ {file}\n")
+                output_string += self.tr("\nPlease open ESLifier and rebuild the output.\n\n")
+                output_string += '\n'
+
             if len(self.needs_flag_dict) > 0:
                 output_string += self.tr("The following plugins can be flagged as esl:\n")
                 output_string += self.tr("NC = New Cell Flag, IC = New Interior Cell Flag, NW = New Worldspace\n")
@@ -150,8 +163,9 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
     def startGuidedFix(self, key):
         pass
     
-    def scan_for_eslable(self):
-        self.flag_dict = {}
+    def scan_for_eslable(self) -> bool:
+        self.flag_dict.clear()
+        self.hash_mismatches.clear()
         self.any_esl = False
         self.show_cells = self._organizer.pluginSetting("ESLifier", "Display Plugins With Cells")
         scan_esms = self._organizer.pluginSetting("ESLifier", "Scan ESMs")
@@ -181,18 +195,45 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
         chunks = [plugin_files_list[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
         chunks.append(plugin_files_list[(split) * chunk_size:])
 
-        threads = []
+        threads: list[threading.Thread] = []
         for chunk in chunks:
             thread = threading.Thread(target=self.plugin_scanner, args=(chunk, new_header, scan_esms))
             threads.append(thread)
             thread.start()
-            
+        
+        original_plugins_path = os.path.join(eslifier_folder, 'ESLifier_Data/original_plugins.json')
+        if os.path.exists(original_plugins_path):
+            with open(original_plugins_path, 'r', encoding='utf-8') as f:
+                original_plugins_dict = json.load(f)
+                original_plugins_hash_map = [values for key, values in original_plugins_dict.items()]
+                print(original_plugins_hash_map)
+
         for thread in threads:
             thread.join()
+
+        threads.clear()
+
+        if os.path.exists(original_plugins_path):
+            for plugin, original_hash in original_plugins_hash_map:
+                thread = threading.Thread(target=self.compare_previous_hash_to_current, args=(plugin, original_hash))
+                threads.append(thread)
+                thread.start()
+
+        for thread in threads:
+            thread.join()
+
         self.needs_flag_dict = {p: f for p, f in self.flag_dict.items() if 'need_compacting' not in f}
         self.needs_compacting_flag_dict = {p: f for p, f in self.flag_dict.items() if 'need_compacting' in f}
-        return self.any_esl
+        return self.any_esl or len(self.hash_mismatches) > 0
     
+    def compare_previous_hash_to_current(self, file, original_hash):
+        if os.path.exists(file):
+            with open(file, 'rb') as f:
+                if hashlib.sha256(f.read()).hexdigest() != original_hash:
+                    self.hash_mismatches.append(file)
+        else:
+            self.hash_mismatches.append(file)
+
     def plugin_scanner(self, plugins, new_header, scan_esms):
         flag_dict = {}
         for plugin in plugins:

@@ -6,6 +6,7 @@ import json
 import threading
 import subprocess
 import struct
+import hashlib
 from file_patchers import patchers
 from intervaltree import IntervalTree
 from full_form_processor import form_processor
@@ -34,6 +35,7 @@ class CFIDs():
         CFIDs.lock = threading.Lock()
         CFIDs.semaphore = threading.Semaphore(1000)
         CFIDs.compacted_and_patched = {}
+        CFIDs.original_plugins = {}
         CFIDs.mo2_mode = mo2_mode
         CFIDs.output_folder_name = output_folder_name
         CFIDs.overwrite_path = os.path.normpath(overwrite_path)
@@ -104,6 +106,7 @@ class CFIDs():
                     print('\n')
                 CFIDs.rename_files_threader(file_to_compact, to_rename, skyrim_folder_path, output_folder_path)
         CFIDs.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json')
+        CFIDs.dump_original_plugins('ESLifier_Data/original_plugins.json')
         if os.path.exists('bsa_extracted_temp/'):
             print('-  Deleting temporarily Extracted FaceGen/Voice Files...')
             shutil.rmtree('bsa_extracted_temp/')
@@ -122,7 +125,19 @@ class CFIDs():
             with open(file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
         except Exception as e:
-            print('!Error: Failed to dump data to {file}')
+            print(f'!Error: Failed to dump data to {file}')
+            print(e)
+
+    def dump_original_plugins(file):
+        data = CFIDs.get_from_file(file)
+        for key, values in CFIDs.original_plugins.items():
+            if key not in data:
+                data[key] = values
+        try:
+            with open(file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print(f'!Error: Failed to dump data to {file}')
             print(e)
 
     def get_from_file(file: str) -> dict:
@@ -466,9 +481,20 @@ class CFIDs():
     
     #Compacts master file and returns the new mod folder
     def compact_file(file: str, skyrim_folder_path: str, output_folder: str, update_header: bool, all_dependents_have_skyrim_esm_as_master: bool):
-        form_id_file_name = 'ESLifier_Data/Form_ID_Maps/' + os.path.basename(file).lower() + "_FormIdMap.txt"
+        basename = os.path.basename(file)
+        form_id_file_name = 'ESLifier_Data/Form_ID_Maps/' + basename.lower() + "_FormIdMap.txt"
         if not os.path.exists(os.path.dirname(form_id_file_name)):
             os.makedirs(os.path.dirname(form_id_file_name))
+
+        if basename not in CFIDs.original_plugins:
+            try:
+                with open(file, 'rb') as f:
+                    sha256_hash = hashlib.sha256(f.read()).hexdigest()
+                CFIDs.original_plugins[basename] = [file, sha256_hash]
+            except Exception as e:
+                print(f'Failed to hash {file}')
+                print(e)
+        
         new_file, _ = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder)
 
         #Set ESL flag, update to header 1.71 for new Form IDs, and get data from mod plugin
@@ -609,6 +635,14 @@ class CFIDs():
         for dependent in dependents:
             new_file, rel_path = CFIDs.copy_file_to_output(dependent, skyrim_folder_path, output_folder_path)
             basename = os.path.basename(new_file)
+            if basename not in CFIDs.original_plugins:
+                try:
+                    with open(dependent, 'rb') as f:
+                        sha256_hash = hashlib.sha256(f.read()).hexdigest()
+                    CFIDs.original_plugins[basename] = [dependent, sha256_hash]
+                except Exception as e:
+                    print(f'!Error: Failed to hash {dependent}')
+                    print(e)
             basename_lower = basename.lower()
             if len(file_masters) > 0 and basename_lower in file_masters and len(file_masters[basename_lower]) > 0 and file_masters[basename_lower][-1].lower().endswith('.seq'):
                 new_seq_file, rel_path_seq = CFIDs.copy_file_to_output(file_masters[basename_lower][-1], skyrim_folder_path, output_folder_path)

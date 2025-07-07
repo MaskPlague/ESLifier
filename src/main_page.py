@@ -602,6 +602,8 @@ class main(QWidget):
                     print(e)
             if os.path.exists('ESLifier_Data/esl_flagged.json'):
                 os.remove('ESLifier_Data/esl_flagged.json')
+            if os.path.exists('ESLifier_Data/original_plugins.json'):
+                os.remove('ESLifier_Data/original_plugins.json')
             self.delete_output(output_folder, files_to_remove)
             self.list_compact.flag_dict = {}
             self.list_eslify.flag_dict = {}
@@ -643,6 +645,8 @@ class main(QWidget):
                 with open('ESLifier_Data/esl_flagged.json', 'r', encoding='utf-8') as fef:
                     previously_esl_flagged = json.load(fef)
                     fef.close()
+            if os.path.exists('ESLifier_Data/original_plugins.json'):
+                os.remove('ESLifier_Data/original_plugins.json')
             if len(previously_compacted) == 0 and len(previously_esl_flagged) == 0:
                 QMessageBox.warning(None, "No Existing Output Data", f"There is no existing output data for ESLifier to use.")
                 return
