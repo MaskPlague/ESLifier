@@ -48,6 +48,7 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
     
     def settings(self):
         return [
+            mobase.PluginSetting("Compare Plugin File Hashes", self.tr("Compare the original plugin hashes from when ESLifier first patched the files to the current ones."), True),
         ]
     
     def activeProblems(self):
@@ -166,6 +167,7 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
     def scan_for_eslable(self) -> bool:
         self.flag_dict.clear()
         self.hash_mismatches.clear()
+        compare_hashes: bool = self._organizer.pluginSetting(self.name(), "Compare Plugin File Hashes")
         self.any_esl = False
         self.show_cells = self._organizer.pluginSetting("ESLifier", "Display Plugins With Cells")
         scan_esms = self._organizer.pluginSetting("ESLifier", "Scan ESMs")
@@ -201,19 +203,19 @@ class ESLifier_Notifier(mobase.IPluginDiagnose):
             threads.append(thread)
             thread.start()
         
-        original_plugins_path = os.path.join(eslifier_folder, 'ESLifier_Data/original_plugins.json')
-        if os.path.exists(original_plugins_path):
-            with open(original_plugins_path, 'r', encoding='utf-8') as f:
-                original_plugins_dict = json.load(f)
-                original_plugins_hash_map = [values for key, values in original_plugins_dict.items()]
-                print(original_plugins_hash_map)
+        if compare_hashes:
+            original_plugins_path = os.path.join(eslifier_folder, 'ESLifier_Data/original_plugins.json')
+            if os.path.exists(original_plugins_path):
+                with open(original_plugins_path, 'r', encoding='utf-8') as f:
+                    original_plugins_dict = json.load(f)
+                    original_plugins_hash_map = [values for key, values in original_plugins_dict.items()]
 
         for thread in threads:
             thread.join()
 
         threads.clear()
 
-        if os.path.exists(original_plugins_path):
+        if compare_hashes and os.path.exists(original_plugins_path):
             for plugin, original_hash in original_plugins_hash_map:
                 thread = threading.Thread(target=self.compare_previous_hash_to_current, args=(plugin, original_hash))
                 threads.append(thread)
