@@ -187,6 +187,37 @@ class ESLifier(mobase.IPluginTool):
         v_layout.addWidget(self.button_maker("Remove Plugins from Blacklist", self.remove_from_blacklist))
         v_layout.addWidget(self.button_maker("Set ESLifier Path", self.set_eslifier_path))
         v_layout.addWidget(self.button_maker("Exit", None, True))
+        
+        #Install notification button to MO2 tool bar
+        tool_bar = self._parentWidget().findChild(QToolBar, 'toolBar')
+        if tool_bar:
+            try:
+                action = tool_bar.children()[-9].actions()[0]
+                tool_bar.insertWidget(action, self.eslifier_button)
+            except:
+                try:
+                    installed = False
+                    for child in tool_bar.children():
+                        if isinstance(check_plugins, QToolButton) and child.text() == 'Notifications':
+                            installed = True
+                            tool_bar.insertWidget(child_action, self.eslifier_button)
+                            break
+                    if not installed:
+                        raise NameError("Notifications not found")
+                except:
+                    next_install = False
+                    installed = False
+                    passed_one = False
+                    for child in tool_bar.children():
+                        if type(child) == QWidget:
+                            next_install = True
+                        elif isinstance(child, QToolButton) and next_install and not passed_one:
+                            passed_one = True
+                        elif isinstance(child, QToolButton) and next_install and not installed and passed_one:
+                            installed = True
+                            child_action = child.actions()[0]
+                            tool_bar.insertWidget(child_action, self.eslifier_button)
+
 
     def button_maker(self, name, function, hide=False):
         button = QPushButton(name)
