@@ -172,12 +172,14 @@ class blacklist(QTableWidget):
             print(e)
         
 class blacklist_window(QMainWindow):
-    def __init__(self, remove_mode):
+    def __init__(self, remove_mode, check_problems):
         super().__init__()
         if remove_mode:
             self.setWindowTitle("Select Mods to Remove From the Blacklist")
         else:
             self.setWindowTitle("Select Mods to Add to Blacklist")
+
+        self.check_problems = check_problems
 
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
         self.blacklist = blacklist(remove_mode)
@@ -229,3 +231,7 @@ class blacklist_window(QMainWindow):
         else:
             for i in range(self.blacklist.rowCount()):
                 self.blacklist.setRowHidden(i, False)
+
+    def hide(self):
+        self.check_problems()
+        return super().hide()
