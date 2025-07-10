@@ -1,4 +1,3 @@
-import mobase
 import zlib
 import struct
 
