@@ -1,18 +1,20 @@
 import mobase
 import subprocess
 import os
+import json
 
-from .ESLifier_notifier import ESLifier_Notifier
+from .ESLifier_notifier import check_plugins
 from .ESLifier_blacklist import blacklist_window
+from .ESLifier_notification_display import notification_display_dialog
 
 try:
-    from PyQt6.QtCore import QCoreApplication
-    from PyQt6.QtGui import QIcon
-    from PyQt6.QtWidgets import QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog
+    from PyQt6.QtCore import QCoreApplication, QObject, pyqtSignal, QThread
+    from PyQt6.QtGui import QIcon, QColor
+    from PyQt6.QtWidgets import QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton, QToolBar, QCheckBox, QLabel, QGridLayout, QWidget
 except ImportError:
-    from PyQt5.QtCore import QCoreApplication
-    from PyQt5.QtGui import QIcon
-    from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog
+    from PyQt5.QtCore import QCoreApplication, QObject, pyqtSignal, QThread
+    from PyQt5.QtGui import QIcon, QColor
+    from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton, QToolBar, QCheckBox, QLabel, QGridLayout, QWidget
             
 class ESLifier(mobase.IPluginTool):
     def __init__(self):
@@ -39,12 +41,72 @@ class ESLifier(mobase.IPluginTool):
         self.eslifier_button.clicked.connect(self.display)
 
         self._organizer.onUserInterfaceInitialized(self.create)
-        self.icon_path = os.path.join(os.path.split(self._organizer.getPluginDataPath())[0], 'ESLifier MO2 Integration')
-        self.notifier = ESLifier_Notifier()
-        self.notifier.init(self._organizer)
-        self.blacklist_add = blacklist_window(False)
-        self.blacklist_remove = blacklist_window(True)
+        self._organizer.onUserInterfaceInitialized(self.create_settings_dialog)
+        self._organizer.pluginList().onRefreshed(self.check_problems)
+
+        self.notifier = check_plugins()
+        self.notifcation_display = notification_display_dialog(icon_path)
+        self.blacklist_add = blacklist_window(False, self.check_problems)
+        self.blacklist_remove = blacklist_window(True, self.check_problems)
+
         return True
+    
+    def check_problems(self):
+        notifications_enabled = self._organizer.pluginSetting(self.name(), "Enable Notifications")
+        if not self.thread.isRunning() and notifications_enabled:
+            compare_hashes = True
+            scan_esms = self._organizer.pluginSetting(self.name(), "Scan ESMs")
+            eslifier_folder = self._organizer.pluginSetting(self.name(), "ESLifier Folder")
+            new_header = self._organizer.pluginSetting(self.name(), "Use 1.71 Header Range")
+            blacklist_path = os.path.join(eslifier_folder, 'ESLifier_Data/blacklist.json')
+            if os.path.exists(blacklist_path):
+                with open(blacklist_path, 'r', encoding='utf-8') as f:
+                    ignore_list = json.load(f)
+                    ignore_list.append("ESLifier_Cell_Master.esm")
+            else:
+                ignore_list = ["ESLifier_Cell_Master.esm"]
+
+            if scan_esms:
+                filter = "*.es[pm]"
+            else:
+                filter = "*.esp"
+
+            self.worker = CheckWorker(self, self.notifier, scan_esms, eslifier_folder, new_header, compare_hashes, ignore_list, filter)
+            self.worker.moveToThread(self.thread)
+            self.thread.started.connect(self.worker.check_for_esl)
+            self.thread.finished.connect(self.possibly_recheck)
+            self.worker.finished_signal.connect(self.update_icon)
+            self.worker.finished_signal.connect(self.thread.quit)
+            self.worker.finished_signal.connect(self.worker.deleteLater)
+            self.thread.start()
+            self.check_again = False
+        else:
+            if not notifications_enabled:
+                self.update_icon(False, {}, {}, [])
+            else:
+                self.check_again = True
+        return
+
+    def update_icon(self, any_eslable_or_issue, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches):
+        if any_eslable_or_issue:
+            self.eslifier_button.setIcon(self.eslifier_icon_notif)
+            self.needs_flag_dict = needs_flag_dict
+            self.needs_compacting_flag_dict = needs_compacting_flag_dict
+            self.hash_mismatches = hash_mismatches
+            self.notification_button.show()
+        else:
+            self.eslifier_button.setIcon(self.eslifier_icon_greyed_out)
+            self.needs_flag_dict.clear()
+            self.needs_compacting_flag_dict.clear()
+            self.hash_mismatches.clear()
+            self.notification_button.hide()
+        return
+    
+    def possibly_recheck(self):
+        if self.check_again:
+            self.check_again = False
+            self.check_problems()
+        return
         
     def name(self) -> str:
         return "ESLifier"
@@ -66,7 +128,7 @@ class ESLifier(mobase.IPluginTool):
     
     def settings(self):
         return [
-            mobase.PluginSetting("Display Plugins With Cells", self.tr("Display plugins that can be light with Cells."), True),
+            mobase.PluginSetting("Enable Notifications", self.tr("Enable ESLifier's notifications"), True),
             mobase.PluginSetting("Scan ESMs", self.tr("Scan plugins that are flagged as ESM."), False),
             mobase.PluginSetting("Use 1.71 Header Range", self.tr("Use the new 1.71 Header range when scanning for plugins that can be light."), True),
             mobase.PluginSetting("ESLifier Folder", self.tr("Set this to the folder that holds ESLifier.exe."), ""),
@@ -154,8 +216,11 @@ class ESLifier(mobase.IPluginTool):
             self.no_path_set()
             return
         blacklist_path = os.path.join(eslifier_folder, 'ESLifier_Data/blacklist.json')
-        self.notifier.scan_for_eslable()
-        self.blacklist_add.blacklist.blacklist = self.notifier.flag_dict
+        full_dict = self.needs_compacting_flag_dict.copy()
+        for key, value in self.needs_flag_dict.items():
+            if key not in full_dict:
+                full_dict[key] = value
+        self.blacklist_add.blacklist.blacklist = full_dict
         self.blacklist_add.blacklist.blacklist_path = blacklist_path
         self.blacklist_add.blacklist.create(False)
         self.blacklist_add.show()
@@ -176,16 +241,25 @@ class ESLifier(mobase.IPluginTool):
         path = dialog.getExistingDirectory(None, "Select the folder that holds ESLifier.exe.", self._organizer.pluginSetting("ESLifier", "ESLifier Folder"))
         if path:
             self._organizer.setPluginSetting("ESLifier", "ESLifier Folder", path)
+            if len(path) > 30:
+                self.folder_path.setText(f"...{path[-30:]}")
+            else:
+                self.folder_path.setText(path)
 
     def create(self, _):
         v_layout = QVBoxLayout()
-        self.dialog.setLayout(v_layout)
-        self.dialog.setWindowTitle('ESLifier MO2 Integration')
-
+        self.main_dialog.setLayout(v_layout)
+        self.main_dialog.setWindowTitle('ESLifier MO2 Integration')
+        self.notification_button = self.button_maker("Show Notifications", self.display_notifications)
+        self.notification_button.hide()
+        p = self.notification_button.palette()
+        p.setColor(p.ColorRole.ButtonText, QColor('Red'))
+        self.notification_button.setPalette(p)
         v_layout.addWidget(self.button_maker("Start ESLifier", self.start_eslifier, True))
         v_layout.addWidget(self.button_maker("Add Plugins to Blacklist", self.add_to_blacklist))
         v_layout.addWidget(self.button_maker("Remove Plugins from Blacklist", self.remove_from_blacklist))
-        v_layout.addWidget(self.button_maker("Set ESLifier Path", self.set_eslifier_path))
+        v_layout.addWidget(self.button_maker("Change Plugin Settings", self.display_settings))
+        v_layout.addWidget(self.notification_button)
         v_layout.addWidget(self.button_maker("Exit", None, True))
         
         #Install notification button to MO2 tool bar
