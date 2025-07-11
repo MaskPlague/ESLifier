@@ -486,16 +486,17 @@ class CFIDs():
         if not os.path.exists(os.path.dirname(form_id_file_name)):
             os.makedirs(os.path.dirname(form_id_file_name))
 
+        new_file, _ = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder)
+
         if basename not in CFIDs.original_plugins:
             try:
                 with open(file, 'rb') as f:
                     sha256_hash = hashlib.sha256(f.read()).hexdigest()
+                    f.close()
                 CFIDs.original_plugins[basename] = [file, sha256_hash]
             except Exception as e:
                 print(f'Failed to hash {file}')
                 print(e)
-        
-        new_file, _ = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder)
 
         #Set ESL flag, update to header 1.71 for new Form IDs, and get data from mod plugin
         data = b''
