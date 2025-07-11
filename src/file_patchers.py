@@ -112,11 +112,11 @@ class patchers():
                 for array in arrays:
                     if array['patch'] == True:
                         for int_offset, integer in array['integers']:
-                            to_id_data = form_id_map.get(integer)
+                            to_id_data = form_id_map.get(int.from_bytes(integer))
                             if to_id_data is not None:
                                 data[int_offset:int_offset+3] = to_id_data["bytes"][::-1][1:]
                                 if to_id_data["update_name"]:
-                                    print(f'~Ineligible: {basename} -> ESLifier_Cell_Master.esm | 0x{integer.to_bytes(4).hex()} -> 0x{to_id_data["hex_no_0"]} | {new_file}')
+                                    print(f'~Ineligible: {basename} -> ESLifier_Cell_Master.esm | 0x{integer.hex()} -> 0x{to_id_data["hex_no_0"]} | {new_file}')
             data = bytes(data)
             f.seek(0)
             f.truncate(0)
