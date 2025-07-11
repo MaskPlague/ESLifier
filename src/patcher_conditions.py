@@ -119,6 +119,8 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_
             patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, symbol= ':', encoding_method=encoding) 
         elif 'plugins\\dressuplovers' in new_file_lower:                                    # Dress Up Lovers
             patchers.json_dressuplovers_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+        elif new_file_lower.endswith('Spell Organizer.json'):                               # Spell Organizer's Auto Remove list
+            patchers.json_jcontainer_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         else:
             print(f'Warn: Possible missing patcher for: {new_file}')
     elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
