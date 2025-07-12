@@ -107,6 +107,10 @@ Run "build_ESLifier_EXE.py" either via a terminal opened in the _ESLifier_ direc
   - CaptiveFollowers
   - Generic Synthesis Patcher (GSP)
   - Dress Up Lover's NPC Outfit Changer
+  - SL Scaler
+  - Magic Fixes and Tweaks SKSE
+  - STB Active Effects
+  - Spell Organizer
 - .toml:
   - Dynamic Animation Casting
   - Precision
