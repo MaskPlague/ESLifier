@@ -292,6 +292,7 @@ class ESLifier(mobase.IPluginTool):
                     action = tool_bar.children()[-9].actions()[0]
                     tool_bar.insertWidget(action, self.eslifier_button)
 
+        self.check_problems()
 
     def button_maker(self, name, function, hide=False):
         button = QPushButton(name)
