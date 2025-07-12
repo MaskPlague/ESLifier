@@ -123,6 +123,10 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_
             patchers.json_jcontainer_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('plugins\\slscaler\\modforms.json'):                   # SL Scaler
             patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+        elif 'plugins\\magictweaks\\' in new_file_lower:                                    # Magic Fixes and Tweaks SKSE
+            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+        elif 'plugins\\stbactiveeffectsinfo' in new_file_lower:                             # STB Active Effects
+            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, symbol='~', encoding_method=encoding)
         else:
             print(f'Warn: Possible missing patcher for: {new_file}')
     elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
