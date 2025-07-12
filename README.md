@@ -8,6 +8,99 @@ Nexus Mods [ESLifier](https://www.nexusmods.com/skyrimspecialedition/mods/145168
 Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspecialedition/mods/126298)
   
 # For Users
+## Files that are patched by ESLifier
+<details>
+  <summary>Files Patched</summary>
+  
+  <details>
+    <summary>.INI Files</summary>
+    
+      - Keyword Item Distributor
+      - Base Object Swapper
+      - Spell Perk Item Distributor
+      - Seasons of Skyrim
+      - Payload Interpreter
+      - ENB Lights For Effect Shaders
+      - Description Framework
+      - SkyPatcher
+      - DtryKeyUtil
+      - Poise Breaker
+      - Valhalla Combat
+      - AutoBody
+      - Various States of Undress
+      - Form List Manipulator
+      - Leveled List Object Swapper
+      - Item Property Manipulator
+      - Music Type Distributor
+      - Completionist
+      - KreatE (with caveats)
+      - Remember Lockpick Angle - Updated
+      - Experience
+      - Light Placer
+      - NPCs Use Potions
+  </details>
+
+  <details>
+    <summary>.JSON Files</summary>
+
+      - Open Animation Replacer
+      - MCM Helper
+      - Dynamic Key Activation Framework NG
+      - Smart Harvest Auto NG AutoLoot
+      - PapyrusUtil's StorageDataUtil
+      - Custom Skills Framework
+      - Core Impact Framework
+      - Object Impact Framework
+      - Light Placer
+      - Dynamic String Distributor
+      - Dynamic Armor Variants
+      - Inventory Injector
+      - Immersive Equipment Display
+      - Perk Adjuster
+      - Player Equipment Manager
+      - Skyrim Unbound
+      - Creature Framework
+      - CoMAP
+      - OBody NG
+      - SL Configs
+      - OStim Standalone
+      - Race Compatibility SKSE
+      - Rain Extinguished Fires
+      - Immersive Hair Growth and Styling
+      - Inte's Skyrim - Utility Mod
+      - dse-display-model
+      - CaptiveFollowers
+      - Generic Synthesis Patcher (GSP)
+      - Dress Up Lover's NPC Outfit Changer
+      - SL Scaler
+      - Magic Fixes and Tweaks SKSE
+      - STB Active Effects
+      - Spell Organizer
+  </details>
+
+  <details>
+    <summary>.TOML Files</summary>
+      
+      - Dynamic Animation Casting
+      - Precision
+      - Loki Poise
+      - True Directional Movment
+  </details>
+
+  <details>
+    <summary>Other Types</summary>
+    
+      - .pex: Compiled script files
+      - _conditions.txt: Dynamic Animation Replacer
+      - _srd.: Sound Record Distributor
+      - .jslot: Racemenu Presets
+      - facegeom's .nif: Texture paths in face mesh files
+      - voice, facetint, facegeom: The names of these files are patched
+      - .seq: SEQ files
+
+  </details>
+</details>
+
 ## BSArch.exe
 ESLifier includes a modified BSArch.exe (from [TES5Edit](https://github.com/TES5Edit/TES5Edit/tree/master/Tools/BSArchive)) to extract pex, seq, facetint, facegeom, and voice files. The modified .dpr file is included in the repo [here](https://github.com/MaskPlague/ESLifier/blob/main/bsarch/BSArch.dpr).
 
@@ -52,77 +145,5 @@ The third page, _Settings_, mostly controls what is displayed in the _Main_ page
 Fork this project and install python 3.13 then install these libraries via pip: _PyQt6_, _Regex_, _mmap_, _intervalTree_, _requests_, and _pyinstaller_.
 Run "build_ESLifier_EXE.py" either via a terminal opened in the _ESLifier_ directory or via your IDE.
 
-## Files that are patched by ESLifier
-- .ini:
-  - Keyword Item Distributor
-  - Base Object Swapper
-  - Spell Perk Item Distributor
-  - Seasons of Skyrim
-  - Payload Interpreter
-  - ENB Lights For Effect Shaders
-  - Description Framework
-  - SkyPatcher
-  - DtryKeyUtil
-  - Poise Breaker
-  - Valhalla Combat
-  - AutoBody
-  - Various States of Undress
-  - Form List Manipulator
-  - Leveled List Object Swapper
-  - Item Property Manipulator
-  - Music Type Distributor
-  - Completionist
-  - KreatE (with caveats)
-  - Remember Lockpick Angle - Updated
-  - Experience
-  - Light Placer
-  - NPCs Use Potions
-- .json:
-  - Open Animation Replacer
-  - MCM Helper
-  - Dynamic Key Activation Framework NG
-  - Smart Harvest Auto NG AutoLoot
-  - PapyrusUtil's StorageDataUtil
-  - Custom Skills Framework
-  - Core Impact Framework
-  - Object Impact Framework
-  - Light Placer
-  - Dynamic String Distributor
-  - Dynamic Armor Variants
-  - Inventory Injector
-  - Immersive Equipment Display
-  - Perk Adjuster
-  - Player Equipment Manager
-  - Skyrim Unbound
-  - Creature Framework
-  - CoMAP
-  - OBody NG
-  - SL Configs
-  - OStim Standalone
-  - Race Compatibility SKSE
-  - Rain Extinguished Fires
-  - Immersive Hair Growth and Styling
-  - Inte's Skyrim - Utility Mod
-  - dse-display-model
-  - CaptiveFollowers
-  - Generic Synthesis Patcher (GSP)
-  - Dress Up Lover's NPC Outfit Changer
-  - SL Scaler
-  - Magic Fixes and Tweaks SKSE
-  - STB Active Effects
-  - Spell Organizer
-- .toml:
-  - Dynamic Animation Casting
-  - Precision
-  - Loki Poise
-  - True Directional Movment
-- .pex: Compiled script files
-- _conditions.txt: Dynamic Animation Replacer
-- _srd.: Sound Record Distributor
-- .jslot: Racemenu Presets
-- facegeom's .nif: Texture paths in face mesh files
-- voice, facetint, facegeom: The names of these files are patched
-- .seq: SEQ files
 
-  
-    
+
