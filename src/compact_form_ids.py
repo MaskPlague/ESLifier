@@ -185,6 +185,7 @@ class CFIDs():
         CFIDs.mo2_mode = mo2_mode
         CFIDs.output_folder_name = output_folder_name
         CFIDs.overwrite_path = os.path.normpath(overwrite_path)
+        CFIDs.original_files: dict = CFIDs.get_from_file('ESLifier_Data/original_files.json')
         CFIDs.do_generate_cell_master = add_cell_to_master
         CFIDs.form_id_map = {}
         CFIDs.form_id_rename_map = []
@@ -207,6 +208,7 @@ class CFIDs():
                     print('\n')
                 CFIDs.rename_files_threader(compacted_file, to_rename, skyrim_folder_path, output_folder_path)
         CFIDs.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json')
+        CFIDs.dump_originals("ESLifier_Data/original_files.json")
         print('CLEAR ALT')
 
     #Create a copy of the mod plugin we're compacting
