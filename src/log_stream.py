@@ -3,6 +3,7 @@ import os
 import traceback
 import threading
 import webbrowser
+import shutil
 
 from PyQt6.QtWidgets import QMainWindow, QTextEdit, QMessageBox, QProgressBar, QWidget, QVBoxLayout
 from PyQt6.QtCore import Qt, QTimer
@@ -36,6 +37,18 @@ class log_stream(QMainWindow):
         self.crash = False
         if not os.path.exists("ESLifier_Data/"):
             os.makedirs("ESLifier_Data/")
+
+        max_logs = 3
+
+        for i in range(max_logs, -1, -1):
+            src = os.path.join("ESLifier_Data", f"ESLifier_{i-1}.log") if i > 0 else "ESLifier_Data/ESLifier.log"
+            dst = os.path.join("ESLifier_Data", f"ESLifier_{i}.log")
+            print(src)
+            if os.path.exists(dst):
+                os.remove(dst)
+            if os.path.exists(src):
+                shutil.copy(src, dst)
+
         self.log_file = open("ESLifier_Data/ESLifier.log", 'w', encoding='utf-8')
         self.log_file.write(f'ESLifier Version v{version}\n')
         self.log_file.write('Working directory is ' + os.getcwd() + '\n')
