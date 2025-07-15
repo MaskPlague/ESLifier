@@ -51,7 +51,7 @@ class ESLifier(mobase.IPluginTool):
             mobase.PluginSetting("Use 1.71 Header Range", self.tr("Use the new 1.71 Header range when scanning for plugins that can be light."), True),
             mobase.PluginSetting("ESLifier Folder", self.tr("Set this to the folder that holds ESLifier.exe."), ""),
             mobase.PluginSetting("Compare File Hashes", self.tr("Compare current file hashes to last ESLifier run."), True),
-            mobase.PluginSetting("Compare Only Game Plugins", self.tr("If 'Compare Hashes' is enabled: only check game plugins, else compare all file hashes."), False)
+            mobase.PluginSetting("Compare Only Game Plugins", self.tr("If 'Compare File Hashes' and this are enabled:\nonly check game plugins (faster),\nelse compare all file hashes (slower)."), False)
         ]
     
     def displayName(self):
@@ -138,7 +138,7 @@ class ESLifier(mobase.IPluginTool):
             self.scan_again = False
         else:
             if not notifications_enabled:
-                self.update_icon(False, {}, {}, [])
+                self.grey_out_icon()
             else:
                 self.scan_again = True
         return
@@ -186,10 +186,10 @@ class ESLifier(mobase.IPluginTool):
         self.settings_dialog.setLayout(layout)
 
         self.notifications_check_box = self.create_label_check_box_setting_pair(layout, "Enable Notifications", 0)
-        self.esms_check_box = self.create_label_check_box_setting_pair(layout, "scan_esms", 1)
+        self.esms_check_box = self.create_label_check_box_setting_pair(layout, "Scan ESMs", 1)
         self.header_check_box = self.create_label_check_box_setting_pair(layout, "Use 1.71 Header Range", 2)
-        self.compare_file_hashes_check_box = self.create_label_check_box_setting_pair(layout, "Compare File Hashes", 3)
-        self.compare_only_game_plugins_check_box = self.create_label_check_box_setting_pair(layout, "Compare Only Game Plugins", 4, "If 'Compare Hashes' is enabled: only check game plugins, else compare all file hashes.")
+        self.compare_file_hashes_check_box = self.create_label_check_box_setting_pair(layout, "Compare File Hashes", 3, "Compare current file hashes to the hashes of the last ESLifier run.")
+        self.compare_only_game_plugins_check_box = self.create_label_check_box_setting_pair(layout, "Compare Only Game Plugins", 4, "If 'Compare File Hashes' and this are enabled:\nonly check game plugins (faster),\nelse compare all file hashes (slower).")
 
         folder = self._organizer.pluginSetting(self.name(), "ESLifier Folder")
         if len(folder) > 30:
@@ -305,7 +305,7 @@ class ESLifier(mobase.IPluginTool):
                 try:
                     installed = False
                     for child in tool_bar.children():
-                        if isinstance(check_plugins, QToolButton) and child.text() == 'Notifications':
+                        if isinstance(child, QToolButton) and child.text() == 'Notifications':
                             installed = True
                             tool_bar.insertWidget(child_action, self.eslifier_button)
                             break
