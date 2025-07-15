@@ -38,16 +38,16 @@ class scanner():
         scanner.dll_files = []
         scanner.kreate_files = []
         scanner.lock = threading.Lock()
-        scanner.file_extensions = ('.ini', '.json', '.jslot', '.toml', '_conditions.txt', '_srd.yaml')
-        scanner.exclude_contains = (
+        scanner.file_extensions = tuple([item.lower() for item in ('.ini', '.json', '.jslot', '.toml', '_conditions.txt', '_srd.yaml')])
+        scanner.exclude_contains = tuple([item.lower() for item in (
             'modex\\user\\kits',
             'nemesis_engine',
             'quickarmorrebalance\\config\\',
             'equipmenttoggle\\slotdata\\',
             '\\headpartwhitelist\\',
             '\\interface\\quests\\'
-            )
-        scanner.exclude_endswith = (
+            )])
+        scanner.exclude_endswith = tuple([item.lower() for item in (
             '\\revealingarmo_tng.ini',
             '\\enginefixes_snct.toml', 
             '\\vortex.deployment.json', 
@@ -56,7 +56,7 @@ class scanner():
             '\\gearspreader.ini',
             '\\merge.json', '\\map.json', '\\fidcache.json', #zMerge
             '\\parallaxgen_diff.json'
-            )
+            )])
         total_ram = psutil.virtual_memory().available
         usable_ram = total_ram * 0.90
         thread_memory_usage = 10 * 1024 * 1024 # assume each file is about 10 MB
