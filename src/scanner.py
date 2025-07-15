@@ -55,7 +55,7 @@ class scanner():
             '\\grasscontrol.ini',
             '\\gearspreader.ini',
             '\\merge.json', '\\map.json', '\\fidcache.json', #zMerge
-            '\\ParallaxGen_Diff.json'
+            '\\parallaxgen_diff.json'
             )
         total_ram = psutil.virtual_memory().available
         usable_ram = total_ram * 0.90
