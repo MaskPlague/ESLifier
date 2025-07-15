@@ -104,10 +104,7 @@ class notification_display_dialog(QDialog):
             else:
                 for i, file in enumerate(data):
                     item_contents = QTableWidgetItem()
-                    if len(file) > 80:
-                        item_contents.setText(f"...{file[-80:]}")
-                    else:
-                        item_contents.setText(file)
+                    item_contents.setText(file)
                     table.setItem(i, 0, item_contents)
             self.do_after_populate(table)
 
