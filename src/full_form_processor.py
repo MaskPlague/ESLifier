@@ -74,7 +74,7 @@ class form_processor():
                         updated = False if is_being_updated else True
                         to_id = form_id_replacements.get(bytes(form[offset:offset+3]))
                         if to_id is not None:
-                            if len(to_id) == 4:                         # Update Cell masters
+                            if len(to_id) == 4 and is_being_patched:    # Update Cell masters
                                 form[offset:offset+4] = to_id
                                 updated = True
                             elif is_being_updated and is_being_patched: # Update master byte and patch form id
