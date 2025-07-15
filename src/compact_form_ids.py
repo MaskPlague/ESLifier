@@ -35,7 +35,7 @@ class CFIDs():
         CFIDs.lock = threading.Lock()
         CFIDs.semaphore = threading.Semaphore(1000)
         CFIDs.compacted_and_patched = {}
-        CFIDs.original_plugins = {}
+        CFIDs.original_files: dict = CFIDs.get_from_file('ESLifier_Data/original_files.json')
         CFIDs.mo2_mode = mo2_mode
         CFIDs.output_folder_name = output_folder_name
         CFIDs.overwrite_path = os.path.normpath(overwrite_path)
@@ -106,7 +106,7 @@ class CFIDs():
                     print('\n')
                 CFIDs.rename_files_threader(file_to_compact, to_rename, skyrim_folder_path, output_folder_path)
         CFIDs.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json')
-        CFIDs.dump_original_plugins('ESLifier_Data/original_plugins.json')
+        CFIDs.dump_originals('ESLifier_Data/original_files.json')
         if os.path.exists('bsa_extracted_temp/'):
             print('-  Deleting temporarily Extracted FaceGen/Voice Files...')
             shutil.rmtree('bsa_extracted_temp/')
@@ -128,9 +128,9 @@ class CFIDs():
             print(f'!Error: Failed to dump data to {file}')
             print(e)
 
-    def dump_original_plugins(file):
+    def dump_originals(file):
         data = CFIDs.get_from_file(file)
-        for key, values in CFIDs.original_plugins.items():
+        for key, values in CFIDs.original_files.items():
             if key not in data:
                 data[key] = values
         try:
@@ -164,6 +164,7 @@ class CFIDs():
         CFIDs.mo2_mode = mo2_mode
         CFIDs.lock = threading.Lock()
         CFIDs.output_folder_name = output_folder_name
+        CFIDs.original_files: dict = CFIDs.get_from_file('ESLifier_Data/original_files.json')
         CFIDs.overwrite_path = os.path.normpath(overwrite_path)
         print("-  Changing ESL flag in: " + os.path.basename(file))
         new_file, _ = CFIDs.copy_file_to_output(file, skyrim_folder, output_folder)
@@ -174,6 +175,7 @@ class CFIDs():
         except Exception as e:
             print('!Error: Failed to set ESL flag in {file}')
             print(e)           
+        CFIDs.dump_originals('ESLifier_Data/original_files.json', CFIDs.original_files)
 
     def patch_new(compacted_file: str, dependents: list, files_to_patch: list, skyrim_folder_path: str, output_folder_path: str, 
                   output_folder_name: str, overwrite_path: str, update_header: bool, mo2_mode: bool, add_cell_to_master: bool):
@@ -216,6 +218,15 @@ class CFIDs():
                 os.makedirs(os.path.dirname(new_file))
             if not os.path.exists(new_file):
                 shutil.copy(file, new_file)
+        if end_path.lower() not in CFIDs.original_files and 'bsa_extracted' not in file and CFIDs.output_folder_name not in file:
+            try:
+                with open(file, 'rb') as f:
+                    sha256_hash = hashlib.sha256(f.read()).hexdigest()
+                    f.close()
+                CFIDs.original_files[end_path.lower()] = [file, sha256_hash]
+            except Exception as e:
+                print(f'Failed to hash {file}')
+                print(e)
         return new_file, end_path
     
     def get_rel_path(file: str, skyrim_folder_path: str) -> str:
@@ -488,16 +499,6 @@ class CFIDs():
 
         new_file, _ = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder)
 
-        if basename not in CFIDs.original_plugins:
-            try:
-                with open(file, 'rb') as f:
-                    sha256_hash = hashlib.sha256(f.read()).hexdigest()
-                    f.close()
-                CFIDs.original_plugins[basename] = [file, sha256_hash]
-            except Exception as e:
-                print(f'Failed to hash {file}')
-                print(e)
-
         #Set ESL flag, update to header 1.71 for new Form IDs, and get data from mod plugin
         data = b''
         with open(new_file, 'rb+') as f:
@@ -636,14 +637,6 @@ class CFIDs():
         for dependent in dependents:
             new_file, rel_path = CFIDs.copy_file_to_output(dependent, skyrim_folder_path, output_folder_path)
             basename = os.path.basename(new_file)
-            if basename not in CFIDs.original_plugins:
-                try:
-                    with open(dependent, 'rb') as f:
-                        sha256_hash = hashlib.sha256(f.read()).hexdigest()
-                    CFIDs.original_plugins[basename] = [dependent, sha256_hash]
-                except Exception as e:
-                    print(f'!Error: Failed to hash {dependent}')
-                    print(e)
             basename_lower = basename.lower()
             if len(file_masters) > 0 and basename_lower in file_masters and len(file_masters[basename_lower]) > 0 and file_masters[basename_lower][-1].lower().endswith('.seq'):
                 new_seq_file, rel_path_seq = CFIDs.copy_file_to_output(file_masters[basename_lower][-1], skyrim_folder_path, output_folder_path)
