@@ -210,7 +210,7 @@ class ESLifier(mobase.IPluginTool):
         layout.addWidget(done_button, 6, 0)
     
     def start_eslifier(self):
-        eslifier_folder = self._organizer.pluginSetting("ESLifier", "ESLifier Folder")
+        eslifier_folder = self._organizer.pluginSetting(self.name(), "ESLifier Folder")
         eslifier_exe = os.path.join(eslifier_folder, 'ESLifier.exe')
         if os.path.exists(eslifier_exe):
             try:
@@ -249,7 +249,7 @@ class ESLifier(mobase.IPluginTool):
         self.blacklist_add.show()
 
     def remove_from_blacklist(self):
-        eslifier_folder = self._organizer.pluginSetting("ESLifier", "ESLifier Folder")
+        eslifier_folder = self._organizer.pluginSetting(self.name(), "ESLifier Folder")
         if not os.path.exists(eslifier_folder):
             self.no_path_set()
             return
@@ -263,7 +263,7 @@ class ESLifier(mobase.IPluginTool):
         dialog.setFileMode(QFileDialog.FileMode.Directory)
         path = dialog.getExistingDirectory(None, "Select the folder that holds ESLifier.exe.", self._organizer.pluginSetting("ESLifier", "ESLifier Folder"))
         if path:
-            self._organizer.setPluginSetting("ESLifier", "ESLifier Folder", path)
+            self._organizer.setPluginSetting(self.name(), "ESLifier Folder", path)
             if len(path) > 30:
                 self.folder_path.setText(f"...{path[-30:]}")
             else:
@@ -340,6 +340,12 @@ class ESLifier(mobase.IPluginTool):
         
         only_plugins = self._organizer.pluginSetting(self.name(), "Compare Only Game Plugins")
         self.compare_only_game_plugins_check_box.setChecked(only_plugins)
+
+        path = self._organizer.pluginSetting(self.name(), "ESLifier Folder")
+        if len(path) > 30:
+            self.folder_path.setText(f"...{path[-30:]}")
+        else:
+            self.folder_path.setText(path)
 
         self.settings_dialog.raise_()
         self.settings_dialog.show()
