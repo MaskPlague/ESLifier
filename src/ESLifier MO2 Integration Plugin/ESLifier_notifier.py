@@ -6,13 +6,14 @@ import hashlib
 from .ESLifier_qualification_checker import qualification_checker as light_check
 
 class check_plugins():    
-    def scan_for_eslable(self, scan_esms, eslifier_folder, new_header, compare_hashes, plugin_files_list) -> tuple[bool, dict, dict, list]:
+    def scan_for_eslable(self, scan_esms, eslifier_folder, new_header, compare_hashes, only_plugins, plugin_files_list) -> tuple[bool, dict, dict, list]:
         self.flag_dict = {}
         self.hash_mismatches = []
         self._problems = [0]
         self._finished = False
         self.any_esl = False
         self.lock = threading.Lock()
+        self.semaphore = threading.Semaphore(500)
         self.flag_dict.clear()
         self.hash_mismatches.clear()
         self.any_esl = False
@@ -34,12 +35,16 @@ class check_plugins():
             threads.append(thread)
             thread.start()
         
+        original_plugins_hash_map = []
         if compare_hashes:
-            original_plugins_path = os.path.join(eslifier_folder, 'ESLifier_Data/original_plugins.json')
+            original_plugins_path = os.path.join(eslifier_folder, 'ESLifier_Data/original_files.json')
             if os.path.exists(original_plugins_path):
                 with open(original_plugins_path, 'r', encoding='utf-8') as f:
                     original_plugins_dict: dict = json.load(f)
-                    original_plugins_hash_map = [values for key, values in original_plugins_dict.items()]
+                    if only_plugins:
+                        original_plugins_hash_map = [values for key, values in original_plugins_dict.items() if key.lower().endswith(('.esp', '.esl', '.esm'))]
+                    else:
+                        original_plugins_hash_map = [values for key, values in original_plugins_dict.items()]
 
         for thread in threads:
             thread.join()
@@ -61,11 +66,15 @@ class check_plugins():
     
     def compare_previous_hash_to_current(self, file, original_hash):
         if os.path.exists(file):
-            with open(file, 'rb') as f:
-                if hashlib.sha256(f.read()).hexdigest() != original_hash:
-                    self.hash_mismatches.append(file)
+            with self.semaphore:
+                with open(file, 'rb') as f:
+                    data = f.read()
+            if hashlib.sha256(data).hexdigest() != original_hash:
+                with self.lock:
+                    self.hash_mismatches.append("Hash Mismatch: " + file)
         else:
-            self.hash_mismatches.append(file)
+            with self.lock:
+                self.hash_mismatches.append("Missing: " + file)
 
     def plugin_scanner(self, plugins, new_header, scan_esms):
         flag_dict = {}

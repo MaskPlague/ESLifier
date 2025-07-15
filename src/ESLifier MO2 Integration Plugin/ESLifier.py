@@ -15,17 +15,71 @@ except ImportError:
     from PyQt5.QtCore import QCoreApplication, QObject, pyqtSignal, QThread
     from PyQt5.QtGui import QIcon, QColor
     from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton, QToolBar, QCheckBox, QLabel, QGridLayout, QWidget
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from PyQt6.QtCore import QCoreApplication, QObject, pyqtSignal, QThread
+    from PyQt6.QtGui import QIcon, QColor
+    from PyQt6.QtWidgets import QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton, QToolBar, QCheckBox, QLabel, QGridLayout, QWidget
             
 class ESLifier(mobase.IPluginTool):
     def __init__(self):
         super(ESLifier, self).__init__()
     
+    def name(self) -> str:
+        return "ESLifier"
+    
+    def localizedName(self) -> str:
+        return self.tr("ESLifier")
+    
+    def author(self) -> str:
+        return "MaskPlague"
+
+    def description(self):
+        return self.tr("ESLifier's MO2 Plugin Integration")
+    
+    def version(self) -> mobase.VersionInfo:
+        return mobase.VersionInfo(1, 4, 4, mobase.ReleaseType.FINAL)
+    
+    def requirements(self):
+        return[]
+    
+    def settings(self):
+        return [
+            mobase.PluginSetting("Enable Notifications", self.tr("Enable ESLifier's notifications"), True),
+            mobase.PluginSetting("Scan ESMs", self.tr("Scan plugins that are flagged as ESM."), False),
+            mobase.PluginSetting("Use 1.71 Header Range", self.tr("Use the new 1.71 Header range when scanning for plugins that can be light."), True),
+            mobase.PluginSetting("ESLifier Folder", self.tr("Set this to the folder that holds ESLifier.exe."), ""),
+            mobase.PluginSetting("Compare File Hashes", self.tr("Compare current file hashes to last ESLifier run."), True),
+            mobase.PluginSetting("Compare Only Game Plugins", self.tr("If 'Compare Hashes' is enabled: only check game plugins, else compare all file hashes."), False)
+        ]
+    
+    def displayName(self):
+        return self.tr("ESLifier")
+    
+    def tooltip(self):
+        return self.tr("")
+    
+    def icon(self):
+        return self.eslifier_icon
+
+    def getFiles(self):
+        return
+
+    def tr(self, str):
+        return QCoreApplication.translate("ESLifier", str)
+    
+    def display(self):
+        self.main_dialog.raise_()
+        self.main_dialog.show()
+        return
+
     def init(self, organiser = mobase.IOrganizer):
         self._organizer = organiser
         self.main_dialog = QDialog()
         self.settings_dialog = QDialog()
         self.thread = QThread()
-        self.check_again = False
+        self.scan_again = False
         self.needs_flag_dict = {}
         self.needs_compacting_flag_dict = {}
         self.hash_mismatches = []
@@ -42,26 +96,28 @@ class ESLifier(mobase.IPluginTool):
 
         self._organizer.onUserInterfaceInitialized(self.create)
         self._organizer.onUserInterfaceInitialized(self.create_settings_dialog)
-        self._organizer.pluginList().onRefreshed(self.check_problems)
+        self._organizer.pluginList().onRefreshed(self.grey_out_icon)
+        self._organizer.pluginList().onRefreshed(self.scan_files)
 
         self.notifier = check_plugins()
         self.notifcation_display = notification_display_dialog(icon_path)
-        self.blacklist_add = blacklist_window(False, self.check_problems)
-        self.blacklist_remove = blacklist_window(True, self.check_problems)
+        self.blacklist_add = blacklist_window(False, self.scan_files)
+        self.blacklist_remove = blacklist_window(True, self.scan_files)
 
         return True
     
-    def check_problems(self):
+    def scan_files(self):
         notifications_enabled = self._organizer.pluginSetting(self.name(), "Enable Notifications")
         if not self.thread.isRunning() and notifications_enabled:
-            compare_hashes = True
             scan_esms = self._organizer.pluginSetting(self.name(), "Scan ESMs")
             eslifier_folder = self._organizer.pluginSetting(self.name(), "ESLifier Folder")
             new_header = self._organizer.pluginSetting(self.name(), "Use 1.71 Header Range")
             blacklist_path = os.path.join(eslifier_folder, 'ESLifier_Data/blacklist.json')
+            compare_hashes = self._organizer.pluginSetting(self.name(), "Compare File Hashes")
+            only_plugins = self._organizer.pluginSetting(self.name(), "Compare Only Game Plugins")
             if os.path.exists(blacklist_path):
                 with open(blacklist_path, 'r', encoding='utf-8') as f:
-                    ignore_list = json.load(f)
+                    ignore_list: list[str] = json.load(f)
                     ignore_list.append("ESLifier_Cell_Master.esm")
             else:
                 ignore_list = ["ESLifier_Cell_Master.esm"]
@@ -71,7 +127,7 @@ class ESLifier(mobase.IPluginTool):
             else:
                 filter = "*.esp"
 
-            self.worker = CheckWorker(self, self.notifier, scan_esms, eslifier_folder, new_header, compare_hashes, ignore_list, filter)
+            self.worker = CheckWorker(self, self.notifier, scan_esms, eslifier_folder, new_header, compare_hashes, only_plugins, ignore_list, filter)
             self.worker.moveToThread(self.thread)
             self.thread.started.connect(self.worker.check_for_esl)
             self.thread.finished.connect(self.possibly_recheck)
@@ -79,12 +135,12 @@ class ESLifier(mobase.IPluginTool):
             self.worker.finished_signal.connect(self.thread.quit)
             self.worker.finished_signal.connect(self.worker.deleteLater)
             self.thread.start()
-            self.check_again = False
+            self.scan_again = False
         else:
             if not notifications_enabled:
                 self.update_icon(False, {}, {}, [])
             else:
-                self.check_again = True
+                self.scan_again = True
         return
 
     def update_icon(self, any_eslable_or_issue, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches):
@@ -95,51 +151,31 @@ class ESLifier(mobase.IPluginTool):
             self.hash_mismatches = hash_mismatches
             self.notification_button.show()
         else:
-            self.eslifier_button.setIcon(self.eslifier_icon_greyed_out)
-            self.needs_flag_dict.clear()
-            self.needs_compacting_flag_dict.clear()
-            self.hash_mismatches.clear()
-            self.notification_button.hide()
+            self.grey_out_icon()
         return
+    
+    def grey_out_icon(self):
+        self.eslifier_button.setIcon(self.eslifier_icon_greyed_out)
+        self.needs_flag_dict.clear()
+        self.needs_compacting_flag_dict.clear()
+        self.hash_mismatches.clear()
+        self.notification_button.hide()
     
     def possibly_recheck(self):
-        if self.check_again:
-            self.check_again = False
-            self.check_problems()
+        if self.scan_again:
+            self.scan_again = False
+            self.scan_files()
         return
-        
-    def name(self) -> str:
-        return "ESLifier"
     
-    def localizedName(self) -> str:
-        return self.tr("ESLifier")
-    
-    def author(self) -> str:
-        return "MaskPlague"
-
-    def description(self):
-        return self.tr("ESLifier's MO2 Plugin Integration")
-    
-    def version(self) -> mobase.VersionInfo:
-        return mobase.VersionInfo(2, 0, 0, mobase.ReleaseType.BETA)
-    
-    def requirements(self):
-        return[]
-    
-    def settings(self):
-        return [
-            mobase.PluginSetting("Enable Notifications", self.tr("Enable ESLifier's notifications"), True),
-            mobase.PluginSetting("Scan ESMs", self.tr("Scan plugins that are flagged as ESM."), False),
-            mobase.PluginSetting("Use 1.71 Header Range", self.tr("Use the new 1.71 Header range when scanning for plugins that can be light."), True),
-            mobase.PluginSetting("ESLifier Folder", self.tr("Set this to the folder that holds ESLifier.exe."), ""),
-        ]
-    
-    def create_label_check_box_setting_pair(self, layout: QGridLayout, text: str, row: int) -> QCheckBox:
+    def create_label_check_box_setting_pair(self, layout: QGridLayout, text: str, row: int, tool_tip = None) -> QCheckBox:
         label = QLabel(text)
         check_box = QCheckBox()
+        if tool_tip:
+            label.setToolTip(tool_tip)
+            check_box.setToolTip(tool_tip)
         def changed():
             self._organizer.setPluginSetting(self.name(), text, check_box.isChecked())
-        check_box.checkStateChanged.connect(changed)
+        check_box.stateChanged.connect(changed)
         layout.addWidget(label, row, 0)
         layout.addWidget(check_box, row, 1)
         return check_box
@@ -152,6 +188,8 @@ class ESLifier(mobase.IPluginTool):
         self.notifications_check_box = self.create_label_check_box_setting_pair(layout, "Enable Notifications", 0)
         self.esms_check_box = self.create_label_check_box_setting_pair(layout, "scan_esms", 1)
         self.header_check_box = self.create_label_check_box_setting_pair(layout, "Use 1.71 Header Range", 2)
+        self.compare_file_hashes_check_box = self.create_label_check_box_setting_pair(layout, "Compare File Hashes", 3)
+        self.compare_only_game_plugins_check_box = self.create_label_check_box_setting_pair(layout, "Compare Only Game Plugins", 4, "If 'Compare Hashes' is enabled: only check game plugins, else compare all file hashes.")
 
         folder = self._organizer.pluginSetting(self.name(), "ESLifier Folder")
         if len(folder) > 30:
@@ -159,32 +197,17 @@ class ESLifier(mobase.IPluginTool):
         else:
             self.folder_path = QLabel(folder)
         self.folder_path.setToolTip("Set this to the folder that holds ESLifier.exe")
-        layout.addWidget(self.folder_path, 3, 0)
+        layout.addWidget(self.folder_path, 5, 0)
         path_button = self.button_maker("Explore", self.set_eslifier_path)
         path_button.setToolTip("Set this to the folder that holds ESLifier.exe")
-        layout.addWidget(path_button, 3, 1)
+        layout.addWidget(path_button, 5, 1)
 
         done_button = QPushButton("Done")
         def done():
             self.settings_dialog.hide()
             self._organizer.refresh()
         done_button.clicked.connect(done)
-        layout.addWidget(done_button, 4, 0)
-
-    def displayName(self):
-        return self.tr("ESLifier")
-    
-    def tooltip(self):
-        return self.tr("")
-    
-    def icon(self):
-        return self.eslifier_icon
-
-    def getFiles(self):
-        return
-
-    def tr(self, str):
-        return QCoreApplication.translate("ESLifier", str)
+        layout.addWidget(done_button, 6, 0)
     
     def start_eslifier(self):
         eslifier_folder = self._organizer.pluginSetting("ESLifier", "ESLifier Folder")
@@ -292,7 +315,7 @@ class ESLifier(mobase.IPluginTool):
                     action = tool_bar.children()[-9].actions()[0]
                     tool_bar.insertWidget(action, self.eslifier_button)
 
-        self.check_problems()
+        self.scan_files()
 
     def button_maker(self, name, function, hide=False):
         button = QPushButton(name)
@@ -301,11 +324,6 @@ class ESLifier(mobase.IPluginTool):
         if function:
             button.clicked.connect(function)
         return button
-
-    def display(self):
-        self.main_dialog.raise_()
-        self.main_dialog.show()
-        return
     
     def display_settings(self):
         notifications = self._organizer.pluginSetting(self.name(), "Enable Notifications")
@@ -317,6 +335,12 @@ class ESLifier(mobase.IPluginTool):
         header = self._organizer.pluginSetting(self.name(), "Use 1.71 Header Range")
         self.header_check_box.setChecked(header)
 
+        hashes = self._organizer.pluginSetting(self.name(), "Compare File Hashes")
+        self.compare_file_hashes_check_box.setChecked(hashes)
+        
+        only_plugins = self._organizer.pluginSetting(self.name(), "Compare Only Game Plugins")
+        self.compare_only_game_plugins_check_box.setChecked(only_plugins)
+
         self.settings_dialog.raise_()
         self.settings_dialog.show()
         return
@@ -327,7 +351,7 @@ class ESLifier(mobase.IPluginTool):
 
 class CheckWorker(QObject):
     finished_signal = pyqtSignal(bool, dict, dict, list)
-    def __init__(self, eslifier: ESLifier, plugin_checker: check_plugins, scan_esms, eslifier_folder, new_header, compare_hashes, ignore_list, filter):
+    def __init__(self, eslifier: ESLifier, plugin_checker: check_plugins, scan_esms, eslifier_folder, new_header, compare_hashes, only_plugins, ignore_list, filter):
         super().__init__()
         self.eslifier = eslifier
         self.plugin_checker = plugin_checker
@@ -335,11 +359,12 @@ class CheckWorker(QObject):
         self.eslifier_folder = eslifier_folder
         self.new_header = new_header
         self.compare_hashes = compare_hashes
+        self.only_plugins = only_plugins
         self.ignore_list = ignore_list
         self.filter = filter
 
     def check_for_esl(self):
         plugin_files_list = [plugin for plugin in self.eslifier._organizer.findFiles('', self.filter) if os.path.basename(plugin) not in self.ignore_list]
         flag, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches = self.plugin_checker.scan_for_eslable(self.scan_esms, self.eslifier_folder, self.new_header, 
-                                                                                                 self.compare_hashes, plugin_files_list)
+                                                                                                 self.compare_hashes, self.only_plugins, plugin_files_list)
         self.finished_signal.emit(flag, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches)
