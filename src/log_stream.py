@@ -43,7 +43,6 @@ class log_stream(QMainWindow):
         for i in range(max_logs, -1, -1):
             src = os.path.join("ESLifier_Data", f"ESLifier_{i-1}.log") if i > 0 else "ESLifier_Data/ESLifier.log"
             dst = os.path.join("ESLifier_Data", f"ESLifier_{i}.log")
-            print(src)
             if os.path.exists(dst):
                 os.remove(dst)
             if os.path.exists(src):
