@@ -1,7 +1,7 @@
 import os
 from file_patchers import patchers
 
-def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_id_rename_map, encoding):
+def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_id_rename_map, master_byte, updated_master_index, update_byte, encoding):
     if new_file_lower.endswith('.ini'):
         if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini', '_enbl.ini',     # PO3's SPID, KID, BOS, ENBL
                                     '_desc.ini', '_llos.ini', '_ipm.ini', '_mus.ini')):     # Description Framework, LLOS, IPM, MTD
@@ -127,6 +127,8 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_
             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'plugins\\stbactiveeffectsinfo' in new_file_lower:                             # STB Active Effects
             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, symbol='~', encoding_method=encoding)
+        elif 'skse\\alternateperspective' in new_file_lower:                                # Alternate Perspective
+            patchers.json_alternate_perspective(basename, new_file, form_id_map, encoding_method=encoding)
         else:
             print(f'Warn: Possible missing patcher for: {new_file}')
     elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
@@ -149,7 +151,7 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_
     elif 'facegeom' in new_file_lower and new_file_lower.endswith('.nif'):                  # FaceGeom mesh patching
         patchers.facegeom_mesh_patcher(basename, new_file, form_id_rename_map)
     elif new_file_lower.endswith('.seq'):                                                   # SEQ file patching
-        patchers.seq_patcher(new_file, form_id_map)
+        patchers.seq_patcher(new_file, form_id_map, master_byte, updated_master_index=updated_master_index, update_byte=update_byte)
     elif new_file_lower.endswith('.jslot'):                                                 # Racemenu Presets
         patchers.jslot_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     elif new_file_lower.endswith('config.txt') and 'plugins\\customskill' in new_file_lower: # CSF's old txt format
