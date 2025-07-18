@@ -1434,6 +1434,76 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
+    def json_alternate_perspective(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            try:
+                json_data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                json_data = patchers.use_json5(string)
+
+            for dictionary in json_data:
+                mod = dictionary.get('mod')
+                changed_outermost = False
+                mod_matches = False
+                mod_name = None
+                if mod is not None and mod.lower() == basename:
+                    mod_name = mod
+                    mod_matches = True
+                    form_id = dictionary.get('id')
+                    if form_id is not None and isinstance(form_id, str):
+                        to_id_data = form_id_map.get(int(form_id, 16))
+                        if to_id_data is not None:
+                            dictionary['id'] = '0x' + to_id_data['hex_no_0']
+                            if to_id_data["update_name"]:
+                                dictionary["mod"] = "ESLifier_Cell_Master.esm"
+                                changed_outermost = True
+
+                suboptions = dictionary.get('suboptions')
+                if suboptions is not None:
+                    for i, suboption in enumerate(suboptions):
+                        submod = suboption.get('mod')
+                        form_id = suboption.get('id')
+                        if submod is None and mod_matches and form_id is not None and isinstance(form_id, str):
+                            to_id_data = form_id_map.get(int(form_id, 16))
+                            if to_id_data is not None:
+                                suboption['id'] = '0x' + to_id_data['hex_no_0']
+                                if to_id_data["update_name"] or changed_outermost:
+                                    new_dict = {}
+                                    new_dict['mod'] = mod_name if changed_outermost and not to_id_data["update_name"] else "ESLifier_Cell_Master.esm"
+                                    for key, value in suboption.items():
+                                        new_dict[key] = value
+                                    suboption = new_dict
+                                    suboptions[i] = suboption
+                            elif changed_outermost:
+                                new_dict = {}
+                                new_dict['mod'] = mod_name
+                                for key, value in suboption.items():
+                                    new_dict[key] = value
+                                suboption = new_dict
+                                suboptions[i] = suboption
+
+                        elif submod is None and mod_matches and form_id is not None and changed_outermost:
+                            new_dict = {}
+                            new_dict['mod'] = mod_name
+                            for key, value in suboption.items():
+                                new_dict[key] = value
+                            suboption = new_dict
+                            suboptions[i] = suboption
+
+                        if submod is not None and submod.lower() == basename and form_id is not None and isinstance(form_id, str):
+                            to_id_data = form_id_map.get(int(form_id, 16))
+                            if to_id_data is not None:
+                                suboption['id'] = '0x' + to_id_data['hex_no_0']
+                                if to_id_data["update_name"]:
+                                    suboption['mod'] = "ESLifier_Cell_Master.esm"
+            
+            f.seek(0)
+            f.truncate(0)
+            json.dump(json_data, f, ensure_ascii=False, indent=2)
+            f.close()
+
     def use_json5(json_string: str):
         return json5.loads(json_string)
 
