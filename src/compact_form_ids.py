@@ -399,11 +399,13 @@ class CFIDs():
                 with CFIDs.semaphore:
                     with CFIDs.lock:
                         try:
-                            patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, CFIDs.form_id_map, CFIDs.form_id_rename_map, 'utf-8')
+                            patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, CFIDs.form_id_map, CFIDs.form_id_rename_map, 
+                                                                     CFIDs.master_byte, CFIDs.updated_master_index, CFIDs.do_generate_cell_master, 'utf-8')
                         except Exception as e:
                             exception_type = type(e)
                             if exception_type == UnicodeDecodeError:
-                                patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, CFIDs.form_id_map, CFIDs.form_id_rename_map, 'ansi')
+                                patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, CFIDs.form_id_map, CFIDs.form_id_rename_map, 
+                                                                         CFIDs.master_byte, CFIDs.updated_master_index, CFIDs.do_generate_cell_master, 'ansi')
                             else:
                                 print(f'!Error: Failed to patch file: {new_file}')
                                 print(e)
@@ -531,6 +533,8 @@ class CFIDs():
                 form_id_list.append([form[12:16], form[:4]])
 
         master_byte = master_count.to_bytes()
+        CFIDs.master_byte = master_byte
+        CFIDs.updated_master_index = updated_master_index
 
         saved_forms = form_processor.save_all_form_data(data_list)
 
@@ -604,7 +608,6 @@ class CFIDs():
                         form_id_replacements.append([old_id, new_id + master_byte + b'\xFF'])
                     else:
                         form_id_replacements.append([old_id, new_id + updated_master_index.to_bytes() + b'\xFF'])
-                
 
         form_id_replacements.sort(key= lambda x: struct.unpack('<I', x[0])[0])
         with open(form_id_file_name, 'w', encoding='utf-8') as fidf:
@@ -721,10 +724,11 @@ class CFIDs():
         except Exception as e:
             print(f'!Error: Failed to patch depdendent: {new_file}')
             print(e)
+            return
 
         if new_seq_file:
             try:
-                patchers.seq_patcher(new_seq_file, form_id_replacements, True)
+                patchers.seq_patcher(new_seq_file, form_id_replacements, master_byte, updated_master_index=updated_master_index, update_byte=CFIDs.do_generate_cell_master, dependent=True)
             except Exception as e:
                 print(f'!Error: Failed to patch depdendent\'s SEQ file: {new_seq_file}')
                 print(e)
