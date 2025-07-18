@@ -101,21 +101,17 @@ class qualification_checker():
 
     def file_reader(file: str, update_header: bool, is_esm: bool) -> tuple[bool, bool, bool, bool, bool]:
         data_list = []
-        new_cell = False
-        interior_cell_flag = False
-        need_compacting = False
-        new_wrld = False
-        edids = []
+        basename = os.path.basename(file)
         with open(file, 'rb') as f:
             data = f.read()
         data_list = qualification_checker.create_data_list(data)
         master_count, has_skyrim_esm_master = qualification_checker.get_master_count(data_list)
 
         if update_header:
-            dependents = qualification_checker.dependent_dict[os.path.basename(file).lower()]
+            dependents = qualification_checker.dependent_dict[basename.lower()]
             all_dependents_have_skyrim_esm_as_master = True
             for plugin_without_skyrim_esm_as_master, master_0 in qualification_checker.missing_skyrim_esm_as_master.items():
-                if plugin_without_skyrim_esm_as_master in dependents and os.path.basename(file) == master_0:
+                if plugin_without_skyrim_esm_as_master in dependents and basename == master_0:
                     all_dependents_have_skyrim_esm_as_master = False
                     break
         else:
@@ -126,6 +122,11 @@ class qualification_checker():
         else:
             num_max_records = qualification_checker.num_max_records
         count = 0
+        new_cell = False
+        interior_cell_flag = False
+        need_compacting = False
+        new_wrld = False
+        edids = []
         cell_form_ids = []
         for form in data_list:
             record_type = form[:4]
@@ -169,19 +170,18 @@ class qualification_checker():
                         offset += 2
                         edids.append(form_to_check[offset:offset+edid_len-1].decode())
 
-                    
             if record_type == b'CELL' and form[15] >= master_count and str(form[12:15].hex()) not in cell_form_ids:
                 cell_form_ids.append(str(form[12:15].hex()))
         
         edids.sort()
         if edids != []:
-            edid_file = os.path.join("ESLifier_Data/EDIDs", os.path.basename(file) + '_EDIDs.txt')
+            edid_file = "ESLifier_Data/EDIDs" + basename + '_EDIDs.txt'
             with open(edid_file, 'w', encoding='utf-8') as f:
                 for edid in edids:
                     f.write(edid + '\n')
         cell_form_ids.sort()
         if cell_form_ids != [] and is_esm:
-            cell_form_id_file = 'ESLifier_Data/Cell_IDs/' + os.path.basename(file) + '_CellFormIDs.txt'
+            cell_form_id_file = 'ESLifier_Data/Cell_IDs/' + basename + '_CellFormIDs.txt'
             with open(cell_form_id_file, 'w', encoding='utf-8') as f:
                 for form_id in cell_form_ids:
                     f.write(form_id + '\n')
