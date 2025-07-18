@@ -326,9 +326,6 @@ class scanner():
                 if relative_path not in mod_files:
                     mod_files[relative_path] = []
                     cases_of_files[relative_path] = relative_path
-                else:
-                    if os.path.exists(full_path):
-                        os.remove(full_path)
                 mod_files[relative_path].append('bsa_extracted_eslifier_scan')
 
         return mod_files, plugin_names, cases_of_files
