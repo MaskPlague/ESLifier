@@ -30,15 +30,24 @@ class patchers():
             f.seek(0)
             f.writelines(data)
     
-    def seq_patcher(new_file: str, form_id_map: dict, dependent: bool =False):
+    def seq_patcher(new_file: str, form_id_map: dict, master_byte: bytes, updated_master_index: int, update_byte, dependent: bool = False):
         with open(new_file, 'rb+') as f:
             data = f.read()
-            seq_form_id_list = [data[i:i+4] for i in range(0, len(data), 4)]
-            if not dependent:
-                form_id_dict = form_id_map
+            seq_form_id_list = [data[i:i+4] if data[i+3:i+4] <= master_byte else data[i:i+3] + master_byte for i in range(0, len(data), 4)]
+            update = updated_master_index == -1 and update_byte
+            if update:
+                updated_master_byte = (int.from_bytes(master_byte) + 1).to_bytes()
             else:
-                form_id_dict = {old_id: new_id for old_id, new_id in form_id_map}
-            new_seq_form_id_list = [form_id_dict.get(fid, fid) for fid in seq_form_id_list]
+                updated_master_byte = master_byte
+            if not dependent:
+                if updated_master_index == -1:
+                    form_id_dict = {old_id: (new_id if not update else new_id[:3] + updated_master_byte) for old_id, new_id in form_id_map.items() if isinstance(old_id, bytes)}
+                else:
+                    form_id_dict = form_id_map
+            else:
+                form_id_dict = {old_id: (new_id if not update else new_id[:3] + updated_master_byte) for old_id, new_id in form_id_map}
+            new_seq_form_id_list = [form_id_dict.get(fid, fid if fid[3:4] < master_byte else fid[:3] + updated_master_byte) for fid in seq_form_id_list]
+                
             f.seek(0)
             f.truncate(0)
             f.write(b''.join(new_seq_form_id_list))
