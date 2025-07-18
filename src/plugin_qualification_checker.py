@@ -175,7 +175,7 @@ class qualification_checker():
         
         edids.sort()
         if edids != []:
-            edid_file = "ESLifier_Data/EDIDs" + basename + '_EDIDs.txt'
+            edid_file = "ESLifier_Data/EDIDs/" + basename + '_EDIDs.txt'
             with open(edid_file, 'w', encoding='utf-8') as f:
                 for edid in edids:
                     f.write(edid + '\n')
