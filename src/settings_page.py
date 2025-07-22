@@ -413,7 +413,7 @@ class settings(QWidget):
             self.enable_cell_changed_filter_toggle.setChecked(True)
             self.enable_interior_cell_filter_toggle.setChecked(False)
             self.enable_worldspaces_filter_toggle.setChecked(True)
-            self.generate_cell_master_toggle.setChecked(False)
+            self.generate_cell_master_toggle.setChecked(True)
             self.check_for_updates_toggle.setChecked(True)
             self.inner_color = '#713585'
             self.outer_color = 'Gray'
@@ -436,7 +436,7 @@ class settings(QWidget):
         self.enable_interior_cell_filter_toggle.setChecked(self.settings.get('enable_interior_cell_filter', False))
         self.enable_worldspaces_filter_toggle.setChecked(self.settings.get('filter_worldspaces', True))
         self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(self.settings.get('show_dlls', False))
-        self.generate_cell_master_toggle.setChecked(self.settings.get('generate_cell_master', False))
+        self.generate_cell_master_toggle.setChecked(self.settings.get('generate_cell_master', True))
         self.check_for_updates_toggle.setChecked(self.settings.get('check_for_updates', True))
         self.inner_color = self.settings.get('inner_color', '#713585')
         self.outer_color = self.settings.get('outer_color', 'Gray')
