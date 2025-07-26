@@ -20,11 +20,18 @@ from plugin_qualification_checker import qualification_checker
 from dependency_getter import dependecy_getter
 
 class scanner():
-    def scan(path: str, mo2_mode: bool, modlist_txt_path: str, plugins_txt_path: str, overwrite_path: str, update_header: bool, full_scan: bool) -> tuple[dict, dict] | None:
+    def scan(full_scan: bool) -> tuple[dict, dict] | None:
         scanner.bsa_blacklist = ['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
                     'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
                     'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa']
         start_time = timeit.default_timer()
+        settings: dict = scanner.get_from_file('ESLifier_Data/settings.json', dict)
+        path: str = settings.get('skyrim_folder_path', '')
+        scanner.mo2_mode: bool = settings.get('mo2_mode', False)
+        modlist_txt_path: str = settings.get('mo2_modlist_txt_path', '')
+        plugins_txt_path: str = settings.get('plugins_txt_path', '')
+        scanner.overwrite_path: str = settings.get('overwrite_path', '')
+        update_header: bool = settings.get('update_header', False)
         scanner.file_count = 0
         scanner.all_files = []
         scanner.plugins = []
