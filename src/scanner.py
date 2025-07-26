@@ -39,6 +39,7 @@ class scanner():
         scanner.bsa_dict = {}
         scanner.dll_dict = {}
         scanner.bsa_files = []
+        scanner.winning_files_dict = {}
         scanner.threads = []
         scanner.seq_files = []
         scanner.pex_files = []
@@ -79,12 +80,12 @@ class scanner():
         thread_memory_usage = 2.5 * (1024**3)
         scanner.bsa_threads_by_ram = max(1, int(usable_ram / thread_memory_usage) * 7)
 
-        scanner.extracted = scanner.get_from_file('ESLifier_Data/extracted_bsa.json')
+        scanner.extracted = scanner.get_from_file('ESLifier_Data/extracted_bsa.json', list)
         print('\n')
         plugins_list = scanner.get_plugins_list(plugins_txt_path)
-        if mo2_mode:
+        if scanner.mo2_mode:
             load_order, enabled_mods = scanner.get_modlist(modlist_txt_path)
-            scanner.all_files, scanner.plugins = scanner.get_winning_files(path, load_order, enabled_mods, plugins_list, overwrite_path)
+            scanner.all_files, scanner.plugins = scanner.get_winning_files(path, load_order, enabled_mods, plugins_list)
             scanner.file_count = len(scanner.all_files)
         else:
             scanner.get_files_from_skyrim_folder(path, plugins_list)
@@ -93,12 +94,13 @@ class scanner():
 
         scanner.dump_to_file(file="ESLifier_Data/extracted_bsa.json", data=scanner.extracted)
         scanner.dump_to_file(file="ESLifier_Data/plugin_list.json", data=scanner.plugins)
+        scanner.dump_to_file(file="ESLifier_Data/winning_files_dict.json", data=scanner.winning_files_dict)
 
         print('\033[F\033[K-  Gathered ' + str(len(scanner.all_files)) +' total files.', end='\r')
 
         if full_scan:
             print('Gettings Dependencies')
-            dependency_dictionary = dependecy_getter.scan(path)
+            dependency_dictionary = dependecy_getter.scan()
             print('Scanning Plugins')
             flag_dict = qualification_checker.scan(path, update_header)
 
@@ -109,7 +111,6 @@ class scanner():
         scanner.dump_to_file(file="ESLifier_Data/file_masters.json", data=scanner.file_dict)
         scanner.dump_to_file(file="ESLifier_Data/bsa_dict.json", data=bsa_dict)
         scanner.dump_to_file(file="ESLifier_Data/dll_dict.json", data=scanner.dll_dict)
-        
 
         end_time = timeit.default_timer()
         time_taken = end_time - start_time
@@ -386,9 +387,9 @@ class scanner():
             return []
         return active_plugins
 
-    def get_winning_files(mods_folder: str, load_order: list, enabled_mods: list, plugins_list: list, overwrite_path: str) -> tuple[list, list]:
+    def get_winning_files(mods_folder: str, load_order: list, enabled_mods: list, plugins_list: list) -> tuple[list, list]:
         mods_folder = os.path.normpath(mods_folder)
-        overwrite_path = os.path.normpath(overwrite_path)
+        overwrite_path = os.path.normpath(scanner.overwrite_path)
         mod_folder_level = len(mods_folder.split(os.sep))
         overwrite_level = len(overwrite_path.split(os.sep)) - 1
         mod_files, plugin_names, cases = scanner.get_files_from_mods(mods_folder, enabled_mods, plugins_list, overwrite_path)
@@ -405,14 +406,17 @@ class scanner():
                 loop += 1
             if len(mods) == 1:
                 overwrite = False
-                if mods[0] == 'bsa_extracted_eslifier_scan':
+                mod = mods[0]
+                if mod == 'bsa_extracted_eslifier_scan':
                     file_path = os.path.join(cwd, 'bsa_extracted', cases[file])
-                elif mods[0] == 'overwrite_eslifier_scan':
+                elif mod == 'overwrite_eslifier_scan':
                     file_path = os.path.join(overwrite_path, cases[file])
                     overwrite = True
                 else:
-                    file_path = os.path.join(mods_folder, mods[0], cases[file])
+                    file_path = os.path.join(mods_folder, mod, cases[file])
                 winning_files.append([file_path, overwrite])
+                if mod != 'ESLifier Compactor Output':
+                    scanner.winning_files_dict[cases[file]] = (mod, file_path)
             else:
                 mods_sorted = sorted(mods, key=lambda mod: load_order.index(mod))
                 overwrite = False
@@ -424,6 +428,10 @@ class scanner():
                 else:
                     file_path = os.path.join(mods_folder, mods_sorted[-1], cases[file])
                 winning_files.append([file_path, overwrite])
+                if mods_sorted[-1] != 'ESLifier Compactor Output':
+                    scanner.winning_files_dict[cases[file]] = (mods_sorted[-1], file_path)
+                else:
+                    scanner.winning_files_dict[cases[file]] = (mods_sorted[-2], os.path.join(mods_folder, mods_sorted[-2], cases[file]))
         plugin_extensions = ('.esp', '.esl', '.esm')
         plugins = []
         plugin_names_lowered = [plugin.lower() for plugin in plugin_names]
@@ -447,12 +455,12 @@ class scanner():
             print(f'!Error: Failed to dump data to: {file}')
             print(e)
     
-    def get_from_file(file: str) -> list:
+    def get_from_file(file: str, type: dict | list) -> list | dict:
         try:
             with open(file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+                data: list | dict = json.load(f)
         except:
-            data = []
+            data: list | dict = type()
         return data
 
     def get_file_masters():
