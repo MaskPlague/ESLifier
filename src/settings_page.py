@@ -160,7 +160,6 @@ class settings(QWidget):
             "the new worldspace flag/filter.",
             "generate_cell_master"            
         )
-        
 
         self.set_init_widget_values()
         
@@ -344,9 +343,9 @@ class settings(QWidget):
                 self.update_settings()
             else:
                 if 'eslifier' in text.lower():
-                    QMessageBox.warning(None, "Invalid Name", f"'{text}' is not a valid folder name.")
+                    QMessageBox.warning(None, "Invalid Output Name", f"'{text}' is not a valid folder name.")
                 else:
-                    QMessageBox.warning(None, "Name missing 'ESLifier'", "The name must have 'ESLifier' (case insenstive) in it for safety purposes.")
+                    QMessageBox.warning(None, "Output Name missing 'ESLifier'", "The output name must have 'ESLifier' (case insenstive) in it for safety purposes.")
                 line_edit.setFocus()
                 self.output_folder_name_valid = False
 
