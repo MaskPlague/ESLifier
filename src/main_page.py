@@ -14,6 +14,7 @@ from scanner import scanner
 from compact_form_ids import CFIDs
 from cell_changed_scanner import cell_scanner
 from create_cell_master import create_new_cell_plugin
+from patch_new import patch_new
 
 class main(QWidget):
     def __init__(self, log_stream, eslifier, COLOR_MODE):
@@ -30,11 +31,14 @@ class main(QWidget):
         self.update_header = True
         self.dependency_dictionary = {}
         self.redoing_output = False
+        self.patch_new_running = False
+        self.patch_new_only_remove = False
         self.generate_cell_master = False
         self.log_stream = log_stream
         self.eslifier = eslifier
         self.COLOR_MODE = COLOR_MODE
         self.start_time = timeit.default_timer()
+        self.settings = {}
         self.create()
 
     def create(self):
@@ -44,6 +48,8 @@ class main(QWidget):
         self.compact.setToolTip(
             "List of plugins that can be compacted to fit ESL conditions.\n" +
             "The \'Compact/ESLify Selected\' button will also ESL the selected plugin(s).")
+
+        self.patch_new = patch_new()
 
         self.list_eslify = list_eslable()
         self.list_compact = list_compactable()
@@ -80,6 +86,16 @@ class main(QWidget):
             "that fit the current filters in the settings.",
             self.rebuild_output
         )
+
+        self.scan_and_patch_new_button = self.create_button(
+            " Scan and Patch New \n or Changed Files ",
+            "Scan for new plugins and files that were not\n"\
+            "present during intial compacting and patching\n"\
+            "and then patch those new plugins and files.\n"\
+            "This currently cannot detect changes in BSA.",
+            self.scan_and_patch_new
+        )
+        #self.scan_and_patch_new_button.clicked.connect(self.set_false_redoing_output)
 
         self.reset_output_button = self.create_button(
             " Reset ESLifier's Output ",
@@ -179,6 +195,8 @@ class main(QWidget):
         self.v_layout0.addWidget(line)
         self.v_layout0.addSpacing(25)
         self.v_layout0.addWidget(self.rebuild_output_button)
+        self.v_layout0.addSpacing(10)
+        self.v_layout0.addWidget(self.scan_and_patch_new_button)
         self.v_layout0.addWidget(line1)
         self.v_layout0.addSpacing(25)
         self.v_layout0.addWidget(self.reset_output_button)
@@ -237,6 +255,8 @@ class main(QWidget):
 
     def set_false_redoing_output(self):
         self.redoing_output = False
+        self.patch_new_only_remove = False
+        self.patch_new_running = False
 
     def compact_selected_clicked(self):
         self.setEnabled(False)
@@ -485,8 +505,15 @@ class main(QWidget):
             for mod in checked_list:
                 self.list_compact.flag_dict.pop(mod)
             self.list_compact.create()
-            print(f"Total Elapsed Time: {timeit.default_timer() - self.start_time:.2f} Seconds")
-            print("CLEAR")
+            if not self.patch_new_running:
+                print(f"Total Elapsed Time: {timeit.default_timer() - self.start_time:.2f} Seconds")
+                print("CLEAR")
+                self.setEnabled(True)
+            else:
+                self.patch_new_running = False
+                self.patch_new_only_remove = False
+                self.redoing_output = False
+                self.patch_new.finished_rebuilding()
         elif sender == 'eslify':
             for mod in checked_list:
                 self.list_eslify.flag_dict.pop(mod)
@@ -503,8 +530,10 @@ class main(QWidget):
                     self.compact_selected_clicked()
                 else:
                     print("CLEAR")
+                    self.setEnabled(True)
             else:
                 print("CLEAR")
+                self.setEnabled(True)
         self.eslifier.update_settings()
         self.calculate_stats()
         if not self.redoing_output:
@@ -515,8 +544,7 @@ class main(QWidget):
         def run_scan():
             self.log_stream.show()
             self.scan_thread = QThread()
-            self.worker = ScannerWorker(self.skyrim_folder_path, self.update_header, self.mo2_mode, self.modlist_txt_path,
-                                 self.plugins_txt_path, self.overwrite_path)
+            self.worker = ScannerWorker()
             self.worker.moveToThread(self.scan_thread)
             self.scan_thread.started.connect(self.worker.scan_run)
             self.worker.finished_signal.connect(self.completed_scan)
@@ -550,7 +578,7 @@ class main(QWidget):
         print('Populating Tables')
         self.eslifier.update_settings()
         print('Done Scanning')
-        if self.redoing_output:
+        if self.redoing_output and not self.patch_new_only_remove:
             if os.path.exists('ESLifier_Data/esl_flagged.json'):
                 self.list_eslify.check_previously_esl_flagged()
                 os.remove('ESLifier_Data/esl_flagged.json')
@@ -558,10 +586,16 @@ class main(QWidget):
             elif os.path.exists('ESLifier_Data/previously_compacted.json'):
                 self.list_compact.check_previously_compacted()
                 self.compact_selected_clicked()
+            self.calculate_stats()
+        elif self.redoing_output and self.patch_new_only_remove:
+            self.redoing_output = False
+            self.patch_new_running = False
+            self.patch_new_only_remove = False
+            self.patch_new.finished_rebuilding()
         else:
             print('CLEAR')
-        self.calculate_stats()
-        self.setEnabled(True)
+            self.calculate_stats()
+            self.setEnabled(True)
 
     def get_from_file(self, file):
         try:
@@ -604,6 +638,8 @@ class main(QWidget):
                 os.remove('ESLifier_Data/esl_flagged.json')
             if os.path.exists('ESLifier_Data/original_files.json'):
                 os.remove('ESLifier_Data/original_files.json')
+            if os.path.exists('ESLifier_Data/master_byte_data.json'):
+                os.remove('ESLifier_Data/master_byte_data.json')
             self.delete_output(output_folder, files_to_remove)
             self.list_compact.flag_dict = {}
             self.list_eslify.flag_dict = {}
@@ -647,6 +683,12 @@ class main(QWidget):
                     fef.close()
             if os.path.exists('ESLifier_Data/original_files.json'):
                 os.remove('ESLifier_Data/original_files.json')
+            if os.path.exists("ESLifier_Data/winning_file_history_dict.json"):
+                os.remove("ESLifier_Data/winning_file_history_dict.json")
+            if os.path.exists("ESLifier_Data/winning_files_dict.json"):
+                os.remove("ESLifier_Data/winning_files_dict.json")
+            if os.path.exists('ESLifier_Data/master_byte_data.json'):
+                os.remove('ESLifier_Data/master_byte_data.json')
             if len(previously_compacted) == 0 and len(previously_esl_flagged) == 0:
                 QMessageBox.warning(None, "No Existing Output Data", f"There is no existing output data for ESLifier to use.")
                 return
@@ -729,15 +771,15 @@ class main(QWidget):
         button.setToolTip(tooltip)
         return button
     
-    def create_confirmation(self, color):
+    def create_confirmation(self, color: str = ''):
         confirm = QMessageBox()
         confirm.setIcon(QMessageBox.Icon.Warning)
         confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
-
-        confirm.setStyleSheet("""
-            QMessageBox {
-                background-color: """+color+""";
-            }""")
+        if color != '':
+            confirm.setStyleSheet("""
+                QMessageBox {
+                    background-color: """+color+""";
+                }""")
         confirm.setWindowTitle("Confirmation")
         confirm.addButton(QMessageBox.StandardButton.Yes)
         confirm.addButton(QMessageBox.StandardButton.Cancel)
@@ -765,6 +807,10 @@ class main(QWidget):
             shutil.rmtree('ESLifier_Data/Cell_IDs')
         if os.path.exists('ESLifier_Data/cell_master_info.json'):
             os.remove('ESLifier_Data/cell_master_info.json')
+        if os.path.exists("ESLifier_Data/winning_file_history_dict.json"):
+            os.remove("ESLifier_Data/winning_file_history_dict.json")
+        if os.path.exists("ESLifier_Data/winning_files_dict.json"):
+             os.remove("ESLifier_Data/winning_files_dict.json")
         if os.path.exists(output_folder) and 'eslifier' in output_folder.lower():
             for file in files_to_remove:
                 if os.path.exists(file):
@@ -808,21 +854,34 @@ class main(QWidget):
                     f"    > {compactible_count}"
         self.stats.setText(stats_text)
 
+    def scan_and_patch_new(self):
+        self.setEnabled(False)
+        confirm = self.create_confirmation()
+        confirm.setText("Are you sure you want to scan and patch new/changed files?")
+        def accepted():
+            confirm.hide()
+            self.log_stream.show()
+            self.patch_new.scan_and_find(self.settings, self)
+        confirm.accepted.connect(accepted)
+        confirm.rejected.connect(lambda: self.setEnabled(True))
+        confirm.show()
+    
+    def re_compact(self, files_to_remove, files_to_re_flag, files_to_re_compact):
+        output_folder = os.path.join(self.output_folder_path, self.output_folder_name)
+        #files_to_remove, size, file_count = self.calculate_existing_output(output_folder)
+        self.delete_output(output_folder, files_to_remove)
+        self.calculate_stats()
+        self.redoing_output = True
+        self.scan()
+
 class ScannerWorker(QObject):
     finished_signal = pyqtSignal(dict, dict)
-    def __init__(self, path, update, mo2_mode, modlist_txt_path, plugins_txt_path, overwrite_path):
+    def __init__(self):
         super().__init__()
-        self.skyrim_folder_path = path
-        self.update_header = update
-        self.mo2_mode = mo2_mode
-        self.modlist_txt_path = modlist_txt_path
-        self.plugins_txt_path = plugins_txt_path
-        self.overwrite_path = overwrite_path
 
     def scan_run(self):
         print('Scanning All Files:')
-        flag_dict, dependency_dictionary = scanner.scan(self.skyrim_folder_path, self.mo2_mode, self.modlist_txt_path, self.plugins_txt_path,
-                                                        self.overwrite_path, self.update_header, True)
+        flag_dict, dependency_dictionary = scanner.scan(True)
         print('Checking if New CELLs are Changed')
         plugins_with_cells = [plugin for plugin, flags in flag_dict.items() if 'new_cell' in flags]
         cell_scanner.scan(plugins_with_cells)
