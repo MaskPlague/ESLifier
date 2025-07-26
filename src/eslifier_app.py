@@ -10,10 +10,9 @@ from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMessageBox, QTa
 
 from settings_page import settings
 from main_page import main
-from patch_new_page import patch_new
 from log_stream import log_stream
 
-CURRENT_VERSION = '0.11.11'
+CURRENT_VERSION = '0.11.12'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
@@ -25,7 +24,7 @@ def verify_luhn_checksum(filename: str):
     computed_checksum = luhn_checksum(original_data)
 
     if computed_checksum != stored_checksum:
-        raise RuntimeError("File is corrupted! Checksum mismatch. Redownload the file, if the issue persists then report this to the GitHub.")
+        raise RuntimeError("The file is corrupted! Checksum mismatch. Redownload the file, if the issue persists then report this to the GitHub.")
     else:
         if os.path.exists('ESLifier_Data/settings.json'):
             with open('ESLifier_Data/settings.json', 'r+', encoding='utf-8') as f:
@@ -123,7 +122,6 @@ class main_window(QMainWindow):
             self.setPalette(palette)
             
         self.main_widget = main(self.log_stream, self, COLOR_MODE)
-        self.patch_new_widget = patch_new()
         self.update_settings()
         self.tabs = QTabWidget()
         if COLOR_MODE == 'Light':
@@ -152,20 +150,19 @@ class main_window(QMainWindow):
                     border-top: 1px solid rgb(255,255,255);
                 }""")
 
+        self.MAIN_TAB = 0
+        self.SETTINGS_TAB = 1
+        self.HELP_TAB = 2
+
         self.tabs.addTab(self.main_widget, "  Main  ")
-        self.tabs.setTabToolTip(0, "This is the Main Page, scan your skyrim folder and select plugins to flag or compress.")
-        self.tabs.addTab(self.patch_new_widget, "  Patch New Plugins/Files  ")
-        self.tabs.setTabToolTip(1,
-            "This is the Patch New Files Page, scan for new files that were not present when you\n"+
-            "initially compressed plugins and patched dependent plugins and files, then select the\n"+
-            "master of the new files you want to patch.")
+        self.tabs.setTabToolTip(self.MAIN_TAB, "This is the Main Page, scan your skyrim folder and select plugins to flag or compress.")
         self.tabs.addTab(self.settings_widget, "  Settings  ")
-        self.tabs.setTabToolTip(2, "This is the settings page. Certain settings will effect what plugins will display after scanning.")
+        self.tabs.setTabToolTip(self.SETTINGS_TAB, "This is the settings page. Certain settings will effect what plugins will display after scanning.")
         self.tabs.addTab(QWidget(), "  Help?  ")
         self.initial = True
         self.tabs.currentChanged.connect(self.tab_changed)
-        self.previous_tab = 0
-        self.tab_changed(0)
+        self.previous_tab = self.MAIN_TAB
+        self.tab_changed(self.MAIN_TAB)
         self.layout().setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         display_widget = QWidget()
@@ -177,7 +174,7 @@ class main_window(QMainWindow):
 
     def tab_changed(self, index: int):
         self.update_settings()
-        if index == 3:
+        if index == self.HELP_TAB:
             self.tabs.setCurrentIndex(self.previous_tab)
             self.help_selected()
             index = self.previous_tab
@@ -192,7 +189,7 @@ class main_window(QMainWindow):
             or (self.settings_widget.settings['mo2_mode'] 
                 and (self.settings_widget.settings['mo2_modlist_txt_path'] == '' 
                      or self.settings_widget.settings['overwrite_path'] == ''))):
-            self.tabs.setCurrentIndex(2)
+            self.tabs.setCurrentIndex(self.SETTINGS_TAB)
             self.tabs.blockSignals(False)
             if not self.initial:
                 self.no_path_set()
@@ -201,7 +198,7 @@ class main_window(QMainWindow):
             return
         self.initial = False
         if not self.settings_widget.output_folder_name_valid or not 'eslifier' in self.settings_widget.settings['output_folder_name'].lower():
-            self.tabs.setCurrentIndex(2)
+            self.tabs.setCurrentIndex(self.SETTINGS_TAB)
             QMessageBox.warning(None, "Invalid Folder Name", f"Enter a valid output folder name.")
             self.tabs.blockSignals(False)
             return
@@ -329,15 +326,7 @@ class main_window(QMainWindow):
         self.main_widget.list_eslify.show_esms =                self.settings_widget.settings['show_esms']
         self.main_widget.list_eslify.filter_worldspaces =       self.settings_widget.settings['filter_worldspaces']
         self.main_widget.list_eslify.cell_master =              self.settings_widget.settings['generate_cell_master']
-        self.patch_new_widget.skyrim_folder_path =              self.settings_widget.settings['skyrim_folder_path']
-        self.patch_new_widget.output_folder_path =              self.settings_widget.settings['output_folder_path']
-        self.patch_new_widget.output_folder_name =              self.settings_widget.settings['output_folder_name']
-        self.patch_new_widget.plugins_txt_path =                self.settings_widget.settings['plugins_txt_path']
-        self.patch_new_widget.overwrite_path =                  self.settings_widget.settings['overwrite_path']
-        self.patch_new_widget.modlist_txt_path =                self.settings_widget.settings['mo2_modlist_txt_path']
-        self.patch_new_widget.mo2_mode =                        self.settings_widget.settings['mo2_mode']
-        self.patch_new_widget.update_header =                   self.settings_widget.settings['update_header']
-        self.patch_new_widget.generate_cell_master =            self.settings_widget.settings['generate_cell_master']
+        self.main_widget.settings =                             self.settings_widget.settings
         self.main_widget.list_compact.create()
         self.main_widget.list_eslify.create()
 
