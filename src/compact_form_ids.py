@@ -36,6 +36,9 @@ class CFIDs():
         CFIDs.semaphore = threading.Semaphore(1000)
         CFIDs.compacted_and_patched = {}
         CFIDs.original_files: dict = CFIDs.get_from_file('ESLifier_Data/original_files.json')
+        CFIDs.winning_files_dict: dict = CFIDs.get_from_file('ESLifier_Data/winning_files_dict.json')
+        CFIDs.master_byte_data: dict = CFIDs.get_from_file('ESLifier_Data/master_byte_data.json')
+        CFIDs.winning_file_history_dict = {}
         CFIDs.mo2_mode = mo2_mode
         CFIDs.output_folder_name = output_folder_name
         CFIDs.overwrite_path = os.path.normpath(overwrite_path)
@@ -106,7 +109,9 @@ class CFIDs():
                     print('\n')
                 CFIDs.rename_files_threader(file_to_compact, to_rename, skyrim_folder_path, output_folder_path)
         CFIDs.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json')
-        CFIDs.dump_originals('ESLifier_Data/original_files.json')
+        CFIDs.dump_dictionary('ESLifier_Data/original_files.json', CFIDs.original_files)
+        CFIDs.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', CFIDs.winning_file_history_dict)
+        CFIDs.dump_dictionary('ESLifier_Data/master_byte_data.json', CFIDs.master_byte_data)
         if os.path.exists('bsa_extracted_temp/'):
             print('-  Deleting temporarily Extracted FaceGen/Voice Files...')
             shutil.rmtree('bsa_extracted_temp/')
@@ -128,11 +133,10 @@ class CFIDs():
             print(f'!Error: Failed to dump data to {file}')
             print(e)
 
-    def dump_originals(file):
+    def dump_dictionary(file, dictionary: dict):
         data = CFIDs.get_from_file(file)
-        for key, values in CFIDs.original_files.items():
-            if key not in data:
-                data[key] = values
+        for key, values in dictionary.items():
+            data[key] = values
         try:
             with open(file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
@@ -165,6 +169,8 @@ class CFIDs():
         CFIDs.lock = threading.Lock()
         CFIDs.output_folder_name = output_folder_name
         CFIDs.original_files: dict = CFIDs.get_from_file('ESLifier_Data/original_files.json')
+        CFIDs.winning_files_dict: dict = CFIDs.get_from_file('ESLifier_Data/winning_files_dict.json')
+        CFIDs.winning_file_history_dict: dict = {}
         CFIDs.overwrite_path = os.path.normpath(overwrite_path)
         print("-  Changing ESL flag in: " + os.path.basename(file))
         new_file, _ = CFIDs.copy_file_to_output(file, skyrim_folder, output_folder)
@@ -175,7 +181,8 @@ class CFIDs():
         except Exception as e:
             print('!Error: Failed to set ESL flag in {file}')
             print(e)           
-        CFIDs.dump_originals('ESLifier_Data/original_files.json')
+        CFIDs.dump_dictionary('ESLifier_Data/original_files.json', CFIDs.original_files)
+        CFIDs.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', CFIDs.winning_file_history_dict)
 
     def patch_new(compacted_file: str, dependents: list, files_to_patch: list, skyrim_folder_path: str, output_folder_path: str, 
                   output_folder_name: str, overwrite_path: str, update_header: bool, mo2_mode: bool, add_cell_to_master: bool):
@@ -186,10 +193,15 @@ class CFIDs():
         CFIDs.output_folder_name = output_folder_name
         CFIDs.overwrite_path = os.path.normpath(overwrite_path)
         CFIDs.original_files: dict = CFIDs.get_from_file('ESLifier_Data/original_files.json')
+        CFIDs.winning_files_dict = CFIDs.get_from_file('ESLifier_Data/winning_files_dict.json')
+        CFIDs.master_byte_data: dict = CFIDs.get_from_file('ESLifier_Data/master_byte_data.json')
+        CFIDs.winning_file_history_dict = {}
         CFIDs.do_generate_cell_master = add_cell_to_master
         CFIDs.form_id_map = {}
         CFIDs.form_id_rename_map = []
         print('Patching new plugins and files for ' + compacted_file + '...')
+        CFIDs.master_byte = bytes.fromhex(CFIDs.master_byte_data[compacted_file]['master_byte'])
+        CFIDs.updated_master_index = CFIDs.master_byte_data[compacted_file]['updated_master_index']
         CFIDs.compacted_and_patched[compacted_file] = []
         if dependents != []:
             print("-  Patching New Dependent Plugins...")
@@ -208,19 +220,25 @@ class CFIDs():
                     print('\n')
                 CFIDs.rename_files_threader(compacted_file, to_rename, skyrim_folder_path, output_folder_path)
         CFIDs.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json')
-        CFIDs.dump_originals("ESLifier_Data/original_files.json")
+        CFIDs.dump_dictionary('ESLifier_Data/original_files.json', CFIDs.original_files)
+        CFIDs.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', CFIDs.winning_file_history_dict)
+        CFIDs.dump_dictionary('ESLifier_Data/master_byte_data.json', CFIDs.master_byte_data)
         print('CLEAR ALT')
 
     #Create a copy of the mod plugin we're compacting
     def copy_file_to_output(file: str, skyrim_folder_path: str, output_folder: str) -> tuple[str, str]:
         end_path = CFIDs.get_rel_path(file, skyrim_folder_path)
         new_file = os.path.normpath(os.path.join(os.path.join(output_folder, CFIDs.output_folder_name), end_path))
+        (winning_mod, _) = CFIDs.winning_files_dict.get(end_path, (None, None))
+        if winning_mod != None and winning_mod != output_folder:
+            CFIDs.winning_file_history_dict[end_path] = winning_mod
         with CFIDs.lock:
             if not os.path.exists(os.path.dirname(new_file)):
                 os.makedirs(os.path.dirname(new_file))
             if not os.path.exists(new_file):
                 shutil.copy(file, new_file)
-        if end_path.lower() not in CFIDs.original_files and 'bsa_extracted' not in file and CFIDs.output_folder_name not in file:
+        if ((end_path.lower() not in CFIDs.original_files or CFIDs.original_files[end_path.lower()] != file) and 
+            'bsa_extracted' not in file and CFIDs.output_folder_name not in file):
             try:
                 with open(file, 'rb') as f:
                     sha256_hash = hashlib.sha256(f.read()).hexdigest()
@@ -535,6 +553,7 @@ class CFIDs():
         master_byte = master_count.to_bytes()
         CFIDs.master_byte = master_byte
         CFIDs.updated_master_index = updated_master_index
+        CFIDs.master_byte_data[basename] = {'master_byte': master_byte.hex(), 'updated_master_index': updated_master_index}
 
         saved_forms = form_processor.save_all_form_data(data_list)
 
@@ -721,6 +740,7 @@ class CFIDs():
 
             with CFIDs.lock:
                 CFIDs.compacted_and_patched[os.path.basename(file)].append(rel_path)
+                CFIDs.master_byte_data[os.path.basename(file)]= {'master_byte': master_byte.hex(), 'updated_master_index': updated_master_index}
         except Exception as e:
             print(f'!Error: Failed to patch depdendent: {new_file}')
             print(e)
