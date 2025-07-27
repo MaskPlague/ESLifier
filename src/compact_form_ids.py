@@ -316,9 +316,9 @@ class CFIDs():
                     print('\033[F\033[K-    Percentage: ' + str(round(percent,1)) +'%\n-    Files: ' + str(CFIDs.count) + '/' + str(CFIDs.file_count), end='\r')
             
             rel_path = CFIDs.get_rel_path(file, skyrim_folder_path)
-            with CFIDs.semaphore:
-                for form_ids in CFIDs.form_id_rename_map:
-                    if form_ids[0].lower() in file.lower():
+            for form_ids in CFIDs.form_id_rename_map:
+                if form_ids[0].lower() in file.lower():
+                    with CFIDs.semaphore:
                         new_file, rel_path_new_file = CFIDs.copy_file_to_output(file, skyrim_folder_path, output_folder_path)
                         index = new_file.lower().index(form_ids[0].lower())
                         renamed_file = new_file[:index] + form_ids[1].upper() + new_file[index+6:]
@@ -333,7 +333,7 @@ class CFIDs():
                                 CFIDs.compacted_and_patched[master_base_name].append(rel_path_renamed_file)
                             if 'facegeom' in new_file.lower() and master_base_name.lower() in new_file.lower():
                                 facegeom_meshes.append(renamed_file)
-                        break
+                    break
             CFIDs.compacted_and_patched[master_base_name].append(rel_path.lower())
         if facegeom_meshes != []:
             CFIDs.patch_files(master, facegeom_meshes, skyrim_folder_path, output_folder_path)
