@@ -44,4 +44,10 @@ class QtToggle(QCheckBox):
             p.drawEllipse(self.width() - (self.height() - 2), 2, self.height() - 4 , self.height() - 4)
         
         p.end()
+
+    def change_color(self, bg_color='Light Grey', circle_color='Grey', active_color='White'):
+        self._circle_color = circle_color
+        self._active_color = active_color
+        self._bg_color = bg_color
+        #self.paintEvent(None)
         
