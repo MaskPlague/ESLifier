@@ -99,7 +99,7 @@ class scanner():
         print('\033[F\033[K-  Gathered ' + str(len(scanner.all_files)) +' total files.', end='\r')
 
         if full_scan:
-            print('Gettings Dependencies')
+            print('Getting Dependencies')
             dependency_dictionary = dependecy_getter.scan()
             print('Scanning Plugins')
             flag_dict = qualification_checker.scan(path, update_header)
