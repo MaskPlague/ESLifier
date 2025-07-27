@@ -109,7 +109,6 @@ class log_stream(QMainWindow):
         if text.startswith('~Ineligible:'):
             ineligible = text[12:]
             self.ineligible.append(ineligible)
-            pass
             
     def missing_patcher_warning(self):
         patcher_message = QMessageBox()
@@ -304,7 +303,7 @@ class log_stream(QMainWindow):
     def clean_up(self):
         self.timer_clear.stop()
         if not self.crash:
-            self.text_edit.setPlainText(None)
+            self.text_edit.setPlainText('')
             self.hide()
             self.parent().update_settings()
         if len(self.missing_patchers) > 0:
