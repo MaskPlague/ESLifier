@@ -3,7 +3,7 @@ import subprocess
 import os
 import json
 
-from .ESLifier_notifier import check_plugins
+from .ESLifier_notifier import check_files
 from .ESLifier_blacklist import blacklist_window
 from .ESLifier_notification_display import notification_display_dialog
 
@@ -99,7 +99,7 @@ class ESLifier(mobase.IPluginTool):
         self._organizer.pluginList().onRefreshed(self.grey_out_icon)
         self._organizer.pluginList().onRefreshed(self.scan_files)
 
-        self.notifier = check_plugins()
+        self.notifier = check_files()
         self.notifcation_display = notification_display_dialog(icon_path)
         self.blacklist_add = blacklist_window(False, self.scan_files)
         self.blacklist_remove = blacklist_window(True, self.scan_files)

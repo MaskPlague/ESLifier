@@ -5,8 +5,8 @@ import hashlib
 
 from .ESLifier_qualification_checker import qualification_checker as light_check
 
-class check_plugins():    
-    def scan_for_eslable(self, scan_esms, eslifier_folder, new_header, compare_hashes, only_plugins, plugin_files_list) -> tuple[bool, dict, dict, list]:
+class check_files():    
+    def scan_files(self, scan_esms, eslifier_folder, new_header, compare_hashes, detect_conflict_changes, only_plugins, plugin_files_list, eslifier) -> tuple[bool, dict, dict, list, list]:
         self.flag_dict = {}
         self.hash_mismatches = []
         self._problems = [0]
