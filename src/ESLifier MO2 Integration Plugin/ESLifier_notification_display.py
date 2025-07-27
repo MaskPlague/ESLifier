@@ -32,8 +32,15 @@ class notification_display_dialog(QDialog):
                                                 "which can cause a CTD.")
         main_layout.addWidget(self.master_not_enabled_label)
 
+        self.conflict_changes_table = self.make_table(1)
+        self.conflict_changes_table_label = QLabel("The following files have had their conflicts change since ESLifier last ran:\n"\
+                                                    "(Run the Patch New button in ESLifier.exe)")
+        main_layout.addWidget(self.conflict_changes_table_label)
+        main_layout.addWidget(self.conflict_changes_table)
+
         self.hash_mismatch_table = self.make_table(1)
-        self.hash_mismatch_table_label = QLabel("The following plugin files have been altered or removed since ESLifier last ran:")
+        self.hash_mismatch_table_label = QLabel("The following files have been altered or removed since ESLifier last ran:\n"\
+                                                "(Run the Patch New button in ESLifier.exe)")
         main_layout.addWidget(self.hash_mismatch_table_label)
         main_layout.addWidget(self.hash_mismatch_table)
 
@@ -58,12 +65,16 @@ class notification_display_dialog(QDialog):
         table.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignLeft)
         return table
 
-    def create(self, hash_mismatches: list, needs_flag_dict: dict, needs_compacting_flag_dict: dict):
+    def create(self, hash_mismatches: list, conlfict_changes: list, needs_flag_dict: dict, needs_compacting_flag_dict: dict, master_not_enabled: bool):
 
         if master_not_enabled:
             self.master_not_enabled_label.show()
         else:
             self.master_not_enabled_label.hide()
+
+        self.conflict_changes_table.hide()
+        self.conflict_changes_table.clear()
+        self.conflict_changes_table_label.hide()
 
         self.hash_mismatch_table.hide()
         self.hash_mismatch_table.clear()
@@ -76,6 +87,10 @@ class notification_display_dialog(QDialog):
         self.needs_compacting_flag_table.clear()
         self.needs_compacting_flag_table.hide()
         self.needs_compacting_flag_table_label.hide()
+
+        if len(conlfict_changes) > 0:
+            self.conflict_changes_table_label.show()
+            self.populate_flag_table(self.conflict_changes_table, conlfict_changes)
 
         if len(hash_mismatches) > 0:
             self.hash_mismatch_table_label.show()
