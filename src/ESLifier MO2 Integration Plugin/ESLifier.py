@@ -373,4 +373,6 @@ class CheckWorker(QObject):
         plugin_files_list = [plugin for plugin in self.eslifier._organizer.findFiles('', self.filter) if os.path.basename(plugin) not in self.ignore_list]
         flag, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches = self.plugin_checker.scan_for_eslable(self.scan_esms, self.eslifier_folder, self.new_header, 
                                                                                                  self.compare_hashes, self.only_plugins, plugin_files_list)
-        self.finished_signal.emit(flag, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches)
+        self.finished_signal.emit(flag, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches)        master_not_enabled = True if self.eslifier._organizer.pluginList().state("ESLifier_Cell_Master.esm") == 1 else False
+        if master_not_enabled:
+            flag = True

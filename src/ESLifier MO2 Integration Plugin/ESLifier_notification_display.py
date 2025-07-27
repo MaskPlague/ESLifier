@@ -28,6 +28,10 @@ class notification_display_dialog(QDialog):
         self.setWindowIcon(QIcon(icon_path + '\\ESLifier.ico'))
         self.setWindowTitle("ESLifier Notifications")
 
+        self.master_not_enabled_label = QLabel("The ESLifier_Cell_Master.esm plugin exists but has not been enabled in the plugin list\n" \
+                                                "which can cause a CTD.")
+        main_layout.addWidget(self.master_not_enabled_label)
+
         self.hash_mismatch_table = self.make_table(1)
         self.hash_mismatch_table_label = QLabel("The following plugin files have been altered or removed since ESLifier last ran:")
         main_layout.addWidget(self.hash_mismatch_table_label)
@@ -55,6 +59,12 @@ class notification_display_dialog(QDialog):
         return table
 
     def create(self, hash_mismatches: list, needs_flag_dict: dict, needs_compacting_flag_dict: dict):
+
+        if master_not_enabled:
+            self.master_not_enabled_label.show()
+        else:
+            self.master_not_enabled_label.hide()
+
         self.hash_mismatch_table.hide()
         self.hash_mismatch_table.clear()
         self.hash_mismatch_table_label.hide()
