@@ -203,7 +203,7 @@ class PatchNewScannerWorker(QObject):
         if self.mo2_mode:
             print('Detecting Conflict Changes...')
             if len(winning_file_history_dict) > 0:
-                for rel_path, prev_mod in winning_file_history_dict.items():
+                for rel_path, prev_mod in winning_file_history_dict.copy().items():
                     (mod_name, full_path) = winning_files_dict.get(rel_path, (None, None))
                     if mod_name != None and mod_name != prev_mod:
                         self.conflict_changes.append((rel_path.lower(), full_path))
@@ -218,18 +218,14 @@ class PatchNewScannerWorker(QObject):
                 for file in files:
                     rel_path = self.get_rel_path(file, self.skyrim_folder_path)
                     if rel_path.lower() not in actual_cases_output_files:
-                        mod_folder, _ = winning_files_dict.get(rel_path, (None, None))
-                        if mod_folder != None:
-                            actual_cases_output_files[rel_path.lower()] = os.path.join(self.output_path, rel_path)
+                        actual_cases_output_files[rel_path.lower()] = os.path.join(self.output_path, rel_path)
 
             for deps in dependencies.values():
                 for dep in deps:
                     rel_path = self.get_rel_path(dep, self.skyrim_folder_path)
                     if rel_path.lower() not in actual_cases_output_files:
-                        mod_folder, _ = winning_files_dict.get(rel_path, (None, None))
-                        if mod_folder != None:
-                            actual_cases_output_files[rel_path.lower()] = os.path.join(self.output_path, rel_path)
-
+                        actual_cases_output_files[rel_path.lower()] = os.path.join(self.output_path, rel_path)
+        
         with open('ESLifier_Data/previously_compacted.json', 'w', encoding='utf-8') as f:
             previously_compacted = [key for key in compacted_and_patched.keys()]
             json.dump(previously_compacted, f, ensure_ascii=False, indent=4)
@@ -245,11 +241,13 @@ class PatchNewScannerWorker(QObject):
         only_remove = True
         if len(temp_list) > 0:
             for rel_path, full_path in temp_list:
+                added_to_list = False
                 for compacted, patched in compacted_and_patched.copy().items():
                     if rel_path == compacted.lower():
                         output_cased = actual_cases_output_files.get(rel_path, None)
                         if output_cased != None and output_cased not in files_to_remove:
                             files_to_remove.append(output_cased)
+                            added_to_list = True
                             for patched_rel_path in patched:
                                 patched_output_cased = actual_cases_output_files.get(patched_rel_path, None)
                                 if patched_output_cased != None and patched_output_cased not in files_to_remove:
@@ -257,6 +255,12 @@ class PatchNewScannerWorker(QObject):
                                     only_remove = False
                         elif output_cased == None and full_path not in files_to_remove and full_path.startswith(self.output_path):
                             files_to_remove.append(full_path)
+                            added_to_list = True
+                            for patched_rel_path in patched:
+                                patched_output_cased = actual_cases_output_files.get(patched_rel_path, None)
+                                if patched_output_cased != None and patched_output_cased not in files_to_remove:
+                                    files_to_remove.append(patched_output_cased)
+                                    only_remove = False
                         compacted_and_patched.pop(compacted)
 
                     if rel_path in patched:
@@ -264,8 +268,10 @@ class PatchNewScannerWorker(QObject):
                         if output_cased != None and output_cased not in files_to_remove:
                             files_to_remove.append(output_cased)
                             only_remove = False
+                            added_to_list = True
                         elif output_cased == None and full_path not in files_to_remove and full_path.startswith(self.output_path):
                             files_to_remove.append(full_path)
+                            added_to_list = True
                         compacted_and_patched[compacted].remove(rel_path)
                 
                 for flagged in esl_flagged:
@@ -273,25 +279,37 @@ class PatchNewScannerWorker(QObject):
                         output_cased = actual_cases_output_files.get(rel_path, None)
                         if output_cased != None and output_cased not in files_to_remove:
                             files_to_remove.append(output_cased)
+                            added_to_list = True
+                
+                if not added_to_list and full_path.startswith(self.output_path):
+                    files_to_remove.append(full_path)
 
+        #TODO: figure out why it prints a bunch of blank space ??
         if len(files_to_remove) > 0:
             with open('ESLifier_Data/compacted_and_patched.json', 'w', encoding='utf-8') as f:
                 json.dump(compacted_and_patched, f, ensure_ascii=False, indent=4)
             print("CLEAR ALT")
-            self.delete_and_patch_changed(files_to_remove, only_remove)
+            self.delete_and_patch_changed(files_to_remove, only_remove, winning_file_history_dict)
         else:
             self.detect_new_files()
     
-    def delete_and_patch_changed(self, files_to_remove, only_remove):
-        print("Deleting Changed Files that may need re-patching...")
+    def delete_and_patch_changed(self, files_to_remove: list[str], only_remove: bool, winning_file_history_dict: dict[str, list[str]]):
+        print(f"Deleting Files that may need re-patching...")
+        deleted_count = 0
         for file in files_to_remove:
             if os.path.exists(file) and self.output_folder.lower() in file.lower():
                 os.remove(file)
+                deleted_count += 1
+            cased_rel_path = self.get_rel_path(file, self.skyrim_folder_path)
+            if cased_rel_path in winning_file_history_dict:
+                winning_file_history_dict.pop(cased_rel_path)
+        with open("ESLifier_Data/winning_file_history_dict.json", 'w', encoding='utf-8') as f:
+            json.dump(winning_file_history_dict, f, ensure_ascii=False, indent=4)
+
         self._parent.redoing_output = True
         self._parent.patch_new_running = True
         self._parent.patch_new_only_remove = only_remove
         self._parent.scan()
-
 
     def detect_new_files(self):
         if not os.path.exists("ESLifier_Data/compacted_and_patched.json"):
