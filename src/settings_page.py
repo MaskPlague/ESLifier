@@ -160,6 +160,7 @@ class settings(QWidget):
             "the new worldspace flag/filter.",
             "generate_cell_master"            
         )
+        self.generate_cell_master_toggle.clicked.connect(self.cell_master_clicked)
 
         self.set_init_widget_values()
         
@@ -304,6 +305,24 @@ class settings(QWidget):
             self.skyrim_folder_path_widget.setToolTip("Set this to your Skyrim Special Edition Data folder that holds Skyrim.esm.")
             self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText("Data Folder Path")
             self.skyrim_folder_path.setPlaceholderText('C:/Path/To/Skyrim Special Edition/Data')
+    
+    def cell_master_clicked(self):
+        if self.generate_cell_master_toggle.checkState() == Qt.CheckState.Checked:
+            self.enable_cell_changed_filter_widget.setEnabled(False)
+            self.enable_cell_changed_filter_toggle.change_color(circle_color='LightCoral', bg_color='Grey', active_color='Grey')
+            self.enable_cell_changed_filter_widget.setToolTip("Disabled by Generate Cell Master setting.")
+            self.enable_worldspaces_filter_widget.setEnabled(False)
+            self.enable_worldspaces_filter_toggle.change_color(circle_color='LightCoral', bg_color='Grey', active_color='Grey')
+            self.enable_worldspaces_filter_widget.setToolTip("Disabled by Generate Cell Master setting.")
+        else:
+            self.enable_cell_changed_filter_widget.setEnabled(True)
+            self.enable_cell_changed_filter_toggle.change_color()
+            self.enable_cell_changed_filter_widget.setToolTip("Hide ESM plugins with new CELL records that have been changed by a dependent plugin.")
+            self.enable_worldspaces_filter_widget.setEnabled(True)
+            self.enable_worldspaces_filter_toggle.change_color()
+            self.enable_worldspaces_filter_widget.setToolTip("Hide plugins with new worldspaces records as they can have the landscape disappear\n"+
+                                                            "(no ground) when flagged as ESL.")
+
 
     def create_button_widget(self, label_text, tooltip, button_text, click_function):
         layout = QHBoxLayout()
@@ -475,6 +494,8 @@ class settings(QWidget):
         else:
             self.mo2_modlist_txt_path_widget.hide()
             self.overwrite_path_widget.hide()
+        self.cell_master_clicked()
+
         self.save_settings_to_file()
         
     def get_settings_from_file(self):
