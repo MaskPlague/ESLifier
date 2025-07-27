@@ -534,7 +534,7 @@ class main(QWidget):
             else:
                 print("CLEAR")
                 self.setEnabled(True)
-        self.eslifier.update_settings()
+        self.eslifier.create_tables()
         self.calculate_stats()
         if not self.redoing_output:
             self.setEnabled(True)
@@ -576,7 +576,7 @@ class main(QWidget):
         self.list_compact.flag_dict = {p: f for p, f in flag_dict.items() if 'need_compacting' in f}
         self.dependency_dictionary = dependency_dictionary
         print('Populating Tables')
-        self.eslifier.update_settings()
+        self.eslifier.create_tables()
         print('Done Scanning')
         if self.redoing_output and not self.patch_new_only_remove:
             if os.path.exists('ESLifier_Data/esl_flagged.json'):
@@ -584,6 +584,7 @@ class main(QWidget):
                 os.remove('ESLifier_Data/esl_flagged.json')
                 self.eslify_selected_clicked()
             elif os.path.exists('ESLifier_Data/previously_compacted.json'):
+                print('previously_compacted')
                 self.list_compact.check_previously_compacted()
                 self.compact_selected_clicked()
             self.calculate_stats()
@@ -861,18 +862,10 @@ class main(QWidget):
         def accepted():
             confirm.hide()
             self.log_stream.show()
-            self.patch_new.scan_and_find(self.settings, self)
+            self.patch_new.scan_and_find(self.settings.copy(), self)
         confirm.accepted.connect(accepted)
         confirm.rejected.connect(lambda: self.setEnabled(True))
         confirm.show()
-    
-    def re_compact(self, files_to_remove, files_to_re_flag, files_to_re_compact):
-        output_folder = os.path.join(self.output_folder_path, self.output_folder_name)
-        #files_to_remove, size, file_count = self.calculate_existing_output(output_folder)
-        self.delete_output(output_folder, files_to_remove)
-        self.calculate_stats()
-        self.redoing_output = True
-        self.scan()
 
 class ScannerWorker(QObject):
     finished_signal = pyqtSignal(dict, dict)
