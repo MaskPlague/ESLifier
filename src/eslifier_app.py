@@ -386,6 +386,7 @@ class main_window(QMainWindow):
         sys.excepthook = sys.__excepthook__
         for window in QApplication.topLevelWidgets():
             window.close()
+        return super().closeEvent(a0)
 
     def resizeEvent(self, a0):
         self.log_stream.center_on_parent()
