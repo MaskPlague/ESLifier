@@ -287,7 +287,6 @@ class PatchNewScannerWorker(QObject):
                 if not added_to_list and full_path.startswith(self.output_path):
                     files_to_remove.append(full_path)
 
-        #TODO: figure out why it prints a bunch of blank space ??
         if len(files_to_remove) > 0:
             with open('ESLifier_Data/compacted_and_patched.json', 'w', encoding='utf-8') as f:
                 json.dump(compacted_and_patched, f, ensure_ascii=False, indent=4)
