@@ -327,11 +327,8 @@ class main_window(QMainWindow):
         self.main_widget.list_eslify.filter_worldspaces =       self.settings_widget.settings['filter_worldspaces']
         self.main_widget.list_eslify.cell_master =              self.settings_widget.settings['generate_cell_master']
         self.main_widget.settings =                             self.settings_widget.settings.copy()
-        self.create_tables()
-    
-    def create_tables(self):
-        self.main_widget.list_compact.create()
         self.main_widget.list_eslify.create()
+        self.main_widget.list_compact.create()
 
     def set_colors(self):
         inner_color = self.settings_widget.settings['inner_color']
@@ -379,6 +376,10 @@ class main_window(QMainWindow):
                 }""")
         
     def closeEvent(self, a0):
+        try:
+            self.log_stream.flush()
+        except:
+            pass
         sys.stdout.flush()
         sys.stderr.flush()
         sys.stdout = sys.__stdout__
