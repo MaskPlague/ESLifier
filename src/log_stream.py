@@ -48,8 +48,9 @@ class log_stream(QMainWindow):
                 os.remove(dst)
             if os.path.exists(src):
                 shutil.copy(src, dst)
-
         self.log_file = open("ESLifier_Data/ESLifier.log", 'w', encoding='utf-8')
+        formatted_datetime = '[' + datetime.now().isoformat(timespec='milliseconds') + ']\n'
+        self.log_file.write(formatted_datetime)
         self.log_file.write(f'ESLifier Version v{version}\n')
         self.log_file.write('Working directory is ' + os.getcwd() + '\n')
         self.log_file.flush()
@@ -94,7 +95,6 @@ class log_stream(QMainWindow):
             and text != ''):
             formatted_datetime = '[' + datetime.now().isoformat(timespec='milliseconds') + '] '
             self.log_file.write(formatted_datetime + text.removeprefix('~') + '\n')
-            #self.log_file.flush()
         if text.startswith('Warn:') and not 'red' in self.text_edit.styleSheet() and not 'lightblue' in self.text_edit.styleSheet():
             self.text_edit.setStyleSheet("background-color: lightblue")
         if text.startswith('Warn:'):
@@ -236,9 +236,9 @@ class log_stream(QMainWindow):
         self.log_file.flush()
 
     def closeEvent(self, a0):
+        super().closeEvent(a0)
         self.log_file.flush()
         self.log_file.close()
-        return super().closeEvent(a0)
 
     def process_queue(self):
         self.timer.stop()
