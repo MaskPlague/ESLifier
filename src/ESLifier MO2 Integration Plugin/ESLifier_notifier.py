@@ -97,7 +97,7 @@ class check_files():
         if len(origins) == 1:
             if old_winner != origins[0]:
                 self.conflict_changes.append(file)
-        else:
+        elif len(origins) > 0:
             if origins[-1] != old_winner:
                 self.conflict_changes.append(file)
 
