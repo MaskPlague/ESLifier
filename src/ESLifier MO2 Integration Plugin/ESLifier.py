@@ -8,17 +8,17 @@ from .ESLifier_blacklist import blacklist_window
 from .ESLifier_notification_display import notification_display_dialog
 
 try:
-    from PyQt6.QtCore import QCoreApplication, QObject, pyqtSignal, QThread
+    from PyQt6.QtCore import QCoreApplication, QObject, pyqtSignal, QThread, QTimer
     from PyQt6.QtGui import QIcon, QColor
     from PyQt6.QtWidgets import QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton, QToolBar, QCheckBox, QLabel, QGridLayout, QWidget
 except ImportError:
-    from PyQt5.QtCore import QCoreApplication, QObject, pyqtSignal, QThread
+    from PyQt5.QtCore import QCoreApplication, QObject, pyqtSignal, QThread, QTimer
     from PyQt5.QtGui import QIcon, QColor
     from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton, QToolBar, QCheckBox, QLabel, QGridLayout, QWidget
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from PyQt6.QtCore import QCoreApplication, QObject, pyqtSignal, QThread
+    from PyQt6.QtCore import QCoreApplication, QObject, pyqtSignal, QThread, QTimer
     from PyQt6.QtGui import QIcon, QColor
     from PyQt6.QtWidgets import QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton, QToolBar, QCheckBox, QLabel, QGridLayout, QWidget
             
@@ -80,18 +80,28 @@ class ESLifier(mobase.IPluginTool):
         self.main_dialog = QDialog()
         self.settings_dialog = QDialog()
         self.thread = QThread()
-        self.scan_again = False
         self.needs_flag_dict = {}
         self.needs_compacting_flag_dict = {}
         self.hash_mismatches = []
         self.conflict_changes = []
         self.master_not_enabled = False
+        self.throbber_iterator = 0
 
         icon_path = os.path.join(os.path.split(self._organizer.getPluginDataPath())[0], 'ESLifier MO2 Integration')
-        self.eslifier_icon = QIcon(icon_path + '\\ESLifier.ico')
+        self.eslifier_icon_default = QIcon(icon_path + '\\ESLifier.ico')
+        self.eslifier_icon = self.eslifier_icon_default
         self.main_dialog.setWindowIcon(self.eslifier_icon)
         self.eslifier_icon_notif = QIcon(icon_path + '\\ESLifier_with_notif_badge.ico')
         self.eslifier_icon_greyed_out = QIcon(icon_path + '\\ESLifier_greyed_out.ico')
+
+        throbber_top_icon = QIcon(icon_path + '\\ESLifier_throbber_top.ico')
+        throbber_right_icon = QIcon(icon_path + '\\ESLifier_throbber_right.ico')
+        throbber_bottom_icon = QIcon(icon_path + '\\ESLifier_throbber_bottom.ico')
+        throbber_left_icon = QIcon(icon_path + '\\ESLifier_throbber_left.ico')
+        self.eslifier_thobber = [throbber_top_icon, throbber_right_icon, throbber_bottom_icon, throbber_left_icon]
+        self.throbber_timer = QTimer()
+        self.throbber_timer.timeout.connect(self.throbber_iterate)
+        self.throbber_timer.setInterval(250)
 
         self.eslifier_button = QToolButton()
         self.eslifier_button.setIcon(self.eslifier_icon_greyed_out)
@@ -100,7 +110,7 @@ class ESLifier(mobase.IPluginTool):
         self._organizer.onUserInterfaceInitialized(self.create)
         self._organizer.onUserInterfaceInitialized(self.create_settings_dialog)
         self._organizer.pluginList().onRefreshed(self.scan_files)
-        self._organizer.pluginList().onPluginStateChanged(self.maybe_scan)
+        self._organizer.pluginList().onPluginStateChanged(self.scan_if_cell_master_state_changed)
 
         self.notifier = check_files()
         self.notifcation_display = notification_display_dialog(icon_path)
@@ -109,7 +119,13 @@ class ESLifier(mobase.IPluginTool):
 
         return True
     
-    def maybe_scan(self, state_changes):
+    def throbber_iterate(self):
+        if self.throbber_iterator > 3:
+            self.throbber_iterator = 0
+        self.eslifier_button.setIcon(self.eslifier_thobber[self.throbber_iterator])
+        self.throbber_iterator += 1
+    
+    def scan_if_cell_master_state_changed(self, state_changes):
         for mod in state_changes:
             if mod == 'ESLifier_Cell_Master.esm':
                 self.scan_files()
@@ -117,7 +133,12 @@ class ESLifier(mobase.IPluginTool):
     
     def scan_files(self):
         notifications_enabled = self._organizer.pluginSetting(self.name(), "Enable Notifications")
-        if not self.thread.isRunning() and notifications_enabled:
+        if self.thread.isRunning():
+            self.worker.stop()
+            self.thread.quit()
+
+        if notifications_enabled:
+            self.throbber_timer.start()
             scan_esms = self._organizer.pluginSetting(self.name(), "Scan ESMs")
             eslifier_folder = self._organizer.pluginSetting(self.name(), "ESLifier Folder")
             new_header = self._organizer.pluginSetting(self.name(), "Use 1.71 Header Range")
@@ -141,22 +162,22 @@ class ESLifier(mobase.IPluginTool):
                                        compare_hashes, detect_conflict_changes, only_plugins, ignore_list, filter)
             self.worker.moveToThread(self.thread)
             self.thread.started.connect(self.worker.check_files)
-            self.thread.finished.connect(self.possibly_recheck)
             self.worker.finished_signal.connect(self.update_icon)
             self.worker.finished_signal.connect(self.thread.quit)
             self.worker.finished_signal.connect(self.worker.deleteLater)
             self.thread.start()
-            self.scan_again = False
         else:
-            if not notifications_enabled:
-                self.grey_out_icon()
-            else:
-                self.scan_again = True
+            self.grey_out_icon()
         return
 
-    def update_icon(self, any_eslable_or_issue, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches, conflict_changes, master_enabled):
+    def update_icon(self, any_eslable_or_issue, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches, conflict_changes, master_enabled, early_exit):
+        if not early_exit:
+            self.throbber_timer.stop()
+        else:
+            self.scan_files()
         if any_eslable_or_issue:
             self.eslifier_button.setIcon(self.eslifier_icon_notif)
+            self.eslifier_icon = self.eslifier_icon_notif
             self.needs_flag_dict = needs_flag_dict
             self.needs_compacting_flag_dict = needs_compacting_flag_dict
             self.hash_mismatches = hash_mismatches
@@ -169,18 +190,13 @@ class ESLifier(mobase.IPluginTool):
     
     def grey_out_icon(self):
         self.eslifier_button.setIcon(self.eslifier_icon_greyed_out)
+        self.eslifier_icon = self.eslifier_icon_default
         self.needs_flag_dict.clear()
         self.needs_compacting_flag_dict.clear()
         self.hash_mismatches.clear()
         self.conflict_changes.clear()
         self.master_not_enabled = False
         self.notification_button.hide()
-    
-    def possibly_recheck(self):
-        if self.scan_again:
-            self.scan_again = False
-            self.scan_files()
-        return
     
     def create_label_check_box_setting_pair(self, layout: QGridLayout, text: str, row: int, tool_tip = None) -> QCheckBox:
         label = QLabel(text)
@@ -331,8 +347,6 @@ class ESLifier(mobase.IPluginTool):
                     action = tool_bar.children()[-9].actions()[0]
                     tool_bar.insertWidget(action, self.eslifier_button)
 
-        self.scan_files()
-
     def button_maker(self, name, function, hide=False):
         button = QPushButton(name)
         if hide:
@@ -375,7 +389,7 @@ class ESLifier(mobase.IPluginTool):
 
 
 class CheckWorker(QObject):
-    finished_signal = pyqtSignal(bool, dict, dict, list, list, bool)
+    finished_signal = pyqtSignal(bool, dict, dict, list, list, bool, bool)
     def __init__(self, eslifier: ESLifier, file_checker: check_files, scan_esms, eslifier_folder, new_header, 
                  compare_hashes, detect_conflict_changes, only_plugins, ignore_list, filter):
         super().__init__()
@@ -389,6 +403,7 @@ class CheckWorker(QObject):
         self.only_plugins = only_plugins
         self.ignore_list = ignore_list
         self.filter = filter
+        self.running = True
 
     def check_files(self):
         mods_path = os.path.normpath(self.eslifier._organizer.modsPath())
@@ -399,4 +414,11 @@ class CheckWorker(QObject):
                                     self.detect_conflict_changes, self.only_plugins, plugin_files_list, self.eslifier)
         if master_not_enabled:
             flag = True
-        self.finished_signal.emit(flag, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches, conflict_changes, master_not_enabled)
+        if self.running:
+            self.finished_signal.emit(flag, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches, conflict_changes, master_not_enabled, False)
+        else:
+            self.finished_signal.emit(False, {}, {}, [], [], False, True)
+
+    def stop(self):
+        self.file_checker.stop()
+        self.running = False
