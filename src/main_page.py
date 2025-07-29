@@ -92,7 +92,9 @@ class main(QWidget):
             "Scan for new plugins and files that were not\n"\
             "present during intial compacting and patching\n"\
             "and then patch those new plugins and files.\n"\
-            "This currently cannot detect changes in BSA.",
+            "If in MO2 mode, it will also detect file\n"\
+            "conflict changes. This currently cannot detect\n"\
+            "changes in BSA.",
             self.scan_and_patch_new
         )
         #self.scan_and_patch_new_button.clicked.connect(self.set_false_redoing_output)
@@ -321,6 +323,8 @@ class main(QWidget):
             self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
             self.confirm.rejected.connect(lambda:self.setEnabled(True))
             self.confirm.setEnabled(True)
+        elif self.patch_new_running and checked == []:
+            self.finished_button_action('compact', checked)
         else:
             self.setEnabled(True)
 
@@ -338,13 +342,13 @@ class main(QWidget):
                                 self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.generate_cell_master)
         self.worker.moveToThread(self.compact_thread)
         self.compact_thread.started.connect(self.worker.run)
-        self.worker.finished_signal.connect(self.compact_thread.quit)
-        self.worker.finished_signal.connect(self.compact_thread.deleteLater)
-        self.worker.finished_signal.connect(self.worker.deleteLater)
         self.worker.finished_signal.connect(
             lambda sender = 'compact', 
             checked_list = checked:
             self.finished_button_action(sender, checked_list,))
+        self.worker.finished_signal.connect(self.compact_thread.quit)
+        self.worker.finished_signal.connect(self.compact_thread.deleteLater)
+        self.worker.finished_signal.connect(self.worker.deleteLater)
         self.compact_thread.start()
         
     def eslify_selected_clicked(self):
@@ -412,6 +416,8 @@ class main(QWidget):
             self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
             self.confirm.rejected.connect(lambda:self.setEnabled(True))
             self.confirm.setEnabled(True)
+        elif self.patch_new_running and checked == []:
+            self.finished_button_action('eslify', checked)
         else:
             self.setEnabled(True)
 
@@ -448,7 +454,7 @@ class main(QWidget):
                     self.finished_button_action(sender, checked_list,))
                 self.flag_and_patch_thread.start()
             else:
-                self.finished_button_action('eslify', checked)
+                self.finished_button_action('eslify', checked,)
                 print("File(s) ESL Flagged")
                 if self.redoing_output:
                     print("CLEAR ALT")
@@ -472,9 +478,13 @@ class main(QWidget):
             basename = os.path.basename(file)
             if basename not in esl_flagged_data:
                 esl_flagged_data.append(basename)
-        with open('ESLifier_Data/esl_flagged.json', 'w', encoding='utf-8') as f:
-            json.dump(esl_flagged_data, f, ensure_ascii=False, indent=4)
-            f.close()
+        try:
+            with open('ESLifier_Data/esl_flagged.json', 'w', encoding='utf-8') as f:
+                json.dump(esl_flagged_data, f, ensure_ascii=False, indent=4)
+                f.close()
+        except Exception as e:
+            print('!Error: failed to save esl_flagged.json')
+            print(e)
 
     def finished_button_action(self, sender, checked_list):
         if not self.redoing_output:
@@ -502,9 +512,10 @@ class main(QWidget):
             message.accepted.connect(shown)
             message.show()
         if sender == 'compact':
-            for mod in checked_list:
-                self.list_compact.flag_dict.pop(mod)
-            self.list_compact.create()
+            if len(checked_list) > 0:
+                for mod in checked_list:
+                    self.list_compact.flag_dict.pop(mod)
+                self.list_compact.create()
             if not self.patch_new_running:
                 print(f"Total Elapsed Time: {timeit.default_timer() - self.start_time:.2f} Seconds")
                 print("CLEAR")
@@ -515,9 +526,10 @@ class main(QWidget):
                 self.redoing_output = False
                 self.patch_new.finished_rebuilding()
         elif sender == 'eslify':
-            for mod in checked_list:
-                self.list_eslify.flag_dict.pop(mod)
-            self.list_eslify.create()
+            if len(checked_list) > 0:
+                for mod in checked_list:
+                    self.list_eslify.flag_dict.pop(mod)
+                self.list_eslify.create()
             if not self.redoing_output:
                 print("CLEAR")
             elif self.redoing_output and os.path.exists('ESLifier_Data/previously_compacted.json'):
@@ -528,16 +540,21 @@ class main(QWidget):
                         checked += 1
                 if checked > 0:
                     self.compact_selected_clicked()
+                elif checked == 0 and self.patch_new_running:
+                    self.patch_new_running = False
+                    self.patch_new_only_remove = False
+                    self.redoing_output = False
+                    self.patch_new.finished_rebuilding()
                 else:
                     print("CLEAR")
                     self.setEnabled(True)
             else:
                 print("CLEAR")
                 self.setEnabled(True)
-        self.eslifier.create_tables()
-        self.calculate_stats()
+        #self.eslifier.create_tables()
         if not self.redoing_output:
             self.setEnabled(True)
+            self.calculate_stats()
         
     def scan(self):
         self.setEnabled(False)
@@ -576,7 +593,11 @@ class main(QWidget):
         self.list_compact.flag_dict = {p: f for p, f in flag_dict.items() if 'need_compacting' in f}
         self.dependency_dictionary = dependency_dictionary
         print('Populating Tables')
-        self.eslifier.create_tables()
+        try:
+            self.eslifier.create_tables()
+        except Exception as e:
+            print('!Error: Failed to create tables')
+            print(e)
         print('Done Scanning')
         if self.redoing_output and not self.patch_new_only_remove:
             if os.path.exists('ESLifier_Data/esl_flagged.json'):
@@ -584,10 +605,9 @@ class main(QWidget):
                 os.remove('ESLifier_Data/esl_flagged.json')
                 self.eslify_selected_clicked()
             elif os.path.exists('ESLifier_Data/previously_compacted.json'):
-                print('previously_compacted')
                 self.list_compact.check_previously_compacted()
                 self.compact_selected_clicked()
-            self.calculate_stats()
+            #self.calculate_stats()
         elif self.redoing_output and self.patch_new_only_remove:
             self.redoing_output = False
             self.patch_new_running = False
@@ -820,7 +840,6 @@ class main(QWidget):
                 item_path = os.path.join(output_folder, item)
                 if os.path.isdir(item_path):
                     shutil.rmtree(item_path)
-        self.calculate_stats()
 
     def calculate_stats(self):
         _, size, file_count=  self.calculate_existing_output(os.path.join(self.output_folder_path, self.output_folder_name))
@@ -879,6 +898,7 @@ class ScannerWorker(QObject):
         plugins_with_cells = [plugin for plugin, flags in flag_dict.items() if 'new_cell' in flags]
         cell_scanner.scan(plugins_with_cells)
         self.finished_signal.emit(flag_dict, dependency_dictionary)
+        return
 
 class CompactorWorker(QObject):
     finished_signal = pyqtSignal()
@@ -938,3 +958,4 @@ class CompactorWorker(QObject):
             self.create_new_cell_plugin.finalize_plugin()
         print("Patching Complete")
         self.finished_signal.emit()
+        return
