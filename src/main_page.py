@@ -436,38 +436,9 @@ class main(QWidget):
                     patch_and_flag.append(file)
                 else:
                     flag_only.append(file) 
-            for file in flag_only:
-                CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, self.mo2_mode)
-            if len(patch_and_flag) > 0:
-                self.flag_and_patch_thread = QThread()
-                self.worker = CompactorWorker(patch_and_flag, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, 
-                                        self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.generate_cell_master)
-                self.worker.moveToThread(self.flag_and_patch_thread)
-                self.flag_and_patch_thread.started.connect(self.worker.run)
-                self.worker.finished_signal.connect(self.flag_and_patch_thread.quit)
-                self.worker.finished_signal.connect(self.flag_and_patch_thread.deleteLater)
-                self.worker.finished_signal.connect(self.worker.deleteLater)
-                self.worker.finished_signal.connect(
-                    lambda sender = 'eslify', 
-                    checked_list = checked:
-                    self.finished_button_action(sender, checked_list,))
-                self.flag_and_patch_thread.start()
-            else:
-                self.finished_button_action('eslify', checked,)
-                print("File(s) ESL Flagged")
-                if self.redoing_output:
-                    print("CLEAR ALT")
-                else:
-                    print("CLEAR")
+            self.create_flag_worker(flag_only, patch_and_flag)
         else:
-            for file in checked:
-                CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, self.mo2_mode)
-            self.finished_button_action('eslify', checked)
-            print("File(s) ESL Flagged")
-            if self.redoing_output:
-                print("CLEAR ALT")
-            else:
-                print("CLEAR")
+            self.create_flag_worker(checked)
         try:
             with open('ESLifier_Data/esl_flagged.json', 'r', encoding='utf-8') as f:
                 esl_flagged_data = json.load(f)
@@ -484,6 +455,44 @@ class main(QWidget):
         except Exception as e:
             print('!Error: failed to save esl_flagged.json')
             print(e)
+
+    def create_patch_and_flag_worker(self, files, patch_and_flag):
+        if len(patch_and_flag) > 0:
+            self.flag_and_patch_thread = QThread()
+            self.worker = CompactorWorker(patch_and_flag, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, 
+                                    self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.generate_cell_master)
+            self.worker.moveToThread(self.flag_and_patch_thread)
+            self.flag_and_patch_thread.started.connect(self.worker.run)
+            self.worker.finished_signal.connect(self.flag_and_patch_thread.quit)
+            self.worker.finished_signal.connect(self.flag_and_patch_thread.deleteLater)
+            self.worker.finished_signal.connect(self.worker.deleteLater)
+            self.worker.finished_signal.connect(
+                lambda sender = 'eslify', 
+                checked_list = files:
+                self.finished_button_action(sender, checked_list,))
+            self.flag_and_patch_thread.start()
+        else:
+            self.finished_button_action('eslify', files,)
+            print("File(s) ESL Flagged")
+            if self.redoing_output:
+                print("CLEAR ALT")
+            else:
+                print("CLEAR")
+
+    def create_flag_worker(self, files, patch_and_flag = []):
+        self.flag_thread = QThread()
+        self.flag_worker = FlagWorker(files, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, self.mo2_mode)
+        self.flag_worker.moveToThread(self.flag_thread)
+        self.flag_thread.started.connect(self.flag_worker.flag_files)
+        self.flag_worker.finished_signal.connect(self.flag_thread.quit)
+        self.flag_worker.finished_signal.connect(self.flag_thread.deleteLater)
+        self.flag_worker.finished_signal.connect(self.flag_worker.deleteLater)
+        self.flag_worker.finished_signal.connect(
+            lambda files_copy = files,
+            patch_and_flag_copy = patch_and_flag:
+            self.create_patch_and_flag_worker(files_copy, patch_and_flag_copy)
+        )
+        self.flag_thread.start()
 
     def finished_button_action(self, sender, checked_list):
         if not self.redoing_output:
@@ -533,6 +542,7 @@ class main(QWidget):
             if not self.redoing_output:
                 print("CLEAR")
             elif self.redoing_output and os.path.exists('ESLifier_Data/previously_compacted.json'):
+                print("CLEAR ALT")
                 self.list_compact.check_previously_compacted()
                 checked = 0
                 for i in range(self.list_compact.rowCount()):
@@ -587,16 +597,21 @@ class main(QWidget):
                 self.confirm.accept()
             else:
                 self.confirm.show()
-        
-    def completed_scan(self, flag_dict, dependency_dictionary):
-        self.list_eslify.flag_dict = {p: f for p, f in flag_dict.items() if 'need_compacting' not in f}
-        self.list_compact.flag_dict = {p: f for p, f in flag_dict.items() if 'need_compacting' in f}
+    
+    def completed_scan(self, eslifiy_flag_dict, compact_flag_dict, dependency_dictionary):
+        self.list_eslify.flag_dict = eslifiy_flag_dict
+        self.list_compact.flag_dict = compact_flag_dict
         self.dependency_dictionary = dependency_dictionary
         print('Populating Tables')
         try:
-            self.eslifier.create_tables()
+            self.list_eslify.create()
         except Exception as e:
-            print('!Error: Failed to create tables')
+            print('!Error: Failed to create "ESLify" list')
+            print(e)
+        try:
+            self.list_compact.create()
+        except Exception as e:
+            print('!Error: Failed to create "Compact + ESLify" list')
             print(e)
         print('Done Scanning')
         if self.redoing_output and not self.patch_new_only_remove:
@@ -888,7 +903,7 @@ class main(QWidget):
         confirm.show()
 
 class ScannerWorker(QObject):
-    finished_signal = pyqtSignal(dict, dict)
+    finished_signal = pyqtSignal(dict, dict, dict)
     def __init__(self):
         super().__init__()
 
@@ -898,7 +913,9 @@ class ScannerWorker(QObject):
         print('Checking if New CELLs are Changed')
         plugins_with_cells = [plugin for plugin, flags in flag_dict.items() if 'new_cell' in flags]
         cell_scanner.scan(plugins_with_cells)
-        self.finished_signal.emit(flag_dict, dependency_dictionary)
+        eslify_flag_dict = {p: f for p, f in flag_dict.items() if 'need_compacting' not in f}
+        compact_flag_dict = {p: f for p, f in flag_dict.items() if 'need_compacting' in f}
+        self.finished_signal.emit(eslify_flag_dict, compact_flag_dict, dependency_dictionary)
         return
 
 class CompactorWorker(QObject):
@@ -958,5 +975,22 @@ class CompactorWorker(QObject):
         if finalize:
             self.create_new_cell_plugin.finalize_plugin()
         print("Patching Complete")
+        self.finished_signal.emit()
+        return
+    
+class FlagWorker(QObject):
+    finished_signal = pyqtSignal()
+    def __init__(self, files, skyrim_folder_path, output_folder_path, output_folder_name, overwrite_path, mo2_mode):
+        self.files = files
+        self.skyrim_folder_path = skyrim_folder_path
+        self.output_folder_path = output_folder_path
+        self.output_folder_name = output_folder_name
+        self.overwrite_path = overwrite_path
+        self.mo2_mode = mo2_mode
+        super().__init__()
+    
+    def flag_files(self):
+        for file in self.files:
+            CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, self.mo2_mode)
         self.finished_signal.emit()
         return
