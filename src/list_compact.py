@@ -105,17 +105,15 @@ class list_compactable(QTableWidget):
             self.hideColumn(self.ESM_COL)
         else:
             self.showColumn(self.ESM_COL)
-        self.dependency_list = self.get_data_from_file("ESLifier_Data/dependency_dictionary.json")
-        self.compacted = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json")
-        self.dll_dict = self.get_data_from_file("ESLifier_Data/dll_dict.json")
-        blacklist = self.get_data_from_file('ESLifier_Data/blacklist.json')
-        self.cell_changed = self.get_data_from_file("ESLifier_Data/cell_changed.json")
-        if blacklist == {}:
-            blacklist = []
+        self.dependency_list = self.get_data_from_file("ESLifier_Data/dependency_dictionary.json", dict)
+        self.compacted = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json", dict)
+        self.dll_dict = self.get_data_from_file("ESLifier_Data/dll_dict.json", dict)
+        self.blacklist_list = self.get_data_from_file('ESLifier_Data/blacklist.json', list)
+        self.cell_changed = self.get_data_from_file("ESLifier_Data/cell_changed.json", list)
 
         to_remove = []
         for mod in self.flag_dict:
-            if os.path.basename(mod) in blacklist:
+            if os.path.basename(mod) in self.blacklist_list:
                 to_remove.append(mod)
         
         for mod in to_remove:
@@ -286,12 +284,12 @@ class list_compactable(QTableWidget):
             else:
                 self.setRowHidden(row, False)
 
-    def get_data_from_file(self, file):
+    def get_data_from_file(self, file, data_type):
         try:
             with open(file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
         except:
-            data = {}
+            data = data_type()
         return data
 
     def contextMenu(self, position):
