@@ -49,5 +49,4 @@ class QtToggle(QCheckBox):
         self._circle_color = circle_color
         self._active_color = active_color
         self._bg_color = bg_color
-        #self.paintEvent(None)
         
