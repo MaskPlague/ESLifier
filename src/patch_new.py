@@ -28,6 +28,7 @@ class patch_new():
             self.no_data_warning.addButton(QMessageBox.StandardButton.Ok)
             self.no_data_warning.show()
             self.parent.setEnabled(True)
+            print('CLEAR')
             return
         self.settings: dict = settings
         self.skyrim_folder_path: str = settings.get('skyrim_folder_path', '')
@@ -45,6 +46,7 @@ class patch_new():
         self.worker.moveToThread(self.patch_new_scan_thread)
         self.patch_new_scan_thread.started.connect(self.worker.detect_changes)
         self.worker.finished_signal.connect(self.completed_scan)
+        self.worker.finished_signal.connect(self.worker.deleteLater)
         self.worker.finished_signal.connect(self.patch_new_scan_thread.quit)
         self.worker.finished_signal.connect(self.patch_new_scan_thread.deleteLater)
         self.patch_new_scan_thread.start()
@@ -181,6 +183,7 @@ class PatchNewScannerWorker(QObject):
             print(f'!Error: Failed to find a required dictionary.')
             print(e)
             self.finished_signal.emit([],{},{},0,0, [])
+            return
 
         self.hash_mismatches.clear()
         print('Detecting Hash Changes...')
@@ -329,6 +332,7 @@ class PatchNewScannerWorker(QObject):
             print(f'!Error: Failed to find a required dictionary.')
             print(e)
             self.finished_signal.emit([],{},{},0,0,[])
+            return
 
         new_files: dict[str, list[str]] = {}
         new_dependencies: dict[str, list[str]] = {}
@@ -365,6 +369,7 @@ class PatchNewScannerWorker(QObject):
                 skse_warnings.append((mod, [os.path.basename(dll) for dll in dlls]))
         
         self.finished_signal.emit(mod_list, new_dependencies, new_files, len(self.hash_mismatches), len(self.conflict_changes), skse_warnings)
+        return
 
     def compare_previous_hash_to_current(self, file, original_hash):
         if os.path.exists(file):
@@ -427,6 +432,7 @@ class PatchNewWorker(QObject):
             if file not in all_patched:
                 all_patched.append(file)
         self.finished_signal.emit(len(all_patched))
+        return
 
     
 
