@@ -97,7 +97,6 @@ class main(QWidget):
             "changes in BSA.",
             self.scan_and_patch_new
         )
-        #self.scan_and_patch_new_button.clicked.connect(self.set_false_redoing_output)
 
         self.reset_output_button = self.create_button(
             " Reset ESLifier's Output ",
@@ -551,7 +550,7 @@ class main(QWidget):
             else:
                 print("CLEAR")
                 self.setEnabled(True)
-        #self.eslifier.create_tables()
+        
         if not self.redoing_output:
             self.setEnabled(True)
             self.calculate_stats()
@@ -602,12 +601,12 @@ class main(QWidget):
         if self.redoing_output and not self.patch_new_only_remove:
             if os.path.exists('ESLifier_Data/esl_flagged.json'):
                 self.list_eslify.check_previously_esl_flagged()
-                os.remove('ESLifier_Data/esl_flagged.json')
+                if not self.patch_new_running:
+                    os.remove('ESLifier_Data/esl_flagged.json')
                 self.eslify_selected_clicked()
             elif os.path.exists('ESLifier_Data/previously_compacted.json'):
                 self.list_compact.check_previously_compacted()
                 self.compact_selected_clicked()
-            #self.calculate_stats()
         elif self.redoing_output and self.patch_new_only_remove:
             self.redoing_output = False
             self.patch_new_running = False
