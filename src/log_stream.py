@@ -303,9 +303,8 @@ class log_stream(QMainWindow):
     def clean_up(self):
         self.timer_clear.stop()
         if not self.crash:
-            self.text_edit.setPlainText('')
+            self.text_edit.setPlainText(None)
             self.hide()
-            self.parent().update_settings()
         if len(self.missing_patchers) > 0:
             self.missing_patcher_warning()
         if len(self.errors) > 0:
