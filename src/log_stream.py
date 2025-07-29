@@ -4,6 +4,7 @@ import traceback
 import threading
 import webbrowser
 import shutil
+from datetime import datetime
 
 from PyQt6.QtWidgets import QMainWindow, QTextEdit, QMessageBox, QProgressBar, QWidget, QVBoxLayout
 from PyQt6.QtCore import Qt, QTimer
@@ -53,6 +54,10 @@ class log_stream(QMainWindow):
         self.log_file.write('Working directory is ' + os.getcwd() + '\n')
         self.log_file.flush()
 
+        self.log_file_flush_timer = QTimer(self)
+        self.log_file_flush_timer.timeout.connect(self.log_file.flush)
+        self.log_file_flush_timer.start(1500)
+
         sys.stdout = self
         sys.stderr = self
         sys.excepthook = self.exception_hook
@@ -80,14 +85,16 @@ class log_stream(QMainWindow):
         self.progress_bar.reset()
         return super().hide()
 
-    def write(self, text):
+    def write(self, text: str):
         if not text.startswith('~'):
             self.list.append(text)
         text = text.strip().removeprefix('\033[F\033[K')
-        if text.startswith(('!', '~')) or ('Process' not in text and 'Percentage' not in text and 'Gathered' not in text and 
-            'Extracting:' not in text and 'CLEAR' not in text and text != '\033[F\033[K' and text != ''):
-            self.log_file.write(text.removeprefix('~') + '\n')
-            self.log_file.flush()
+        if (text.startswith(('!', '~')) 
+            or not text.startswith(('-  Gathered:', '-  Winning', '-    Processed', '-    Percentage', '-  Extracting:', 'CLEAR')) 
+            and text != ''):
+            formatted_datetime = '[' + datetime.now().isoformat(timespec='milliseconds') + '] '
+            self.log_file.write(formatted_datetime + text.removeprefix('~') + '\n')
+            #self.log_file.flush()
         if text.startswith('Warn:') and not 'red' in self.text_edit.styleSheet() and not 'lightblue' in self.text_edit.styleSheet():
             self.text_edit.setStyleSheet("background-color: lightblue")
         if text.startswith('Warn:'):
@@ -229,9 +236,9 @@ class log_stream(QMainWindow):
         self.log_file.flush()
 
     def closeEvent(self, a0):
-        super().closeEvent(a0)
         self.log_file.flush()
         self.log_file.close()
+        return super().closeEvent(a0)
 
     def process_queue(self):
         self.timer.stop()
@@ -315,6 +322,7 @@ class log_stream(QMainWindow):
     def clear_alt(self):
         if not self.crash:
             self.text_edit.setPlainText(None)
+            self.log_file.flush()
 
 
 
