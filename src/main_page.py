@@ -519,6 +519,7 @@ class main(QWidget):
                 print(f"Total Elapsed Time: {timeit.default_timer() - self.start_time:.2f} Seconds")
                 print("CLEAR")
                 self.setEnabled(True)
+                self.calculate_stats()
             else:
                 self.patch_new_running = False
                 self.patch_new_only_remove = False
@@ -600,6 +601,7 @@ class main(QWidget):
         print('Done Scanning')
         if self.redoing_output and not self.patch_new_only_remove:
             if os.path.exists('ESLifier_Data/esl_flagged.json'):
+                print('CLEAR ALT')
                 self.list_eslify.check_previously_esl_flagged()
                 if not self.patch_new_running:
                     os.remove('ESLifier_Data/esl_flagged.json')
