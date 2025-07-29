@@ -68,10 +68,11 @@ class settings(QWidget):
         )
         self.mo2_mode_widget, self.mo2_mode_toggle = self.create_toggle_widget(
             "Enable MO2 Mode",
-            "MO2 users should not launch this executible through MO2 and\n"+
+            "MO2 users should not launch this executible through MO2,\n"+
             "instead enable this setting. This will change the paths and scanner\n"+
             "method to scan the MO2 mods folder and get winning file conflicts.\n"+
-            "Launching this program through MO2 drastically slows down the scanner.",
+            "Launching this program through MO2 drastically slows it down and may\n"+
+            "break certain functions.",
             "mo2_mode"
         )
         self.mo2_mode_widget.layout().itemAt(2).widget().clicked.connect(self.mo2_mode_clicked)
@@ -86,12 +87,12 @@ class settings(QWidget):
         )
         self.show_esms_widget, self.show_esms_toggle = self.create_toggle_widget(
             "Show ESM Plugins",
-            "Show ESM plugins (.esm/ESM flagged).",
+            "Display ESM plugins (.esm/ESM flagged).",
             "show_esms"
         )
         self.show_plugins_with_cells_widget, self.show_plugins_with_cells_toggle = self.create_toggle_widget(
             "Show plugins with new CELL records",
-            "Show or hide plugins with new CELL records.",
+            "Display plugins with new CELL records.",
             "show_cells"
         )
         self.enable_cell_changed_filter_widget, self.enable_cell_changed_filter_toggle = self.create_toggle_widget(
