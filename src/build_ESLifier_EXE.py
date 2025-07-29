@@ -38,4 +38,5 @@ def compile_exe():
     print('Done Building EXE')
 
 compile_exe()
+print('Calculating Checksum')
 append_luhn_checksum("dist\\ESLifier.exe")
