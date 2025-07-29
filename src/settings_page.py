@@ -67,7 +67,7 @@ class settings(QWidget):
             self.mo2_modlist_txt_path_clicked
         )
         self.mo2_mode_widget, self.mo2_mode_toggle = self.create_toggle_widget(
-            "Enabled MO2 Mode",
+            "Enable MO2 Mode",
             "MO2 users should not launch this executible through MO2 and\n"+
             "instead enable this setting. This will change the paths and scanner\n"+
             "method to scan the MO2 mods folder and get winning file conflicts.\n"+
