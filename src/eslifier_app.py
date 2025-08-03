@@ -12,7 +12,7 @@ from settings_page import settings
 from main_page import main
 from log_stream import log_stream
 
-CURRENT_VERSION = '0.12.0'
+CURRENT_VERSION = '0.12.1'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
@@ -103,14 +103,15 @@ class main_window(QMainWindow):
         self.setWindowIcon(QIcon(":/images/ESLifier.png"))
         self.setFocus()
         self.settings_widget = settings(COLOR_MODE, self)
-        if self.settings_widget.settings['check_for_updates']:
+        check_for_update = self.settings_widget.settings.get('check_for_updates', True)
+        if check_for_update:
             self.github_thread = QThread()
             self.github_connection = github_connect()
             self.github_connection.moveToThread(self.github_thread)
             self.github_thread.started.connect(self.github_connection.check_version)
+            self.github_connection.finished_signal.connect(connection_result)
             self.github_connection.finished_signal.connect(self.github_thread.quit)
             self.github_connection.finished_signal.connect(self.github_thread.deleteLater)
-            self.github_connection.finished_signal.connect(connection_result)
             self.github_connection.finished_signal.connect(self.github_connection.deleteLater)
             self.github_thread.start()
         if COLOR_MODE == 'Light':

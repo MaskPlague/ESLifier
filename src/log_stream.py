@@ -16,7 +16,6 @@ class log_stream(QMainWindow):
         self.setWindowTitle('Log Stream')
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowCloseButtonHint & ~Qt.WindowType.Dialog)
         self.setFixedSize(400, 300)
-        self.center_on_parent()
         self.missing_patchers = []
         self.errors = []
         self.ineligible = []
@@ -36,6 +35,8 @@ class log_stream(QMainWindow):
         self.setCentralWidget(main_widget)
         self.list = []
         self.crash = False
+        self.center_on_parent()
+
         if not os.path.exists("ESLifier_Data/"):
             os.makedirs("ESLifier_Data/")
 
@@ -58,11 +59,19 @@ class log_stream(QMainWindow):
         self.log_file_flush_timer = QTimer(self)
         self.log_file_flush_timer.timeout.connect(self.log_file.flush)
         self.log_file_flush_timer.start(1500)
-
-        sys.stdout = self
-        sys.stderr = self
-        sys.excepthook = self.exception_hook
-        threading.excepthook = self.custom_exception_hook
+        
+        try:
+            sys.stdout = self
+            sys.stderr = self
+            sys.excepthook = self.exception_hook
+            threading.excepthook = self.custom_exception_hook
+        except Exception as e:
+            print('Failed intiialzing log streams, retrying')
+            print(e)
+            sys.stdout = self
+            sys.stderr = self
+            sys.excepthook = self.exception_hook
+            threading.excepthook = self.custom_exception_hook
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.process_queue)
@@ -91,7 +100,7 @@ class log_stream(QMainWindow):
             self.list.append(text)
         text = text.strip().removeprefix('\033[F\033[K')
         if (text.startswith(('!', '~')) 
-            or not text.startswith(('-  Gathered:', '-  Winning', '-    Processed', '-    Percentage', '-  Extracting:', 'CLEAR')) 
+            or not text.startswith(('-  Gathered:', '-  Winning', '-    Processed', '-  Percentage', '-    Percentage', '-  Extracting:', 'CLEAR')) 
             and text != ''):
             formatted_datetime = '[' + datetime.now().isoformat(timespec='milliseconds') + '] '
             self.log_file.write(formatted_datetime + text.removeprefix('~') + '\n')
@@ -236,14 +245,14 @@ class log_stream(QMainWindow):
         self.log_file.flush()
 
     def closeEvent(self, a0):
+        self.timer.stop()
+        self.log_file_flush_timer.stop()
         super().closeEvent(a0)
         self.log_file.flush()
         self.log_file.close()
 
     def process_queue(self):
         self.timer.stop()
-        length = len(self.list)
-        count = 0
         if not self.isHidden():
             if self.percentage == 0:
                 self.progress_bar.setRange(0,0)
@@ -273,12 +282,16 @@ class log_stream(QMainWindow):
                 """)
                 if not self.progress_bar.paintingActive() and self.progress_bar.value() != self.percentage:
                     self.progress_bar.setValue(self.percentage)
+        length = len(self.list)
+        count = 0
         for _ in range(length):
+            if len(self.list) == 0:
+                break
             line = self.list.pop(0)
             self.update_text_widget(line)
             count += 1
             if count > 1000:
-                for line in self.list:
+                for line in self.list.copy():
                     if line.startswith("\033[F\033[K"):
                         self.list.remove(line)
                 break

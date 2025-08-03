@@ -160,30 +160,30 @@ class PatchNewScannerWorker(QObject):
         scanner.scan(False)
         print('Getting Dependencies')
         dependecy_getter.scan()
-        try:
-            if os.path.exists('ESLifier_Data/compacted_and_patched.json'):
-                with open("ESLifier_Data/compacted_and_patched.json", 'r', encoding='utf-8') as f:
-                    compacted_and_patched: dict[str, list[str]] = json.load(f)
-            else:
-                compacted_and_patched: dict[str, list[str]] = {}
-            if os.path.exists('ESLifier_Data/esl_flagged.json'):
-                with open("ESLifier_Data/esl_flagged.json", 'r', encoding='utf-8') as f:
-                    esl_flagged: list[str] = json.load(f)
-            else:
-                esl_flagged: list[str] = {}
-            with open("ESLifier_Data/file_masters.json", 'r', encoding='utf-8') as f:
-                file_masters: dict[str, list[str]] = json.load(f)
-            with open("ESLifier_Data/dependency_dictionary.json", 'r', encoding='utf-8') as f: 
-                dependencies: dict[str, list[str]] = json.load(f)
+        if os.path.exists('ESLifier_Data/compacted_and_patched.json'):
+            with open("ESLifier_Data/compacted_and_patched.json", 'r', encoding='utf-8') as f:
+                compacted_and_patched: dict[str, list[str]] = json.load(f)
+        else:
+            compacted_and_patched: dict[str, list[str]] = {}
+        if os.path.exists('ESLifier_Data/esl_flagged.json'):
+            with open("ESLifier_Data/esl_flagged.json", 'r', encoding='utf-8') as f:
+                esl_flagged: list[str] = json.load(f)
+        else:
+            esl_flagged: list[str] = {}
+        with open("ESLifier_Data/file_masters.json", 'r', encoding='utf-8') as f:
+            file_masters: dict[str, list[str]] = json.load(f)
+        with open("ESLifier_Data/dependency_dictionary.json", 'r', encoding='utf-8') as f: 
+            dependencies: dict[str, list[str]] = json.load(f)
+        if os.path.exists("ESLifier_Data/winning_file_history_dict.json"):
             with open("ESLifier_Data/winning_file_history_dict.json", 'r', encoding='utf-8') as f:
                 winning_file_history_dict: dict[str, list[str]] = json.load(f)
+        else:
+            winning_file_history_dict: dict[str, list[str]] = {}
+        if os.path.exists("ESLifier_Data/winning_files_dict.json"):
             with open("ESLifier_Data/winning_files_dict.json", 'r', encoding='utf-8') as f:
                 winning_files_dict: dict[str, (str, list[str])] = json.load(f)
-        except Exception as e:
-            print(f'!Error: Failed to find a required dictionary.')
-            print(e)
-            self.finished_signal.emit([],{},{},0,0, [])
-            return
+        else:
+            winning_files_dict: dict[str, (str, list[str])] = {}
 
         self.hash_mismatches.clear()
         print('Detecting Hash Changes...')
