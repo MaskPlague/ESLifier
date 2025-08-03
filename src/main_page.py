@@ -990,7 +990,31 @@ class FlagWorker(QObject):
         super().__init__()
     
     def flag_files(self):
+        original_files = self.get_from_file('ESLifier_Data/original_files.json')
+        winning_files_dict = self.get_from_file('ESLifier_Data/winning_files_dict.json')
+        winning_file_history_dict = {}
         for file in self.files:
-            CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, self.mo2_mode)
+            original_files, winning_file_history_dict = CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, 
+                                                                      self.overwrite_path, self.mo2_mode, original_files, winning_files_dict, winning_file_history_dict)
+        self.dump_dictionary('ESLifier_Data/original_files.json', CFIDs.original_files)
+        self.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', CFIDs.winning_file_history_dict)
         self.finished_signal.emit()
-        return
+
+    def dump_dictionary(self, file, dictionary: dict):
+        data = self.get_from_file(file)
+        for key, values in dictionary.items():
+            data[key] = values
+        try:
+            with open(file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print(f'!Error: Failed to dump data to {file}')
+            print(e)
+    
+    def get_from_file(self, file: str) -> dict:
+        try:
+            with open(file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        except:
+            data = {}
+        return data

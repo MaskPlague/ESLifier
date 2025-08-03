@@ -164,13 +164,16 @@ class CFIDs():
                     if line.startswith('Unpacking error'):
                         raise Exception(f"During Temp Extraction, {line}")
                     
-    def set_flag(file: str, skyrim_folder: str, output_folder: str, output_folder_name: str, overwrite_path: str, mo2_mode: bool):
+    def set_flag(file: str, skyrim_folder: str, output_folder: str, output_folder_name: str, overwrite_path: str, mo2_mode: bool, 
+                 original_files: dict, winning_files_dict: dict, winning_file_history_dict):
+        #TODO: Figure out what takes so long. Maybe pass dicts to and return since it isn't threaded
+        #It seems to freeze the program while running so maybe something is set up wrong with the threading
         CFIDs.mo2_mode = mo2_mode
         CFIDs.lock = threading.Lock()
         CFIDs.output_folder_name = output_folder_name
-        CFIDs.original_files: dict = CFIDs.get_from_file('ESLifier_Data/original_files.json')
-        CFIDs.winning_files_dict: dict = CFIDs.get_from_file('ESLifier_Data/winning_files_dict.json')
-        CFIDs.winning_file_history_dict: dict = {}
+        CFIDs.original_files: dict = original_files
+        CFIDs.winning_files_dict: dict = winning_files_dict
+        CFIDs.winning_file_history_dict: dict = winning_file_history_dict
         CFIDs.overwrite_path = os.path.normpath(overwrite_path)
         print("-  Changing ESL flag in: " + os.path.basename(file))
         new_file, _ = CFIDs.copy_file_to_output(file, skyrim_folder, output_folder)
@@ -183,6 +186,7 @@ class CFIDs():
             print(e)           
         CFIDs.dump_dictionary('ESLifier_Data/original_files.json', CFIDs.original_files)
         CFIDs.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', CFIDs.winning_file_history_dict)
+        return CFIDs.original_files, CFIDs.winning_file_history_dict
 
     def patch_new(compacted_file: str, dependents: list, files_to_patch: list, skyrim_folder_path: str, output_folder_path: str, 
                   output_folder_name: str, overwrite_path: str, update_header: bool, mo2_mode: bool, add_cell_to_master: bool):
@@ -245,7 +249,7 @@ class CFIDs():
                     f.close()
                 CFIDs.original_files[end_path.lower()] = [file, sha256_hash]
             except Exception as e:
-                print(f'Failed to hash {file}')
+                print(f'!Error: Failed to hash {file}')
                 print(e)
         return new_file, end_path
     
