@@ -832,7 +832,7 @@ class patchers():
             ox = False
             print_replace = True
             for path, value in json_dict:
-                if type(value) is str and symbol in value:
+                if isinstance(value, str) and symbol in value:
                     index = value.index(symbol)
                     plugin = value[:index]
                     if plugin.lower() == basename:
@@ -871,7 +871,7 @@ class patchers():
             json_dict = patchers.extract_values_and_keys(data)
             print_replace = True
             for path, value in json_dict:
-                if type(value) is str and symbol in value:
+                if isinstance(value, str) and symbol in value:
                     ox = False
                     int_type_actual = int_type
                     index = value.index(symbol)
@@ -925,10 +925,10 @@ class patchers():
             plugin_name_path = []
             print_replace = True
             for path, value in json_dict:
-                if type(path[-1]) is str and 'pluginname' == path[-1].lower() and value.lower() == basename:
+                if isinstance(path[-1], str) and 'pluginname' == path[-1].lower() and value.lower() == basename:
                     plugin = True
                     plugin_name_path = path
-                elif plugin and type(path[-1]) is str and 'formid' == path[-1].lower():
+                elif plugin and isinstance(path[-1], str) and 'formid' == path[-1].lower():
                     form_id_int = int(value, 16)
                     to_id_data = form_id_map.get(form_id_int)
                     if to_id_data is not None:
@@ -957,7 +957,7 @@ class patchers():
             json_dict = patchers.extract_values_and_keys(data)
             print_replace = True
             for path, value in json_dict:
-                if type(value) is str and '|' in value:
+                if isinstance(value, str) and '|' in value:
                     index = value.index('|')
                     plugin = value[index+1:]
                     if plugin.lower() == basename:
@@ -1027,7 +1027,7 @@ class patchers():
             json_dict = patchers.extract_values_and_keys(data)
             print_replace = True
             for path, value in json_dict:
-                if type(value) is str and '|' + basename in value.lower():
+                if isinstance(value, str) and '|' + basename in value.lower():
                     count = value.lower().count('|'+basename)
                     start_index = 0
                     changed = False
@@ -1195,7 +1195,7 @@ class patchers():
             json_dict = patchers.extract_values_and_keys(data)
             print_replace = True
             for path, value in json_dict:
-                if path[-1] == 'form_id' and '|' in value:
+                if isinstance(path[-1], str) and path[-1] == 'form_id' and '|' in value:
                     index = value.index('|')
                     form_id = value[:index]
                     plugin = value[index+1:]
@@ -1226,7 +1226,7 @@ class patchers():
             json_dict = patchers.extract_values_and_keys(data)
             print_replace = True
             for path, value in json_dict:
-                if type(value) is str and '|' in value:
+                if isinstance(value, str) and '|' in value:
                     index = value.find('|')
                     plugin = value[:index]
                     form_id_int = int(value[index+1:], 16)
@@ -1256,7 +1256,7 @@ class patchers():
             json_dict = patchers.extract_values_and_keys(data)
             print_replace = True
             for path, value in json_dict:
-                if len(path) > 2 and type(path[-2]) is str and 'replace' in path[-2]:
+                if len(path) > 2 and isinstance(path[-2], str) and 'replace' in path[-2]:
                     if path[-2] == 'replaceByForm':
                         index = path[-1].index('|')
                         plugin = path[-1][:index]
@@ -1300,7 +1300,7 @@ class patchers():
                 data = patchers.use_json5(string)
             json_dict = patchers.extract_values_and_keys(data)
             for path, value in json_dict:
-                if type(value) is str and '__formdata' in value.lower():
+                if isinstance(value, str) and '__formdata' in value.lower():
                     formData_index = value.index('|')
                     index = value.index('|', formData_index+1)
                     plugin = value[formData_index+1:index]
@@ -1330,7 +1330,7 @@ class patchers():
                 if path[-1] == 'id':
                     form_id_int = value
                     form_id_path = path
-                if path[-1].lower() == 'plugin' and value.lower() == basename:
+                if isinstance(path[-1], str) and path[-1].lower() == 'plugin' and value.lower() == basename:
                     to_id_data = form_id_map.get(form_id_int)
                     if to_id_data is not None:
                         data = patchers.change_json_element(data, form_id_path, to_id_data["int"])
@@ -1357,10 +1357,10 @@ class patchers():
             print_replace = True
             plugin_path = []
             for path, value in json_dict:
-                if type(path[-1]) is str and 'mod' == path[-1].lower() and value.lower() == basename:
+                if isinstance(path[-1], str) and 'mod' == path[-1].lower() and value.lower() == basename:
                     plugin = True
                     plugin_path = path
-                elif plugin and type(path[-1]) is str and 'formid' == path[-1].lower():
+                elif plugin and isinstance(path[-1], str) and 'formid' == path[-1].lower():
                     form_id_int = int(value, 16)
                     to_id_data = form_id_map.get(form_id_int)
                     if to_id_data is not None:
@@ -1396,7 +1396,7 @@ class patchers():
                     to_id_data = form_id_map.get(form_id_int)
                     if to_id_data is not None:
                         data = patchers.change_json_element(data, path, to_id_data["hex"])
-                if type(path[-1]) is int and path[-1] == 0 and value.lower() == basename:
+                if isinstance(path[-1], int) and path[-1] == 0 and value.lower() == basename:
                     patch_next_index = True
             f.seek(0)
             f.truncate(0)
@@ -1414,7 +1414,7 @@ class patchers():
             json_dict = patchers.extract_values_and_keys(data)
             patched_keys = set()
             for path, value in json_dict:
-                if type(path[1]) is str and (path[0], path[1]) not in patched_keys and path[1].lower().startswith(basename+":"):
+                if isinstance(path[1], str) and (path[0], path[1]) not in patched_keys and path[1].lower().startswith(basename+":"):
                     key = path[1]
                     patched_keys.add((path[0], path[1]))
                     index = key.lower().index(':0x')+1
@@ -1423,7 +1423,7 @@ class patchers():
                         data = patchers.change_json_key(data, path[1], key[:index-1] + ':0x' + to_id_data["hex_no_0"])
             json_dict = patchers.extract_values_and_keys(data)
             for path, value in json_dict:
-                if type(value) is str and value.lower().startswith(basename+":"):
+                if isinstance(value, str) and value.lower().startswith(basename+":"):
                     index = value.index(':0x')+1
                     to_id_data = form_id_map.get(int(value[index:], 16))
                     if to_id_data is not None:
