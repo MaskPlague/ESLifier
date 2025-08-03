@@ -166,8 +166,6 @@ class CFIDs():
                     
     def set_flag(file: str, skyrim_folder: str, output_folder: str, output_folder_name: str, overwrite_path: str, mo2_mode: bool, 
                  original_files: dict, winning_files_dict: dict, winning_file_history_dict):
-        #TODO: Figure out what takes so long. Maybe pass dicts to and return since it isn't threaded
-        #It seems to freeze the program while running so maybe something is set up wrong with the threading
         CFIDs.mo2_mode = mo2_mode
         CFIDs.lock = threading.Lock()
         CFIDs.output_folder_name = output_folder_name
@@ -184,8 +182,6 @@ class CFIDs():
         except Exception as e:
             print('!Error: Failed to set ESL flag in {file}')
             print(e)           
-        CFIDs.dump_dictionary('ESLifier_Data/original_files.json', CFIDs.original_files)
-        CFIDs.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', CFIDs.winning_file_history_dict)
         return CFIDs.original_files, CFIDs.winning_file_history_dict
 
     def patch_new(compacted_file: str, dependents: list, files_to_patch: list, skyrim_folder_path: str, output_folder_path: str, 
