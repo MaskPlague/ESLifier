@@ -405,7 +405,7 @@ class PatchNewWorker(QObject):
         self.skyrim_folder_path: str = settings.get('skyrim_folder_path', '')
         self.output_folder_path = settings.get('output_folder_path', '')
         self.output_folder_name = settings.get('output_folder_name', 'ESLifier Compactor Output')
-        self.overwrite_path: str = settings.get('overwrite_path', '')
+        self.overwrite_path: str = os.path.normpath(settings.get('overwrite_path', ''))
         self.mo2_mode: bool = settings.get('mo2_mode', False)
         self.update_header: bool = settings.get('update_header', False)
         self.generate_cell_master = settings.get('generate_cell_master', True)
@@ -414,6 +414,12 @@ class PatchNewWorker(QObject):
         total = len(self.files)
         count = 0
         print("CLEAR ALT")
+        original_files: dict = self.get_from_file('ESLifier_Data/original_files.json')
+        winning_files_dict: dict = self.get_from_file('ESLifier_Data/winning_files_dict.json')
+        master_byte_data: dict = self.get_from_file('ESLifier_Data/master_byte_data.json')
+        winning_file_history_dict = {}
+        compacted_and_patched = {}
+
         for file in self.files:
             count +=1
             percent = round((count/total)*100,1)
@@ -421,8 +427,10 @@ class PatchNewWorker(QObject):
             dependents = []
             if file in self.dependencies_dictionary:
                 dependents = self.dependencies_dictionary[file]
-            CFIDs.patch_new(file, dependents, self.file_dictionary, self.skyrim_folder_path, self.output_folder_path,
-                            self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.generate_cell_master)
+            original_files, winning_files_dict, master_byte_data, winning_file_history_dict, compacted_and_patched = CFIDs.patch_new(
+                            file, dependents, self.file_dictionary, self.skyrim_folder_path, self.output_folder_path,
+                            self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.generate_cell_master,
+                            original_files, winning_files_dict, master_byte_data, winning_file_history_dict, compacted_and_patched)
         all_patched = []
         for file in self.dependencies_dictionary.values():
             if file not in all_patched:
@@ -430,8 +438,47 @@ class PatchNewWorker(QObject):
         for file in self.file_dictionary.values():
             if file not in all_patched:
                 all_patched.append(file)
+
+        self.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json', compacted_and_patched)
+        self.dump_dictionary('ESLifier_Data/original_files.json', original_files)
+        self.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', winning_file_history_dict)
+        self.dump_dictionary('ESLifier_Data/master_byte_data.json', master_byte_data)
         self.finished_signal.emit(len(all_patched))
         return
+    
+    def dump_compacted_and_patched(self, file, dictionary: dict[str, list[str]]):
+        data: dict[str, list[str]] = self.get_from_file(file)
+        for key, value in dictionary.items():
+            if key not in data:
+                data[key] = []
+            for item in value:
+                if item.lower() not in data[key]:
+                    data[key].append(item.lower())
+        try:
+            with open(file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print(f'!Error: Failed to dump data to {file}')
+            print(e)
+    
+    def dump_dictionary(self, file, dictionary: dict):
+        data = self.get_from_file(file)
+        for key, values in dictionary.items():
+            data[key] = values
+        try:
+            with open(file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print(f'!Error: Failed to dump data to {file}')
+            print(e)
+
+    def get_from_file(self, file: str) -> dict:
+        try:
+            with open(file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        except:
+            data = {}
+        return data
 
     
 

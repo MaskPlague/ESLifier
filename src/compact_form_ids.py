@@ -31,17 +31,19 @@ else:
 class CFIDs():
     def compact_and_patch(file_to_compact: str, dependents: list, skyrim_folder_path: str, output_folder_path: str,
                           output_folder_name: str, overwrite_path: str, update_header: bool, mo2_mode: bool,
-                          all_dependents_have_skyrim_esm_as_master: bool, create_cell_master_class: create_new_cell_plugin, add_cell_to_master: bool):
+                          all_dependents_have_skyrim_esm_as_master: bool, create_cell_master_class: create_new_cell_plugin, add_cell_to_master: bool,
+                          original_files: dict, winning_files_dict: dict, master_byte_data: dict, winning_file_history_dict: dict, files_to_patch: dict,
+                          bsa_masters: list, bsa_dict: dict, compacted_and_patched: dict):
         CFIDs.lock = threading.Lock()
         CFIDs.semaphore = threading.Semaphore(1000)
-        CFIDs.compacted_and_patched = {}
-        CFIDs.original_files: dict = CFIDs.get_from_file('ESLifier_Data/original_files.json')
-        CFIDs.winning_files_dict: dict = CFIDs.get_from_file('ESLifier_Data/winning_files_dict.json')
-        CFIDs.master_byte_data: dict = CFIDs.get_from_file('ESLifier_Data/master_byte_data.json')
-        CFIDs.winning_file_history_dict = {}
+        CFIDs.compacted_and_patched: dict[str, list[str]] = compacted_and_patched
+        CFIDs.original_files: dict = original_files
+        CFIDs.winning_files_dict: dict = winning_files_dict
+        CFIDs.master_byte_data: dict = master_byte_data
+        CFIDs.winning_file_history_dict = winning_file_history_dict
         CFIDs.mo2_mode = mo2_mode
         CFIDs.output_folder_name = output_folder_name
-        CFIDs.overwrite_path = os.path.normpath(overwrite_path)
+        CFIDs.overwrite_path = overwrite_path
         CFIDs.create_cell_master_class = create_cell_master_class
         CFIDs.do_generate_cell_master = add_cell_to_master
         CFIDs.form_id_map = {}
@@ -49,16 +51,11 @@ class CFIDs():
         print(f"Editing Plugin: {os.path.basename(file_to_compact)}...")
         CFIDs.compact_file(file_to_compact, skyrim_folder_path, output_folder_path, update_header, all_dependents_have_skyrim_esm_as_master)
         CFIDs.get_form_id_map(file_to_compact)
-        files_to_patch = CFIDs.get_from_file('ESLifier_Data/file_masters.json')
         if dependents != []:
             print(f"-  Patching {len(dependents)} Dependent Plugins...")
             CFIDs.patch_dependent_plugins(file_to_compact, dependents, skyrim_folder_path, output_folder_path, update_header, files_to_patch)
 
-        bsa_dict = CFIDs.get_from_file('ESLifier_Data/bsa_dict.json')
         name = os.path.basename(file_to_compact).lower()
-        bsa_masters = []
-        for value in bsa_dict.values():
-            bsa_masters.extend(value)
         if name in files_to_patch or name in bsa_masters:
             patch_or_rename = []
             if name in files_to_patch:
@@ -85,7 +82,7 @@ class CFIDs():
                                             
                 rel_paths = []
                 for file in patch_or_rename:
-                    rel_path = CFIDs.get_rel_path(file, skyrim_folder_path)
+                    rel_path: str = CFIDs.get_rel_path(file, skyrim_folder_path)
                     rel_paths.append(rel_path.lower())
 
                 start = os.path.join(os.getcwd(), 'bsa_extracted_temp')
@@ -108,18 +105,14 @@ class CFIDs():
                 if len(to_rename) > 20:
                     print('\n')
                 CFIDs.rename_files_threader(file_to_compact, to_rename, skyrim_folder_path, output_folder_path)
-        CFIDs.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json')
-        CFIDs.dump_dictionary('ESLifier_Data/original_files.json', CFIDs.original_files)
-        CFIDs.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', CFIDs.winning_file_history_dict)
-        CFIDs.dump_dictionary('ESLifier_Data/master_byte_data.json', CFIDs.master_byte_data)
         if os.path.exists('bsa_extracted_temp/'):
             print('-  Deleting temporarily Extracted FaceGen/Voice Files...')
             shutil.rmtree('bsa_extracted_temp/')
         print('CLEAR ALT')
-        return
+        return CFIDs.original_files, CFIDs.winning_files_dict, CFIDs.master_byte_data, CFIDs.winning_file_history_dict, CFIDs.compacted_and_patched
     
     def dump_compacted_and_patched(file):
-        data = CFIDs.get_from_file(file)
+        data: dict[str, list[str]] = CFIDs.get_from_file(file)
         for key, value in CFIDs.compacted_and_patched.items():
             if key not in data:
                 data[key] = []
@@ -185,17 +178,18 @@ class CFIDs():
         return CFIDs.original_files, CFIDs.winning_file_history_dict
 
     def patch_new(compacted_file: str, dependents: list, files_to_patch: list, skyrim_folder_path: str, output_folder_path: str, 
-                  output_folder_name: str, overwrite_path: str, update_header: bool, mo2_mode: bool, add_cell_to_master: bool):
+                  output_folder_name: str, overwrite_path: str, update_header: bool, mo2_mode: bool, add_cell_to_master: bool, 
+                  original_files: dict, winning_files_dict: dict, master_byte_data: dict, winning_file_history_dict: dict, compacted_and_patched: dict):
         CFIDs.lock = threading.Lock()
         CFIDs.semaphore = threading.Semaphore(1000)
-        CFIDs.compacted_and_patched = {}
+        CFIDs.compacted_and_patched = compacted_and_patched
         CFIDs.mo2_mode = mo2_mode
         CFIDs.output_folder_name = output_folder_name
-        CFIDs.overwrite_path = os.path.normpath(overwrite_path)
-        CFIDs.original_files: dict = CFIDs.get_from_file('ESLifier_Data/original_files.json')
-        CFIDs.winning_files_dict = CFIDs.get_from_file('ESLifier_Data/winning_files_dict.json')
-        CFIDs.master_byte_data: dict = CFIDs.get_from_file('ESLifier_Data/master_byte_data.json')
-        CFIDs.winning_file_history_dict = {}
+        CFIDs.overwrite_path = overwrite_path
+        CFIDs.original_files: dict = original_files
+        CFIDs.winning_files_dict = winning_files_dict
+        CFIDs.master_byte_data: dict = master_byte_data
+        CFIDs.winning_file_history_dict = winning_file_history_dict
         CFIDs.do_generate_cell_master = add_cell_to_master
         CFIDs.form_id_map = {}
         CFIDs.form_id_rename_map = []
@@ -219,11 +213,8 @@ class CFIDs():
                 if len(to_rename) > 20:
                     print('\n')
                 CFIDs.rename_files_threader(compacted_file, to_rename, skyrim_folder_path, output_folder_path)
-        CFIDs.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json')
-        CFIDs.dump_dictionary('ESLifier_Data/original_files.json', CFIDs.original_files)
-        CFIDs.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', CFIDs.winning_file_history_dict)
-        CFIDs.dump_dictionary('ESLifier_Data/master_byte_data.json', CFIDs.master_byte_data)
         print('CLEAR ALT')
+        return CFIDs.original_files, CFIDs.winning_files_dict, CFIDs.master_byte_data, CFIDs.winning_file_history_dict, CFIDs.compacted_and_patched
 
     #Create a copy of the mod plugin we're compacting
     def copy_file_to_output(file: str, skyrim_folder_path: str, output_folder: str) -> tuple[str, str]:

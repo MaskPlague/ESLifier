@@ -329,7 +329,7 @@ class main(QWidget):
             self.setEnabled(True)
 
     def compact_confirmed(self, checked):
-        self.log_stream.log_file.write('Running Scan\n')
+        self.log_stream.log_file.write('Compacting Plugins\n')
         self.confirm.hide()
         self.confirm.deleteLater()
         self.start_time = timeit.default_timer()
@@ -936,7 +936,7 @@ class CompactorWorker(QObject):
         self.skyrim_folder_path = skyrim_folder_path
         self.output_folder_path = output_folder_path
         self.output_folder_name = output_folder_name
-        self.overwrite_path = overwrite_path
+        self.overwrite_path = os.path.normpath(overwrite_path)
         self.update_header = update_header
         self.mo2_mode = mo2_mode
         self.create_new_cell_plugin = create_new_cell_plugin()
@@ -956,6 +956,17 @@ class CompactorWorker(QObject):
         if self.generate_cell_master:
             self.create_new_cell_plugin.generate(os.path.join(self.output_folder_path, self.output_folder_name))
         finalize = False
+        original_files: dict = self.get_from_file('ESLifier_Data/original_files.json')
+        winning_files_dict: dict = self.get_from_file('ESLifier_Data/winning_files_dict.json')
+        master_byte_data: dict = self.get_from_file('ESLifier_Data/master_byte_data.json')
+        files_to_patch: dict = self.get_from_file('ESLifier_Data/file_masters.json')
+        bsa_dict: dict = self.get_from_file('ESLifier_Data/bsa_dict.json')
+        bsa_masters = []
+        for value in bsa_dict.values():
+            bsa_masters.extend(value)
+        winning_file_history_dict = {}
+        compacted_and_patched = {}
+
         for file in self.checked:
             count +=1
             percent = round((count/total)*100,1)
@@ -977,14 +988,56 @@ class CompactorWorker(QObject):
                     finalize = True
             else:
                 generate_cell_master = False
-            CFIDs.compact_and_patch(file, dependents, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name,
-                                     self.overwrite_path, self.update_header, self.mo2_mode, all_dependents_have_skyrim_esm_as_master, 
-                                     self.create_new_cell_plugin, generate_cell_master)
+            original_files, winning_files_dict, master_byte_data, winning_file_history_dict, compacted_and_patched = CFIDs.compact_and_patch(
+                            file, dependents, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, 
+                            self.update_header, self.mo2_mode, all_dependents_have_skyrim_esm_as_master, self.create_new_cell_plugin, 
+                            generate_cell_master, original_files, winning_files_dict, master_byte_data, winning_file_history_dict, 
+                            files_to_patch, bsa_masters, bsa_dict, compacted_and_patched)
+            
         if finalize:
             self.create_new_cell_plugin.finalize_plugin()
+        self.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json', compacted_and_patched)
+        self.dump_dictionary('ESLifier_Data/original_files.json', original_files)
+        self.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', winning_file_history_dict)
+        self.dump_dictionary('ESLifier_Data/master_byte_data.json', master_byte_data)
         print("Patching Complete")
         self.finished_signal.emit()
         return
+    
+    def dump_compacted_and_patched(self, file, dictionary: dict):
+        data: dict[str, list[str]] = self.get_from_file(file)
+        for key, value in dictionary.items():
+            if key not in data:
+                data[key] = []
+            for item in value:
+                if item.lower() not in data[key]:
+                    data[key].append(item.lower())
+        try:
+            with open(file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print(f'!Error: Failed to dump data to {file}')
+            print(e)
+    
+    def dump_dictionary(self, file, dictionary: dict):
+        data = self.get_from_file(file)
+        for key, values in dictionary.items():
+            data[key] = values
+        try:
+            with open(file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print(f'!Error: Failed to dump data to {file}')
+            print(e)
+    
+    def get_from_file(self, file: str) -> dict:
+        try:
+            with open(file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        except:
+            data = {}
+        return data
+
     
 class FlagWorker(QObject):
     finished_signal = pyqtSignal()
@@ -1002,10 +1055,11 @@ class FlagWorker(QObject):
         winning_files_dict = self.get_from_file('ESLifier_Data/winning_files_dict.json')
         winning_file_history_dict = {}
         for file in self.files:
-            original_files, winning_file_history_dict = CFIDs.set_flag(file, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, 
-                                                                      self.overwrite_path, self.mo2_mode, original_files, winning_files_dict, winning_file_history_dict)
-        self.dump_dictionary('ESLifier_Data/original_files.json', CFIDs.original_files)
-        self.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', CFIDs.winning_file_history_dict)
+            original_files, winning_file_history_dict = CFIDs.set_flag(
+                            file, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, 
+                            self.overwrite_path, self.mo2_mode, original_files, winning_files_dict, winning_file_history_dict)
+        self.dump_dictionary('ESLifier_Data/original_files.json', original_files)
+        self.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', winning_file_history_dict)
         self.finished_signal.emit()
 
     def dump_dictionary(self, file, dictionary: dict):
