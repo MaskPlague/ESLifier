@@ -2,7 +2,6 @@ import os
 import binascii
 import shutil
 import zlib
-import json
 import threading
 import subprocess
 import struct
@@ -110,40 +109,6 @@ class CFIDs():
             shutil.rmtree('bsa_extracted_temp/')
         print('CLEAR ALT')
         return CFIDs.original_files, CFIDs.winning_files_dict, CFIDs.master_byte_data, CFIDs.winning_file_history_dict, CFIDs.compacted_and_patched
-    
-    def dump_compacted_and_patched(file):
-        data: dict[str, list[str]] = CFIDs.get_from_file(file)
-        for key, value in CFIDs.compacted_and_patched.items():
-            if key not in data:
-                data[key] = []
-            for item in value:
-                if item.lower() not in data[key]:
-                    data[key].append(item.lower())
-        try:
-            with open(file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=4)
-        except Exception as e:
-            print(f'!Error: Failed to dump data to {file}')
-            print(e)
-
-    def dump_dictionary(file, dictionary: dict):
-        data = CFIDs.get_from_file(file)
-        for key, values in dictionary.items():
-            data[key] = values
-        try:
-            with open(file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=4)
-        except Exception as e:
-            print(f'!Error: Failed to dump data to {file}')
-            print(e)
-
-    def get_from_file(file: str) -> dict:
-        try:
-            with open(file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-        except:
-            data = {}
-        return data
     
     def bsa_temp_extract(bsa_file: str, type: str, name:str, startupinfo: subprocess.STARTUPINFO):
         with subprocess.Popen(
@@ -333,7 +298,6 @@ class CFIDs():
     #Create the Form ID map which is a list of tuples that holds four Form Ids that are in \xMASTER\x00\x00\x00 order:
     #original Form ID w/o leading 0s, original Form ID w/ leading 0s, new Form ID w/o 0s, new Form ID w/ 0s, 
     #the orginal Form ID in \x00\x00\x00\xMASTER order, and the new Form ID in the same order.
-    #TODO: Convert to a dictionary for even faster patching
     def get_form_id_map(file: str):
         form_id_file_name = "ESLifier_Data/Form_ID_Maps/" + os.path.basename(file).lower() + "_FormIdMap.txt"
         form_id_file_data = ''
@@ -647,11 +611,11 @@ class CFIDs():
         with open(form_id_file_name, 'r', encoding='utf-8') as form_id_file:
             form_id_file_data = form_id_file.readlines()
 
-        threads = []
+        threads: list[threading.Thread] = []
 
         for dependent in dependents:
             new_file, rel_path = CFIDs.copy_file_to_output(dependent, skyrim_folder_path, output_folder_path)
-            basename = os.path.basename(new_file)
+            basename: str = os.path.basename(new_file)
             basename_lower = basename.lower()
             if len(file_masters) > 0 and basename_lower in file_masters and len(file_masters[basename_lower]) > 0 and file_masters[basename_lower][-1].lower().endswith('.seq'):
                 new_seq_file, rel_path_seq = CFIDs.copy_file_to_output(file_masters[basename_lower][-1], skyrim_folder_path, output_folder_path)
@@ -668,7 +632,7 @@ class CFIDs():
         for thread in threads:
             thread.join()
 
-    def patch_dependent(new_file: str, update_header: bool, file: str, form_id_file_data: list, rel_path: str, new_seq_file: str, rel_path_seq: str):
+    def patch_dependent(new_file: str, update_header: bool, file: str, form_id_file_data: list[str], rel_path: str, new_seq_file: str, rel_path_seq: str):
         form_id_replacements = []
         try:
             with open(new_file, 'rb+') as dependent_file:
@@ -691,7 +655,7 @@ class CFIDs():
 
                 form_id_list = []
                 master_byte = b''
-                updated_master_index = -1
+                updated_master_index: int = -1
                 if CFIDs.do_generate_cell_master:
                     #Get all new form ids in plugin
                     for form in data_list:
@@ -752,7 +716,7 @@ class CFIDs():
         tes4 = data_list[0]
         offset = 24
         data_len = len(tes4)
-        master_list = []
+        master_list: list[str] = []
         master_index = 0
         name = os.path.basename(file).lower()
         while offset < data_len:
@@ -816,7 +780,7 @@ class CFIDs():
             elif field != b'DATA' and master_exists:
                 break
             offset += field_size + 6
-        tes4_size = struct.unpack("<I", tes4[4:8])[0] + 45
+        tes4_size: int = struct.unpack("<I", tes4[4:8])[0] + 45
         if master_exists:
             tes4 = b'TES4' + tes4_size.to_bytes(4,'little') + tes4[8:offset] + new_master_data + tes4[offset:]
         else:
