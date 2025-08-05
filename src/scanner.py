@@ -40,7 +40,7 @@ class scanner():
         scanner.dll_dict = {}
         scanner.bsa_files = []
         scanner.winning_files_dict = {}
-        scanner.threads = []
+        scanner.threads: list[threading.Thread] = []
         scanner.seq_files = []
         scanner.pex_files = []
         scanner.dll_files = []
