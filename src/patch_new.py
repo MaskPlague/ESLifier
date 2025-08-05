@@ -209,9 +209,9 @@ class PatchNewScannerWorker(QObject):
                 for rel_path, prev_mod in winning_file_history_dict.copy().items():
                     (mod_name, full_path) = winning_files_dict.get(rel_path, (None, None))
                     if mod_name != None and mod_name != prev_mod:
-                        self.conflict_changes.append((rel_path.lower(), full_path))
+                        self.conflict_changes.append((rel_path.lower(), full_path, 'c'))
                     elif mod_name == None:
-                        self.conflict_changes.append((rel_path.lower(), os.path.join(self.output_path, rel_path)))
+                        self.conflict_changes.append((rel_path.lower(), os.path.join(self.output_path, rel_path), 'c'))
             
             print(f'Found {len(self.conflict_changes)} Conflict Changes.')
 
@@ -240,10 +240,10 @@ class PatchNewScannerWorker(QObject):
             for rel_path, full_path in self.hash_mismatches:
                 if rel_path not in temp_rel_paths:
                     temp_rel_paths.append(rel_path)
-                    temp_list.append((rel_path, full_path))
+                    temp_list.append((rel_path.lower(), full_path, 'h'))
         only_remove = True
         if len(temp_list) > 0:
-            for rel_path, full_path in temp_list:
+            for rel_path, full_path, source in temp_list:
                 added_to_list = False
                 for compacted, patched in compacted_and_patched.copy().items():
                     if rel_path == compacted.lower():
@@ -251,6 +251,8 @@ class PatchNewScannerWorker(QObject):
                         if output_cased != None and output_cased not in files_to_remove:
                             files_to_remove.append(output_cased)
                             added_to_list = True
+                            if source == 'h':
+                                only_remove = False
                             for patched_rel_path in patched:
                                 patched_output_cased = actual_cases_output_files.get(patched_rel_path, None)
                                 if patched_output_cased != None and patched_output_cased not in files_to_remove:
@@ -259,6 +261,8 @@ class PatchNewScannerWorker(QObject):
                         elif output_cased == None and full_path not in files_to_remove and full_path.startswith(self.output_path):
                             files_to_remove.append(full_path)
                             added_to_list = True
+                            if source == 'h':
+                                only_remove = False
                             for patched_rel_path in patched:
                                 patched_output_cased = actual_cases_output_files.get(patched_rel_path, None)
                                 if patched_output_cased != None and patched_output_cased not in files_to_remove:
@@ -286,7 +290,6 @@ class PatchNewScannerWorker(QObject):
                 
                 if not added_to_list and full_path.startswith(self.output_path):
                     files_to_remove.append(full_path)
-
         if len(files_to_remove) > 0:
             with open('ESLifier_Data/compacted_and_patched.json', 'w', encoding='utf-8') as f:
                 json.dump(compacted_and_patched, f, ensure_ascii=False, indent=4)
@@ -377,9 +380,9 @@ class PatchNewScannerWorker(QObject):
                     data = f.read()
             if hashlib.sha256(data).hexdigest() != original_hash:
                 with self.lock:
-                    self.hash_mismatches.append(self.get_rel_path(file), file)
+                    self.hash_mismatches.append((self.get_rel_path(file, self.skyrim_folder_path), file))
 
-    def get_rel_path(self, file, skyrim_folder_path):
+    def get_rel_path(self, file: str, skyrim_folder_path: str):
         if 'bsa_extracted' in file:
             if 'bsa_extracted_temp' in file:
                 start = os.path.join(os.getcwd(), 'bsa_extracted_temp/')
