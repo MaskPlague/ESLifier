@@ -331,7 +331,7 @@ class main(QWidget):
     def compact_confirmed(self, checked):
         self.log_stream.log_file.write('Compacting Plugins\n')
         self.confirm.hide()
-        self.confirm.deleteLater()
+        #self.confirm.deleteLater()
         self.start_time = timeit.default_timer()
         for row in range(self.list_compact.rowCount()):
             if self.list_compact.item(row,self.list_compact.MOD_COL).checkState() == Qt.CheckState.Checked:
@@ -348,8 +348,8 @@ class main(QWidget):
             checked_list = checked:
             self.finished_button_action(sender, checked_list,))
         self.worker.finished_signal.connect(self.compact_thread.quit)
-        self.worker.finished_signal.connect(self.compact_thread.deleteLater)
-        self.worker.finished_signal.connect(self.worker.deleteLater)
+        #self.worker.finished_signal.connect(self.compact_thread.deleteLater)
+        #self.worker.finished_signal.connect(self.worker.deleteLater)
         self.compact_thread.start()
         
     def eslify_selected_clicked(self):
@@ -425,7 +425,7 @@ class main(QWidget):
     def eslify_confirmed(self, checked):
         self.log_stream.log_file.write('ESL Flagging Plugins\n')
         self.confirm.hide()
-        self.confirm.deleteLater()
+        #self.confirm.deleteLater()
         for row in range(self.list_eslify.rowCount()):
             if self.list_eslify.item(row, self.list_eslify.MOD_COL).checkState() == Qt.CheckState.Checked:
                 self.list_eslify.item(row, self.list_eslify.MOD_COL).setCheckState(Qt.CheckState.PartiallyChecked)
@@ -467,8 +467,8 @@ class main(QWidget):
             self.worker.moveToThread(self.flag_and_patch_thread)
             self.flag_and_patch_thread.started.connect(self.worker.run)
             self.worker.finished_signal.connect(self.flag_and_patch_thread.quit)
-            self.worker.finished_signal.connect(self.flag_and_patch_thread.deleteLater)
-            self.worker.finished_signal.connect(self.worker.deleteLater)
+            #self.worker.finished_signal.connect(self.flag_and_patch_thread.deleteLater)
+            #self.worker.finished_signal.connect(self.worker.deleteLater)
             self.worker.finished_signal.connect(
                 lambda sender = 'eslify', 
                 checked_list = files:
@@ -488,8 +488,8 @@ class main(QWidget):
         self.flag_worker.moveToThread(self.flag_thread)
         self.flag_thread.started.connect(self.flag_worker.flag_files)
         self.flag_worker.finished_signal.connect(self.flag_thread.quit)
-        self.flag_worker.finished_signal.connect(self.flag_thread.deleteLater)
-        self.flag_worker.finished_signal.connect(self.flag_worker.deleteLater)
+        #self.flag_worker.finished_signal.connect(self.flag_thread.deleteLater)
+        #self.flag_worker.finished_signal.connect(self.flag_worker.deleteLater)
         self.flag_worker.finished_signal.connect(
             lambda files_copy = files,
             patch_and_flag_copy = patch_and_flag:
@@ -580,8 +580,8 @@ class main(QWidget):
             self.scan_thread.started.connect(self.worker.scan_run)
             self.worker.finished_signal.connect(self.completed_scan)
             self.worker.finished_signal.connect(self.scan_thread.quit)
-            self.worker.finished_signal.connect(self.scan_thread.deleteLater)
-            self.worker.finished_signal.connect(self.worker.deleteLater)
+            #self.worker.finished_signal.connect(self.scan_thread.deleteLater)
+            #self.worker.finished_signal.connect(self.worker.deleteLater)
             self.scan_thread.start()
         if not self.scanned:
             self.scanned = True

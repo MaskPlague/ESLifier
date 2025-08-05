@@ -56,23 +56,11 @@ class log_stream(QMainWindow):
         self.log_file.write(f'ESLifier Version v{version}\n')
         self.log_file.write('Working directory is ' + os.getcwd() + '\n')
         self.log_file.flush()
-
-        self.log_file_flush_timer = QTimer(self)
-        self.log_file_flush_timer.timeout.connect(self.log_file.flush)
-        self.log_file_flush_timer.start(1500)
         
-        try:
-            sys.stdout = self
-            sys.stderr = self
-            sys.excepthook = self.exception_hook
-            threading.excepthook = self.custom_exception_hook
-        except Exception as e:
-            print('Failed intiialzing log streams, retrying')
-            print(e)
-            sys.stdout = self
-            sys.stderr = self
-            sys.excepthook = self.exception_hook
-            threading.excepthook = self.custom_exception_hook
+        sys.stdout = self
+        sys.stderr = self
+        sys.excepthook = self.exception_hook
+        threading.excepthook = self.custom_exception_hook
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.process_queue)
@@ -108,6 +96,7 @@ class log_stream(QMainWindow):
             and text != ''):
             formatted_datetime = '[' + datetime.now().isoformat(timespec='milliseconds') + '] '
             self.log_file.write(formatted_datetime + text.removeprefix('~') + '\n')
+            self.log_file.flush()
         if text.startswith('Warn:') and not 'red' in self.text_edit.styleSheet() and not 'lightblue' in self.text_edit.styleSheet():
             self.text_edit.setStyleSheet("background-color: lightblue")
         if text.startswith('Warn:'):
@@ -250,7 +239,6 @@ class log_stream(QMainWindow):
 
     def closeEvent(self, a0):
         self.timer.stop()
-        self.log_file_flush_timer.stop()
         self.log_file.flush()
         self.log_file.close()
         super().closeEvent(a0)
@@ -287,19 +275,11 @@ class log_stream(QMainWindow):
                 if not self.progress_bar.paintingActive() and self.progress_bar.value() != self.percentage:
                     self.progress_bar.setValue(self.percentage)
         length = self.list.qsize()
-        count = 0
         for _ in range(length):
             if self.list.empty():
                 break
             line = self.list.get()
             self.update_text_widget(line)
-            count += 1
-            if count > 1000:
-                current_length = self.list.qsize()
-                for line in range(current_length):
-                    if not self.list.empty():
-                        self.list.get()
-                break
 
         self.timer.start(50)
 

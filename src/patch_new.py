@@ -13,8 +13,8 @@ from compact_form_ids import CFIDs
 from cell_changed_scanner import cell_scanner
 
 class patch_new():
-    def scan_and_find(self, settings: dict[str, str|bool], parent):
-        self.parent = parent
+    def scan_and_find(self, settings: dict[str, str|bool], main_parent):
+        self.main_parent = main_parent
         if not os.path.exists('ESLifier_Data/compacted_and_patched.json') and not os.path.exists('ESLifier_Data/esl_flagged.json'):
             self.no_data_warning = QMessageBox()
             self.no_data_warning.setIcon(QMessageBox.Icon.Information)
@@ -27,7 +27,7 @@ class patch_new():
             self.no_data_warning.setWindowIcon(QIcon(":/images/ESLifier.png"))
             self.no_data_warning.addButton(QMessageBox.StandardButton.Ok)
             self.no_data_warning.show()
-            self.parent.setEnabled(True)
+            self.main_parent.setEnabled(True)
             print('CLEAR')
             return
         self.settings: dict = settings
@@ -42,13 +42,13 @@ class patch_new():
         self.generate_cell_master = settings.get('generate_cell_master', True)
 
         self.patch_new_scan_thread = QThread()
-        self.worker = PatchNewScannerWorker(settings, self.parent)
-        self.worker.moveToThread(self.patch_new_scan_thread)
-        self.patch_new_scan_thread.started.connect(self.worker.detect_changes)
-        self.worker.finished_signal.connect(self.completed_scan)
-        self.worker.finished_signal.connect(self.worker.deleteLater)
-        self.worker.finished_signal.connect(self.patch_new_scan_thread.quit)
-        self.worker.finished_signal.connect(self.patch_new_scan_thread.deleteLater)
+        self.scanner_worker = PatchNewScannerWorker(settings.copy(), self.main_parent)
+        self.scanner_worker.moveToThread(self.patch_new_scan_thread)
+        self.patch_new_scan_thread.started.connect(self.scanner_worker.detect_changes)
+        self.scanner_worker.finished_signal.connect(self.completed_scan)
+        #self.scanner_worker.finished_signal.connect(self.scanner_worker.deleteLater)
+        self.scanner_worker.finished_signal.connect(self.patch_new_scan_thread.quit)
+        #self.scanner_worker.finished_signal.connect(self.patch_new_scan_thread.deleteLater)
         self.patch_new_scan_thread.start()
     
     def completed_scan(self, mod_list, new_dependencies, new_files, hash_mismatch_num, file_conflict_num, skse_warnings):
@@ -70,12 +70,12 @@ class patch_new():
                         text += '\n\t'
             QMessageBox.warning(None, "Compacted mod referenced in SKSE dll.", text)
         if len(self.mod_list) > 0 and len(self.new_dependencies) > 0 :
-            print('\nChecking if New CELLs are Changed:')
+            print('\nChecking if New CELLs are Changed...')
             cell_scanner.scan_new_dependents(self.mod_list, self.new_dependencies)
         if len(self.mod_list) == 0:
             print("CLEAR")
             self.create_completion_message(0)
-            self.parent.setEnabled(True)
+            self.main_parent.setEnabled(True)
         else:
             self.patch_new_plugins_and_files()
 
@@ -97,19 +97,20 @@ class patch_new():
 
     def patch_new_plugins_and_files(self):
         self.patch_new_thread = QThread()
-        self.worker = PatchNewWorker(self.mod_list, self.new_dependencies, self.new_files, self.settings)
-        self.worker.moveToThread(self.patch_new_thread)
-        self.patch_new_thread.started.connect(self.worker.patch)
-        self.worker.finished_signal.connect(self.finished_patching)
-        self.worker.finished_signal.connect(self.patch_new_thread.quit)
-        self.worker.finished_signal.connect(self.patch_new_thread.deleteLater)
+        self.patch_worker = PatchNewWorker(self.mod_list, self.new_dependencies, self.new_files, self.settings.copy())
+        self.patch_worker.moveToThread(self.patch_new_thread)
+        self.patch_new_thread.started.connect(self.patch_worker.patch_new_files)
+        self.patch_worker.finished_signal.connect(self.finished_patching)
+        self.patch_worker.finished_signal.connect(self.patch_new_thread.quit)
+        #self.patch_worker.finished_signal.connect(self.patch_new_thread.deleteLater)
+        #self.patch_worker.finished_signal.connect(self.patch_worker.deleteLater)
         self.patch_new_thread.start()
 
     def finished_patching(self, new_file_num):
         print('Finished Patching New or Changed Dependencies and Files')
         print('CLEAR')
         self.create_completion_message(new_file_num)
-        self.parent.setEnabled(True)
+        self.main_parent.setEnabled(True)
 
     def create_completion_message(self, new_file_num):
         self.patch_new_complete_message = QMessageBox()
@@ -135,14 +136,14 @@ class patch_new():
         self.patch_new_complete_message.addButton(QMessageBox.StandardButton.Ok)
         self.patch_new_complete_message.accepted.connect(self.patch_new_complete_message.hide)
         self.patch_new_complete_message.show()
-        self.parent.calculate_stats()
+        self.main_parent.calculate_stats()
 
     def finished_rebuilding(self):
-        self.worker.detect_new_files()
+        self.scanner_worker.detect_new_files()
 
 class PatchNewScannerWorker(QObject):
     finished_signal = pyqtSignal(list, dict, dict, int, int, list)
-    def __init__(self, settings:dict[str, str|bool], parent):
+    def __init__(self, settings:dict[str, str|bool], main_parent):
         super().__init__()
         self.skyrim_folder_path: str = settings.get('skyrim_folder_path', '')
         self.overwrite_path: str = settings.get('overwrite_path', '')
@@ -153,7 +154,7 @@ class PatchNewScannerWorker(QObject):
         self.conflict_changes = []
         self.lock = threading.Lock()
         self.semaphore = threading.Semaphore(1000)
-        self._parent = parent
+        self.main_parent = main_parent
 
     def detect_changes(self):
         print('Scanning All Files:')
@@ -311,10 +312,10 @@ class PatchNewScannerWorker(QObject):
         with open("ESLifier_Data/winning_file_history_dict.json", 'w', encoding='utf-8') as f:
             json.dump(winning_file_history_dict, f, ensure_ascii=False, indent=4)
 
-        self._parent.redoing_output = True
-        self._parent.patch_new_running = True
-        self._parent.patch_new_only_remove = only_remove
-        self._parent.scan()
+        self.main_parent.redoing_output = True
+        self.main_parent.patch_new_running = True
+        self.main_parent.patch_new_only_remove = only_remove
+        self.main_parent.scan()
 
     def detect_new_files(self):
         if not os.path.exists("ESLifier_Data/compacted_and_patched.json"):
@@ -369,7 +370,6 @@ class PatchNewScannerWorker(QObject):
         for mod, dlls in dll_dict.items():
             if mod in compacted_lowered and mod not in mod_list_lowered:
                 skse_warnings.append((mod, [os.path.basename(dll) for dll in dlls]))
-        
         self.finished_signal.emit(mod_list, new_dependencies, new_files, len(self.hash_mismatches), len(self.conflict_changes), skse_warnings)
         return
 
@@ -413,7 +413,7 @@ class PatchNewWorker(QObject):
         self.update_header: bool = settings.get('update_header', False)
         self.generate_cell_master = settings.get('generate_cell_master', True)
 
-    def patch(self):
+    def patch_new_files(self):
         total = len(self.files)
         count = 0
         print("CLEAR ALT")
