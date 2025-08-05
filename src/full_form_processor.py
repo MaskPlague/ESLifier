@@ -93,257 +93,130 @@ class form_processor():
     
     def save_all_form_data(data_list):
         saved_forms = []
+
+        default_handler = lambda i, form: [i, bytearray(form), [12]]
+
+        # Records with default handler
+        default_records = {
+            b'AACT', b'ASTP', b'CLAS', b'CLFM', b'CSTY', b'DEBR',
+            b'EYES', b'GMST', b'GRAS', b'IMAD', b'IMGS', b'KYWD',
+            b'LCRT', b'LGTM', b'MATO', b'MOVT', b'REVB', b'SOPM',
+            b'SPGD', b'TXST', b'VTYP', b'WOOP', b'VOLI', b'LENS'
+        }
+        # Records with shared handler
+        placed_records = {
+            b'PHZD', b'PGRE', b'PMIS', b'PARW', b'PBAR', b'PCON', b'PFLA', b'BEAM'
+        }
+        
+        record_handlers = {
+            b'REFR': form_processor.save_refr_data,
+            b'ACHR': form_processor.save_achr_data,
+            b'ACTI': form_processor.save_acti_data,
+            b'ADDN': form_processor.save_addn_data,
+            b'ALCH': form_processor.save_alch_data,
+            b'AMMO': form_processor.save_ammo_data,
+            b'ANIO': form_processor.save_anio_data,
+            b'APPA': form_processor.save_appa_data,
+            b'ARMA': form_processor.save_arma_data,
+            b'ARMO': form_processor.save_armo_data,
+            b'ARTO': form_processor.save_arto_data,
+            b'ASPC': form_processor.save_aspc_data,
+            b'AVIF': form_processor.save_avif_data,
+            b'BOOK': form_processor.save_book_data,
+            b'BPTD': form_processor.save_bptd_data,
+            b'CAMS': form_processor.save_cams_data,
+            b'CELL': form_processor.save_cell_data,
+            b'CLMT': form_processor.save_clmt_data,
+            b'COBJ': form_processor.save_cobj_data,
+            b'COLL': form_processor.save_coll_data,
+            b'CONT': form_processor.save_cont_data,
+            b'CPTH': form_processor.save_cpth_data,
+            b'DIAL': form_processor.save_dial_data,
+            b'DLBR': form_processor.save_dlbr_data,
+            b'DLVW': form_processor.save_dlvw_data,
+            b'DOBJ': form_processor.save_dobj_data,
+            b'DOOR': form_processor.save_door_data,
+            b'DUAL': form_processor.save_dual_data,
+            b'ECZN': form_processor.save_eczn_data,
+            b'EFSH': form_processor.save_efsh_data,
+            b'ENCH': form_processor.save_ench_data,
+            b'EQUP': form_processor.save_equp_data,
+            b'EXPL': form_processor.save_expl_data,
+            b'FACT': form_processor.save_fact_data,
+            b'FLOR': form_processor.save_flor_data,
+            b'FLST': form_processor.save_flst_data,
+            b'FSTP': form_processor.save_fstp_data,
+            b'FSTS': form_processor.save_fsts_data,
+            b'FURN': form_processor.save_furn_data,
+            b'GLOB': form_processor.save_glob_data,
+            b'GRUP': form_processor.save_grup_data,
+            b'HAZD': form_processor.save_hazd_data,
+            b'HDPT': form_processor.save_hdpt_data,
+            b'IDLE': form_processor.save_idle_data,
+            b'IDLM': form_processor.save_idlm_data,
+            b'INFO': form_processor.save_info_data,
+            b'INGR': form_processor.save_ingr_data,
+            b'IPCT': form_processor.save_ipct_data,
+            b'IPDS': form_processor.save_ipds_data,
+            b'KEYM': form_processor.save_keym_data,
+            b'LAND': form_processor.save_land_data,
+            b'LCTN': form_processor.save_lctn_data,
+            b'LIGH': form_processor.save_ligh_data,
+            b'LSCR': form_processor.save_lscr_data,
+            b'LTEX': form_processor.save_ltex_data,
+            b'LVLI': form_processor.save_lvli_data,
+            b'LVLN': form_processor.save_lvln_data,
+            b'LVSP': form_processor.save_lvsp_data,
+            b'MATT': form_processor.save_matt_data,
+            b'MESG': form_processor.save_mesg_data,
+            b'MGEF': form_processor.save_mgef_data,
+            b'MISC': form_processor.save_misc_data,
+            b'MSTT': form_processor.save_mstt_data,
+            b'MUSC': form_processor.save_musc_data,
+            b'MUST': form_processor.save_must_data,
+            b'NAVI': form_processor.save_navi_data,
+            b'NAVM': form_processor.save_navm_data,
+            b'NOTE': form_processor.save_note_data,
+            b'NPC_': form_processor.save_npc__data,
+            b'OTFT': form_processor.save_otft_data,
+            b'PACK': form_processor.save_pack_data,
+            b'PERK': form_processor.save_perk_data,
+            b'PROJ': form_processor.save_proj_data,
+            b'QUST': form_processor.save_qust_data,
+            b'RACE': form_processor.save_race_data,
+            b'REGN': form_processor.save_regn_data,
+            b'RELA': form_processor.save_rela_data,
+            b'RFCT': form_processor.save_rfct_data,
+            b'SCEN': form_processor.save_scen_data,
+            b'SCRL': form_processor.save_scrl_data,
+            b'SHOU': form_processor.save_shou_data,
+            b'SLGM': form_processor.save_slgm_data,
+            b'SMBN': form_processor.save_smbn_data,
+            b'SMEN': form_processor.save_smen_data,
+            b'SMQN': form_processor.save_smqn_data,
+            b'SNCT': form_processor.save_snct_data,
+            b'SNDR': form_processor.save_sndr_data,
+            b'SOUN': form_processor.save_soun_data,
+            b'SPEL': form_processor.save_spel_data,
+            b'STAT': form_processor.save_stat_data,
+            b'TACT': form_processor.save_tact_data,
+            b'TES4': form_processor.save_tes4_data,
+            b'TREE': form_processor.save_tree_data,
+            b'WATR': form_processor.save_watr_data,
+            b'WEAP': form_processor.save_weap_data,
+            b'WRLD': form_processor.save_wrld_data,
+            b'WTHR': form_processor.save_wthr_data,
+        }
+        
         for i, form in enumerate(data_list):
             record_type = form[:4]
-            if b'REFR' == record_type:
-                saved_forms.append(form_processor.save_refr_data(i, form))
-            elif b'ACHR' == record_type:
-                saved_forms.append(form_processor.save_achr_data(i, form))
-            elif b'ACTI' == record_type:
-                saved_forms.append(form_processor.save_acti_data(i, form))
-            elif b'AACT' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'ADDN' == record_type:
-                saved_forms.append(form_processor.save_addn_data(i, form))
-            elif b'ALCH' == record_type:
-                saved_forms.append(form_processor.save_alch_data(i, form))
-            elif b'AMMO' == record_type:
-                saved_forms.append(form_processor.save_ammo_data(i, form))
-            elif b'ANIO' == record_type:
-                saved_forms.append(form_processor.save_anio_data(i, form))
-            elif b'APPA' == record_type:
-                saved_forms.append(form_processor.save_appa_data(i, form))
-            elif b'ARMA' == record_type:
-                saved_forms.append(form_processor.save_arma_data(i, form))
-            elif b'ARMO' == record_type:
-                saved_forms.append(form_processor.save_armo_data(i, form))
-            elif b'ARTO' == record_type:
-                saved_forms.append(form_processor.save_arto_data(i, form))
-            elif b'ASPC' == record_type:
-                saved_forms.append(form_processor.save_aspc_data(i, form))
-            elif b'ASTP' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'AVIF' == record_type:
-                saved_forms.append(form_processor.save_avif_data(i, form))
-            elif b'BOOK' == record_type:
-                saved_forms.append(form_processor.save_book_data(i, form))
-            elif b'BPTD' == record_type:
-                saved_forms.append(form_processor.save_bptd_data(i, form))
-            elif b'CAMS' == record_type:
-                saved_forms.append(form_processor.save_cams_data(i, form))
-            elif b'CELL' == record_type:
-                saved_forms.append(form_processor.save_cell_data(i, form))
-            elif b'CLAS' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'CLFM' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'CLMT' == record_type:
-                saved_forms.append(form_processor.save_clmt_data(i, form))
-            elif b'COBJ' == record_type:
-                saved_forms.append(form_processor.save_cobj_data(i, form))
-            elif b'COLL' == record_type:
-                saved_forms.append(form_processor.save_coll_data(i, form))
-            elif b'CONT' == record_type:
-                saved_forms.append(form_processor.save_cont_data(i, form))
-            elif b'CPTH' == record_type:
-                saved_forms.append(form_processor.save_cpth_data(i, form))
-            elif b'CSTY' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'DEBR' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'DIAL' == record_type:
-                saved_forms.append(form_processor.save_dial_data(i, form))
-            elif b'DLBR' == record_type:
-                saved_forms.append(form_processor.save_dlbr_data(i, form))
-            elif b'DLVW' == record_type:
-                saved_forms.append(form_processor.save_dlvw_data(i, form))
-            elif b'DOBJ' == record_type:
-                saved_forms.append(form_processor.save_dobj_data(i, form))
-            elif b'DOOR' == record_type:
-                saved_forms.append(form_processor.save_door_data(i, form))
-            elif b'DUAL' == record_type:
-                saved_forms.append(form_processor.save_dual_data(i, form))
-            elif b'ECZN' == record_type:
-                saved_forms.append(form_processor.save_eczn_data(i, form))
-            elif b'EFSH' == record_type:
-                saved_forms.append(form_processor.save_efsh_data(i, form))
-            elif b'ENCH' == record_type:
-                saved_forms.append(form_processor.save_ench_data(i, form))
-            elif b'EQUP' == record_type:
-                saved_forms.append(form_processor.save_equp_data(i, form))
-            elif b'EXPL' == record_type:
-                saved_forms.append(form_processor.save_expl_data(i, form))
-            elif b'EYES' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'FACT' == record_type:
-                saved_forms.append(form_processor.save_fact_data(i, form))
-            elif b'FLOR' == record_type:
-                saved_forms.append(form_processor.save_flor_data(i, form))
-            elif b'FLST' == record_type:
-                saved_forms.append(form_processor.save_flst_data(i, form))
-            elif b'FSTP' == record_type:
-                saved_forms.append(form_processor.save_fstp_data(i, form))
-            elif b'FSTS' == record_type:
-                saved_forms.append(form_processor.save_fsts_data(i, form))
-            elif b'FURN' == record_type:
-                saved_forms.append(form_processor.save_furn_data(i, form))
-            elif b'GLOB' == record_type:
-                saved_forms.append(form_processor.save_glob_data(i, form))
-            elif b'GMST' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'GRAS' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'GRUP' == record_type:
-                saved_forms.append(form_processor.save_grup_data(i, form))
-            elif b'HAZD' == record_type:
-                saved_forms.append(form_processor.save_hazd_data(i, form))
-            elif b'HDPT' == record_type:
-                saved_forms.append(form_processor.save_hdpt_data(i, form))
-            elif b'IDLE' == record_type:
-                saved_forms.append(form_processor.save_idle_data(i, form))
-            elif b'IDLM' == record_type:
-                saved_forms.append(form_processor.save_idlm_data(i, form))
-            elif b'IMAD' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'IMGS' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'INFO' == record_type:
-                saved_forms.append(form_processor.save_info_data(i, form))
-            elif b'INGR' == record_type:
-                saved_forms.append(form_processor.save_ingr_data(i, form))
-            elif b'IPCT' == record_type:
-                saved_forms.append(form_processor.save_ipct_data(i, form))
-            elif b'IPDS' == record_type:
-                saved_forms.append(form_processor.save_ipds_data(i, form))
-            elif b'KEYM' == record_type:
-                saved_forms.append(form_processor.save_keym_data(i, form))
-            elif b'KYWD' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'LAND' == record_type:
-                saved_forms.append(form_processor.save_land_data(i, form))
-            elif b'LCRT' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'LCTN' == record_type:
-                saved_forms.append(form_processor.save_lctn_data(i, form))
-            elif b'LGTM' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'LIGH' == record_type:
-                saved_forms.append(form_processor.save_ligh_data(i, form))
-            elif b'LSCR' == record_type:
-                saved_forms.append(form_processor.save_lscr_data(i, form))
-            elif b'LTEX' == record_type:
-                saved_forms.append(form_processor.save_ltex_data(i, form))
-            elif b'LVLI' == record_type:
-                saved_forms.append(form_processor.save_lvli_data(i, form))
-            elif b'LVLN' == record_type:
-                saved_forms.append(form_processor.save_lvln_data(i, form))
-            elif b'LVSP' == record_type:
-                saved_forms.append(form_processor.save_lvsp_data(i, form))
-            elif b'MATO' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'MATT' == record_type:
-                saved_forms.append(form_processor.save_matt_data(i, form))
-            elif b'MESG' == record_type:
-                saved_forms.append(form_processor.save_mesg_data(i, form))
-            elif b'MGEF' == record_type:
-                saved_forms.append(form_processor.save_mgef_data(i, form))
-            elif b'MISC' == record_type:
-                saved_forms.append(form_processor.save_misc_data(i, form))
-            elif b'MOVT' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'MSTT' == record_type:
-                saved_forms.append(form_processor.save_mstt_data(i, form))
-            elif b'MUSC' == record_type:
-                saved_forms.append(form_processor.save_musc_data(i, form))
-            elif b'MUST' == record_type:
-                saved_forms.append(form_processor.save_must_data(i, form))
-            elif b'NAVI' == record_type:
-                saved_forms.append(form_processor.save_navi_data(i, form))
-            elif b'NAVM' == record_type:
-                saved_forms.append(form_processor.save_navm_data(i, form))
-            elif b'NOTE' == record_type:
-                saved_forms.append(form_processor.save_note_data(i, form))
-            elif b'NPC_' == record_type:
-                saved_forms.append(form_processor.save_npc__data(i, form))
-            elif b'OTFT' == record_type:
-                saved_forms.append(form_processor.save_otft_data(i, form))
-            elif b'PACK' == record_type:
-                saved_forms.append(form_processor.save_pack_data(i, form))
-            elif b'PERK' == record_type:
-                saved_forms.append(form_processor.save_perk_data(i, form))
-            elif record_type in (
-                b'PHZD', b'PGRE', b'PMIS', b'PARW',
-                b'PBAR', b'PCON', b'PFLA', b'BEAM',):
-                saved_forms.append(form_processor.save_placed_data(i, form))
-            elif b'PHZD' == record_type:
-                saved_forms.append(form_processor.save_phzd_data(i, form))
-            elif b'PROJ' == record_type:
-                saved_forms.append(form_processor.save_proj_data(i, form))
-            elif b'QUST' == record_type:
-                saved_forms.append(form_processor.save_qust_data(i, form))
-            elif b'RACE' == record_type:
-                saved_forms.append(form_processor.save_race_data(i, form))
-            #REFR at start of if else statement since it is the most common.
-            elif b'REGN' == record_type:
-                saved_forms.append(form_processor.save_regn_data(i, form))
-            elif b'RELA' == record_type:
-                saved_forms.append(form_processor.save_rela_data(i, form))
-            elif b'REVB' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'RFCT' == record_type:
-                saved_forms.append(form_processor.save_rfct_data(i, form))
-            elif b'SCEN' == record_type:
-                saved_forms.append(form_processor.save_scen_data(i, form))
-            elif b'SCRL' == record_type:
-                saved_forms.append(form_processor.save_scrl_data(i, form))
-            elif b'SHOU' == record_type:
-                saved_forms.append(form_processor.save_shou_data(i, form))
-            elif b'SLGM' == record_type:
-                saved_forms.append(form_processor.save_slgm_data(i, form))
-            elif b'SMBN' == record_type:
-                saved_forms.append(form_processor.save_smbn_data(i, form))
-            elif b'SMEN' == record_type:
-                saved_forms.append(form_processor.save_smen_data(i, form))
-            elif b'SMQN' == record_type:
-                saved_forms.append(form_processor.save_smqn_data(i, form))
-            elif b'SNCT' == record_type:
-                saved_forms.append(form_processor.save_snct_data(i, form))
-            elif b'SNDR' == record_type:
-                saved_forms.append(form_processor.save_sndr_data(i, form))
-            elif b'SOPM' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'SOUN' == record_type:
-                saved_forms.append(form_processor.save_soun_data(i, form))
-            elif b'SPEL' == record_type:
-                saved_forms.append(form_processor.save_spel_data(i, form))
-            elif b'SPGD' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'STAT' == record_type:
-                saved_forms.append(form_processor.save_stat_data(i, form))
-            elif b'TACT' == record_type:
-                saved_forms.append(form_processor.save_tact_data(i, form))
-            elif b'TES4' == record_type:
-                saved_forms.append(form_processor.save_tes4_data(i, form))
-            elif b'TREE' == record_type:
-                saved_forms.append(form_processor.save_tree_data(i, form))
-            elif b'TXST' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'VTYP' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'WATR' == record_type:
-                saved_forms.append(form_processor.save_watr_data(i, form))
-            elif b'WEAP' == record_type:
-                saved_forms.append(form_processor.save_weap_data(i, form))
-            elif b'WOOP' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'WRLD' == record_type:
-                saved_forms.append(form_processor.save_wrld_data(i, form))
-            elif b'WTHR' == record_type:
-                saved_forms.append(form_processor.save_wthr_data(i, form))
-            elif b'VOLI' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
-            elif b'LENS' == record_type:
-                saved_forms.append([i, bytearray(form), [12]])
+            if record_type in placed_records:
+                handler = form_processor.save_placed_data
+            else:
+                handler = record_handlers.get(record_type, default_handler if record_type in default_records else None)
+
+            if handler:
+                saved_forms.append(handler(i, form))
             else:
                 print(f'Missing form processing for record type: {record_type}')
 
@@ -1947,20 +1820,6 @@ class form_processor():
             offset += field_size + 6
 
         return [i, bytearray(form), placed_offsets]
-
-    def save_phzd_data(i, form): 
-        phzd_fields = [b'NAME', b'XESP', b'XLRL']
-
-        phzd_offsets = [12]
-        offset = 24
-        while offset < len(form):
-            field = form[offset:offset+4]
-            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
-            if field in phzd_fields:
-                phzd_offsets.append(offset + 6)
-            offset += field_size + 6
-
-        return [i, bytearray(form), phzd_offsets]
 
     def save_proj_data(i, form): 
         special_proj_fields = [b'DSTD', b'DATA', b'DMDS', b'MODS']
