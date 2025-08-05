@@ -236,7 +236,7 @@ class PatchNewScannerWorker(QObject):
         files_to_remove = []
         temp_list = self.conflict_changes.copy()
         if len(self.hash_mismatches) > 0:
-            temp_rel_paths = [rel_path for rel_path, _ in self.conflict_changes]
+            temp_rel_paths = [rel_path for rel_path, x, y in self.conflict_changes]
             for rel_path, full_path in self.hash_mismatches:
                 if rel_path not in temp_rel_paths:
                     temp_rel_paths.append(rel_path)
