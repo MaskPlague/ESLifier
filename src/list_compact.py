@@ -111,16 +111,12 @@ class list_compactable(QTableWidget):
         self.blacklist_list = self.get_data_from_file('ESLifier_Data/blacklist.json', list)
         self.cell_changed = self.get_data_from_file("ESLifier_Data/cell_changed.json", list)
 
-        to_remove = []
-        for mod in self.flag_dict:
+        for mod in self.flag_dict.copy():
             if os.path.basename(mod) in self.blacklist_list:
-                to_remove.append(mod)
-        
-        for mod in to_remove:
-            self.flag_dict.pop(mod)
+                self.flag_dict.pop(mod)
 
         self.setRowCount(len(self.flag_dict))
-        self.button_group = QButtonGroup()
+        #self.button_group = QButtonGroup()
 
         def display_dependencies(mod_key):
             index = self.currentRow()
@@ -251,9 +247,9 @@ class list_compactable(QTableWidget):
                     background-color: transparent;
                     border: none;
                     }""")
-                self.button_group.addButton(dL)
+                #self.button_group.addButton(dL)
                 item_hidden = QTableWidgetItem('')
-                self.setCellWidget(i, self.DEP_COL,dL)
+                self.setCellWidget(i, self.DEP_COL, dL)
                 self.setItem(i, self.DEP_COL,item_hidden)
             if hide_row:
                 self.setItem(i, self.HIDER_COL, QTableWidgetItem('hide me'))
