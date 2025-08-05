@@ -4,6 +4,7 @@ import traceback
 import threading
 import webbrowser
 import shutil
+import queue
 from datetime import datetime
 
 from PyQt6.QtWidgets import QMainWindow, QTextEdit, QMessageBox, QProgressBar, QWidget, QVBoxLayout
@@ -33,7 +34,7 @@ class log_stream(QMainWindow):
         main_layout.addSpacing(10)
         main_layout.addWidget(self.text_edit)
         self.setCentralWidget(main_widget)
-        self.list = []
+        self.list = queue.Queue()
         self.crash = False
         self.center_on_parent()
 
@@ -81,9 +82,11 @@ class log_stream(QMainWindow):
         self.timer_clear.timeout.connect(self.clean_up)
 
     def center_on_parent(self):
-        x = (self.parent().geometry().width() // 2) - (self.geometry().width() // 2)
-        y = (self.parent().geometry().height() // 2) - (self.geometry().height() // 2)
-        self.move(x,y)
+        parent = self.parent()
+        if parent != None:
+            x = (parent.geometry().width() // 2) - (self.geometry().width() // 2)
+            y = (parent.geometry().height() // 2) - (self.geometry().height() // 2)
+            self.move(x,y)
 
     def show(self):
         self.raise_()
@@ -96,8 +99,9 @@ class log_stream(QMainWindow):
         return super().hide()
 
     def write(self, text: str):
+        text = str(text)
         if not text.startswith('~'):
-            self.list.append(text)
+            self.list.put(text)
         text = text.strip().removeprefix('\033[F\033[K')
         if (text.startswith(('!', '~')) 
             or not text.startswith(('-  Gathered:', '-  Winning', '-    Processed', '-  Percentage', '-    Percentage', '-  Extracting:', 'CLEAR')) 
@@ -247,9 +251,9 @@ class log_stream(QMainWindow):
     def closeEvent(self, a0):
         self.timer.stop()
         self.log_file_flush_timer.stop()
-        super().closeEvent(a0)
         self.log_file.flush()
         self.log_file.close()
+        super().closeEvent(a0)
 
     def process_queue(self):
         self.timer.stop()
@@ -282,18 +286,19 @@ class log_stream(QMainWindow):
                 """)
                 if not self.progress_bar.paintingActive() and self.progress_bar.value() != self.percentage:
                     self.progress_bar.setValue(self.percentage)
-        length = len(self.list)
+        length = self.list.qsize()
         count = 0
         for _ in range(length):
-            if len(self.list) == 0:
+            if self.list.empty():
                 break
-            line = self.list.pop(0)
+            line = self.list.get()
             self.update_text_widget(line)
             count += 1
             if count > 1000:
-                for line in self.list.copy():
-                    if line.startswith("\033[F\033[K"):
-                        self.list.remove(line)
+                current_length = self.list.qsize()
+                for line in range(current_length):
+                    if not self.list.empty():
+                        self.list.get()
                 break
 
         self.timer.start(50)
