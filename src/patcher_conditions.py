@@ -44,6 +44,8 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_
             patchers.ini_eq_plugin_sep_fid_patcher(basename, new_file, form_id_map, sep='|', encoding_method=encoding)
         elif new_file_lower.endswith('_nup_dist.ini'):                                      # NPCs Use Potions
             patchers.ini_npcs_use_potions_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+        elif 'plugins\\truehud\\' in new_file_lower:                                        # TrueHud
+            patchers.ini_eq_plugin_sep_fid_patcher(basename, new_file, form_id_map, sep=':', encoding_method=encoding)
         else:                                                                               
             print(f'Warn: Possible missing patcher for: {new_file}')
     elif new_file_lower.endswith('_conditions.txt'):                                        # Dynamic Animation Replacer
