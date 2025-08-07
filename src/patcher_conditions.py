@@ -113,7 +113,8 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_
             patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, int_type=True, encoding_method=encoding)
         elif 'plugins\\ypsfashion\\' in new_file_lower:                                     # Immersive Hair Growth and Styling
             patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, int_type=True, encoding_method=encoding)
-        elif 'plugins\\skyrim - utility mod\\' in new_file_lower:                           # Inte's Skyrim - Utility Mod
+        elif ('plugins\\skyrim - utility mod\\' in new_file_lower or                        # Inte's Skyrim - Utility Mod
+            'plugins\\devious devices - equip\\' in new_file_lower):                        # Inte's Devious Devices - Equip
             patchers.json_skyrim_utility_mod_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'plugins\\captivefollowers' in new_file_lower:                                 # Captive Followers
             patchers.json_jcontainer_patcher(basename, new_file, form_id_map, encoding_method=encoding)
@@ -131,6 +132,8 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_
             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, symbol='~', encoding_method=encoding)
         elif 'skse\\alternateperspective' in new_file_lower:                                # Alternate Perspective
             patchers.json_alternate_perspective(basename, new_file, form_id_map, encoding_method=encoding)
+        elif 'plugins\\sleep in lingerie\\' in new_file_lower:                              # Sleep in Lingerie
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         else:
             print(f'Warn: Possible missing patcher for: {new_file}')
     elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
@@ -146,6 +149,8 @@ def patch_file_conditions(new_file_lower, new_file, basename, form_id_map, form_
             patchers.toml_loki_tdm_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('_avg.toml'):                                          # Actor Value Generator
             patchers.toml_actor_value_generator_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+        elif os.path.basename(new_file_lower).startswith('yastm_'):                         # YASTM - Yet Another Soul Trap Manager
+            patchers.toml_yet_another_soul_trap_manager_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         else:
             print(f'Warn: Possible missing patcher for: {new_file}')
     elif new_file_lower.endswith('_srd.yaml'):                                              # Sound record distributor YAML
