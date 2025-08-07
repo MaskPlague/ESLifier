@@ -1,7 +1,3 @@
-try:
-    import regex as re
-except ImportError:
-    import re
 import json
 import json5
 import os
@@ -378,7 +374,7 @@ class patchers():
             lines = f.readlines()
             print_replace = True
             for i, line in enumerate(lines):
-                if basename in line.lower() and sep in line and '=' in line and not line.startswith(';'):
+                if basename in line.lower() and sep in line and '=' in line and not line.strip().startswith(';'):
                     ox = False
                     middle_index = line.index(sep)
                     plugin_index = line.index('=') + 1
@@ -815,6 +811,27 @@ class patchers():
                             to_id_data = form_id_map.get(form_id_int)
                             if to_id_data is not None:
                                 lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+
+    # No Cell Form IDs possible
+    def toml_yet_another_soul_trap_manager_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if '"'+basename+'"' in line.lower() and line.lower().strip().startswith('[0x'):
+                    index = line.lower().index('[0x') + 1
+                    end_index = line.index(',', index)
+                    form_id = line[index:end_index]
+                    if form_id != '0x':
+                        start_of_line = line[:index]
+                        end_of_line = line[end_index:]
+                        form_id_int = int(form_id,16)
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -1580,3 +1597,9 @@ class patchers():
             f.truncate(0)
             f.write(''.join(lines))
             f.close()
+
+#if __name__ == '__main__':
+#    basename = ''.lower()
+#    form_id_map = {47097: {'hex_no_0': 'TEST', 'update_name': False}, 49880: {'hex_no_0': 'test2', 'update_name': False}}
+#    new_file = os.path.normpath(r"")
+#    patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
