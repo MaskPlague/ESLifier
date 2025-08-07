@@ -56,6 +56,7 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
     Generic Synthesis Patcher (GSP)
     Immersive Equipment Display
     Immersive Hair Growth and Styling
+    Inte's Devious Devices - Equip
     Inte's Skyrim - Utility Mod
     Inventory Injector
     Magic Fixes and Tweaks SKSE
@@ -70,6 +71,7 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
     Skyrim Unbound
     SL Config/Expressions/Animations
     SL Scaler
+    Sleep In Lingerie
     Smart Harvest Auto NG AutoLoot
     Sound Record Distributor
     Spell Organizer
@@ -84,6 +86,7 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
     Loki Poise
     Precision
     True Directional Movement
+    YATSM - Yet Another Soul Trap Manager
   </details>
 
   <details>
