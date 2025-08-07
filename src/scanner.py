@@ -817,7 +817,7 @@ class scanner():
                             time = timeit.default_timer() - start_time
                             offset += folder_record_size
                         if time > max_time:
-                            raise ValueError('Exceeded max processing time')
+                            raise ValueError(f'Exceeded max processing time for {bsa_file}')
                         mm.close()
                     f.close()
 
