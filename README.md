@@ -15,76 +15,75 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
   <details>
     <summary>.INI Files</summary>
     
-      - Keyword Item Distributor
-      - Base Object Swapper
-      - Spell Perk Item Distributor
-      - Seasons of Skyrim
-      - Payload Interpreter
-      - ENB Lights For Effect Shaders
-      - Description Framework
-      - SkyPatcher
-      - DtryKeyUtil
-      - Poise Breaker
-      - Valhalla Combat
-      - AutoBody
-      - Various States of Undress
-      - Form List Manipulator
-      - Leveled List Object Swapper
-      - Item Property Manipulator
-      - Music Type Distributor
-      - Completionist
-      - KreatE (with caveats)
-      - Remember Lockpick Angle - Updated
-      - Experience
-      - Light Placer
-      - NPCs Use Potions
+    AutoBody
+    Base Object Swapper
+    Completionist
+    Description Framework
+    DtryKeyUtil
+    ENB Lights for Effect Shaders
+    Experience
+    Form List Manipulator
+    Item Property Manipulator
+    Keyword Item Distributor
+    KreatE (with caveats)
+    Leveled List Object Swapper
+    Light Placer
+    Music Type Distributor
+    NPCs Use Potions
+    Payload Interpreter
+    Poise Breaker
+    Seasons of Skyrim
+    SkyPatcher
+    Spell Perk Item Distributor
+    TrueHUD
+    Valhalla Combat
+    Various States of Undress
   </details>
 
   <details>
     <summary>.JSON Files</summary>
 
-      - Open Animation Replacer
-      - MCM Helper
-      - Dynamic Key Activation Framework NG
-      - Smart Harvest Auto NG AutoLoot
-      - PapyrusUtil's StorageDataUtil
-      - Custom Skills Framework
-      - Core Impact Framework
-      - Object Impact Framework
-      - Light Placer
-      - Dynamic String Distributor
-      - Dynamic Armor Variants
-      - Inventory Injector
-      - Immersive Equipment Display
-      - Perk Adjuster
-      - Player Equipment Manager
-      - Skyrim Unbound
-      - Creature Framework
-      - CoMAP
-      - OBody NG
-      - SL Configs
-      - OStim Standalone
-      - Race Compatibility SKSE
-      - Rain Extinguished Fires
-      - Immersive Hair Growth and Styling
-      - Inte's Skyrim - Utility Mod
-      - dse-display-model
-      - CaptiveFollowers
-      - Generic Synthesis Patcher (GSP)
-      - Dress Up Lover's NPC Outfit Changer
-      - SL Scaler
-      - Magic Fixes and Tweaks SKSE
-      - STB Active Effects
-      - Spell Organizer
+    Alternate Perspective
+    CaptiveFollowers
+    CoMAP
+    Creature Framework
+    Custom Skills Framework (old format CustomSkill.<name>.config.txt supported)
+    Dress Up Lover's NPC Outfit Changer
+    dse-display-model
+    Dynamic Armor Variants
+    Dynamic Key Activation Framework NG
+    Dynamic String Distributor
+    Generic Synthesis Patcher (GSP)
+    Immersive Equipment Display
+    Immersive Hair Growth and Styling
+    Inte's Skyrim - Utility Mod
+    Inventory Injector
+    Magic Fixes and Tweaks SKSE
+    MCM Helper
+    OBody NG
+    Open Animation Replacer
+    OStim Standalone
+    PapyrusUtil's StorageDataUtil
+    Player Equipment Manager
+    Race Compatibility SKSE
+    Rain Extinguished Fires
+    Skyrim Unbound
+    SL Config/Expressions/Animations
+    SL Scaler
+    Smart Harvest Auto NG AutoLoot
+    Sound Record Distributor
+    Spell Organizer
+    Spell Research
   </details>
 
   <details>
     <summary>.TOML Files</summary>
       
-      - Dynamic Animation Casting
-      - Precision
-      - Loki Poise
-      - True Directional Movment
+    Actor Value Generator
+    Dynamic Animation Casting
+    Loki Poise
+    Precision
+    True Directional Movement
   </details>
 
   <details>
