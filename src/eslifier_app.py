@@ -12,32 +12,41 @@ from settings_page import settings
 from main_page import main
 from log_stream import log_stream
 
-CURRENT_VERSION = '0.12.6'
+CURRENT_VERSION = '0.12.7'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
 def verify_luhn_checksum(filename: str):
-    with open(filename, "rb") as f:
-        data = f.read()
-
-    original_data, stored_checksum = data[:-1], data[-1]
-    computed_checksum = luhn_checksum(original_data)
+    try:
+        with open(filename, "rb") as f:
+            data = f.read()
+        original_data, stored_checksum = data[:-1], data[-1]
+        computed_checksum = luhn_checksum(original_data)
+    except:
+        computed_checksum = stored_checksum
 
     if computed_checksum != stored_checksum:
         raise RuntimeError("The file is corrupted! Checksum mismatch. Redownload the file, if the issue persists then report this to the GitHub.")
     else:
-        if os.path.exists('ESLifier_Data/settings.json'):
-            with open('ESLifier_Data/settings.json', 'r+', encoding='utf-8') as f:
-                settings_data = json.load(f)
-                settings_data['version'] = CURRENT_VERSION
-                f.seek(0)
-                f.truncate(0)
-                json.dump(settings_data, f, ensure_ascii=False, indent=4)
+        settings_path = os.path.normpath('ESLifier_Data/settings.json')
+        if os.path.exists(settings_path):
+            try:
+                with open(settings_path, 'r+', encoding='utf-8') as f:
+                    settings_data = json.load(f)
+                    settings_data['version'] = CURRENT_VERSION
+                    f.seek(0)
+                    f.truncate(0)
+                    json.dump(settings_data, f, ensure_ascii=False, indent=4)
+            except:
+                QMessageBox.warning(None, 'Access Error', 'Cannot access ESLifier_Data/settings.json')
         else:
-            os.makedirs('ESLifier_Data/')
+            os.makedirs(os.path.dirname(settings_path))
             settings_data = {"version": CURRENT_VERSION}
-            with open('ESLifier_Data/settings.json', 'w', encoding='utf-8') as f:
-                json.dump(settings_data, f, ensure_ascii=False, indent=4)
+            try:
+                with open(settings_path, 'w', encoding='utf-8') as f:
+                    json.dump(settings_data, f, ensure_ascii=False, indent=4)
+            except:
+                QMessageBox.warning(None, 'Access Error', 'Cannot access/create ESLifier_Data/settings.json')
 
 def luhn_checksum(data: bytes) -> int:
     total = 0
@@ -61,13 +70,13 @@ class github_connect(QObject):
         is_latest, latest_version = self.connect_to_github()
         self.finished_signal.emit(is_latest, latest_version)
             
-    def connect_to_github(self):
+    def connect_to_github(self) -> tuple[bool, str]:
         try:
             api_url = f"https://api.github.com/repos/MaskPlague/ESLifier/releases/latest"
             response = requests.get(api_url, timeout=10)
             response.raise_for_status()
 
-            latest_release_info = response.json()
+            latest_release_info: dict[str, str] = response.json()
             latest_version = latest_release_info["tag_name"]
             latest_version = latest_version.removeprefix('v')
             major, minor, patch = [int(x, 10) for x in latest_version.split('.')]
@@ -79,14 +88,19 @@ class github_connect(QObject):
         except:
             return True, '0'
 
+
 class main_window(QMainWindow):
     def __init__(self):
         super().__init__()
         if getattr(sys, 'frozen', False):
-            os.chdir(os.path.dirname(sys.executable))
-            if os.path.exists('ESLifier_Data/settings.json'):
-                with open('ESLifier_Data/settings.json', 'r', encoding='utf-8') as f:
-                    settings_data = json.load(f)
+            try:
+                os.chdir(os.path.dirname(sys.executable))
+            except Exception as e:
+                raise RuntimeError(f"ESLifier cannot change working directory: {e}")
+            settings_path = os.path.normpath('ESLifier_Data/settings.json')
+            if os.path.exists(settings_path):
+                with open(settings_path, 'r', encoding='utf-8') as f:
+                    settings_data: dict[str, str|bool] = json.load(f)
                 version = settings_data.get('version', '0.0.0')
                 major, minor, patch = [int(x, 10) for x in version.split('.')] 
                 version_tuple = (major, minor, patch)
@@ -111,8 +125,8 @@ class main_window(QMainWindow):
             self.github_thread.started.connect(self.github_connection.check_version)
             self.github_connection.finished_signal.connect(connection_result)
             self.github_connection.finished_signal.connect(self.github_thread.quit)
-            self.github_connection.finished_signal.connect(self.github_thread.deleteLater)
-            self.github_connection.finished_signal.connect(self.github_connection.deleteLater)
+            #self.github_connection.finished_signal.connect(self.github_thread.deleteLater)
+            #self.github_connection.finished_signal.connect(self.github_connection.deleteLater)
             self.github_thread.start()
         if COLOR_MODE == 'Light':
             palette = QPalette()
@@ -305,28 +319,28 @@ class main_window(QMainWindow):
     def update_settings(self):
         self.settings_widget.update_settings()
         self.set_colors()
-        self.main_widget.skyrim_folder_path =                   self.settings_widget.settings['skyrim_folder_path']
-        self.main_widget.output_folder_path =                   self.settings_widget.settings['output_folder_path']
-        self.main_widget.output_folder_name =                   self.settings_widget.settings['output_folder_name']
-        self.main_widget.mo2_mode =                             self.settings_widget.settings['mo2_mode']
-        self.main_widget.modlist_txt_path =                     self.settings_widget.settings['mo2_modlist_txt_path']
-        self.main_widget.plugins_txt_path =                     self.settings_widget.settings['plugins_txt_path']
-        self.main_widget.overwrite_path =                       self.settings_widget.settings['overwrite_path']
-        self.main_widget.update_header =                        self.settings_widget.settings['update_header']
-        self.main_widget.generate_cell_master =                 self.settings_widget.settings['generate_cell_master']
-        self.main_widget.list_compact.filter_changed_cells =    self.settings_widget.settings['enable_cell_changed_filter']
-        self.main_widget.list_compact.filter_interior_cells =   self.settings_widget.settings['enable_interior_cell_filter']
-        self.main_widget.list_compact.show_cells =              self.settings_widget.settings['show_cells']
-        self.main_widget.list_compact.show_esms =               self.settings_widget.settings['show_esms']
-        self.main_widget.list_compact.show_dlls =               self.settings_widget.settings['show_dlls']
-        self.main_widget.list_compact.filter_worldspaces =      self.settings_widget.settings['filter_worldspaces']
-        self.main_widget.list_compact.cell_master =             self.settings_widget.settings['generate_cell_master']
-        self.main_widget.list_eslify.filter_changed_cells =     self.settings_widget.settings['enable_cell_changed_filter']
-        self.main_widget.list_eslify.filter_interior_cells =    self.settings_widget.settings['enable_interior_cell_filter']
-        self.main_widget.list_eslify.show_cells =               self.settings_widget.settings['show_cells']
-        self.main_widget.list_eslify.show_esms =                self.settings_widget.settings['show_esms']
-        self.main_widget.list_eslify.filter_worldspaces =       self.settings_widget.settings['filter_worldspaces']
-        self.main_widget.list_eslify.cell_master =              self.settings_widget.settings['generate_cell_master']
+        self.main_widget.skyrim_folder_path =                   self.settings_widget.settings.get('skyrim_folder_path', '')
+        self.main_widget.output_folder_path =                   self.settings_widget.settings.get('output_folder_path', '')
+        self.main_widget.output_folder_name =                   self.settings_widget.settings.get('output_folder_name', "ESLifier Compactor Output")
+        self.main_widget.mo2_mode =                             self.settings_widget.settings.get('mo2_mode', False)
+        self.main_widget.modlist_txt_path =                     self.settings_widget.settings.get('mo2_modlist_txt_path', '')
+        self.main_widget.plugins_txt_path =                     self.settings_widget.settings.get('plugins_txt_path', '')
+        self.main_widget.overwrite_path =                       self.settings_widget.settings.get('overwrite_path', '')
+        self.main_widget.update_header =                        self.settings_widget.settings.get('update_header', True)
+        self.main_widget.generate_cell_master =                 self.settings_widget.settings.get('generate_cell_master', True)
+        self.main_widget.list_compact.filter_changed_cells =    self.settings_widget.settings.get('enable_cell_changed_filter', True)
+        self.main_widget.list_compact.filter_interior_cells =   self.settings_widget.settings.get('enable_interior_cell_filter', False)
+        self.main_widget.list_compact.show_cells =              self.settings_widget.settings.get('show_cells', True)
+        self.main_widget.list_compact.show_esms =               self.settings_widget.settings.get('show_esms', True)
+        self.main_widget.list_compact.show_dlls =               self.settings_widget.settings.get('show_dlls', False)
+        self.main_widget.list_compact.filter_worldspaces =      self.settings_widget.settings.get('filter_worldspaces', True)
+        self.main_widget.list_compact.cell_master =             self.settings_widget.settings.get('generate_cell_master', True)
+        self.main_widget.list_eslify.filter_changed_cells =     self.settings_widget.settings.get('enable_cell_changed_filter', True)
+        self.main_widget.list_eslify.filter_interior_cells =    self.settings_widget.settings.get('enable_interior_cell_filter', False)
+        self.main_widget.list_eslify.show_cells =               self.settings_widget.settings.get('show_cells', True)
+        self.main_widget.list_eslify.show_esms =                self.settings_widget.settings.get('show_esms', True)
+        self.main_widget.list_eslify.filter_worldspaces =       self.settings_widget.settings.get('filter_worldspaces', True)
+        self.main_widget.list_eslify.cell_master =              self.settings_widget.settings.get('generate_cell_master', True)
         self.main_widget.settings =                             self.settings_widget.settings.copy()
         self.main_widget.list_eslify.create()
         self.main_widget.list_compact.create()
@@ -378,7 +392,9 @@ class main_window(QMainWindow):
         
     def closeEvent(self, a0):
         try:
+            self.log_stream.running = False
             self.log_stream.flush()
+            self.log_stream.close()
         except:
             pass
         sys.stdout.flush()
