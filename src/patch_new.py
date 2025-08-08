@@ -15,7 +15,8 @@ from cell_changed_scanner import cell_scanner
 class patch_new():
     def scan_and_find(self, settings: dict[str, str|bool], main_parent):
         self.main_parent = main_parent
-        if not os.path.exists('ESLifier_Data/compacted_and_patched.json') and not os.path.exists('ESLifier_Data/esl_flagged.json'):
+        if (not os.path.exists(os.path.normpath('ESLifier_Data/compacted_and_patched.json')) 
+            and not os.path.exists(os.path.normpath('ESLifier_Data/esl_flagged.json'))):
             self.no_data_warning = QMessageBox()
             self.no_data_warning.setIcon(QMessageBox.Icon.Information)
             self.no_data_warning.setWindowTitle("No Compacted/Patched Mods")
@@ -27,6 +28,20 @@ class patch_new():
             self.no_data_warning.setWindowIcon(QIcon(":/images/ESLifier.png"))
             self.no_data_warning.addButton(QMessageBox.StandardButton.Ok)
             self.no_data_warning.show()
+            self.main_parent.setEnabled(True)
+            print('CLEAR')
+            return
+        if not os.path.exists(os.path.normpath('ESLifier_data/master_byte_data.json')):
+            self.output_not_new_warning = QMessageBox()
+            self.output_not_new_warning.setIcon(QMessageBox.Icon.Information)
+            self.output_not_new_warning.setWindowTitle("Output is from outdated build.")
+            self.output_not_new_warning.setText("ESLifier cannot find the file master_byte_data.json\n"+
+                                                "in ESLifier_Data/, this is likely because the current\n"+
+                                                "ESLifier output was made on a version older than v0.12.0.\n"+
+                                                "This button needs an output made from v0.12.0+.")
+            self.output_not_new_warning.setWindowIcon(QIcon(":/images/ESLifier.png"))
+            self.output_not_new_warning.addButton(QMessageBox.StandardButton.Ok)
+            self.output_not_new_warning.show()
             self.main_parent.setEnabled(True)
             print('CLEAR')
             return
