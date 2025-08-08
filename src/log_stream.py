@@ -36,6 +36,7 @@ class log_stream(QMainWindow):
         self.setCentralWidget(main_widget)
         self.list = queue.Queue()
         self.crash = False
+        self.running = True
         self.center_on_parent()
 
         if not os.path.exists("ESLifier_Data/"):
@@ -60,7 +61,7 @@ class log_stream(QMainWindow):
         sys.stdout = self
         sys.stderr = self
         sys.excepthook = self.exception_hook
-        threading.excepthook = self.custom_exception_hook
+        threading.excepthook = self.threading_exception_hook
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.process_queue)
@@ -218,34 +219,58 @@ class log_stream(QMainWindow):
 
     def exception_hook(self, exc_type, exc_value, exc_traceback):
         self.crash = True
+        self.running = False
         self.show()
         self.text_edit.setStyleSheet("background-color: red;")
         print("\nAn exception has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data.\n")
         traceback.print_tb(exc_traceback, limit=5)
         print(f"Unhandled exception: {exc_value}")
         print('\n')
+        try:
+            self.log_file.write('exception_hook -> Extended Traceback for debugging:')
+            traceback.print_tb(exc_traceback, limit=10, file=self.log_file)
+            self.log_file.flush()
+        except:
+            pass
 
-    def custom_exception_hook(self, args: threading.ExceptHookArgs):
+    def threading_exception_hook(self, args: threading.ExceptHookArgs):
         self.crash = True
+        self.running = False
         self.show()
         self.text_edit.setStyleSheet("background-color: red;")
         print("\nAn exception has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data.\n")
         traceback.print_tb(args.exc_traceback, limit=5)
         print(f"Unhandled exception: {args.exc_value}")
         print('\n')
+        try:
+            self.log_file.write('threading_exception_hook -> Extended Traceback for debugging:')
+            traceback.print_tb(args.exc_traceback, limit=10, file=self.log_file)
+            self.log_file.flush()
+        except:
+            pass
+
 
     def flush(self):
-        self.log_file.flush()
+        if not self.log_file.closed:
+            self.log_file.flush()
 
     def closeEvent(self, a0):
+        self.running = False
         self.timer.stop()
-        self.log_file.flush()
-        self.log_file.close()
+        if not self.log_file.closed:
+            self.log_file.flush()
+            self.log_file.close()
         super().closeEvent(a0)
 
-    def process_queue(self):
+    def close(self):
+        self.running = False
         self.timer.stop()
-        if not self.isHidden():
+        if not self.log_file.closed:
+            self.log_file.flush()
+            self.log_file.close()
+        super().close()
+
+    def process_queue(self):
             if self.percentage == 0:
                 self.progress_bar.setRange(0,0)
                 self.progress_bar.setStyleSheet("""
@@ -280,6 +305,8 @@ class log_stream(QMainWindow):
                 break
             line = self.list.get()
             self.update_text_widget(line)
+        if self.running:
+            self.timer.start(50)
 
         self.timer.start(50)
 
@@ -306,7 +333,6 @@ class log_stream(QMainWindow):
         self.text_edit.verticalScrollBar().setValue(self.text_edit.verticalScrollBar().maximum())
     
     def clean_up(self):
-        self.timer_clear.stop()
         if not self.crash:
             self.text_edit.setPlainText(None)
             self.hide()
