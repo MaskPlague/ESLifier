@@ -3,6 +3,8 @@ import os
 import images_qr #do not remove, used for icons, it is a PyQt6 resource file
 import json
 import requests
+import traceback
+from datetime import datetime
 
 from PyQt6.QtCore import Qt, QObject, QThread, pyqtSignal
 from PyQt6.QtGui import QPalette, QColor, QIcon
@@ -26,7 +28,8 @@ def verify_luhn_checksum(filename: str):
         computed_checksum = stored_checksum
 
     if computed_checksum != stored_checksum:
-        raise RuntimeError("The file is corrupted! Checksum mismatch. Redownload the file, if the issue persists then report this to the GitHub.")
+        QMessageBox.critical(None, "File likely Corrupt", "The file is likely corrupt! Checksum mismatch. Redownload the file, if the issue persists then report this to the GitHub.")
+        raise RuntimeError("The file is likely corrupt! Checksum mismatch. Redownload the file, if the issue persists then report this to the GitHub.")
     else:
         settings_path = os.path.normpath('ESLifier_Data/settings.json')
         if os.path.exists(settings_path):
@@ -135,7 +138,7 @@ class main_window(QMainWindow):
             palette.setColor(QPalette.ColorRole.Button, QColor("Light Grey"))
             palette.setColor(QPalette.ColorRole.WindowText, QColor("White"))
             self.setPalette(palette)
-            
+
         self.main_widget = main(self.log_stream, self, COLOR_MODE)
         self.update_settings()
         self.tabs = QTabWidget()
@@ -414,15 +417,35 @@ class main_window(QMainWindow):
         self.log_stream.center_on_parent()
         return super().moveEvent(a0)
 
-app = QApplication(sys.argv)
-palette = app.palette()
-background_color = palette.color(QPalette.ColorRole.Window)
+try:
+    app = QApplication(sys.argv)
+    palette = app.palette()
+    background_color = palette.color(QPalette.ColorRole.Window)
 
-# Determine if the mode is dark or light based on brightness
-if background_color.lightness() < 128:
-    COLOR_MODE = "Dark"
-else:
-    COLOR_MODE = "Light"
-w = main_window()
-w.show()
-app.exec()
+    # Determine if the mode is dark or light based on brightness
+    if background_color.lightness() < 128:
+        COLOR_MODE = "Dark"
+    else:
+        COLOR_MODE = "Light"
+    w = main_window()
+    w.show()
+    app.exec()
+except Exception as e:
+    timestamp = datetime.now().isoformat(timespec='minutes').replace(':', '-')
+    crash_log = f'crash-{timestamp}.log'
+    try:
+        sys.stderr = sys.__stderr__
+        if os.path.exists('ESLifier_Data') and not os.path.exists('ESlifier_Data/Crash Logs'):
+            os.makedirs(os.path.normpath('ESLifier_Data/Crash Logs/'))
+        with open(os.path.normpath(os.path.join('ESLifier_Data/Crash Logs/', crash_log)), 'w+', encoding='utf-8') as f:
+            traceback.print_exc(file=f)
+        QMessageBox.critical(None, 'ESLifier Error', 'Check latest crash log in ESLifier_Data/Crash Logs')
+        raise RuntimeError(f'Unhandled Exception, check for latest crash log in ESLifier_Data/Crash Logs')
+    except Exception as e1:
+        crash_log_file = os.path.normpath(os.path.join(os.getcwd(), crash_log))
+        try:
+            with open(crash_log_file, 'w+', encoding='utf-8') as f:
+                traceback.print_exc(file=f)
+            QMessageBox.critical(None, 'ESLifier Error', f'Failed to open crash log directory, creating crash log at: {crash_log_file}')
+        except Exception as e2:
+            QMessageBox.critical(None, 'ESLifier Error', f'Failed to create crash log, error: {e2}\ncrash cause: {e}')
