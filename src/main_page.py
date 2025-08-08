@@ -40,6 +40,9 @@ class main(QWidget):
         self.COLOR_MODE = COLOR_MODE
         self.start_time = timeit.default_timer()
         self.settings = {}
+        self.flag_worker = None
+        self.compact_worker = None
+        self.patch_and_flag_worker = None
         self.create()
 
     def create(self):
@@ -339,17 +342,17 @@ class main(QWidget):
                 self.list_compact.item(row,self.list_compact.MOD_COL).setFlags(self.list_compact.item(row,self.list_compact.MOD_COL).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
         self.log_stream.show()
         self.compact_thread = QThread()
-        self.worker = CompactorWorker(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, 
+        self.compact_worker = CompactorWorker(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, 
                                 self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.generate_cell_master)
-        self.worker.moveToThread(self.compact_thread)
-        self.compact_thread.started.connect(self.worker.run)
-        self.worker.finished_signal.connect(
+        self.compact_worker.moveToThread(self.compact_thread)
+        self.compact_thread.started.connect(self.compact_worker.run)
+        self.compact_worker.finished_signal.connect(
             lambda sender = 'compact', 
             checked_list = checked:
             self.finished_button_action(sender, checked_list,))
-        self.worker.finished_signal.connect(self.compact_thread.quit)
-        #self.worker.finished_signal.connect(self.compact_thread.deleteLater)
-        #self.worker.finished_signal.connect(self.worker.deleteLater)
+        self.compact_worker.finished_signal.connect(self.compact_thread.quit)
+        #self.compact_worker.finished_signal.connect(self.compact_thread.deleteLater)
+        #self.compact_worker.finished_signal.connect(self.compact_worker.deleteLater)
         self.compact_thread.start()
         
     def eslify_selected_clicked(self):
@@ -462,14 +465,14 @@ class main(QWidget):
     def create_patch_and_flag_worker(self, files, patch_and_flag):
         if len(patch_and_flag) > 0:
             self.flag_and_patch_thread = QThread()
-            self.worker = CompactorWorker(patch_and_flag, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, 
+            self.patch_and_flag_worker = CompactorWorker(patch_and_flag, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, 
                                     self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.generate_cell_master)
-            self.worker.moveToThread(self.flag_and_patch_thread)
-            self.flag_and_patch_thread.started.connect(self.worker.run)
-            self.worker.finished_signal.connect(self.flag_and_patch_thread.quit)
-            #self.worker.finished_signal.connect(self.flag_and_patch_thread.deleteLater)
-            #self.worker.finished_signal.connect(self.worker.deleteLater)
-            self.worker.finished_signal.connect(
+            self.patch_and_flag_worker.moveToThread(self.flag_and_patch_thread)
+            self.flag_and_patch_thread.started.connect(self.patch_and_flag_worker.run)
+            self.patch_and_flag_worker.finished_signal.connect(self.flag_and_patch_thread.quit)
+            #self.patch_and_flag_worker.finished_signal.connect(self.flag_and_patch_thread.deleteLater)
+            #self.patch_and_flag_worker.finished_signal.connect(self.patch_and_flag_worker.deleteLater)
+            self.patch_and_flag_worker.finished_signal.connect(
                 lambda sender = 'eslify', 
                 checked_list = files:
                 self.finished_button_action(sender, checked_list,))
@@ -575,13 +578,13 @@ class main(QWidget):
         def run_scan():
             self.log_stream.log_file.write('Running Scan\n')
             self.log_stream.show()
-            self.worker = ScannerWorker()
-            self.worker.moveToThread(self.scan_thread)
-            self.scan_thread.started.connect(self.worker.scan_run)
-            self.worker.finished_signal.connect(self.completed_scan)
-            self.worker.finished_signal.connect(self.scan_thread.quit)
-            #self.worker.finished_signal.connect(self.scan_thread.deleteLater)
-            #self.worker.finished_signal.connect(self.worker.deleteLater)
+            self.scanner_worker = ScannerWorker()
+            self.scanner_worker.moveToThread(self.scan_thread)
+            self.scan_thread.started.connect(self.scanner_worker.scan_run)
+            self.scanner_worker.finished_signal.connect(self.completed_scan)
+            self.scanner_worker.finished_signal.connect(self.scan_thread.quit)
+            #self.scanner_worker.finished_signal.connect(self.scan_thread.deleteLater)
+            #self.scanner_worker.finished_signal.connect(self.scanner_worker.deleteLater)
             self.scan_thread.start()
         if not self.scanned:
             self.scanned = True
@@ -995,7 +998,9 @@ class CompactorWorker(QObject):
                             files_to_patch, bsa_masters, bsa_dict, compacted_and_patched)
             
         if finalize:
+            print('Creating/Updating ESLifier_Cell_Master.esm...')
             self.create_new_cell_plugin.finalize_plugin()
+        print('Saving Data...')
         self.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json', compacted_and_patched)
         self.dump_dictionary('ESLifier_Data/original_files.json', original_files)
         self.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', winning_file_history_dict)
