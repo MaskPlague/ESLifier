@@ -312,9 +312,7 @@ class log_stream(QMainWindow):
         if self.running:
             self.timer.start(50)
 
-        self.timer.start(50)
-
-    def update_text_widget(self, text):
+    def update_text_widget(self, text: str):
         cursor = self.text_edit.textCursor()
         cursor.movePosition(cursor.MoveOperation.End)
 
