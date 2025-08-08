@@ -64,10 +64,12 @@ class log_stream(QMainWindow):
         threading.excepthook = self.threading_exception_hook
 
         self.timer = QTimer(self)
+        self.timer.setSingleShot(True)
         self.timer.timeout.connect(self.process_queue)
         self.timer.start(50)
 
         self.timer_clear = QTimer(self)
+        self.timer_clear.setSingleShot(True)
         self.timer_clear.timeout.connect(self.clean_up)
 
     def center_on_parent(self):
@@ -271,6 +273,7 @@ class log_stream(QMainWindow):
         super().close()
 
     def process_queue(self):
+        if not self.isHidden() and self.progress_bar.value() != self.percentage:
             if self.percentage == 0:
                 self.progress_bar.setRange(0,0)
                 self.progress_bar.setStyleSheet("""
@@ -283,6 +286,7 @@ class log_stream(QMainWindow):
                     QProgressBar::chunk {
                         background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0.5, y2:0, stop:0 #999999, stop:1 #03f8fc);
                     }""")
+                self.progress_bar.setValue(self.percentage)
             else:
                 self.progress_bar.setRange(0,100)
                 self.progress_bar.setStyleSheet("""
@@ -297,7 +301,7 @@ class log_stream(QMainWindow):
                         width:1px
                     }
                 """)
-                if not self.progress_bar.paintingActive() and self.progress_bar.value() != self.percentage:
+                if not self.progress_bar.paintingActive():
                     self.progress_bar.setValue(self.percentage)
         length = self.list.qsize()
         for _ in range(length):
