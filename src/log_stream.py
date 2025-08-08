@@ -229,7 +229,7 @@ class log_stream(QMainWindow):
         print(f"Unhandled exception: {exc_value}")
         print('\n')
         try:
-            self.log_file.write('exception_hook -> Extended Traceback for debugging:')
+            self.log_file.write('exception_hook -> Extended Traceback for debugging:\n')
             traceback.print_tb(exc_traceback, limit=10, file=self.log_file)
             self.log_file.flush()
         except:
@@ -245,7 +245,7 @@ class log_stream(QMainWindow):
         print(f"Unhandled exception: {args.exc_value}")
         print('\n')
         try:
-            self.log_file.write('threading_exception_hook -> Extended Traceback for debugging:')
+            self.log_file.write('threading_exception_hook -> Extended Traceback for debugging:\n')
             traceback.print_tb(args.exc_traceback, limit=10, file=self.log_file)
             self.log_file.flush()
         except:
