@@ -8,11 +8,11 @@ import shutil
 class qualification_checker():
     def scan(path: str, update_header: bool) -> dict:
         qualification_checker.lock = threading.Lock()
-        all_plugins = qualification_checker.get_from_file("ESLifier_Data/plugin_list.json")
+        all_plugins: list[str] = qualification_checker.get_from_file("ESLifier_Data/plugin_list.json")
         qualification_checker.maxed_masters = qualification_checker.get_from_file("ESLifier_Data/maxed_masters.json")
         plugins = [plugin for plugin in all_plugins if not plugin.lower().endswith('.esl')]
         qualification_checker.missing_skyrim_esm_as_master = qualification_checker.get_from_file("ESLifier_Data/missing_skyrim_as_master.json")
-        qualification_checker.dependent_dict = qualification_checker.get_from_file("ESLifier_Data/dependency_dictionary.json")
+        qualification_checker.dependent_dict: dict[str, list[str]] = qualification_checker.get_from_file("ESLifier_Data/dependency_dictionary.json")
         qualification_checker.flag_dict = {}
         qualification_checker.max_record_number = 4096
         if os.path.exists('ESLifier_Data/EDIDs'):
@@ -39,7 +39,7 @@ class qualification_checker():
         chunks = [plugins[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
         chunks.append(plugins[(split) * chunk_size:])
 
-        threads = []
+        threads: list[threading.Thread] = []
         for chunk in chunks:
             thread = threading.Thread(target=qualification_checker.plugin_scanner, args=(chunk, update_header,))
             threads.append(thread)
@@ -52,7 +52,7 @@ class qualification_checker():
         return qualification_checker.flag_dict
 
     def plugin_scanner(plugins: list, update_header: bool):
-        flag_dict = {}
+        flag_dict: dict[str, list[str]] = {}
         for plugin in plugins:
             alread_esl, is_esm = qualification_checker.already_esl(plugin)
             if not alread_esl:
