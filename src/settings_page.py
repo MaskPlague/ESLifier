@@ -39,7 +39,7 @@ class settings(QWidget):
         )
         self.output_folder_path_widget, self.output_folder_path = self.create_path_widget(
             "Output Folder Path",
-            "Set where you want the Output Folder 'ESLifier Compactor Ouput' to be generated.",
+            "Set where you want the Output Folder to be generated.",
             'C:/Path/To/The/Output/Folder/',
             self.output_folder_path_clicked
         )
@@ -461,11 +461,14 @@ class settings(QWidget):
         self.outer_color = self.settings.get('outer_color', 'Gray')
 
     def save_settings_to_file(self):
-        settings_file = 'ESLifier_Data/settings.json'
+        settings_file = os.path.normpath('ESLifier_Data/settings.json')
         if not os.path.exists(os.path.dirname(settings_file)):
             os.makedirs(os.path.dirname(settings_file))
-        with open(settings_file, 'w+', encoding='utf-8') as f:
-            json.dump(self.settings, f, ensure_ascii=False, indent=4)
+        try:
+            with open(settings_file, 'w+', encoding='utf-8') as f:
+                json.dump(self.settings, f, ensure_ascii=False, indent=4)
+        except:
+            print("Failed to save settings.")
 
     def update_settings(self):
         self.settings['skyrim_folder_path'] = os.path.normpath(self.skyrim_folder_path.text()) if self.skyrim_folder_path.text() != '' else ''
