@@ -561,7 +561,7 @@ class CFIDs():
                 if from_id in all_form_ids_list:
                     form_id_replacements.append([from_id, to_id])
                 elif not CFIDs.free_non_existent:
-                    form_id_replacements.append([form_id, to_id])
+                    form_id_replacements.append([from_id, to_id])
         if len(form_id_replacements) > 0:
             matched_from_ids = [from_id[:4] for from_id, to_id in form_id_replacements]
             matched_to_ids = [to_id[:4] for from_id, to_id in form_id_replacements]
