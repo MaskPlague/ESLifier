@@ -729,7 +729,7 @@ class main(QWidget):
             if len(previously_compacted) == 0 and len(previously_esl_flagged) == 0:
                 QMessageBox.warning(None, "No Existing Output Data", f"There is no existing output data for ESLifier to use.")
                 return
-            self.delete_output(output_folder, files_to_remove)
+            self.delete_output(output_folder, files_to_remove, remove_maps=False)
             self.calculate_stats()
             self.redoing_output = True
             self.scan()
@@ -836,8 +836,8 @@ class main(QWidget):
                 size += os.path.getsize(full_path)
         return files_to_remove, size, file_count
     
-    def delete_output(self, output_folder, files_to_remove):
-        if os.path.exists('ESLifier_Data/Form_ID_Maps'):
+    def delete_output(self, output_folder, files_to_remove, remove_maps=True):
+        if remove_maps and os.path.exists('ESLifier_Data/Form_ID_Maps'):
             shutil.rmtree('ESLifier_Data/Form_ID_Maps')
         if os.path.exists('ESLifier_Data/EDIDs'):
             shutil.rmtree('ESLifier_Data/EDIDs')
