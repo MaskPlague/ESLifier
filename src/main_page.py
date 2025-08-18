@@ -334,7 +334,6 @@ class main(QWidget):
     def compact_confirmed(self, checked):
         self.log_stream.log_file.write('Compacting Plugins\n')
         self.confirm.hide()
-        #self.confirm.deleteLater()
         self.start_time = timeit.default_timer()
         for row in range(self.list_compact.rowCount()):
             if self.list_compact.item(row,self.list_compact.MOD_COL).checkState() == Qt.CheckState.Checked:
@@ -350,8 +349,6 @@ class main(QWidget):
             checked_list = checked:
             self.finished_button_action(sender, checked_list,))
         self.compact_worker.finished_signal.connect(self.compact_thread.quit)
-        #self.compact_worker.finished_signal.connect(self.compact_thread.deleteLater)
-        #self.compact_worker.finished_signal.connect(self.compact_worker.deleteLater)
         self.compact_thread.start()
         
     def eslify_selected_clicked(self):
@@ -464,13 +461,10 @@ class main(QWidget):
     def create_patch_and_flag_worker(self, files, patch_and_flag):
         if len(patch_and_flag) > 0:
             self.flag_and_patch_thread = QThread()
-            self.patch_and_flag_worker = CompactorWorker(patch_and_flag, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, 
-                                    self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.generate_cell_master)
+            self.patch_and_flag_worker = CompactorWorker(patch_and_flag, self.dependency_dictionary, self.settings)
             self.patch_and_flag_worker.moveToThread(self.flag_and_patch_thread)
             self.flag_and_patch_thread.started.connect(self.patch_and_flag_worker.run)
             self.patch_and_flag_worker.finished_signal.connect(self.flag_and_patch_thread.quit)
-            #self.patch_and_flag_worker.finished_signal.connect(self.flag_and_patch_thread.deleteLater)
-            #self.patch_and_flag_worker.finished_signal.connect(self.patch_and_flag_worker.deleteLater)
             self.patch_and_flag_worker.finished_signal.connect(
                 lambda sender = 'eslify', 
                 checked_list = files:
@@ -490,8 +484,6 @@ class main(QWidget):
         self.flag_worker.moveToThread(self.flag_thread)
         self.flag_thread.started.connect(self.flag_worker.flag_files)
         self.flag_worker.finished_signal.connect(self.flag_thread.quit)
-        #self.flag_worker.finished_signal.connect(self.flag_thread.deleteLater)
-        #self.flag_worker.finished_signal.connect(self.flag_worker.deleteLater)
         self.flag_worker.finished_signal.connect(
             lambda files_copy = files,
             patch_and_flag_copy = patch_and_flag:
@@ -995,7 +987,7 @@ class CompactorWorker(QObject):
                             file, dependents, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, 
                             self.update_header, self.mo2_mode, all_dependents_have_skyrim_esm_as_master, self.create_new_cell_plugin, 
                             generate_cell_master, original_files, winning_files_dict, master_byte_data, winning_file_history_dict, 
-                            files_to_patch, bsa_masters, bsa_dict, compacted_and_patched)
+                            files_to_patch, bsa_masters, bsa_dict, compacted_and_patched, self.persistent_ids, self.free_non_existent)
             
         if finalize:
             print('Creating/Updating ESLifier_Cell_Master.esm...')
