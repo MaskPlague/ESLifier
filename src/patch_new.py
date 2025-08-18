@@ -61,10 +61,31 @@ class patch_new():
         self.scanner_worker.moveToThread(self.patch_new_scan_thread)
         self.patch_new_scan_thread.started.connect(self.scanner_worker.detect_changes)
         self.scanner_worker.finished_signal.connect(self.completed_scan)
-        #self.scanner_worker.finished_signal.connect(self.scanner_worker.deleteLater)
         self.scanner_worker.finished_signal.connect(self.patch_new_scan_thread.quit)
-        #self.scanner_worker.finished_signal.connect(self.patch_new_scan_thread.deleteLater)
+        self.scanner_worker.delete_confirmation_signal.connect(self.create_delete_message)
         self.patch_new_scan_thread.start()
+
+    def create_delete_message(self, text, files_to_delete, winning_file_history_dict, only_remove, compacted_and_patched):
+        self.delete_message = QMessageBox()
+        self.delete_message.setWindowTitle(f'Delete {len(files_to_delete)} files?')
+        self.delete_message.setText(text)
+        self.delete_message.addButton(QMessageBox.StandardButton.Abort)
+        self.delete_message.addButton(QMessageBox.StandardButton.Ok)
+        def accept():
+            self.delete_message.hide()
+            self.scanner_worker.delete_files(files_to_delete, winning_file_history_dict, only_remove, compacted_and_patched)
+            return
+        def reject():
+            self.delete_message.hide()
+            self.patch_new_scan_thread.quit()
+            self.main_parent.setEnabled(True)
+            self.main_parent.calculate_stats()
+            print('User canceled Patch New file deletion, aborting.')
+            print('CLEAR')
+            return
+        self.delete_message.accepted.connect(accept)
+        self.delete_message.rejected.connect(reject)
+        self.delete_message.show()
     
     def completed_scan(self, mod_list, new_dependencies, new_files, hash_mismatch_num, file_conflict_num, skse_warnings):
         self.mod_list = mod_list
@@ -117,8 +138,6 @@ class patch_new():
         self.patch_new_thread.started.connect(self.patch_worker.patch_new_files)
         self.patch_worker.finished_signal.connect(self.finished_patching)
         self.patch_worker.finished_signal.connect(self.patch_new_thread.quit)
-        #self.patch_worker.finished_signal.connect(self.patch_new_thread.deleteLater)
-        #self.patch_worker.finished_signal.connect(self.patch_worker.deleteLater)
         self.patch_new_thread.start()
 
     def finished_patching(self, new_file_num):
@@ -158,6 +177,7 @@ class patch_new():
 
 class PatchNewScannerWorker(QObject):
     finished_signal = pyqtSignal(list, dict, dict, int, int, list)
+    delete_confirmation_signal = pyqtSignal(str, list, dict, bool, dict)
     def __init__(self, settings:dict[str, str|bool], main_parent):
         super().__init__()
         self.skyrim_folder_path: str = settings.get('skyrim_folder_path', '')
@@ -307,18 +327,52 @@ class PatchNewScannerWorker(QObject):
                 if not added_to_list and full_path.startswith(self.output_path):
                     files_to_remove.append(full_path)
         if len(files_to_remove) > 0:
-            with open('ESLifier_Data/compacted_and_patched.json', 'w', encoding='utf-8') as f:
-                json.dump(compacted_and_patched, f, ensure_ascii=False, indent=4)
             print("CLEAR ALT")
-            self.delete_and_patch_changed(files_to_remove, only_remove, winning_file_history_dict)
+            self.delete_and_patch_changed(files_to_remove, only_remove, winning_file_history_dict, compacted_and_patched)
         else:
             self.detect_new_files()
     
-    def delete_and_patch_changed(self, files_to_remove: list[str], only_remove: bool, winning_file_history_dict: dict[str, list[str]]):
-        print(f"Deleting Files that may need re-patching...")
+    def delete_and_patch_changed(self, files_to_remove: list[str], only_remove: bool,
+                                  winning_file_history_dict: dict[str, list[str]], compacted_and_patched: dict):
+        print(f"Confirming files that need deleting...")
+        output_folder_lowered = self.output_folder.lower()
+        counter = 0
+        plugins_to_delete = []
+        files_that_exist_to_delete = []
+        for file in files_to_remove:
+            if os.path.exists(file) and output_folder_lowered in file.lower():
+                counter += 1
+                files_that_exist_to_delete.append(file)
+                if file.lower().endswith(('.esp','.esm','.esl')):
+                    plugins_to_delete.append(os.path.basename(file))
+
+        if counter > 0:
+            number_of_plugins_to_delete = len(plugins_to_delete)
+            text = f"Continuing will delete {counter} files from ESLifier's output"
+            if number_of_plugins_to_delete > 0:
+                text +=  f" of which {number_of_plugins_to_delete} are game plugins. "
+            else:
+                text += ". "
+            text += ("This action is destructive and cannot be undone. If you have made any edits to files in the ESLifier "\
+                    " Output it is not advised to do so nor to continue.\nAre you sure you want to continue?")
+
+            if number_of_plugins_to_delete > 0:
+                if number_of_plugins_to_delete > 10:
+                    text += '\nSome plugins that will be deleted include:'
+                else:
+                    text += '\nThe plugins that will be deleted are:'
+                for plugin in plugins_to_delete:
+                    text += f'\n - {plugin}'
+            self.delete_confirmation_signal.emit(text, files_that_exist_to_delete, winning_file_history_dict, only_remove, compacted_and_patched)
+        else:
+            self.delete_files(files_that_exist_to_delete, winning_file_history_dict, only_remove, compacted_and_patched)
+
+    def delete_files(self, files_to_remove: list[str], winning_file_history_dict: dict[str, list[str]], only_remove: bool, compacted_and_patched: dict):
+        with open('ESLifier_Data/compacted_and_patched.json', 'w', encoding='utf-8') as f:
+            json.dump(compacted_and_patched, f, ensure_ascii=False, indent=4)
         deleted_count = 0
         for file in files_to_remove:
-            if os.path.exists(file) and self.output_folder.lower() in file.lower():
+            if os.path.exists(file):
                 os.remove(file)
                 deleted_count += 1
             cased_rel_path = self.get_rel_path(file, self.skyrim_folder_path)
@@ -330,6 +384,7 @@ class PatchNewScannerWorker(QObject):
         self.main_parent.redoing_output = True
         self.main_parent.patch_new_running = True
         self.main_parent.patch_new_only_remove = only_remove
+        print('CLEAR ALT')
         self.main_parent.scan()
 
     def detect_new_files(self):
@@ -427,6 +482,8 @@ class PatchNewWorker(QObject):
         self.mo2_mode: bool = settings.get('mo2_mode', False)
         self.update_header: bool = settings.get('update_header', False)
         self.generate_cell_master = settings.get('generate_cell_master', True)
+        self.persistent_ids = settings.get('persistent_ids', True)
+        self.free_non_existent = settings.get('free_non_existent', False)
 
     def patch_new_files(self):
         total = len(self.files)
@@ -448,7 +505,8 @@ class PatchNewWorker(QObject):
             original_files, winning_files_dict, master_byte_data, winning_file_history_dict, compacted_and_patched = CFIDs.patch_new(
                             file, dependents, self.file_dictionary, self.skyrim_folder_path, self.output_folder_path,
                             self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.generate_cell_master,
-                            original_files, winning_files_dict, master_byte_data, winning_file_history_dict, compacted_and_patched)
+                            original_files, winning_files_dict, master_byte_data, winning_file_history_dict, compacted_and_patched,
+                            self.persistent_ids, self.free_non_existent)
         all_patched = []
         for file in self.dependencies_dictionary.values():
             if file not in all_patched:
