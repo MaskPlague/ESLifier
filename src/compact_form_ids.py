@@ -32,7 +32,7 @@ class CFIDs():
                           output_folder_name: str, overwrite_path: str, update_header: bool, mo2_mode: bool,
                           all_dependents_have_skyrim_esm_as_master: bool, create_cell_master_class: create_new_cell_plugin, add_cell_to_master: bool,
                           original_files: dict, winning_files_dict: dict, master_byte_data: dict, winning_file_history_dict: dict, files_to_patch: dict,
-                          bsa_masters: list, bsa_dict: dict, compacted_and_patched: dict):
+                          bsa_masters: list, bsa_dict: dict, compacted_and_patched: dict, persistent_ids: bool, free_non_existent: bool):
         CFIDs.lock = threading.Lock()
         CFIDs.semaphore = threading.Semaphore(1000)
         CFIDs.compacted_and_patched: dict[str, list[str]] = compacted_and_patched
@@ -45,6 +45,8 @@ class CFIDs():
         CFIDs.overwrite_path = overwrite_path
         CFIDs.create_cell_master_class = create_cell_master_class
         CFIDs.do_generate_cell_master = add_cell_to_master
+        CFIDs.persistent_ids = persistent_ids
+        CFIDs.free_non_existent = free_non_existent
         CFIDs.form_id_map = {}
         CFIDs.form_id_rename_map = []
         print(f"Editing Plugin: {os.path.basename(file_to_compact)}...")
@@ -144,7 +146,8 @@ class CFIDs():
 
     def patch_new(compacted_file: str, dependents: list, files_to_patch: list, skyrim_folder_path: str, output_folder_path: str, 
                   output_folder_name: str, overwrite_path: str, update_header: bool, mo2_mode: bool, add_cell_to_master: bool, 
-                  original_files: dict, winning_files_dict: dict, master_byte_data: dict, winning_file_history_dict: dict, compacted_and_patched: dict):
+                  original_files: dict, winning_files_dict: dict, master_byte_data: dict, winning_file_history_dict: dict, compacted_and_patched: dict,
+                  persistent_ids: bool, free_non_existent: bool):
         CFIDs.lock = threading.Lock()
         CFIDs.semaphore = threading.Semaphore(1000)
         CFIDs.compacted_and_patched = compacted_and_patched
@@ -156,6 +159,8 @@ class CFIDs():
         CFIDs.master_byte_data: dict = master_byte_data
         CFIDs.winning_file_history_dict = winning_file_history_dict
         CFIDs.do_generate_cell_master = add_cell_to_master
+        CFIDs.persistent_ids = persistent_ids
+        CFIDs.free_non_existent = free_non_existent
         CFIDs.form_id_map = {}
         CFIDs.form_id_rename_map = []
         print('Patching new plugins and files for ' + compacted_file + '...')
@@ -544,8 +549,25 @@ class CFIDs():
             new_form_ids.remove([new_decimal, new_id])
 
         matched_ids = []
-
         form_id_replacements = []
+        #If a form id map already exists we want to compact the Form IDs the exact same as they were before
+        if CFIDs.persistent_ids and os.path.exists(form_id_file_name):
+            with open(form_id_file_name, 'r', encoding='utf-8') as f:
+                form_id_file_data = f.readlines()
+            for i in range(len(form_id_file_data)):
+                form_id_conversion = form_id_file_data[i].split('|')
+                from_id = bytes.fromhex(form_id_conversion[0])[:4]
+                to_id = bytes.fromhex(form_id_conversion[1])[:4]
+                if from_id in all_form_ids_list:
+                    form_id_replacements.append([from_id, to_id])
+                elif not CFIDs.free_non_existent:
+                    form_id_replacements.append([form_id, to_id])
+        if len(form_id_replacements) > 0:
+            matched_from_ids = [from_id[:4] for from_id, to_id in form_id_replacements]
+            matched_to_ids = [to_id[:4] for from_id, to_id in form_id_replacements]
+            form_id_list[:] = [[old_id, type] for old_id, type in form_id_list if old_id not in matched_from_ids]
+            new_form_ids[:] = [[new_decimal, new_id] for new_decimal, new_id in new_form_ids if new_id not in matched_to_ids]
+
         #Make sure that if a cell form id follows the sub-block convention it keeps it
         for form_id, type in form_id_list:
             if type == b'CELL':
