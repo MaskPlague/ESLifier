@@ -354,15 +354,22 @@ class PatchNewScannerWorker(QObject):
             else:
                 text += ". "
             text += ("This action is destructive and cannot be undone. If you have made any edits to files in the ESLifier "\
-                    " Output it is not advised to do so nor to continue.\nAre you sure you want to continue?")
+                    "Output it is not advised to do so nor to continue.\nAre you sure you want to continue?")
 
             if number_of_plugins_to_delete > 0:
                 if number_of_plugins_to_delete > 10:
                     text += '\nSome plugins that will be deleted include:'
                 else:
                     text += '\nThe plugins that will be deleted are:'
+                count = 0
                 for plugin in plugins_to_delete:
-                    text += f'\n - {plugin}'
+                    if count < 10:
+                        text += f'\n - {plugin}'
+                        count += 1
+                    else:
+                        break
+                if number_of_plugins_to_delete > 10:
+                    text += f"\nand {number_of_plugins_to_delete - count} more..."
             self.delete_confirmation_signal.emit(text, files_that_exist_to_delete, winning_file_history_dict, only_remove, compacted_and_patched)
         else:
             self.delete_files(files_that_exist_to_delete, winning_file_history_dict, only_remove, compacted_and_patched)
@@ -380,11 +387,10 @@ class PatchNewScannerWorker(QObject):
                 winning_file_history_dict.pop(cased_rel_path)
         with open("ESLifier_Data/winning_file_history_dict.json", 'w', encoding='utf-8') as f:
             json.dump(winning_file_history_dict, f, ensure_ascii=False, indent=4)
-
+        print('CLEAR ALT')
         self.main_parent.redoing_output = True
         self.main_parent.patch_new_running = True
         self.main_parent.patch_new_only_remove = only_remove
-        print('CLEAR ALT')
         self.main_parent.scan()
 
     def detect_new_files(self):
