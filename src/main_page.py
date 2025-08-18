@@ -342,8 +342,7 @@ class main(QWidget):
                 self.list_compact.item(row,self.list_compact.MOD_COL).setFlags(self.list_compact.item(row,self.list_compact.MOD_COL).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
         self.log_stream.show()
         self.compact_thread = QThread()
-        self.compact_worker = CompactorWorker(checked, self.dependency_dictionary, self.skyrim_folder_path, self.output_folder_path, 
-                                self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.generate_cell_master)
+        self.compact_worker = CompactorWorker(checked, self.dependency_dictionary, self.settings)
         self.compact_worker.moveToThread(self.compact_thread)
         self.compact_thread.started.connect(self.compact_worker.run)
         self.compact_worker.finished_signal.connect(
@@ -931,19 +930,20 @@ class ScannerWorker(QObject):
 
 class CompactorWorker(QObject):
     finished_signal = pyqtSignal()
-    def __init__(self, checked, dependency_dictionary, skyrim_folder_path, output_folder_path, output_folder_name, overwrite_path,
-                  update_header, mo2_mode, generate_cell_master):
+    def __init__(self, checked, dependency_dictionary, settings: dict):
         super().__init__()
         self.checked = checked
         self.dependency_dictionary = dependency_dictionary
-        self.skyrim_folder_path = skyrim_folder_path
-        self.output_folder_path = output_folder_path
-        self.output_folder_name = output_folder_name
-        self.overwrite_path = os.path.normpath(overwrite_path)
-        self.update_header = update_header
-        self.mo2_mode = mo2_mode
+        self.skyrim_folder_path: str = settings.get('skyrim_folder_path', '')
+        self.output_folder_path = settings.get('output_folder_path', '')
+        self.output_folder_name = settings.get('output_folder_name', 'ESLifier Compactor Output')
+        self.overwrite_path: str = os.path.normpath(settings.get('overwrite_path', ''))
+        self.mo2_mode: bool = settings.get('mo2_mode', False)
+        self.update_header: bool = settings.get('update_header', False)
         self.create_new_cell_plugin = create_new_cell_plugin()
-        self.generate_cell_master = generate_cell_master
+        self.generate_cell_master = settings.get('generate_cell_master', True)
+        self.persistent_ids = settings.get('persistent_ids', True)
+        self.free_non_existent = settings.get('free_non_existent', False)
         
     def run(self):
         total = len(self.checked)
