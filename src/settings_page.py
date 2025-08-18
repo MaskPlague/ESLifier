@@ -124,8 +124,8 @@ class settings(QWidget):
             "the middle of the existing Form IDs. (Doesn't work after clicking Reset Output)\n"+
             "(i.e. adding 0x9A0B to a mod that only had 0x9A0A and 0x9A0C where\n"+
             "the ids compacted to 0x80A and 0x80B respectively. Then the new Form ID\n"+
-            "compact from 0x9A0B to 0x90C since the first two IDs existed previously\n"+
-            "and 0x9A0B did not and 0x90C is the next available compacted Form ID.)",
+            "will compact from 0x9A0B to 0x90C since the first two IDs existed previously\n"+
+            "but 0x9A0B did not and 0x90C is the next available compacted Form ID.)",
             "persistent_ids"
         )
         self.persistent_ids_toggle.clicked.connect(self.persistent_ids_clicked)
