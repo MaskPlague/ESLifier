@@ -123,16 +123,16 @@ class settings(QWidget):
             "run, regardless of changes to the plugin such as adding a new Form ID in\n"+
             "the middle of the existing Form IDs. (Doesn't work after clicking Reset Output)\n"+
             "(i.e. adding 0x9A0B to a mod that only had 0x9A0A and 0x9A0C where\n"+
-            "the ids compacted as 0x9A0A -> 0x80A and 0x9A0C -> 0x80B. Then the new\n"+
-            "Form ID will compact as 0x9A0B -> 0x90C since the first two existed previously\n"+
-            "and 0x9A0B did not and 0x90C was the next available compacted Form ID)",
+            "the ids compacted to 0x80A and 0x80B respectively. Then the new Form ID\n"+
+            "compact from 0x9A0B to 0x90C since the first two IDs existed previously\n"+
+            "and 0x9A0B did not and 0x90C is the next available compacted Form ID.)",
             "persistent_ids"
         )
         self.persistent_ids_toggle.clicked.connect(self.persistent_ids_clicked)
         self.free_non_existent_widget, self.free_non_existent_toggle = self.create_toggle_widget(
             "Free Non-Existent Form IDs",
             "Allow ESLifier to free the allocation of a compacted Form ID if the\n"+
-            "original Form ID that the comapcted Form ID is allocated to no longer exists.\n"+
+            "original Form ID that the compacted Form ID is allocated to no longer exists.\n"+
             "(i.e. if 0x9A0A no longer exists in the theoretical mod in the toolTip example\n"+
             "of \"Persist Form IDs between rebuilds\", then adding 0x9A0B becomes -> 0x80A\n"+
             "instead of 0x80C since 0x80A is free)",
