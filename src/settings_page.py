@@ -117,6 +117,27 @@ class settings(QWidget):
             "Show or hide plugins that may have Form IDs hard-coded in SKSE dlls.",
             "show_dlls"
         )
+        self.persistent_ids_widget, self.persistent_ids_toggle = self.create_toggle_widget(
+            "Persist Form IDs between rebuilds",
+            "Make Form IDs re-compact to the same compacted Form IDs as the previous\n"+
+            "run, regardless of changes to the plugin such as adding a new Form ID in\n"+
+            "the middle of the existing Form IDs. (Doesn't work after clicking Reset Output)\n"+
+            "(i.e. adding 0x9A0B to a mod that only had 0x9A0A and 0x9A0C where\n"+
+            "the ids compacted as 0x9A0A -> 0x80A and 0x9A0C -> 0x80B. Then the new\n"+
+            "Form ID will compact as 0x9A0B -> 0x90C since the first two existed previously\n"+
+            "and 0x9A0B did not and 0x90C was the next available compacted Form ID)",
+            "persistent_ids"
+        )
+        self.persistent_ids_toggle.clicked.connect(self.persistent_ids_clicked)
+        self.free_non_existent_widget, self.free_non_existent_toggle = self.create_toggle_widget(
+            "Free Non-Existent Form IDs",
+            "Allow ESLifier to free the allocation of a compacted Form ID if the\n"+
+            "original Form ID that the comapcted Form ID is allocated to no longer exists.\n"+
+            "(i.e. if 0x9A0A no longer exists in the theoretical mod in the toolTip example\n"+
+            "of \"Persist Form IDs between rebuilds\", then adding 0x9A0B becomes -> 0x80A\n"+
+            "instead of 0x80C since 0x80A is free)",
+            "free_non_existent"
+        )
         self.check_for_updates_widget, self.check_for_updates_toggle = self.create_toggle_widget(
             "Check for updates on start",
             "Connect to GitHub on program start to check for updates",
@@ -207,12 +228,15 @@ class settings(QWidget):
         column_1.addWidget(self.enable_interior_cell_filter_widget)
         column_1.addWidget(self.enable_worldspaces_filter_widget)
         column_1.addWidget(self.show_plugins_possibly_refd_by_dlls_widget)
-        column_2.addWidget(self.check_for_updates_widget)
+        column_1.addWidget(self.generate_cell_master_widget)
+        
+        column_2.addWidget(self.persistent_ids_widget)
+        column_2.addWidget(self.free_non_existent_widget)
         column_2.addWidget(self.edit_blacklist_widget)
         column_2.addWidget(self.open_eslifier_data_widget)
         column_2.addWidget(self.colors_select_widget)
         column_2.addWidget(self.reset_settings_widget)
-        column_2.addWidget(self.generate_cell_master_widget)
+        column_2.addWidget(self.check_for_updates_widget)
 
         settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -323,7 +347,14 @@ class settings(QWidget):
             self.enable_worldspaces_filter_toggle.change_color()
             self.enable_worldspaces_filter_widget.setToolTip("Hide plugins with new worldspaces records as they can have the landscape disappear\n"+
                                                             "(no ground) when flagged as ESL.")
-
+    
+    def persistent_ids_clicked(self):
+        if self.persistent_ids_toggle.checkState() == Qt.CheckState.Checked:
+            self.free_non_existent_widget.setEnabled(True)
+            self.free_non_existent_widget.show()
+        else:
+            self.free_non_existent_widget.setEnabled(False)
+            self.free_non_existent_widget.hide()
 
     def create_button_widget(self, label_text, tooltip, button_text, click_function):
         layout = QHBoxLayout()
@@ -434,6 +465,8 @@ class settings(QWidget):
             self.enable_worldspaces_filter_toggle.setChecked(True)
             self.generate_cell_master_toggle.setChecked(True)
             self.check_for_updates_toggle.setChecked(True)
+            self.persistent_ids_toggle.setChecked(True)
+            self.free_non_existent_toggle.setChecked(False)
             self.inner_color = '#713585'
             self.outer_color = 'Gray'
             self.update_settings()
@@ -457,6 +490,8 @@ class settings(QWidget):
         self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(self.settings.get('show_dlls', False))
         self.generate_cell_master_toggle.setChecked(self.settings.get('generate_cell_master', True))
         self.check_for_updates_toggle.setChecked(self.settings.get('check_for_updates', True))
+        self.persistent_ids_toggle.setChecked(self.settings.get('persistent_ids', True))
+        self.free_non_existent_toggle.setChecked(self.settings.get('free_non_existent', False))
         self.inner_color = self.settings.get('inner_color', '#713585')
         self.outer_color = self.settings.get('outer_color', 'Gray')
 
@@ -488,6 +523,8 @@ class settings(QWidget):
         self.settings['show_dlls'] = self.show_plugins_possibly_refd_by_dlls_toggle.isChecked()
         self.settings['generate_cell_master'] = self.generate_cell_master_toggle.isChecked()
         self.settings['check_for_updates'] = self.check_for_updates_toggle.isChecked()
+        self.settings['persistent_ids'] = self.persistent_ids_toggle.isChecked()
+        self.settings['free_non_existent'] = self.free_non_existent_toggle.isChecked()
         self.settings['inner_color'] = self.inner_color
         self.settings['outer_color'] = self.outer_color
 
@@ -499,6 +536,7 @@ class settings(QWidget):
             self.mo2_modlist_txt_path_widget.hide()
             self.overwrite_path_widget.hide()
         self.cell_master_clicked()
+        self.persistent_ids_clicked()
 
         self.save_settings_to_file()
         
