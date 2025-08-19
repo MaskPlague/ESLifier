@@ -417,7 +417,7 @@ class scanner():
                     file_path = os.path.join(mods_folder, mod, cases[file])
                 winning_files.append([file_path, overwrite])
                 if mod != scanner.output_file_name:
-                    scanner.winning_files_dict[cases[file]] = (mod, file_path)
+                    scanner.winning_files_dict[cases[file].lower()] = (mod, file_path)
             else:
                 mods_sorted = sorted(mods, key=lambda mod: load_order.index(mod))
                 overwrite = False
@@ -430,9 +430,9 @@ class scanner():
                     file_path = os.path.join(mods_folder, mods_sorted[-1], cases[file])
                 winning_files.append([file_path, overwrite])
                 if mods_sorted[-1] != scanner.output_file_name:
-                    scanner.winning_files_dict[cases[file]] = (mods_sorted[-1], file_path)
+                    scanner.winning_files_dict[cases[file].lower()] = (mods_sorted[-1], file_path)
                 else:
-                    scanner.winning_files_dict[cases[file]] = (mods_sorted[-2], os.path.join(mods_folder, mods_sorted[-2], cases[file]))
+                    scanner.winning_files_dict[cases[file].lower()] = (mods_sorted[-2], os.path.join(mods_folder, mods_sorted[-2], cases[file]))
         plugin_extensions = ('.esp', '.esl', '.esm')
         plugins = []
         plugin_names_lowered = [plugin.lower() for plugin in plugin_names]

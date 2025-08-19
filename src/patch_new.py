@@ -245,9 +245,9 @@ class PatchNewScannerWorker(QObject):
                 for rel_path, prev_mod in winning_file_history_dict.copy().items():
                     (mod_name, full_path) = winning_files_dict.get(rel_path, (None, None))
                     if mod_name != None and mod_name != prev_mod:
-                        self.conflict_changes.append((rel_path.lower(), full_path, 'c'))
+                        self.conflict_changes.append((rel_path, full_path, 'c'))
                     elif mod_name == None:
-                        self.conflict_changes.append((rel_path.lower(), os.path.join(self.output_path, rel_path), 'c'))
+                        self.conflict_changes.append((rel_path, os.path.join(self.output_path, rel_path), 'c'))
             
             print(f'Found {len(self.conflict_changes)} Conflict Changes.')
 

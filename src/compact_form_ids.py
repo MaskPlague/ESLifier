@@ -188,11 +188,11 @@ class CFIDs():
 
     #Create a copy of the mod plugin we're compacting
     def copy_file_to_output(file: str, skyrim_folder_path: str, output_folder: str) -> tuple[str, str]:
-        end_path = CFIDs.get_rel_path(file, skyrim_folder_path)
-        new_file = os.path.normpath(os.path.join(os.path.join(output_folder, CFIDs.output_folder_name), end_path))
-        (winning_mod, _) = CFIDs.winning_files_dict.get(end_path, (None, None))
+        end_path: str = CFIDs.get_rel_path(file, skyrim_folder_path)
+        new_file: str = os.path.normpath(os.path.join(os.path.join(output_folder, CFIDs.output_folder_name), end_path))
+        (winning_mod, _) = CFIDs.winning_files_dict.get(end_path.lower(), (None, None))
         if winning_mod != None and winning_mod != output_folder:
-            CFIDs.winning_file_history_dict[end_path] = winning_mod
+            CFIDs.winning_file_history_dict[end_path.lower()] = winning_mod
         with CFIDs.lock:
             if not os.path.exists(os.path.dirname(new_file)):
                 os.makedirs(os.path.dirname(new_file))
