@@ -80,7 +80,7 @@ class scanner():
         thread_memory_usage = 2.5 * (1024**3)
         scanner.bsa_threads_by_ram = max(1, int(usable_ram / thread_memory_usage) * 7)
 
-        scanner.extracted = scanner.get_from_file('ESLifier_Data/extracted_bsa.json', list)
+        scanner.extracted: list[str] = scanner.get_from_file('ESLifier_Data/extracted_bsa.json', list)
         print('\n')
         plugins_list = scanner.get_plugins_list(plugins_txt_path)
         if scanner.mo2_mode:
@@ -221,8 +221,8 @@ class scanner():
     def get_files_from_mods(mods_folder: str, enabled_mods: list, plugins_list: list, overwrite_path: str) -> tuple[dict, list, dict]:
         if not os.path.exists('bsa_extracted/'):
             os.makedirs('bsa_extracted/')
-        mod_files = {}
-        cases_of_files = {}
+        mod_files: dict[str, list[str]] = {}
+        cases_of_files: dict[str, str] = {}
         bsa_list = []
         plugin_extensions = ('.esp', '.esl', '.esm')
         plugin_names = []
@@ -350,7 +350,7 @@ class scanner():
 
         enabled_mods = []
         for line in load_order:
-            if line.startswith(('+','*')) and not line.endswith('_separator'):
+            if line.startswith(('+','*')) and not line.strip().endswith('_separator'):
                 enabled_mods.append(line[1:].strip())
         
         enabled_mods.append('bsa_extracted_eslifier_scan')
@@ -360,7 +360,7 @@ class scanner():
         to_remove = []
         for i in range(len(load_order)):
             load_order[i] = load_order[i][1:].strip()
-            if '_separator' in load_order[i]:
+            if load_order[i].endswith('_separator'):
                 to_remove.append(load_order[i])
         
         for mod in to_remove:
