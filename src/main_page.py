@@ -97,8 +97,10 @@ class main(QWidget):
             "present during intial compacting and patching\n"\
             "and then patch those new plugins and files.\n"\
             "If in MO2 mode, it will also detect file\n"\
-            "conflict changes. This currently cannot detect\n"\
-            "changes in BSA.",
+            "conflict changes but requires the output mod\n"\
+            "in MO2 to match the exact same name as the\n"\
+            "output folder in the settings. This currently\n"\
+            "cannot detect changes in BSA.",
             self.scan_and_patch_new
         )
 

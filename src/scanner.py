@@ -28,6 +28,7 @@ class scanner():
         settings: dict = scanner.get_from_file('ESLifier_Data/settings.json', dict)
         path: str = settings.get('skyrim_folder_path', '')
         scanner.mo2_mode: bool = settings.get('mo2_mode', False)
+        scanner.output_file_name = settings.get('output_folder_name', 'ESLifier Compactor Output')
         modlist_txt_path: str = settings.get('mo2_modlist_txt_path', '')
         plugins_txt_path: str = settings.get('plugins_txt_path', '')
         scanner.overwrite_path: str = settings.get('overwrite_path', '')
@@ -415,7 +416,7 @@ class scanner():
                 else:
                     file_path = os.path.join(mods_folder, mod, cases[file])
                 winning_files.append([file_path, overwrite])
-                if mod != 'ESLifier Compactor Output':
+                if mod != scanner.output_file_name:
                     scanner.winning_files_dict[cases[file]] = (mod, file_path)
             else:
                 mods_sorted = sorted(mods, key=lambda mod: load_order.index(mod))
@@ -428,7 +429,7 @@ class scanner():
                 else:
                     file_path = os.path.join(mods_folder, mods_sorted[-1], cases[file])
                 winning_files.append([file_path, overwrite])
-                if mods_sorted[-1] != 'ESLifier Compactor Output':
+                if mods_sorted[-1] != scanner.output_file_name:
                     scanner.winning_files_dict[cases[file]] = (mods_sorted[-1], file_path)
                 else:
                     scanner.winning_files_dict[cases[file]] = (mods_sorted[-2], os.path.join(mods_folder, mods_sorted[-2], cases[file]))
