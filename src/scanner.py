@@ -33,19 +33,19 @@ class scanner():
         plugins_txt_path: str = settings.get('plugins_txt_path', '')
         scanner.overwrite_path: str = settings.get('overwrite_path', '')
         update_header: bool = settings.get('update_header', False)
-        scanner.file_count = 0
-        scanner.all_files = []
-        scanner.plugins = []
-        scanner.file_dict = {}
-        scanner.bsa_dict = {}
-        scanner.dll_dict = {}
-        scanner.bsa_files = []
-        scanner.winning_files_dict = {}
+        scanner.file_count: int = 0
+        scanner.all_files: list[str] = []
+        scanner.plugins: list[str] = []
+        scanner.file_dict: dict[str, list[str]] = {}
+        scanner.bsa_dict: dict[str, list[str]] = {}
+        scanner.dll_dict: dict[str, list[str]] = {}
+        scanner.bsa_files: list[str] = []
+        scanner.winning_files_dict: dict[str, list[str]] = {}
         scanner.threads: list[threading.Thread] = []
-        scanner.seq_files = []
-        scanner.pex_files = []
-        scanner.dll_files = []
-        scanner.kreate_files = []
+        scanner.seq_files: list[str] = []
+        scanner.pex_files: list[str] = []
+        scanner.dll_files: list[str] = []
+        scanner.kreate_files: list[str] = []
         scanner.lock = threading.Lock()
         scanner.file_extensions = tuple([item.lower() for item in ('.ini', '.json', '.jslot', '.toml', '_conditions.txt', '_srd.yaml')])
         scanner.exclude_contains = tuple([item.lower() for item in (
@@ -393,8 +393,11 @@ class scanner():
         overwrite_path = os.path.normpath(scanner.overwrite_path)
         mod_folder_level = len(mods_folder.split(os.sep))
         overwrite_level = len(overwrite_path.split(os.sep)) - 1
+        mod_files: dict[str, list[str]]
+        plugin_names: list[str]
+        cases: dict[str, str]
         mod_files, plugin_names, cases = scanner.get_files_from_mods(mods_folder, enabled_mods, plugins_list, overwrite_path)
-        winning_files = []
+        winning_files: list[list[str, str]] = []
         file_count = 0
         loop = 0
         cwd = os.getcwd()
@@ -553,7 +556,7 @@ class scanner():
         scanner.kreate_processor()
 
     def kreate_processor():
-        plugin_edid_dict = {}
+        plugin_edid_dict: dict[str, list[str]] = {}
         if os.path.exists('ESLifier_Data\\EDIDs'):
             for file in os.scandir('ESLifier_Data\\EDIDs'):
                 basename = os.path.basename(file)
@@ -602,11 +605,11 @@ class scanner():
                 print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
             scanner.file_reader(pattern2, file, 'pex')
 
-    def file_processor(files, pattern, pattern3, pattern4, pattern5):
-        local_dict = {}
-        local_pex = []
-        local_dll = []
-        local_seq = []
+    def file_processor(files: list[str], pattern, pattern3, pattern4, pattern5):
+        local_dict: dict[str, list[str]] = {}
+        local_pex: list[str] = []
+        local_dll: list[str] = []
+        local_seq: list[str] = []
         for file in files:
             scanner.count += 1
             scanner.percentage = (scanner.count / scanner.file_count) * 100
@@ -683,7 +686,7 @@ class scanner():
             elif esm in scanner.file_dict:
                 if file[1] not in scanner.file_dict[esm]: scanner.file_dict[esm].append(file[1])
 
-    def file_reader(pattern, file, reader_type):
+    def file_reader(pattern, file: str, reader_type):
         try:
             file_lower = file.lower()
             if reader_type == 'r':
@@ -703,7 +706,7 @@ class scanner():
                     if 'headParts' in data:
                         for part in data['headParts']:
                             if 'formIdentifier' in part:
-                                formIdentifier = part['formIdentifier']
+                                formIdentifier: str = part['formIdentifier']
                                 plugins.append(formIdentifier[:-7].lower())
                     with scanner.lock:
                         for plugin in plugins:
