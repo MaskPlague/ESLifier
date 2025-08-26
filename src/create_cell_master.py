@@ -131,6 +131,7 @@ class create_new_cell_plugin():
 
             if form[:4] == b'CELL' and form[15] >= master_count and not interior_cell_flag and not current_wrld_id == b'':
                 xclc_data = b''
+                persistent_flag = form[9:10]
                 offset = 24
                 form_size = len(form)
                 while offset < form_size:
@@ -148,7 +149,7 @@ class create_new_cell_plugin():
                     new_form_id = (self.counter + 2048).to_bytes(3, 'little')
                     self.counter += 1
                     form_id_map.append([form[12:16], new_form_id])
-                    cell_data = (b'CELL\x24\x00\x00\x00\x00\x00\x00\x00' + new_form_id +
+                    cell_data = (b'CELL\x24\x00\x00\x00\x00' + persistent_flag + b'\x00\x00' + new_form_id +
                                 b'\x01'+ form[16:24] + b'\x44\x41\x54\x41\x02\x00'+
                                 b'\x00\x00\x58\x43\x4C\x43\x0C\x00' + xclc_data + 
                                 b'\x4C\x54\x4D\x50\x04\x00\x00\x00\x00\x00')
@@ -169,7 +170,7 @@ class create_new_cell_plugin():
                             new_form_id = (self.counter + 2048).to_bytes(3, 'little')
                             self.counter += 1
                             form_id_map.append([form[12:16], new_form_id])
-                            cell_data = (b'CELL\x24\x00\x00\x00\x00\x00\x00\x00' + new_form_id +
+                            cell_data = (b'CELL\x24\x00\x00\x00\x00' + persistent_flag + b'\x00\x00' + new_form_id +
                                         b'\x01'+ form[16:24] + b'\x44\x41\x54\x41\x02\x00'+
                                         b'\x00\x00\x58\x43\x4C\x43\x0C\x00' + xclc_data + 
                                         b'\x4C\x54\x4D\x50\x04\x00\x00\x00\x00\x00')
