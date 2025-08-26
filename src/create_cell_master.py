@@ -130,15 +130,28 @@ class create_new_cell_plugin():
                             prev_grup_block = grup_block
 
             if form[:4] == b'CELL' and form[15] >= master_count and not interior_cell_flag and not current_wrld_id == b'':
+                xclc_data = b''
+                offset = 24
+                form_size = len(form)
+                while offset < form_size:
+                    field = form[offset:offset+4]
+                    field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
+                    if field == b'XCLC':
+                        xclc_data = form[offset+6:offset+6+field_size]
+                        break
+                    offset += field_size + 6
+                if xclc_data == b'':
+                    xclc_data = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+
                 if first_exterior_cell_in_world:
                     first_exterior_cell_in_world = False
                     new_form_id = (self.counter + 2048).to_bytes(3, 'little')
                     self.counter += 1
                     form_id_map.append([form[12:16], new_form_id])
                     cell_data = (b'CELL\x24\x00\x00\x00\x00\x00\x00\x00' + new_form_id +
-                                b'\x01'+ data_list[i][16:24] + b'\x44\x41\x54\x41\x02\x00'+
-                                b'\x00\x00\x58\x43\x4C\x43\x0C\x00\x00\x00\x00\x00\x00\x00\x00'+
-                                b'\x00\x00\x00\x00\x00\x4C\x54\x4D\x50\x04\x00\x00\x00\x00\x00')
+                                b'\x01'+ form[16:24] + b'\x44\x41\x54\x41\x02\x00'+
+                                b'\x00\x00\x58\x43\x4C\x43\x0C\x00' + xclc_data + 
+                                b'\x4C\x54\x4D\x50\x04\x00\x00\x00\x00\x00')
                     self.wrld_dict[current_wrld_id]["persistent_cell_data"] = cell_data
                 else:
                     sub_block = False
@@ -157,9 +170,9 @@ class create_new_cell_plugin():
                             self.counter += 1
                             form_id_map.append([form[12:16], new_form_id])
                             cell_data = (b'CELL\x24\x00\x00\x00\x00\x00\x00\x00' + new_form_id +
-                                        b'\x01'+ data_list[i][16:24] + b'\x44\x41\x54\x41\x02\x00'+
-                                        b'\x00\x00\x58\x43\x4C\x43\x0C\x00\x00\x00\x00\x00\x00\x00\x00'+
-                                        b'\x00\x00\x00\x00\x00\x4C\x54\x4D\x50\x04\x00\x00\x00\x00\x00')
+                                        b'\x01'+ form[16:24] + b'\x44\x41\x54\x41\x02\x00'+
+                                        b'\x00\x00\x58\x43\x4C\x43\x0C\x00' + xclc_data + 
+                                        b'\x4C\x54\x4D\x50\x04\x00\x00\x00\x00\x00')
                             if grup_block not in self.wrld_dict[current_wrld_id]['blocks'][prev_grup_block]["sub_blocks"]:
                                 self.wrld_dict[current_wrld_id]['blocks'][prev_grup_block]["sub_blocks"][grup_block] = {
                                     "data": new_grup,
