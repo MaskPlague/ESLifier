@@ -30,7 +30,7 @@ class main(QWidget):
         self.cell_master_warned = False
         self.mo2_mode = False
         self.update_header = True
-        self.dependency_dictionary = {}
+        self.dependency_dictionary: dict[str, list[str]] = {}
         self.redoing_output = False
         self.patch_new_running = False
         self.patch_new_only_remove = False
@@ -355,13 +355,13 @@ class main(QWidget):
         
     def eslify_selected_clicked(self):
         self.setEnabled(False)
-        checked = []
+        checked: list[str] = []
         self.list_eslify.clearSelection()
         for row in range(self.list_eslify.rowCount()):
             if self.list_eslify.item(row, self.list_eslify.MOD_COL).checkState() == Qt.CheckState.Checked and not self.list_eslify.item(row, self.list_eslify.HIDER_COL):
                 checked.append(self.list_eslify.item(row, self.list_eslify.MOD_COL).toolTip())
         if checked != []:
-            file_masters = self.get_from_file('ESLifier_Data/file_masters.json')
+            file_masters: dict[str, list[str]] = self.get_from_file('ESLifier_Data/file_masters.json')
             self.confirm = QMessageBox()
             self.confirm.setIcon(QMessageBox.Icon.Information)
             self.confirm.setWindowTitle("Getting estimated disk usage...")
@@ -426,7 +426,6 @@ class main(QWidget):
     def eslify_confirmed(self, checked):
         self.log_stream.log_file.write('ESL Flagging Plugins\n')
         self.confirm.hide()
-        #self.confirm.deleteLater()
         for row in range(self.list_eslify.rowCount()):
             if self.list_eslify.item(row, self.list_eslify.MOD_COL).checkState() == Qt.CheckState.Checked:
                 self.list_eslify.item(row, self.list_eslify.MOD_COL).setCheckState(Qt.CheckState.PartiallyChecked)
@@ -460,8 +459,10 @@ class main(QWidget):
             print('!Error: failed to save esl_flagged.json')
             print(e)
 
-    def create_patch_and_flag_worker(self, files, patch_and_flag):
+    def create_patch_and_flag_worker(self, files: list[str], patch_and_flag: list[str]):
         if len(patch_and_flag) > 0:
+            full_list = files.copy()
+            full_list.extend(patch_and_flag)
             self.flag_and_patch_thread = QThread()
             self.patch_and_flag_worker = CompactorWorker(patch_and_flag, self.dependency_dictionary, self.settings)
             self.patch_and_flag_worker.moveToThread(self.flag_and_patch_thread)
@@ -469,7 +470,7 @@ class main(QWidget):
             self.patch_and_flag_worker.finished_signal.connect(self.flag_and_patch_thread.quit)
             self.patch_and_flag_worker.finished_signal.connect(
                 lambda sender = 'eslify', 
-                checked_list = files:
+                checked_list = full_list:
                 self.finished_button_action(sender, checked_list,))
             self.flag_and_patch_thread.start()
         else:
