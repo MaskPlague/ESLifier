@@ -128,8 +128,6 @@ class main_window(QMainWindow):
             self.github_thread.started.connect(self.github_connection.check_version)
             self.github_connection.finished_signal.connect(connection_result)
             self.github_connection.finished_signal.connect(self.github_thread.quit)
-            #self.github_connection.finished_signal.connect(self.github_thread.deleteLater)
-            #self.github_connection.finished_signal.connect(self.github_connection.deleteLater)
             self.github_thread.start()
         if COLOR_MODE == 'Light':
             palette = QPalette()
