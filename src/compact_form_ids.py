@@ -496,10 +496,11 @@ class CFIDs():
 
         data_list, grup_struct = CFIDs.create_data_list(data)
 
+        master_count: int
         master_count, has_skyrim_esm_master = CFIDs.get_master_count(data_list)
 
         data_list, sizes_list = CFIDs.decompress_data(data_list)
-        updated_master_index = -1
+        updated_master_index: int = -1
         if CFIDs.do_generate_cell_master:
             new_cell_form_ids = CFIDs.create_cell_master_class.add_cells(data_list, grup_struct, master_count, os.path.basename(file))
             data_list, updated_master_index = CFIDs.add_cell_master_to_masters(data_list)
@@ -556,8 +557,11 @@ class CFIDs():
                 form_id_file_data = f.readlines()
             for i in range(len(form_id_file_data)):
                 form_id_conversion = form_id_file_data[i].split('|')
-                from_id = bytes.fromhex(form_id_conversion[0])[:4]
-                to_id = bytes.fromhex(form_id_conversion[1])[:4]
+                from_id = bytes.fromhex(form_id_conversion[0])[:3] + master_byte
+                if updated_master_index == -1:
+                    to_id = bytes.fromhex(form_id_conversion[1])[:3] + master_byte
+                else:
+                    to_id = bytes.fromhex(form_id_conversion[1])[:3] + updated_master_index.to_bytes() + b'\xFF'
                 if from_id in all_form_ids_list:
                     form_id_replacements.append([from_id, to_id])
                 elif not CFIDs.free_non_existent:
