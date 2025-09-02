@@ -59,6 +59,7 @@ class scanner():
         scanner.exclude_endswith = tuple([item.lower() for item in (
             '\\revealingarmo_tng.ini',
             '\\enginefixes_snct.toml', 
+            '\\enginefixes_snct.ini',
             '\\vortex.deployment.json', 
             '\\aiprocessfixmodpatch.ini', 
             '\\grasscontrol.ini',
