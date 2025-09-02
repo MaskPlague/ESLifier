@@ -1,7 +1,7 @@
 import os
 from file_patchers import patchers
 
-def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, form_id_map: dict, form_id_rename_map: dict,\
+def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, form_id_map: dict, form_id_rename_map: dict,
                         master_byte: bytes, updated_master_index: int, update_byte: bool, encoding: str):
     if new_file_lower.endswith('.ini'):
         if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini', '_enbl.ini',     # PO3's SPID, KID, BOS, ENBL
