@@ -3,9 +3,9 @@ import json5
 import os
 
 class patchers():    
-    def find_prev_non_alphanumeric(text: str, start_index: int):
+    def find_prev_non_alphanumeric(text: str, start_index: int, tokens: set[str] = ()):
         for i in range(start_index, 0, -1):
-            if not text[i].isalnum() and text[i] != ' ':
+            if (not text[i].isalnum() and text[i] != ' ') or text[i] in tokens:
                 return i
         return -1
 
@@ -26,7 +26,7 @@ class patchers():
             f.seek(0)
             f.writelines(data)
     
-    def seq_patcher(new_file: str, form_id_map: dict, master_byte: bytes, updated_master_index: int, update_byte, dependent: bool = False):
+    def seq_patcher(new_file: str, form_id_map: dict, master_byte: bytes, updated_master_index: int, update_byte: bool, dependent: bool = False):
         with open(new_file, 'rb+') as f:
             data = f.read()
             seq_form_id_list = [data[i:i+4] if data[i+3:i+4] <= master_byte else data[i:i+3] + master_byte for i in range(0, len(data), 4)]
@@ -219,8 +219,8 @@ class patchers():
                         line = lines[i]
                         middle_index = line.index('~', start)
                         start_index = patchers.find_prev_non_alphanumeric(line, middle_index-2)
-                        end_index = line.index('.es', middle_index) + 3
-                        plugin = line.lower()[middle_index+1:end_index+1].strip()
+                        end_index = line.index('.es', middle_index) + 4
+                        plugin = line.lower()[middle_index+1:end_index].strip()
                         start_of_line = line[:start_index+1]
                         end_of_line = line[middle_index:]
                         form_id = line[start_index+1:middle_index].strip()
@@ -260,8 +260,8 @@ class patchers():
                         line = lines[i]
                         middle_index = line.index('~', start)
                         start_index = patchers.find_prev_non_alphanumeric(line, middle_index-2)
-                        end_index = line.index('.es', middle_index) + 3
-                        plugin = line.lower()[middle_index+1:end_index+1].strip()
+                        end_index = line.index('.es', middle_index) + 4
+                        plugin = line.lower()[middle_index+1:end_index].strip()
                         start_of_line = line[:start_index+1]
                         end_of_line = line[middle_index:]
                         form_id = line[start_index+1:middle_index].strip()
@@ -283,9 +283,9 @@ class patchers():
                                         print_replace = False
                                     lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + "~ESLifier_Cell_Master.esm" + line[end_index:]
                                     start = len(start_of_line) + 6 + 20
-            #f.seek(0)
-            #f.truncate(0)
-            #f.write(''.join(lines))
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
             f.close()
        
     def ini_mu_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
@@ -1598,8 +1598,48 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
+    def dbd_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            lines = f.readlines()
+            print_replace = True
+            for i, line in enumerate(lines):
+                if basename in line.lower() and '|' in line:
+                    count = line.lower().count('|')
+                    start = 0
+                    for _ in range(count):
+                        ox = ''
+                        line = lines[i]
+                        middle_index = line.index('|', start)
+                        start_index = patchers.find_prev_non_alphanumeric(line, middle_index-2, tokens=(' '))
+                        end_index = line.index('.es', middle_index) + 4
+                        plugin = line.lower()[middle_index+1:end_index].strip()
+                        start_of_line = line[:start_index+1]
+                        end_of_line = line[middle_index:]
+                        form_id = line[start_index+1:middle_index].strip()
+                        start = middle_index+1
+                        if basename == plugin: 
+                            try:
+                                form_id_int = int(form_id, 16)
+                            except:
+                                continue
+                            if form_id.lower().startswith('0x'):
+                                ox = '0x'
+                            to_id_data = form_id_map.get(form_id_int)
+                            if to_id_data is not None:
+                                if not to_id_data["update_name"]:
+                                    lines[i] = start_of_line + ox + to_id_data["hex_no_0"] + end_of_line
+                                else:
+                                    if print_replace:
+                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                        print_replace = False
+                                    lines[i] = start_of_line + ox + to_id_data["hex_no_0"] + "|ESLifier_Cell_Master.esm" + line[end_index:]
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+
 #if __name__ == '__main__':
 #    basename = ''.lower()
-#    form_id_map = {47097: {'hex_no_0': 'TEST', 'update_name': False}, 49880: {'hex_no_0': 'test2', 'update_name': False}}
+#    form_id_map = {105: {'hex_no_0': 'TEST', 'update_name': False}, 5: {'hex_no_0': 'test2', 'update_name': True}}
 #    new_file = os.path.normpath(r"")
-#    patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
+#    patchers.dbd_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
