@@ -47,7 +47,7 @@ class scanner():
         scanner.dll_files: list[str] = []
         scanner.kreate_files: list[str] = []
         scanner.lock = threading.Lock()
-        scanner.file_extensions = tuple([item.lower() for item in ('.ini', '.json', '.jslot', '.toml', '_conditions.txt', '_srd.yaml')])
+        scanner.file_extensions = tuple([item.lower() for item in ('.ini', '.json', '.jslot', '.toml', '_conditions.txt', '_srd.yaml', '.yml')])
         scanner.exclude_contains = tuple([item.lower() for item in (
             'modex\\user\\kits',
             'nemesis_engine',
