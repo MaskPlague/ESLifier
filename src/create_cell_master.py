@@ -39,10 +39,10 @@ class create_new_cell_plugin():
         self.counter = 1
         if os.path.exists(self.output_file) and os.path.exists('ESLifier_Data/cell_master_info.json'):
             with open('ESLifier_Data/cell_master_info.json', 'r', encoding='utf-8')as f:
-                dict = json.load(f)
+                str_dict: dict = json.load(f)
             # Convert strings back to 
-            str_new_interior_cell_dict = dict["interior_cells_dict"]
-            self.counter = dict["counter"]
+            str_new_interior_cell_dict = str_dict["interior_cells_dict"]
+            self.counter = str_dict["counter"]
             for grup_block in str_new_interior_cell_dict:
                 str_grup_dict = str_new_interior_cell_dict[grup_block]
                 byte_grup_block = bytes.fromhex(grup_block)
@@ -58,12 +58,13 @@ class create_new_cell_plugin():
                     for cell in str_sub_dict["cells"]:
                         self.new_interior_cell_dict[byte_grup_block]["sub_blocks"][byte_sub_block]["cells"].append(bytes.fromhex(cell))
             
-            str_hex_wrld_dict = dict["wrld_dict"]
+            str_hex_wrld_dict = str_dict["wrld_dict"]
             for world_id in str_hex_wrld_dict:
                 str_wrld_dict = str_hex_wrld_dict[world_id]
                 byte_wrld_id = bytes.fromhex(world_id)
                 self.wrld_dict[byte_wrld_id] = {"data": bytes.fromhex(str_wrld_dict["data"]),
                                                 "grup_data": bytes.fromhex(str_wrld_dict["grup_data"]),
+                                                "edid_field_size": str_wrld_dict["edid_field_size"],
                                                 "persistent_cell_data": bytes.fromhex(str_wrld_dict["persistent_cell_data"]),
                                                 "source_plugin": str_wrld_dict["source_plugin"],
                                                 "blocks": {}}
@@ -191,10 +192,23 @@ class create_new_cell_plugin():
                     new_form_id += b'\01'
                 else:
                     new_form_id = current_wrld_id
+                edid_data = b''
+                offset = 24
+                form_size = len(form)
+                edid_length = 0
+                while offset < form_size:
+                    field = form[offset:offset+4]
+                    field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
+                    if field == b'EDID':
+                        edid_data = form[offset:offset+6+field_size]
+                        edid_length = field_size + 6
+                        break
+                    offset += field_size + 6
                 first_exterior_cell_in_world = True
                 self.wrld_dict[current_wrld_id] = {
-                    "data": (b'WRLD\x9B\x00\x00\x00\x00\x00\x00\x00' + new_form_id +
-                            b'\x00\x00\x00\x00\x2C\x00\x00\x00'+
+                    "data": (b'WRLD'+ (155 + edid_length).to_bytes(4, 'little') +
+                            b'\x00\x00\x00\x00' + new_form_id +
+                            b'\x00\x00\x00\x00\x2C\x00\x00\x00'+ edid_data + 
                             b'\x43\x4E\x41\x4D\x04\x00\x5F\x01\x00\x00\x4E\x41'+
                             b'\x4D\x32\x04\x00\x18\x00\x00\x00\x4E\x41\x4D\x33'+
                             b'\x04\x00\x18\x00\x00\x00\x4E\x41\x4D\x34\x04\x00'+
@@ -209,6 +223,7 @@ class create_new_cell_plugin():
                             b'\x00\xFF\xFF\x7F\x7F\xFF\xFF\x7F\x7F\x4E\x41\x4D'+
                             b'\x39\x08\x00\xFF\xFF\x7F\xFF\xFF\xFF\x7F\xFF'),
                     "source_plugin": name,
+                    "edid_field_size": edid_length,
                     "grup_data": (b'GRUP\x00\x00\x00\x00'+ new_form_id +
                             b'\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'),
                     "persistent_cell_data": b'',
@@ -238,11 +253,13 @@ class create_new_cell_plugin():
         wrld_grup_count = 1 # start at 1 as the top grup is not in the dict
         wrld_grup_cell_count = 0
         wrld_count = 0
+        wrld_edid_size_total = 0
         for wrld_id in self.wrld_dict:
             wrld_dict = self.wrld_dict[wrld_id]['blocks']
             wrld_grup_count += 1
             wrld_grup_cell_count += 1
             wrld_count += 1
+            wrld_edid_size_total += self.wrld_dict[wrld_id]["edid_field_size"]
             for grup_block in wrld_dict:
                 grup_dict = wrld_dict[grup_block]
                 wrld_grup_count += 1
@@ -257,7 +274,7 @@ class create_new_cell_plugin():
             cell_grup_count = 0
         record_count = wrld_grup_count + wrld_grup_cell_count + cell_grup_count + cell_grup_cell_count + wrld_count
         self.new_data_list[0] = self.new_data_list[0][:34] + record_count.to_bytes(4, 'little') + self.new_data_list[0][38:]
-        size = ((wrld_count * (24 + 155)) + (wrld_grup_count * 24) + (wrld_grup_cell_count * (36 + 24))).to_bytes(4, 'little')
+        size = ((wrld_count * (24 + 155)) + (wrld_grup_count * 24) + (wrld_grup_cell_count * (36 + 24)) + wrld_edid_size_total).to_bytes(4, 'little')
         self.new_data_list[2] = b'GRUP' + size + self.new_data_list[2][8:]
 
         # Calculate sizes of CELL block GRUPs and sub-block GRUPs, grups are 24 bytes and cells are 18 bytes + 24 for header
@@ -355,6 +372,7 @@ class create_new_cell_plugin():
             str_wrld_dict[str_wrld_id] = {"data": wrld_dict["data"].hex(),
                                           "size": int.from_bytes(wrld_dict["size"], "little"),
                                           "grup_data": wrld_dict["grup_data"].hex(),
+                                          "edid_field_size": wrld_dict["edid_field_size"],
                                           "persistent_cell_data": wrld_dict["persistent_cell_data"].hex(),
                                           "source_plugin": wrld_dict["source_plugin"],
                                           "blocks": {}}
