@@ -555,7 +555,10 @@ class CFIDs():
         if CFIDs.persistent_ids and os.path.exists(form_id_file_name):
             with open(form_id_file_name, 'r', encoding='utf-8') as f:
                 form_id_file_data = f.readlines()
-            old_ids_of_new_cells = [old_id for old_id, new_id in new_cell_form_ids]
+            if CFIDs.do_generate_cell_master:
+                old_ids_of_new_cells = [old_id for old_id, new_id in new_cell_form_ids]
+            else:
+                old_ids_of_new_cells = []
             for i in range(len(form_id_file_data)):
                 form_id_conversion = form_id_file_data[i].split('|')
                 from_id = bytes.fromhex(form_id_conversion[0])[:3] + master_byte
