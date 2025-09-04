@@ -555,13 +555,17 @@ class CFIDs():
         if CFIDs.persistent_ids and os.path.exists(form_id_file_name):
             with open(form_id_file_name, 'r', encoding='utf-8') as f:
                 form_id_file_data = f.readlines()
+            old_ids_of_new_cells = [old_id for old_id, new_id in new_cell_form_ids]
             for i in range(len(form_id_file_data)):
                 form_id_conversion = form_id_file_data[i].split('|')
                 from_id = bytes.fromhex(form_id_conversion[0])[:3] + master_byte
-                if updated_master_index == -1:
-                    to_id = bytes.fromhex(form_id_conversion[1])[:3] + master_byte
+                if from_id in old_ids_of_new_cells:
+                    if updated_master_index == -1:
+                        to_id = bytes.fromhex(form_id_conversion[1])[:3] + master_byte + b'\xFF'
+                    else:
+                        to_id = bytes.fromhex(form_id_conversion[1])[:3] + updated_master_index.to_bytes() + b'\xFF'
                 else:
-                    to_id = bytes.fromhex(form_id_conversion[1])[:3] + updated_master_index.to_bytes() + b'\xFF'
+                    to_id = bytes.fromhex(form_id_conversion[1])[:4]
                 if from_id in all_form_ids_list:
                     form_id_replacements.append([from_id, to_id])
                 elif not CFIDs.free_non_existent:
