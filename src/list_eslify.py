@@ -20,18 +20,23 @@ class list_eslable(QTableWidget):
         self.setColumnCount(self.COL_COUNT)
         self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'WRLD Records', 'ESM', '', 'Hider'])
         self.horizontalHeaderItem(self.MOD_COL).setToolTip('This is the plugin name. Select which plugins you wish to flag as light.')
-        self.horizontalHeaderItem(self.CELL_COL).setToolTip('This is the CELL Record Flag. If an ESL plugin creates a new CELL\n'+
-                                                'and another mod changes that CELL then it may not work due to an engine bug.\n'+
-                                                'If an ESL plugin creates a new interior CELL then that cell may experience\n'+
-                                                'issues when reloading a save without restarting the game.\n'+
-                                                '"New  CELL" indicates the presence of a new CELL record.\n'+
-                                                '"!!New CELL Changed!!" indicates that a new CELL record from an ESM is changed\n'+
-                                                'by a dependent plugin.\n'+
-                                                '"!!Maxed Masters!!" indicates that a plugin or its dependent plugins have the\n'+
-                                                'maximum amount of masters (254) and cannot add ESLifier_Cell_Master.esm as a master\n'+
-                                                'for the ESL+ESM cell bug and ESL worldspace bug workarounds.')
-        self.horizontalHeaderItem(self.WRLD_COL).setToolTip('This is the WRLD Record Flag. If an plugin is flagged ESL\n'+
-                                                       'then the new worldspace may have landscape issues (no ground).')
+        self.horizontalHeaderItem(self.CELL_COL).setToolTip('This is the CELL Record Flag. It can be completely ignored for users\n'+
+                                                            'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'+
+                                                            'Otherwise, if an ESM+ESL plugin creates a new CELL and another mod\n'+
+                                                            'changes that CELL then it may not work due to an engine bug. If an\n'+
+                                                            'ESL plugin creates a new interior CELL then that cell may experience\n'+
+                                                            'issues when reloading a save without restarting the game.\n'+
+                                                            '"New  CELL" indicates the presence of a new CELL record.\n'+
+                                                            '"!New Interior CELL!" indicates that a new CELL is an interior.\n'+
+                                                            '"!!New CELL Changed!!" indicates that a new CELL record from an ESM is changed\n'+
+                                                            'by a dependent plugin.\n'+
+                                                            '"!!Maxed Masters!!" indicates that a plugin or its dependent plugins\n'+
+                                                            'have the maximum amount of masters (254) and cannot add ESLifier_Cell_Master.esm\n'+
+                                                            'as a master for the ESL+ESM cell bug and ESL worldspace bug workarounds.')
+        self.horizontalHeaderItem(self.WRLD_COL).setToolTip('This is the WRLD Record Flag. It can be completely ignored for users\n'+
+                                                            'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'+
+                                                            'Otherwise, if an plugin is flagged ESL\n'+
+                                                            'then the new worldspace may have landscape issues (no ground).')
         self.horizontalHeaderItem(self.ESM_COL).setToolTip('This is the ESM flag.')
         self.setColumnHidden(self.HIDER_COL, True)
         self.horizontalHeader().sortIndicatorChanged.connect(self.hide_rows)

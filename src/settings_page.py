@@ -92,16 +92,20 @@ class settings(QWidget):
         )
         self.show_plugins_with_cells_widget, self.show_plugins_with_cells_toggle = self.create_toggle_widget(
             "Show plugins with new CELL records",
+            "Bugs related to cells have been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+.\n"+
+            "For users of SSE Engine Fixes v7+ there is no reason to disable this.\n"+
             "Display plugins with new CELL records.",
             "show_cells"
         )
         self.enable_cell_changed_filter_widget, self.enable_cell_changed_filter_toggle = self.create_toggle_widget(
             "Hide ESM plugins with new CELL records that are overwritten",
+            "The related bug has been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+. Disable this filter.\n"+
             "Hide ESM plugins with new CELL records that have been changed by a dependent plugin.",
             "enable_cell_changed_filter"
         )
         self.enable_interior_cell_filter_widget, self.enable_interior_cell_filter_toggle = self.create_toggle_widget(
             "Hide plugins with new interior CELL records",
+            "This bug has been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+. Disable this filter.\n"+
             "Hide plugins with new interior CELL records as they can have issues when reloading\n"+
             "a save without restarting the game.",
             "enable_interior_cell_filter"
@@ -171,6 +175,8 @@ class settings(QWidget):
         )
         self.generate_cell_master_widget, self.generate_cell_master_toggle = self.create_toggle_widget(
             "Generate Cell Master",
+            "As of SSE Engine Fixes v7+ this is no longer necessary\n"+
+            "for Skyrim version 1.6.1170+ and can be left disabled.\n"+
             "This generates a master cell plugin to circumvent\n"+
             "the ESM + ESL cell bug and the ESL worldspace bug.\n"+
             "(This does not fix the interior ESL save reload bug).\n"+
@@ -463,7 +469,7 @@ class settings(QWidget):
             self.enable_cell_changed_filter_toggle.setChecked(True)
             self.enable_interior_cell_filter_toggle.setChecked(False)
             self.enable_worldspaces_filter_toggle.setChecked(True)
-            self.generate_cell_master_toggle.setChecked(True)
+            self.generate_cell_master_toggle.setChecked(False)
             self.check_for_updates_toggle.setChecked(True)
             self.persistent_ids_toggle.setChecked(True)
             self.free_non_existent_toggle.setChecked(False)
@@ -488,7 +494,7 @@ class settings(QWidget):
         self.enable_interior_cell_filter_toggle.setChecked(self.settings.get('enable_interior_cell_filter', False))
         self.enable_worldspaces_filter_toggle.setChecked(self.settings.get('filter_worldspaces', True))
         self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(self.settings.get('show_dlls', False))
-        self.generate_cell_master_toggle.setChecked(self.settings.get('generate_cell_master', True))
+        self.generate_cell_master_toggle.setChecked(self.settings.get('generate_cell_master', False))
         self.check_for_updates_toggle.setChecked(self.settings.get('check_for_updates', True))
         self.persistent_ids_toggle.setChecked(self.settings.get('persistent_ids', True))
         self.free_non_existent_toggle.setChecked(self.settings.get('free_non_existent', False))
