@@ -112,6 +112,7 @@ Notes:
 - There is now a MO2 plugin that will notify users of when a plugin is ESLify-able and can allow users to edit the plugin blacklist.
 - Almost every element in the program has a tooltip that is activated by hovering over it.
 - ESLifier may cause issues in existing save games as is the nature of compacting Form IDs. I am currently looking into how difficult it would be to patch an existing save file.
+- Almost all the following info on CELL records can be ignore if you're on Skyrim 1.6.1170+ with SSE Engine Fixes v7+ installed as it fixes the ESL cell bugs.
 
 On the first launch or when the paths are not set, you will be redirected to the settings page. Set all available paths to the required folders and files. You will not be able to exit the settings page until they are set. The settings available are by default in the recommended configuration that should ensure the fewest issues when compacting or ESL flagging. You may want to disable _Show plugins with new CELL records_ if you think you may often install mods that will patch your existing mods with CELLs (the Patch New Page will warn you if you do install mods that do so later).
 
