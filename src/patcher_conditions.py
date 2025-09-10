@@ -135,6 +135,8 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
             patchers.json_alternate_perspective(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'plugins\\sleep in lingerie\\' in new_file_lower:                              # Sleep in Lingerie
             patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+        elif new_file_lower.endswith('strangerunescompatibility.json'):                     # For whatever this json is
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         else:
             print(f'Warn: Possible missing patcher for: {new_file}')
     elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
