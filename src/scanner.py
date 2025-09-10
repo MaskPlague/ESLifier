@@ -47,6 +47,10 @@ class scanner():
         scanner.dll_files: list[str] = []
         scanner.kreate_files: list[str] = []
         scanner.lock = threading.Lock()
+        if not os.path.exists("ESLifier_Data/ignored_files.json"):
+            with open("ESLifier_data/ignored_files.json", "w+", encoding="utf-8") as f:
+                json.dump([], f, ensure_ascii=False, indent=3)
+        scanner.ignored_files = tuple([item.lower() for item in scanner.get_from_file("ESLifier_Data/ignored_files.json", list)])
         scanner.file_extensions = tuple([item.lower() for item in ('.ini', '.json', '.jslot', '.toml', '_conditions.txt', '_srd.yaml', '.yml')])
         scanner.exclude_contains = tuple([item.lower() for item in (
             'modex\\user\\kits',
@@ -151,18 +155,21 @@ class scanner():
             else:
                 loop += 1
             for file in files:
+                file_lower = file.lower()
+                if file_lower in scanner.ignored_files:
+                    continue
                 full_path = os.path.join(root, file)
                 rel_path = os.path.relpath(full_path, path).lower()
                 scanner.all_files.append(full_path)
                 temp_rel_paths.append(rel_path)
-                if path_level == root_level and file.lower().endswith(plugin_extensions):
+                if path_level == root_level and file_lower.endswith(plugin_extensions):
                     scanner.plugins.append(full_path)
-                if path_level == root_level and file.lower().endswith('.bsa') and file.lower() not in scanner.bsa_blacklist:
+                if path_level == root_level and file_lower.endswith('.bsa') and file_lower not in scanner.bsa_blacklist:
                     file = file[:-4]
-                    if ' - textures' in file.lower():
-                        index = file.lower().index(' - textures')
+                    if ' - textures' in file_lower:
+                        index = file_lower.index(' - textures')
                         file = file[:index]
-                    bsa_list.append([file.lower(), full_path])
+                    bsa_list.append([file_lower, full_path])
 
         order_map = {plugin: index for index, plugin in enumerate(plugins_list)}
         filtered_bsa_list = [item for item in bsa_list if item[0] in order_map]
@@ -195,6 +202,8 @@ class scanner():
             else:
                 loop += 1
             for file in files:
+                if file.lower() in scanner.ignored_files:
+                    continue
                 full_path = os.path.join(root, file)
                 relative_path = os.path.relpath(full_path, mod_folder).lower()
                 if relative_path not in temp_rel_paths:
@@ -245,6 +254,9 @@ class scanner():
                         loop += 1
                     for file in files:
                         if file != 'meta.ini':
+                            file_lower = file.lower()
+                            if file_lower in scanner.ignored_files:
+                                continue
                             # Get the relative file path
                             full_path = os.path.join(root, file)
                             relative_path = os.path.relpath(full_path, mods_folder)
@@ -258,14 +270,14 @@ class scanner():
                                 mod_files[relative_path] = []
                                 cases_of_files[relative_path] = cased
                             mod_files[relative_path].append(mod_folder)
-                            if file.lower().endswith(plugin_extensions):
+                            if file_lower.endswith(plugin_extensions):
                                 plugin_names.append(file)
-                            if root_level == mod_folder_level and file.lower().endswith('.bsa') and file.lower() not in scanner.bsa_blacklist:
+                            if root_level == mod_folder_level and file_lower.endswith('.bsa') and file_lower not in scanner.bsa_blacklist:
                                 file = file[:-4]
-                                if ' - textures' in file.lower():
+                                if ' - textures' in file_lower:
                                     index = file.lower().index(' - textures')
                                     file = file[:index]
-                                bsa_list.append([file.lower(), full_path])
+                                bsa_list.append([file_lower, full_path])
 
         #Get files from MO2's overwrite folder
         if os.path.exists(overwrite_path):
@@ -277,6 +289,9 @@ class scanner():
                 else:
                     loop += 1
                 for file in files:
+                    file_lower = file.lower()
+                    if file_lower in scanner.ignored_files:
+                        continue
                     full_path = os.path.join(root, file)
                     cased = os.path.relpath(full_path, overwrite_path)
                     relative_path = cased.lower()
@@ -286,14 +301,14 @@ class scanner():
                         mod_files[relative_path] = []
                         cases_of_files[relative_path] = cased
                     mod_files[relative_path].append('overwrite_eslifier_scan')
-                    if file.lower().endswith(plugin_extensions):
+                    if file_lower.endswith(plugin_extensions):
                         plugin_names.append(file)
-                    if file.lower().endswith('.bsa') and file.lower() not in scanner.bsa_blacklist:
+                    if file_lower.endswith('.bsa') and file_lower not in scanner.bsa_blacklist:
                         file = file[:-4]
-                        if ' - textures' in file.lower():
-                            index = file.lower().index(' - textures')
+                        if ' - textures' in file_lower:
+                            index = file_lower.index(' - textures')
                             file = file[:index]
-                        bsa_list.append([file.lower(), full_path])
+                        bsa_list.append([file_lower, full_path])
         else:
             print('Overwrite folder not found.\n')
 
@@ -329,6 +344,8 @@ class scanner():
             else:
                 loop += 1
             for file in files:
+                if file.lower() in scanner.ignored_files:
+                    continue
                 # Get the relative file path
                 full_path = os.path.join(root, file)
                 relative_path = os.path.relpath(full_path, mod_folder)
@@ -460,12 +477,12 @@ class scanner():
             print(f'!Error: Failed to dump data to: {file}')
             print(e)
     
-    def get_from_file(file: str, type: dict | list) -> list | dict:
+    def get_from_file(file: str, type: dict | list) -> list[str] | dict[str]:
         try:
             with open(file, 'r', encoding='utf-8') as f:
-                data: list | dict = json.load(f)
+                data: list[str] | dict[str] = json.load(f)
         except:
-            data: list | dict = type()
+            data: list[str] | dict[str] = type()
         return data
 
     def get_file_masters():
