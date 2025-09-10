@@ -169,7 +169,7 @@ class scanner():
                     if ' - textures' in file_lower:
                         index = file_lower.index(' - textures')
                         file = file[:index]
-                    bsa_list.append([file_lower, full_path])
+                    bsa_list.append([file.lower(), full_path])
 
         order_map = {plugin: index for index, plugin in enumerate(plugins_list)}
         filtered_bsa_list = [item for item in bsa_list if item[0] in order_map]
@@ -192,7 +192,7 @@ class scanner():
                     print(e)
             print(f'\033[F\033[K')
 
-        mod_folder = os.path.join(os.getcwd(), 'bsa_extracted')
+        mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
 
         for root, dirs, files in os.walk('bsa_extracted/'):
             scanner.file_count += len(files)
@@ -277,7 +277,7 @@ class scanner():
                                 if ' - textures' in file_lower:
                                     index = file.lower().index(' - textures')
                                     file = file[:index]
-                                bsa_list.append([file_lower, full_path])
+                                bsa_list.append([file.lower(), full_path])
 
         #Get files from MO2's overwrite folder
         if os.path.exists(overwrite_path):
@@ -308,7 +308,7 @@ class scanner():
                         if ' - textures' in file_lower:
                             index = file_lower.index(' - textures')
                             file = file[:index]
-                        bsa_list.append([file_lower, full_path])
+                        bsa_list.append([file.lower(), full_path])
         else:
             print('Overwrite folder not found.\n')
 
