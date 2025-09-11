@@ -156,14 +156,17 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
             patchers.toml_yet_another_soul_trap_manager_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         else:
             print(f'Warn: Possible missing patcher for: {new_file}')
+    elif new_file_lower.endswith('.yml'):
+        if '\\dbd\\configurations\\' in new_file_lower:                                     # Dynamic Body Distribution
+            patchers.dbd_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+        elif '\\plugins\\alchemyoftime\\' in new_file_lower:                                # Alchemy Of Time
+            patchers.ini_0xfid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     elif new_file_lower.endswith('_srd.yaml'):                                              # Sound record distributor YAML
         patchers.sound_record_distributor_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     elif 'facegeom' in new_file_lower and new_file_lower.endswith('.nif'):                  # FaceGeom mesh patching
         patchers.facegeom_mesh_patcher(basename, new_file, form_id_rename_map)
     elif new_file_lower.endswith('.seq'):                                                   # SEQ file patching
         patchers.seq_patcher(new_file, form_id_map, master_byte, updated_master_index=updated_master_index, update_byte=update_byte)
-    elif new_file_lower.endswith('.yml') and '\\dbd\\configurations\\' in new_file_lower:
-        patchers.dbd_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     elif new_file_lower.endswith('.jslot'):                                                 # Racemenu Presets
         patchers.jslot_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     elif new_file_lower.endswith('config.txt') and 'plugins\\customskill' in new_file_lower: # CSF's old txt format
