@@ -218,7 +218,7 @@ class patchers():
                     for _ in range(count):
                         line = lines[i]
                         middle_index = line.index('~', start)
-                        start_index = patchers.find_prev_non_alphanumeric(line, middle_index-2)
+                        start_index = patchers.find_prev_non_alphanumeric(line, middle_index-2, tokens=(" "))
                         end_index = line.index('.es', middle_index) + 4
                         plugin = line.lower()[middle_index+1:end_index].strip()
                         start_of_line = line[:start_index+1]
