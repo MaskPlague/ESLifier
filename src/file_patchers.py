@@ -320,16 +320,6 @@ class patchers():
             f.truncate(0)
             f.write(''.join(lines))
             f.close()
-    
-    def find_pipe_outside_tildes(line: str, start_index: int) -> int:
-        in_tilde = False
-        for i in range(start_index, len(line)):
-            ch = line[i]
-            if ch == '~':
-                in_tilde = not in_tilde
-            elif ch == '|' and not in_tilde:
-                return i
-        return -1
 
     def ini_skypatcher_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
