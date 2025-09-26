@@ -207,7 +207,7 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
-    def ini_0xfid_tilde_plugin_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+    def ini_formid_tilde_plugin_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             print_replace = True
@@ -381,7 +381,7 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
-    def ini_eq_plugin_sep_fid_patcher(basename: str, new_file: str, form_id_map: dict, sep: str ='|', encoding_method: str ='utf-8'):
+    def ini_eq_plugin_sep_formid_patcher(basename: str, new_file: str, form_id_map: dict, sep: str ='|', encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             print_replace = True
@@ -1288,7 +1288,7 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
-    def json_dyanmic_armor_varients_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+    def json_dynamic_armor_variants_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             try:
                 data = json.load(f)
