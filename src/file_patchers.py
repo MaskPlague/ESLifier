@@ -533,7 +533,7 @@ class patchers():
                     lines[i] = patchers.comp_form_id_processor(line, basename, global_replace, form_id_map, True)
 
                 if not in_form_ids and line.startswith('0x') and '=' in line:
-                    lines[i] = patchers.comp_variable_from_id(line, basename, global_replace, form_id_map)
+                    lines[i] = patchers.comp_variable_form_id(line, basename, global_replace, form_id_map)
 
             if not patchers.comp_print_replace:
                 print(f'~Plugin Name Replaced: {basename} | {new_file}')
@@ -554,24 +554,35 @@ class patchers():
         else:
             return form_id, False
 
-    def comp_variable_from_id(line: str, basename: str, global_replace: bool, form_id_map: dict):
+    def comp_variable_form_id(line: str, basename: str, global_replace: bool, form_id_map: dict):
         equal_index = line.index('=')
         variable = line[:equal_index]
         var_end = False
         if '_' in variable:
             index = variable.index('_')
-            form_id = variable[:index]
+            form_id_string = variable[:index]
             var_end = True
             variable_end = variable[index:]
         else:
-            form_id = variable
-        if global_replace:
-            form_id, replace_name_ignored = patchers.comp_form_id_replacer(form_id, form_id_map)
-            variable = form_id
+            form_id_string = variable
+        if '*' in form_id_string:
+            index = form_id_string.index('*')
+            end_index = len(form_id_string)
+            plugin = form_id_string[index+1:end_index].strip()
+            if plugin.lower() == basename:
+                form_id_string = form_id_string[:index]
+                form_id_string, replace_name = patchers.comp_form_id_replacer(form_id_string, form_id_map)
+                if not replace_name:
+                    form_id_string = form_id_string + '*' + plugin + ' '
+                else:
+                    form_id_string = form_id_string + '*' + "ESLifier_Cell_Master.esm "
+            variable = form_id_string
+        elif global_replace:
+            form_id_string, replace_name_ignored = patchers.comp_form_id_replacer(form_id_string, form_id_map)
+            variable = form_id_string
             if var_end:
                 variable += variable_end
             else:
-                variable += ' '
         line = variable + line[equal_index:]
         line = patchers.comp_layout_3_processor(global_replace, basename, line, form_id_map)
         return line
@@ -579,19 +590,21 @@ class patchers():
     def comp_layout_3_processor(global_replace: bool, basename: str, line: str, form_id_map: dict):
         # This assumes that no plugin name has a comma. If one does then it probably breaks completionist anyways.
         start_index = line.index('=')+1
-        parts = [part for part in line[start_index:].split(',') if part]
-        append_newline = False
+        parts = [part.strip() for part in line[start_index:].split(',') if part]
         if parts[-1] == '\n':
-            append_newline = True
             parts.pop()
         for i, form_id_string in enumerate(parts):
             parts[i] = patchers.comp_form_id_processor(form_id_string, basename, global_replace, form_id_map, False)
-        return_string = line[:start_index] + ' ' + ', '.join(parts) + ','
-        if append_newline:
+        return_string = line[:start_index] + ' ' + ', '.join(parts)
+        if not return_string.endswith('\n'):
             return_string += '\n'
         return return_string
 
     def comp_form_id_processor(form_id_string: str, basename: str, global_replace: bool, form_id_map: str, has_comma: bool):
+        has_semicolon = False
+        if form_id_string.strip().startswith(';'):
+            form_id_string = form_id_string.strip()[1:].strip()
+            has_semicolon = True
         if has_comma:
             index = form_id_string.index(',')
             end_of_line = form_id_string[index:]
@@ -637,6 +650,8 @@ class patchers():
             
         if has_comma:
             form_id_string += end_of_line
+        if has_semicolon:
+            form_id_string = '; ' + form_id_string
         return form_id_string
 
     def ini_kreate_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
