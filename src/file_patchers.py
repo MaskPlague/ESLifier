@@ -1070,7 +1070,7 @@ class patchers():
             json_dict = patchers.extract_values_and_keys(data)
             print_replace = True
             for path, value in json_dict:
-                if isinstance(value, str) and '|' + basename in value.lower():
+                if isinstance(value, str) and '|' + basename in value.lower() and 'formid' in value.lower():
                     count = value.lower().count('|'+basename)
                     start_index = 0
                     changed = False
