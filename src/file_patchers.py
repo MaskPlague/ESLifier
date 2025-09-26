@@ -1668,4 +1668,4 @@ class patchers():
 #    basename = ''.lower()
 #    form_id_map = {290306: {'hex_no_0': '0A0A', 'hex': 'TESTH', 'update_name': False}, 2570: {'hex_no_0': '0B0B', 'update_name': True}}
 #    new_file = os.path.normpath(r"")
-#    patchers.ini_skypatcher_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
+#    patchers.json_skyrim_utility_mod_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
