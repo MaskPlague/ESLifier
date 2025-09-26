@@ -594,6 +594,8 @@ class CFIDs():
 
         for form_id, _ in form_id_list:
             if form_id not in matched_ids:
+                #if len(new_cell_form_ids) <= 0:
+                #    break
                 _, new_id = new_form_ids.pop(0)
                 form_id_replacements.append([form_id, new_id])
 
