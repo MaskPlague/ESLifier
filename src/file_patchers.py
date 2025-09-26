@@ -320,18 +320,30 @@ class patchers():
             f.truncate(0)
             f.write(''.join(lines))
             f.close()
-        
-    def ini_sky_patcher_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+    
+    def find_pipe_outside_tildes(line: str, start_index: int) -> int:
+        in_tilde = False
+        for i in range(start_index, len(line)):
+            ch = line[i]
+            if ch == '~':
+                in_tilde = not in_tilde
+            elif ch == '|' and not in_tilde:
+                return i
+        return -1
+
+    def ini_skypatcher_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             print_replace = True
             for i, line in enumerate(lines):
                 if basename in line.lower() and '|' in line and not line.startswith(';'):
                     count = line.lower().count('|')
-                    start = 0
+                    pos = 0
                     for _ in range(count):
                         line = lines[i]
-                        start_index = line.lower().index('.es', start)
+                        start_index = line.lower().find('.es', pos)
+                        if start_index == -1:
+                            break
                         middle_index = line.index('|', start_index)
                         plugin_start_index = -1
                         for j in range(start_index-1, 0, -1):
@@ -350,7 +362,7 @@ class patchers():
                                 form_id = form_id[-6:]
                         try:
                             form_id_int = int(form_id, 16)
-                            start = start_index+3
+                            pos = start_index+3
                             if plugin.lower().strip() == basename:
                                 to_id_data = form_id_map.get(form_id_int)
                                 if to_id_data is not None:
@@ -361,9 +373,9 @@ class patchers():
                                             print(f'~Plugin Name Replaced: {basename} | {new_file}')
                                             print_replace = False
                                         lines[i] = start_of_line + "ESLifier_Cell_Master.esm|" + to_id_data["hex_no_0"] + end_of_line
-                                        start += len('ESLifier_Cell_Master.esm') - len(plugin)
+                                        pos += len('ESLifier_Cell_Master.esm') - len(plugin)
                         except:
-                            start = start_index+3
+                            pos = start_index+3
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -582,7 +594,6 @@ class patchers():
             variable = form_id_string
             if var_end:
                 variable += variable_end
-            else:
         line = variable + line[equal_index:]
         line = patchers.comp_layout_3_processor(global_replace, basename, line, form_id_map)
         return line
@@ -1655,6 +1666,6 @@ class patchers():
 
 #if __name__ == '__main__':
 #    basename = ''.lower()
-#    form_id_map = {105: {'hex_no_0': 'TEST', 'update_name': False}, 5: {'hex_no_0': 'test2', 'update_name': True}}
+#    form_id_map = {290306: {'hex_no_0': '0A0A', 'hex': 'TESTH', 'update_name': False}, 2570: {'hex_no_0': '0B0B', 'update_name': True}}
 #    new_file = os.path.normpath(r"")
-#    patchers.dbd_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
+#    patchers.ini_skypatcher_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
