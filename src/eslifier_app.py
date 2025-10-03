@@ -119,9 +119,9 @@ class get_latest_patcher_conditions(QObject):
                 local_conditions_version = local_conditions_data.get("version", -1)
             else:
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
-                local_conditions_version = 0
+                local_conditions_version = -1
             if github_conditions_version <= local_conditions_version:
-                print("~Local master_patcher_conditions.json is up to date.")
+                print(f"~Local master_patcher_conditions.json is version {local_conditions_version} which is up to date.")
                 return True
             with open(filename, "w", encoding="utf-8") as f:
                 json.dump(conditions_data, f, ensure_ascii=False, indent=4)
