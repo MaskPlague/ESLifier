@@ -963,10 +963,12 @@ class CompactorWorker(QObject):
         bsa_masters = []
         for value in bsa_dict.values():
             bsa_masters.extend(value)
-        winning_file_history_dict = {}
-        compacted_and_patched = {}
 
         additional_file_patcher_conditions = user_and_master_conditions_class()
+        cfids = CFIDs(self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, self.mo2_mode, self.update_header, 
+                      self.create_new_cell_plugin, original_files, winning_files_dict, {}, {}, master_byte_data, bsa_masters, bsa_dict,
+                      self.persistent_ids, self.free_non_existent, additional_file_patcher_conditions)
+        
         for file in self.checked:
             count +=1
             percent = round((count/total)*100,1)
@@ -988,49 +990,18 @@ class CompactorWorker(QObject):
                     finalize = True
             else:
                 generate_cell_master = False
-            original_files, winning_files_dict, master_byte_data, winning_file_history_dict, compacted_and_patched = CFIDs.compact_and_patch(
-                            file, dependents, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, 
-                            self.update_header, self.mo2_mode, all_dependents_have_skyrim_esm_as_master, self.create_new_cell_plugin, 
-                            generate_cell_master, original_files, winning_files_dict, master_byte_data, winning_file_history_dict, 
-                            files_to_patch, bsa_masters, bsa_dict, compacted_and_patched, self.persistent_ids, self.free_non_existent)
+            cfids.compact_and_patch(
+                            file, dependents, all_dependents_have_skyrim_esm_as_master, 
+                            generate_cell_master, files_to_patch)
             
         if finalize:
             print('Creating/Updating ESLifier_Cell_Master.esm...')
             self.create_new_cell_plugin.finalize_plugin()
         print('Saving Data...')
-        self.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json', compacted_and_patched)
-        self.dump_dictionary('ESLifier_Data/original_files.json', original_files)
-        self.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', winning_file_history_dict)
-        self.dump_dictionary('ESLifier_Data/master_byte_data.json', master_byte_data)
+        cfids.save_data()
         print("Patching Complete")
         self.finished_signal.emit()
         return
-    
-    def dump_compacted_and_patched(self, file, dictionary: dict):
-        data: dict[str, list[str]] = self.get_from_file(file)
-        for key, value in dictionary.items():
-            if key not in data:
-                data[key] = []
-            for item in value:
-                if item.lower() not in data[key]:
-                    data[key].append(item.lower())
-        try:
-            with open(file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=4)
-        except Exception as e:
-            print(f'!Error: Failed to dump data to {file}')
-            print(e)
-    
-    def dump_dictionary(self, file, dictionary: dict):
-        data = self.get_from_file(file)
-        for key, values in dictionary.items():
-            data[key] = values
-        try:
-            with open(file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=4)
-        except Exception as e:
-            print(f'!Error: Failed to dump data to {file}')
-            print(e)
     
     def get_from_file(self, file: str) -> dict:
         try:
@@ -1057,10 +1028,10 @@ class FlagWorker(QObject):
         winning_files_dict = self.get_from_file('ESLifier_Data/winning_files_dict.json')
         winning_file_history_dict = {}
         additional_file_patcher_conditions = user_and_master_conditions_class()
+        cfids = CFIDs(self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, True, self.mo2_mode, 
+                      None, original_files, winning_files_dict, winning_file_history_dict, None, None, None, None, None, None, additional_file_patcher_conditions)
         for file in self.files:
-            original_files, winning_file_history_dict = CFIDs.set_flag(
-                            file, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, 
-                            self.overwrite_path, self.mo2_mode, original_files, winning_files_dict, winning_file_history_dict)
+            original_files, winning_file_history_dict = cfids.set_flag(file)
         self.dump_dictionary('ESLifier_Data/original_files.json', original_files)
         self.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', winning_file_history_dict)
         self.finished_signal.emit()

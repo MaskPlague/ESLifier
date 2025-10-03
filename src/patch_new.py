@@ -501,8 +501,10 @@ class PatchNewWorker(QObject):
         master_byte_data: dict = self.get_from_file('ESLifier_Data/master_byte_data.json')
         winning_file_history_dict = {}
         compacted_and_patched = {}
-
         additional_file_patcher_conditions = user_and_master_conditions_class()
+        cfids = CFIDs(self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, 
+                      self.update_header, self.mo2_mode, None, original_files, winning_files_dict, winning_file_history_dict, 
+                      compacted_and_patched, master_byte_data, None, None, self.persistent_ids, self.free_non_existent, additional_file_patcher_conditions)
         for file in self.files:
             count +=1
             percent = round((count/total)*100,1)
@@ -510,23 +512,8 @@ class PatchNewWorker(QObject):
             dependents = []
             if file in self.dependencies_dictionary:
                 dependents = self.dependencies_dictionary[file]
-            original_files, winning_files_dict, master_byte_data, winning_file_history_dict, compacted_and_patched = CFIDs.patch_new(
-                            file, dependents, self.file_dictionary, self.skyrim_folder_path, self.output_folder_path,
-                            self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode, self.generate_cell_master,
-                            original_files, winning_files_dict, master_byte_data, winning_file_history_dict, compacted_and_patched,
-                            self.persistent_ids, self.free_non_existent)
+            cfids.patch_new(file, dependents, self.file_dictionary, self.generate_cell_master)
         all_patched = []
-        for file in self.dependencies_dictionary.values():
-            if file not in all_patched:
-                all_patched.append(file)
-        for file in self.file_dictionary.values():
-            if file not in all_patched:
-                all_patched.append(file)
-
-        self.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json', compacted_and_patched)
-        self.dump_dictionary('ESLifier_Data/original_files.json', original_files)
-        self.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', winning_file_history_dict)
-        self.dump_dictionary('ESLifier_Data/master_byte_data.json', master_byte_data)
         for files in self.dependencies_dictionary.values():
             for file in files:
                 if file not in all_patched:
@@ -535,6 +522,7 @@ class PatchNewWorker(QObject):
             for file in files:
                 if file not in all_patched:
                     all_patched.append(file)
+        cfids.save_data()
         self.finished_signal.emit(len(all_patched))
         return
     
