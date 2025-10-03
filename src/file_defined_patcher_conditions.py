@@ -87,7 +87,8 @@ class user_and_master_conditions_class():
                         if exception_type == UnicodeDecodeError:
                             patcher_method(basename, file, form_id_map, encoding_method="ansi")
                         else:
-                            print(e)
+                            print(f'!Error: Failed to patch file: {file}')
+                            print(e)    
                 else:
                     try:
                         patcher_method(basename, file, form_id_map, encoding_method="utf-8")
@@ -96,6 +97,7 @@ class user_and_master_conditions_class():
                         if exception_type == UnicodeDecodeError:
                             patcher_method(basename, file, form_id_map, encoding_method="ansi")
                         else:
-                            print(e)
+                            print(f'!Error: Failed to patch file: {file}')
+                            print(e)    
                 return True
         return False
