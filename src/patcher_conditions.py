@@ -79,11 +79,11 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         elif 'plugins\\rain extinguishes fires\\' in new_file_lower:                        # Rain Extinguishes Fires
             patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\coreimpactframework\\' in new_file_lower:                                   # Core Impact Framework
-            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, symbol=':', encoding_method=encoding)
+            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, sep=':', encoding_method=encoding)
         elif 'plugins\\objectimpactframework' in new_file_lower:                            # Object Impact Framework
-            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, symbol=':', encoding_method=encoding)
+            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, sep=':', encoding_method=encoding)
         elif '\\lightplacer\\' in new_file_lower:                                           # Light Placer
-            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, symbol='~', encoding_method=encoding)
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, sep='~', encoding_method=encoding)
         elif '\\skyrimunbound\\' in new_file_lower:                                         # Skyrim Unbound
             patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\playerequipmentmanager\\' in new_file_lower:                                # Player Equipment Manager
@@ -120,7 +120,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         elif 'plugins\\captivefollowers' in new_file_lower:                                 # Captive Followers
             patchers.json_jcontainer_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\gsp\\' in new_file_lower:                                                   # Generic Synthesis Patcher
-            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, symbol= ':', encoding_method=encoding) 
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, sep= ':', encoding_method=encoding) 
         elif 'plugins\\dressuplovers' in new_file_lower:                                    # Dress Up Lovers
             patchers.json_dressuplovers_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('spell organizer.json'):                               # Spell Organizer's Auto Remove list
@@ -130,7 +130,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         elif 'plugins\\magictweaks\\' in new_file_lower:                                    # Magic Fixes and Tweaks SKSE
             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'plugins\\stbactiveeffectsinfo' in new_file_lower:                             # STB Active Effects
-            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, symbol='~', encoding_method=encoding)
+            patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, sep='~', encoding_method=encoding)
         elif 'skse\\alternateperspective' in new_file_lower:                                # Alternate Perspective
             patchers.json_alternate_perspective(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'plugins\\sleep in lingerie\\' in new_file_lower:                              # Sleep in Lingerie
