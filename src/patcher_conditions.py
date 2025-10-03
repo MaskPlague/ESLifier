@@ -1,8 +1,10 @@
 import os
 from file_patchers import patchers
+from file_defined_patcher_conditions import user_and_master_conditions_class
 
 def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, form_id_map: dict, form_id_rename_map: dict,
-                        master_byte: bytes, updated_master_index: int, update_byte: bool, encoding: str):
+                        master_byte: bytes, updated_master_index: int, update_byte: bool, additional_conditions: user_and_master_conditions_class,
+                        encoding: str):
     if new_file_lower.endswith('.ini'):
         if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini', '_enbl.ini',     # PO3's SPID, KID, BOS, ENBL
                                     '_desc.ini', '_llos.ini', '_ipm.ini', '_mus.ini')):     # Description Framework, LLOS, IPM, MTD
@@ -47,8 +49,10 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
             patchers.ini_npcs_use_potions_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'plugins\\truehud\\' in new_file_lower:                                        # TrueHud
             patchers.ini_eq_plugin_sep_formid_patcher(basename, new_file, form_id_map, sep=':', encoding_method=encoding)
-        else:                                                                               
-            print(f'Warn: Possible missing patcher for: {new_file}')
+        else:                                    
+            patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
+            if not patched:                                           
+                print(f'Warn: Possible missing patcher for: {new_file}')
     elif new_file_lower.endswith('_conditions.txt'):                                        # Dynamic Animation Replacer
         patchers.dynamic_animation_replacer_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     elif new_file_lower.endswith('.json'):
@@ -138,7 +142,9 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         elif new_file_lower.endswith('strangerunescompatibility.json'):                     # For whatever this json is
             patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         else:
-            print(f'Warn: Possible missing patcher for: {new_file}')
+            patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
+            if not patched:                                           
+                print(f'Warn: Possible missing patcher for: {new_file}')
     elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
         patchers.pex_patcher(basename, new_file, form_id_map)
     elif new_file_lower.endswith('.toml'):
@@ -155,7 +161,9 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         elif os.path.basename(new_file_lower).startswith('yastm_'):                         # YASTM - Yet Another Soul Trap Manager
             patchers.toml_yet_another_soul_trap_manager_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         else:
-            print(f'Warn: Possible missing patcher for: {new_file}')
+            patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
+            if not patched:                                           
+                print(f'Warn: Possible missing patcher for: {new_file}')
     elif new_file_lower.endswith('.yml'):
         if '\\dbd\\configurations\\' in new_file_lower:                                     # Dynamic Body Distribution
             patchers.dbd_patcher(basename, new_file, form_id_map, encoding_method=encoding)
@@ -172,4 +180,6 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
     elif new_file_lower.endswith('config.txt') and 'plugins\\customskill' in new_file_lower: # CSF's old txt format
         patchers.old_customskill_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     else:
-        print(f'Warn: Possible missing patcher for: {new_file}')
+        patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
+        if not patched:                                           
+            print(f'Warn: Possible missing patcher for: {new_file}')
