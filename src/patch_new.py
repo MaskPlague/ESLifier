@@ -527,6 +527,14 @@ class PatchNewWorker(QObject):
         self.dump_dictionary('ESLifier_Data/original_files.json', original_files)
         self.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', winning_file_history_dict)
         self.dump_dictionary('ESLifier_Data/master_byte_data.json', master_byte_data)
+        for files in self.dependencies_dictionary.values():
+            for file in files:
+                if file not in all_patched:
+                    all_patched.append(file)
+        for files in self.file_dictionary.values():
+            for file in files:
+                if file not in all_patched:
+                    all_patched.append(file)
         self.finished_signal.emit(len(all_patched))
         return
     
