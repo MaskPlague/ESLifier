@@ -1,0 +1,9 @@
+[
+    {
+        "test": "master_patch_conditions",
+        "operator": "equals",
+        "value": "true",
+        "path": "src/special_feature_enabled.json"
+    },
+    {}
+]
