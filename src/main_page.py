@@ -16,6 +16,7 @@ from cell_changed_scanner import cell_scanner
 from create_cell_master import create_new_cell_plugin
 from patch_new import patch_new
 from log_stream import log_stream as l_s
+from file_defined_patcher_conditions import user_and_master_conditions_class
 
 class main(QWidget):
     def __init__(self, log_stream, eslifier, COLOR_MODE):
@@ -965,6 +966,7 @@ class CompactorWorker(QObject):
         winning_file_history_dict = {}
         compacted_and_patched = {}
 
+        additional_file_patcher_conditions = user_and_master_conditions_class()
         for file in self.checked:
             count +=1
             percent = round((count/total)*100,1)
@@ -1054,6 +1056,7 @@ class FlagWorker(QObject):
         original_files = self.get_from_file('ESLifier_Data/original_files.json')
         winning_files_dict = self.get_from_file('ESLifier_Data/winning_files_dict.json')
         winning_file_history_dict = {}
+        additional_file_patcher_conditions = user_and_master_conditions_class()
         for file in self.files:
             original_files, winning_file_history_dict = CFIDs.set_flag(
                             file, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, 

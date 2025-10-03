@@ -11,6 +11,7 @@ from scanner import scanner
 from dependency_getter import dependecy_getter
 from compact_form_ids import CFIDs
 from cell_changed_scanner import cell_scanner
+from file_defined_patcher_conditions import user_and_master_conditions_class
 
 class patch_new():
     def scan_and_find(self, settings: dict[str, str|bool], main_parent):
@@ -501,6 +502,7 @@ class PatchNewWorker(QObject):
         winning_file_history_dict = {}
         compacted_and_patched = {}
 
+        additional_file_patcher_conditions = user_and_master_conditions_class()
         for file in self.files:
             count +=1
             percent = round((count/total)*100,1)
