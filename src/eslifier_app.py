@@ -128,7 +128,7 @@ class get_latest_patcher_conditions(QObject):
             print(f"~Updated to master_patcher_conditions.json version {github_conditions_version} from GitHub.")
             return True
         except Exception as e:
-            print("!Error: Failed to updated local master_patcher_conditions.json: " + e)
+            print("!Error: Failed to update local master_patcher_conditions.json: " + e)
             return False
 
 class main_window(QMainWindow):
