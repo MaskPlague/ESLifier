@@ -1,17 +1,20 @@
-[
-    {
-        "extension": "json",
-        "contains": "Plugins/FSM/",
-        "patcher": "json_jcontainer"
-    },
-    {
-        "extension": "txt",
-        "endswith": "/FSM/Audit_Masters.txt",
-        "patcher": -1
-    },
-    {
-        "extension": "txt",
-        "endswith": "/FSM/Audit_Outfits.txt",
-        "patcher": -1
-    }
-]
+{
+    "version": 0,
+    "patchers": [
+        {
+            "extension": "json",
+            "contains": "Plugins/FSM/",
+            "patcher": "json_jcontainer"
+        },
+        {
+            "extension": "txt",
+            "endswith": "/FSM/Audit_Masters.txt",
+            "patcher": -1
+        },
+        {
+            "extension": "txt",
+            "endswith": "/FSM/Audit_Outfits.txt",
+            "patcher": -1
+        }
+    ]
+}
