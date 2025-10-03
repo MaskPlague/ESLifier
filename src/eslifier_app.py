@@ -14,7 +14,7 @@ from settings_page import settings
 from main_page import main
 from log_stream import log_stream
 
-CURRENT_VERSION = '0.12.21'
+CURRENT_VERSION = '0.13.0'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
@@ -78,7 +78,6 @@ class github_connect(QObject):
             api_url = f"https://api.github.com/repos/MaskPlague/ESLifier/releases/latest"
             response = requests.get(api_url, timeout=10)
             response.raise_for_status()
-
             latest_release_info: dict[str, str] = response.json()
             latest_version = latest_release_info["tag_name"]
             latest_version = latest_version.removeprefix('v')
@@ -90,7 +89,47 @@ class github_connect(QObject):
                 return True, latest_version
         except:
             return True, '0'
+        
+def conditions_connection_result(success: bool):
+    if not success:
+        QMessageBox.warning(None, 'Patcher Conditions Update Failed', 'Failed to download latest patcher conditions from GitHub.\n'\
+                                                                     'Ensure you have an active internet connection.\n'\
+                                                                     'Using outdated patcher conditions may cause certain files to not be patched.')
 
+class get_latest_patcher_conditions(QObject):
+    finished_signal = pyqtSignal(bool)
+    def fetch_conditions(self):
+        success = self.download_conditions()
+        self.finished_signal.emit(success)
+            
+    def download_conditions(self) -> bool:
+        try:
+            url = "https://raw.githubusercontent.com/MaskPlague/ESLifier/main/src/master_patch_conditions.json"
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            conditions_data: dict[str] = json.loads(response.text)
+            github_conditions_version = conditions_data.get("version", -1)
+            filename = os.path.normpath("ESLifier_Data/master_patch_conditions.json")
+            if os.path.exists(filename):
+                try:
+                    with open(filename, 'r', encoding='utf-8') as f:
+                        local_conditions_data: dict[str] = json.load(f)
+                except:
+                    local_conditions_data = {}
+                local_conditions_version = local_conditions_data.get("version", -1)
+            else:
+                os.makedirs(os.path.dirname(filename), exist_ok=True)
+                local_conditions_version = 0
+            if github_conditions_version <= local_conditions_version:
+                print("~Local master_patcher_conditions.json is up to date.")
+                return True
+            with open(filename, "w", encoding="utf-8") as f:
+                json.dump(conditions_data, f, ensure_ascii=False, indent=4)
+            print(f"~Updated to master_patcher_conditions.json version {github_conditions_version} from GitHub.")
+            return True
+        except Exception as e:
+            print("!Error: Failed to updated local master_patcher_conditions.json: " + e)
+            return False
 
 class main_window(QMainWindow):
     def __init__(self):
@@ -129,6 +168,14 @@ class main_window(QMainWindow):
             self.github_connection.finished_signal.connect(connection_result)
             self.github_connection.finished_signal.connect(self.github_thread.quit)
             self.github_thread.start()
+        
+        self.conditions_thread = QThread()
+        self.conditions_connection = get_latest_patcher_conditions()
+        self.conditions_connection.moveToThread(self.conditions_thread)
+        self.conditions_thread.started.connect(self.conditions_connection.fetch_conditions)
+        self.conditions_connection.finished_signal.connect(self.conditions_thread.quit)
+        self.conditions_thread.start()
+
         if COLOR_MODE == 'Light':
             palette = QPalette()
             palette.setColor(QPalette.ColorRole.Window, QColor("Gray"))
