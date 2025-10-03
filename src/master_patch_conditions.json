@@ -1,20 +1,16 @@
 {
     "version": 0,
-    "patchers": [
+    "conditions": [
         {
             "extension": "json",
             "contains": "Plugins/FSM/",
             "patcher": "json_jcontainer"
         },
         {
-            "extension": "txt",
-            "endswith": "/FSM/Audit_Masters.txt",
-            "patcher": -1
-        },
-        {
-            "extension": "txt",
-            "endswith": "/FSM/Audit_Outfits.txt",
-            "patcher": -1
+            "extension": "json",
+            "contains": "SKSE/XEMIUtil/",
+            "patcher": "json_generic_formid_sep_plugin",
+            "separator": ":"
         }
     ]
 }
