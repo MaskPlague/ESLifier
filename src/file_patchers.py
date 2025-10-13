@@ -9,9 +9,9 @@ class patchers():
                 return i
         return -1
 
-    def find_next_non_alphanumeric(text: str, start_index: int):
+    def find_next_non_alphanumeric(text: str, start_index: int, tokens: set[str] = ()):
         for i in range(start_index, len(text)):
-            if not text[i].isalnum():
+            if not text[i].isalnum() or text[i] in tokens:
                 return i
         return len(text)
     
@@ -243,6 +243,50 @@ class patchers():
                                         print(f'~Plugin Name Replaced: {basename} | {new_file}')
                                         print_replace = False
                                     lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + sep +"ESLifier_Cell_Master.esm" + line[end_index:]
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+
+    def ini_plugin_sep_formid_patcher(basename: str, new_file: str, form_id_map: dict, sep: str = '~', encoding_method: str ='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            lines = f.readlines()
+            print_replace = True
+            for i, line in enumerate(lines):
+                if basename in line.lower() and sep in line and not line.startswith(';'):
+                    count = line.lower().count(sep)
+                    start = 0
+                    for _ in range(count):
+                        line = lines[i]
+                        middle_index = line.index(sep, start)
+                        start_index = patchers.find_prev_non_alphanumeric(line, middle_index-5, tokens=(" "))
+                        end_index = patchers.find_next_non_alphanumeric(line, middle_index+1, tokens=(" "))
+                        plugin = line.lower()[start_index+1:middle_index].strip()
+                        start_of_line = line[:start_index+1]
+                        print(start_of_line)
+                        end_of_line = line[end_index:]
+                        print(end_of_line)
+                        form_id = line[middle_index+1:end_index].strip()
+                        print(form_id)
+                        start = middle_index+1
+                        if not form_id.lower().startswith('0x'):
+                            continue
+                        if len(form_id) > 8: # 0x accounts for 2
+                            if form_id[2:4] == 'FE':
+                                form_id = form_id [-3:]
+                            else:
+                                form_id = form_id[-6:]
+                        if basename == plugin: 
+                            form_id_int = int(form_id, 16)
+                            to_id_data = form_id_map.get(form_id_int)
+                            if to_id_data is not None:
+                                if not to_id_data["update_name"]:
+                                    lines[i] = line[:middle_index+1] + '0x' + to_id_data["hex_no_0"] + end_of_line
+                                else:
+                                    if print_replace:
+                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                        print_replace = False
+                                    lines[i] = start_of_line + "ESLifier_Cell_Master.esm" + sep + '0x' + to_id_data["hex_no_0"] + line[end_index:]
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
@@ -1675,7 +1719,7 @@ class patchers():
             f.close()
 
 #if __name__ == '__main__':
-#    basename = ''.lower()
-#    form_id_map = {290306: {'hex_no_0': '0A0A', 'hex': 'TESTH', 'update_name': False}, 2570: {'hex_no_0': '0B0B', 'update_name': True}}
+#    basename = 'Test.esp'.lower()
+#    form_id_map = {1: {'hex_no_0': '0A0A', 'hex': 'TESTH', 'update_name': True}, 2570: {'hex_no_0': '0B0B', 'update_name': True}}
 #    new_file = os.path.normpath(r"")
-#    patchers.json_skyrim_utility_mod_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
+#    patchers.ini_plugin_sep_formid_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
