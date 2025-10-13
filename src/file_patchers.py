@@ -1537,6 +1537,26 @@ class patchers():
             json.dump(json_data, f, ensure_ascii=False, indent=2)
             f.close()
 
+    def json_fire_hurts_re_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = patchers.use_json5(string)
+            json_dict = patchers.extract_values_and_keys(data)
+
+            for path, value in json_dict:
+                if isinstance(path[0], str) and path[0].lower() == basename and isinstance(path[-1], str) and path[-1] == 'id' and isinstance(value, int):
+                    to_id_data = form_id_map.get(value)
+                    if to_id_data is not None:
+                        data = patchers.change_json_element(data, path, to_id_data["int"])
+            f.seek(0)
+            f.truncate(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
+            f.close()
+
     def use_json5(json_string: str):
         return json5.loads(json_string)
 
