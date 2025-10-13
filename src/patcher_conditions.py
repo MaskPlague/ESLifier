@@ -8,7 +8,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
     if new_file_lower.endswith('.ini'):
         if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini', '_enbl.ini',     # PO3's SPID, KID, BOS, ENBL
                                     '_desc.ini', '_llos.ini', '_ipm.ini', '_mus.ini')):     # Description Framework, LLOS, IPM, MTD
-            patchers.ini_formid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+            patchers.ini_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('_flm.ini'):                                           # Form List Manipulator
             patchers.ini_form_list_manipulator_patcher(basename, new_file_lower, form_id_map, encoding_method=encoding)
         elif 'seasons\\' in new_file_lower:                                                 # Po3's Seasons of Skyrim
@@ -28,19 +28,19 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         elif '\\autobody\\' in new_file_lower:                                              # AutoBody
             patchers.ini_auto_body_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\vsu\\' in new_file_lower:                                                     # VSU
-            patchers.ini_formid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+            patchers.ini_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'completionistdata\\' in new_file_lower:                                       # Completionist
             patchers.ini_completionist_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'kreate\\presets' in new_file_lower:                                           # KreatE
             patchers.ini_kreate_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith(('thenewgentleman.ini', 'thenewgentleman5.ini', '_tng.ini')): # The New Gentleman
-            patchers.ini_formid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+            patchers.ini_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('rememberlockpickangle.ini'):                          # Remember Lockpicking Angle - Updated
             patchers.ini_remember_lockpick_angle_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'plugins\\experience\\' in new_file_lower:                                     # Experience
             patchers.ini_experience_knotwork_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\lightplacer\\' in new_file_lower:                                           # Light Placer
-            patchers.ini_formid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+            patchers.ini_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'plugins\\knotwork\\' in new_file_lower:                                       # Knotwork
             patchers.ini_experience_knotwork_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('\\simpleedgeremoverng.ini'):                          # Simple Edge Glow Remover NG
@@ -170,7 +170,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         if '\\dbd\\configurations\\' in new_file_lower:                                     # Dynamic Body Distribution
             patchers.dbd_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\plugins\\alchemyoftime\\' in new_file_lower:                                # Alchemy Of Time
-            patchers.ini_formid_tilde_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+            patchers.ini_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     elif new_file_lower.endswith('_srd.yaml'):                                              # Sound record distributor YAML
         patchers.sound_record_distributor_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     elif 'facegeom' in new_file_lower and new_file_lower.endswith('.nif'):                  # FaceGeom mesh patching

@@ -207,17 +207,17 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
-    def ini_formid_tilde_plugin_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+    def ini_formid_sep_plugin_patcher(basename: str, new_file: str, form_id_map: dict, sep: str = '~', encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             print_replace = True
             for i, line in enumerate(lines):
-                if basename in line.lower() and '~' in line and not line.startswith(';'):
-                    count = line.lower().count('~')
+                if basename in line.lower() and sep in line and not line.startswith(';'):
+                    count = line.lower().count(sep)
                     start = 0
                     for _ in range(count):
                         line = lines[i]
-                        middle_index = line.index('~', start)
+                        middle_index = line.index(sep, start)
                         start_index = patchers.find_prev_non_alphanumeric(line, middle_index-2, tokens=(" "))
                         end_index = line.index('.es', middle_index) + 4
                         plugin = line.lower()[middle_index+1:end_index].strip()
@@ -242,7 +242,7 @@ class patchers():
                                     if print_replace:
                                         print(f'~Plugin Name Replaced: {basename} | {new_file}')
                                         print_replace = False
-                                    lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + "~ESLifier_Cell_Master.esm" + line[end_index:]
+                                    lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + sep +"ESLifier_Cell_Master.esm" + line[end_index:]
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
