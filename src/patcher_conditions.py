@@ -14,9 +14,9 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         elif 'seasons\\' in new_file_lower:                                                 # Po3's Seasons of Skyrim
             patchers.ini_seasons_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'payloadinterpreter\\' in new_file_lower:                                      # Payload Interpreter
-            patchers.ini_payload_interpreter_dtrys_key_utils_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+            patchers.ini_payload_interpreter_and_dtrys_key_utils_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'dtrykeyutil\\' in new_file_lower:                                             # DtryKeyUtil
-            patchers.ini_payload_interpreter_dtrys_key_utils_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+            patchers.ini_payload_interpreter_and_dtrys_key_utils_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'muimpactframework\\' in new_file_lower or 'muskeletoneditor\\' in new_file_lower: # MU
             patchers.ini_mu_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\poisebreaker_' in new_file_lower:                                           # Poise Breaker
@@ -38,11 +38,11 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         elif new_file_lower.endswith('rememberlockpickangle.ini'):                          # Remember Lockpicking Angle - Updated
             patchers.ini_remember_lockpick_angle_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'plugins\\experience\\' in new_file_lower:                                     # Experience
-            patchers.ini_experience_knotwork_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+            patchers.ini_experience_and_knotwork_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\lightplacer\\' in new_file_lower:                                           # Light Placer
             patchers.ini_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'plugins\\knotwork\\' in new_file_lower:                                       # Knotwork
-            patchers.ini_experience_knotwork_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+            patchers.ini_experience_and_knotwork_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('\\simpleedgeremoverng.ini'):                          # Simple Edge Glow Remover NG
             patchers.ini_eq_plugin_sep_formid_patcher(basename, new_file, form_id_map, sep='|', encoding_method=encoding)
         elif new_file_lower.endswith('_nup_dist.ini'):                                      # NPCs Use Potions
@@ -155,9 +155,9 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         elif '\\precision\\' in new_file_lower:                                             # Precision
             patchers.toml_precision_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\loki_poise\\' in new_file_lower:                                            # Loki Poise
-            patchers.toml_loki_tdm_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+            patchers.toml_loki_and_tdm_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\truedirectionalmovement\\' in new_file_lower:                               # TDM
-            patchers.toml_loki_tdm_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+            patchers.toml_loki_and_tdm_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('_avg.toml'):                                          # Actor Value Generator
             patchers.toml_actor_value_generator_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif os.path.basename(new_file_lower).startswith('yastm_'):                         # YASTM - Yet Another Soul Trap Manager

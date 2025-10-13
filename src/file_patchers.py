@@ -172,7 +172,7 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
-    def ini_payload_interpreter_dtrys_key_utils_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+    def ini_payload_interpreter_and_dtrys_key_utils_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             print_replace = True
@@ -498,7 +498,7 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
-    def ini_experience_knotwork_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+    def ini_experience_and_knotwork_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             patch_following = False
@@ -832,7 +832,7 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
-    def toml_loki_tdm_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+    def toml_loki_and_tdm_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             for i, line in enumerate(lines):
