@@ -11,6 +11,11 @@
             "contains": "SKSE/XEMIUtil/",
             "patcher": "json_generic_formid_sep_plugin",
             "separator": ":"
+        },
+        {
+            "extension": "ini",
+            "endswith": "/NPCSpellVariance.ini",
+            "patcher": -1
         }
     ]
 }

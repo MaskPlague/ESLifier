@@ -50,7 +50,12 @@ class scanner():
         if not os.path.exists("ESLifier_Data/ignored_files.json"):
             with open("ESLifier_data/ignored_files.json", "w+", encoding="utf-8") as f:
                 json.dump([], f, ensure_ascii=False, indent=3)
-        scanner.ignored_files = tuple([item.lower() for item in scanner.get_from_file("ESLifier_Data/ignored_files.json", list)])
+        master_ignored_file_data = scanner.get_from_file("ESLifier_Data/master_ignored_files.json", dict)
+        master_ignored_files = [item.lower() for item in master_ignored_file_data.get("ignored_files", [])]
+        user_ignored_files = [item.lower() for item in scanner.get_from_file("ESLifier_Data/ignored_files.json", list)]
+        master_ignored_files.extend(user_ignored_files)
+
+        scanner.ignored_files = tuple(master_ignored_files)
         scanner.file_extensions = tuple([item.lower() for item in ('.ini', '.json', '.jslot', '.toml', '_conditions.txt', '_srd.yaml', '.yml')])
         scanner.exclude_contains = tuple([item.lower() for item in (
             'modex\\user\\kits',
