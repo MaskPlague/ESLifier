@@ -5,10 +5,11 @@ from file_patchers import patchers
 
 class user_and_master_conditions_class():
     def __init__(self):
-        user_conditions = self.get_conditions("ESLifier_Data/user_patch_conditions.json")
         master_conditions = self.get_conditions("ESLifier_Data/master_patch_conditions.json")
-        self.user_and_master_conditions = user_conditions
-        self.user_and_master_conditions.update(master_conditions)
+        user_conditions = self.get_conditions("ESLifier_Data/user_patch_conditions.json")
+        self.user_and_master_conditions = master_conditions
+        for extension, conditions in user_conditions.items():
+            self.user_and_master_conditions[extension].extend(conditions)
 
     def get_conditions(self, filename):
         try:
@@ -20,7 +21,9 @@ class user_and_master_conditions_class():
                 with open(filename, "r", encoding="utf-8") as f:
                     file_data: dict[str] = json.load(f)
                     conditions_data: list[dict[str, str | int]] = file_data.get("conditions", [])
-        except:
+        except Exception as e:
+            print(f"!Error: Issue in conditions file {filename}:")
+            print(e)
             return {}
         
         ini_conditions = []
@@ -39,14 +42,18 @@ class user_and_master_conditions_class():
             "other": other_conditions
         }
 
+
         patcher_methods = {
-            "ini_fid_tilde_plugin": patchers.ini_formid_tilde_plugin_patcher,
-            "ini_eq_plugin_sep_fid": patchers.ini_eq_plugin_sep_formid_patcher,
-            "ini_experience_knotwork": patchers.ini_experience_knotwork_patcher,
-            "ini_payload_interpreter_dtrys_key_utils": patchers.ini_payload_interpreter_dtrys_key_utils_patcher,
+            "ini_formid_sep_plugin": patchers.ini_formid_sep_plugin_patcher,
+            "ini_plugin_sep_formid": patchers.ini_plugin_sep_formid_patcher,
+            "ini_eq_plugin_sep_formid": patchers.ini_eq_plugin_sep_formid_patcher,
+            "ini_experience_and_knotwork": patchers.ini_experience_and_knotwork_patcher,
+            "ini_payload_interpreter_and_dtrys_key_utils": patchers.ini_payload_interpreter_and_dtrys_key_utils_patcher,
             "json_generic_plugin_sep_formid": patchers.json_generic_plugin_sep_formid_patcher,
             "json_generic_formid_sep_plugin": patchers.json_generic_formid_sep_plugin_patcher,
+            "json_storage_util_data": patchers.json_storage_util_data_patcher,
             "json_jcontainer": patchers.json_jcontainer_patcher,
+            "toml_loki_and_tdm": patchers.toml_loki_and_tdm_patcher,
             -1: None, # No patching needed, ignore file
         }
 
@@ -79,25 +86,19 @@ class user_and_master_conditions_class():
                 if patcher_method == None: # if patcher == -1 then it is a file that needs no patching and can be skipped.
                     return True
                 separator_symbol = condition_set.get("separator", "")
+                args = [basename, file, form_id_map]
+                kwargs = {"encoding_method": "utf-8"}
                 if separator_symbol != "":
-                    try:
-                        patcher_method(basename, file, form_id_map, sep=condition_set["separator"], encoding_method="utf-8")
-                    except Exception as e:
-                        exception_type = type(e)
-                        if exception_type == UnicodeDecodeError:
-                            patcher_method(basename, file, form_id_map, encoding_method="ansi")
-                        else:
-                            print(f'!Error: Failed to patch file: {file}')
-                            print(e)    
-                else:
-                    try:
-                        patcher_method(basename, file, form_id_map, encoding_method="utf-8")
-                    except Exception as e:
-                        exception_type = type(e)
-                        if exception_type == UnicodeDecodeError:
-                            patcher_method(basename, file, form_id_map, encoding_method="ansi")
-                        else:
-                            print(f'!Error: Failed to patch file: {file}')
-                            print(e)    
+                    kwargs.update({"sep": separator_symbol})
+                try:
+                    patcher_method(*args, **kwargs)
+                except Exception as e:
+                    exception_type = type(e)
+                    if exception_type == UnicodeDecodeError:
+                        kwargs.update({"encoding_method": "ansi"})
+                        patcher_method(*args, **kwargs)
+                    else:
+                        print(f'!Error: Failed to patch file: {file}')
+                        print(e)    
                 return True
         return False
