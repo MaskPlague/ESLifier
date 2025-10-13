@@ -1,9 +1,10 @@
 {
-	"version": 0,
+	"version": 1,
 	"ignored_files": [
 		"BFCO_FX_CheckPreAttackIsOK.pex",
 		"BFCO_FX_PlayIdleListKeyE.pex",
 		"BFCO_FX_PlayIdleListKeyINT.pex",
-		"BFCO_MCM.pex"
+		"BFCO_MCM.pex",
+		"NPCSpellVariance.ini"
 	]
 }
