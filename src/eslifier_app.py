@@ -90,17 +90,21 @@ class github_connect(QObject):
         except:
             return True, '0'
         
-def conditions_connection_result(success: bool):
-    if not success:
-        QMessageBox.warning(None, 'Patcher Conditions Update Failed', 'Failed to download latest patcher conditions from GitHub.\n'\
+def conditions_connection_result(conditions_success: bool , ignored_success: bool):
+    if not conditions_success:
+        QMessageBox.warning(None, 'Master Patcher Conditions Update Failed', 'Failed to download latest patcher conditions from GitHub.\n'\
                                                                      'Ensure you have an active internet connection.\n'\
                                                                      'Using outdated patcher conditions may cause certain files to not be patched.')
+    elif not ignored_success:
+        QMessageBox.warning(None, 'Master Ignored Files Update Failed', 'Failed to download latest ignored files list from GitHub.\n'\
+                                                                     'Ensure you have an active internet connection.')
 
 class get_latest_patcher_conditions(QObject):
-    finished_signal = pyqtSignal(bool)
+    finished_signal = pyqtSignal(bool, bool)
     def fetch_conditions(self):
-        success = self.download_conditions()
-        self.finished_signal.emit(success)
+        conditions_success = self.download_conditions()
+        ignored_success = self.download_ignored_files()
+        self.finished_signal.emit(conditions_success, ignored_success)
             
     def download_conditions(self) -> bool:
         try:
@@ -127,8 +131,35 @@ class get_latest_patcher_conditions(QObject):
                 json.dump(conditions_data, f, ensure_ascii=False, indent=4)
             print(f"~Updated to master_patcher_conditions.json version {github_conditions_version} from GitHub.")
             return True
-        except Exception as e:
-            print("!Error: Failed to update local master_patcher_conditions.json: " + e)
+        except:
+            return False
+        
+    def download_ignored_files(self) -> bool:
+        try:
+            url = "https://raw.githubusercontent.com/MaskPlague/ESLifier/main/src/master_ignored_files.json"
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            conditions_data: dict[str] = json.loads(response.text)
+            github_conditions_version = conditions_data.get("version", -1)
+            filename = os.path.normpath("ESLifier_Data/master_ignored_files.json")
+            if os.path.exists(filename):
+                try:
+                    with open(filename, 'r', encoding='utf-8') as f:
+                        local_conditions_data: dict[str] = json.load(f)
+                except:
+                    local_conditions_data = {}
+                local_conditions_version = local_conditions_data.get("version", -1)
+            else:
+                os.makedirs(os.path.dirname(filename), exist_ok=True)
+                local_conditions_version = -1
+            if github_conditions_version <= local_conditions_version:
+                print(f"~Local master_ignored_files.json is version {local_conditions_version} which is up to date.")
+                return True
+            with open(filename, "w", encoding="utf-8") as f:
+                json.dump(conditions_data, f, ensure_ascii=False, indent=4)
+            print(f"~Updated to master_ignored_files.json version {github_conditions_version} from GitHub.")
+            return True
+        except:
             return False
 
 class main_window(QMainWindow):
@@ -168,13 +199,14 @@ class main_window(QMainWindow):
             self.github_connection.finished_signal.connect(connection_result)
             self.github_connection.finished_signal.connect(self.github_thread.quit)
             self.github_thread.start()
-        
-        self.conditions_thread = QThread()
-        self.conditions_connection = get_latest_patcher_conditions()
-        self.conditions_connection.moveToThread(self.conditions_thread)
-        self.conditions_thread.started.connect(self.conditions_connection.fetch_conditions)
-        self.conditions_connection.finished_signal.connect(self.conditions_thread.quit)
-        self.conditions_thread.start()
+
+            self.conditions_thread = QThread()
+            self.conditions_connection = get_latest_patcher_conditions()
+            self.conditions_connection.moveToThread(self.conditions_thread)
+            self.conditions_thread.started.connect(self.conditions_connection.fetch_conditions)
+            self.conditions_connection.finished_signal.connect(self.conditions_thread.quit)
+            self.conditions_connection.finished_signal.connect(conditions_connection_result)
+            self.conditions_thread.start()
 
         if COLOR_MODE == 'Light':
             palette = QPalette()
