@@ -132,7 +132,7 @@ class get_latest_patcher_conditions(QObject):
             print(f"~Updated to master_patcher_conditions.json version {github_conditions_version} from GitHub.")
             return True
         except:
-            print("Failed to update master_patcher_conditions.json; no connection?")
+            print("~Failed to update master_patcher_conditions.json; no connection?")
             return False
         
     def download_ignored_files(self) -> bool:
@@ -161,7 +161,7 @@ class get_latest_patcher_conditions(QObject):
             print(f"~Updated to master_ignored_files.json version {github_conditions_version} from GitHub.")
             return True
         except:
-            print("Failed to update master_ignored_files.json; no connection?")
+            print("~Failed to update master_ignored_files.json; no connection?")
             return False
 
 class main_window(QMainWindow):
@@ -210,7 +210,7 @@ class main_window(QMainWindow):
             self.conditions_connection.finished_signal.connect(conditions_connection_result)
             self.conditions_thread.start()
         else:
-            print("GitHub connection is disabled via user's settings.")
+            print("~GitHub connection is disabled via user's settings.")
 
         if COLOR_MODE == 'Light':
             palette = QPalette()
