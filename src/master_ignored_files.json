@@ -1,5 +1,5 @@
 {
-	"version": 1,
+	"version": 0,
 	"ignored_files": [
 		"BFCO_FX_CheckPreAttackIsOK.pex",
 		"BFCO_FX_PlayIdleListKeyE.pex",
