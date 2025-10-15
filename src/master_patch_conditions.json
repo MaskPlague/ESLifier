@@ -1,5 +1,5 @@
 {
-    "version": 1,
+    "version": 0,
     "conditions": [
         {
             "extension": "json",
@@ -11,6 +11,12 @@
             "contains": "SKSE/XEMIUtil/",
             "patcher": "json_generic_formid_sep_plugin",
             "separator": ":"
+        },
+        {
+            "extension": "yaml",
+            "endswith": "_PLD.yaml",
+            "patcher": "ini_plugin_sep_formid",
+            "separator": "|"
         }
     ]
 }
