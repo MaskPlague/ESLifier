@@ -1,5 +1,6 @@
 import subprocess
 import os
+from datetime import datetime
 
 def luhn_checksum(data: bytes) -> int:
     total = 0
@@ -40,3 +41,5 @@ def compile_exe():
 compile_exe()
 print('Calculating Checksum')
 append_luhn_checksum("dist\\ESLifier.exe")
+formatted_datetime = datetime.now().isoformat(timespec='milliseconds')
+print("Last Ran: " + formatted_datetime)
