@@ -259,7 +259,7 @@ class CFIDs():
         files_to_patch = []
         files_to_rename = []
         split_name = os.path.splitext(os.path.basename(master))[0].lower()
-        matchers = ['.pex', '.ini', '_conditions.txt', '.json', '.jslot', '_srd.', '.yml',
+        matchers = ['.pex', '.ini', '_conditions.txt', '.json', '.jslot', '.yaml', '.yml',
                     split_name + '.seq', '.toml', 'netscriptframework\\plugins\\customskill']
         for file in files:
             file_lower = file.lower()

@@ -56,7 +56,7 @@ class scanner():
         master_ignored_files.extend(user_ignored_files)
 
         scanner.ignored_files = tuple(master_ignored_files)
-        scanner.file_extensions = tuple([item.lower() for item in ('.ini', '.json', '.jslot', '.toml', '_conditions.txt', '_srd.yaml', '.yml')])
+        scanner.file_extensions = tuple([item.lower() for item in ('.ini', '.json', '.jslot', '.toml', '_conditions.txt', '.yaml', '.yml')])
         scanner.exclude_contains = tuple([item.lower() for item in (
             'modex\\user\\kits',
             'nemesis_engine',
