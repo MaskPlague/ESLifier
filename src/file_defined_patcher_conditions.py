@@ -29,6 +29,7 @@ class user_and_master_conditions_class():
         ini_conditions = []
         json_conditions = []
         toml_conditions = []
+        yaml_conditions = []
         yml_conditions = []
         txt_conditions = []
         other_conditions = []
@@ -37,6 +38,7 @@ class user_and_master_conditions_class():
             "ini": ini_conditions,
             "json": json_conditions,
             "toml": toml_conditions,
+            "yaml": yaml_conditions,
             "yml": yml_conditions,
             "txt": txt_conditions,
             "other": other_conditions
@@ -71,7 +73,7 @@ class user_and_master_conditions_class():
         return conditions_dict
 
     def check_conditions(self, basename, file, file_lower, form_id_map):
-        conditions_list = self.user_and_master_conditions.get(os.path.splitext(file_lower)[1].removeprefix('.'), [])
+        conditions_list = self.user_and_master_conditions.get(os.path.splitext(file_lower)[1].removeprefix('.'), self.user_and_master_conditions.get("other", []))
         for condition_set in conditions_list:
             contains = condition_set["contains"]
             endswith = condition_set["endswith"]
