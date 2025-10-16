@@ -34,11 +34,11 @@ class CFIDs():
                   create_cell_master_class: create_new_cell_plugin, original_files: dict, winning_files_dict: dict, winning_file_history_dict: dict,
                   compacted_and_patched: dict, master_byte_data:dict, bsa_masters: list, bsa_dict: dict, persistent_ids: bool, free_non_existent: bool,
                   additional_file_patcher_conditions):
-        self.skyrim_folder_path = skyrim_folder_path
-        self.output_folder_path = output_folder_path
-        self.output_folder_name = output_folder_name
-        self.output_folder = os.path.join(output_folder_path, output_folder_name)
-        self.overwrite_path = overwrite_path
+        self.skyrim_folder_path = os.path.normpath(skyrim_folder_path)
+        self.output_folder_path = os.path.normpath(output_folder_path)
+        self.output_folder_name = os.path.normpath(output_folder_name)
+        self.output_folder = os.path.normpath(os.path.join(output_folder_path, output_folder_name))
+        self.overwrite_path = os.path.normpath(overwrite_path)
         self.mo2_mode = mo2_mode
         self.update_header = update_header
         self.create_cell_master_class = create_cell_master_class
@@ -249,7 +249,10 @@ class CFIDs():
             rel_path = os.path.normpath(os.path.relpath(file, self.overwrite_path))
         else:
             if self.mo2_mode:
-                rel_path = os.path.join(*os.path.normpath(os.path.relpath(file, self.skyrim_folder_path)).split(os.sep)[1:])
+                parts = os.path.normpath(os.path.relpath(file, self.skyrim_folder_path)).split(os.sep)
+                if len(parts) != 1:
+                    parts = parts[1:]
+                rel_path = os.path.join(*parts)
             else:
                 rel_path = os.path.normpath(os.path.relpath(file, self.skyrim_folder_path))
         return rel_path
