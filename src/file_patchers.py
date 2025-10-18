@@ -837,8 +837,8 @@ class patchers():
             lines = f.readlines()
             for i, line in enumerate(lines):
                 if '"'+basename+'"' in line.lower() and line.lower().startswith('plugin'):
-                    i = i - 1
-                    line = lines[i]
+                    x = i - 1
+                    line = lines[x]
                     index = line.lower().index('0x')
                     end_index = patchers.find_next_non_alphanumeric(line, index)
                     start_of_line = line[:index]
@@ -846,7 +846,7 @@ class patchers():
                     form_id_int = int(line[index:end_index],16)
                     to_id_data = form_id_map.get(form_id_int)
                     if to_id_data is not None:
-                        lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
+                        lines[x] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
