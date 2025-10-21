@@ -108,7 +108,7 @@ class get_latest_patcher_conditions(QObject):
             
     def download_conditions(self) -> bool:
         try:
-            url = "https://raw.githubusercontent.com/MaskPlague/ESLifier/main/src/master_patch_conditions.json"
+            url = "https://raw.githubusercontent.com/MaskPlague/ESLifier/refs/heads/main/src/master_patch_conditions.json"
             response = requests.get(url, timeout=10)
             response.raise_for_status()
             conditions_data: dict[str] = json.loads(response.text)
@@ -137,7 +137,7 @@ class get_latest_patcher_conditions(QObject):
         
     def download_ignored_files(self) -> bool:
         try:
-            url = "https://raw.githubusercontent.com/MaskPlague/ESLifier/main/src/master_ignored_files.json"
+            url = "https://raw.githubusercontent.com/MaskPlague/ESLifier/refs/heads/main/src/master_ignored_files.json"
             response = requests.get(url, timeout=10)
             response.raise_for_status()
             conditions_data: dict[str] = json.loads(response.text)
