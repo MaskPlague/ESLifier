@@ -1,5 +1,5 @@
 {
-    "version": 0,
+    "version": 1,
     "conditions": [
         {
             "extension": "json",
@@ -17,6 +17,11 @@
             "endswith": "_PLD.yaml",
             "patcher": "ini_plugin_sep_formid",
             "separator": "|"
+        },
+        {
+            "extension": "json",
+            "endswith": "NPC_Token.json",
+            "patcher": "json_generic_key_fid_sep_plugin"
         }
     ]
 }
