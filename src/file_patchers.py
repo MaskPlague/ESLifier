@@ -973,7 +973,7 @@ class patchers():
                                 elif ox:
                                     data = patchers.change_json_element(data, path, '0x' + to_id_data["hex_no_0"] + sep + plugin)
                                 else: # not ox and int_type
-                                    data = patchers.change_json_element(data, path, str(int(to_id_data["hex_no_0"], 16)) + sep + plugin)
+                                    data = patchers.change_json_element(data, path, str(to_id_data["int"]) + sep + plugin)
                             else:
                                 if print_replace:
                                     print(f'~Plugin Name Replaced: {basename} | {new_file}')
@@ -983,11 +983,61 @@ class patchers():
                                 elif ox:
                                     data = patchers.change_json_element(data, path, '0x' + to_id_data["hex_no_0"] + sep + "ESLifier_Cell_Master.esm")
                                 else: # not ox and int_type
-                                    data = patchers.change_json_element(data, path, str(int(to_id_data["hex_no_0"], 16)) + sep +"ESLifier_Cell_Master.esm")
+                                    data = patchers.change_json_element(data, path, str(to_id_data["int"]) + sep + "ESLifier_Cell_Master.esm")
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
+    
+    def json_generic_key_fid_sep_plugin_patcher(basename: str, new_file: str, form_id_map: dict, int_type: bool = False, sep: str = ":", encoding_method: str ='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = patchers.use_json5(string)
+            json_dict = patchers.extract_values_and_keys(data)
+            patched_keys = []
+            for path, value in json_dict:
+                for i, part in enumerate(path):
+                    if isinstance(part, str) and part.lower().endswith(sep + basename) and path[:i+1] not in patched_keys:
+                        index = part.find(sep)
+                        to_id_data = form_id_map.get(int(part[:index])) if int_type else form_id_map.get(int(part[:index],16))
+                        if to_id_data is not None:
+                            new_id = '0x' + to_id_data['hex'] if part.startswith('0x') else str(to_id_data['int']) if int_type else to_id_data['hex']
+                            plugin = sep + 'ESLifier_Cell_Master.esm' if to_id_data['update_name'] else part[index:]
+                            data = patchers.change_json_key(data, part, new_id + plugin)
+                            patched_keys.append(path[:i+1])
+            f.seek(0)
+            f.truncate(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
+            f.close()
+
+    def json_generic_key_plugin_sep_fid_patcher(basename: str, new_file: str, form_id_map: dict, int_type: bool = False, sep: str = ":", encoding_method: str ='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = patchers.use_json5(string)
+            json_dict = patchers.extract_values_and_keys(data)
+            patched_keys = []
+            for path, value in json_dict:
+                for i, part in enumerate(path):
+                    if isinstance(part, str) and part.lower().startswith(basename+sep) and not path[:i+1] in patched_keys:
+                        index = part.find(sep)
+                        to_id_data = form_id_map.get(int(part[index+1:])) if int_type else form_id_map.get(int(part[index+1:],16))
+                        if to_id_data is not None:
+                            new_id = '0x' + to_id_data['hex'] if part[index+1:].startswith('0x') else str(to_id_data['int']) if int_type else to_id_data['hex']
+                            plugin = 'ESLifier_Cell_Master.esm' + sep if to_id_data['update_name'] else part[:index+1]
+                            data = patchers.change_json_key(data, part, plugin + new_id)
+                            patched_keys.append(path[:i+1])
+            f.seek(0)
+            f.truncate(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
+            f.close()      
     
     def json_open_animation_replacer_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
@@ -1719,7 +1769,7 @@ class patchers():
             f.close()
 
 #if __name__ == '__main__':
-#    basename = 'Test.esp'.lower()
-#    form_id_map = {1: {'hex_no_0': '0A0A', 'hex': 'TESTH', 'update_name': True}, 2570: {'hex_no_0': '0B0B', 'update_name': True}}
+#    basename = "Zim's Improved Dremora.esp".lower()
+#    form_id_map = {52285: {'hex_no_0': '0A0A', 'hex': '0A', 'int': '10', 'update_name': False}, 2570: {'hex_no_0': '0B0B', 'update_name': True}}
 #    new_file = os.path.normpath(r"")
-#    patchers.ini_plugin_sep_formid_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
+#    patchers.json_generic_key_plugin_sep_fid_patcher(basename, new_file, form_id_map, int_type=False, encoding_method='utf-8')
