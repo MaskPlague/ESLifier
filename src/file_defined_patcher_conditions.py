@@ -44,7 +44,6 @@ class user_and_master_conditions_class():
             "other": other_conditions
         }
 
-
         patcher_methods = {
             "ini_formid_sep_plugin": patchers.ini_formid_sep_plugin_patcher,
             "ini_plugin_sep_formid": patchers.ini_plugin_sep_formid_patcher,
@@ -68,6 +67,7 @@ class user_and_master_conditions_class():
                     "contains": os.path.normpath(conditions.get("contains", "").lower().strip()),
                     "endswith": os.path.normpath(conditions.get("endswith", "").lower().strip()),
                     "separator": conditions.get("separator", "").lower().strip(),
+                    "int_type": conditions.get("int_type", False),
                     "patcher": patcher_methods[conditions["patcher"]]})
             except Exception as e:
                 print(f"A condtion in {os.path.basename(filename)} is missing required fields or has an invalid patcher method.")
@@ -90,10 +90,13 @@ class user_and_master_conditions_class():
                 if patcher_method == None: # if patcher == -1 then it is a file that needs no patching and can be skipped.
                     return True
                 separator_symbol = condition_set.get("separator", "")
+                int_type = condition_set.get("int_type", False)
                 args = [basename, file, form_id_map]
                 kwargs = {"encoding_method": "utf-8"}
                 if separator_symbol != "":
                     kwargs.update({"sep": separator_symbol})
+                if int_type:
+                    kwargs.update({"int_type": True})
                 try:
                     patcher_method(*args, **kwargs)
                 except Exception as e:
