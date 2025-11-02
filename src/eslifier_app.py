@@ -14,7 +14,7 @@ from settings_page import settings
 from main_page import main
 from log_stream import log_stream
 
-CURRENT_VERSION = '0.13.2'
+CURRENT_VERSION = '0.13.3'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
@@ -118,6 +118,7 @@ class get_latest_patcher_conditions(QObject):
                 try:
                     with open(filename, 'r', encoding='utf-8') as f:
                         local_conditions_data: dict[str] = json.load(f)
+                        f.close()
                 except:
                     local_conditions_data = {}
                 local_conditions_version = local_conditions_data.get("version", -1)
@@ -131,8 +132,9 @@ class get_latest_patcher_conditions(QObject):
                 json.dump(conditions_data, f, ensure_ascii=False, indent=4)
             print(f"~Updated to master_patcher_conditions.json version {github_conditions_version} from GitHub.")
             return True
-        except:
+        except Exception as e:
             print("~Failed to update master_patcher_conditions.json; no connection?")
+            print(e)
             return False
         
     def download_ignored_files(self) -> bool:
@@ -147,6 +149,7 @@ class get_latest_patcher_conditions(QObject):
                 try:
                     with open(filename, 'r', encoding='utf-8') as f:
                         local_conditions_data: dict[str] = json.load(f)
+                        f.close()
                 except:
                     local_conditions_data = {}
                 local_conditions_version = local_conditions_data.get("version", -1)
@@ -160,9 +163,21 @@ class get_latest_patcher_conditions(QObject):
                 json.dump(conditions_data, f, ensure_ascii=False, indent=4)
             print(f"~Updated to master_ignored_files.json version {github_conditions_version} from GitHub.")
             return True
-        except:
+        except Exception as e:
             print("~Failed to update master_ignored_files.json; no connection?")
+            print(e)
             return False
+        
+def curdirIsWritable() -> bool:
+    try:
+        test_file = os.path.join(os.getcwd(), 'eslifierTestFile.txt')
+        with open(test_file, 'w', encoding='utf-8') as f:
+            f.write('Testing if ESLifier is in a non-protected folder')
+            f.close()
+        os.remove(test_file)
+        return True
+    except:
+        return False
 
 class main_window(QMainWindow):
     def __init__(self):
@@ -172,6 +187,9 @@ class main_window(QMainWindow):
                 os.chdir(os.path.dirname(sys.executable))
             except Exception as e:
                 raise RuntimeError(f"ESLifier cannot change working directory: {e}")
+            if not curdirIsWritable():
+                QMessageBox.critical(None, "EXE is in a Protected Folder!", "ESLifier is in a protected folder, please move its exe outside of any C:/User/USERNAME/ folder or program files folder.")
+                return 
             settings_path = os.path.normpath('ESLifier_Data/settings.json')
             if os.path.exists(settings_path):
                 with open(settings_path, 'r', encoding='utf-8') as f:
