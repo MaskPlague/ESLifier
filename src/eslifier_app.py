@@ -187,9 +187,6 @@ class main_window(QMainWindow):
                 os.chdir(os.path.dirname(sys.executable))
             except Exception as e:
                 raise RuntimeError(f"ESLifier cannot change working directory: {e}")
-            if not curdirIsWritable():
-                QMessageBox.critical(None, "EXE is in a Protected Folder!", "ESLifier is in a protected folder, please move its exe outside of any C:/User/USERNAME/ folder or program files folder.")
-                return 
             settings_path = os.path.normpath('ESLifier_Data/settings.json')
             if os.path.exists(settings_path):
                 with open(settings_path, 'r', encoding='utf-8') as f:
@@ -199,6 +196,9 @@ class main_window(QMainWindow):
                 version_tuple = (major, minor, patch)
                 if VERSION_TUPLE > version_tuple:
                     verify_luhn_checksum('ESLifier.exe')
+            elif not curdirIsWritable():
+                QMessageBox.critical(None, "EXE is in a Protected Folder!", "ESLifier is in a protected folder, please move its exe outside of any C:/User/USERNAME/ folder or program files folder.")
+                return 
             else:
                 verify_luhn_checksum('ESLifier.exe')
         
