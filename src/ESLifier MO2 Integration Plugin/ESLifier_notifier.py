@@ -97,7 +97,8 @@ class check_files():
             self.hash_mismatches.append("Missing: " + file)
     
     def detect_conflict_change(self, old_winner, file, mod_list: list):
-        origins: list = self.eslifier._organizer.getFileOrigins(file)
+        origins_unformated: list = self.eslifier._organizer.getFileOrigins(file)
+        origins = [origin if origin != 'Overwrite' else 'overwrite_eslifier_scan' for origin in origins_unformated]
         if len(origins) == 1:
             if old_winner != origins[0]:
                 self.conflict_changes.append(file)
