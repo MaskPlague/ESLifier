@@ -386,8 +386,8 @@ class PatchNewScannerWorker(QObject):
                 os.remove(file)
                 deleted_count += 1
             cased_rel_path = self.get_rel_path(file, self.skyrim_folder_path)
-            if cased_rel_path in winning_file_history_dict:
-                winning_file_history_dict.pop(cased_rel_path)
+            if cased_rel_path.lower() in winning_file_history_dict:
+                winning_file_history_dict.pop(cased_rel_path.lower())
             if cased_rel_path.lower() in original_files:
                 original_files.pop(cased_rel_path.lower())
         with open("ESLifier_Data/winning_file_history_dict.json", 'w', encoding='utf-8') as f:
