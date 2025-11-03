@@ -378,6 +378,8 @@ class PatchNewScannerWorker(QObject):
     def delete_files(self, files_to_remove: list[str], winning_file_history_dict: dict[str, list[str]], only_remove: bool, compacted_and_patched: dict):
         with open('ESLifier_Data/compacted_and_patched.json', 'w', encoding='utf-8') as f:
             json.dump(compacted_and_patched, f, ensure_ascii=False, indent=4)
+        with open("ESLifier_Data/original_files.json", 'r', encoding='utf-8') as f:
+            original_files: dict[str, list[str]] = json.load(f)
         deleted_count = 0
         for file in files_to_remove:
             if os.path.exists(file):
@@ -386,8 +388,12 @@ class PatchNewScannerWorker(QObject):
             cased_rel_path = self.get_rel_path(file, self.skyrim_folder_path)
             if cased_rel_path in winning_file_history_dict:
                 winning_file_history_dict.pop(cased_rel_path)
+            if cased_rel_path.lower() in original_files:
+                original_files.pop(cased_rel_path.lower())
         with open("ESLifier_Data/winning_file_history_dict.json", 'w', encoding='utf-8') as f:
             json.dump(winning_file_history_dict, f, ensure_ascii=False, indent=4)
+        with open("ESLifier_Data/original_files.json", 'w', encoding='utf-8') as f:
+            json.dump(original_files, f, ensure_ascii=False, indent=4)
         print('CLEAR ALT')
         self.main_parent.redoing_output = True
         self.main_parent.patch_new_running = True
