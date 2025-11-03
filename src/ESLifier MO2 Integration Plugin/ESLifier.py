@@ -39,7 +39,7 @@ class ESLifier(mobase.IPluginTool):
         return self.tr("ESLifier's MO2 Plugin Integration")
     
     def version(self) -> mobase.VersionInfo:
-        return mobase.VersionInfo(1, 4, 4, mobase.ReleaseType.FINAL)
+        return mobase.VersionInfo(1, 5, 1, mobase.ReleaseType.FINAL)
     
     def requirements(self):
         return[]
@@ -84,6 +84,7 @@ class ESLifier(mobase.IPluginTool):
         self.needs_compacting_flag_dict = {}
         self.hash_mismatches = []
         self.conflict_changes = []
+        self.lost_to_overwrite = []
         self.master_not_enabled = False
         self.throbber_iterator = 0
 
@@ -170,7 +171,7 @@ class ESLifier(mobase.IPluginTool):
             self.grey_out_icon()
         return
 
-    def update_icon(self, any_eslable_or_issue, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches, conflict_changes, master_enabled, early_exit):
+    def update_icon(self, any_eslable_or_issue, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches, conflict_changes, lost_to_overwrite, master_enabled, early_exit):
         if not early_exit:
             self.throbber_timer.stop()
         else:
@@ -181,6 +182,7 @@ class ESLifier(mobase.IPluginTool):
             self.needs_flag_dict = needs_flag_dict
             self.needs_compacting_flag_dict = needs_compacting_flag_dict
             self.hash_mismatches = hash_mismatches
+            self.lost_to_overwrite = lost_to_overwrite
             self.conflict_changes = conflict_changes
             self.master_not_enabled = master_enabled
             self.notification_button.show()
@@ -385,11 +387,11 @@ class ESLifier(mobase.IPluginTool):
         return
     
     def display_notifications(self):
-        self.notifcation_display.create(self.hash_mismatches, self.conflict_changes, self.needs_flag_dict, self.needs_compacting_flag_dict, self.master_not_enabled)
+        self.notifcation_display.create(self.hash_mismatches, self.conflict_changes, self.lost_to_overwrite, self.needs_flag_dict, self.needs_compacting_flag_dict, self.master_not_enabled)
 
 
 class CheckWorker(QObject):
-    finished_signal = pyqtSignal(bool, dict, dict, list, list, bool, bool)
+    finished_signal = pyqtSignal(bool, dict, dict, list, list, list, bool, bool)
     def __init__(self, eslifier: ESLifier, file_checker: check_files, scan_esms, eslifier_folder, new_header, 
                  compare_hashes, detect_conflict_changes, only_plugins, ignore_list, filter):
         super().__init__()
@@ -409,15 +411,15 @@ class CheckWorker(QObject):
         mods_path = os.path.normpath(self.eslifier._organizer.modsPath())
         master_not_enabled = True if self.eslifier._organizer.pluginList().state("ESLifier_Cell_Master.esm") == 1 else False
         plugin_files_list = [plugin for plugin in self.eslifier._organizer.findFiles('', self.filter) if os.path.basename(plugin) not in self.ignore_list and os.path.normpath(plugin).startswith(mods_path)]
-        flag, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches, conflict_changes = self.file_checker.scan_files(
+        flag, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches, conflict_changes, lost_to_overwrite = self.file_checker.scan_files(
                                     self.scan_esms, self.eslifier_folder, self.new_header, self.compare_hashes, 
                                     self.detect_conflict_changes, self.only_plugins, plugin_files_list, self.eslifier)
         if master_not_enabled:
             flag = True
         if self.running:
-            self.finished_signal.emit(flag, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches, conflict_changes, master_not_enabled, False)
+            self.finished_signal.emit(flag, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches, conflict_changes, lost_to_overwrite, master_not_enabled, False)
         else:
-            self.finished_signal.emit(False, {}, {}, [], [], False, True)
+            self.finished_signal.emit(False, {}, {}, [], [], [], False, True)
 
     def stop(self):
         self.file_checker.stop()

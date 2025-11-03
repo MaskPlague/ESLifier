@@ -9,6 +9,7 @@ class check_files():
     def scan_files(self, scan_esms, eslifier_folder, new_header, compare_hashes, detect_conflict_changes, only_plugins, plugin_files_list, eslifier) -> tuple[bool, dict, dict, list, list]:
         self.flag_dict = {}
         self.hash_mismatches = []
+        self.lost_to_overwrite = []
         self._problems = [0]
         self._finished = False
         self.any_esl = False
@@ -52,7 +53,8 @@ class check_files():
         self.conflict_changes = []
         if detect_conflict_changes:
             winning_file_history_dict_path = os.path.join(eslifier_folder, "ESLifier_Data/winning_file_history_dict.json")
-            mod_list = self.eslifier._organizer.modList().allModsByProfilePriority()
+            mod_list: list[str] = self.eslifier._organizer.modList().allModsByProfilePriority()
+            mod_list.append('overwrite_eslifier_scan')
             if os.path.exists(winning_file_history_dict_path):
                 with self.semaphore:
                     with open(winning_file_history_dict_path, 'r', encoding='utf-8') as f:
@@ -78,9 +80,9 @@ class check_files():
         needs_compacting_flag_dict = {p: f for p, f in self.flag_dict.items() if 'need_compacting' in f}
         if self.running:
             return ((self.any_esl or len(self.hash_mismatches) > 0 or len(self.conflict_changes) > 0), 
-                needs_flag_dict, needs_compacting_flag_dict, self.hash_mismatches, self.conflict_changes)
+                needs_flag_dict, needs_compacting_flag_dict, self.hash_mismatches, self.conflict_changes, self.lost_to_overwrite)
         else:
-            return False, {}, {}, [], []
+            return False, {}, {}, [], [], []
 
     def stop(self):
         self.running = False
@@ -105,12 +107,13 @@ class check_files():
         elif len(origins) > 0:
             sorted_origins = sorted(origins, key=lambda x: mod_list.index(x))
             if 'eslifier' in sorted_origins[-1].lower():
-                if sorted_origins[-2] != old_winner:
+                if sorted_origins[-1] == 'overwrite_eslifier_scan':
+                    self.lost_to_overwrite.append(file)
+                elif sorted_origins[-2] != old_winner:
                     self.conflict_changes.append(file)
             else:
                 if sorted_origins[-1] != old_winner:
                     self.conflict_changes.append(file)
-
 
     def plugin_scanner(self, plugins, new_header, scan_esms):
         flag_dict = {}
