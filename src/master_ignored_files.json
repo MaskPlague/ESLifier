@@ -1,11 +1,12 @@
 {
-	"version": 1,
+	"version": 2,
 	"ignored_files": [
 		"BFCO_FX_CheckPreAttackIsOK.pex",
 		"BFCO_FX_PlayIdleListKeyE.pex",
 		"BFCO_FX_PlayIdleListKeyINT.pex",
 		"BFCO_MCM.pex",
 		"NPCSpellVariance.ini",
-		"SmartTalk_QuestCache.json"
+		"SmartTalk_QuestCache.json",
+		"MLO.ini"
 	]
 }
