@@ -1834,5 +1834,5 @@ class patchers():
 #if __name__ == '__main__':
 #    basename = "The_Sinister_Seven.esp".lower()
 #    form_id_map = {17225: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'update_name': False}, 2570: {'hex_no_0': 'B0B', 'update_name': True}}
-#    new_file = os.path.normpath(r"C:\Users\s34ke\Downloads\Achievement Injector-126220-1-2-3-1735893881\AchievementsData\TheSinisterSeven.json")
+#    new_file = os.path.normpath(r"")
 #    patchers.json_achievement_injector_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
