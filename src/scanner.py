@@ -74,7 +74,8 @@ class scanner():
             '\\grasscontrol.ini',
             '\\gearspreader.ini',
             '\\merge.json', '\\map.json', '\\fidcache.json', #zMerge
-            '\\parallaxgen_diff.json'
+            '\\parallaxgen_diff.json',
+            '\\console_cheatsheet.json'
             )])
         total_ram = psutil.virtual_memory().available
         usable_ram = total_ram * 0.90
@@ -646,7 +647,7 @@ class scanner():
             if ((file_lower.endswith(scanner.file_extensions) or (file_lower.endswith('config.txt') and 'plugins\\customskill' in file_lower))
                 and not (any(exclusion in file_lower for exclusion in scanner.exclude_contains) or file_lower.endswith(scanner.exclude_endswith))
                 ):
-                if 'kreate\\presets\\' in file_lower:
+                if 'kreate\\presets\\' in file_lower and file_lower.endswith('.ini'):
                     scanner.kreate_files.append(file)
                     continue
                 thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
