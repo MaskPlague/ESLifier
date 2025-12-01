@@ -49,6 +49,8 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
             patchers.ini_npcs_use_potions_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'plugins\\truehud\\' in new_file_lower:                                        # TrueHud
             patchers.ini_eq_plugin_sep_formid_patcher(basename, new_file, form_id_map, sep=':', encoding_method=encoding)
+        elif '\\rules\\dyndolod' in new_file_lower:                                         # DynDOLOD Mesh Mask / Reference Rules
+            patchers.ini_dyndolod_rules_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         else:                                    
             patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
             if not patched:                                           
@@ -141,8 +143,12 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
             patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('strangerunescompatibility.json'):                     # For whatever this json is
             patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-        elif 'plugins\\firehurtsre\\' in new_file_lower:
+        elif 'plugins\\firehurtsre\\' in new_file_lower:                                    # Fire Hurts RE/NG
             patchers.json_fire_hurts_re_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+        elif 'undaunted\\groups\\' in new_file_lower:                                         # Undaunted
+            patchers.json_undaunted_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+        elif '\\achievementsdata\\' in new_file_lower:                                      # Achievement Injector
+            patchers.json_achievement_injector_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         else:
             patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
             if not patched:                                           
