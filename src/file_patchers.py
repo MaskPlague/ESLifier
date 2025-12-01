@@ -263,11 +263,8 @@ class patchers():
                         end_index = patchers.find_next_non_alphanumeric(line, middle_index+1, tokens=(" "))
                         plugin = line.lower()[start_index+1:middle_index].strip()
                         start_of_line = line[:start_index+1]
-                        print(start_of_line)
                         end_of_line = line[end_index:]
-                        print(end_of_line)
                         form_id = line[middle_index+1:end_index].strip()
-                        print(form_id)
                         start = middle_index+1
                         if not form_id.lower().startswith('0x'):
                             continue
@@ -727,6 +724,24 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
+    # No Cell Form IDs possible (I think?)
+    def ini_dyndolod_rules_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if basename+';' in line.lower() and not line.startswith(';'):
+                    index = line.index(';') + 1
+                    start = line[:index]
+                    form_id_int = int(line[index+2:index+8], 16)
+                    end = line[index+8:]
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        lines[i] = start + '00' + to_id_data['hex'] + end
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+
     # No Cell Form IDs possible
     def toml_dynamic_animation_casting_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
@@ -1180,6 +1195,54 @@ class patchers():
                                 changed = True
                     if changed:
                         data = patchers.change_json_element(data, path, value)
+            f.seek(0)
+            f.truncate(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
+            f.close()
+
+    # No CELL Form IDs possible
+    def json_undaunted_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = patchers.use_json5(string)
+            skip_first = False
+            for bounty in data:
+                for line in bounty:
+                    if not skip_first:
+                        skip_first = True
+                        continue
+                    if line[1].lower() == basename:
+                        form_id_int = line[2]
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            line[2] = to_id_data["int"]
+            f.seek(0)
+            f.truncate(0)
+            json.dump(data, f, ensure_ascii=False, indent=4)
+            f.close()
+
+    def json_achievement_injector_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data = patchers.use_json5(string)
+            json_dict = patchers.extract_values_and_keys(data)
+            for path, value in json_dict:
+                if isinstance(path[-1], str) and (path[-1] == "formID" or path[-1] == "cellID") and isinstance(value, str):
+                    form_id_int = int(value, 16)
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        if not to_id_data["update_name"]:
+                            data = patchers.change_json_element(data, path, to_id_data["hex"])
+                        else:
+                            print(f'~Ineligible: {basename} -> ESLifier_Cell_Master.esm | 0x{value} -> 0x{to_id_data["hex"]} | {new_file}')
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
@@ -1769,7 +1832,7 @@ class patchers():
             f.close()
 
 #if __name__ == '__main__':
-#    basename = "Zim's Improved Dremora.esp".lower()
-#    form_id_map = {52285: {'hex_no_0': '0A0A', 'hex': '0A', 'int': '10', 'update_name': False}, 2570: {'hex_no_0': '0B0B', 'update_name': True}}
-#    new_file = os.path.normpath(r"")
-#    patchers.json_generic_key_plugin_sep_fid_patcher(basename, new_file, form_id_map, int_type=False, encoding_method='utf-8')
+#    basename = "The_Sinister_Seven.esp".lower()
+#    form_id_map = {17225: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'update_name': False}, 2570: {'hex_no_0': 'B0B', 'update_name': True}}
+#    new_file = os.path.normpath(r"C:\Users\s34ke\Downloads\Achievement Injector-126220-1-2-3-1735893881\AchievementsData\TheSinisterSeven.json")
+#    patchers.json_achievement_injector_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
