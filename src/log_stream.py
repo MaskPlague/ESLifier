@@ -199,10 +199,11 @@ class log_stream(QMainWindow):
                 background-color: lightcoral;
             }""")
         eligibility_warning.setWindowTitle("Cell Master Patching Warning")
-        text = ("ESLifier has come across one or more pex files that are currently unpatchable.\n"+
+        text = ("ESLifier has either come across one or more pex/ini files that are currently unpatchable.\n"+
                 "This is because there is currently no programmed method to replace a necessary\n"+
-                "plugin name with ESLifier_Cell_Master.esm. The errors show the plugin name\n"+
-                "that needs replacing and the pex file that isn't patched yet.\n\n")
+                "plugin name with ESLifier_Cell_Master.esm in pex files and, certain ini files assume that\n"+
+                "every form ID in the ini is from the same plugin. The errors show the plugin name\n"+
+                "that needs replacing, the form ID change, and the pex/ini file that isn't patched yet.\n\n")
         count = 0
         for line in self.ineligible:
             count += 1
