@@ -20,6 +20,7 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
     Completionist
     Description Framework
     DtryKeyUtil
+    DynDOLOD Rules
     ENB Lights for Effect Shaders
     Experience
     Form List Manipulator
@@ -43,9 +44,11 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
   <details>
     <summary>.JSON Files</summary>
 
+    Achievement Injector
     Alternate Perspective
     CaptiveFollowers
     CoMAP
+    Container Distribution Framework
     Creature Framework
     Custom Skills Framework (old format CustomSkill.<name>.config.txt supported)
     Dress Up Lover's NPC Outfit Changer
@@ -76,6 +79,8 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
     Sound Record Distributor
     Spell Organizer
     Spell Research
+    Undaunted
+    XEMI Utility
   </details>
 
   <details>
