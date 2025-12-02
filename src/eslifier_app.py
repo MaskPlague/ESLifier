@@ -14,7 +14,7 @@ from settings_page import settings
 from main_page import main
 from log_stream import log_stream
 
-CURRENT_VERSION = '0.13.4'
+CURRENT_VERSION = '0.13.5'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
@@ -366,7 +366,7 @@ class main_window(QMainWindow):
             error_message += "Invalid MO2 modlist.txt, the file does not exist.\n"
 
         if len(error_message) > 10:
-            self.tabs.setCurrentIndex(2)
+            self.tabs.setCurrentIndex(self.SETTINGS_TAB)
             message = QMessageBox()
             message.setWindowTitle("Path Validation Error")
             message.setIcon(QMessageBox.Icon.Warning)
@@ -382,9 +382,6 @@ class main_window(QMainWindow):
             message.accepted.connect(close)
             message.show()
         self.tabs.blockSignals(False)
-
-    def settings_selected(self):
-        self.tabs.setCurrentIndex(2)
 
     def help_selected(self):
         help = QMessageBox()
