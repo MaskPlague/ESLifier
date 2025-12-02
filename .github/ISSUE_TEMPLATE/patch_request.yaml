@@ -18,7 +18,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Make sure to double check that the file you're requesting a patch for is not already in the list on Nexus or the GitHub ReadMe.md. If the file is, then instead
+        Make sure to double check that the file you're requesting a patch for is not already in the list on Nexus or the GitHub README.md. If the file is, then instead
         you should make a bug report if the file is not being patched.
           
   - type: checkboxes
