@@ -262,13 +262,13 @@ class settings(QWidget):
         button.setFixedWidth(width)
         return button
     
-    def select_file_path(self, dialog, title, setting_key, line_edit, filter):
+    def select_file_path(self, dialog: QFileDialog, title, setting_key, line_edit: QLineEdit, filter):
         if filter != None:
             path, _ = dialog.getOpenFileName(self, title, self.settings.get(setting_key, ""), filter)
         else:
             path = dialog.getExistingDirectory(self, title, self.settings.get(setting_key, ""))
         if path:
-            line_edit.setText(path)
+            line_edit.setText(os.path.normpath(path))
         self.update_settings()
     
     def skyrim_folder_path_clicked(self):
