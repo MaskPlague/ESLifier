@@ -295,20 +295,20 @@ class main(QWidget):
 
             for mod in checked:
                 mod_lower = mod.lower()
-                if mod_lower not in counted:
+                if mod_lower not in counted and os.path.exists(mod):
                     size += os.path.getsize(mod)
                     counted.add(mod_lower)
                 mod_basename = os.path.basename(mod_lower)
                 if mod_basename in self.dependency_dictionary:
                     for dependent_mod in self.dependency_dictionary[mod_basename]:
                         dep_lower = dependent_mod.lower()
-                        if dep_lower not in counted:
+                        if dep_lower not in counted and os.path.exists(dependent_mod):
                             size += os.path.getsize(dependent_mod)
                             counted.add(dep_lower)
                 if mod_basename in file_masters:
                     for file in file_masters[mod_basename]:
                         file_lower = file.lower()
-                        if file_lower not in counted:
+                        if file_lower not in counted and os.path.exists(file):
                             size += os.path.getsize(file)
                             counted.add(file_lower)
             total, used, free = shutil.disk_usage(self.output_folder_path)
@@ -383,7 +383,7 @@ class main(QWidget):
 
             for mod in checked:
                 mod_lower = mod.lower()
-                if mod_lower not in counted:
+                if mod_lower not in counted and os.path.exists(mod):
                     size += os.path.getsize(mod)
                     counted.add(mod_lower)
                 if not 'new_interior_cell' in self.list_eslify.flag_dict[mod]:
@@ -392,13 +392,13 @@ class main(QWidget):
                 if mod_basename in self.dependency_dictionary:
                     for dependent_mod in self.dependency_dictionary[mod_basename]:
                         dep_lower = dependent_mod.lower()
-                        if dep_lower not in counted:
+                        if dep_lower not in counted and os.path.exists(dependent_mod):
                             size += os.path.getsize(dependent_mod)
                             counted.add(dep_lower)
                 if mod_basename in file_masters:
                     for file in file_masters[mod_basename]:
                         file_lower = file.lower()
-                        if file_lower not in counted:
+                        if file_lower not in counted and os.path.exists(file):
                             size += os.path.getsize(file)
                             counted.add(file_lower)
             total, used, free = shutil.disk_usage(self.output_folder_path)
