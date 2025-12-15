@@ -1,5 +1,5 @@
 {
-    "version": 2,
+    "version": 3,
     "conditions": [
         {
             "extension": "json",
@@ -26,6 +26,11 @@
         {
             "extension": "json",
             "contains": "/Plugins/ContainerDistributionFramework/",
+            "patcher": "json_generic_formid_sep_plugin"
+        },
+        {
+            "extension": "json",
+            "contains": "/Plugins/FarmingDarkness/LetYourHairDown",
             "patcher": "json_generic_formid_sep_plugin"
         }
     ]
