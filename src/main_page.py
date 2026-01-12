@@ -1350,7 +1350,8 @@ class HashWorker(QObject):
             else: 
                 self.new_file_hashes[rel_path] = (old_hash, True) 
                 changed_hashes.append((file, rel_path))
-
+        print('\033[F\033[K-    Processed: 100.0%' + 
+                    '\n-    Files: ' + str(to_hash_len) + '/' + str(to_hash_len), end='\r')
         self.finished.emit({
             "size": size,
             "file_count": file_count,
