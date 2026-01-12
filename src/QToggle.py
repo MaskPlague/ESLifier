@@ -8,7 +8,7 @@ class QtToggle(QCheckBox):
         width = 30,
         bg_color = 'Light Grey',
         circle_color = 'Grey',
-        active_color = 'White'
+        active_color = 'palegreen' #'White'
     ):
         super().__init__()
         
