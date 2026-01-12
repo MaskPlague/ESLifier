@@ -1390,6 +1390,11 @@ class patchers():
                     form_id = value[:index]
                     plugin = value[index+1:]
                     if plugin.lower() == basename:
+                        if len(form_id) > 6:
+                            if form_id[:2] == 'FE':
+                                form_id = form_id [-3:]
+                            else:
+                                form_id = form_id[-6:]
                         form_id_int = int(form_id,16)
                         to_id_data = form_id_map.get(form_id_int)
                         if to_id_data is not None:
