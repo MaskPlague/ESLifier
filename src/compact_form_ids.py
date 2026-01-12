@@ -95,6 +95,39 @@ class CFIDs():
             data = {}
         return data
 
+    def hash_output_files(self, files_to_not_hash: list[str], before_patching:bool = False) -> dict:
+        to_hash = {}
+        new_file_hashes: dict = self.get_from_file("ESLifier_Data/new_file_hashes.json")
+        local_compacted_and_patched = self.get_from_file("ESLifier_Data/compacted_and_patched.json")
+        lowered_output = self.output_folder.lower()
+        for _1, values in local_compacted_and_patched.items():
+            for rel_path in values:
+                lower_rel_path = rel_path.lower()
+                if lower_rel_path not in to_hash and not lower_rel_path.endswith(('.pex', '.esp', '.esl', '.esm')):
+                    full_path = os.path.normpath(os.path.join(lowered_output, lower_rel_path))
+                    to_hash[lower_rel_path] = full_path
+
+        for lower_rel_path, file in to_hash.items():
+            if file not in files_to_not_hash:
+                if os.path.exists(file):
+                    try:
+                        with open(file, 'rb') as f:
+                            sha256_hash = hashlib.sha256(f.read()).hexdigest()
+                            f.close()
+                        old_hash, changed = new_file_hashes.get(lower_rel_path, (None, False))
+                        if not before_patching:
+                            new_file_hashes[lower_rel_path] = (sha256_hash, changed)
+                        elif before_patching:
+                            if old_hash != None and old_hash != sha256_hash:
+                                new_file_hashes[lower_rel_path] = (sha256_hash, True)
+                            else:
+                                new_file_hashes[lower_rel_path] = (sha256_hash, changed)
+                    except Exception as e:
+                        print(f"!Error: Failed to hash file: {file}")
+                        print(e)
+
+        self.dump_dictionary("ESLifier_Data/new_file_hashes.json", new_file_hashes)
+
     def compact_and_patch(self, file_to_compact: str, dependents: list, all_dependents_have_skyrim_esm_as_master: bool,
                            add_cell_to_master: bool, files_to_patch: dict):
         self.do_generate_cell_master = add_cell_to_master
@@ -177,7 +210,7 @@ class CFIDs():
                     
     def set_flag(self, file: str):
         print("-  Changing ESL flag in: " + os.path.basename(file))
-        new_file, _ = self.copy_file_to_output(file)
+        new_file, _1 = self.copy_file_to_output(file)
         try:
             with open(new_file, 'rb+') as f:
                 f.seek(9)
