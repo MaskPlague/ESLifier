@@ -3,9 +3,11 @@ import json
 import shutil
 import threading
 import timeit
+import hashlib
 
-from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal
-from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QSplitter, QFrame, QTextEdit
+from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal, QTimer, QRunnable, QThreadPool
+from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, 
+                             QSplitter, QFrame, QTextEdit, QListWidget, QListWidgetItem, QDialog, QSpacerItem, QSizePolicy)
 from PyQt6.QtGui import QIcon
 
 from list_eslify import list_eslable
@@ -36,6 +38,7 @@ class main(QWidget):
         self.patch_new_running = False
         self.patch_new_only_remove = False
         self.generate_cell_master = False
+        self.hash_output = True
         self.log_stream: l_s = log_stream
         self.eslifier = eslifier
         self.COLOR_MODE = COLOR_MODE
@@ -44,6 +47,8 @@ class main(QWidget):
         self.flag_worker = None
         self.compact_worker = None
         self.patch_and_flag_worker = None
+        self.scanner_worker = None
+        self.files_to_not_hash = []
         self.create()
 
     def create(self):
@@ -88,7 +93,10 @@ class main(QWidget):
             " Scan and Rebuild \n ESLifier's Output ",
             "This will delete the existing output folder's contents\n"\
             "then scan and re-patch all curently ESLified mods\n"\
-            "that fit the current filters in the settings.",
+            "that fit the current filters in the settings.\n"\
+            "It will also confirm if any files that are in the output\n"\
+            "have been changed since ESLifier patched them and give\n"\
+            "an option to keep or remove them.",
             self.rebuild_output
         )
 
@@ -100,15 +108,20 @@ class main(QWidget):
             "If in MO2 mode, it will also detect file\n"\
             "conflict changes but requires the output mod\n"\
             "in MO2 to match the exact same name as the\n"\
-            "output folder in the settings. This currently\n"\
-            "cannot detect changes in BSA.",
+            "output folder in the settings.\n"\
+            "This cannot detect changes in BSA and will NOT\n"\
+            "check if the files in the output have been\n"\
+            "changed since ESLifier patched them.",
             self.scan_and_patch_new
         )
 
         self.reset_output_button = self.create_button(
             " Reset ESLifier's Output ",
             "This will delete the existing output folder's contents and\n"\
-            "the data used to patch new files.",
+            "the data used to patch new files.\n"\
+            "It will also confirm if any files that are in the output\n"\
+            "have been changed since ESLifier patched them and give\n"\
+            "an option to keep or remove them.",
             self.reset_output
         )
 
@@ -203,7 +216,9 @@ class main(QWidget):
         self.v_layout0.addWidget(line)
         self.v_layout0.addSpacing(25)
         self.v_layout0.addWidget(self.rebuild_output_button)
-        self.v_layout0.addSpacing(10)
+        #self.v_layout0.addSpacing(10)
+        self.scan_and_patch_new_button_spacer = QSpacerItem(10, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+        self.v_layout0.addItem(self.scan_and_patch_new_button_spacer)
         self.v_layout0.addWidget(self.scan_and_patch_new_button)
         self.v_layout0.addWidget(line1)
         self.v_layout0.addSpacing(25)
@@ -344,7 +359,7 @@ class main(QWidget):
                 self.list_compact.item(row,self.list_compact.MOD_COL).setFlags(self.list_compact.item(row,self.list_compact.MOD_COL).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
         self.log_stream.show()
         self.compact_thread = QThread()
-        self.compact_worker = CompactorWorker(checked, self.dependency_dictionary, self.settings)
+        self.compact_worker = CompactorWorker(checked, self.dependency_dictionary, self.files_to_not_hash, self.settings)
         self.compact_worker.moveToThread(self.compact_thread)
         self.compact_thread.started.connect(self.compact_worker.run)
         self.compact_worker.finished_signal.connect(
@@ -465,7 +480,8 @@ class main(QWidget):
             full_list = files.copy()
             full_list.extend(patch_and_flag)
             self.flag_and_patch_thread = QThread()
-            self.patch_and_flag_worker = CompactorWorker(patch_and_flag, self.dependency_dictionary, self.settings)
+            self.patch_and_flag_worker = CompactorWorker(patch_and_flag, self.dependency_dictionary, 
+                                                         self.files_to_not_hash, self.settings)
             self.patch_and_flag_worker.moveToThread(self.flag_and_patch_thread)
             self.flag_and_patch_thread.started.connect(self.patch_and_flag_worker.run)
             self.patch_and_flag_worker.finished_signal.connect(self.flag_and_patch_thread.quit)
@@ -578,8 +594,6 @@ class main(QWidget):
             self.scan_thread.started.connect(self.scanner_worker.scan_run)
             self.scanner_worker.finished_signal.connect(self.completed_scan)
             self.scanner_worker.finished_signal.connect(self.scan_thread.quit)
-            #self.scanner_worker.finished_signal.connect(self.scan_thread.deleteLater)
-            #self.scanner_worker.finished_signal.connect(self.scanner_worker.deleteLater)
             self.scan_thread.start()
         if not self.scanned:
             self.scanned = True
@@ -644,13 +658,39 @@ class main(QWidget):
             data = {}
         return data
     
+    def update_changed_rel_paths_in_new_files_hashes(self, changed_rel_paths_to_switch):
+        try:
+            with open('ESLifier_Data/new_file_hashes.json', 'r+', encoding='utf-8') as f:
+                try:
+                    new_file_hashes:dict = json.load(f)
+                except:
+                    new_file_hashes = {}
+                for rel_path in changed_rel_paths_to_switch:
+                    tup = new_file_hashes.get(rel_path, (None, False))
+                    if tup[0] != None:
+                        new_file_hashes[rel_path] = (tup[0], False)
+                f.seek(0)
+                f.truncate(0)
+                json.dump(new_file_hashes, f, ensure_ascii=False, indent=4)
+                f.close()
+        except Exception as e:
+            print("!Error: Failed to open new_file_hashes.json")
+            print(e)
+    
     def reset_output(self):
-        output_folder = os.path.join(self.output_folder_path, self.output_folder_name)
-        if output_folder.lower() == self.skyrim_folder_path.lower() or output_folder.lower() == self.output_folder_path.lower():
+        self.output_folder_full = os.path.join(self.output_folder_path, self.output_folder_name)
+        if self.output_folder_full.lower() == self.skyrim_folder_path.lower() or self.output_folder_full.lower() == self.output_folder_path.lower():
             self.log_stream.show()
             print('!Error: Issue occured getting the output folder during output reset.')
             return
-        files_to_remove, size, file_count = self.calculate_existing_output(output_folder)
+
+        if self.hash_output:
+            self.calculate_existing_output_threaded('reset_output')
+        else:
+            files_to_remove, size, file_count = self.calculate_existing_output()
+            self.reset_output_next(files_to_remove, size, file_count, [])
+    
+    def reset_output_next(self, files_to_remove, size, file_count, changed_rel_paths_to_switch):
         confirm = self.create_confirmation('lightcoral')
         calculated_size = round(size / 1048576, 2)
         confirm.setText(
@@ -680,23 +720,55 @@ class main(QWidget):
                 os.remove('ESLifier_Data/original_files.json')
             if os.path.exists('ESLifier_Data/master_byte_data.json'):
                 os.remove('ESLifier_Data/master_byte_data.json')
-            self.delete_output(output_folder, files_to_remove)
+            self.delete_output(self.output_folder_full, files_to_remove)
             self.list_compact.flag_dict = {}
             self.list_eslify.flag_dict = {}
             self.list_compact.create()
             self.list_eslify.create()
+            if os.path.exists('ESLifier_Data/new_file_hashes.json') and self.hash_output:
+                self.update_changed_rel_paths_in_new_files_hashes(changed_rel_paths_to_switch)
+                def accepted2():
+                    if os.path.exists('ESLifier_Data/new_file_hashes.json'):
+                        os.remove('ESLifier_Data/new_file_hashes.json')
+                    confirm2.hide()
+                confirm2 = self.create_confirmation('tomato')
+                confirm2.setText("Would you like to remove the ESLifier Output hash info?\n"\
+                                "This is how ESLifier can tell if a file in the output\n"\
+                                "has been changed after ESLifier patched it.\n"\
+                                "This is NOT recommended, especially if you kept any\n"\
+                                "changed files.")
+                yes_button = QPushButton("3 Yes")
+                confirm2.addButton(yes_button, QMessageBox.ButtonRole.YesRole)
+                confirm2.setStandardButtons(QMessageBox.StandardButton.No)
+                confirm2.setDefaultButton(QMessageBox.StandardButton.No)
+                yes_button.setEnabled(False)
+                confirm2.accepted.connect(accepted2)
+                QTimer.singleShot(1000, lambda: yes_button.setText("2 Yes"))
+                QTimer.singleShot(2000, lambda: yes_button.setText("1 Yes"))
+                def enable_and_set_text():
+                    yes_button.setEnabled(True)
+                    yes_button.setText("Yes")
+                QTimer.singleShot(3000, enable_and_set_text)
+                confirm2.show()
             self.calculate_stats()
 
         confirm.accepted.connect(accepted)
         confirm.show()
 
     def rebuild_output(self):
-        output_folder = os.path.join(self.output_folder_path, self.output_folder_name)
-        if output_folder.lower() == self.skyrim_folder_path.lower() or output_folder.lower() == self.output_folder_path.lower():
+        self.output_folder_full = os.path.join(self.output_folder_path, self.output_folder_name)
+        if self.output_folder_full.lower() == self.skyrim_folder_path.lower() or self.output_folder_full.lower() == self.output_folder_path.lower():
             self.log_stream.show()
             print('!Error: Issue occured getting the output folder during output rebuild.')
             return
-        files_to_remove, size, file_count = self.calculate_existing_output(output_folder)
+        if self.hash_output:
+            self.calculate_existing_output_threaded('rebuild_output')
+        else:
+            files_to_remove, size, file_count = self.calculate_existing_output()
+            self.rebuild_output_next(files_to_remove, size, file_count, [])
+        
+    def rebuild_output_next(self, files_to_remove, size, file_count, changed_rel_paths_to_switch):
+
         confirm = self.create_confirmation('skyblue')
         calculated_size = round(size / 1048576, 2)
         confirm.setText(
@@ -709,6 +781,8 @@ class main(QWidget):
             confirm.hide()
             previously_compacted = []
             previously_esl_flagged = []
+            if os.path.exists('ESLifier_Data/new_file_hashes.json'):
+                self.update_changed_rel_paths_in_new_files_hashes(changed_rel_paths_to_switch)
             if os.path.exists('ESLifier_Data/compacted_and_patched.json'):
                 with open('ESLifier_Data/compacted_and_patched.json', 'r', encoding='utf-8') as fcp:
                     compacted_and_patched_dict = json.load(fcp)
@@ -733,7 +807,7 @@ class main(QWidget):
             if len(previously_compacted) == 0 and len(previously_esl_flagged) == 0:
                 QMessageBox.warning(None, "No Existing Output Data", f"There is no existing output data for ESLifier to use.")
                 return
-            self.delete_output(output_folder, files_to_remove, remove_maps=False)
+            self.delete_output(self.output_folder_full, files_to_remove, remove_maps=False)
             self.calculate_stats()
             self.redoing_output = True
             self.scan()
@@ -827,12 +901,31 @@ class main(QWidget):
         confirm.addButton(QMessageBox.StandardButton.Cancel)
         confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
         return confirm
-
-    def calculate_existing_output(self, output_folder):
+    
+    def get_rel_path(self, file: str) -> str:
+        if 'bsa_extracted' in file:
+            if 'bsa_extracted_temp' in file:
+                start = os.path.join(os.getcwd(), 'bsa_extracted_temp/')
+            else:
+                start = os.path.join(os.getcwd(), 'bsa_extracted/')
+            rel_path = os.path.normpath(os.path.relpath(file, start))
+        elif self.mo2_mode and file.lower().startswith(self.overwrite_path.lower()):
+            rel_path = os.path.normpath(os.path.relpath(file, self.overwrite_path))
+        else:
+            if self.mo2_mode:
+                parts = os.path.normpath(os.path.relpath(file, self.skyrim_folder_path)).split(os.sep)
+                if len(parts) != 1:
+                    parts = parts[1:]
+                rel_path = os.path.join(*parts)
+            else:
+                rel_path = os.path.normpath(os.path.relpath(file, self.skyrim_folder_path))
+        return rel_path
+    
+    def calculate_existing_output(self):
         size = 0
         file_count = 0
         files_to_remove = []
-        for root, _, files in os.walk(output_folder):
+        for root, _, files in os.walk(self.output_folder_full):
             file_count += len(files)
             for file in files:
                 full_path = os.path.join(root, file)
@@ -840,7 +933,165 @@ class main(QWidget):
                 size += os.path.getsize(full_path)
         return files_to_remove, size, file_count
     
-    def delete_output(self, output_folder, files_to_remove, remove_maps=True):
+    def calculate_existing_output_threaded(self, requester):
+        self.setEnabled(False)
+        self.pool = QThreadPool.globalInstance()
+        self.pool.setMaxThreadCount(os.cpu_count())
+        self.calculate_requester = requester
+        self.total_size = 0
+        self.total_file_count = 0
+        self.total_progress = 0
+        self.files_to_remove = []
+        self.changed_hashes = []
+        self.new_file_hashes = self.get_from_file('ESLifier_Data/new_file_hashes.json')
+
+        files_to_hash = []
+        for root, _, files in os.walk(self.output_folder_full):
+            for f in files:
+                files_to_hash.append(os.path.join(root, f))
+        print("CLEAR ALT")
+        self.log_stream.show()
+        print("Hashing output for changes...\n\n")
+        self.hasher_thread = QThread()
+        self.hasher_worker = HashWorker(files_to_hash, self.new_file_hashes, self.get_rel_path)
+        self.hasher_worker.moveToThread(self.hasher_thread)
+        self.hasher_thread.started.connect(self.hasher_worker.run)
+        self.hasher_worker.finished.connect(self.on_hashing_finished)
+        self.hasher_worker.finished.connect(self.hasher_thread.quit)
+        self.hasher_thread.start()
+
+    def on_hashing_finished(self, result):
+        total_size: int = result["size"]
+        total_file_count: int = result["file_count"]
+        files_to_remove:list[str] = result["files_to_remove"]
+        changed_hashes:list = result["changed_hashes"]
+        self.setEnabled(True)
+
+        print("Hashing for changes complete.")
+        print(f"Found {len(changed_hashes)} changed files.")
+        print("CLEAR")
+        changed_rel_paths_to_switch = []
+
+        if changed_hashes:
+            with open('ESLifier_Data/new_file_hashes.json', 'w', encoding='utf-8') as f:
+                json.dump(self.new_file_hashes, f, ensure_ascii=False, indent=4)
+                f.close()
+            dialog = QDialog()
+            dialog.setWindowIcon(QIcon(":/images/ESLifier.png"))
+            dialog.setWindowTitle("Select files to remove.")
+            dialog.setStyleSheet("QDialog {background-color: tomato;}")
+            dialog.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
+            listWidget = QListWidget()
+            listWidget.setEditTriggers(QListWidget.EditTrigger.NoEditTriggers)
+            listWidget.setAutoScroll(False)
+            layout = QVBoxLayout()
+            buttons_widget = QWidget()
+            buttons_layout = QHBoxLayout()
+            buttons_widget.setLayout(buttons_layout)
+            
+            self.hash_changed_option = 'keep_all'
+            def delete_selected():
+                self.hash_changed_option = 'delete_selected'
+                dialog.close()
+            delete_selected_button = self.create_button("3 Delete Selected", "Deletes only the selected files.", delete_selected)
+            delete_selected_button.setStyleSheet("QPushButton {background-color: red;}")
+            delete_selected_button.setEnabled(False)
+            
+            def delete_all():
+                self.hash_changed_option = 'delete_all'
+                dialog.close()
+            delete_all_button = self.create_button("3 Delete All", "Deletes all files regardless of selection.", delete_all)
+            delete_all_button.setStyleSheet("QPushButton {background-color: red;}")
+            delete_all_button.setEnabled(False)
+
+            def keep_all():
+                self.hash_changed_option = 'keep_all'
+                dialog.close()
+            keep_all_button = self.create_button("Keep All", "Keeps all files regardless of selection.", keep_all)
+            keep_all_button.setStyleSheet("QPushButton {background-color: lime;}")
+
+            buttons_layout.addWidget(delete_all_button)
+            buttons_layout.addWidget(delete_selected_button)
+            buttons_layout.addWidget(keep_all_button)
+            dialog.setLayout(layout)
+            label = QLabel("The following files have had their hashes change since they were patched by ESLifier.\n"\
+                            "These files could be config or data storage files that you may want to keep.\n"\
+                            "Select the files you would like to remove and select \"Delete Selected\",\n"\
+                            "select \"Delete All\" to delete all files regardless of selection,\n"\
+                            "or select \"Keep All\" to not delete any files.")
+            layout.addWidget(label)
+            layout.addWidget(listWidget)
+            layout.addWidget(buttons_widget)
+            
+            for file, rel_path in changed_hashes:
+                item = QListWidgetItem(rel_path)
+                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+                item.setCheckState(Qt.CheckState.Unchecked)
+                item.setToolTip(os.path.normpath(file))
+                item.setData(0, rel_path)
+                listWidget.addItem(item)
+            
+            def rename_2():
+                delete_selected_button.setText("2 Delete Selected")
+                delete_all_button.setText("2 Delete All")
+
+            def rename_1():
+                delete_selected_button.setText("1 Delete Selected")
+                delete_all_button.setText("1 Delete All")
+            
+            def rename_and_enable():
+                delete_selected_button.setText("Delete Selected")
+                delete_selected_button.setEnabled(True)
+                delete_all_button.setText("Delete All")
+                delete_all_button.setEnabled(True)
+
+            QTimer.singleShot(1000, rename_2)
+            QTimer.singleShot(2000, rename_1)
+            QTimer.singleShot(3000, rename_and_enable)
+            keep_all_button.setFocus()
+            dialog.exec()
+            self.files_to_not_hash.clear()
+
+            if self.hash_changed_option == 'delete_all':
+                for file, rel_path in changed_hashes:
+                    files_to_remove.append(file)
+                    changed_rel_paths_to_switch.append(rel_path)
+                    total_size += os.path.getsize(file)
+                    total_file_count += 1
+            elif self.hash_changed_option == 'delete_selected':
+                for index in range(0, listWidget.count()):
+                    item = listWidget.item(index)
+                    if item.checkState() == Qt.CheckState.Checked:
+                        files_to_remove.append(item.toolTip())
+                        changed_rel_paths_to_switch.append(item.data(0))
+                        total_size += os.path.getsize(item.toolTip())
+                        total_file_count += 1
+                    else:
+                        self.files_to_not_hash.append(item.toolTip().lower())
+            elif self.hash_changed_option == 'keep_all':
+                for file, rel_path in self.changed_hashes:
+                    self.files_to_not_hash.append(os.path.normpath(file).lower())
+        if self.calculate_requester == 'reset_output':
+            self.reset_output_next(files_to_remove, total_size, total_file_count, changed_rel_paths_to_switch)
+        elif self.calculate_requester == 'rebuild_output':
+            self.rebuild_output_next(files_to_remove, total_size, total_file_count, changed_rel_paths_to_switch)
+    
+    def prune_empty_dirs_recursive(self, path, output_folder):
+        if not os.path.isdir(path):
+            return
+
+        for entry in os.listdir(path):
+            full_path = os.path.join(path, entry)
+            if os.path.isdir(full_path):
+                self.prune_empty_dirs_recursive(full_path, output_folder)
+
+        if not os.listdir(path) and path != output_folder:
+            try:
+                os.rmdir(path)
+            except OSError as e:
+                print(f"~Warn: Could not remove {path}: {e}")
+        
+    def delete_output(self, output_folder: str, files_to_remove: list[str], remove_maps=True):
         if remove_maps and os.path.exists('ESLifier_Data/Form_ID_Maps'):
             shutil.rmtree('ESLifier_Data/Form_ID_Maps')
         if os.path.exists('ESLifier_Data/EDIDs'):
@@ -852,18 +1103,16 @@ class main(QWidget):
         if os.path.exists("ESLifier_Data/winning_file_history_dict.json"):
             os.remove("ESLifier_Data/winning_file_history_dict.json")
         if os.path.exists("ESLifier_Data/winning_files_dict.json"):
-             os.remove("ESLifier_Data/winning_files_dict.json")
+            os.remove("ESLifier_Data/winning_files_dict.json")
         if os.path.exists(output_folder) and 'eslifier' in output_folder.lower():
             for file in files_to_remove:
                 if os.path.exists(file):
                     os.remove(file)
-            for item in os.listdir(output_folder):
-                item_path = os.path.join(output_folder, item)
-                if os.path.isdir(item_path):
-                    shutil.rmtree(item_path)
+            self.prune_empty_dirs_recursive(output_folder, output_folder)
 
     def calculate_stats(self):
-        _, size, file_count=  self.calculate_existing_output(os.path.join(self.output_folder_path, self.output_folder_name))
+        self.output_folder_full = os.path.join(self.output_folder_path, self.output_folder_name)
+        _1, size, file_count =  self.calculate_existing_output()
         if size > 1024 ** 3:
             calculated_size = str(round(size / (1024 ** 3), 3)) + ' GBs'
         elif size > 1048576:
@@ -926,7 +1175,7 @@ class ScannerWorker(QObject):
 
 class CompactorWorker(QObject):
     finished_signal = pyqtSignal()
-    def __init__(self, checked, dependency_dictionary, settings: dict):
+    def __init__(self, checked, dependency_dictionary, files_to_not_hash, settings: dict):
         super().__init__()
         self.checked = checked
         self.dependency_dictionary = dependency_dictionary
@@ -940,6 +1189,8 @@ class CompactorWorker(QObject):
         self.generate_cell_master = settings.get('generate_cell_master', True)
         self.persistent_ids = settings.get('persistent_ids', True)
         self.free_non_existent = settings.get('free_non_existent', False)
+        self.files_to_not_hash = files_to_not_hash
+        self.hash_output = settings.get('hash_output', True)
         
     def run(self):
         total = len(self.checked)
@@ -968,7 +1219,10 @@ class CompactorWorker(QObject):
         cfids = CFIDs(self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode,
                       self.create_new_cell_plugin, original_files, winning_files_dict, {}, {}, master_byte_data, bsa_masters, bsa_dict,
                       self.persistent_ids, self.free_non_existent, additional_file_patcher_conditions)
-        
+        if self.hash_output:
+            print("Hashing any existing files for changes...")
+            cfids.hash_output_files([], True)
+        print("CLEAR ALT")
         for file in self.checked:
             count +=1
             percent = round((count/total)*100,1)
@@ -993,12 +1247,15 @@ class CompactorWorker(QObject):
             cfids.compact_and_patch(
                             file, dependents, all_dependents_have_skyrim_esm_as_master, 
                             generate_cell_master, files_to_patch)
-            
+
         if finalize:
             print('Creating/Updating ESLifier_Cell_Master.esm...')
             self.create_new_cell_plugin.finalize_plugin()
         print('Saving Data...')
         cfids.save_data()
+        if self.hash_output:
+            print('Hashing output files for checking later changes...')
+            cfids.hash_output_files(self.files_to_not_hash)
         print("Patching Complete")
         self.finished_signal.emit()
         return
@@ -1054,3 +1311,49 @@ class FlagWorker(QObject):
         except:
             data = {}
         return data
+    
+
+class HashWorker(QObject):
+    finished = pyqtSignal(dict)
+    def __init__(self, files, new_file_hashes, get_rel_path):
+        super().__init__()
+        self.files = files
+        self.new_file_hashes:dict = new_file_hashes
+        self.get_rel_path = get_rel_path
+
+    def run(self):
+        size = 0
+        file_count = 0
+        files_to_remove = []
+        changed_hashes = []
+        to_hash_len = len(self.files)
+
+        progress = 1
+        for file in self.files:
+            progress += 1
+            percentage = (progress / to_hash_len) * 100
+            factor = round(to_hash_len * 0.01)
+            if factor == 0:
+                factor = 1
+            if (progress % factor) >= (factor-1):
+                print('\033[F\033[K-    Processed: ' + str(round(percentage, 1)) + '%' + 
+                    '\n-    Files: ' + str(progress) + '/' + str(to_hash_len), end='\r')
+            with open(file, 'rb') as f: 
+                sha256_hash = hashlib.sha256(f.read()).hexdigest()
+                f.close()
+            rel_path = self.get_rel_path(file).lower()
+            old_hash, changed = self.new_file_hashes.get(rel_path, (None, False))
+            if old_hash == None or (old_hash == sha256_hash and not changed): 
+                files_to_remove.append(file) 
+                size += os.path.getsize(file)
+                file_count += 1
+            else: 
+                self.new_file_hashes[rel_path] = (old_hash, True) 
+                changed_hashes.append((file, rel_path))
+
+        self.finished.emit({
+            "size": size,
+            "file_count": file_count,
+            "files_to_remove": files_to_remove,
+            "changed_hashes": changed_hashes
+        })
