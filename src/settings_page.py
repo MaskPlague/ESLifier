@@ -142,6 +142,19 @@ class settings(QWidget):
             "instead of 0x80C since 0x80A is free)",
             "free_non_existent"
         )
+        self.enable_patch_new_widget, self.enable_patch_new_toggle = self.create_toggle_widget(
+            "Enable the Patch New or Changed Files Button",
+            "Show the patch new button on the main page. Personally, I think it is useless\n"+
+            "and annoying to maintain. However, I'm sure there is someone who uses it so I'm\n"+
+            "keeping the option here to keep it enabled. Doesn't hash check if output has changed.",
+            "enable_patch_new"
+        )
+        self.hash_output_widget, self.hash_output_toggle = self.create_toggle_widget(
+            "Hash the Output Folder to Detect Changes",
+            "Hash the output folder during certain actions to detect if a file has been changed\n"+
+            "since ESLifier last patched it. Can be time consuming.",
+            "hash_output"
+        )
         self.check_for_updates_widget, self.check_for_updates_toggle = self.create_toggle_widget(
             "Check for updates on start",
             "Connect to GitHub on program start to check for updates",
@@ -238,6 +251,8 @@ class settings(QWidget):
         
         column_2.addWidget(self.persistent_ids_widget)
         column_2.addWidget(self.free_non_existent_widget)
+        column_2.addWidget(self.hash_output_widget)
+        column_2.addWidget(self.enable_patch_new_widget)
         column_2.addWidget(self.edit_blacklist_widget)
         column_2.addWidget(self.open_eslifier_data_widget)
         column_2.addWidget(self.colors_select_widget)
@@ -473,6 +488,8 @@ class settings(QWidget):
             self.check_for_updates_toggle.setChecked(True)
             self.persistent_ids_toggle.setChecked(True)
             self.free_non_existent_toggle.setChecked(False)
+            self.enable_patch_new_toggle.setChecked(False)
+            self.hash_output_toggle.setChecked(True)
             self.inner_color = '#713585'
             self.outer_color = 'Gray'
             self.update_settings()
@@ -498,6 +515,8 @@ class settings(QWidget):
         self.check_for_updates_toggle.setChecked(self.settings.get('check_for_updates', True))
         self.persistent_ids_toggle.setChecked(self.settings.get('persistent_ids', True))
         self.free_non_existent_toggle.setChecked(self.settings.get('free_non_existent', False))
+        self.enable_patch_new_toggle.setChecked(self.settings.get('enable_patch_new', False))
+        self.hash_output_toggle.setChecked(self.settings.get('hash_output', True))
         self.inner_color = self.settings.get('inner_color', '#713585')
         self.outer_color = self.settings.get('outer_color', 'Gray')
 
@@ -531,6 +550,8 @@ class settings(QWidget):
         self.settings['check_for_updates'] = self.check_for_updates_toggle.isChecked()
         self.settings['persistent_ids'] = self.persistent_ids_toggle.isChecked()
         self.settings['free_non_existent'] = self.free_non_existent_toggle.isChecked()
+        self.settings['enable_patch_new'] = self.enable_patch_new_toggle.isChecked()
+        self.settings['hash_output'] = self.hash_output_toggle.isChecked()
         self.settings['inner_color'] = self.inner_color
         self.settings['outer_color'] = self.outer_color
 
