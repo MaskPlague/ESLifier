@@ -8,13 +8,13 @@ from datetime import datetime
 
 from PyQt6.QtCore import Qt, QObject, QThread, pyqtSignal
 from PyQt6.QtGui import QPalette, QColor, QIcon
-from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMessageBox, QTabWidget, QVBoxLayout
+from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMessageBox, QTabWidget, QVBoxLayout, QSizePolicy
 
 from settings_page import settings
 from main_page import main
 from log_stream import log_stream
 
-CURRENT_VERSION = '0.13.6'
+CURRENT_VERSION = '0.14.0'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
@@ -441,9 +441,15 @@ class main_window(QMainWindow):
         self.main_widget.list_eslify.filter_worldspaces =       self.settings_widget.settings.get('filter_worldspaces', True)
         self.main_widget.list_eslify.cell_master =              self.settings_widget.settings.get('generate_cell_master', True)
         self.main_widget.settings =                             self.settings_widget.settings.copy()
-        self.main_widget.list_eslify.create()
-        self.main_widget.list_compact.create()
+        self.main_widget.hash_output =                          self.settings_widget.settings.get('hash_output', True)
 
+        if self.settings_widget.settings.get('enable_patch_new', False):
+            self.main_widget.scan_and_patch_new_button_spacer.changeSize(10, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+            self.main_widget.scan_and_patch_new_button.setHidden(False)
+        else:
+            self.main_widget.scan_and_patch_new_button_spacer.changeSize(0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+            self.main_widget.scan_and_patch_new_button.setHidden(True)
+            
     def set_colors(self):
         inner_color = self.settings_widget.settings['inner_color']
         outer_color = self.settings_widget.settings['outer_color']
@@ -536,12 +542,13 @@ except Exception as e:
         with open(os.path.normpath(os.path.join('ESLifier_Data/Crash Logs/', crash_log)), 'w+', encoding='utf-8') as f:
             traceback.print_exc(file=f)
         QMessageBox.critical(None, 'ESLifier Error', 'Check latest crash log in ESLifier_Data/Crash Logs')
-        raise RuntimeError(f'Unhandled Exception, check for latest crash log in ESLifier_Data/Crash Logs')
     except Exception as e1:
         crash_log_file = os.path.normpath(os.path.join(os.getcwd(), crash_log))
         try:
             with open(crash_log_file, 'w+', encoding='utf-8') as f:
                 traceback.print_exc(file=f)
+                f.write(f'Failed to open crash log directory: \n')
+                f.write(e1)
             QMessageBox.critical(None, 'ESLifier Error', f'Failed to open crash log directory, creating crash log at: {crash_log_file}')
         except Exception as e2:
             QMessageBox.critical(None, 'ESLifier Error', f'Failed to create crash log, error: {e2}\ncrash cause: {e}')
