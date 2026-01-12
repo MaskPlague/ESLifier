@@ -120,7 +120,6 @@ class list_compactable(QTableWidget):
                 self.flag_dict.pop(mod)
 
         self.setRowCount(len(self.flag_dict))
-        #self.button_group = QButtonGroup()
 
         def display_dependencies(mod_key):
             index = self.currentRow()
@@ -251,7 +250,6 @@ class list_compactable(QTableWidget):
                     background-color: transparent;
                     border: none;
                     }""")
-                #self.button_group.addButton(dL)
                 item_hidden = QTableWidgetItem('')
                 self.setCellWidget(i, self.DEP_COL, dL)
                 self.setItem(i, self.DEP_COL,item_hidden)
