@@ -23,7 +23,7 @@ class patch_new():
             self.no_data_warning.setWindowTitle("No Compacted/Patched Mods")
             self.no_data_warning.setText("There are no existing compacted/patched mods for\n"+
                                          "ESLifier to check for new files that need patching.\n"+
-                                         "Compact a mod on the Main page first. This page is for\n"+
+                                         "Compact a mod on the Main page first. This button is for\n"+
                                          "when you install a new mod and don't feel like rebuilding\n"+
                                          "the entire output.")
             self.no_data_warning.setWindowIcon(QIcon(":/images/ESLifier.png"))
@@ -502,6 +502,7 @@ class PatchNewWorker(QObject):
         self.generate_cell_master = settings.get('generate_cell_master', True)
         self.persistent_ids = settings.get('persistent_ids', True)
         self.free_non_existent = settings.get('free_non_existent', False)
+        self.hash_output = settings.get('hash_output', True)
 
     def patch_new_files(self):
         total = len(self.files)
@@ -515,7 +516,12 @@ class PatchNewWorker(QObject):
         additional_file_patcher_conditions = user_and_master_conditions_class()
         cfids = CFIDs(self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, 
                       self.update_header, self.mo2_mode, None, original_files, winning_files_dict, winning_file_history_dict, 
-                      compacted_and_patched, master_byte_data, None, None, self.persistent_ids, self.free_non_existent, additional_file_patcher_conditions)
+                      compacted_and_patched, master_byte_data, None, None, self.persistent_ids, self.free_non_existent, 
+                      additional_file_patcher_conditions)
+        if self.hash_output:
+            print("Hashing any existing files for changes...")
+            cfids.hash_output_files([], True)
+            print("CLEAR ALT")
         for file in self.files:
             count +=1
             percent = round((count/total)*100,1)
@@ -533,7 +539,11 @@ class PatchNewWorker(QObject):
             for file in files:
                 if file not in all_patched:
                     all_patched.append(file)
+        print('Saving Data...')
         cfids.save_data()
+        if self.hash_output:
+            print('Hashing output files for checking later changes...')
+            cfids.hash_output_files([], True)
         self.finished_signal.emit(len(all_patched))
         return
     
