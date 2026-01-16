@@ -1043,10 +1043,11 @@ class patchers():
                 for i, part in enumerate(path):
                     if isinstance(part, str) and part.lower().startswith(basename+sep) and not path[:i+1] in patched_keys:
                         index = part.find(sep)
-                        to_id_data = form_id_map.get(int(part[index+len(sep):])) if int_type else form_id_map.get(int(part[index+len(sep):],16))
+                        id_part = part[index+len(sep):]
+                        to_id_data = form_id_map.get(int(id_part)) if int_type else form_id_map.get(int(id_part ,16))
                         if to_id_data is not None:
-                            new_id = '0x' + to_id_data['hex'] if part[index+len(sep):].startswith('0x') else str(to_id_data['int']) if int_type else to_id_data['hex']
-                            plugin = 'ESLifier_Cell_Master.esm' + sep if to_id_data['update_name'] else part[:index+1]
+                            new_id = '0x' + to_id_data['hex'] if id_part.startswith('0x') else str(to_id_data['int']) if int_type else to_id_data['hex']
+                            plugin = 'ESLifier_Cell_Master.esm' + sep if to_id_data['update_name'] else part[:index+len(sep)]
                             data = patchers.change_json_key(data, part, plugin + new_id)
                             patched_keys.append(path[:i+1])
             f.seek(0)
