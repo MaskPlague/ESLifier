@@ -46,7 +46,7 @@ class settings(QWidget):
         self.output_folder_name_widget, self.output_folder_name = self.create_text_input_widget(
             "Output Folder Name",
             "Change this to what you want to be the name of the Output Folder.",
-            "ESLifier Compactor Output"
+            "ESLifier Output"
         )
         self.overwrite_path_widget, self.overwrite_path = self.create_path_widget(
             "Overwrite Path",
@@ -472,7 +472,7 @@ class settings(QWidget):
             self.settings.clear()
             self.skyrim_folder_path.clear()
             self.output_folder_path.clear()
-            self.output_folder_name.setText('ESLifier Compactor Output')
+            self.output_folder_name.setText('ESLifier Output')
             self.overwrite_path.clear()
             self.plugins_txt_path.clear()
             self.mo2_modlist_txt_path.clear()
@@ -499,7 +499,7 @@ class settings(QWidget):
     def set_init_widget_values(self):
         self.skyrim_folder_path.setText(self.settings.get('skyrim_folder_path', ''))
         self.output_folder_path.setText(self.settings.get('output_folder_path', ''))
-        self.output_folder_name.setText(self.settings.get('output_folder_name', 'ESLifier Compactor Output'))
+        self.output_folder_name.setText(self.settings.get('output_folder_name', 'ESLifier Output'))
         self.overwrite_path.setText(self.settings.get('overwrite_path', ''))
         self.plugins_txt_path.setText(self.settings.get('plugins_txt_path', ''))
         self.mo2_modlist_txt_path.setText(self.settings.get('mo2_modlist_txt_path' ,''))

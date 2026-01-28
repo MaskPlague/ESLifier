@@ -420,7 +420,7 @@ class main_window(QMainWindow):
         self.set_colors()
         self.main_widget.skyrim_folder_path =                   self.settings_widget.settings.get('skyrim_folder_path', '')
         self.main_widget.output_folder_path =                   self.settings_widget.settings.get('output_folder_path', '')
-        self.main_widget.output_folder_name =                   self.settings_widget.settings.get('output_folder_name', "ESLifier Compactor Output")
+        self.main_widget.output_folder_name =                   self.settings_widget.settings.get('output_folder_name', "ESLifier Output")
         self.main_widget.mo2_mode =                             self.settings_widget.settings.get('mo2_mode', False)
         self.main_widget.modlist_txt_path =                     self.settings_widget.settings.get('mo2_modlist_txt_path', '')
         self.main_widget.plugins_txt_path =                     self.settings_widget.settings.get('plugins_txt_path', '')

@@ -49,7 +49,7 @@ class patch_new():
         self.settings: dict = settings
         self.skyrim_folder_path: str = settings.get('skyrim_folder_path', '')
         self.output_folder_path = settings.get('output_folder_path', '')
-        self.output_folder_name = settings.get('output_folder_name', 'ESLifier Compactor Output')
+        self.output_folder_name = settings.get('output_folder_name', 'ESLifier Output')
         self.modlist_txt_path: str = settings.get('mo2_modlist_txt_path', '')
         self.plugins_txt_path: str = settings.get('plugins_txt_path', '')
         self.overwrite_path: str = settings.get('overwrite_path', '')
@@ -183,7 +183,7 @@ class PatchNewScannerWorker(QObject):
         super().__init__()
         self.skyrim_folder_path: str = settings.get('skyrim_folder_path', '')
         self.overwrite_path: str = settings.get('overwrite_path', '')
-        self.output_folder: str = settings.get('output_folder_name', 'ESLifier Compactor Output')
+        self.output_folder: str = settings.get('output_folder_name', 'ESLifier Output')
         self.output_path: str = os.path.join(settings.get('output_folder_path', ''), self.output_folder)
         self.mo2_mode: bool = settings.get('mo2_mode', False)
         self.hash_mismatches = []
@@ -495,7 +495,7 @@ class PatchNewWorker(QObject):
         self.file_dictionary = file_dictionary
         self.skyrim_folder_path: str = settings.get('skyrim_folder_path', '')
         self.output_folder_path = settings.get('output_folder_path', '')
-        self.output_folder_name = settings.get('output_folder_name', 'ESLifier Compactor Output')
+        self.output_folder_name = settings.get('output_folder_name', 'ESLifier Output')
         self.overwrite_path: str = os.path.normpath(settings.get('overwrite_path', ''))
         self.mo2_mode: bool = settings.get('mo2_mode', False)
         self.update_header: bool = settings.get('update_header', False)

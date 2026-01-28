@@ -1181,7 +1181,7 @@ class CompactorWorker(QObject):
         self.dependency_dictionary = dependency_dictionary
         self.skyrim_folder_path: str = settings.get('skyrim_folder_path', '')
         self.output_folder_path = settings.get('output_folder_path', '')
-        self.output_folder_name = settings.get('output_folder_name', 'ESLifier Compactor Output')
+        self.output_folder_name = settings.get('output_folder_name', 'ESLifier Output')
         self.overwrite_path: str = os.path.normpath(settings.get('overwrite_path', ''))
         self.mo2_mode: bool = settings.get('mo2_mode', False)
         self.update_header: bool = settings.get('update_header', False)

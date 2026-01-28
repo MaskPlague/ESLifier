@@ -28,7 +28,7 @@ class scanner():
         settings: dict = scanner.get_from_file('ESLifier_Data/settings.json', dict)
         path: str = settings.get('skyrim_folder_path', '')
         scanner.mo2_mode: bool = settings.get('mo2_mode', False)
-        scanner.output_file_name = settings.get('output_folder_name', 'ESLifier Compactor Output')
+        scanner.output_file_name = settings.get('output_folder_name', 'ESLifier Output')
         modlist_txt_path: str = settings.get('mo2_modlist_txt_path', '')
         plugins_txt_path: str = settings.get('plugins_txt_path', '')
         scanner.overwrite_path: str = settings.get('overwrite_path', '')
