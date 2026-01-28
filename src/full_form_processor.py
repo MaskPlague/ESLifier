@@ -1,14 +1,10 @@
 import struct
 
 class form_processor():
+    
     def get_offsets_from_array(offset, field_size, struct_size=4):
-        offsets = []
-        offset += 6
-        count = field_size // struct_size
-        for _ in range(count):
-            offsets.append(offset)
-            offset += struct_size
-        return offsets
+        start = offset + 6
+        return list(range(start, start + field_size, struct_size))
 
     def get_alt_texture_offsets(offset, form):
         offsets = []
