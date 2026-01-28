@@ -1,13 +1,13 @@
 import struct
 
 class form_processor():
-    def get_kwda_offsets(offset, form):
+    def get_offsets_from_array(offset, field_size, struct_size=4):
         offsets = []
-        ksiz = struct.unpack("<H", form[offset+4:offset+6])[0] // 4
         offset += 6
-        for _ in range(ksiz):
+        count = field_size // struct_size
+        for _ in range(count):
             offsets.append(offset)
-            offset += 4
+            offset += struct_size
         return offsets
 
     def get_alt_texture_offsets(offset, form):
@@ -268,7 +268,7 @@ class form_processor():
                 acti_offsets.append(offset + 6)
             elif field in special_acti_fields:
                 if field == b'KWDA':
-                    acti_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    acti_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'DSTD':
                     acti_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
                     acti_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
@@ -312,7 +312,7 @@ class form_processor():
                 alch_offsets.append(offset + 6)
             elif field in special_alch_fields:
                 if field == b'KWDA':
-                    alch_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    alch_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'MODS':
                     alch_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
                 elif field == b'ENIT':
@@ -341,7 +341,7 @@ class form_processor():
                 ammo_offsets.append(offset + 6)
             elif field in special_ammo_fields:
                 if field == b'KWDA':
-                    ammo_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    ammo_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'MODS':
                     ammo_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
                 elif field == b'DSTD':
@@ -420,7 +420,7 @@ class form_processor():
                 armo_offsets.append(offset + 6)
             elif field in special_armo_fields:
                 if field == b'KWDA':
-                    armo_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    armo_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'VMAD':
                     armo_offsets.extend(form_processor.vmad_reader(form, offset))
                 elif field in (b'MODS', b'MO2S', b'MO4S'):
@@ -486,7 +486,7 @@ class form_processor():
                 book_offsets.append(offset + 6)
             elif field in special_book_fields:
                 if field == b'KWDA':
-                    book_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    book_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'VMAD':
                     book_offsets.extend(form_processor.vmad_reader(form, offset))
                 elif field == b'MODS':
@@ -556,11 +556,7 @@ class form_processor():
                 cell_offsets.append(offset + 6)
             elif field in special_cell_fields:
                 if field == b'XCLR':
-                    form_id_count = field_size // 4
-                    in_field_offset = offset + 6
-                    for _ in range(form_id_count):
-                        cell_offsets.append(in_field_offset)
-                        in_field_offset += 4
+                    cell_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
             offset += field_size + 6
 
         return [i, bytearray(form), cell_offsets]
@@ -836,11 +832,7 @@ class form_processor():
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
             if field in special_equp_fields:
                 if field == b'PNAM':
-                    pnam_size = field_size // 4
-                    in_field_offset = offset + 6
-                    for _ in range(pnam_size):
-                        equp_offsets.append(in_field_offset)
-                        in_field_offset += 4
+                    equp_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
             offset += field_size + 6
 
         return [i, bytearray(form), equp_offsets]
@@ -901,7 +893,7 @@ class form_processor():
                 flor_offsets.append(offset + 6)
             elif field in special_flor_fields:
                 if field == b'KWDA':
-                    flor_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    flor_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'VMAD':
                     flor_offsets.extend(form_processor.vmad_reader(form, offset))
                 elif field == b'MODS':
@@ -950,11 +942,7 @@ class form_processor():
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
             if field in special_fsts_fields:
                 if field == b'DATA':
-                    data_length = field_size // 4
-                    in_field_offset = offset + 6
-                    for _ in range(data_length):
-                        fsts_offsets.append(in_field_offset)
-                        in_field_offset += 4
+                    fsts_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
             offset += field_size + 6
 
         return [i, bytearray(form), fsts_offsets]
@@ -971,7 +959,7 @@ class form_processor():
                 furn_offsets.append(offset + 6)
             elif field in special_furn_fields:
                 if field == b'KWDA':
-                    furn_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    furn_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'VMAD':
                     furn_offsets.extend(form_processor.vmad_reader(form, offset))
                 elif field == b'MODS':
@@ -1073,11 +1061,7 @@ class form_processor():
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
             if field in special_idlm_fields:
                 if field == b'IDLA':
-                    idla_length = field_size // 4
-                    in_field_offset = offset + 6
-                    for _ in range(idla_length):
-                        idlm_offsets.append(in_field_offset)
-                        in_field_offset += 4
+                    idlm_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'MODS':
                     idlm_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
             offset += field_size + 6
@@ -1119,7 +1103,7 @@ class form_processor():
                 if field == b'VMAD':
                     ingr_offsets.extend(form_processor.vmad_reader(form, offset))
                 elif field == b'KWDA':
-                    ingr_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    ingr_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'CTDA':
                     ingr_offsets.extend(form_processor.ctda_reader(form, offset))
                 elif field == b'MODS':
@@ -1179,7 +1163,7 @@ class form_processor():
                 if field == b'VMAD':
                     keym_offsets.extend(form_processor.vmad_reader(form, offset))
                 elif field == b'KWDA':
-                    keym_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    keym_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'MODS':
                     keym_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
                 elif field == b'DSTD':
@@ -1223,11 +1207,7 @@ class form_processor():
                         lctn_offsets.append(in_field_offset+ 4)
                         in_field_offset += 12
                 elif field in (b'RCPR', b'ACID', b'LCID'):
-                    form_id_count = field_size // 4
-                    in_field_offset = offset + 6
-                    for _ in range(form_id_count):
-                        lctn_offsets.append(in_field_offset)
-                        in_field_offset += 4
+                    lctn_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field in (b'ACUN', b'LCUN'):
                     struct_count = field_size // 12
                     in_field_offset = offset + 6
@@ -1245,7 +1225,7 @@ class form_processor():
                         lctn_offsets.append(in_field_offset+ 8)
                         in_field_offset += 16
                 elif field == b'KWDA':
-                    lctn_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    lctn_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
             offset += field_size + 6
 
         return [i, bytearray(form), lctn_offsets]
@@ -1402,7 +1382,7 @@ class form_processor():
                 mgef_offsets.append(offset + 6)
             elif field in special_mgef_fields:
                 if field == b'KWDA':
-                    mgef_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    mgef_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'SNDD':
                     list_size = field_size // 8
                     in_field_offset = offset + 6
@@ -1447,7 +1427,7 @@ class form_processor():
                 misc_offsets.append(offset + 6)
             elif field in special_misc_fields:
                 if field == b'KWDA':
-                    misc_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    misc_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'VMAD':
                     misc_offsets.extend(form_processor.vmad_reader(form, offset))
                 elif field == b'MODS':
@@ -1492,11 +1472,7 @@ class form_processor():
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
             if field in special_musc_fields:
                 if field == b'TNAM':
-                    form_id_count = field_size // 4
-                    in_field_offset = offset + 6
-                    for _ in range(form_id_count):
-                        musc_offsets.append(in_field_offset)
-                        in_field_offset += 4
+                    musc_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
             offset += field_size + 6
 
         return [i, bytearray(form), musc_offsets]
@@ -1531,11 +1507,7 @@ class form_processor():
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
             if field in special_navi_fields:
                 if field == b'NVSI':
-                    form_id_count = field_size // 4
-                    in_field_offset = offset + 6
-                    for _ in range(form_id_count):
-                        navi_offsets.append(in_field_offset)
-                        in_field_offset += 4
+                    navi_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'NVPP':
                     path_count = struct.unpack("<I", form[offset+6:offset+10])[0]
                     in_field_offset = offset + 10
@@ -1592,12 +1564,10 @@ class form_processor():
                     in_field_offset += 8
                     num_vertices = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4
-                    for _ in range(num_vertices):
-                        in_field_offset += 12
+                    in_field_offset += 12 * num_vertices
                     num_tris = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4
-                    for _ in range(num_tris):
-                        in_field_offset += 16
+                    in_field_offset += 16 * num_tris
                     ext_connections = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4
                     for _ in range(ext_connections):
@@ -1648,7 +1618,7 @@ class form_processor():
                 npc__offsets.append(offset + 6)
             elif field in special_npc__fields:
                 if field == b'KWDA':
-                    npc__offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    npc__offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'VMAD':
                     npc__offsets.extend(form_processor.vmad_reader(form, offset))
                 elif field == b'DSTD':
@@ -1676,11 +1646,7 @@ class form_processor():
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
             if field in special_otft_fields:
                 if field == b'INAM':
-                    form_id_count = field_size // 4
-                    in_field_offset = offset + 6
-                    for _ in range(form_id_count):
-                        otft_offsets.append(in_field_offset)
-                        in_field_offset += 4
+                    otft_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
             offset += field_size + 6
 
         return [i, bytearray(form), otft_offsets]
@@ -1701,11 +1667,7 @@ class form_processor():
                 elif field == b'CTDA':
                     pack_offsets.extend(form_processor.ctda_reader(form, offset))
                 elif field == b'IDLA':
-                    form_id_count = field_size // 4
-                    in_field_offset = offset + 6
-                    for _ in range(form_id_count):
-                        pack_offsets.append(in_field_offset)
-                        in_field_offset += 4
+                    pack_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field in (b'PKCU', b'PDTO', b'PLDT', b'PTDA'):
                     pack_offsets.append(offset + 10)
 
@@ -1807,7 +1769,7 @@ class form_processor():
                 elif field == b'CTDA':
                     qust_offsets.extend(form_processor.ctda_reader(form, offset))
                 elif field == b'KWDA':
-                    qust_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    qust_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'COED':
                     qust_offsets.append(offset+ 6)
                     qust_offsets.append(offset+ 10)
@@ -1828,7 +1790,7 @@ class form_processor():
                 race_offsets.append(offset + 6)
             elif field in special_race_fields:
                 if field == b'KWDA':
-                    race_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    race_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field in (b'VTCK', b'DNAM', b'HCLF'):
                     race_offsets.append(offset + 6)
                     race_offsets.append(offset + 10)
@@ -1881,11 +1843,7 @@ class form_processor():
                 regn_offsets.append(offset + 6)
             elif field in special_regn_fields:
                 if field == b'RDSA':
-                    struct_count = field_size // 12
-                    in_field_offset = offset + 6
-                    for _ in range(struct_count):
-                        regn_offsets.append(in_field_offset)
-                        in_field_offset += 12
+                    regn_offsets.extend(form_processor.get_offsets_from_array(offset, field_size, struct_size=12))
                 elif field == b'RDWT':
                     struct_count = field_size // 12
                     in_field_offset = offset + 6
@@ -1963,7 +1921,7 @@ class form_processor():
                 if field == b'CTDA':
                     scrl_offsets.extend(form_processor.ctda_reader(form, offset))
                 elif field == b'KWDA':
-                    scrl_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    scrl_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'SPIT':
                     scrl_offsets.append(offset+38) #Half-cost Perk
                 elif field == b'DSTD':
@@ -2007,7 +1965,7 @@ class form_processor():
                 slgm_offsets.append(offset + 6)
             elif field in special_slgm_fields:
                 if field == b'KWDA':
-                    slgm_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    slgm_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'MODS':
                     slgm_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
                 elif field == b'DSTD':
@@ -2129,7 +2087,7 @@ class form_processor():
                 elif field == b'SPIT':
                     spel_offsets.append(offset + 38)
                 elif field == b'KWDA':
-                    spel_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    spel_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
             offset += field_size + 6
 
         return [i, bytearray(form), spel_offsets]
@@ -2166,7 +2124,7 @@ class form_processor():
                 elif field == b'MODS':
                     tact_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
                 elif field == b'KWDA':
-                    tact_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    tact_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'DSTD':
                     tact_offsets.append(offset+14) #ExplosionID 6 + 4 + 4
                     tact_offsets.append(offset+18) #DebrisID    6 + 4 + 4 + 4
@@ -2185,11 +2143,7 @@ class form_processor():
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
             if field in special_tes4_fields:
                 if field == b'ONAM':
-                    overriden_forms_length = field_size // 4
-                    in_field_offset = offset + 6
-                    for _ in range(overriden_forms_length):
-                        tes4_offsets.append(in_field_offset)
-                        in_field_offset += 4
+                    tes4_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
             offset += field_size + 6
 
         return [i, bytearray(form), tes4_offsets]
@@ -2236,7 +2190,7 @@ class form_processor():
                 weap_offsets.append(offset + 6)
             elif field in special_weap_fields:
                 if field == b'KWDA':
-                    weap_offsets.extend(form_processor.get_kwda_offsets(offset, form))
+                    weap_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field in (b'MODS', b'MO3S'):
                     weap_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
                 elif field == b'VMAD':
@@ -2391,18 +2345,15 @@ class form_processor():
             elif property_type == 13:
                 item_count = struct.unpack("<I", form[offset:offset+4])[0]
                 offset += 4
-                for _ in range(item_count):
-                    offset += 4
+                offset += 4 * item_count
             elif property_type == 14:
                 item_count = struct.unpack("<I", form[offset:offset+4])[0]
                 offset += 4
-                for _ in range(item_count):
-                    offset += 4
+                offset += 4 * item_count
             elif property_type == 15:
                 item_count = struct.unpack("<I", form[offset:offset+4])[0]
                 offset += 4
-                for _ in range(item_count):
-                    offset += 1
+                offset += item_count
         return offsets, offset
     
     def vmad_reader(form, offset):
