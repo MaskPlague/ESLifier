@@ -235,7 +235,7 @@ class form_processor():
         return saved_forms
     
     def save_achr_data(i, form):
-        achr_fields = [b'NAME', b'XEZN', b'INAM', b'XMRC', b'XAPR', b'XLRT', b'XHOR', b'XOWN', b'XESP', b'XLCN', b'XLRL', b'XEMI', b'XMBR']
+        achr_fields = [b'NAME', b'XEZN', b'INAM', b'XMRC', b'XAPR', b'XLRT', b'XHOR', b'XOWN', b'XESP', b'XLCN', b'XLRL', b'XEMI', b'XMBR', b'TNAM']
         special_achr_fields = [b'PDTO', b'VMAD', b'XLKR']
 
         achr_offsets = [12]
