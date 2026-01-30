@@ -743,11 +743,19 @@ class main(QWidget):
                 confirm2.setDefaultButton(QMessageBox.StandardButton.No)
                 yes_button.setEnabled(False)
                 confirm2.accepted.connect(accepted2)
-                QTimer.singleShot(1000, lambda: yes_button.setText("2 Yes"))
-                QTimer.singleShot(2000, lambda: yes_button.setText("1 Yes"))
+                def update_text(text):
+                    try:
+                        yes_button.setText(text)
+                    except:
+                        pass
+                QTimer.singleShot(1000, lambda: update_text("2 Yes"))
+                QTimer.singleShot(2000, lambda: update_text("1 Yes"))
                 def enable_and_set_text():
-                    yes_button.setEnabled(True)
-                    yes_button.setText("Yes")
+                    try:
+                        yes_button.setEnabled(True)
+                        yes_button.setText("Yes")
+                    except:
+                        pass
                 QTimer.singleShot(3000, enable_and_set_text)
                 confirm2.show()
             self.calculate_stats()
