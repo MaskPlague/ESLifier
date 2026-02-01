@@ -1,5 +1,5 @@
 {
-    "version": 5,
+    "version": 6,
     "conditions": [
         {
             "extension": "json",
@@ -44,6 +44,21 @@
             "patcher": "json_generic_key_fid_sep_plugin",
             "int_type": true,
             "separator": "___"
+        },
+        {
+            "extension": "json",
+            "contains": "/Plugins/MARAs/",
+            "patcher": "json_jcontainer"
+        },
+        {
+            "extension": "json",
+            "endswith": "/Plugins/ImmersiveInteractions/UserSettings.json",
+            "patcher": "json_generic_formid_sep_plugin"
+        },
+        {
+            "extension": "ini",
+            "endswith": "Plugins/Underwear.ini",
+            "patcher": "ini_formid_sep_plugin"
         }
     ]
 }
