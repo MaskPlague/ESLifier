@@ -1496,15 +1496,31 @@ class patchers():
                 data = patchers.use_json5(string)
             json_dict = patchers.extract_values_and_keys(data)
             for path, value in json_dict:
-                if isinstance(value, str) and '__formdata' in value.lower():
-                    formData_index = value.index('|')
+                if (isinstance(value, str) and '__formdata' in value.lower()):
+                    formData_index = value.lower().index('__formdata|') + 10
                     index = value.index('|', formData_index+1)
                     plugin = value[formData_index+1:index]
                     if plugin.lower() == basename:
-                        form_id_int = int(value[index+1:],16)
+                        end_index = patchers.find_next_non_alphanumeric(value, index+1)
+                        end = value[end_index:]
+                        form_id_int = int(value[index+1:end_index],16)
                         to_id_data = form_id_map.get(form_id_int)
                         if to_id_data is not None:
-                            data = patchers.change_json_element(data, path, value[:index+1] + '0x' + to_id_data["hex_no_0"])
+                            data = patchers.change_json_element(data, path, value[:index+1] + '0x' + to_id_data["hex_no_0"] + end)
+            json_dict = patchers.extract_values_and_keys(data)
+            for path, value in json_dict:
+                if len(path)>1 and isinstance(path[-2], str) and '__formdata' in path[-2].lower():
+                    part:str = path[-2]
+                    formData_index = part.lower().index('__formdata|') + 10
+                    index = part.index('|', formData_index+1)
+                    plugin = part[formData_index+1:index]
+                    if plugin.lower() == basename:
+                        end_index = patchers.find_next_non_alphanumeric(part, index+1)
+                        end = part[end_index:]
+                        form_id_int = int(part[index+1:end_index],16)
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            data = patchers.change_json_key(data, part, part[:index+1] + '0x' + to_id_data["hex_no_0"] + end)
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
@@ -1837,8 +1853,8 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
-#if __name__ == '__main__':
-#    basename = "The_Sinister_Seven.esp".lower()
-#    form_id_map = {17225: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'update_name': False}, 2570: {'hex_no_0': 'B0B', 'update_name': True}}
-#    new_file = os.path.normpath(r"")
-#    patchers.json_achievement_injector_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
+if __name__ == '__main__':
+    basename = "SofiaFollower.esp".lower()
+    form_id_map = {333439: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'update_name': False}, 4804: {'hex_no_0': 'B0B', 'update_name': True}}
+    new_file = os.path.normpath(r"C:\Users\s34ke\Downloads\M.A.R.A.S - Patches-159033-1-0-4-TTMPatches-1767644526\patches\customFollowers\Sofia\SofiaFunnyFollowerMarriageQuest.json")
+    patchers.json_jcontainer_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
