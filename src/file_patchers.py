@@ -1853,8 +1853,8 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
-if __name__ == '__main__':
-    basename = "SofiaFollower.esp".lower()
-    form_id_map = {333439: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'update_name': False}, 4804: {'hex_no_0': 'B0B', 'update_name': True}}
-    new_file = os.path.normpath(r"C:\Users\s34ke\Downloads\M.A.R.A.S - Patches-159033-1-0-4-TTMPatches-1767644526\patches\customFollowers\Sofia\SofiaFunnyFollowerMarriageQuest.json")
-    patchers.json_jcontainer_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
+#if __name__ == '__main__':
+#    basename = "SofiaFollower.esp".lower()
+#    form_id_map = {333439: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'update_name': False}, 4804: {'hex_no_0': 'B0B', 'update_name': True}}
+#    new_file = os.path.normpath(r)
+#    patchers.json_jcontainer_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
