@@ -1,5 +1,5 @@
 {
-    "version": 6,
+    "version": 7,
     "conditions": [
         {
             "extension": "json",
@@ -58,6 +58,11 @@
         {
             "extension": "ini",
             "endswith": "Plugins/Underwear.ini",
+            "patcher": "ini_formid_sep_plugin"
+        },
+        {
+            "extension": "ini",
+            "endswith": "_ANIO.ini",
             "patcher": "ini_formid_sep_plugin"
         }
     ]
