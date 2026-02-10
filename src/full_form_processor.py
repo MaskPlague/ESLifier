@@ -1546,7 +1546,7 @@ class form_processor():
         return [i, bytearray(form), navi_offsets]
 
     def save_navm_data(i, form): 
-        special_navm_fields = [b'NVNM']
+        special_navm_fields = [b'NVNM', b'ONAM']
 
         navm_offsets = [12]
         offset = 24
@@ -1574,6 +1574,8 @@ class form_processor():
                     for _ in range(num_door_tris):
                         navm_offsets.append(in_field_offset + 6)# Door REFR
                         in_field_offset += 10
+                elif field == b'ONAM':
+                    navm_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
             offset += field_size + 6
 
         return [i, bytearray(form), navm_offsets]
