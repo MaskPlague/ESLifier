@@ -1,5 +1,5 @@
 {
-    "version": 3,
+    "version": 4,
     "ignored_files": [
         "BFCO_FX_CheckPreAttackIsOK.pex",
         "BFCO_FX_PlayIdleListKeyE.pex",
@@ -8,6 +8,7 @@
         "NPCSpellVariance.ini",
         "SmartTalk_QuestCache.json",
         "MLO.ini",
-        "RewardModBlacklist.json"
+        "RewardModBlacklist.json",
+        "DynamicStringDistributor.dll"
     ]
 }
