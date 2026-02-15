@@ -254,26 +254,33 @@ class create_new_cell_plugin():
         wrld_grup_cell_count = 0
         wrld_count = 0
         wrld_edid_size_total = 0
+
         for wrld_id in self.wrld_dict:
             wrld_dict = self.wrld_dict[wrld_id]['blocks']
-            wrld_grup_count += 1
-            wrld_grup_cell_count += 1
-            wrld_count += 1
             wrld_edid_size_total += self.wrld_dict[wrld_id]["edid_field_size"]
-            for grup_block in wrld_dict:
-                grup_dict = wrld_dict[grup_block]
+            wrld_count += 1
+            # if wrld actually has any cells
+            if self.wrld_dict[wrld_id]['persistent_cell_data'] != b'':
                 wrld_grup_count += 1
-                for sub_block in grup_dict["sub_blocks"]:
-                    sub_dict = grup_dict["sub_blocks"][sub_block]
+                wrld_grup_cell_count += 1
+                for grup_block in wrld_dict:
+                    grup_dict = wrld_dict[grup_block]
                     wrld_grup_count += 1
-                    for cell in sub_dict["cells"]:
-                        wrld_grup_cell_count += 1
+                    for sub_block in grup_dict["sub_blocks"]:
+                        sub_dict = grup_dict["sub_blocks"][sub_block]
+                        wrld_grup_count += 1
+                        for cell in sub_dict["cells"]:
+                            wrld_grup_cell_count += 1
+
+        #save the actual record count to the tes4 header
         if wrld_grup_count == 1:
             wrld_grup_count = 0
         if cell_grup_count == 1:
             cell_grup_count = 0
         record_count = wrld_grup_count + wrld_grup_cell_count + cell_grup_count + cell_grup_cell_count + wrld_count
         self.new_data_list[0] = self.new_data_list[0][:34] + record_count.to_bytes(4, 'little') + self.new_data_list[0][38:]
+
+        # Size is (number of wrlds * (header + data)) + (number of grups * 24) + (number of cells * (data + header)) + size of all edids, in bytes
         size = ((wrld_count * (24 + 155)) + (wrld_grup_count * 24) + (wrld_grup_cell_count * (36 + 24)) + wrld_edid_size_total).to_bytes(4, 'little')
         self.new_data_list[2] = b'GRUP' + size + self.new_data_list[2][8:]
 
@@ -332,16 +339,18 @@ class create_new_cell_plugin():
         for wrld_id in self.wrld_dict:
             wrld_dict = self.wrld_dict[wrld_id]
             self.new_data_list.append(wrld_dict['data'])
-            self.new_data_list.append(b'GRUP' + wrld_dict['size'] + wrld_dict["grup_data"][8:])
-            self.new_data_list.append(wrld_dict['persistent_cell_data'])
-            for grup_block in wrld_dict['blocks']:
-                grup_dict = wrld_dict['blocks'][grup_block]
-                self.new_data_list.append(b'GRUP' + grup_dict["size"] + grup_dict["data"][8:]) 
-                for sub_block in grup_dict["sub_blocks"]:
-                    sub_dict = grup_dict["sub_blocks"][sub_block]
-                    self.new_data_list.append(b'GRUP' + sub_dict["size"] + sub_dict["data"][8:])
-                    for cell in sub_dict["cells"]:
-                        self.new_data_list.append(cell)
+            # if wrld actually has any cell data to add
+            if wrld_dict['persistent_cell_data'] != b'':
+                self.new_data_list.append(b'GRUP' + wrld_dict['size'] + wrld_dict["grup_data"][8:])
+                self.new_data_list.append(wrld_dict['persistent_cell_data'])
+                for grup_block in wrld_dict['blocks']:
+                    grup_dict = wrld_dict['blocks'][grup_block]
+                    self.new_data_list.append(b'GRUP' + grup_dict["size"] + grup_dict["data"][8:]) 
+                    for sub_block in grup_dict["sub_blocks"]:
+                        sub_dict = grup_dict["sub_blocks"][sub_block]
+                        self.new_data_list.append(b'GRUP' + sub_dict["size"] + sub_dict["data"][8:])
+                        for cell in sub_dict["cells"]:
+                            self.new_data_list.append(cell)
         if len(self.wrld_dict) == 0:
             self.new_data_list.pop()
 
