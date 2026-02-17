@@ -14,7 +14,7 @@ from settings_page import settings
 from main_page import main
 from log_stream import log_stream
 
-CURRENT_VERSION = '0.14.2'
+CURRENT_VERSION = '0.14.3'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
@@ -209,6 +209,7 @@ class main_window(QMainWindow):
         self.log_stream = log_stream(self, CURRENT_VERSION)
         self.setWindowIcon(QIcon(":/images/ESLifier.png"))
         self.setFocus()
+        self.rebuild_lists = False
         self.settings_widget = settings(COLOR_MODE, self)
         check_for_update = self.settings_widget.settings.get('check_for_updates', True)
         if check_for_update:
@@ -291,6 +292,10 @@ class main_window(QMainWindow):
 
     def tab_changed(self, index: int):
         self.update_settings()
+        if self.rebuild_lists:
+            self.rebuild_lists = False
+            self.main_widget.list_compact.create()
+            self.main_widget.list_eslify.create()
         if index == self.HELP_TAB:
             self.tabs.setCurrentIndex(self.previous_tab)
             self.help_selected()

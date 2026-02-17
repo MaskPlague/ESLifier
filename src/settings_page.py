@@ -333,7 +333,7 @@ class settings(QWidget):
         label = QLabel(label_text)
         toggle = QtToggle()
         toggle.setChecked(self.settings.get(setting_key, False))
-        toggle.clicked.connect(self.update_settings)
+        toggle.clicked.connect(lambda: self.update_settings(setting_key))
         
         widget.setLayout(layout)
         layout.addWidget(label)
@@ -530,7 +530,7 @@ class settings(QWidget):
         except:
             print("Failed to save settings.")
 
-    def update_settings(self):
+    def update_settings(self, key = ''):
         self.settings['skyrim_folder_path'] = os.path.normpath(self.skyrim_folder_path.text()) if self.skyrim_folder_path.text() != '' else ''
         self.settings['output_folder_path'] = os.path.normpath(self.output_folder_path.text()) if self.output_folder_path.text() != '' else ''
         if self.output_folder_name_valid:
@@ -566,6 +566,10 @@ class settings(QWidget):
         self.persistent_ids_clicked()
 
         self.save_settings_to_file()
+
+        if key in ('show_esms', 'show_cells', 'enable_cell_changed_filter', 'enable_interior_cell_filter', 
+                   'filter_worldspaces', 'show_dlls', 'generate_cell_master', 'reset'):
+            self.eslifier.rebuild_lists = True
         
     def get_settings_from_file(self):
         try:
