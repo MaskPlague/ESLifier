@@ -238,7 +238,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in achr_fields:
+            if field in achr_fields and field_size >= 4:
                 achr_offsets.append(offset + 6)
             elif field in special_achr_fields:
                 if field == b'PDTO':
@@ -260,7 +260,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in acti_fields:
+            if field in acti_fields and field_size >= 4:
                 acti_offsets.append(offset + 6)
             elif field in special_acti_fields:
                 if field == b'KWDA':
@@ -287,7 +287,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in addn_fields:
+            if field in addn_fields and field_size >= 4:
                 addn_offsets.append(offset + 6)
             elif field in special_addn_fields:
                 if field == b'MODS':
@@ -304,7 +304,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in alch_fields:
+            if field in alch_fields and field_size >= 4:
                 alch_offsets.append(offset + 6)
             elif field in special_alch_fields:
                 if field == b'KWDA':
@@ -333,7 +333,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in ammo_fields:
+            if field in ammo_fields and field_size >= 4:
                 ammo_offsets.append(offset + 6)
             elif field in special_ammo_fields:
                 if field == b'KWDA':
@@ -371,7 +371,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in appa_fields:
+            if field in appa_fields and field_size >= 4:
                 appa_offsets.append(offset + 6)
             elif field in special_appa_fields:
                 if field == b'DSTD':
@@ -395,7 +395,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in arma_fields:
+            if field in arma_fields and field_size >= 4:
                 arma_offsets.append(offset + 6)
             elif field in special_arma_fields:
                 if field in (b'MO2S', b'MO3S', b'MO4S', b'MO5S'):
@@ -412,7 +412,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in armo_fields:
+            if field in armo_fields and field_size >= 4:
                 armo_offsets.append(offset + 6)
             elif field in special_armo_fields:
                 if field == b'KWDA':
@@ -451,7 +451,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in aspc_fields:
+            if field in aspc_fields and field_size >= 4:
                 aspc_offsets.append(offset + 6)
             offset += field_size + 6
 
@@ -464,7 +464,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in avif_fields:
+            if field in avif_fields and field_size >= 4:
                 avif_offsets.append(offset + 6)
             offset += field_size + 6
 
@@ -478,7 +478,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in book_fields:
+            if field in book_fields and field_size >= 4:
                 book_offsets.append(offset + 6)
             elif field in special_book_fields:
                 if field == b'KWDA':
@@ -506,7 +506,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in bptd_fields:
+            if field in bptd_fields and field_size >= 4:
                 bptd_offsets.append(offset + 6)
             elif field in special_bptd_fields:
                 if field == b'MODS':
@@ -531,7 +531,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in cams_fields:
+            if field in cams_fields and field_size >= 4:
                 cams_offsets.append(offset + 6)
             elif field in special_cams_fields:
                 if field == b'MODS':
@@ -548,7 +548,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in cell_fields:
+            if field in cell_fields and field_size >= 4:
                 cell_offsets.append(offset + 6)
             elif field in special_cell_fields:
                 if field == b'XCLR':
@@ -586,7 +586,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in cobj_fields:
+            if field in cobj_fields and field_size >= 4:
                 cobj_offsets.append(offset + 6)
             elif field in special_cobj_fields:
                 if field == b'COED':
@@ -626,7 +626,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in cont_fields:
+            if field in cont_fields and field_size >= 4:
                 cont_offsets.append(offset + 6)
             elif field in special_cont_fields:
                 if field == b'MODS':
@@ -653,7 +653,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in cpth_fields:
+            if field in cpth_fields and field_size >= 4:
                 cpth_offsets.append(offset + 6)
             elif field in special_cpth_fields:
                 if field == b'ANAM':
@@ -672,7 +672,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in dial_fields:
+            if field in dial_fields and field_size >= 4:
                 dial_offsets.append(offset + 6)
             offset += field_size + 6
 
@@ -685,7 +685,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in dlbr_fields:
+            if field in dlbr_fields and field_size >= 4:
                 dlbr_offsets.append(offset + 6)
             offset += field_size + 6
 
@@ -698,7 +698,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in dlvw_fields:
+            if field in dlvw_fields and field_size >= 4:
                 dlvw_offsets.append(offset + 6)
             offset += field_size + 6
 
@@ -731,7 +731,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in door_fields:
+            if field in door_fields and field_size >= 4:
                 door_offsets.append(offset + 6)
             elif field in special_door_fields:
                 if field == b'MODS':
@@ -804,7 +804,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in ench_fields:
+            if field in ench_fields and field_size >= 4:
                 ench_offsets.append(offset + 6)
             elif field in special_ench_fields:
                 if field == b'CTDA':
@@ -841,7 +841,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in expl_fields:
+            if field in expl_fields and field_size >= 4:
                 expl_offsets.append(offset + 6)
             elif field in special_FORM_fields:
                 if field == b'DATA':                        #DATA description not present in uesp wiki
@@ -866,7 +866,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in fact_fields:
+            if field in fact_fields and field_size >= 4:
                 fact_offsets.append(offset + 6)
             elif field in special_fact_fields:
                 if field == b'PLVD':
@@ -885,7 +885,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in flor_fields:
+            if field in flor_fields and field_size >= 4:
                 flor_offsets.append(offset + 6)
             elif field in special_flor_fields:
                 if field == b'KWDA':
@@ -910,7 +910,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in flst_fields:
+            if field in flst_fields and field_size >= 4:
                 flst_offsets.append(offset + 6)
             offset += field_size + 6
 
@@ -923,7 +923,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in fstp_fields:
+            if field in fstp_fields and field_size >= 4:
                 fstp_offsets.append(offset + 6)
             offset += field_size + 6
 
@@ -951,7 +951,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in furn_fields:
+            if field in furn_fields and field_size >= 4:
                 furn_offsets.append(offset + 6)
             elif field in special_furn_fields:
                 if field == b'KWDA':
@@ -999,7 +999,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in hazd_fields:
+            if field in hazd_fields and field_size >= 4:
                 hazd_offsets.append(offset + 6)
             elif field in special_hazd_fields:
                 if field == b'DATA':
@@ -1022,7 +1022,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in hdpt_fields:
+            if field in hdpt_fields and field_size >= 4:
                 hdpt_offsets.append(offset + 6)
             elif field in special_hdpt_fields:
                 if field == b'MODS':
@@ -1072,7 +1072,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in info_fields:
+            if field in info_fields and field_size >= 4:
                 info_offsets.append(offset + 6)
             elif field in special_info_fields:
                 if field == b'VMAD':
@@ -1093,7 +1093,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in ingr_fields:
+            if field in ingr_fields and field_size >= 4:
                 ingr_offsets.append(offset + 6)
             elif field in special_ingr_fields:
                 if field == b'VMAD':
@@ -1121,7 +1121,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in ipct_fields:
+            if field in ipct_fields and field_size >= 4:
                 ipct_offsets.append(offset + 6)
             elif field in special_ipct_fields:
                 if field == b'MODS':
@@ -1153,7 +1153,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in keym_fields:
+            if field in keym_fields and field_size >= 4:
                 keym_offsets.append(offset + 6)
             elif field in special_keym_fields:
                 if field == b'VMAD':
@@ -1178,7 +1178,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in land_fields:
+            if field in land_fields and field_size >= 4:
                 land_offsets.append(offset + 6)
             offset += field_size + 6
 
@@ -1192,7 +1192,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in lctn_fields:
+            if field in lctn_fields and field_size >= 4:
                 lctn_offsets.append(offset + 6)
             elif field in special_lctn_fields:
                 if field in (b'ACPR', b'LCPR', b'ACEP', b'LCEP'):
@@ -1234,7 +1234,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in ligh_fields:
+            if field in ligh_fields and field_size >= 4:
                 ligh_offsets.append(offset + 6)
             elif field in special_ligh_fields:
                 if field == b'VMAD':
@@ -1258,7 +1258,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in lscr_fields:
+            if field in lscr_fields and field_size >= 4:
                 lscr_offsets.append(offset + 6)
             elif field in special_lscr_fields:
                 if field == b'CTDA':
@@ -1274,7 +1274,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in ltex_fields:
+            if field in ltex_fields and field_size >= 4:
                 ltex_offsets.append(offset + 6)
             offset += field_size + 6
 
@@ -1288,7 +1288,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in lvli_fields:
+            if field in lvli_fields and field_size >= 4:
                 lvli_offsets.append(offset + 6)
             elif field in special_lvli_fields:
                 if field == b'LVLO':
@@ -1308,7 +1308,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in lvln_fields:
+            if field in lvln_fields and field_size >= 4:
                 lvln_offsets.append(offset + 6)
             elif field in special_lvln_fields:
                 if field == b'COED':
@@ -1343,7 +1343,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in matt_fields:
+            if field in matt_fields and field_size >= 4:
                 matt_offsets.append(offset + 6)
             offset += field_size + 6
 
@@ -1357,7 +1357,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in mesg_fields:
+            if field in mesg_fields and field_size >= 4:
                 mesg_offsets.append(offset + 6)
             elif field in special_mesg_fields:
                 if field == b'CTDA':
@@ -1374,7 +1374,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in mgef_fields:
+            if field in mgef_fields and field_size >= 4:
                 mgef_offsets.append(offset + 6)
             elif field in special_mgef_fields:
                 if field == b'KWDA':
@@ -1419,7 +1419,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in misc_fields:
+            if field in misc_fields and field_size >= 4:
                 misc_offsets.append(offset + 6)
             elif field in special_misc_fields:
                 if field == b'KWDA':
@@ -1445,7 +1445,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in mstt_fields:
+            if field in mstt_fields and field_size >= 4:
                 mstt_offsets.append(offset + 6)
             elif field in special_mstt_fields:
                 if field == b'MODS':
@@ -1588,7 +1588,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in note_fields:
+            if field in note_fields and field_size >= 4:
                 note_offsets.append(offset + 6)
             elif field in special_note_fields:
                 if field == b'TNAM':
@@ -1612,7 +1612,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in npc__fields:
+            if field in npc__fields and field_size >= 4:
                 npc__offsets.append(offset + 6)
             elif field in special_npc__fields:
                 if field == b'KWDA':
@@ -1657,7 +1657,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in pack_fields:
+            if field in pack_fields and field_size >= 4:
                 pack_offsets.append(offset + 6)
             elif field in special_pack_fields:
                 if field == b'VMAD':
@@ -1681,7 +1681,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in perk_fields:
+            if field in perk_fields and field_size >= 4:
                 perk_offsets.append(offset + 6)
             elif field in special_perk_fields:
                 if field == b'VMAD':
@@ -1759,7 +1759,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in qust_fields:
+            if field in qust_fields and field_size >= 4:
                 qust_offsets.append(offset + 6)
             elif field in special_qust_fields:
                 if field == b'VMAD':
@@ -1784,7 +1784,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in race_fields:
+            if field in race_fields and field_size >= 4:
                 race_offsets.append(offset + 6)
             elif field in special_race_fields:
                 if field == b'KWDA':
@@ -1810,7 +1810,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in refr_fields:
+            if field in refr_fields and field_size >= 4:
                 refr_offsets.append(offset + 6)
             elif field in special_refr_fields:
                 if field == b'PDTO' or field == b'XLOC':
@@ -1837,7 +1837,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in regn_fields:
+            if field in regn_fields and field_size >= 4:
                 regn_offsets.append(offset + 6)
             elif field in special_regn_fields:
                 if field == b'RDSA':
@@ -1894,7 +1894,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in scen_fields:
+            if field in scen_fields and field_size >= 4:
                 scen_offsets.append(offset + 6)
             elif field in special_scen_fields:
                 if field == b'VMAD':
@@ -1913,7 +1913,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in scrl_fields:
+            if field in scrl_fields and field_size >= 4:
                 scrl_offsets.append(offset + 6)
             elif field in special_scrl_fields:
                 if field == b'CTDA':
@@ -1941,7 +1941,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in shou_fields:
+            if field in shou_fields and field_size >= 4:
                 shou_offsets.append(offset + 6)
             elif field in special_shou_fields:
                 if field == b'SNAM':
@@ -1959,7 +1959,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in slgm_fields:
+            if field in slgm_fields and field_size >= 4:
                 slgm_offsets.append(offset + 6)
             elif field in special_slgm_fields:
                 if field == b'KWDA':
@@ -1983,7 +1983,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in smbn_fields:
+            if field in smbn_fields and field_size >= 4:
                 smbn_offsets.append(offset + 6)
             elif field in special_smbn_fields:
                 if field == b'CTDA':
@@ -2000,7 +2000,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in smen_fields:
+            if field in smen_fields and field_size >= 4:
                 smen_offsets.append(offset + 6)
             elif field in special_smen_fields:
                 if field == b'CTDA':
@@ -2017,7 +2017,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in smqn_fields:
+            if field in smqn_fields and field_size >= 4:
                 smqn_offsets.append(offset + 6)
             elif field in special_smqn_fields:
                 if field == b'CTDA':
@@ -2033,7 +2033,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in snct_fields:
+            if field in snct_fields and field_size >= 4:
                 snct_offsets.append(offset + 6)
             offset += field_size + 6
 
@@ -2047,7 +2047,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in sndr_fields:
+            if field in sndr_fields and field_size >= 4:
                 sndr_offsets.append(offset + 6)
             elif field in special_sndr_fields:
                 if field == b'CTDA':
@@ -2063,7 +2063,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in soun_fields:
+            if field in soun_fields and field_size >= 4:
                 soun_offsets.append(offset + 6)
             offset += field_size + 6
 
@@ -2077,7 +2077,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in spel_fields:
+            if field in spel_fields and field_size >= 4:
                 spel_offsets.append(offset + 6)
             elif field in special_spel_fields:
                 if field == b'CTDA':
@@ -2114,7 +2114,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in tact_fields:
+            if field in tact_fields and field_size >= 4:
                 tact_offsets.append(offset + 6)
             elif field in special_tact_fields:
                 if field == b'VMAD':
@@ -2154,7 +2154,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in tree_fields:
+            if field in tree_fields and field_size >= 4:
                 tree_offsets.append(offset + 6)
             elif field in special_tree_fields:
                 if field == b'MODS':
@@ -2170,7 +2170,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in watr_fields:
+            if field in watr_fields and field_size >= 4:
                 watr_offsets.append(offset + 6)
             offset += field_size + 6
 
@@ -2184,7 +2184,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in weap_fields:
+            if field in weap_fields and field_size >= 4:
                 weap_offsets.append(offset + 6)
             elif field in special_weap_fields:
                 if field == b'KWDA':
@@ -2215,7 +2215,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in wrld_fields:
+            if field in wrld_fields and field_size >= 4:
                 wrld_offsets.append(offset + 6)
             elif field in special_wrld_fields:
                 if field == b'RNAM':
@@ -2239,7 +2239,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in wthr_fields:
+            if field in wthr_fields and field_size >= 4:
                 wthr_offsets.append(offset + 6)
             elif field in special_wthr_fields:
                 if field in (b'IMSP', b'HNAM'):
@@ -2264,7 +2264,7 @@ class form_processor():
             #field = form[offset:offset+4]
             #field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in FORM_fields:
+            if field in FORM_fields and field_size >= 4:
                 FORM_offsets.append(offset + 6)
             elif field in special_FORM_fields:
                 pass
