@@ -109,11 +109,19 @@ class list_compactable(QTableWidget):
             self.hideColumn(self.ESM_COL)
         else:
             self.showColumn(self.ESM_COL)
-        self.dependency_list = self.get_data_from_file("ESLifier_Data/dependency_dictionary.json", dict)
-        self.compacted = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json", dict)
-        self.dll_dict = self.get_data_from_file("ESLifier_Data/dll_dict.json", dict)
-        self.blacklist_list = self.get_data_from_file('ESLifier_Data/blacklist.json', list)
-        self.cell_changed = self.get_data_from_file("ESLifier_Data/cell_changed.json", list)
+        self.dependency_list:dict = self.get_data_from_file("ESLifier_Data/dependency_dictionary.json", dict)
+        self.compacted:dict = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json", dict)
+        self.dll_dict:dict = self.get_data_from_file("ESLifier_Data/dll_dict.json", dict)
+        self.blacklist_list: list[str] = self.get_data_from_file('ESLifier_Data/blacklist.json', list)
+        self.cell_changed:list[str] = self.get_data_from_file("ESLifier_Data/cell_changed.json", list)
+
+        if self.cell_master:
+            self.blacklist_list.extend(["ccafdsse001-dwesanctuary.esm",
+                                        "ccasvsse001-almsivi.esm",
+                                        "ccbgssse025-advdsgs.esm",
+                                        "ccbgssse031-advcyrus.esm",
+                                        "cceejsse001-hstead.esm",
+                                        "cceejsse005-cave.esm"])
 
         for mod in self.flag_dict.copy():
             if os.path.basename(mod) in self.blacklist_list:

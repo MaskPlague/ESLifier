@@ -96,17 +96,21 @@ class list_eslable(QTableWidget):
             self.hideColumn(self.ESM_COL)
         else:
             self.showColumn(self.ESM_COL)
-        self.compacted = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json", dict)
-        self.blacklist_list = self.get_data_from_file('ESLifier_Data/blacklist.json', list)
-        self.cell_changed = self.get_data_from_file("ESLifier_Data/cell_changed.json", list)
+        self.compacted:dict = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json", dict)
+        self.blacklist_list:list = self.get_data_from_file('ESLifier_Data/blacklist.json', list)
+        self.cell_changed:list = self.get_data_from_file("ESLifier_Data/cell_changed.json", list)
 
-        to_remove = []
-        for mod in self.flag_dict:
+        if self.cell_master:
+            self.blacklist_list.extend(["ccafdsse001-dwesanctuary.esm",
+                                        "ccasvsse001-almsivi.esm",
+                                        "ccbgssse025-advdsgs.esm",
+                                        "ccbgssse031-advcyrus.esm",
+                                        "cceejsse001-hstead.esm",
+                                        "cceejsse005-cave.esm"])
+            
+        for mod in self.flag_dict.copy():
             if os.path.basename(mod) in self.blacklist_list:
-                to_remove.append(mod)
-        
-        for mod in to_remove:
-            self.flag_dict.pop(mod)
+                self.flag_dict.pop(mod)
 
         self.setRowCount(len(self.flag_dict))
 
