@@ -1233,17 +1233,30 @@ class patchers():
             except:
                 f.seek(0)
                 string = f.read()
-                data = patchers.use_json5(string)
-            json_dict = patchers.extract_values_and_keys(data)
-            for path, value in json_dict:
-                if isinstance(path[-1], str) and (path[-1] == "formID" or path[-1] == "cellID") and isinstance(value, str):
-                    form_id_int = int(value, 16)
-                    to_id_data = form_id_map.get(form_id_int)
-                    if to_id_data is not None:
-                        if not to_id_data["update_name"]:
-                            data = patchers.change_json_element(data, path, to_id_data["hex"])
-                        else:
-                            print(f'~Ineligible: {basename} -> ESLifier_Cell_Master.esm | 0x{value} -> 0x{to_id_data["hex"]} | {new_file}')
+                data: dict = patchers.use_json5(string)
+            plugin = data.get("plugin", "").lower() == basename
+            achievements:list[dict] = data.get("achievements", [])
+            for achievement in achievements:
+                conditions:list[dict] = achievement.get("conditions", [])
+                for condition in conditions:
+                    pluginOverride:str = condition.get("pluginOverride", "")
+                    formID = condition.get("formID", None)
+                    cellID = condition.get("cellID", None)
+                    if ((plugin and pluginOverride == "") or (pluginOverride.lower() == basename)) and formID is not None:
+                        form_id_int = int(formID, 16)
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            condition["formID"] = to_id_data["hex"]
+                            if to_id_data["update_name"]:
+                                condition["pluginOverride"] = "ESLifier_Cell_Master.esm"
+                    if ((plugin and pluginOverride == "") or (pluginOverride.lower() == basename)) and cellID is not None:
+                        form_id_int = int(cellID, 16)
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            condition["cellID"] = to_id_data["hex"]
+                            if to_id_data["update_name"]:
+                                condition["pluginOverride"] = "ESLifier_Cell_Master.esm"
+
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
@@ -1854,7 +1867,7 @@ class patchers():
             f.close()
 
 #if __name__ == '__main__':
-#    basename = "SofiaFollower.esp".lower()
-#    form_id_map = {333439: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'update_name': False}, 4804: {'hex_no_0': 'B0B', 'update_name': True}}
+#    basename = "blackreachrailroadnew.esp".lower()
+#    form_id_map = {135385: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'update_name': True}, 4804: {'hex_no_0': 'B0B', 'update_name': True}}
 #    new_file = os.path.normpath(r)
-#    patchers.json_jcontainer_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
+#    patchers.json_achievement_injector_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
