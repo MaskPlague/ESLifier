@@ -1,5 +1,5 @@
 {
-    "version": 5,
+    "version": 6,
     "ignored_files": [
         "BFCO_FX_CheckPreAttackIsOK.pex",
         "BFCO_FX_PlayIdleListKeyE.pex",
@@ -10,6 +10,7 @@
         "MLO.ini",
         "RewardModBlacklist.json",
         "DynamicStringDistributor.dll",
-        "taglist.yaml"
+        "taglist.yaml",
+        "AddItemMenuSE.ini"
     ]
 }
