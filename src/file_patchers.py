@@ -259,7 +259,7 @@ class patchers():
                     for _ in range(count):
                         line = lines[i]
                         middle_index = line.index(sep, start)
-                        start_index = patchers.find_prev_non_alphanumeric(line, middle_index-5, tokens=(" "))
+                        start_index = patchers.find_prev_non_alphanumeric(line, middle_index-5)
                         end_index = patchers.find_next_non_alphanumeric(line, middle_index+1, tokens=(" "))
                         plugin = line.lower()[start_index+1:middle_index].strip()
                         start_of_line = line[:start_index+1]
