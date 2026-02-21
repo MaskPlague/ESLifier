@@ -102,19 +102,19 @@ class list_eslable(QTableWidget):
 
         if self.cell_master:
             self.blacklist_list.extend(["ccafdsse001-dwesanctuary.esm",
-                                        "ccasvsse001-almsivi.esm",
                                         "ccbgssse025-advdsgs.esm",
                                         "ccbgssse031-advcyrus.esm",
                                         "cceejsse001-hstead.esm",
                                         "cceejsse005-cave.esm"])
-            
-        for mod in self.flag_dict.copy():
+        
+        local_dict = self.flag_dict.copy()
+        for mod in self.flag_dict:
             if os.path.basename(mod) in self.blacklist_list:
-                self.flag_dict.pop(mod)
+                local_dict.pop(mod)
 
-        self.setRowCount(len(self.flag_dict))
+        self.setRowCount(len(local_dict))
 
-        for i, (plugin, flags) in enumerate(self.flag_dict.items()):
+        for i, (plugin, flags) in enumerate(local_dict.items()):
             basename = os.path.basename(plugin)
             item = QTableWidgetItem(basename)
             item.setToolTip(plugin)
