@@ -43,7 +43,7 @@ class settings(QWidget):
             'C:/Path/To/The/Output/Folder/',
             self.output_folder_path_clicked
         )
-        self.output_folder_name_widget, self.output_folder_name = self.create_text_input_widget(
+        self.output_folder_name_widget, self.output_folder_name = self.create_output_name_text_input_widget(
             "Output Folder Name",
             "Change this to what you want to be the name of the Output Folder.",
             "ESLifier Output"
@@ -392,7 +392,7 @@ class settings(QWidget):
         layout.addWidget(button)
         return widget
     
-    def create_text_input_widget(self, label_text, tooltip, placeholder):
+    def create_output_name_text_input_widget(self, label_text, tooltip, placeholder):
         layout = QHBoxLayout()
         widget = QWidget()
         widget.setToolTip(tooltip)
