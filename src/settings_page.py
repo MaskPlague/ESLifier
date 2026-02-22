@@ -122,6 +122,22 @@ class settings(QWidget):
             "or KreatE preset (patched with caveat).",
             "filter_weathers"
         )
+        self.hide_left_columns_widget, self.hide_left_columns_text_input = self.create_text_input_widget(
+            "Hide left list columns visually",
+            "Hide specified columns visually. This does not effect what mods are displayed.\n"+
+            "Specify the column names, comma seperated. Available: CELL, WRLD, ESM\n"+
+            "Example, hides ESM flag and the dependent plugins: CELL,ESM",
+            "CELL,ESM",
+            "left_hidden_columns"
+        )
+        self.hide_right_columns_widget, self.hide_right_columns_text_input = self.create_text_input_widget(
+            "Hide right list columns visually",
+            "Hide specified columns visually. This does not effect what mods are displayed.\n"+
+            "Specify the column names, comma seperated. Available: CELL, WRLD, WTHR, ESM, DEPENDENTS\n"+
+            "Example, hides ESM flag and the dependent plugins: ESM,DEPENDENT",
+            "ESM,DEPENDENTS",
+            "right_hidden_columns"
+        )
         self.show_plugins_possibly_refd_by_dlls_widget, self.show_plugins_possibly_refd_by_dlls_toggle = self.create_toggle_widget(
             "Show plugins that are in SKSE dlls",
             "Show or hide plugins that may have Form IDs hard-coded in SKSE dlls.",
@@ -255,6 +271,7 @@ class settings(QWidget):
         column_1.addWidget(self.enable_weather_filter_widget)
         column_1.addWidget(self.show_plugins_possibly_refd_by_dlls_widget)
         column_1.addWidget(self.generate_cell_master_widget)
+        column_1.addWidget(self.hide_left_columns_widget)
         
         column_2.addWidget(self.persistent_ids_widget)
         column_2.addWidget(self.free_non_existent_widget)
@@ -265,6 +282,7 @@ class settings(QWidget):
         column_2.addWidget(self.colors_select_widget)
         column_2.addWidget(self.reset_settings_widget)
         column_2.addWidget(self.check_for_updates_widget)
+        column_2.addWidget(self.hide_right_columns_widget)
 
         settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -516,6 +534,8 @@ class settings(QWidget):
             self.persistent_ids_toggle.setChecked(True)
             self.free_non_existent_toggle.setChecked(False)
             self.enable_patch_new_toggle.setChecked(False)
+            self.hide_left_columns_text_input.clear()
+            self.hide_right_columns_text_input.clear()
             self.hash_output_toggle.setChecked(True)
             self.inner_color = '#713585'
             self.outer_color = 'Gray'
@@ -538,6 +558,8 @@ class settings(QWidget):
         self.enable_interior_cell_filter_toggle.setChecked(self.settings.get('enable_interior_cell_filter', False))
         self.enable_worldspaces_filter_toggle.setChecked(self.settings.get('filter_worldspaces', True))
         self.enable_weather_filter_toggle.setChecked(self.settings.get('filter_weathers', False))
+        self.hide_left_columns_text_input.setText(self.settings.get('left_hidden_columns', ''))
+        self.hide_right_columns_text_input.setText(self.settings.get('right_hidden_columns', ''))
         self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(self.settings.get('show_dlls', False))
         self.generate_cell_master_toggle.setChecked(self.settings.get('generate_cell_master', False))
         self.check_for_updates_toggle.setChecked(self.settings.get('check_for_updates', True))
@@ -574,6 +596,8 @@ class settings(QWidget):
         self.settings['enable_interior_cell_filter'] = self.enable_interior_cell_filter_toggle.isChecked()
         self.settings['filter_worldspaces'] = self.enable_worldspaces_filter_toggle.isChecked()
         self.settings['filter_weathers'] = self.enable_weather_filter_toggle.isChecked()
+        self.settings['left_hidden_columns'] = self.hide_left_columns_text_input.text()
+        self.settings['right_hidden_columns'] = self.hide_right_columns_text_input.text()
         self.settings['show_dlls'] = self.show_plugins_possibly_refd_by_dlls_toggle.isChecked()
         self.settings['generate_cell_master'] = self.generate_cell_master_toggle.isChecked()
         self.settings['check_for_updates'] = self.check_for_updates_toggle.isChecked()

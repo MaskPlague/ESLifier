@@ -440,6 +440,8 @@ class main_window(QMainWindow):
         self.main_widget.list_compact.filter_worldspaces =      self.settings_widget.settings.get('filter_worldspaces', True)
         self.main_widget.list_compact.filter_weather =          self.settings_widget.settings.get('filter_weathers', False)
         self.main_widget.list_compact.cell_master =             self.settings_widget.settings.get('generate_cell_master', True)
+        self.main_widget.list_eslify.hidden_columns =           self.settings_widget.settings.get('left_hidden_columns', '')
+        self.main_widget.list_compact.hidden_columns =          self.settings_widget.settings.get('right_hidden_columns', '')
         self.main_widget.list_eslify.filter_changed_cells =     self.settings_widget.settings.get('enable_cell_changed_filter', True)
         self.main_widget.list_eslify.filter_interior_cells =    self.settings_widget.settings.get('enable_interior_cell_filter', False)
         self.main_widget.list_eslify.show_cells =               self.settings_widget.settings.get('show_cells', True)

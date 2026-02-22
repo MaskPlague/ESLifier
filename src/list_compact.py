@@ -69,6 +69,7 @@ class list_compactable(QTableWidget):
         self.filter_worldspaces = False
         self.filter_weather = False
         self.cell_master = False
+        self.hidden_columns = ""
         self.blacklist = blacklist()
 
         self.setStyleSheet("""
@@ -97,24 +98,27 @@ class list_compactable(QTableWidget):
     def create(self):
         self.setSortingEnabled(False)
         self.clearContents()
-        if not self.show_cells: 
-            self.hideColumn(self.CELL_COL)
-        else:
-            self.showColumn(self.CELL_COL)
-        if not self.show_dlls:
-            self.hideColumn(self.SKSE_COL)
-        else:
-            self.showColumn(self.SKSE_COL)
-        if self.filter_worldspaces or self.cell_master: 
-            self.hideColumn(self.WRLD_COL)
-        else:
-            self.showColumn(self.WRLD_COL)
-        if not self.show_esms:
-            self.hideColumn(self.ESM_COL)
-        else:
-            self.showColumn(self.ESM_COL)
+        hidden_columns = [col.strip().upper() for col in self.hidden_columns.split(',')]
+
+        if self.show_cells and not "CELL" in hidden_columns: self.showColumn(self.CELL_COL)
+        else: self.hideColumn(self.CELL_COL)
+
+        if not self.show_dlls: self.hideColumn(self.SKSE_COL)
+        else: self.showColumn(self.SKSE_COL)
+
+        if self.filter_worldspaces or self.cell_master or 'WRLD' in hidden_columns: self.hideColumn(self.WRLD_COL) 
+        else: self.showColumn(self.WRLD_COL)
+
         if self.filter_weather or "WTHR" in hidden_columns: self.hideColumn(self.WTHR_COL)
         else: self.showColumn(self.WTHR_COL)
+
+        if self.show_esms and not "ESM" in hidden_columns: self.showColumn(self.ESM_COL)
+        else: self.hideColumn(self.ESM_COL)
+
+        if 'DEPENDENTS' in hidden_columns: self.hideColumn(self.DEP_COL), self.hideColumn(self.DEP_DISP_COL)
+        else: self.showColumn(self.DEP_COL), self.showColumn(self.DEP_DISP_COL)
+
+
         self.dependency_list:dict = self.get_data_from_file("ESLifier_Data/dependency_dictionary.json", dict)
         self.compacted:dict = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json", dict)
         self.dll_dict:dict = self.get_data_from_file("ESLifier_Data/dll_dict.json", dict)
@@ -223,6 +227,7 @@ class list_compactable(QTableWidget):
                                               'added as a master and thus the ESM + ESL cell bug workaround cannot\n'+
                                               'be applied. It is NOT recommended to ESL flag it as doing so may\n'+
                                               'break temporary references in its new CELL(s).')
+                    self.showColumn(self.CELL_COL)
                 elif 'new_interior_cell' in flags:
                     item_cell_flag.setText('!New Interior CELL!')
                     item_cell_flag.setToolTip('This mod has at least one new CELL record that is an interior cell.\n'+
