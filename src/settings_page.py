@@ -116,6 +116,12 @@ class settings(QWidget):
             "(no ground) when flagged as ESL.",
             "filter_worldspaces"
         )
+        self.enable_weather_filter_widget, self.enable_weather_filter_toggle = self.create_toggle_widget(
+            "Hide plugins with new WTHR (weather) records",
+            "Hide plugins with new weather records as they can be referenced in an ENB preset (not patched)\n"+
+            "or KreatE preset (patched with caveat).",
+            "filter_weathers"
+        )
         self.show_plugins_possibly_refd_by_dlls_widget, self.show_plugins_possibly_refd_by_dlls_toggle = self.create_toggle_widget(
             "Show plugins that are in SKSE dlls",
             "Show or hide plugins that may have Form IDs hard-coded in SKSE dlls.",
@@ -246,6 +252,7 @@ class settings(QWidget):
         column_1.addWidget(self.enable_cell_changed_filter_widget)
         column_1.addWidget(self.enable_interior_cell_filter_widget)
         column_1.addWidget(self.enable_worldspaces_filter_widget)
+        column_1.addWidget(self.enable_weather_filter_widget)
         column_1.addWidget(self.show_plugins_possibly_refd_by_dlls_widget)
         column_1.addWidget(self.generate_cell_master_widget)
         
@@ -503,6 +510,7 @@ class settings(QWidget):
             self.enable_cell_changed_filter_toggle.setChecked(True)
             self.enable_interior_cell_filter_toggle.setChecked(False)
             self.enable_worldspaces_filter_toggle.setChecked(True)
+            self.enable_weather_filter_toggle.setChecked(False)
             self.generate_cell_master_toggle.setChecked(False)
             self.check_for_updates_toggle.setChecked(True)
             self.persistent_ids_toggle.setChecked(True)
@@ -529,6 +537,7 @@ class settings(QWidget):
         self.enable_cell_changed_filter_toggle.setChecked(self.settings.get('enable_cell_changed_filter', True))
         self.enable_interior_cell_filter_toggle.setChecked(self.settings.get('enable_interior_cell_filter', False))
         self.enable_worldspaces_filter_toggle.setChecked(self.settings.get('filter_worldspaces', True))
+        self.enable_weather_filter_toggle.setChecked(self.settings.get('filter_weathers', False))
         self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(self.settings.get('show_dlls', False))
         self.generate_cell_master_toggle.setChecked(self.settings.get('generate_cell_master', False))
         self.check_for_updates_toggle.setChecked(self.settings.get('check_for_updates', True))
@@ -564,6 +573,7 @@ class settings(QWidget):
         self.settings['enable_cell_changed_filter'] = self.enable_cell_changed_filter_toggle.isChecked()
         self.settings['enable_interior_cell_filter'] = self.enable_interior_cell_filter_toggle.isChecked()
         self.settings['filter_worldspaces'] = self.enable_worldspaces_filter_toggle.isChecked()
+        self.settings['filter_weathers'] = self.enable_weather_filter_toggle.isChecked()
         self.settings['show_dlls'] = self.show_plugins_possibly_refd_by_dlls_toggle.isChecked()
         self.settings['generate_cell_master'] = self.generate_cell_master_toggle.isChecked()
         self.settings['check_for_updates'] = self.check_for_updates_toggle.isChecked()

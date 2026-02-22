@@ -19,7 +19,7 @@ class list_compactable(QTableWidget):
         self.DEP_DISP_COL = 6
         self.HIDER_COL = 7
         self.setColumnCount(self.COL_COUNT)
-        self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'WRLD Records', 'SKSE DLL', 'ESM', 'Dependencies', '', 'Hider'])
+        self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'WRLD Records', 'WTHR Records', 'SKSE DLL', 'ESM', 'Dependencies', '', 'Hider'])
         self.horizontalHeaderItem(self.MOD_COL).setToolTip('This is the plugin name. Select which plugins you wish to compact.')
         self.horizontalHeaderItem(self.CELL_COL).setToolTip('This is the CELL Record Flag. It can be completely ignored for users\n'+
                                                             'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'+
@@ -38,6 +38,9 @@ class list_compactable(QTableWidget):
                                                             'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'+
                                                             'Otherwise, if an plugin is flagged ESL\n'+
                                                             'then the new worldspace may have landscape issues (no ground).')
+        self.horizontalHeaderItem(self.WTHR_COL).setToolTip('This is the WTHR Record Flag. This is an indicator if a mod has a new weather record\n'+
+                                                            'Some mods weathers are referenced in ENB Presets which cannot be patched by ESLifier\n'+
+                                                            'It is at the user\'s discretion if a plugin with new weather should be compacted.')
         self.horizontalHeaderItem(self.SKSE_COL).setToolTip('This is the skse DLL flag. If a dll has the plugin name in it then it may\n'+
                                                             'have a LookUpForm() call that may break after compacting a flagged plugin.')
         self.horizontalHeaderItem(self.ESM_COL).setToolTip('This is the ESM flag. If a plugin is an ESM then it will be flagged here.')
@@ -64,6 +67,7 @@ class list_compactable(QTableWidget):
         self.filter_changed_cells = True
         self.filter_interior_cells = False
         self.filter_worldspaces = False
+        self.filter_weather = False
         self.cell_master = False
         self.blacklist = blacklist()
 
@@ -109,6 +113,8 @@ class list_compactable(QTableWidget):
             self.hideColumn(self.ESM_COL)
         else:
             self.showColumn(self.ESM_COL)
+        if self.filter_weather or "WTHR" in hidden_columns: self.hideColumn(self.WTHR_COL)
+        else: self.showColumn(self.WTHR_COL)
         self.dependency_list:dict = self.get_data_from_file("ESLifier_Data/dependency_dictionary.json", dict)
         self.compacted:dict = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json", dict)
         self.dll_dict:dict = self.get_data_from_file("ESLifier_Data/dll_dict.json", dict)
@@ -232,6 +238,13 @@ class list_compactable(QTableWidget):
                 if self.filter_worldspaces:
                     hide_row = True
                 self.setItem(i, self.WRLD_COL, item_wrld_flag)
+            if 'new_wthr' in flags:
+                item_wthr_flag = QTableWidgetItem('!New WTHR!')
+                item_wthr_flag.setToolTip('This mod has a new WTHR (weather) record which can be referenced in\n'+
+                                          'an ENB preset (not patched) or KreatE preset (patched with caveat).')
+                if self.filter_weather:
+                    hide_row = True
+                self.setItem(i, self.WTHR_COL, item_wthr_flag)
             if basename.lower() in self.dll_dict:
                 item_dll = QTableWidgetItem('!!SKSE DLL!!')
                 tooltip = 'This mod\'s plugin name is present in the following SKSE dlls and\nmay break their FormLookup() function calls if a hard-coded form id is present:'

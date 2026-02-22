@@ -56,7 +56,7 @@ class qualification_checker():
         for plugin in plugins:
             alread_esl, is_esm = qualification_checker.already_esl(plugin)
             if not alread_esl:
-                esl_allowed, need_compacting, new_cell, interior_cell, new_wrld = qualification_checker.file_reader(plugin, update_header, is_esm)
+                esl_allowed, need_compacting, new_cell, interior_cell, new_wrld, new_wthr = qualification_checker.file_reader(plugin, update_header, is_esm)
                 if esl_allowed:
                     flag_dict[plugin] = []
                     if need_compacting:
@@ -76,6 +76,8 @@ class qualification_checker():
                                     break
                     if new_wrld:
                         flag_dict[plugin].append('new_wrld')
+                    if new_wthr:
+                        flag_dict[plugin].append('new_wthr')
                     if is_esm:
                         flag_dict[plugin].append('is_esm')
                         
@@ -126,6 +128,7 @@ class qualification_checker():
         interior_cell_flag = False
         need_compacting = False
         new_wrld = False
+        new_wthr = False
         edids = []
         cell_form_ids = []
         for form in data_list:
@@ -133,7 +136,7 @@ class qualification_checker():
             if record_type not in (b'GRUP', b'TES4') and form[15] >= master_count:
                 count += 1
                 if count > num_max_records:
-                    return False, False, False, False, False
+                    return False, False, False, False, False, False
                 if int.from_bytes(form[12:15][::-1]) > qualification_checker.max_record_number:
                     need_compacting = True
                 if record_type == b'CELL':
@@ -157,6 +160,9 @@ class qualification_checker():
 
                 if record_type == b'WRLD':
                     new_wrld = True
+
+                if record_type == b'WTHR':
+                    new_wthr = True
 
                 if record_type in (b'CELL', b'CLMT', b'IMGS', b'LGTM', b'VOLI', b'WTHR'): # Get EDIDs for KreatE and whatever else may use them in the future
                     flag_byte = form[10]
@@ -185,7 +191,7 @@ class qualification_checker():
             with open(cell_form_id_file, 'w', encoding='utf-8') as f:
                 for form_id in cell_form_ids:
                     f.write(form_id + '\n')
-        return True, need_compacting, new_cell, interior_cell_flag, new_wrld
+        return True, need_compacting, new_cell, interior_cell_flag, new_wrld, new_wthr
 
     def already_esl(file: str) -> tuple[bool, bool]:
         with open(file, 'rb') as f:

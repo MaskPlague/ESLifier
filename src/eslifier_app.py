@@ -438,6 +438,7 @@ class main_window(QMainWindow):
         self.main_widget.list_compact.show_esms =               self.settings_widget.settings.get('show_esms', True)
         self.main_widget.list_compact.show_dlls =               self.settings_widget.settings.get('show_dlls', False)
         self.main_widget.list_compact.filter_worldspaces =      self.settings_widget.settings.get('filter_worldspaces', True)
+        self.main_widget.list_compact.filter_weather =          self.settings_widget.settings.get('filter_weathers', False)
         self.main_widget.list_compact.cell_master =             self.settings_widget.settings.get('generate_cell_master', True)
         self.main_widget.list_eslify.filter_changed_cells =     self.settings_widget.settings.get('enable_cell_changed_filter', True)
         self.main_widget.list_eslify.filter_interior_cells =    self.settings_widget.settings.get('enable_interior_cell_filter', False)
