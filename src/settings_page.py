@@ -435,6 +435,25 @@ class settings(QWidget):
         line_edit.setMaximumWidth(460)
         
         return widget, line_edit
+    
+    def create_text_input_widget(self, label_text, tooltip, placeholder, setting_key):
+        layout = QHBoxLayout()
+        widget = QWidget()
+        widget.setToolTip(tooltip)
+        label = QLabel(label_text)
+        line_edit = QLineEdit()
+
+        line_edit.setText(self.settings.get(setting_key, ''))
+        line_edit.editingFinished.connect(lambda: self.update_settings(setting_key))
+
+        widget.setLayout(layout)
+        layout.addWidget(label)
+        layout.addSpacing(10)
+        layout.addWidget(line_edit)
+
+        line_edit.setPlaceholderText(placeholder)
+        line_edit.setMinimumWidth(200)
+        return widget, line_edit
 
     def edit_blacklist_button_clicked(self):
         self.blacklist_window.blacklist.create()
