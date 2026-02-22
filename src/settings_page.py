@@ -126,7 +126,7 @@ class settings(QWidget):
             "Hide left list columns visually",
             "Hide specified columns visually. This does not affect what plugins are displayed.\n"+
             "Specify the column names, comma seperated. Available: CELL, WRLD, ESM\n"+
-            "Example, hides ESM flag and the dependent plugins: CELL,ESM",
+            "Example, hides the CELL and ESM flags: CELL,ESM",
             "CELL,ESM",
             "left_hidden_columns"
         )
@@ -134,7 +134,7 @@ class settings(QWidget):
             "Hide right list columns visually",
             "Hide specified columns visually. This does not affect what plugins are displayed.\n"+
             "Specify the column names, comma seperated. Available: CELL, WRLD, WTHR, ESM, DEPENDENTS\n"+
-            "Example, hides ESM flag and the dependent plugins: ESM,DEPENDENT",
+            "Example, hides the ESM flag and the dependent plugins: ESM,DEPENDENT",
             "ESM,DEPENDENTS",
             "right_hidden_columns"
         )
