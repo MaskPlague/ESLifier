@@ -1,7 +1,7 @@
 import os
 import subprocess
 import json
-
+import itertools
 from PyQt6.QtCore import Qt, QItemSelection
 from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QPushButton, QButtonGroup, QListWidget, QListWidgetItem
 from blacklist import blacklist
@@ -9,15 +9,17 @@ from blacklist import blacklist
 class list_compactable(QTableWidget):
     def __init__(self):
         super().__init__()
-        self.COL_COUNT = 8
-        self.MOD_COL = 0
-        self.CELL_COL = 1
-        self.WRLD_COL = 2
-        self.SKSE_COL = 3
-        self.ESM_COL = 4
-        self.DEP_COL = 5
-        self.DEP_DISP_COL = 6
-        self.HIDER_COL = 7
+        c = itertools.count()
+        self.MOD_COL = next(c)
+        self.CELL_COL = next(c)
+        self.WRLD_COL = next(c)
+        self.WTHR_COL = next(c)
+        self.SKSE_COL = next(c)
+        self.ESM_COL = next(c)
+        self.DEP_COL = next(c)
+        self.DEP_DISP_COL = next(c)
+        self.HIDER_COL = next(c)
+        self.COL_COUNT = next(c)
         self.setColumnCount(self.COL_COUNT)
         self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'WRLD Records', 'WTHR Records', 'SKSE DLL', 'ESM', 'Dependencies', '', 'Hider'])
         self.horizontalHeaderItem(self.MOD_COL).setToolTip('This is the plugin name. Select which plugins you wish to compact.')
@@ -190,7 +192,7 @@ class list_compactable(QTableWidget):
             self.resizeRowToContents(index)
 
         for i, (plugin, flags) in enumerate(local_dict.items()):
-            basename = os.path.basename(plugin)
+            basename:str = os.path.basename(plugin)
             item = QTableWidgetItem(basename)
             if basename in self.compacted:
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsUserCheckable)

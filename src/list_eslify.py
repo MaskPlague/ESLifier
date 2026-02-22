@@ -1,6 +1,7 @@
 import os
 import subprocess
 import json
+import itertools
 
 from PyQt6.QtCore import Qt, QItemSelection
 from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem
@@ -9,14 +10,15 @@ from blacklist import blacklist
 
 class list_eslable(QTableWidget):
     def __init__(self):
-        self.COL_COUNT = 6
-        self.MOD_COL = 0
-        self.CELL_COL = 1
-        self.WRLD_COL = 2
-        self.ESM_COL = 3
-        self.SPACER_COL = 4
-        self.HIDER_COL = 5
         super().__init__()
+        c = itertools.count()
+        self.MOD_COL = next(c)
+        self.CELL_COL = next(c)
+        self.WRLD_COL = next(c)
+        self.ESM_COL = next(c)
+        self.SPACER_COL = next(c)
+        self.HIDER_COL = next(c)
+        self.COL_COUNT = next(c)
         self.setColumnCount(self.COL_COUNT)
         self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'WRLD Records', 'ESM', '', 'Hider'])
         self.horizontalHeaderItem(self.MOD_COL).setToolTip('This is the plugin name. Select which plugins you wish to flag as light.')
