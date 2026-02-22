@@ -347,7 +347,7 @@ class settings(QWidget):
 
         line_edit.setPlaceholderText(placeholder)
         line_edit.setMinimumWidth(400)
-        line_edit.setMaximumWidth(460)
+        line_edit.setMaximumWidth(550)
         
         return widget, line_edit
     
@@ -457,7 +457,7 @@ class settings(QWidget):
 
         line_edit.setPlaceholderText(placeholder)
         line_edit.setMinimumWidth(400)
-        line_edit.setMaximumWidth(460)
+        line_edit.setMaximumWidth(550)
         
         return widget, line_edit
     
@@ -621,7 +621,8 @@ class settings(QWidget):
         self.save_settings_to_file()
 
         if key in ('show_esms', 'show_cells', 'enable_cell_changed_filter', 'enable_interior_cell_filter', 
-                   'filter_worldspaces', 'show_dlls', 'generate_cell_master', 'reset'):
+                   'filter_worldspaces', 'filter_weathers', 'show_dlls', 'generate_cell_master', 'reset',
+                   'left_hidden_columns', 'right_hidden_columns'):
             self.eslifier.rebuild_lists = True
         
     def get_settings_from_file(self):
