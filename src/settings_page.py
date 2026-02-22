@@ -124,7 +124,7 @@ class settings(QWidget):
         )
         self.hide_left_columns_widget, self.hide_left_columns_text_input = self.create_text_input_widget(
             "Hide left list columns visually",
-            "Hide specified columns visually. This does not effect what mods are displayed.\n"+
+            "Hide specified columns visually. This does not affect what plugins are displayed.\n"+
             "Specify the column names, comma seperated. Available: CELL, WRLD, ESM\n"+
             "Example, hides ESM flag and the dependent plugins: CELL,ESM",
             "CELL,ESM",
@@ -132,7 +132,7 @@ class settings(QWidget):
         )
         self.hide_right_columns_widget, self.hide_right_columns_text_input = self.create_text_input_widget(
             "Hide right list columns visually",
-            "Hide specified columns visually. This does not effect what mods are displayed.\n"+
+            "Hide specified columns visually. This does not affect what plugins are displayed.\n"+
             "Specify the column names, comma seperated. Available: CELL, WRLD, WTHR, ESM, DEPENDENTS\n"+
             "Example, hides ESM flag and the dependent plugins: ESM,DEPENDENT",
             "ESM,DEPENDENTS",
