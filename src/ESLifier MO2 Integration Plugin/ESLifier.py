@@ -3,7 +3,7 @@ import subprocess
 import os
 import json
 
-from .ESLifier_notifier import check_files
+from .ESLifier_notifier import check_files as notifier
 from .ESLifier_blacklist import blacklist_window
 from .ESLifier_notification_display import notification_display_dialog
 
@@ -111,7 +111,6 @@ class ESLifier(mobase.IPluginTool):
         self.master_not_enabled = False
         self.throbber_iterator = 0
 
-        self.notifier = check_files()
         self.notifcation_display = notification_display_dialog(icon_path)
         self.blacklist_add = blacklist_window(False, self.scan_files)
         self.blacklist_remove = blacklist_window(True, self.scan_files)
@@ -159,8 +158,9 @@ class ESLifier(mobase.IPluginTool):
                 break
 
     def _stop_worker_if_running(self):
-        if self.thread.isRunning():
+        if hasattr(self, 'worker') and self.worker and self.worker.running:
             self.worker.stop()
+        if hasattr(self, 'thread') and self.thread and self.thread.isRunning():
             self.thread.quit()
 
     def scan_files(self):
@@ -179,9 +179,12 @@ class ESLifier(mobase.IPluginTool):
             detect_conflict_changes = self._organizer.pluginSetting(self.name(), "Detect Conflict Changes")
             only_plugins = self._organizer.pluginSetting(self.name(), "Compare Only Game Plugins")
             if os.path.exists(blacklist_path):
-                with open(blacklist_path, 'r', encoding='utf-8') as f:
-                    ignore_list: list[str] = json.load(f)
-                    ignore_list.append("ESLifier_Cell_Master.esm")
+                try:
+                    with open(blacklist_path, 'r', encoding='utf-8') as f:
+                        ignore_list: list[str] = json.load(f)
+                        ignore_list.append("ESLifier_Cell_Master.esm")
+                except Exception as e:
+                    ignore_list = ["ESLifier_Cell_Master.esm"]
             else:
                 ignore_list = ["ESLifier_Cell_Master.esm"]
 
@@ -190,8 +193,8 @@ class ESLifier(mobase.IPluginTool):
             else:
                 filter = "*.esp"
 
-            self.worker = CheckWorker(self._organizer, self.notifier, scan_esms, eslifier_folder, new_header,
-                                       compare_hashes, detect_conflict_changes, only_plugins, ignore_list, filter)
+            self.worker = CheckWorker(self._organizer, scan_esms, eslifier_folder, new_header, compare_hashes, 
+                                      detect_conflict_changes, only_plugins, ignore_list, filter)
             self.worker.moveToThread(self.thread)
             self.thread.started.connect(self.worker.check_files)
             self.worker.finished_signal.connect(self.update_icon)
@@ -427,11 +430,11 @@ class ESLifier(mobase.IPluginTool):
 
 class CheckWorker(QObject):
     finished_signal = pyqtSignal(bool, dict, dict, list, list, list, bool, bool)
-    def __init__(self, organizer: mobase.IOrganizer, file_checker: check_files, scan_esms, eslifier_folder, new_header, 
+    def __init__(self, organizer: mobase.IOrganizer, scan_esms, eslifier_folder, new_header, 
                  compare_hashes, detect_conflict_changes, only_plugins, ignore_list, filter):
         super().__init__()
         self._organizer = organizer
-        self.file_checker = file_checker
+        self.file_checker: notifier = notifier()
         self.scan_esms = scan_esms
         self.eslifier_folder = eslifier_folder
         self.new_header = new_header
@@ -445,7 +448,11 @@ class CheckWorker(QObject):
     def check_files(self):
         mods_path = os.path.normpath(self._organizer.modsPath())
         master_not_enabled = True if self._organizer.pluginList().state("ESLifier_Cell_Master.esm") == 1 else False
-        plugin_files_list = [plugin for plugin in self._organizer.findFiles('', self.filter) if os.path.basename(plugin) not in self.ignore_list and os.path.normpath(plugin).startswith(mods_path)]
+        try:
+            plugin_files_list = [plugin for plugin in self._organizer.findFiles('', self.filter) if os.path.basename(plugin) not in self.ignore_list and os.path.normpath(plugin).startswith(mods_path)]
+        except Exception as e:
+            self.finished_signal.emit(False, {}, {}, [], [], [], False, True)
+            return
         flag, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches, conflict_changes, lost_to_overwrite = self.file_checker.scan_files(
                                     self.scan_esms, self.eslifier_folder, self.new_header, self.compare_hashes, 
                                     self.detect_conflict_changes, self.only_plugins, plugin_files_list, self._organizer)

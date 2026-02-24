@@ -34,31 +34,39 @@ class check_files():
 
         threads: list[threading.Thread] = []
         for chunk in chunks:
+            if not self.running:
+                break
             thread = threading.Thread(target=self.plugin_scanner, args=(chunk, new_header, scan_esms))
             threads.append(thread)
             thread.start()
 
         original_plugins_hash_map = []
-        if compare_hashes:
+        if compare_hashes and self.running:
             original_plugins_path = os.path.join(eslifier_folder, 'ESLifier_Data/original_files.json')
             if os.path.exists(original_plugins_path):
                 with self.semaphore:
-                    with open(original_plugins_path, 'r', encoding='utf-8') as f:
-                        original_plugins_dict: dict = json.load(f)
+                    try:
+                        with open(original_plugins_path, 'r', encoding='utf-8') as f:
+                            original_plugins_dict: dict = json.load(f)
+                    except Exception as e:
+                        return False, {}, {}, [], [], []
                 if only_plugins:
                     original_plugins_hash_map = [values for key, values in original_plugins_dict.items() if key.lower().endswith(('.esp', '.esl', '.esm'))]
                 else:
                     original_plugins_hash_map = [values for key, values in original_plugins_dict.items()]
 
         self.conflict_changes = []
-        if detect_conflict_changes:
+        if detect_conflict_changes and self.running:
             winning_file_history_dict_path = os.path.join(eslifier_folder, "ESLifier_Data/winning_file_history_dict.json")
             mod_list: list[str] = self._organizer.modList().allModsByProfilePriority()
             mod_list.append('overwrite_eslifier_scan')
             if os.path.exists(winning_file_history_dict_path):
                 with self.semaphore:
-                    with open(winning_file_history_dict_path, 'r', encoding='utf-8') as f:
-                        winning_file_history_dict: dict[str, list[str]] = json.load(f)
+                    try:
+                        with open(winning_file_history_dict_path, 'r', encoding='utf-8') as f:
+                            winning_file_history_dict: dict[str, list[str]] = json.load(f)
+                    except Exception as e:
+                        return False, {}, {}, [], [], []
                 for file, old_winner in winning_file_history_dict.items():
                     if self.running:
                         if not 'bsa_extracted_eslifier_scan' == old_winner:
@@ -66,7 +74,7 @@ class check_files():
                     else:
                         break
 
-        if compare_hashes and os.path.exists(original_plugins_path):
+        if compare_hashes and os.path.exists(original_plugins_path) and self.running:
             for plugin, original_hash in original_plugins_hash_map:
                 if self.running:
                     self.compare_previous_hash_to_current(plugin, original_hash)
@@ -99,7 +107,10 @@ class check_files():
             self.hash_mismatches.append("Missing: " + file)
     
     def detect_conflict_change(self, old_winner, file, mod_list: list):
-        origins_unformated: list = self._organizer.getFileOrigins(file)
+        try:
+            origins_unformated: list = self._organizer.getFileOrigins(file)
+        except:
+            return
         origins = [origin if origin != 'Overwrite' else 'overwrite_eslifier_scan' for origin in origins_unformated]
         if len(origins) == 1:
             if old_winner != origins[0]:
@@ -118,7 +129,7 @@ class check_files():
     def plugin_scanner(self, plugins, new_header, scan_esms):
         flag_dict = {}
         for plugin in plugins:
-            esl_allowed, need_compacting, new_cell, interior_cell, new_wrld = self.qualification_check(plugin, new_header, scan_esms)
+            esl_allowed, need_compacting, new_cell, interior_cell, new_wrld, new_wthr = self.qualification_check(plugin, new_header, scan_esms)
             if esl_allowed == True:
                 self.any_esl = True
                 basename = os.path.basename(plugin)
@@ -133,6 +144,8 @@ class check_files():
                                 flag_dict[basename].append('new_interior_cell')
                         if new_wrld:
                             flag_dict[basename].append('new_wrld')
+                        if new_wthr:
+                            flag_dict[basename].append('new_wthr')
         with self.lock:
             for key, value in flag_dict.items():
                 if key not in self.flag_dict:

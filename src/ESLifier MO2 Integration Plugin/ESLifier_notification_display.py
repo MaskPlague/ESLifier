@@ -22,7 +22,9 @@ class notification_display_dialog(QDialog):
         self.MOD_COL = 0
         self.CELL_COL = 1
         self.WRLD_COL = 2
-        self.setMinimumWidth(800)
+        self.WTHR_COL = 3
+        self.COL_COUNT = 4
+        self.setMinimumWidth(900)
         main_layout = QVBoxLayout()
         self.setLayout(main_layout)
         self.setWindowIcon(QIcon(icon_path + '\\ESLifier.ico'))
@@ -51,12 +53,12 @@ class notification_display_dialog(QDialog):
         main_layout.addWidget(self.hash_mismatch_table_label)
         main_layout.addWidget(self.hash_mismatch_table)
 
-        self.needs_flag_table = self.make_table(3)
+        self.needs_flag_table = self.make_table(self.COL_COUNT)
         self.needs_flag_table_label = QLabel("The following plugins can be flagged as esl:")
         main_layout.addWidget(self.needs_flag_table_label)
         main_layout.addWidget(self.needs_flag_table)
 
-        self.needs_compacting_flag_table = self.make_table(3)
+        self.needs_compacting_flag_table = self.make_table(self.COL_COUNT)
         self.needs_compacting_flag_table_label = QLabel("The following plugins can be flagged as esl after compacting:")
         main_layout.addWidget(self.needs_compacting_flag_table_label)
         main_layout.addWidget(self.needs_compacting_flag_table)
@@ -117,17 +119,23 @@ class notification_display_dialog(QDialog):
 
         if len(needs_compacting_flag_dict) > 0:
             self.needs_compacting_flag_table_label.show()
-            self.populate_flag_table(self.needs_compacting_flag_table, needs_compacting_flag_dict)
+            self.populate_flag_table(self.needs_compacting_flag_table, needs_compacting_flag_dict, weather=True)
 
         self.show()
         self.raise_()
 
-    def populate_flag_table(self, table: QTableWidget, data: dict | list):
+    def populate_flag_table(self, table: QTableWidget, data: dict | list, weather = False):
         table.show()
         table.setRowCount(len(data))
         table.setSortingEnabled(False)
         if isinstance(data, dict):
-            table.setHorizontalHeaderLabels(['Mod', 'Cell Flag', 'Worldspace Flag'])
+            headers = ['Mod', 'Cell Flag', 'Worldspace Flag']
+            if weather:
+                headers.append('Weather Flag')
+                table.showColumn(self.WTHR_COL)
+            else:
+                table.hideColumn(self.WTHR_COL)
+            table.setHorizontalHeaderLabels(headers)
             for i, (plugin, flags) in enumerate(data.items()):
                 basename = os.path.basename(plugin)
                 item = QTableWidgetItem(basename)
@@ -141,6 +149,9 @@ class notification_display_dialog(QDialog):
                 if 'new_wrld' in flags:
                     item_wrld_flag = QTableWidgetItem('New Worldspace')
                     table.setItem(i, self.WRLD_COL, item_wrld_flag)
+                if 'new_wthr' in flags:
+                    item_wthr_flag = QTableWidgetItem('New Weather')
+                    table.setItem(i, self.WTHR_COL, item_wthr_flag)
         else:
             for i, file in enumerate(data):
                 item_contents = QTableWidgetItem()
