@@ -6,7 +6,7 @@ import hashlib
 from .ESLifier_qualification_checker import qualification_checker as light_check
 
 class check_files():    
-    def scan_files(self, scan_esms, eslifier_folder, new_header, compare_hashes, detect_conflict_changes, only_plugins, plugin_files_list, eslifier) -> tuple[bool, dict, dict, list, list]:
+    def scan_files(self, scan_esms, eslifier_folder, new_header, compare_hashes, detect_conflict_changes, only_plugins, plugin_files_list, organizer) -> tuple[bool, dict, dict, list, list]:
         self.flag_dict = {}
         self.hash_mismatches = []
         self.lost_to_overwrite = []
@@ -18,7 +18,7 @@ class check_files():
         self.flag_dict.clear()
         self.hash_mismatches.clear()
         self.any_esl = False
-        self.eslifier = eslifier
+        self._organizer = organizer
         self.running = True
 
         if len(plugin_files_list) > 1000:
@@ -53,7 +53,7 @@ class check_files():
         self.conflict_changes = []
         if detect_conflict_changes:
             winning_file_history_dict_path = os.path.join(eslifier_folder, "ESLifier_Data/winning_file_history_dict.json")
-            mod_list: list[str] = self.eslifier._organizer.modList().allModsByProfilePriority()
+            mod_list: list[str] = self._organizer.modList().allModsByProfilePriority()
             mod_list.append('overwrite_eslifier_scan')
             if os.path.exists(winning_file_history_dict_path):
                 with self.semaphore:
@@ -99,7 +99,7 @@ class check_files():
             self.hash_mismatches.append("Missing: " + file)
     
     def detect_conflict_change(self, old_winner, file, mod_list: list):
-        origins_unformated: list = self.eslifier._organizer.getFileOrigins(file)
+        origins_unformated: list = self._organizer.getFileOrigins(file)
         origins = [origin if origin != 'Overwrite' else 'overwrite_eslifier_scan' for origin in origins_unformated]
         if len(origins) == 1:
             if old_winner != origins[0]:

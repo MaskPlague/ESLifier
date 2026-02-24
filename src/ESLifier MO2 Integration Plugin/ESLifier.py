@@ -190,7 +190,7 @@ class ESLifier(mobase.IPluginTool):
             else:
                 filter = "*.esp"
 
-            self.worker = CheckWorker(self, self.notifier, scan_esms, eslifier_folder, new_header,
+            self.worker = CheckWorker(self._organizer, self.notifier, scan_esms, eslifier_folder, new_header,
                                        compare_hashes, detect_conflict_changes, only_plugins, ignore_list, filter)
             self.worker.moveToThread(self.thread)
             self.thread.started.connect(self.worker.check_files)
@@ -427,10 +427,10 @@ class ESLifier(mobase.IPluginTool):
 
 class CheckWorker(QObject):
     finished_signal = pyqtSignal(bool, dict, dict, list, list, list, bool, bool)
-    def __init__(self, eslifier: ESLifier, file_checker: check_files, scan_esms, eslifier_folder, new_header, 
+    def __init__(self, organizer: mobase.IOrganizer, file_checker: check_files, scan_esms, eslifier_folder, new_header, 
                  compare_hashes, detect_conflict_changes, only_plugins, ignore_list, filter):
         super().__init__()
-        self.eslifier = eslifier
+        self._organizer = organizer
         self.file_checker = file_checker
         self.scan_esms = scan_esms
         self.eslifier_folder = eslifier_folder
@@ -443,12 +443,12 @@ class CheckWorker(QObject):
         self.running = True
 
     def check_files(self):
-        mods_path = os.path.normpath(self.eslifier._organizer.modsPath())
-        master_not_enabled = True if self.eslifier._organizer.pluginList().state("ESLifier_Cell_Master.esm") == 1 else False
-        plugin_files_list = [plugin for plugin in self.eslifier._organizer.findFiles('', self.filter) if os.path.basename(plugin) not in self.ignore_list and os.path.normpath(plugin).startswith(mods_path)]
+        mods_path = os.path.normpath(self._organizer.modsPath())
+        master_not_enabled = True if self._organizer.pluginList().state("ESLifier_Cell_Master.esm") == 1 else False
+        plugin_files_list = [plugin for plugin in self._organizer.findFiles('', self.filter) if os.path.basename(plugin) not in self.ignore_list and os.path.normpath(plugin).startswith(mods_path)]
         flag, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches, conflict_changes, lost_to_overwrite = self.file_checker.scan_files(
                                     self.scan_esms, self.eslifier_folder, self.new_header, self.compare_hashes, 
-                                    self.detect_conflict_changes, self.only_plugins, plugin_files_list, self.eslifier)
+                                    self.detect_conflict_changes, self.only_plugins, plugin_files_list, self._organizer)
         if master_not_enabled:
             flag = True
         if self.running:
