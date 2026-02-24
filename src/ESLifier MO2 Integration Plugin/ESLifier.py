@@ -10,17 +10,20 @@ from .ESLifier_notification_display import notification_display_dialog
 try:
     from PyQt6.QtCore import QCoreApplication, QObject, pyqtSignal, QThread, QTimer
     from PyQt6.QtGui import QIcon, QColor
-    from PyQt6.QtWidgets import QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton, QToolBar, QCheckBox, QLabel, QGridLayout, QWidget
+    from PyQt6.QtWidgets import (QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton,
+                                  QToolBar, QCheckBox, QLabel, QGridLayout, QWidget, QApplication)
 except ImportError:
     from PyQt5.QtCore import QCoreApplication, QObject, pyqtSignal, QThread, QTimer
     from PyQt5.QtGui import QIcon, QColor
-    from PyQt5.QtWidgets import QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton, QToolBar, QCheckBox, QLabel, QGridLayout, QWidget
+    from PyQt5.QtWidgets import (QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton,
+                                  QToolBar, QCheckBox, QLabel, QGridLayout, QWidget, QApplication)
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from PyQt6.QtCore import QCoreApplication, QObject, pyqtSignal, QThread, QTimer
     from PyQt6.QtGui import QIcon, QColor
-    from PyQt6.QtWidgets import QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton, QToolBar, QCheckBox, QLabel, QGridLayout, QWidget
+    from PyQt6.QtWidgets import (QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton,
+                                  QToolBar, QCheckBox, QLabel, QGridLayout, QWidget, QApplication)
             
 class ESLifier(mobase.IPluginTool):
     def __init__(self):
@@ -42,7 +45,10 @@ class ESLifier(mobase.IPluginTool):
         return mobase.VersionInfo(1, 5, 1, mobase.ReleaseType.FINAL)
     
     def requirements(self):
-        return[]
+        return [mobase.PluginRequirementFactory.gameDependency({
+                "Skyrim Special Edition",
+                "Skyrim VR"
+            })]
     
     def settings(self):
         return [
@@ -77,6 +83,23 @@ class ESLifier(mobase.IPluginTool):
 
     def init(self, organiser = mobase.IOrganizer):
         self._organizer = organiser
+        icon_path = os.path.join(os.path.dirname(self._organizer.getPluginDataPath()), 'ESLifier MO2 Integration')
+
+        self._init_state(icon_path)
+        self._create_icons(icon_path)
+        self._create_throbber(icon_path)
+
+        self._create_eslifier_button()
+        
+        self._hook_up_callbacks()
+
+        QApplication.instance().aboutToQuit.connect(self._stop_worker_if_running)
+
+        return True
+
+    
+    def _init_state(self, icon_path):
+        self.validGame = True
         self.main_dialog = QDialog()
         self.settings_dialog = QDialog()
         self.thread = QThread()
@@ -88,55 +111,63 @@ class ESLifier(mobase.IPluginTool):
         self.master_not_enabled = False
         self.throbber_iterator = 0
 
-        icon_path = os.path.join(os.path.split(self._organizer.getPluginDataPath())[0], 'ESLifier MO2 Integration')
+        self.notifier = check_files()
+        self.notifcation_display = notification_display_dialog(icon_path)
+        self.blacklist_add = blacklist_window(False, self.scan_files)
+        self.blacklist_remove = blacklist_window(True, self.scan_files)
+    
+    def _create_icons(self, icon_path):
         self.eslifier_icon_default = QIcon(icon_path + '\\ESLifier.ico')
         self.eslifier_icon = self.eslifier_icon_default
         self.main_dialog.setWindowIcon(self.eslifier_icon)
         self.eslifier_icon_notif = QIcon(icon_path + '\\ESLifier_with_notif_badge.ico')
         self.eslifier_icon_greyed_out = QIcon(icon_path + '\\ESLifier_greyed_out.ico')
-
+    
+    def _create_throbber(self, icon_path):
         throbber_top_icon = QIcon(icon_path + '\\ESLifier_throbber_top.ico')
         throbber_right_icon = QIcon(icon_path + '\\ESLifier_throbber_right.ico')
         throbber_bottom_icon = QIcon(icon_path + '\\ESLifier_throbber_bottom.ico')
         throbber_left_icon = QIcon(icon_path + '\\ESLifier_throbber_left.ico')
         self.eslifier_thobber = [throbber_top_icon, throbber_right_icon, throbber_bottom_icon, throbber_left_icon]
         self.throbber_timer = QTimer()
-        self.throbber_timer.timeout.connect(self.throbber_iterate)
+        self.throbber_timer.timeout.connect(self._throbber_iterate)
         self.throbber_timer.setInterval(250)
-
+    
+    def _create_eslifier_button(self):
         self.eslifier_button = QToolButton()
         self.eslifier_button.setIcon(self.eslifier_icon_greyed_out)
         self.eslifier_button.clicked.connect(self.display)
 
+    def _hook_up_callbacks(self):
         self._organizer.onUserInterfaceInitialized(self.create)
-        self._organizer.onUserInterfaceInitialized(self.create_settings_dialog)
+        self._organizer.onUserInterfaceInitialized(self._create_settings_dialog)
         self._organizer.pluginList().onRefreshed(self.scan_files)
         self._organizer.pluginList().onPluginStateChanged(self.scan_if_cell_master_state_changed)
-
-        self.notifier = check_files()
-        self.notifcation_display = notification_display_dialog(icon_path)
-        self.blacklist_add = blacklist_window(False, self.scan_files)
-        self.blacklist_remove = blacklist_window(True, self.scan_files)
-
-        return True
     
-    def throbber_iterate(self):
+    def _throbber_iterate(self):
         if self.throbber_iterator > 3:
             self.throbber_iterator = 0
         self.eslifier_button.setIcon(self.eslifier_thobber[self.throbber_iterator])
         self.throbber_iterator += 1
     
     def scan_if_cell_master_state_changed(self, state_changes):
+        if not self.validGame:
+            return
         for mod in state_changes:
             if mod == 'ESLifier_Cell_Master.esm':
                 self.scan_files()
                 break
-    
-    def scan_files(self):
-        notifications_enabled = self._organizer.pluginSetting(self.name(), "Enable Notifications")
+
+    def _stop_worker_if_running(self):
         if self.thread.isRunning():
             self.worker.stop()
             self.thread.quit()
+
+    def scan_files(self):
+        if not self.validGame:
+            return
+        notifications_enabled = self._organizer.pluginSetting(self.name(), "Enable Notifications")
+        self._stop_worker_if_running()
 
         if notifications_enabled:
             self.throbber_timer.start()
@@ -168,7 +199,7 @@ class ESLifier(mobase.IPluginTool):
             self.worker.finished_signal.connect(self.worker.deleteLater)
             self.thread.start()
         else:
-            self.grey_out_icon()
+            self._grey_out_icon()
         return
 
     def update_icon(self, any_eslable_or_issue, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches, conflict_changes, lost_to_overwrite, master_enabled, early_exit):
@@ -187,10 +218,10 @@ class ESLifier(mobase.IPluginTool):
             self.master_not_enabled = master_enabled
             self.notification_button.show()
         else:
-            self.grey_out_icon()
+            self._grey_out_icon()
         return
     
-    def grey_out_icon(self):
+    def _grey_out_icon(self):
         self.eslifier_button.setIcon(self.eslifier_icon_greyed_out)
         self.eslifier_icon = self.eslifier_icon_default
         self.needs_flag_dict.clear()
@@ -200,7 +231,7 @@ class ESLifier(mobase.IPluginTool):
         self.master_not_enabled = False
         self.notification_button.hide()
     
-    def create_label_check_box_setting_pair(self, layout: QGridLayout, text: str, row: int, tool_tip = None) -> QCheckBox:
+    def _create_label_check_box_setting_pair(self, layout: QGridLayout, text: str, row: int, tool_tip = None) -> QCheckBox:
         label = QLabel(text)
         check_box = QCheckBox()
         if tool_tip:
@@ -213,17 +244,17 @@ class ESLifier(mobase.IPluginTool):
         layout.addWidget(check_box, row, 1)
         return check_box
     
-    def create_settings_dialog(self, _):
+    def _create_settings_dialog(self, _):
         self.settings_dialog = QDialog()
         layout = QGridLayout()
         self.settings_dialog.setLayout(layout)
 
-        self.notifications_check_box = self.create_label_check_box_setting_pair(layout, "Enable Notifications", 0)
-        self.esms_check_box = self.create_label_check_box_setting_pair(layout, "Scan ESMs", 1)
-        self.header_check_box = self.create_label_check_box_setting_pair(layout, "Use 1.71 Header Range", 2)
-        self.compare_file_hashes_check_box = self.create_label_check_box_setting_pair(layout, "Compare File Hashes", 3, "Compare current file hashes to the hashes of the last ESLifier run.")
-        self.compare_only_game_plugins_check_box = self.create_label_check_box_setting_pair(layout, "Compare Only Game Plugins", 4, "If 'Compare File Hashes' and this are enabled:\nonly check game plugins (faster),\nelse compare all file hashes (slower).")
-        self.detect_file_conflict_changes_check_box = self.create_label_check_box_setting_pair(layout, "Detect Conflict Changes", 5, "Detect if a file conflict change has occured since ESLifier last ran.")
+        self.notifications_check_box = self._create_label_check_box_setting_pair(layout, "Enable Notifications", 0)
+        self.esms_check_box = self._create_label_check_box_setting_pair(layout, "Scan ESMs", 1)
+        self.header_check_box = self._create_label_check_box_setting_pair(layout, "Use 1.71 Header Range", 2)
+        self.compare_file_hashes_check_box = self._create_label_check_box_setting_pair(layout, "Compare File Hashes", 3, "Compare current file hashes to the hashes of the last ESLifier run.")
+        self.compare_only_game_plugins_check_box = self._create_label_check_box_setting_pair(layout, "Compare Only Game Plugins", 4, "If 'Compare File Hashes' and this are enabled:\nonly check game plugins (faster),\nelse compare all file hashes (slower).")
+        self.detect_file_conflict_changes_check_box = self._create_label_check_box_setting_pair(layout, "Detect Conflict Changes", 5, "Detect if a file conflict change has occured since ESLifier last ran.")
 
         folder = self._organizer.pluginSetting(self.name(), "ESLifier Folder")
         if len(folder) > 30:
@@ -232,7 +263,7 @@ class ESLifier(mobase.IPluginTool):
             self.folder_path = QLabel(folder)
         self.folder_path.setToolTip("Set this to the folder that holds ESLifier.exe")
         layout.addWidget(self.folder_path, 6, 0)
-        path_button = self.button_maker("Explore", self.set_eslifier_path)
+        path_button = self._button_maker("Explore", self.set_eslifier_path)
         path_button.setToolTip("Set this to the folder that holds ESLifier.exe")
         layout.addWidget(path_button, 6, 1)
 
@@ -304,20 +335,24 @@ class ESLifier(mobase.IPluginTool):
                 self.folder_path.setText(path)
 
     def create(self, _):
+        game = self._organizer.managedGame()
+        if not game.gameName() in ("Skyrim Special Edition", "Skyrim VR"):
+            self.validGame = False
+            return
         v_layout = QVBoxLayout()
         self.main_dialog.setLayout(v_layout)
         self.main_dialog.setWindowTitle('ESLifier MO2 Integration')
-        self.notification_button = self.button_maker("Show Notifications", self.display_notifications)
+        self.notification_button = self._button_maker("Show Notifications", self.display_notifications)
         self.notification_button.hide()
         p = self.notification_button.palette()
         p.setColor(p.ColorRole.ButtonText, QColor('Red'))
         self.notification_button.setPalette(p)
-        v_layout.addWidget(self.button_maker("Start ESLifier", self.start_eslifier, True))
-        v_layout.addWidget(self.button_maker("Add Plugins to Blacklist", self.add_to_blacklist))
-        v_layout.addWidget(self.button_maker("Remove Plugins from Blacklist", self.remove_from_blacklist))
-        v_layout.addWidget(self.button_maker("Change Plugin Settings", self.display_settings))
+        v_layout.addWidget(self._button_maker("Start ESLifier", self.start_eslifier, True))
+        v_layout.addWidget(self._button_maker("Add Plugins to Blacklist", self.add_to_blacklist))
+        v_layout.addWidget(self._button_maker("Remove Plugins from Blacklist", self.remove_from_blacklist))
+        v_layout.addWidget(self._button_maker("Change Plugin Settings", self.display_settings))
         v_layout.addWidget(self.notification_button)
-        v_layout.addWidget(self.button_maker("Exit", None, True))
+        v_layout.addWidget(self._button_maker("Exit", None, True))
         
         #Install notification button to MO2 tool bar
         tool_bar = self._parentWidget().findChild(QToolBar, 'toolBar')
@@ -349,7 +384,7 @@ class ESLifier(mobase.IPluginTool):
                     action = tool_bar.children()[-9].actions()[0]
                     tool_bar.insertWidget(action, self.eslifier_button)
 
-    def button_maker(self, name, function, hide=False):
+    def _button_maker(self, name, function, hide=False):
         button = QPushButton(name)
         if hide:
             button.clicked.connect(self.main_dialog.hide)
