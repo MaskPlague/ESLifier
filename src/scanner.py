@@ -57,15 +57,19 @@ class scanner():
 
         scanner.ignored_files = tuple(master_ignored_files)
         scanner.file_extensions = tuple([item.lower() for item in ('.ini', '.json', '.jslot', '.toml', '_conditions.txt', '.yaml', '.yml')])
-        scanner.exclude_contains = tuple([item.lower() for item in (
+
+        exclude_contains = [item.lower() for item in (
             'modex\\user\\kits',
             'nemesis_engine',
             'quickarmorrebalance\\config\\',
             'equipmenttoggle\\slotdata\\',
             '\\headpartwhitelist\\',
             '\\interface\\quests\\'
-            )])
-        scanner.exclude_endswith = tuple([item.lower() for item in (
+            )]
+        exclude_contains.extend([item.lower() for item in master_ignored_file_data.get("ignored_contains", [])])
+        scanner.exclude_contains = tuple(exclude_contains)
+
+        exclude_endswith = [item.lower() for item in (
             '\\revealingarmo_tng.ini',
             '\\enginefixes_snct.toml', 
             '\\enginefixes_snct.ini',
@@ -76,7 +80,10 @@ class scanner():
             '\\merge.json', '\\map.json', '\\fidcache.json', #zMerge
             '\\parallaxgen_diff.json',
             '\\console_cheatsheet.json'
-            )])
+            )]
+        exclude_endswith.extend([item.lower() for item in master_ignored_file_data.get("ignored_endswith", [])])
+        scanner.exclude_endswith = tuple(exclude_endswith)
+
         total_ram = psutil.virtual_memory().available
         usable_ram = total_ram * 0.90
         thread_memory_usage = 10 * 1024 * 1024 # assume each file is about 10 MB
@@ -644,8 +651,10 @@ class scanner():
             if (scanner.count % factor) >= (factor-1):
                 print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + 
                       '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
-            if ((file_lower.endswith(scanner.file_extensions) or (file_lower.endswith('config.txt') and 'plugins\\customskill' in file_lower))
-                and not (any(exclusion in file_lower for exclusion in scanner.exclude_contains) or file_lower.endswith(scanner.exclude_endswith))
+            if ((file_lower.endswith(scanner.file_extensions) 
+                 or (file_lower.endswith('config.txt') and 'plugins\\customskill' in file_lower))
+                 and not (any(exclusion in file_lower for exclusion in scanner.exclude_contains) 
+                          or file_lower.endswith(scanner.exclude_endswith))
                 ):
                 if 'kreate\\presets\\' in file_lower and file_lower.endswith('.ini'):
                     scanner.kreate_files.append(file)

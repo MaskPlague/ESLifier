@@ -1,5 +1,5 @@
 {
-    "version": 6,
+    "version": 7,
     "ignored_files": [
         "BFCO_FX_CheckPreAttackIsOK.pex",
         "BFCO_FX_PlayIdleListKeyE.pex",
@@ -12,5 +12,12 @@
         "DynamicStringDistributor.dll",
         "taglist.yaml",
         "AddItemMenuSE.ini"
+    ],
+    "ignored_endswith": [
+        "_SkyrimDiagReport.txt",
+        "_SkyrimDiagSummary.json"
+    ],
+    "ignored_contains": [
+        "SkyrimDiag_Incident_"
     ]
 }
