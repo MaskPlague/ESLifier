@@ -698,6 +698,7 @@ class patchers():
         return form_id_string
 
     def ini_kreate_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+    def ini_kreate_patcher_pre_1_dot_5(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         edid_file = 'ESLifier_Data\\EDIDs\\' + basename + '_EDIDs.txt'
         edids = []
         with open(edid_file, 'r', encoding='utf-8') as f:
