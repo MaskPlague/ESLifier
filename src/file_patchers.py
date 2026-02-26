@@ -51,7 +51,8 @@ class patchers():
             f.truncate(0)
             f.write(b''.join(new_seq_form_id_list))
             f.close()
-        
+    #TODO: make a method to download certain pex files from github, save them to a folder as a cache (don't redownload if already downloaded)
+    # and copy the file to the output if the file has getmodbyname since the thing is unpatchable via my methods.
     def pex_patcher(basename: str, new_file: str, form_id_map: dict):
         with open(new_file,'rb+') as f:
             data = f.read()
@@ -178,7 +179,7 @@ class patchers():
             lines = f.readlines()
             print_replace = True
             for i, line in enumerate(lines):
-                if '|'+basename in line.lower() and '|' in line and not line.startswith(';'):
+                if not line.startswith(';') and '|'+basename in line.lower():
                     end_index = line.lower().index("|"+basename)
                     start_index = patchers.find_prev_non_alphanumeric(line, end_index-1)
                     start_of_line = line[:start_index+1]
