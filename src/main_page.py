@@ -989,13 +989,49 @@ class main(QWidget):
             dialog.setWindowTitle("Select files to remove.")
             dialog.setStyleSheet("QDialog {background-color: tomato;}")
             dialog.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
+
+            def somethingChanged(item_changed:QListWidgetItem):
+                listWidget.blockSignals(True)
+                if item_changed in listWidget.selectedItems():
+                    if item_changed.checkState() == Qt.CheckState.Checked:
+                        for x in listWidget.selectedItems():
+                            x.setCheckState(Qt.CheckState.Checked)
+                    else:
+                        for x in listWidget.selectedItems():
+                            x.setCheckState(Qt.CheckState.Unchecked)
+                listWidget.blockSignals(False)
+
             listWidget = QListWidget()
+            listWidget.itemChanged.connect(somethingChanged)
             listWidget.setEditTriggers(QListWidget.EditTrigger.NoEditTriggers)
-            listWidget.setAutoScroll(False)
+            listWidget.setSelectionBehavior(QListWidget.SelectionBehavior.SelectRows)
+            listWidget.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
+            listWidget.setAutoScroll(True)
             layout = QVBoxLayout()
             buttons_widget = QWidget()
             buttons_layout = QHBoxLayout()
             buttons_widget.setLayout(buttons_layout)
+            
+            filter = QLineEdit()
+            buttons_layout.addWidget(filter)
+            filter.setPlaceholderText("Filter")
+            filter.setToolTip("Search bar")
+            filter.setMinimumWidth(50)
+            filter.setMaximumWidth(150)
+            filter.setAlignment(Qt.AlignmentFlag.AlignRight)
+            filter.setClearButtonEnabled(True)
+
+            def filtered():
+                if len(filter.text()) > 0:
+                    items = listWidget.findItems(filter.text(), Qt.MatchFlag.MatchContains)
+                    if len(items) > 0:
+                        for i in range(listWidget.count()):
+                            listWidget.setRowHidden(i, False if listWidget.item(i) in items else True)
+                else:
+                    for i in range(listWidget.count()):
+                        listWidget.setRowHidden(i, False)
+
+            filter.textEdited.connect(filtered)
             
             self.hash_changed_option = 'keep_all'
             def delete_selected():
