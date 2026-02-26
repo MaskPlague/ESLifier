@@ -14,7 +14,8 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
   
   <details>
     <summary>.INI Files</summary>
-    
+
+    Animated Object Swapper
     AutoBody
     Base Object Swapper
     Completionist
@@ -56,13 +57,18 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
     Dynamic Armor Variants
     Dynamic Key Activation Framework NG
     Dynamic String Distributor
+    Follower Slavery Mod
+    Frost Fall Data
     Generic Synthesis Patcher (GSP)
     Immersive Equipment Display
     Immersive Hair Growth and Styling
+    Immersive Interactions
     Inte's Devious Devices - Equip
     Inte's Skyrim - Utility Mod
     Inventory Injector
+    Let Your Hair Down
     Magic Fixes and Tweaks SKSE
+    M.A.R.A.S.
     MCM Helper
     OBody NG
     Open Animation Replacer
@@ -104,6 +110,7 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
       - facegeom's .nif: Texture paths in face mesh files
       - voice, facetint, facegeom: The names of these files are patched
       - .seq: SEQ files
+      - yaml: Precision Locational Damage Framework
 
   </details>
 </details>
