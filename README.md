@@ -101,7 +101,7 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
   </details>
 
   <details>
-    <summary>Other Types</summary>
+    <summary>.YAML Files</summary>
 
     Precision - Unofficial Locational Damage Framework
     Sound record distributor
