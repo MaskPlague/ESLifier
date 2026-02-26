@@ -126,7 +126,7 @@ ESLifier includes a modified BSArch.exe (from [TES5Edit](https://github.com/TES5
 
 ## User Manual
 Notes:
-- If you use MO2 do **NOT** add ESLifier.exe as an executable. Launching ESLifier through MO2 significantly slows down the file scanning process. Instead enable MO2 mode in the settings of ESLifier. Also, ESLifier can scan the Overwrite folder however, you will probably want to move everything in it to a mod instead, so that ESLifier's output can win any file conflicts and you won't keep the only copy of any configs generated in overwrite patched to ESLifier Output as your only copy.
+- If you use MO2 do $${\color{red}NOT}$$ add ESLifier.exe as an executable. Launching ESLifier through MO2 significantly slows down the file scanning process. It may also conflict with certain features. Instead enable MO2 mode in the settings of ESLifier. Also, ESLifier can scan the Overwrite folder however, you will probably want to move everything in it to a mod instead, so that ESLifier's output can win any file conflicts and you won't keep the only copy of any configs generated in overwrite patched to ESLifier Output as your only copy.
 - There is now a MO2 plugin that will notify users of when a plugin is ESLify-able and can allow users to edit the plugin blacklist.
 - Almost every element in the program has a tooltip that is activated by hovering over it.
 - ESLifier may cause issues in existing save games as is the nature of compacting Form IDs.
