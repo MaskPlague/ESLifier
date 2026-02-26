@@ -1865,7 +1865,7 @@ class patchers():
             f.close()
 
 #if __name__ == '__main__':
-#    basename = "blackreachrailroadnew.esp".lower()
-#    form_id_map = {135385: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'update_name': True}, 4804: {'hex_no_0': 'B0B', 'update_name': True}}
+#    basename = "thing.esp".lower()
+#    form_id_map = {2052: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'update_name': False}, 104445: {'hex_no_0': 'B0B', 'update_name': True}}
 #    new_file = os.path.normpath(r)
-#    patchers.json_achievement_injector_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
+#    patchers.ini_kreate_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
