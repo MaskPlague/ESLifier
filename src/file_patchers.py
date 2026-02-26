@@ -2,6 +2,9 @@ import json
 import json5
 import os
 
+import configparser
+import io
+
 class patchers():    
     def find_prev_non_alphanumeric(text: str, start_index: int, tokens: set[str] = ()):
         for i in range(start_index, 0, -1):
@@ -722,6 +725,40 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
+    def ini_kreate_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+        ini = configparser.ConfigParser()
+        ini.optionxform = str
+        with open(new_file, 'r', encoding=encoding_method) as f:
+            config_data = f.read()
+        has_top_section = False
+        if not config_data.startswith('['):
+            has_top_section = True
+            config_data = '[eslifier_top_section]\n' + config_data
+        ini.read_string(config_data)
+        for section in ini.sections():
+            for key, value in ini[section].items():
+                if "Symbol" in key and '|' in value:
+                    parts = value.split('|')
+                    current_esp = parts[0].strip()
+                    if current_esp.lower() == basename:
+                        form_id_int = int(parts[1].strip(),16)
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            id_key = key.replace("Symbol", "ID")
+                            ini[section][key] = current_esp + '|' + to_id_data["hex_no_0"].lower()
+                            ini[section][id_key] = '0x' + to_id_data["hex_no_0"].lower()
+        
+        buffer = io.StringIO()
+        ini.write(buffer)
+        data = buffer.getvalue()
+        if has_top_section:
+            _, _, data = data.partition('\n')
+        with open(new_file, 'w', encoding=encoding_method) as f:
+            f.seek(0)
+            f.truncate(0)
+            f.write(data)
+            f.close()
+        
     # No Cell Form IDs possible (I think?)
     def ini_dyndolod_rules_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:

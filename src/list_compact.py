@@ -248,7 +248,7 @@ class list_compactable(QTableWidget):
             if 'new_wthr' in flags:
                 item_wthr_flag = QTableWidgetItem('!New WTHR!')
                 item_wthr_flag.setToolTip('This mod has a new WTHR (weather) record which can be referenced in\n'+
-                                          'an ENB preset (not patched) or KreatE preset (patched with caveat).')
+                                          'ENB presets which are not patched.')
                 if self.filter_weather:
                     hide_row = True
                 self.setItem(i, self.WTHR_COL, item_wthr_flag)

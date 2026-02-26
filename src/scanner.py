@@ -583,8 +583,8 @@ class scanner():
         for thread in scanner.threads: thread.join()
         scanner.threads.clear()
 
-        print("-  Scanning Other files\n\n")
-        scanner.kreate_processor()
+        #print("-  Scanning Other files\n\n")
+        #scanner.kreate_processor()
 
     def kreate_processor():
         plugin_edid_dict: dict[str, list[str]] = {}
@@ -656,9 +656,9 @@ class scanner():
                  and not (any(exclusion in file_lower for exclusion in scanner.exclude_contains) 
                           or file_lower.endswith(scanner.exclude_endswith))
                 ):
-                if 'kreate\\presets\\' in file_lower and file_lower.endswith('.ini'):
-                    scanner.kreate_files.append(file)
-                    continue
+                #if 'kreate\\presets\\' in file_lower and file_lower.endswith('.ini'):
+                #    scanner.kreate_files.append(file)
+                #    continue
                 thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
                 scanner.threads.append(thread)
                 thread.start()

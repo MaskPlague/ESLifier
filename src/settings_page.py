@@ -118,8 +118,7 @@ class settings(QWidget):
         )
         self.enable_weather_filter_widget, self.enable_weather_filter_toggle = self.create_toggle_widget(
             "Hide plugins with new WTHR (weather) records",
-            "Hide plugins with new weather records as they can be referenced in an ENB preset (not patched)\n"+
-            "or KreatE preset (patched with caveat).",
+            "Hide plugins with new weather records as they can be referenced in ENB presets which are not patched",
             "filter_weathers"
         )
         self.hide_left_columns_widget, self.hide_left_columns_text_input = self.create_text_input_widget(

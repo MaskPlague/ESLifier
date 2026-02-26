@@ -129,7 +129,7 @@ class qualification_checker():
         need_compacting = False
         new_wrld = False
         new_wthr = False
-        edids = []
+        #edids = []
         cell_form_ids = []
         for form in data_list:
             record_type = form[:4]
@@ -164,27 +164,27 @@ class qualification_checker():
                 if record_type == b'WTHR':
                     new_wthr = True
 
-                if record_type in (b'CELL', b'CLMT', b'IMGS', b'LGTM', b'VOLI', b'WTHR'): # Get EDIDs for KreatE and whatever else may use them in the future
-                    flag_byte = form[10]
-                    compressed_flag = (flag_byte & 0x04) != 0
-                    form_to_check = form
-                    if compressed_flag:
-                        form_to_check = form[:24] + zlib.decompress(form[28:])
-                    if form_to_check[24:28] == b'EDID':
-                        offset = 28
-                        edid_len = struct.unpack("<H", form_to_check[offset:offset+2])[0]
-                        offset += 2
-                        edids.append(form_to_check[offset:offset+edid_len-1].decode())
+                #if record_type in (b'CELL', b'CLMT', b'IMGS', b'LGTM', b'VOLI', b'WTHR'): # Get EDIDs for KreatE and whatever else may use them in the future
+                #    flag_byte = form[10]
+                #    compressed_flag = (flag_byte & 0x04) != 0
+                #    form_to_check = form
+                #    if compressed_flag:
+                #        form_to_check = form[:24] + zlib.decompress(form[28:])
+                #    if form_to_check[24:28] == b'EDID':
+                #        offset = 28
+                #        edid_len = struct.unpack("<H", form_to_check[offset:offset+2])[0]
+                #        offset += 2
+                #        edids.append(form_to_check[offset:offset+edid_len-1].decode())
 
             if record_type == b'CELL' and form[15] >= master_count and str(form[12:15].hex()) not in cell_form_ids:
                 cell_form_ids.append(str(form[12:15].hex()))
         
-        edids.sort()
-        if edids != []:
-            edid_file = "ESLifier_Data/EDIDs/" + basename + '_EDIDs.txt'
-            with open(edid_file, 'w', encoding='utf-8') as f:
-                for edid in edids:
-                    f.write(edid + '\n')
+        #edids.sort()
+        #if edids != []:
+        #    edid_file = "ESLifier_Data/EDIDs/" + basename + '_EDIDs.txt'
+        #    with open(edid_file, 'w', encoding='utf-8') as f:
+        #        for edid in edids:
+        #            f.write(edid + '\n')
         cell_form_ids.sort()
         if cell_form_ids != [] and is_esm:
             cell_form_id_file = 'ESLifier_Data/Cell_IDs/' + basename + '_CellFormIDs.txt'
