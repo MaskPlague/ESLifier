@@ -102,6 +102,13 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
 
   <details>
     <summary>Other Types</summary>
+
+    Precision - Unofficial Locational Damage Framework
+    Sound record distributor
+  </details>
+
+  <details>
+    <summary>Other Types</summary>
     
       - .pex: Compiled script files
       - _conditions.txt: Dynamic Animation Replacer
@@ -110,7 +117,6 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
       - facegeom's .nif: Texture paths in face mesh files
       - voice, facetint, facegeom: The names of these files are patched
       - .seq: SEQ files
-      - yaml: Precision Locational Damage Framework
 
   </details>
 </details>
