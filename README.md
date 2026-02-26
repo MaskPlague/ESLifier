@@ -26,7 +26,7 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
     Form List Manipulator
     Item Property Manipulator
     Keyword Item Distributor
-    KreatE (with caveats)
+    KreatE (only version 1.5+ configs are supported, you may need to launch the game with your weather mod non-compacted to first convert non v1.5+ configs to v1.5 correctly)
     Leveled List Object Swapper
     Light Placer
     Music Type Distributor
