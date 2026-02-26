@@ -11,25 +11,25 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
             patchers.ini_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('_flm.ini'):                                           # Form List Manipulator
             patchers.ini_form_list_manipulator_patcher(basename, new_file_lower, form_id_map, encoding_method=encoding)
-        elif 'seasons\\' in new_file_lower:                                                 # Po3's Seasons of Skyrim
+        elif '\\seasons\\' in new_file_lower:                                                 # Po3's Seasons of Skyrim
             patchers.ini_seasons_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-        elif 'payloadinterpreter\\' in new_file_lower:                                      # Payload Interpreter
+        elif '\\payloadinterpreter\\' in new_file_lower:                                      # Payload Interpreter
             patchers.ini_payload_interpreter_and_dtrys_key_utils_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-        elif 'dtrykeyutil\\' in new_file_lower:                                             # DtryKeyUtil
+        elif '\\dtrykeyutil\\' in new_file_lower:                                             # DtryKeyUtil
             patchers.ini_payload_interpreter_and_dtrys_key_utils_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-        elif 'muimpactframework\\' in new_file_lower or 'muskeletoneditor\\' in new_file_lower: # MU
+        elif '\\muimpactframework\\' in new_file_lower or '\\muskeletoneditor\\' in new_file_lower: # MU
             patchers.ini_mu_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\poisebreaker_' in new_file_lower:                                           # Poise Breaker
             patchers.ini_eq_plugin_sep_formid_patcher(basename, new_file, form_id_map, sep=':', encoding_method=encoding)
-        elif 'skypatcher\\' in new_file_lower:                                              # Sky Patcher
+        elif '\\skypatcher\\' in new_file_lower:                                              # Sky Patcher
             patchers.ini_skypatcher_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-        elif 'valhallacombat\\' in new_file_lower:                                          # Valhalla Combat
+        elif '\\valhallacombat\\' in new_file_lower:                                          # Valhalla Combat
             patchers.ini_eq_plugin_sep_formid_patcher(basename, new_file, form_id_map, sep='|', encoding_method=encoding)
         elif '\\autobody\\' in new_file_lower:                                              # AutoBody
             patchers.ini_auto_body_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\vsu\\' in new_file_lower:                                                     # VSU
             patchers.ini_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-        elif 'completionistdata\\' in new_file_lower:                                       # Completionist
+        elif '\\completionistdata\\' in new_file_lower:                                       # Completionist
             patchers.ini_completionist_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'kreate\\presets' in new_file_lower:                                           # KreatE
             patchers.ini_kreate_patcher(basename, new_file, form_id_map, encoding_method=encoding)
