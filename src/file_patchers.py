@@ -697,7 +697,6 @@ class patchers():
             form_id_string = '; ' + form_id_string
         return form_id_string
 
-    def ini_kreate_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
     def ini_kreate_patcher_pre_1_dot_5(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         edid_file = 'ESLifier_Data\\EDIDs\\' + basename + '_EDIDs.txt'
         edids = []
@@ -747,7 +746,8 @@ class patchers():
                         if to_id_data is not None:
                             id_key = key.replace("Symbol", "ID")
                             ini[section][key] = current_esp + '|' + to_id_data["hex_no_0"].lower()
-                            ini[section][id_key] = '0x' + to_id_data["hex_no_0"].lower()
+                            if id_key in ini[section]:
+                                ini[section][id_key] = '0x' + to_id_data["hex_no_0"].lower()
         
         buffer = io.StringIO()
         ini.write(buffer)
