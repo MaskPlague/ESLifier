@@ -133,14 +133,10 @@ class patchers():
             lines = f.readlines()
             print_replace = True
             for i, line in enumerate(lines):
-                if not ';' in line and basename in line.lower():
-                    index_1 = line.find('~')
-                    index_2 = line.find('|', index_1)
-                    index_3 = line.find('~', index_2)
-                    plugin_1 = line[index_1+1:index_2]
-                    plugin_2 = line[index_3+1:]
-                    form_id_1 = line[:index_1]
-                    form_id_2 = line[index_2+1:index_3]
+                if not line.strip().startswith(';') and "~"+basename in line.lower():
+                    split = line.split('|')
+                    form_id_1, plugin_1 = split[0].split('~')
+                    form_id_2, plugin_2 = split[1].split('~')
                     replace_1 = False
                     replace_2 = False
                     if basename == plugin_1.lower().strip():
@@ -156,14 +152,16 @@ class patchers():
                             form_id_2 = '0x' + to_id_data['hex_no_0']
                             replace_2 = to_id_data["update_name"]
 
-                    if not replace_1 and not replace_2:
-                        lines[i] = form_id_1 + '~' + plugin_1 + '|' + form_id_2 + '~' + plugin_2
-                    elif replace_1 and not replace_2:
-                        lines[i] = form_id_1 + '~' + "ESLifier_Cell_Master.esm" + "|" + form_id_2 + '~' + plugin_2
-                    elif not replace_1 and replace_2:
-                        lines[i] = form_id_1 + '~' + plugin_1 + '|' + form_id_2 + "~" + "ESLifier_Cell_Master.esm" + '\n'
+                    if not replace_1:
+                        start_of_line = form_id_1 + '~' + plugin_1 + '|' + form_id_2 + "~"
                     else:
-                        lines[i] = form_id_1 + '~' + "ESLifier_Cell_Master.esm" + "|" + form_id_2 + "~" + "ESLifier_Cell_Master.esm" + '\n'
+                        start_of_line = form_id_1 + '~' + "ESLifier_Cell_Master.esm|" + form_id_2 + "~"
+                    
+                    if not replace_2:
+                        lines[i] = start_of_line + plugin_2
+                    else:
+                        lines[i] = start_of_line + "ESLifier_Cell_Master.esm" + ('\n' if plugin_2.endswith('\n') else '')
+
                     if replace_1 or replace_2 and print_replace:
                         print(f'~Plugin Name Replaced: {basename} | {new_file}')
                         print_replace = False
@@ -177,9 +175,9 @@ class patchers():
             lines = f.readlines()
             print_replace = True
             for i, line in enumerate(lines):
-                if basename in line.lower() and '|' in line and not line.startswith(';'):
-                    end_index = line.rfind('|', 0, line.lower().index(basename))
-                    start_index = line.rfind('|', 0, end_index)
+                if '|'+basename in line.lower() and '|' in line and not line.startswith(';'):
+                    end_index = line.lower().index("|"+basename)
+                    start_index = patchers.find_prev_non_alphanumeric(line, end_index-1)
                     start_of_line = line[:start_index+1]
                     end_of_line = line[end_index:]
                     form_id_int = int(line[start_index+1:end_index],16)
