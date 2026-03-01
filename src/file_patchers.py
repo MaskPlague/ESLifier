@@ -140,7 +140,12 @@ class patchers():
                 if not line.strip().startswith(';') and "~"+basename in line.lower():
                     split = line.split('|')
                     form_id_1, plugin_1 = split[0].split('~')
-                    form_id_2, plugin_2 = split[1].split('~')
+                    two_symbols = False
+                    if len(split) > 1:
+                        form_id_2, plugin_2 = split[1].split('~')
+                        two_symbols = True
+                    else:
+                        form_id_2, plugin_2 = 0, ''
                     replace_1 = False
                     replace_2 = False
                     if basename == plugin_1.lower().strip():
@@ -156,15 +161,22 @@ class patchers():
                             form_id_2 = '0x' + to_id_data['hex_no_0']
                             replace_2 = to_id_data["update_name"]
 
-                    if not replace_1:
-                        start_of_line = form_id_1 + '~' + plugin_1 + '|' + form_id_2 + "~"
+                    if two_symbols:
+                        if not replace_1:
+                            start_of_line = form_id_1 + '~' + plugin_1 + '|' + form_id_2 + "~"
+                        else:
+                            start_of_line = form_id_1 + '~' + "ESLifier_Cell_Master.esm|" + form_id_2 + "~"
+
+                        if not replace_2:
+                            lines[i] = start_of_line + plugin_2
+                        else:
+                            lines[i] = start_of_line + "ESLifier_Cell_Master.esm" + ('\n' if plugin_2.endswith('\n') else '')
+
                     else:
-                        start_of_line = form_id_1 + '~' + "ESLifier_Cell_Master.esm|" + form_id_2 + "~"
-                    
-                    if not replace_2:
-                        lines[i] = start_of_line + plugin_2
-                    else:
-                        lines[i] = start_of_line + "ESLifier_Cell_Master.esm" + ('\n' if plugin_2.endswith('\n') else '')
+                        if not replace_1:
+                            lines[i] = form_id_1 + '~' + plugin_1
+                        else:
+                            lines[i] = form_id_1 + '~' + "ESLifier_Cell_Master.esm" + ('\n' if plugin_1.endswith('\n') else '')
 
                     if replace_1 or replace_2 and print_replace:
                         print(f'~Plugin Name Replaced: {basename} | {new_file}')
