@@ -11,7 +11,7 @@ class qualification_checker():
         all_plugins: list[str] = qualification_checker.get_from_file("ESLifier_Data/plugin_list.json")
         qualification_checker.maxed_masters = qualification_checker.get_from_file("ESLifier_Data/maxed_masters.json")
         plugins = [plugin for plugin in all_plugins if not plugin.lower().endswith('.esl')]
-        qualification_checker.missing_skyrim_esm_as_master = qualification_checker.get_from_file("ESLifier_Data/missing_skyrim_as_master.json")
+        qualification_checker.missing_skyrim_esm_as_master: dict[str, str] = qualification_checker.get_from_file("ESLifier_Data/missing_skyrim_as_master.json")
         qualification_checker.dependent_dict: dict[str, list[str]] = qualification_checker.get_from_file("ESLifier_Data/dependency_dictionary.json")
         qualification_checker.flag_dict = {}
         qualification_checker.max_record_number = 4096
@@ -104,9 +104,15 @@ class qualification_checker():
     def file_reader(file: str, update_header: bool, is_esm: bool) -> tuple[bool, bool, bool, bool, bool]:
         data_list = []
         basename = os.path.basename(file)
-        with open(file, 'rb') as f:
-            data = f.read()
-        data_list = qualification_checker.create_data_list(data)
+        try:
+            with open(file, 'rb') as f:
+                data = f.read()
+            data_list = qualification_checker.create_data_list(data)
+        except Exception as e:
+            print(f'!Error: Failed to read plugin: {file}')
+            print(e) 
+            return False, False, False, False, False, False
+
         master_count, has_skyrim_esm_master = qualification_checker.get_master_count(data_list)
 
         if update_header:
