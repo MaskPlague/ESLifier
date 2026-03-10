@@ -34,6 +34,8 @@ class scanner():
         scanner.overwrite_path: str = settings.get('overwrite_path', '')
         update_header: bool = settings.get('update_header', False)
         scanner.all_patcher_experimental: bool = settings.get('all_patcher_experimental', False)
+        if scanner.all_patcher_experimental:
+            print("~Experimental all patcher mode enabled.")
         scanner.file_count: int = 0
         scanner.all_files: list[str] = []
         scanner.plugins: list[str] = []
@@ -616,14 +618,10 @@ class scanner():
                 print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + 
                       '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
             if ((file_lower.endswith(scanner.file_extensions) 
-                 or (scanner.all_patcher_experimental)
                  or (file_lower.endswith('config.txt') and 'plugins\\customskill' in file_lower))
                  and not (any(exclusion in file_lower for exclusion in scanner.exclude_contains) 
                           or file_lower.endswith(scanner.exclude_endswith))
                 ):
-                #if 'kreate\\presets\\' in file_lower and file_lower.endswith('.ini'):
-                #    scanner.kreate_files.append(file)
-                #    continue
                 thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
                 scanner.threads.append(thread)
                 thread.start()
@@ -664,6 +662,18 @@ class scanner():
                             local_dict[plugin].append(file)
                     except Exception as e:
                         pass
+            elif (scanner.all_patcher_experimental 
+                  and not file_lower.endswith(
+                      ('.psc', '.tri', '.nif', '.dds', '.osd', '.osp', '.hkx', '.pdb', '.dll', '.esp', '.esl', '.esm',
+                       '.swf', '.wav', '.ttf', '.bin', '.bsa', '.exe', '.modgroups', '.jpg', '.png', '.lua', '.refcache',
+                       '.fla', '.bsl', '.html', '.bak', '.psd', '.log', '.cdf'))
+                  and not (any(excl in file_lower for excl in ['dialogueviews', '\\calientetools\\bodyslide']))
+                  and not (any(exclusion in file_lower for exclusion in scanner.exclude_contains) 
+                          or file_lower.endswith(scanner.exclude_endswith))
+                 ):
+                thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
+                scanner.threads.append(thread)
+                thread.start()
         with scanner.lock:     
             scanner.pex_files.extend(local_pex)
             scanner.seq_files.extend(local_seq)
