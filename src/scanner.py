@@ -46,7 +46,6 @@ class scanner():
         scanner.seq_files: list[str] = []
         scanner.pex_files: list[str] = []
         scanner.dll_files: list[str] = []
-        scanner.kreate_files: list[str] = []
         scanner.lock = threading.Lock()
         if not os.path.exists("ESLifier_Data/ignored_files.json"):
             with open("ESLifier_data/ignored_files.json", "w+", encoding="utf-8") as f:
@@ -583,42 +582,6 @@ class scanner():
         
         for thread in scanner.threads: thread.join()
         scanner.threads.clear()
-
-        #print("-  Scanning Other files\n\n")
-        #scanner.kreate_processor()
-
-    def kreate_processor():
-        plugin_edid_dict: dict[str, list[str]] = {}
-        if os.path.exists('ESLifier_Data\\EDIDs'):
-            for file in os.scandir('ESLifier_Data\\EDIDs'):
-                basename = os.path.basename(file)
-                plugin_name = basename.removesuffix('_EDIDs.txt').lower()
-                plugin_edid_dict[plugin_name] = []
-                with open(file, 'r', encoding='utf-8') as f:
-                    for line in f.readlines():
-                        plugin_edid_dict[plugin_name].append(line.strip())
-                    f.close()
-
-        for plugin, edids in plugin_edid_dict.items():
-            for kreate_file in scanner.kreate_files:
-                file_edid = os.path.basename(kreate_file).removesuffix('.ini')
-                # only works if KreatE preset has at least one EDID ini file from a weather mod
-                if file_edid in edids:
-                    # assume everything in a preset is meant for one weather mod or does not share ANY Form IDs with other weather mods
-                    if plugin not in scanner.file_dict: 
-                        scanner.file_dict.update({plugin: []})
-                    split = kreate_file.split(os.sep)[:-2]
-                    level = len(split)
-                    directory = os.sep.join(split)
-                    for root, _, files in os.walk(directory):
-                        split = root.split(os.sep)
-                        root_level = len(split)
-                        if root_level == level + 1:
-                            for file_name in files:
-                                file = os.path.join(root, file_name)
-                                if file not in scanner.file_dict[plugin]: 
-                                    scanner.file_dict[plugin].append(file)
-                    break
         
     def bsa_processor(files):
         for file in files:

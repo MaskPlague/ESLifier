@@ -710,34 +710,6 @@ class patchers():
             form_id_string = '; ' + form_id_string
         return form_id_string
 
-    def ini_kreate_patcher_pre_1_dot_5(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
-        edid_file = 'ESLifier_Data\\EDIDs\\' + basename + '_EDIDs.txt'
-        edids = []
-        with open(edid_file, 'r', encoding='utf-8') as f:
-            for line in f.readlines():
-                edids.append(line.strip())
-        edid_name = os.path.basename(new_file).removesuffix('.ini')
-        # assume everything in a preset is meant for one weather mod or does not share ANY Form IDs with other weather mods
-        with open(new_file, 'r+', encoding=encoding_method) as f:
-            lines = f.readlines()
-            for i, line in enumerate(lines):
-                if line.startswith('ID =') and edid_name in edids:
-                    index = line.index('=')
-                    form_id_int = int(line[index+1:],16)
-                    to_id_data = form_id_map.get(form_id_int)
-                    if to_id_data is not None:
-                        lines[i] = 'ID = 0xFE' + to_id_data["hex"] + '\n'
-                elif 'ID' in line and '= 0x' in line:
-                    index = line.index('=')
-                    form_id_int = int(line[index+1:], 16)
-                    to_id_data = form_id_map.get(form_id_int)
-                    if to_id_data is not None:
-                        lines[i] = line[:index+1] + ' 0xFE' + to_id_data["hex"] + '\n'
-            f.seek(0)
-            f.truncate(0)
-            f.write(''.join(lines))
-            f.close()
-
     def ini_kreate_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         ini = configparser.ConfigParser()
         ini.optionxform = str
