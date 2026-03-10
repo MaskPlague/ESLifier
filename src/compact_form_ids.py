@@ -33,7 +33,7 @@ class CFIDs():
     def __init__(self, skyrim_folder_path: str, output_folder_path: str, output_folder_name: str, overwrite_path: str, update_header: bool, mo2_mode: bool,
                   create_cell_master_class: create_new_cell_plugin, original_files: dict, winning_files_dict: dict, winning_file_history_dict: dict,
                   compacted_and_patched: dict, master_byte_data:dict, bsa_masters: list, bsa_dict: dict, persistent_ids: bool, free_non_existent: bool,
-                  additional_file_patcher_conditions):
+                  additional_file_patcher_conditions, all_patcher_experimental):
         self.skyrim_folder_path = os.path.normpath(skyrim_folder_path)
         self.output_folder_path = os.path.normpath(output_folder_path)
         self.output_folder_name = os.path.normpath(output_folder_name)
@@ -54,6 +54,7 @@ class CFIDs():
         self.lock = threading.Lock()
         self.semaphore = threading.Semaphore(1000)
         self.additional_conditions = additional_file_patcher_conditions
+        self.all_patcher_experimental = all_patcher_experimental
 
     def save_data(self):
         self.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json', self.compacted_and_patched)
@@ -303,6 +304,8 @@ class CFIDs():
                 files_to_patch.append(file)
             elif os.path.basename(master).lower() in file_lower and ('facegeom' in file_lower or 'voice' in file_lower or 'facetint' in file_lower):
                 files_to_rename.append(file)
+            elif self.all_patcher_experimental:
+                files_to_patch.append(file)
             else:
                 raise TypeError(f"{os.path.basename(master).lower()} - File: {file} \nhas no patching method but it is in file_masters...")
         return files_to_patch, files_to_rename

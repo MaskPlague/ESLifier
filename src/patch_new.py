@@ -517,7 +517,7 @@ class PatchNewWorker(QObject):
         cfids = CFIDs(self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, 
                       self.update_header, self.mo2_mode, None, original_files, winning_files_dict, winning_file_history_dict, 
                       compacted_and_patched, master_byte_data, None, None, self.persistent_ids, self.free_non_existent, 
-                      additional_file_patcher_conditions)
+                      additional_file_patcher_conditions, False)
         if self.hash_output:
             print("Hashing any existing files for changes...")
             cfids.hash_output_files([], True)

@@ -1235,6 +1235,7 @@ class CompactorWorker(QObject):
         self.free_non_existent = settings.get('free_non_existent', False)
         self.files_to_not_hash = files_to_not_hash
         self.hash_output = settings.get('hash_output', True)
+        self.all_patcher_experimental = settings.get('all_patcher_experimental', False)
         
     def run(self):
         total = len(self.checked)
@@ -1262,7 +1263,7 @@ class CompactorWorker(QObject):
         additional_file_patcher_conditions = user_and_master_conditions_class()
         cfids = CFIDs(self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode,
                       self.create_new_cell_plugin, original_files, winning_files_dict, {}, {}, master_byte_data, bsa_masters, bsa_dict,
-                      self.persistent_ids, self.free_non_existent, additional_file_patcher_conditions)
+                      self.persistent_ids, self.free_non_existent, additional_file_patcher_conditions, self.all_patcher_experimental)
         if self.hash_output:
             print("Hashing any existing files for changes...")
             cfids.hash_output_files([], True)
@@ -1330,7 +1331,7 @@ class FlagWorker(QObject):
         winning_file_history_dict = {}
         additional_file_patcher_conditions = user_and_master_conditions_class()
         cfids = CFIDs(self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, True, self.mo2_mode, 
-                      None, original_files, winning_files_dict, winning_file_history_dict, None, None, None, None, None, None, additional_file_patcher_conditions)
+                      None, original_files, winning_files_dict, winning_file_history_dict, None, None, None, None, None, None, additional_file_patcher_conditions, False)
         for file in self.files:
             original_files, winning_file_history_dict = cfids.set_flag(file)
         self.dump_dictionary('ESLifier_Data/original_files.json', original_files)

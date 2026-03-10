@@ -33,6 +33,7 @@ class scanner():
         plugins_txt_path: str = settings.get('plugins_txt_path', '')
         scanner.overwrite_path: str = settings.get('overwrite_path', '')
         update_header: bool = settings.get('update_header', False)
+        scanner.all_patcher_experimental: bool = settings.get('all_patcher_experimental', False)
         scanner.file_count: int = 0
         scanner.all_files: list[str] = []
         scanner.plugins: list[str] = []
@@ -66,7 +67,7 @@ class scanner():
             '\\headpartwhitelist\\',
             '\\interface\\quests\\'
             )]
-        exclude_contains.extend([item.lower() for item in master_ignored_file_data.get("ignored_contains", [])])
+        exclude_contains.extend([os.path.normpath(item).lower() for item in master_ignored_file_data.get("ignored_contains", [])])
         scanner.exclude_contains = tuple(exclude_contains)
 
         exclude_endswith = [item.lower() for item in (
@@ -81,7 +82,7 @@ class scanner():
             '\\parallaxgen_diff.json',
             '\\console_cheatsheet.json'
             )]
-        exclude_endswith.extend([item.lower() for item in master_ignored_file_data.get("ignored_endswith", [])])
+        exclude_endswith.extend([os.path.normpath(item).lower() for item in master_ignored_file_data.get("ignored_endswith", [])])
         scanner.exclude_endswith = tuple(exclude_endswith)
 
         total_ram = psutil.virtual_memory().available
@@ -652,6 +653,7 @@ class scanner():
                 print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + 
                       '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
             if ((file_lower.endswith(scanner.file_extensions) 
+                 or (scanner.all_patcher_experimental)
                  or (file_lower.endswith('config.txt') and 'plugins\\customskill' in file_lower))
                  and not (any(exclusion in file_lower for exclusion in scanner.exclude_contains) 
                           or file_lower.endswith(scanner.exclude_endswith))
