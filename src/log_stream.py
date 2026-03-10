@@ -100,24 +100,22 @@ class log_stream(QMainWindow):
             formatted_datetime = '[' + datetime.now().isoformat(timespec='milliseconds') + '] '
             self.log_file.write(formatted_datetime + text.removeprefix('~') + '\n')
             self.log_file.flush()
-        if text.startswith('Warn:') and not 'red' in self.text_edit.styleSheet() and not 'lightblue' in self.text_edit.styleSheet():
-            self.text_edit.setStyleSheet("background-color: lightblue")
         if text.startswith('Warn:'):
             missing = text[36:]
             if missing not in self.missing_patchers:
                 self.missing_patchers.append(missing)
+            if not 'red' in self.text_edit.styleSheet() and not 'lightblue' in self.text_edit.styleSheet():
+                self.text_edit.setStyleSheet("background-color: lightblue")
         if text.startswith('!Error'):
             self.errors.append(text.removeprefix('!Error'))
         if '%' in text and '.' in text and ('-    Processed:' in text or '% Patching:' in text):
             pindex = text.index('.')
-            if ':' in text:
-                cindex = text.index(':')
-                if cindex < pindex:
-                    self.percentage = int(text[cindex+1:pindex])
-                else:
-                    self.percentage = int(text[:pindex])
+            cindex = text.index(':')
+            if cindex < pindex:
+                self.percentage = int(text[cindex+1:pindex])
             else:
                 self.percentage = int(text[:pindex])
+                
         if text.startswith('~Ineligible:'):
             ineligible = text[12:]
             self.ineligible.append(ineligible)
