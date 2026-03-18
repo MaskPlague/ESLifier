@@ -350,7 +350,7 @@ class main(QWidget):
             self.setEnabled(True)
 
     def compact_confirmed(self, checked):
-        self.log_stream.log_file.write('Compacting Plugins\n')
+        self.log_stream.log_file.write(f'Compacting Plugins [MO2 Mode = {self.mo2_mode}]\n')
         self.confirm.hide()
         self.start_time = timeit.default_timer()
         for row in range(self.list_compact.rowCount()):
@@ -440,7 +440,7 @@ class main(QWidget):
             self.setEnabled(True)
 
     def eslify_confirmed(self, checked):
-        self.log_stream.log_file.write('ESL Flagging Plugins\n')
+        self.log_stream.log_file.write(f'ESL Flagging Plugins [MO2 Mode = {self.mo2_mode}]\n')
         self.confirm.hide()
         for row in range(self.list_eslify.rowCount()):
             if self.list_eslify.item(row, self.list_eslify.MOD_COL).checkState() == Qt.CheckState.Checked:
@@ -587,7 +587,7 @@ class main(QWidget):
         self.setEnabled(False)
         self.scan_thread = QThread()
         def run_scan():
-            self.log_stream.log_file.write('Running Scan\n')
+            self.log_stream.log_file.write(f'Running Scan [MO2 Mode = {self.mo2_mode}]\n')
             self.log_stream.show()
             self.scanner_worker = ScannerWorker()
             self.scanner_worker.moveToThread(self.scan_thread)
@@ -698,7 +698,7 @@ class main(QWidget):
             f"This action will delete {file_count} files and {calculated_size} MBs of data from the output."
             )
         def accepted():
-            self.log_stream.log_file.write('Resetting Output\n')
+            self.log_stream.log_file.write(f'Resetting Output [MO2 Mode = {self.mo2_mode}]\n')
             confirm.hide()
             if os.path.exists('ESLifier_Data/compacted_and_patched.json'):
                 try:
@@ -785,7 +785,7 @@ class main(QWidget):
             "re-scan, flag, compact, and patch all previously output files that fit the current filters."
             )
         def accepted():
-            self.log_stream.log_file.write('Starting Output Rebuild\n')
+            self.log_stream.log_file.write(f'Starting Output Rebuild [MO2 Mode = {self.mo2_mode}]\n')
             confirm.hide()
             previously_compacted = []
             previously_esl_flagged = []
@@ -833,7 +833,7 @@ class main(QWidget):
             "or you can manually delete the \"bsa_extracted/\" folder\n"+
             "and then click this button.")
         def accepted():
-            self.log_stream.log_file.write('Resetting BSA\n')
+            self.log_stream.log_file.write(f'Resetting BSA [MO2 Mode = {self.mo2_mode}]\n')
             confirm.hide()
             if os.path.exists('ESLifier_Data/extracted_bsa.json'):
                 os.remove('ESLifier_Data/extracted_bsa.json')
@@ -1193,7 +1193,7 @@ class main(QWidget):
         confirm = self.create_confirmation()
         confirm.setText("Are you sure you want to scan and patch new/changed files?")
         def accepted():
-            self.log_stream.log_file.write('Starting Patch New Process\n')
+            self.log_stream.log_file.write(f'Starting Patch New Process [MO2 Mode = {self.mo2_mode}]\n')
             confirm.hide()
             self.log_stream.show()
             self.patch_new.scan_and_find(self.settings.copy(), self)
