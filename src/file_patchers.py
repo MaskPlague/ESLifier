@@ -766,6 +766,26 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
+    def ini_knockback_skse_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            lines = f.readlines()
+            for i, line in enumerate(lines):
+                if basename+'|' in line.lower() and not line.startswith(';'):
+                    line = lines[i]
+                    middle_index = line.index('|')
+                    end_index = patchers.find_next_non_alphanumeric(line, middle_index+1, tokens=(" "))
+                    end_of_line = line[end_index:]
+                    form_id = line[middle_index+1:end_index].strip()
+                    form_id_int = int(form_id, 16)
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        lines[i] = line[:middle_index+1] + '00' + to_id_data["hex"] + end_of_line
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+
+    # No Cell Form IDs possible
     def toml_dynamic_animation_casting_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str = 'utf-8'):
         def _get_target_keys(espname_key):
             espname_key = espname_key.lower()

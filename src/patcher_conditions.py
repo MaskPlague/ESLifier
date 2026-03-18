@@ -51,6 +51,8 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
             patchers.ini_eq_plugin_sep_formid_patcher(basename, new_file, form_id_map, sep=':', encoding_method=encoding)
         elif '\\rules\\dyndolod' in new_file_lower:                                         # DynDOLOD Mesh Mask / Reference Rules
             patchers.ini_dyndolod_rules_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+        elif new_file_lower.endswith('\\knockbackplugin.ini'):                              # Knockback SKSE (For BFCO and MCO Users)
+            patchers.ini_knockback_skse_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         else:                                    
             patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
             if not patched:                                           
