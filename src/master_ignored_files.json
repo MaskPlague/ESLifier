@@ -1,5 +1,5 @@
 {
-    "version": 8,
+    "version": 9,
     "ignored_files": [
         "BFCO_FX_CheckPreAttackIsOK.pex",
         "BFCO_FX_PlayIdleListKeyE.pex",
@@ -19,6 +19,8 @@
         "Modex\\user\\blacklist.json"
     ],
     "ignored_contains": [
-        "SkyrimDiag_Incident_"
+        "SkyrimDiag_Incident_",
+        "interface/Console_Cheatsheet/",
+        "interface/PartySheet/Spells/"
     ]
 }
