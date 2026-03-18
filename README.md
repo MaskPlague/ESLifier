@@ -55,6 +55,7 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
     Dress Up Lover's NPC Outfit Changer
     dse-display-model
     Dynamic Armor Variants
+    Dynamic Inventory Icon Injector
     Dynamic Key Activation Framework NG
     Dynamic String Distributor
     Follower Slavery Mod
@@ -104,6 +105,7 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
     <summary>.YAML Files</summary>
 
     Precision - Unofficial Locational Damage Framework
+    SLP+ Stripping/SOS/Voices
     Sound record distributor
   </details>
 
