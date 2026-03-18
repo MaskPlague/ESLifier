@@ -1,5 +1,5 @@
 {
-    "version": 7,
+    "version": 8,
     "conditions": [
         {
             "extension": "json",
@@ -64,6 +64,11 @@
             "extension": "ini",
             "endswith": "_ANIO.ini",
             "patcher": "ini_formid_sep_plugin"
+        },
+        {
+            "extension": "json",
+            "contains": "/Plugins/DIII/",
+            "patcher": "json_generic_formid_sep_plugin"
         }
     ]
 }
