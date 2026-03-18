@@ -559,7 +559,6 @@ class patchers():
             f.truncate(0)
             f.write(''.join(lines))
             f.close()
-
     
     def ini_completionist_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         comp_print_replace = True
