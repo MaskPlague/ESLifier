@@ -1128,7 +1128,11 @@ class patchers():
                     plugin = True
                     plugin_name_path = path
                 elif plugin and isinstance(path[-1], str) and 'formid' == path[-1].lower():
-                    form_id_int = int(value, 16)
+                    try:
+                        form_id_int = int(value, 16)
+                    except:
+                        print(f"~Warn: Invalid Form ID of {value} in file {new_file}")
+                        continue
                     to_id_data = form_id_map.get(form_id_int)
                     if to_id_data is not None:
                         data = patchers.change_json_element(data, path, to_id_data["hex_no_0"])
