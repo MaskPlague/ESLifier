@@ -1892,6 +1892,6 @@ class patchers():
 
 #if __name__ == '__main__':
 #    basename = "thing.esp".lower()
-#    form_id_map = {2052: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'update_name': False}, 104445: {'hex_no_0': 'B0B', 'update_name': True}}
+#    form_id_map = {2052: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'update_name': False}, 3428: {'hex_no_0': 'B0B', 'update_name': True}}
 #    new_file = os.path.normpath(r)
-#    patchers.ini_kreate_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
+#    patchers.toml_dynamic_animation_casting_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
