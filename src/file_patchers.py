@@ -767,76 +767,108 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
-    def toml_dynamic_animation_casting_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+    def toml_dynamic_animation_casting_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str = 'utf-8'):
+        def _get_target_keys(espname_key):
+            espname_key = espname_key.lower()
+            if espname_key.endswith('espname'):
+                prefix = espname_key[:-7]
+                targets = [prefix + 'formid', prefix + 'formids', 'has' + prefix + 'formid', 'is' + prefix + 'formid']
+                if prefix == 'weapon':
+                    targets.extend(['isequippedrightformid', 'isequippedleftformid'])
+                return targets
+            return []
+
+        def _replace_only_form_ids_format(line, form_id_map):
+            if '=' not in line:
+                return line
+            left, right = line.split('=', 1)
+            new_right = ""
+            i = 0
+            while i < len(right):
+                if right[i].isdigit() or (right[i] == '-' and i + 1 < len(right) and right[i+1].isdigit()):
+                    start = i
+                    i += 1
+                    while i < len(right) and (right[i].isalnum() or right[i] == '-'):
+                        i += 1
+                    num_str = right[start:i]
+                    
+                    is_hex = num_str.lower().startswith('0x')
+                    form_id_int = int(num_str, 16) if is_hex else int(num_str)
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        new_right += '0x' + to_id_data["hex_no_0"]
+                    else:
+                        new_right += num_str
+                else:
+                    new_right += right[i]
+                    i += 1
+            return left + '=' + new_right
+
+        def _replace_plugin_sep_formid_format(line:str, basename:str, form_id_map:dict):
+            new_line = ""
+            i = 0
+            while i < len(line):
+                if line[i] == '"':
+                    start = i
+                    i += 1
+                    while i < len(line) and line[i] != '"':
+                        i += 1
+                    if i < len(line):
+                        inside_quotes = line[start+1:i]
+                        if basename+'|' in inside_quotes.lower():
+                            plugin_part, id_part = inside_quotes.split('|', 1)
+                            id_clean = id_part.strip()
+                            is_hex = '0x' in id_clean.lower()
+                            form_id_int = int(id_clean, 16) if is_hex else int(id_clean)
+                            to_id_data = form_id_map.get(form_id_int)
+                            if to_id_data is not None:
+                                inside_quotes = plugin_part + '|0x' + to_id_data["hex_no_0"]
+                        new_line += '"' + inside_quotes + '"'
+                        i += 1
+                    else:
+                        new_line += line[start:]
+                else:
+                    new_line += line[i]
+                    i += 1
+            return new_line
+
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
-            dac_toml_type = 'new'
-            events = []
+            
             for i, line in enumerate(lines):
-                if 'espname' in line.lower():
-                    dac_toml_type = 'old'
-                elif '[[event]]' in line.lower():
-                    events.append(i)
+                if line.strip().startswith('#'):
+                    continue
+                
+                line_lower = line.lower()
+                
+                if '"'+basename+'|' in line_lower:
+                    lines[i] = _replace_plugin_sep_formid_format(line, basename, form_id_map)
+
+                elif 'espname' in line_lower and '"'+basename+'"' in line_lower:
+                    key_part = line.split('=')[0].strip().lower()
+                    targets = _get_target_keys(key_part)
                     
-            if dac_toml_type == 'new':
-                for i, line, in enumerate(lines):
-                    if basename in line.lower() and '|' in line:
-                        count = line.lower().count('|')
-                        start = 0
-                        for _ in range(count):
-                            line = lines[i]
-                            start_index = line.lower().index('.', start)
-                            middle_index = line.index('|', start_index)
-                            plugin_start_index = -1
-                            for j in range(start_index-1, 0, -1):
-                                if line[j] == '"':
-                                    plugin_start_index = j + 1
-                                    break
-                            plugin = line.lower()[plugin_start_index:middle_index].strip()
-                            start = start_index + 1
-                            if plugin == basename:
-                                end_index = patchers.find_next_non_alphanumeric(line, middle_index+1)
-                                start_of_line = line[:middle_index+1]
-                                end_of_line = line[end_index:]
-                                form_id_int = int(line[middle_index+1:end_index], 16)
-                                to_id_data = form_id_map.get(form_id_int)
-                                if to_id_data is not None:
-                                    lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
-            else:
-                plugin_offsets = [3, 5, 9, 11, 13, 15]
-                for event in events:
-                    for offset in plugin_offsets:
-                        if basename in lines[event + offset].lower():
-                            if offset == 9:
-                                form_id_offsets = [6,7]
-                            else:
-                                form_id_offsets = [event + offset - 1]
-                            if offset != 15:
-                                for form_id_offset in form_id_offsets:
-                                    line = lines[form_id_offset]
-                                    index = line.index('=')
-                                    start_of_line = line[:index+1]
-                                    end_index = patchers.find_next_non_alphanumeric(line, index + 3)
-                                    end_of_line = line[end_index:]
-                                    form_id_int = int(line[index+1:], 16)
-                                    to_id_data = form_id_map.get(form_id_int)
-                                    if to_id_data is not None:
-                                        lines[form_id_offset] = start_of_line + ' 0x' + to_id_data["hex_no_0"] + end_of_line
-                            else:
-                                form_id_offset = form_id_offsets[0]
-                                count = lines[form_id_offset].count(',') + 1
-                                start_index = lines[form_id_offset].index('[')
-                                for _ in range(count):
-                                    line = lines[form_id_offset]
-                                    end_index = patchers.find_next_non_alphanumeric(line,start_index+1)
-                                    start_of_line = line[:start_index+1]
-                                    end_of_line = line[end_index:]
-                                    id = line[start_index+1:end_index]
-                                    form_id_int = int(id, 16)
-                                    to_id_data = form_id_map.get(form_id_int)
-                                    if to_id_data is not None:
-                                        lines[form_id_offset] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
-                                    start_index = patchers.find_next_non_alphanumeric(lines[form_id_offset], start_index+1) + 1
+                    if targets:
+                        for j in range(i - 1, -1, -1):
+                            if '[[event]]' in lines[j].lower():
+                                break
+                            if lines[j].strip().startswith('#'):
+                                continue
+                            
+                            target_key = lines[j].split('=')[0].strip().lower()
+                            if target_key in targets:
+                                lines[j] = _replace_only_form_ids_format(lines[j], form_id_map)
+                                
+                        for j in range(i + 1, len(lines)):
+                            if '[[event]]' in lines[j].lower():
+                                break
+                            if lines[j].strip().startswith('#'):
+                                continue
+                            
+                            target_key = lines[j].split('=')[0].strip().lower()
+                            if target_key in targets:
+                                lines[j] = _replace_only_form_ids_format(lines[j], form_id_map)
+
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
