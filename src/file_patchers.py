@@ -1401,6 +1401,57 @@ class patchers():
             f.close()
 
     # No Cell Form IDs possible
+    def yaml_slpp_sos_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            lines = f.readlines()
+            patch_ids = False
+            for i, line in enumerate(lines):
+                stripped_line = line.strip()
+                if stripped_line.startswith("- ESP: "):
+                    patch_ids = stripped_line.lower().startswith("- esp: " + basename)
+                elif patch_ids:
+                    if (stripped_line.startswith("ID:") and len(stripped_line) > 3) or stripped_line.startswith('-'):
+                        starter = "-"
+                        if stripped_line.startswith("ID:"):
+                            starter = "ID:"
+                        index = line.index(starter) + len(starter)
+                        form_id = line[index:].strip()
+                        end_index = patchers.find_next_non_alphanumeric(line, index+1)
+                        is_hex = form_id.lower().startswith('0x')
+                        form_id_int = int(form_id,16) if is_hex else int(form_id)
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            if is_hex:
+                                lines[i] = line[:index] + " 0x" + to_id_data["hex_no_0"] + line[end_index:]
+                            else:
+                                lines[i] = line[:index] + " " + str(to_id_data["int"]) + line[end_index:]
+
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+
+    # No Cell Form IDs possible
+    def yaml_slpp_stripping_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            lines = f.readlines()
+            patch_lines = False
+            for i, line in enumerate(lines):
+                if not line.startswith(' '):
+                    patch_lines = line.lower().startswith(basename) or line.lower().startswith('"'+basename)
+                elif patch_lines and ':' in line:
+                    end_index = line.index(':')
+                    start_index = patchers.find_prev_non_alphanumeric(line, end_index-1, tokens=(' ')) + 1
+                    form_id_int = int(line[start_index:end_index])
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        lines[i] = line[:start_index] + str(to_id_data["int"]) + line[end_index:]
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
+
+    # No Cell Form IDs possible
     def jslot_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             read_string = f.read()
@@ -1947,6 +1998,6 @@ class patchers():
 
 #if __name__ == '__main__':
 #    basename = "thing.esp".lower()
-#    form_id_map = {2049: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'update_name': False}, 71646: {'hex_no_0': 'B0B', 'hex': '000B0B', 'update_name': True}}
+#    form_id_map = {2059: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'update_name': False}, 2218: {'hex_no_0': 'B0B', "int": 10101, 'hex': '000B0B', 'update_name': True}}
 #    new_file = os.path.normpath(r)
-#    patchers.ini_knockback_skse_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
+#    patchers.yaml_slpp_stripping_patcher(basename, new_file, form_id_map, encoding_method='utf-8')

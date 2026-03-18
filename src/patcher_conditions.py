@@ -186,6 +186,18 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
     elif new_file_lower.endswith('.yaml'):
         if new_file_lower.endswith('_srd.yaml'):                                              # Sound record distributor YAML
             patchers.sound_record_distributor_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+        elif new_file_lower.endswith('sexlab\\userdata\\stripping.yaml'):
+            patchers.yaml_slpp_stripping_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+        elif new_file_lower.endswith('sexlab\\userdata\\voices_npc.yaml'):
+            patchers.ini_formid_sep_plugin_patcher(basename, new_file, form_id_map, sep='|', encoding_method=encoding)
+        elif new_file_lower.endswith('sexlab\\schlongsofskyrim.yaml'):
+            patchers.yaml_slpp_sos_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+        elif "sexlab\\voices" in new_file_lower:
+            patchers.ini_formid_sep_plugin_patcher(basename, new_file, form_id_map, sep='|', encoding_method=encoding)
+        else:
+            patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
+            if not patched:                                           
+                print(f'Warn: Possible missing patcher for: {new_file}')
     elif 'facegeom' in new_file_lower and new_file_lower.endswith('.nif'):                  # FaceGeom mesh patching
         patchers.facegeom_mesh_patcher(basename, new_file, form_id_rename_map)
     elif new_file_lower.endswith('.seq'):                                                   # SEQ file patching
