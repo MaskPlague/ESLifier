@@ -68,7 +68,7 @@
         {
             "extension": "json",
             "contains": "/Plugins/DIII/",
-            "patcher": "json_generic_formid_sep_plugin"
+            "patcher": "json_generic_plugin_sep_formid"
         }
     ]
 }
