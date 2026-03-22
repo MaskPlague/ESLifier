@@ -1,5 +1,5 @@
 {
-    "version": 8,
+    "version": 9,
     "conditions": [
         {
             "extension": "json",
@@ -68,6 +68,11 @@
         {
             "extension": "json",
             "contains": "/Plugins/DIII/",
+            "patcher": "json_generic_plugin_sep_formid"
+        },
+        {
+            "extension": "json",
+            "contains": "/PrismaUI/views/SkillMenu/Skill Trees/",
             "patcher": "json_generic_plugin_sep_formid"
         }
     ]
