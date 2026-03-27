@@ -25,6 +25,22 @@ if TYPE_CHECKING:
     from PyQt6.QtWidgets import (QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton,
                                   QToolBar, QCheckBox, QLabel, QGridLayout, QWidget, QApplication)
             
+class QueueScan():
+    def __init__(self):
+        self.lock = False
+
+    def unlock(self):
+        self.lock = False
+        self.callback()
+
+    def queue(self):
+        if not self.lock:
+            self.lock = True
+            QTimer.singleShot(1, self.unlock)
+    
+    def callback(self):
+        pass        
+
 class ESLifier(mobase.IPluginTool):
     def __init__(self):
         super(ESLifier, self).__init__()
@@ -110,6 +126,12 @@ class ESLifier(mobase.IPluginTool):
         self.lost_to_overwrite = []
         self.master_not_enabled = False
         self.throbber_iterator = 0
+        self.scanning = False
+        self.waiting_to_scan = False
+
+        self.scan_queue = QueueScan()
+        self.scan_queue.callback = self.scan_files
+
 
         self.notifcation_display = notification_display_dialog(icon_path)
         self.blacklist_add = blacklist_window(False, self.scan_files)
@@ -129,8 +151,9 @@ class ESLifier(mobase.IPluginTool):
         throbber_left_icon = QIcon(icon_path + '\\ESLifier_throbber_left.ico')
         self.eslifier_thobber = [throbber_top_icon, throbber_right_icon, throbber_bottom_icon, throbber_left_icon]
         self.throbber_timer = QTimer()
-        self.throbber_timer.timeout.connect(self._throbber_iterate)
         self.throbber_timer.setInterval(250)
+        self.throbber_timer.stop()
+        self.throbber_timer.timeout.connect(self._throbber_iterate)
     
     def _create_eslifier_button(self):
         self.eslifier_button = QToolButton()
@@ -142,6 +165,8 @@ class ESLifier(mobase.IPluginTool):
         self._organizer.onUserInterfaceInitialized(self._create_settings_dialog)
         self._organizer.pluginList().onRefreshed(self.scan_files)
         self._organizer.pluginList().onPluginStateChanged(self.scan_if_cell_master_state_changed)
+        self._organizer.onAboutToRun(self._stop_worker_if_running)
+        self._organizer.modList().onModInstalled(self._stop_worker_if_running)
     
     def _throbber_iterate(self):
         if self.throbber_iterator > 3:
@@ -157,19 +182,24 @@ class ESLifier(mobase.IPluginTool):
                 self.scan_files()
                 break
 
-    def _stop_worker_if_running(self):
+    def _stop_worker_if_running(self, *args):
         if hasattr(self, 'worker') and self.worker and self.worker.running:
             self.worker.stop()
         if hasattr(self, 'thread') and self.thread and self.thread.isRunning():
             self.thread.quit()
-
+        return True
+        
     def scan_files(self):
         if not self.validGame:
             return
         notifications_enabled = self._organizer.pluginSetting(self.name(), "Enable Notifications")
         self._stop_worker_if_running()
-
+        if self.scanning:
+            self.scan_queue.queue()
+            return
+        
         if notifications_enabled:
+            self.scanning = True
             self.throbber_timer.start()
             scan_esms = self._organizer.pluginSetting(self.name(), "Scan ESMs")
             eslifier_folder = self._organizer.pluginSetting(self.name(), "ESLifier Folder")
@@ -222,6 +252,7 @@ class ESLifier(mobase.IPluginTool):
             self.notification_button.show()
         else:
             self._grey_out_icon()
+        self.scanning = False
         return
     
     def _grey_out_icon(self):
@@ -247,7 +278,7 @@ class ESLifier(mobase.IPluginTool):
         layout.addWidget(check_box, row, 1)
         return check_box
     
-    def _create_settings_dialog(self, _):
+    def _create_settings_dialog(self, *args):
         self.settings_dialog = QDialog()
         layout = QGridLayout()
         self.settings_dialog.setLayout(layout)
@@ -337,7 +368,7 @@ class ESLifier(mobase.IPluginTool):
             else:
                 self.folder_path.setText(path)
 
-    def create(self, _):
+    def create(self, *args):
         game = self._organizer.managedGame()
         if not game.gameName() in ("Skyrim Special Edition", "Skyrim VR"):
             self.validGame = False
@@ -453,6 +484,7 @@ class CheckWorker(QObject):
         except Exception as e:
             self.finished_signal.emit(False, {}, {}, [], [], [], False, True)
             return
+        
         flag, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches, conflict_changes, lost_to_overwrite = self.file_checker.scan_files(
                                     self.scan_esms, self.eslifier_folder, self.new_header, self.compare_hashes, 
                                     self.detect_conflict_changes, self.only_plugins, plugin_files_list, self._organizer)
