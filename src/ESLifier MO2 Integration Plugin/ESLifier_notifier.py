@@ -74,7 +74,7 @@ class check_files():
                     else:
                         break
 
-        if compare_hashes and os.path.exists(original_plugins_path) and self.running:
+        if compare_hashes and self.running and os.path.exists(original_plugins_path) :
             for plugin, original_hash in original_plugins_hash_map:
                 if self.running:
                     self.compare_previous_hash_to_current(plugin, original_hash)
