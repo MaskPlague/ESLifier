@@ -271,18 +271,21 @@ class patchers():
             lines = f.readlines()
             print_replace = True
             for i, line in enumerate(lines):
-                if basename in line.lower() and sep in line and not line.startswith(';'):
-                    count = line.lower().count(sep)
+                if basename+sep in line.lower() and not line.startswith(';'):
+                    count = line.lower().count(basename+sep)
                     start = 0
+                    final_index = line.index(';') if ';' in line else None
                     for _ in range(count):
                         line = lines[i]
-                        middle_index = line.index(sep, start)
-                        start_index = patchers.find_prev_non_alphanumeric(line, middle_index-5)
+                        start_index = line.lower().index(basename+sep, start)
+                        if final_index is not None and start_index > final_index:
+                            continue
+                        middle_index = start_index + len(basename+sep)
                         end_index = patchers.find_next_non_alphanumeric(line, middle_index+1, tokens=(" "))
-                        plugin = line.lower()[start_index+1:middle_index].strip()
-                        start_of_line = line[:start_index+1]
+                        plugin = line.lower()[start_index:middle_index-len(sep)].strip()
+                        start_of_line = line[:start_index]
                         end_of_line = line[end_index:]
-                        form_id = line[middle_index+1:end_index].strip()
+                        form_id = line[middle_index:end_index].strip()
                         start = middle_index+1
                         if not form_id.lower().startswith('0x'):
                             continue
@@ -296,7 +299,7 @@ class patchers():
                             to_id_data = form_id_map.get(form_id_int)
                             if to_id_data is not None:
                                 if not to_id_data["update_name"]:
-                                    lines[i] = line[:middle_index+1] + '0x' + to_id_data["hex_no_0"] + end_of_line
+                                    lines[i] = line[:middle_index] + '0x' + to_id_data["hex_no_0"] + end_of_line
                                 else:
                                     if print_replace:
                                         print(f'~Plugin Name Replaced: {basename} | {new_file}')
