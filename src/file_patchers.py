@@ -358,18 +358,21 @@ class patchers():
             lines = f.readlines()
             print_replace = True
             for i, line in enumerate(lines):
-                if basename in line.lower() and '|' in line and not line.startswith(';'):
-                    count = line.lower().count('|')
+                if basename+'|' in line.lower() and not line.startswith(';'):
+                    count = line.lower().count(basename+'|')
                     start = 0
+                    final_index = line.index(';') if ';' in line else None
                     for _ in range(count):
                         line = lines[i]
-                        start_index = line.lower().index(basename, start)
-                        middle_index = line.index('|', start_index)
+                        start_index = line.lower().index(basename+'|', start)
+                        if final_index is not None and start_index > final_index:
+                            continue
+                        middle_index = start_index + len(basename+'|')
                         end_index = patchers.find_next_non_alphanumeric(line, middle_index+1)
-                        plugin = line.lower()[start_index:middle_index].strip()
-                        start_of_line = line[:middle_index+1]
+                        plugin = line.lower()[start_index:middle_index-1].strip()
+                        start_of_line = line[:middle_index]
                         end_of_line = line[end_index:]
-                        form_id_int = int(line[middle_index+1:end_index], 16)
+                        form_id_int = int(line[middle_index:end_index], 16)
                         start = start_index + 1
                         if plugin == basename:
                             to_id_data = form_id_map.get(form_id_int)
