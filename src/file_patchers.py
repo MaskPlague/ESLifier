@@ -230,10 +230,13 @@ class patchers():
                 if basename in line.lower() and sep in line and not line.startswith(';'):
                     count = line.lower().count(sep)
                     start = 0
+                    final_index = line.index(';') if ';' in line else None
                     for _ in range(count):
                         line = lines[i]
                         middle_index = line.index(sep, start)
                         start_index = patchers.find_prev_non_alphanumeric(line, middle_index-2, tokens=(" "))
+                        if final_index is not None and start_index > final_index:
+                            continue
                         end_index = line.index('.es', middle_index) + 4
                         plugin = line.lower()[middle_index+1:end_index].strip()
                         start_of_line = line[:start_index+1]
