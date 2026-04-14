@@ -1,5 +1,5 @@
 {
-    "version": 9,
+    "version": 10,
     "conditions": [
         {
             "extension": "json",
@@ -74,6 +74,12 @@
             "extension": "json",
             "contains": "/PrismaUI/views/SkillMenu/Skill Trees/",
             "patcher": "json_generic_plugin_sep_formid"
+        },
+        {
+            "extension": "ini",
+            "contains": "Plugins/CraftingInventoryExtender/",
+            "patcher": "ini_plugin_sep_formid",
+            "separator": "|"
         }
     ]
 }
