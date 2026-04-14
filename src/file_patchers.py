@@ -7,6 +7,7 @@ import io
 
 class patchers():    
     def find_prev_non_alphanumeric(text: str, start_index: int, tokens: set[str] = ()):
+        """Use this with care, do not use this to find the start of a plugin name as plugins are files and can contain non-alphanumeric characters"""
         for i in range(start_index, 0, -1):
             if (not text[i].isalnum() and text[i] != ' ') or text[i] in tokens:
                 return i
