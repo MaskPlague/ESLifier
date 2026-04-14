@@ -36,7 +36,7 @@ class notification_display_dialog(QDialog):
 
         self.lost_to_overwrite_table = self.make_table(1)
         self.lost_to_overwrite_table_label = QLabel("The following files are present in both MO2's Overwrite folder and ESLifier's output.\n"\
-                                                "This means that ESLifier is likely losing a file conflict and needs these files move to\n"\
+                                                "This means that ESLifier is likely losing a file conflict and needs these files moved to\n"\
                                                 "a mod that it can win the conflict with.")
         main_layout.addWidget(self.lost_to_overwrite_table_label)
         main_layout.addWidget(self.lost_to_overwrite_table)
