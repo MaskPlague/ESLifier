@@ -1,5 +1,5 @@
 {
-    "version": 10,
+    "version": 11,
     "conditions": [
         {
             "extension": "json",
@@ -79,6 +79,12 @@
             "extension": "ini",
             "contains": "Plugins/CraftingInventoryExtender/",
             "patcher": "ini_plugin_sep_formid",
+            "separator": "|"
+        },
+        {
+            "extension": "yml",
+            "contains": "SKSE/Acheron/",
+            "patcher": "ini_formid_sep_plugin",
             "separator": "|"
         }
     ]
