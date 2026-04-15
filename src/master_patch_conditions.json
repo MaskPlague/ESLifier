@@ -1,5 +1,5 @@
 {
-    "version": 11,
+    "version": 12,
     "conditions": [
         {
             "extension": "json",
@@ -83,6 +83,12 @@
         },
         {
             "extension": "yml",
+            "contains": "SKSE/Acheron/",
+            "patcher": "ini_formid_sep_plugin",
+            "separator": "|"
+        },
+        {
+            "extension": "yaml",
             "contains": "SKSE/Acheron/",
             "patcher": "ini_formid_sep_plugin",
             "separator": "|"
