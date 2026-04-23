@@ -23,10 +23,21 @@ class patchers():
         with open(new_file, 'rb+') as f:
             data = f.readlines()
             bytes_basename = bytes(basename, 'utf-8')
-            for i in range(len(data)):
-                if bytes_basename in data[i].lower(): #check for plugin name, in file path, in line of nif file.
-                    for form_ids in form_id_map:
-                        data[i] = data[i].replace(form_ids[0].encode(), form_ids[1].encode()).replace(form_ids[0].encode().lower(), form_ids[1].encode().lower())
+            form_id_dict = {old.lower().encode(): new.upper().encode() for old, new in form_id_map}
+            for i, line in enumerate(data):
+                line_lower = line.lower()
+                if bytes_basename in line_lower: #check for plugin name, in file path, in line of nif file.
+                    count = line_lower.count(bytes_basename)
+                    start = 0
+                    for _ in range(count):
+                        esp_index = line_lower.find(bytes_basename, start)
+                        if esp_index == -1:
+                            break
+                        index = esp_index+ len(bytes_basename) + 3
+                        start = esp_index + 1
+                        to_id = form_id_dict.get(line[index:index+6].lower(), None)
+                        if to_id is not None:
+                            data[i] = data[i][:index] + to_id + data[i][index+6:]
             f.seek(0)
             f.writelines(data)
 
