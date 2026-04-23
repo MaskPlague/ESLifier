@@ -201,7 +201,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
     elif 'facegeom' in new_file_lower and new_file_lower.endswith('.nif'):                  # FaceGeom mesh patching
         patchers.facegeom_mesh_patcher(basename, new_file, form_id_rename_map)
     elif new_file_lower.endswith('.seq'):                                                   # SEQ file patching
-        patchers.seq_patcher(new_file, form_id_map, master_byte, updated_master_index=updated_master_index, update_byte=update_byte)
+        patchers.seq_patcher(new_file, form_id_map, updated_master_index=updated_master_index, master_byte=master_byte, update_byte=update_byte)
     elif new_file_lower.endswith('.jslot'):                                                 # Racemenu Presets
         patchers.jslot_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     elif new_file_lower.endswith('config.txt') and 'plugins\\customskill' in new_file_lower: # CSF's old txt format

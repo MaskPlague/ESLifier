@@ -577,7 +577,7 @@ class CFIDs():
         form_id_list = []
         #Get all new form ids in plugin
         for form in data_list:
-            if form[:4] not in (b'GRUP', b'TES4') and form[15] >= master_count and form[12:16] not in form_id_list:
+            if form[:4] not in (b'GRUP', b'TES4') and form[15] >= master_count and [form[12:16], form[:4]] not in form_id_list:
                 form_id_list.append([form[12:16], form[:4]])
 
         master_byte = master_count.to_bytes()
@@ -759,13 +759,14 @@ class CFIDs():
 
                 form_id_list = []
                 master_byte = b''
+                master_byte_for_seq = self.get_master_count(data_list)[0].to_bytes()
                 updated_master_index: int = -1
                 if self.do_generate_cell_master:
                     #Get all new form ids in plugin
                     for form in data_list:
                         if form[:4] not in (b'GRUP', b'TES4') and form[15] >= master_index and form[12:16] not in form_id_list:
                             form_id_list.append(form[12:16])
-                    master_byte = self.get_master_count(data_list)[0].to_bytes()
+                    master_byte = master_byte_for_seq
                     with self.lock:
                         data_list, updated_master_index = self.add_cell_master_to_masters(data_list)
 
@@ -807,7 +808,7 @@ class CFIDs():
 
         if new_seq_file:
             try:
-                patchers.seq_patcher(new_seq_file, form_id_replacements, master_byte, updated_master_index=updated_master_index, update_byte=self.do_generate_cell_master, dependent=True)
+                patchers.dependent_seq_patcher(new_seq_file, form_id_replacements, updated_master_index, master_byte_for_seq, master_index_byte, update_byte=self.do_generate_cell_master)
             except Exception as e:
                 print(f'!Error: Failed to patch depdendent\'s SEQ file: {new_seq_file}')
                 print(e)
