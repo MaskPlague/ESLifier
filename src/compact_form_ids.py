@@ -863,16 +863,16 @@ class CFIDs():
         offset = 24
         data_len = len(tes4)
         if new_master_data in tes4:
-            master_index = 0
+            cell_master_index = 0
             while offset < data_len:
                 field = tes4[offset:offset+4]
                 field_size = struct.unpack("<H", tes4[offset+4:offset+6])[0]
                 if field == b'MAST':
                     if b'ESLifier_Cell_Master.esm' in tes4[offset+6:offset+6+field_size]:
-                        return data_list, master_index
-                    master_index += 1
+                        return data_list, cell_master_index
+                    cell_master_index += 1
                 offset += field_size + 6
-        master_exists = False
+        any_master_exists = False
         cnam_offset = 0
         while offset < data_len:
             field = tes4[offset:offset+4]
@@ -880,12 +880,12 @@ class CFIDs():
             if field == b'CNAM':
                 cnam_offset = offset
             if field == b'MAST':
-                master_exists = True
-            elif field != b'DATA' and master_exists:
+                any_master_exists = True
+            elif field != b'DATA' and any_master_exists:
                 break
             offset += field_size + 6
         tes4_size: int = struct.unpack("<I", tes4[4:8])[0] + 45
-        if master_exists:
+        if any_master_exists:
             tes4 = b'TES4' + tes4_size.to_bytes(4,'little') + tes4[8:offset] + new_master_data + tes4[offset:]
         else:
             field_size = struct.unpack("<H", tes4[cnam_offset+4:cnam_offset+6])[0]
