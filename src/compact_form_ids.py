@@ -345,14 +345,15 @@ class CFIDs():
             
             rel_path = self.get_rel_path(file)
             for form_ids in self.form_id_rename_map:
-                if form_ids[0].lower() in file.lower():
+                form_ids_0_lower = form_ids[0].lower()
+                if file.lower().endswith((form_ids_0_lower + '.nif', form_ids_0_lower + '.dds')):
                     with self.semaphore:
                         new_file, rel_path_new_file = self.copy_file_to_output(file)
-                        index = new_file.lower().index(form_ids[0].lower())
+                        index = len(new_file) - 10
                         renamed_file = new_file[:index] + form_ids[1].upper() + new_file[index+6:]
                         with self.lock:
                             os.replace(new_file, renamed_file)
-                        index = rel_path_new_file.lower().index(form_ids[0].lower())
+                        index = len(rel_path_new_file) - 10
                         rel_path_renamed_file = rel_path_new_file[:index] + form_ids[1].upper() + rel_path_new_file[index+6:]
                         with self.lock:
                             if rel_path_new_file not in self.compacted_and_patched[master_base_name]:
