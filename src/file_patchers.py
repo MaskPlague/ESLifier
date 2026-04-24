@@ -600,8 +600,271 @@ class patchers():
             f.truncate(0)
             f.write(''.join(lines))
             f.close()
+
+    #Told an AI to update the old patcher based on the template ini, fingers crossed...
+    def ini_completionist_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
+        comp_print_replace = True
+
+        def _comp_form_id_replacer(form_id, form_id_map):
+            nonlocal comp_print_replace
+            if '0x' in form_id.lower():
+                form_id_int = int(form_id, 16)
+                to_id_data = form_id_map.get(form_id_int)
+                if to_id_data is not None:
+                    if to_id_data.get("update_name") and comp_print_replace:
+                        comp_print_replace = False
+                    return '0x' + to_id_data["hex"], to_id_data.get("update_name", False)
+            return form_id, False
+            
+        def _comp_single_value_form_id(line, should_replace, form_id_map):
+            # Handles solitary FormIDs like BaseFormID or validItemsFormID
+            if not should_replace:
+                return line
+            equal_index = line.index('=')
+            var_name = line[:equal_index]
+            val = line[equal_index+1:].strip()
+            
+            if '0x' in val.lower():
+                comment = ""
+                if ';' in val:
+                    c_idx = val.index(';')
+                    comment = ' ' + val[c_idx:]
+                    val = val[:c_idx].strip()
+                
+                new_val, replace_name = _comp_form_id_replacer(val, form_id_map)
+                return var_name + '= ' + new_val + comment + '\n'
+            return line
+
+        def _comp_variable_form_id(line, basename, global_replace, local_replace, local_defined, form_id_map):
+            equal_index = line.index('=')
+            variable = line[:equal_index].strip()
+            var_end = False
+            patch_this = False
+            has_star = False
+            plugin_original = ""
+            
+            # Identifies variables that contain text/settings on the right side rather than actual FormIDs
+            is_special_var = variable.endswith(('_DisplayName','_Highlight', '_Visibility', '_InstallCondition', '_MuseumDisplayable', '_Type', '_Stage', '_OptionalStage', '_PickupEnabled'))
+            
+            if is_special_var:
+                index = variable.rindex('_')
+                form_id_string = variable[:index]
+                if '*' in form_id_string:
+                    has_star = True
+                    index_star = form_id_string.index('*')
+                    form_id = form_id_string[:index_star]
+                    plugin_original = form_id_string[index_star+1:].strip()
+                    if plugin_original.lower() == basename:
+                        patch_this = True
+                else:
+                    form_id = form_id_string
+                var_end = True
+                variable_end = variable[index:]
+            else:
+                if '*' in variable:
+                    has_star = True
+                    index_star = variable.index('*')
+                    form_id = variable[:index_star]
+                    plugin_original = variable[index_star+1:].strip()
+                    if plugin_original.lower() == basename:
+                        patch_this = True
+                else:
+                    form_id = variable
+
+            do_patch = False
+            if has_star:
+                if patch_this:
+                    do_patch = True
+            else:
+                if (global_replace and not local_defined) or local_replace:
+                    do_patch = True
+
+            if do_patch:
+                form_id, replace_name = _comp_form_id_replacer(form_id, form_id_map)
+                variable = form_id
+                if has_star:
+                    if replace_name:
+                        variable += '*' + "ESLifier_Cell_Master.esm"
+                    else:
+                        variable += '*' + plugin_original
+
+            if var_end:
+                variable += variable_end + ' '
+            else:
+                variable += ' '
+
+            line = variable + line[equal_index:]
+            
+            # Only process the right-hand side if it's NOT a special variable (e.g. 0x00 = 0x01,0x02)
+            # Prevents commas in DisplayNames from being wrongly split/processed.
+            if not is_special_var:
+                line = _comp_layout_3_processor(global_replace, local_replace, local_defined, basename, line, form_id_map)
+                
+            return line
+
+        def _comp_layout_3_processor(global_replace, local_replace, local_defined, basename, line, form_id_map):
+            start_index = line.index('=')+1
+            append_newline = False
+            if line.endswith('\n'):
+                append_newline = True
+            parts = [part.strip() for part in line[start_index:].split(',') if part.strip() != '']
+            for i, form_id_string in enumerate(parts):
+                parts[i] = _comp_form_id_processor(form_id_string, basename, global_replace, local_replace, local_defined, form_id_map, False)
+            return_string = line[:start_index] + ' ' + ', '.join(parts)
+            if append_newline:
+                return_string += '\n'
+            return return_string
+
+        def _comp_form_id_processor(form_id_string, basename, global_replace, local_replace, local_defined, form_id_map, has_comma):
+            has_semicolon = False
+            if form_id_string.strip().startswith(';'):
+                form_id_string = form_id_string.strip()[1:].strip()
+                has_semicolon = True
+                
+            if has_comma:
+                index = form_id_string.index(',')
+                end_of_line = form_id_string[index:]
+                form_id_string = form_id_string[:index]
+                
+            if '*' in form_id_string:
+                index = form_id_string.index('*')
+                if '<' in form_id_string:
+                    add_end = True
+                    end_index = form_id_string.index('<')
+                else:
+                    add_end = False
+                    end_index = len(form_id_string)
+                plugin = form_id_string[index+1:end_index].strip()
+                if plugin.lower() == basename:
+                    form_id = form_id_string[:index]
+                    form_id, replace_name = _comp_form_id_replacer(form_id, form_id_map)
+                    if add_end:
+                        end = form_id_string[end_index:]
+                        if not replace_name:
+                            form_id_string = form_id + '*' + plugin + end
+                        else:
+                            form_id_string = form_id + '*' + "ESLifier_Cell_Master.esm" + end
+                    else:
+                        if not replace_name:
+                            form_id_string = form_id + '*' + plugin
+                        else:
+                            form_id_string = form_id + '*' + "ESLifier_Cell_Master.esm"
+                            
+            elif '<' in form_id_string:
+                end_index = form_id_string.index('<')
+                form_id = form_id_string[:end_index]
+                end = form_id_string[end_index:]
+                form_id, replace_name = _comp_form_id_replacer(form_id, form_id_map)
+                if replace_name:
+                    form_id += "*" + "ESLifier_Cell_Master.esm"
+                form_id_string = form_id + end
+                
+            elif (global_replace and not local_defined) or local_replace:
+                form_id, replace_name = _comp_form_id_replacer(form_id_string, form_id_map)
+                form_id_string = form_id
+                if replace_name:
+                    form_id_string += "*" + "ESLifier_Cell_Master.esm"
+
+            if has_comma:
+                form_id_string += end_of_line
+                
+            if has_semicolon:
+                form_id_string = '; ' + form_id_string
+                
+            return form_id_string
+        
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            lines = f.readlines()
+            
+            # --- PASS 1: Extract Scopes ---
+            # Due to INI lines being unordered (e.g. validItemsFileName can be read AFTER validItemsFormID), 
+            # we map out each section's active target plugins first.
+            section_metadata = {}
+            current_sec = "GLOBAL"
+            
+            def _get_val_clean(l):
+                val = l.split('=', 1)[1]
+                if ';' in val: val = val.split(';', 1)[0]
+                return val.strip().lower()
+
+            for line in lines:
+                line_s = line.strip()
+                if not line_s or line_s.startswith(';'):
+                    continue
+                if line_s.startswith('[') and line_s.endswith(']'):
+                    current_sec = line_s
+                    section_metadata[current_sec] = {}
+                elif line_s.startswith('PluginFileName') and '=' in line_s:
+                    section_metadata.setdefault(current_sec, {})['PluginFileName'] = _get_val_clean(line_s)
+                elif line_s.startswith('InstallFrom') and '=' in line_s:
+                    section_metadata.setdefault(current_sec, {})['InstallFrom'] = _get_val_clean(line_s)
+                elif line_s.startswith('validItemsFileName') and '=' in line_s:
+                    section_metadata.setdefault(current_sec, {})['validItemsFileName'] = _get_val_clean(line_s)
+
+            # Find the Global Plugin (first declaration of it usually dictates the file's primary scope)
+            global_plugin = ""
+            for sec, data in section_metadata.items():
+                if 'PluginFileName' in data:
+                    global_plugin = data['PluginFileName']
+                    break
+
+            global_replace = (global_plugin == basename)
+            
+            # --- PASS 2: Execute Replacements ---
+            current_sec = "GLOBAL"
+            in_form_ids = False
+            end_tag = 'ENDTAG'
+            
+            local_replace = False
+            local_defined = False
+            quest_replace = global_replace
+            valid_items_replace = False
+
+            for i, line in enumerate(lines):
+                line_s = line.strip()
+                
+                if line_s.startswith('[') and line_s.endswith(']'):
+                    current_sec = line_s
+                    sec_data = section_metadata.get(current_sec, {})
+                    local_defined = 'InstallFrom' in sec_data
+                    local_replace = (sec_data.get('InstallFrom', '') == basename)
+                    quest_plugin = sec_data.get('PluginFileName', global_plugin)
+                    quest_replace = (quest_plugin == basename)
+                    valid_items_plugin = sec_data.get('validItemsFileName', '')
+                    valid_items_replace = (valid_items_plugin == basename)
+                    
+                if not in_form_ids and line_s.startswith('FormIDs') and '=' in line_s:
+                    if '<<<' in line_s:
+                        in_form_ids = True
+                        index = line.index('<<<')+3
+                        end_tag = line[index:].strip()
+                        continue
+                    else:
+                        lines[i] = _comp_layout_3_processor(global_replace, local_replace, local_defined, basename, line, form_id_map)
+                        
+                elif in_form_ids and line_s == end_tag:
+                    in_form_ids = False
+                    
+                elif in_form_ids:
+                    lines[i] = _comp_form_id_processor(line, basename, global_replace, local_replace, local_defined, form_id_map, True)
+                    
+                elif not in_form_ids:
+                    if line_s.startswith('0x') and '=' in line_s:
+                        lines[i] = _comp_variable_form_id(line, basename, global_replace, local_replace, local_defined, form_id_map)
+                    elif line_s.startswith('BaseFormID') and '=' in line_s:
+                        lines[i] = _comp_single_value_form_id(line, quest_replace, form_id_map)
+                    elif line_s.startswith('validItemsFormID') and '=' in line_s:
+                        lines[i] = _comp_single_value_form_id(line, valid_items_replace, form_id_map)
+                        
+            if not comp_print_replace:
+                print(f'~Plugin Name Replaced: {basename} | {new_file}')
+
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
+            f.close()
     
-    def ini_completionist_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+    def old_ini_completionist_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         comp_print_replace = True
         def _comp_form_id_replacer(form_id: str, form_id_map: dict):
             nonlocal comp_print_replace
