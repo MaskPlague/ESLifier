@@ -273,7 +273,7 @@ class create_new_cell_plugin():
                             wrld_grup_cell_count += 1
 
         #save the actual record count to the tes4 header
-        if wrld_grup_count == 1:
+        if wrld_grup_count == 1 and len(self.wrld_dict) == 0:
             wrld_grup_count = 0
         if cell_grup_count == 1:
             cell_grup_count = 0
