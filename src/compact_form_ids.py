@@ -342,7 +342,7 @@ class CFIDs():
                     print('\033[F\033[K-    Percentage: ' + str(round(percent,1)) +'%\n-    Files: ' + str(self.count) + '/' + str(self.file_count), end='\r')
             
             rel_path = self.get_rel_path(file)
-            if 'facegeom' in file.lower(): # Meshes
+            if 'facegendata' in file.lower(): # Meshes
                 with self.semaphore:
                     from_id = file[-10:-4]
                     to_id = self.form_id_map.get(from_id, None)
