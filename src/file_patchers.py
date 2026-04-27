@@ -23,7 +23,7 @@ class patchers():
         with open(new_file, 'rb+') as f:
             data = f.readlines()
             bytes_basename = bytes(basename, 'utf-8')
-            form_id_dict = {old.lower().encode(): new.upper().encode() for old, new in form_id_map}
+            form_id_dict = {old.lower().encode(): new.upper().encode() for old, new in form_id_map.items() if isinstance(old, str)}
             for i, line in enumerate(data):
                 line_lower = line.lower()
                 if bytes_basename in line_lower: #check for plugin name, in file path, in line of nif file.

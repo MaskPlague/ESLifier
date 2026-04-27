@@ -133,7 +133,6 @@ class CFIDs():
                            add_cell_to_master: bool, files_to_patch: dict):
         self.do_generate_cell_master = add_cell_to_master
         self.form_id_map = {}
-        self.form_id_rename_map = []
         print(f"Editing Plugin: {os.path.basename(file_to_compact)}...")
         self.compact_file(file_to_compact, all_dependents_have_skyrim_esm_as_master)
         self.get_form_id_map(file_to_compact)
@@ -224,7 +223,6 @@ class CFIDs():
     def patch_new(self, compacted_file: str, dependents: list, files_to_patch: list, add_cell_to_master: bool):
         self.do_generate_cell_master = add_cell_to_master
         self.form_id_map = {}
-        self.form_id_rename_map = []
         print('Patching new plugins and files for ' + compacted_file + '...')
         self.master_byte = bytes.fromhex(self.master_byte_data[compacted_file]['master_byte'])
         self.updated_master_index = self.master_byte_data[compacted_file]['updated_master_index']
@@ -344,17 +342,16 @@ class CFIDs():
                     print('\033[F\033[K-    Percentage: ' + str(round(percent,1)) +'%\n-    Files: ' + str(self.count) + '/' + str(self.file_count), end='\r')
             
             rel_path = self.get_rel_path(file)
-            for form_ids in self.form_id_rename_map:
-                form_ids_0_lower = form_ids[0].lower()
-                if file.lower()[:-4].endswith(form_ids_0_lower): # Meshes
-                    with self.semaphore:
+            if 'facegeom' in file.lower(): # Meshes
+                with self.semaphore:
+                    from_id = file[-10:-4]
+                    to_id = self.form_id_map.get(from_id, None)
+                    if to_id is not None:
                         new_file, rel_path_new_file = self.copy_file_to_output(file)
-                        index = len(new_file) - 10
-                        renamed_file = new_file[:index] + form_ids[1].upper() + new_file[index+6:]
+                        renamed_file = new_file[:-10] + to_id.upper() + new_file[-4:]
                         with self.lock:
                             os.replace(new_file, renamed_file)
-                        index = len(rel_path_new_file) - 10
-                        rel_path_renamed_file = rel_path_new_file[:index] + form_ids[1].upper() + rel_path_new_file[index+6:]
+                        rel_path_renamed_file = rel_path_new_file[:-10] + to_id.upper() + rel_path_new_file[-4:]
                         with self.lock:
                             if rel_path_new_file not in self.compacted_and_patched[master_base_name]:
                                 self.compacted_and_patched[master_base_name].append(rel_path_new_file)
@@ -362,21 +359,25 @@ class CFIDs():
                                 self.compacted_and_patched[master_base_name].append(rel_path_renamed_file)
                             if 'facegeom' in new_file.lower() and master_base_name.lower() in new_file.lower():
                                 facegeom_meshes.append(renamed_file)
-                elif file[-6] == "_" or file[-7] == "_": # Voice
-                    with self.semaphore:
+            elif file[-6] == "_" or file[-7] == "_": # Voice
+                with self.semaphore:
+                    index = file.rfind('_') - 6
+                    from_id = file[index:index+6]
+                    to_id = self.form_id_map.get(from_id, None)
+                    if to_id is not None:
                         new_file, rel_path_new_file = self.copy_file_to_output(file)
-                        index = new_file.rfind('_') - 7
-                        renamed_file = new_file[:index] + form_ids[1].upper() + new_file[index+6:]
+                        index = new_file.rfind('_') - 6
+                        renamed_file = new_file[:index] + to_id.upper() + new_file[index+6:]
                         with self.lock:
                             os.replace(new_file, renamed_file)
-                        index = rel_path_new_file.rfind('_') - 7
-                        rel_path_renamed_file = rel_path_new_file[:index] + form_ids[1].upper() + rel_path_new_file[index+6:]
+                        index = rel_path_new_file.rfind('_') - 6
+                        rel_path_renamed_file = rel_path_new_file[:index] + to_id.upper() + rel_path_new_file[index+6:]
                         with self.lock:
                             if rel_path_new_file not in self.compacted_and_patched[master_base_name]:
                                 self.compacted_and_patched[master_base_name].append(rel_path_new_file)
                             if rel_path_renamed_file not in self.compacted_and_patched[master_base_name]:
                                 self.compacted_and_patched[master_base_name].append(rel_path_renamed_file)
-                    break
+
             self.compacted_and_patched[master_base_name].append(rel_path.lower())
         if facegeom_meshes != []:
             self.patch_files(master, facegeom_meshes)
@@ -403,10 +404,7 @@ class CFIDs():
             to_id_hex_no_0 = to_id_hex.lstrip('0')
             if to_id_hex_no_0 == '':
                 to_id_hex_no_0 = '0'
-
-            self.form_id_rename_map.append([from_id_hex, to_id_hex])
             
-
             if len(to_id_bytes) == 4:
                 update_plugin_name = False
             else:
@@ -421,6 +419,7 @@ class CFIDs():
                                                 }
             
             self.form_id_map[from_id_bytes] = to_id_bytes
+            self.form_id_map[from_id_hex.lower()] = to_id_hex.lower()
 
     def patch_files_threader(self, master: str, files: list[str]):
         threads = []
@@ -459,13 +458,13 @@ class CFIDs():
                 with self.semaphore:
                     with self.lock:
                         try:
-                            patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, self.form_id_map, self.form_id_rename_map, 
+                            patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, self.form_id_map, 
                                                                      self.master_byte, self.updated_master_index, self.do_generate_cell_master,
                                                                      self.additional_conditions, 'utf-8')
                         except Exception as e:
                             exception_type = type(e)
                             if exception_type == UnicodeDecodeError:
-                                patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, self.form_id_map, self.form_id_rename_map, 
+                                patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, self.form_id_map, 
                                                                          self.master_byte, self.updated_master_index, self.do_generate_cell_master,
                                                                           self.additional_conditions, 'ansi')
                             else:

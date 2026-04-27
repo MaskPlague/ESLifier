@@ -2,7 +2,7 @@ import os
 from file_patchers import patchers
 from file_defined_patcher_conditions import user_and_master_conditions_class
 
-def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, form_id_map: dict, form_id_rename_map: dict,
+def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, form_id_map: dict,
                         master_byte: bytes, updated_master_index: int, update_byte: bool, additional_conditions: user_and_master_conditions_class,
                         encoding: str):
     if new_file_lower.endswith('.ini'):
@@ -199,7 +199,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
             if not patched:                                           
                 print(f'Warn: Possible missing patcher for: {new_file}')
     elif 'facegeom' in new_file_lower and new_file_lower.endswith('.nif'):                  # FaceGeom mesh patching
-        patchers.facegeom_mesh_patcher(basename, new_file, form_id_rename_map)
+        patchers.facegeom_mesh_patcher(basename, new_file, form_id_map)
     elif new_file_lower.endswith('.seq'):                                                   # SEQ file patching
         patchers.seq_patcher(new_file, form_id_map, updated_master_index=updated_master_index, master_byte=master_byte, update_byte=update_byte)
     elif new_file_lower.endswith('.jslot'):                                                 # Racemenu Presets
