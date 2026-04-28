@@ -345,7 +345,7 @@ class CFIDs():
             if 'facegendata' in file.lower(): # Meshes
                 with self.semaphore:
                     from_id = file[-10:-4]
-                    to_id = self.form_id_map.get(from_id, None)
+                    to_id = self.form_id_map.get(from_id.lower(), None)
                     if to_id is not None:
                         new_file, rel_path_new_file = self.copy_file_to_output(file)
                         renamed_file = new_file[:-10] + to_id.upper() + new_file[-4:]
@@ -363,7 +363,7 @@ class CFIDs():
                 with self.semaphore:
                     index = file.rfind('_') - 6
                     from_id = file[index:index+6]
-                    to_id = self.form_id_map.get(from_id, None)
+                    to_id = self.form_id_map.get(from_id.lower(), None)
                     if to_id is not None:
                         new_file, rel_path_new_file = self.copy_file_to_output(file)
                         index = new_file.rfind('_') - 6
