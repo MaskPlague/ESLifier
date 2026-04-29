@@ -2300,8 +2300,60 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
+    #Cell Form IDs not present besides in the cell int but the master byte shouldn't be updated anyways
+    def json_dyndolod_ligh_patcher(basename: str, new_file: str, form_id_map: dict, master_byte: bytes, encoding_method: str ='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            try:
+                data: dict = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data: dict = patchers.use_json5(string)
+            json_esp_keys = list(data)
+            json_cell_values = list(data.values())
+            cell_numbers_to_maybe_patch = []
+            for i, key in enumerate(json_esp_keys):
+                if key.lower().endswith(','+basename):
+                    cell_numbers_to_maybe_patch.append(i)
+                    form_id_int = int(key[2:8], 16)
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        json_esp_keys[i] = '00' + to_id_data['hex'] + key[8:]
+
+            for i, value in enumerate(json_cell_values):
+                if i in cell_numbers_to_maybe_patch:
+                    cell_number_int = value.get('Cell', None)
+                    if cell_number_int is not None:
+                        cell_number_bytes = int.to_bytes(cell_number_int, 4)
+                        if cell_number_bytes[0:1] >= master_byte:
+                            form_id_int = int(cell_number_bytes[1:].hex(), 16)
+                            to_id_data = form_id_map.get(form_id_int)
+                            if to_id_data is not None:
+                                new_bytes = master_byte + to_id_data['bytes']
+                                new_int = int.from_bytes(new_bytes)
+                                value['Cell'] = new_int
+                for k, v in value.items():
+                    if isinstance(v, str) and v.lower().endswith(','+basename):
+                        form_id_int = int(v[2:8], 16)
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            value[k] = '00' + to_id_data['hex'] + v[8:]
+                    elif isinstance(v, dict):
+                        for n_k, n_v in v.items():
+                            if isinstance(n_v, str) and n_v.lower().endswith(','+basename):
+                                form_id_int = int(n_v[2:8], 16)
+                                to_id_data = form_id_map.get(form_id_int)
+                                if to_id_data is not None:
+                                    v[n_k] = '00' + to_id_data['hex'] + n_v[8:]
+            data = dict(zip(json_esp_keys, json_cell_values))
+            f.seek(0)
+            f.truncate(0)
+            json.dump(data, f, ensure_ascii=False, indent=2)
+            f.close()
+
 #if __name__ == '__main__':
 #    basename = "thing.esp".lower()
-#    form_id_map = {2079: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'update_name': False}, 2077: {'hex_no_0': 'B0B', "int": 10101, 'hex': '000B0B', 'update_name': True}}
+#    form_id_map = {2174834: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'bytes': b'\x00\x0A\x0A', 'update_name': False}, 
+#                   2175263: {'hex_no_0': 'B0B', 'hex': '000B0B', "int": 10101, 'bytes': b'\x00\x0B\x0B', 'update_name': True}}
 #    new_file = os.path.normpath(r)
-#    patchers.ini_skypatcher_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
+#    patchers.json_dyndolod_ligh_patcher(basename, new_file, form_id_map, master_byte=b'\x05', encoding_method='utf-8')
