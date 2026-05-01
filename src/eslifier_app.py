@@ -4,11 +4,12 @@ import images_qr #do not remove, used for icons, it is a PyQt6 resource file
 import json
 import requests
 import traceback
+import webbrowser
 from datetime import datetime
 
 from PyQt6.QtCore import Qt, QObject, QThread, pyqtSignal
 from PyQt6.QtGui import QPalette, QColor, QIcon
-from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMessageBox, QTabWidget, QVBoxLayout, QSizePolicy
+from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMessageBox, QTabWidget, QVBoxLayout, QSizePolicy, QPushButton
 
 from settings_page import settings
 from main_page import main
@@ -63,9 +64,22 @@ def luhn_checksum(data: bytes) -> int:
 
 def connection_result(is_latest: bool, latest_version: str):
     if not is_latest:
-        QMessageBox.warning(None, 'ESLifier Outdated', f"There exists a new version of ESLifier (v{latest_version}).\n"\
-                                                        "It is recommended to update as it could contain critical changes,\n"\
-                                                        "bug fixes, or additional file patchers.")
+        message = QMessageBox()
+        message.setIcon(QMessageBox.Icon.Warning)
+        message.setWindowTitle("ESLifier Outdated")
+        message.setText(f"There exists a new version of ESLifier (v{latest_version}).\n"\
+                         "It is recommended to update as it could contain critical changes,\n"\
+                         "bug fixes, or additional file patchers.")
+        def open_nexus():
+            webbrowser.open("https://www.nexusmods.com/skyrimspecialedition/mods/145168?tab=files")
+            message.show()
+        def open_github():
+            webbrowser.open("https://github.com/MaskPlague/ESLifier/releases/latest")
+            message.show()
+        message.addButton("Open Nexus", QMessageBox.ButtonRole.AcceptRole).clicked.connect(open_nexus)
+        message.addButton("Open GitHub", QMessageBox.ButtonRole.AcceptRole).clicked.connect(open_github)
+        message.addButton(QMessageBox.StandardButton.Close)
+        message.show()
         
 class github_connect(QObject):
     finished_signal = pyqtSignal(bool, str)
