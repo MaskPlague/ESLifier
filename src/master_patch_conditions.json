@@ -1,5 +1,5 @@
 {
-    "version": 12,
+    "version": 13,
     "conditions": [
         {
             "extension": "json",
@@ -92,6 +92,11 @@
             "contains": "SKSE/Acheron/",
             "patcher": "ini_formid_sep_plugin",
             "separator": "|"
+        },
+        {
+            "extension": "json",
+            "contains": "SKSE/Plugins/LazyFollowers/",
+            "patcher": "json_jcontainer"
         }
     ]
 }
