@@ -399,7 +399,8 @@ class scanner():
         
         for mod in to_remove:
             load_order.remove(mod)
-        load_order.pop(0)
+        if load_order[0].startswith('# This file was'):
+            load_order.pop(0)
         load_order.append('bsa_extracted_eslifier_scan')
         load_order.reverse()
         load_order.append('overwrite_eslifier_scan')
