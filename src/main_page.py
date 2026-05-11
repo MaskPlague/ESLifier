@@ -871,7 +871,7 @@ class main(QWidget):
                 if os.name == 'nt':
                     os.startfile(output_folder)
                 elif os.name == 'posix':
-                    subprocess.Popen(['xdg-open', output_folder])
+                    subprocess.Popen(['xdg-open', os.path.dirname(output_folder)])
                 else:
                     subprocess.Popen(['open', os.path.dirname(output_folder)])
             except Exception as e:
@@ -884,9 +884,9 @@ class main(QWidget):
                 if os.name == 'nt':
                     os.startfile(log_file)
                 elif os.name == 'posix':
-                    subprocess.Popen(['xdg-open', os.path.dirname(log_file)])
+                    subprocess.Popen(['xdg-open', log_file])
                 else:
-                    subprocess.Popen(['open', os.path.dirname(log_file)])
+                    subprocess.Popen(['open', log_file])
             except Exception as e:
                 print(f"Error opening file: {e}")
 
