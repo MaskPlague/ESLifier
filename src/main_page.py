@@ -195,16 +195,16 @@ class main(QWidget):
         self.h_layout5.addWidget(self.button_compact)
         self.h_layout5.addWidget(self.filter_compact)
 
-        line = QFrame()
-        line.setFrameStyle(QFrame.Shape.HLine | QFrame.Shadow.Sunken)
-        line1 = QFrame()
-        line1.setFrameStyle(QFrame.Shape.HLine | QFrame.Shadow.Sunken)
-        line2 = QFrame()
-        line2.setFrameStyle(QFrame.Shape.HLine | QFrame.Shadow.Sunken)
-        if self.COLOR_MODE == 'Light':
-            line.setStyleSheet('QFrame{background-color: lightgrey;}')
-            line1.setStyleSheet('QFrame{background-color: lightgrey;}')
-            line2.setStyleSheet('QFrame{background-color: lightgrey;}')
+        def create_line():
+            widget = QFrame()
+            widget.setFrameStyle(QFrame.Shape.HLine | QFrame.Shadow.Sunken)
+            if self.COLOR_MODE == 'Light':
+                widget.setStyleSheet('QFrame{background-color: lightgrey;}')
+            return widget
+
+        line = create_line()
+        line1 = create_line()
+        line2 = create_line()
         
         self.stats = QTextEdit()
         self.stats.setReadOnly(True)
