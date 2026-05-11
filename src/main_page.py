@@ -4,6 +4,7 @@ import shutil
 import threading
 import timeit
 import hashlib
+import subprocess
 
 from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal, QTimer, QThreadPool
 from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QApplication,
@@ -870,7 +871,7 @@ class main(QWidget):
                 if os.name == 'nt':
                     os.startfile(output_folder)
                 elif os.name == 'posix':
-                    subprocess.Popen(['xdg-open', os.path.dirname(output_folder)])
+                    subprocess.Popen(['xdg-open', output_folder])
                 else:
                     subprocess.Popen(['open', os.path.dirname(output_folder)])
             except Exception as e:
