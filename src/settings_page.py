@@ -23,6 +23,7 @@ class settings(QWidget):
         self.setLayout(h_base_layout)
         self.output_folder_name_valid = True
         self.settings = self.get_settings_from_file()
+        self.default_settings = {}
         self.eslifier = eslifier
 
         self.file_dialog = QFileDialog()
@@ -35,13 +36,15 @@ class settings(QWidget):
             "Data Folder Path",
             "Set this to your Skyrim Special Edition Data folder that holds Skyrim.esm.",
             'C:/Path/To/Skyrim Special Edition/Data',
-            self.skyrim_folder_path_clicked
+            self.skyrim_folder_path_clicked,
+            'skyrim_folder_path'
         )
         self.output_folder_path_widget, self.output_folder_path = self.create_path_widget(
             "Output Folder Path",
             "Set where you want the Output Folder to be generated.",
             'C:/Path/To/The/Output/Folder/',
-            self.output_folder_path_clicked
+            self.output_folder_path_clicked,
+            'output_folder_path'
         )
         self.output_folder_name_widget, self.output_folder_name = self.create_output_name_text_input_widget(
             "Output Folder Name",
@@ -52,19 +55,22 @@ class settings(QWidget):
             "Overwrite Path",
             "Set this to your modlist\'s overwrite folder",
             'C:/Path/To/Overwrite',
-            self.overwrite_path_clicked
+            self.overwrite_path_clicked,
+            'overwrite_path'
         )
         self.plugins_txt_path_widget, self.plugins_txt_path = self.create_path_widget(
             "Plugins.txt Path",
             "Set this to your modlist\'s plugins.txt",
             'C:/Path/To/plugins.txt',
-            self.plugins_txt_path_clicked
+            self.plugins_txt_path_clicked,
+            'plugins_txt_path'
         )
         self.mo2_modlist_txt_path_widget, self.mo2_modlist_txt_path = self.create_path_widget(
             "Modlist.txt Path",
             "Set this to your profile's modlist.txt",
             'C:/Path/To/MO2/profiles/profile_name/modlist.txt',
-            self.mo2_modlist_txt_path_clicked
+            self.mo2_modlist_txt_path_clicked,
+            'mo2_modlist_txt_path'
         )
         self.mo2_mode_widget, self.mo2_mode_toggle = self.create_toggle_widget(
             "Enable MO2 Mode",
@@ -73,7 +79,8 @@ class settings(QWidget):
             "method to scan the MO2 mods folder and get winning file conflicts.\n"+
             "Launching this program through MO2 drastically slows it down and may\n"+
             "break certain functions.",
-            "mo2_mode"
+            "mo2_mode",
+            default=False
         )
         self.mo2_mode_widget.layout().itemAt(2).widget().clicked.connect(self.mo2_mode_clicked)
         self.mo2_mode_widget.layout().itemAt(2).widget().clicked.connect(self.skyrim_folder_path.clear)
@@ -83,43 +90,50 @@ class settings(QWidget):
             "Allow scanning and patching to use the new 1.71 header.\n"+
             "Requires Backported Extended ESL Support on Skyrim versions below 1.6.1130.\n"+
             "Changing this settings requires a re-scan.",
-            "update_header"
+            "update_header",
+            default=True
         )
         self.show_esms_widget, self.show_esms_toggle = self.create_toggle_widget(
             "Show ESM Plugins",
             "Display ESM plugins (.esm/ESM flagged).",
-            "show_esms"
+            "show_esms",
+            default=True
         )
         self.show_plugins_with_cells_widget, self.show_plugins_with_cells_toggle = self.create_toggle_widget(
             "Show plugins with new CELL records",
             "Bugs related to cells have been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+.\n"+
             "For users of SSE Engine Fixes v7+ there is no reason to disable this.\n"+
             "Display plugins with new CELL records.",
-            "show_cells"
+            "show_cells",
+            default=True
         )
         self.enable_cell_changed_filter_widget, self.enable_cell_changed_filter_toggle = self.create_toggle_widget(
             "Hide ESM plugins with new CELL records that are overwritten",
             "The related bug has been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+. Disable this filter.\n"+
             "Hide ESM plugins with new CELL records that have been changed by a dependent plugin.",
-            "enable_cell_changed_filter"
+            "enable_cell_changed_filter",
+            default=True
         )
         self.enable_interior_cell_filter_widget, self.enable_interior_cell_filter_toggle = self.create_toggle_widget(
             "Hide plugins with new interior CELL records",
             "This bug has been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+. Disable this filter.\n"+
             "Hide plugins with new interior CELL records as they can have issues when reloading\n"+
             "a save without restarting the game.",
-            "enable_interior_cell_filter"
+            "enable_interior_cell_filter",
+            default=False
         )
         self.enable_worldspaces_filter_widget, self.enable_worldspaces_filter_toggle = self.create_toggle_widget(
             "Hide plugins with new WRLD (worldspace) records",
             "Hide plugins with new worldspaces records as they can have the landscape disappear\n"+
             "(no ground) when flagged as ESL.",
-            "filter_worldspaces"
+            "filter_worldspaces",
+            default=True
         )
         self.enable_weather_filter_widget, self.enable_weather_filter_toggle = self.create_toggle_widget(
             "Hide plugins with new WTHR (weather) records",
             "Hide plugins with new weather records as they can be referenced in ENB presets which are not patched",
-            "filter_weathers"
+            "filter_weathers",
+            default=False
         )
         self.hide_left_columns_widget, self.hide_left_columns_text_input = self.create_text_input_widget(
             "Hide left list columns visually",
@@ -127,7 +141,8 @@ class settings(QWidget):
             "Specify the column names, comma seperated. Available: CELL, WRLD, ESM\n"+
             "Example, hides the CELL and ESM flags: CELL,ESM",
             "CELL,ESM",
-            "left_hidden_columns"
+            "left_hidden_columns",
+            ''
         )
         self.hide_right_columns_widget, self.hide_right_columns_text_input = self.create_text_input_widget(
             "Hide right list columns visually",
@@ -135,12 +150,14 @@ class settings(QWidget):
             "Specify the column names, comma seperated. Available: CELL, WRLD, WTHR, ESM, DEPENDENTS\n"+
             "Example, hides the ESM flag and the dependent plugins: ESM,DEPENDENT",
             "ESM,DEPENDENTS",
-            "right_hidden_columns"
+            "right_hidden_columns",
+            ''
         )
         self.show_plugins_possibly_refd_by_dlls_widget, self.show_plugins_possibly_refd_by_dlls_toggle = self.create_toggle_widget(
             "Show plugins that are in SKSE dlls",
             "Show or hide plugins that may have Form IDs hard-coded in SKSE dlls.",
-            "show_dlls"
+            "show_dlls",
+            default=False
         )
         self.persistent_ids_widget, self.persistent_ids_toggle = self.create_toggle_widget(
             "Persist Form IDs between rebuilds",
@@ -151,7 +168,8 @@ class settings(QWidget):
             "the ids compacted to 0x80A and 0x80B respectively. Then the new Form ID\n"+
             "will compact from 0x9A0B to 0x90C since the first two IDs existed previously\n"+
             "but 0x9A0B did not and 0x90C is the next available compacted Form ID.)",
-            "persistent_ids"
+            "persistent_ids",
+            default=True
         )
         self.persistent_ids_toggle.clicked.connect(self.persistent_ids_clicked)
         self.free_non_existent_widget, self.free_non_existent_toggle = self.create_toggle_widget(
@@ -161,25 +179,29 @@ class settings(QWidget):
             "(i.e. if 0x9A0A no longer exists in the theoretical mod in the toolTip example\n"+
             "of \"Persist Form IDs between rebuilds\", then adding 0x9A0B becomes -> 0x80A\n"+
             "instead of 0x80C since 0x80A is free)",
-            "free_non_existent"
+            "free_non_existent",
+            default=False
         )
         self.enable_patch_new_widget, self.enable_patch_new_toggle = self.create_toggle_widget(
             "Enable the Patch New or Changed Files Button",
             "Show the patch new button on the main page. Personally, I think it is useless\n"+
             "and annoying to maintain. However, I'm sure there is someone who uses it so I'm\n"+
             "keeping the option here to keep it enabled. Doesn't hash check if output has changed.",
-            "enable_patch_new"
+            "enable_patch_new",
+            default=False
         )
         self.hash_output_widget, self.hash_output_toggle = self.create_toggle_widget(
             "Hash the Output Folder to Detect Changes",
             "Hash the output folder during certain actions to detect if a file has been changed\n"+
             "since ESLifier last patched it. Can be time consuming.",
-            "hash_output"
+            "hash_output",
+            default=True
         )
         self.check_for_updates_widget, self.check_for_updates_toggle = self.create_toggle_widget(
             "Check for updates on start",
             "Connect to GitHub on program start to check for updates",
-            "check_for_updates"
+            "check_for_updates",
+            default=True
         )
         self.blacklist_window = blacklist_window()
         self.edit_blacklist_widget = self.create_button_widget(
@@ -220,7 +242,8 @@ class settings(QWidget):
             "is generated. You may also need to re-sort your plugins.\n"+
             "This disables the cell changed flag/filter for ESMs and\n"+
             "the new worldspace flag/filter.",
-            "generate_cell_master"            
+            "generate_cell_master",
+            default=False   
         )
         self.generate_cell_master_toggle.clicked.connect(self.cell_master_clicked)
 
@@ -328,12 +351,13 @@ class settings(QWidget):
     def plugins_txt_path_clicked(self):
         self.select_file_path(self.file_dialog_2, "Select your plugins.txt", 'plugins_txt_path', self.plugins_txt_path, "Load Order (plugins.txt)")
 
-    def create_path_widget(self, label_text, tooltip, placeholder, click_function):
+    def create_path_widget(self, label_text, tooltip, placeholder, click_function, settings_key):
         layout = QHBoxLayout()
         widget = QWidget()
         widget.setToolTip(tooltip)
         label = QLabel(label_text)
         line_edit = QLineEdit()
+        line_edit.setText(self.settings.get(settings_key, ''))
         line_edit.editingFinished.connect(self.update_settings)
         button = self.button_maker('Explore...', click_function, 100)
 
@@ -347,23 +371,23 @@ class settings(QWidget):
         line_edit.setPlaceholderText(placeholder)
         line_edit.setMinimumWidth(400)
         line_edit.setMaximumWidth(550)
-        
+        self.default_settings[settings_key] = {"type": "path", "default": '', "widget": line_edit}
         return widget, line_edit
     
-    def create_toggle_widget(self, label_text, tooltip, setting_key):
+    def create_toggle_widget(self, label_text, tooltip, setting_key, default=False):
         layout = QHBoxLayout()
         widget = QWidget()
         widget.setToolTip(tooltip)
         label = QLabel(label_text)
         toggle = QtToggle()
-        toggle.setChecked(self.settings.get(setting_key, False))
+        toggle.setChecked(self.settings.get(setting_key, default))
         toggle.clicked.connect(lambda: self.update_settings(setting_key))
         
         widget.setLayout(layout)
         layout.addWidget(label)
         layout.addSpacing(10)
         layout.addWidget(toggle)
-
+        self.default_settings[setting_key] = {"type": "toggle", "default": default, "widget": toggle}
         return widget, toggle
 
     def mo2_mode_clicked(self):
@@ -445,6 +469,7 @@ class settings(QWidget):
                 line_edit.setFocus()
                 self.output_folder_name_valid = False
 
+        line_edit.setText(self.settings.get('output_folder_name', "ESLifier Output"))
         line_edit.editingFinished.connect(hard_validate)
 
         widget.setLayout(layout)
@@ -457,10 +482,10 @@ class settings(QWidget):
         line_edit.setPlaceholderText(placeholder)
         line_edit.setMinimumWidth(400)
         line_edit.setMaximumWidth(550)
-        
+        self.default_settings['output_folder_name'] = {"type": "text", "default": "ESLifier Output", "widget": line_edit}
         return widget, line_edit
     
-    def create_text_input_widget(self, label_text, tooltip, placeholder, setting_key):
+    def create_text_input_widget(self, label_text, tooltip, placeholder, setting_key, default=''):
         layout = QHBoxLayout()
         widget = QWidget()
         widget.setToolTip(tooltip)
@@ -477,6 +502,7 @@ class settings(QWidget):
 
         line_edit.setPlaceholderText(placeholder)
         line_edit.setMinimumWidth(200)
+        self.default_settings[setting_key] = {"type": "text", "default": default, "widget": line_edit}
         return widget, line_edit
 
     def edit_blacklist_button_clicked(self):
@@ -513,29 +539,15 @@ class settings(QWidget):
             if os.path.exists('ESLifier_Data/settings.json'):
                 os.remove('ESLifier_Data/settings.json')
             self.settings.clear()
-            self.skyrim_folder_path.clear()
-            self.output_folder_path.clear()
-            self.output_folder_name.setText('ESLifier Output')
-            self.overwrite_path.clear()
-            self.plugins_txt_path.clear()
-            self.mo2_modlist_txt_path.clear()
-            self.mo2_mode_toggle.setChecked(False)
-            self.update_header_toggle.setChecked(True)
-            self.show_esms_toggle.setChecked(True)
-            self.show_plugins_with_cells_toggle.setChecked(True)
-            self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(False)
-            self.enable_cell_changed_filter_toggle.setChecked(True)
-            self.enable_interior_cell_filter_toggle.setChecked(False)
-            self.enable_worldspaces_filter_toggle.setChecked(True)
-            self.enable_weather_filter_toggle.setChecked(False)
-            self.generate_cell_master_toggle.setChecked(False)
-            self.check_for_updates_toggle.setChecked(True)
-            self.persistent_ids_toggle.setChecked(True)
-            self.free_non_existent_toggle.setChecked(False)
-            self.enable_patch_new_toggle.setChecked(False)
-            self.hide_left_columns_text_input.clear()
-            self.hide_right_columns_text_input.clear()
-            self.hash_output_toggle.setChecked(True)
+            for settings_key, setting_data in self.default_settings.items():
+                setting_type = setting_data["type"]
+                if setting_type == "toggle":
+                    setting_data["widget"].setChecked(setting_data["default"])
+                elif setting_type == "path":
+                    setting_data["widget"].clear()
+                elif setting_type == "text":
+                    setting_data["widget"].setText(setting_data["default"])
+
             self.inner_color = '#713585'
             self.outer_color = 'Gray'
             self.update_settings()
@@ -543,29 +555,6 @@ class settings(QWidget):
         confirm.show()
         
     def set_init_widget_values(self):
-        self.skyrim_folder_path.setText(self.settings.get('skyrim_folder_path', ''))
-        self.output_folder_path.setText(self.settings.get('output_folder_path', ''))
-        self.output_folder_name.setText(self.settings.get('output_folder_name', 'ESLifier Output'))
-        self.overwrite_path.setText(self.settings.get('overwrite_path', ''))
-        self.plugins_txt_path.setText(self.settings.get('plugins_txt_path', ''))
-        self.mo2_modlist_txt_path.setText(self.settings.get('mo2_modlist_txt_path' ,''))
-        self.mo2_mode_toggle.setChecked(self.settings.get('mo2_mode', False))
-        self.update_header_toggle.setChecked(self.settings.get('update_header', True))
-        self.show_esms_toggle.setChecked(self.settings.get('show_esms', True))
-        self.show_plugins_with_cells_toggle.setChecked(self.settings.get('show_cells', True))
-        self.enable_cell_changed_filter_toggle.setChecked(self.settings.get('enable_cell_changed_filter', True))
-        self.enable_interior_cell_filter_toggle.setChecked(self.settings.get('enable_interior_cell_filter', False))
-        self.enable_worldspaces_filter_toggle.setChecked(self.settings.get('filter_worldspaces', True))
-        self.enable_weather_filter_toggle.setChecked(self.settings.get('filter_weathers', False))
-        self.hide_left_columns_text_input.setText(self.settings.get('left_hidden_columns', ''))
-        self.hide_right_columns_text_input.setText(self.settings.get('right_hidden_columns', ''))
-        self.show_plugins_possibly_refd_by_dlls_toggle.setChecked(self.settings.get('show_dlls', False))
-        self.generate_cell_master_toggle.setChecked(self.settings.get('generate_cell_master', False))
-        self.check_for_updates_toggle.setChecked(self.settings.get('check_for_updates', True))
-        self.persistent_ids_toggle.setChecked(self.settings.get('persistent_ids', True))
-        self.free_non_existent_toggle.setChecked(self.settings.get('free_non_existent', False))
-        self.enable_patch_new_toggle.setChecked(self.settings.get('enable_patch_new', False))
-        self.hash_output_toggle.setChecked(self.settings.get('hash_output', True))
         self.inner_color = self.settings.get('inner_color', '#713585')
         self.outer_color = self.settings.get('outer_color', 'Gray')
 
