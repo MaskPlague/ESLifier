@@ -1,5 +1,5 @@
 {
-    "version": 13,
+    "version": 14,
     "conditions": [
         {
             "extension": "json",
@@ -97,6 +97,12 @@
             "extension": "json",
             "contains": "SKSE/Plugins/LazyFollowers/",
             "patcher": "json_jcontainer"
+        },
+        {
+            "extension": "json",
+            "contains": "Plugins/SIF/",
+            "patcher": "json_generic_plugin_sep_formid",
+            "separator": "|"
         }
     ]
 }
