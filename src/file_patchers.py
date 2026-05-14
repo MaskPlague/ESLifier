@@ -1675,7 +1675,7 @@ class patchers():
             lines = f.readlines()
             print_replace = True
             for i, line in enumerate(lines):
-                if basename in line.lower() and '|' in line and not line.startswith('#'):
+                if basename+'|' in line.lower() and not line.strip().startswith('#'):
                     if '#' in line:
                         comment_index = line.index('#')
                         comment = True
@@ -1686,7 +1686,7 @@ class patchers():
                     if comment and (index > comment_index or end_index > comment_index):
                         continue
                     end_of_line = line[end_index:]
-                    form_id_int = int(line[index+1:], 16)
+                    form_id_int = int(line[index+1:end_index], 16)
                     plugin_index = line.index(':')+1
                     plugin = line[plugin_index:index].lower().strip()
                     if plugin == basename:
@@ -2353,7 +2353,7 @@ class patchers():
 
 #if __name__ == '__main__':
 #    basename = "thing.esp".lower()
-#    form_id_map = {2174834: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'bytes': b'\x00\x0A\x0A', 'update_name': False}, 
+#    form_id_map = {3756539: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'bytes': b'\x00\x0A\x0A', 'update_name': False}, 
 #                   2175263: {'hex_no_0': 'B0B', 'hex': '000B0B', "int": 10101, 'bytes': b'\x00\x0B\x0B', 'update_name': True}}
 #    new_file = os.path.normpath(r)
-#    patchers.json_dyndolod_ligh_patcher(basename, new_file, form_id_map, master_byte=b'\x05', encoding_method='utf-8')
+#    patchers.sound_record_distributor_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
