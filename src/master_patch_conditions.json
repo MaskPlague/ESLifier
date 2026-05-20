@@ -1,5 +1,5 @@
 {
-    "version": 14,
+    "version": 15,
     "conditions": [
         {
             "extension": "json",
@@ -103,6 +103,11 @@
             "contains": "Plugins/SIF/",
             "patcher": "json_generic_plugin_sep_formid",
             "separator": "|"
+        },
+        {
+            "extension": "ini",
+            "endswith": "_CID.ini",
+            "patcher": "ini_formid_sep_plugin"
         }
     ]
 }
