@@ -345,7 +345,7 @@ class main(QWidget):
             self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
             self.confirm.rejected.connect(lambda:self.setEnabled(True))
             self.confirm.setEnabled(True)
-        elif self.patch_new_running and checked == []:
+        elif (self.redoing_output or self.patch_new_running) and checked == []:
             self.finished_button_action('compact', checked)
         else:
             self.setEnabled(True)
@@ -435,7 +435,7 @@ class main(QWidget):
             self.confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
             self.confirm.rejected.connect(lambda:self.setEnabled(True))
             self.confirm.setEnabled(True)
-        elif self.patch_new_running and checked == []:
+        elif (self.redoing_output or self.patch_new_running) and checked == []:
             self.finished_button_action('eslify', checked)
         else:
             self.setEnabled(True)
@@ -545,8 +545,10 @@ class main(QWidget):
             if not self.patch_new_running:
                 print(f"Total Elapsed Time: {timeit.default_timer() - self.start_time:.2f} Seconds")
                 print("CLEAR")
+                self.redoing_output = False
                 self.setEnabled(True)
                 self.calculate_stats()
+                return
             else:
                 self.patch_new_running = False
                 self.patch_new_only_remove = False
