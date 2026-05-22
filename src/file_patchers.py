@@ -777,8 +777,6 @@ class patchers():
             lines = f.readlines()
             
             # --- PASS 1: Extract Scopes ---
-            # Due to INI lines being unordered (e.g. validItemsFileName can be read AFTER validItemsFormID), 
-            # we map out each section's active target plugins first.
             section_metadata = {}
             current_sec = "GLOBAL"
             
