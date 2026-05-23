@@ -1,5 +1,5 @@
 {
-    "version": 9,
+    "version": 10,
     "ignored_files": [
         "BFCO_FX_CheckPreAttackIsOK.pex",
         "BFCO_FX_PlayIdleListKeyE.pex",
@@ -21,6 +21,7 @@
     "ignored_contains": [
         "SkyrimDiag_Incident_",
         "interface/Console_Cheatsheet/",
-        "interface/PartySheet/Spells/"
+        "interface/PartySheet/Spells/",
+        "Plugins/LoadTimeProfiler/LTP_summary_"
     ]
 }
