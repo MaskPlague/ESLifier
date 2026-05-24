@@ -1,5 +1,5 @@
 {
-    "version": 10,
+    "version": 11,
     "ignored_files": [
         "BFCO_FX_CheckPreAttackIsOK.pex",
         "BFCO_FX_PlayIdleListKeyE.pex",
@@ -16,7 +16,8 @@
     "ignored_endswith": [
         "_SkyrimDiagReport.txt",
         "_SkyrimDiagSummary.json",
-        "Modex\\user\\blacklist.json"
+        "Modex\\user\\blacklist.json",
+        "PGPatcher/cfg/ignored_messages.json"
     ],
     "ignored_contains": [
         "SkyrimDiag_Incident_",
