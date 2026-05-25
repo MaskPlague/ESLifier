@@ -6,7 +6,7 @@ import hashlib
 from .ESLifier_qualification_checker import qualification_checker as light_check
 
 class check_files():    
-    def scan_files(self, scan_esms, eslifier_folder, new_header, compare_hashes, detect_conflict_changes, only_plugins, plugin_files_list, organizer) -> tuple[bool, dict, dict, list, list]:
+    def scan_files(self, scan_esms, eslifier_folder, new_header, compare_hashes, detect_conflict_changes, only_plugins, plugin_files_list, organizer):
         self.flag_dict = {}
         self.hash_mismatches = []
         self.lost_to_overwrite = []
