@@ -41,7 +41,7 @@ class qualification_checker():
                 count += 1
                 if count > num_max_records:
                     return False, False, False, False, False, False
-                if int.from_bytes(form[12:15][::-1]) > qualification_checker.max_record_number:
+                if int.from_bytes(form[12:15][::-1], "big") > qualification_checker.max_record_number:
                     need_compacting = True
                 if record_type == b'CELL':
                     new_cell = True
