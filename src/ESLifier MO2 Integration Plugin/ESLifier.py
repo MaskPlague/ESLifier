@@ -295,6 +295,7 @@ class ESLifier(mobase.IPluginTool):
             self.folder_path = QLabel(f"...{folder[-30:]}")
         else:
             self.folder_path = QLabel(folder)
+
         self.folder_path.setToolTip("Set this to the folder that holds ESLifier.exe")
         layout.addWidget(self.folder_path, 6, 0)
         path_button = self._button_maker("Explore", self.set_eslifier_path)
@@ -367,6 +368,10 @@ class ESLifier(mobase.IPluginTool):
                 self.folder_path.setText(f"...{path[-30:]}")
             else:
                 self.folder_path.setText(path)
+            if os.path.exists(path) and os.path.exists(os.path.join(path, "eslifier.exe")):
+                self.folder_path.setStyleSheet("")
+            else:
+                self.folder_path.setStyleSheet("QLabel{color:red}")
 
     def create(self, *args):
         game = self._organizer.managedGame()
@@ -450,6 +455,13 @@ class ESLifier(mobase.IPluginTool):
             self.folder_path.setText(f"...{path[-30:]}")
         else:
             self.folder_path.setText(path)
+
+        if os.path.exists(path) and os.path.exists(os.path.join(path, "eslifier.exe")):
+            self.folder_path.setStyleSheet("")
+        else:
+            self.folder_path.setStyleSheet("QLabel{color:red}")
+        if self.folder_path.text().strip() == '':
+            self.folder_path.setText("Set ESLifier Folder")
 
         self.settings_dialog.raise_()
         self.settings_dialog.show()
