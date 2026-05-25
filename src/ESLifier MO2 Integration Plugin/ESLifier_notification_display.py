@@ -124,7 +124,7 @@ class notification_display_dialog(QDialog):
         self.show()
         self.raise_()
 
-    def populate_flag_table(self, table: QTableWidget, data: dict | list, weather = False):
+    def populate_flag_table(self, table: QTableWidget, data, weather = False):
         table.show()
         table.setRowCount(len(data))
         table.setSortingEnabled(False)
