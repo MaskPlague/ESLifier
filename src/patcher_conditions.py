@@ -1,6 +1,8 @@
 import os
 from file_patchers import patchers
 from file_defined_patcher_conditions import user_and_master_conditions_class
+from log_stream import write_warning
+from PyQt6.QtCore import QCoreApplication
 
 def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, form_id_map: dict,
                         master_byte: bytes, updated_master_index: int, update_byte: bool, additional_conditions: user_and_master_conditions_class,
@@ -56,7 +58,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         else:                                    
             patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
             if not patched:                                           
-                print(f'Warn: Possible missing patcher for: {new_file}')
+                write_warning(QCoreApplication.translate("patcher_conditions", "Possible missing patcher for: ") + new_file)
     elif new_file_lower.endswith('_conditions.txt'):                                        # Dynamic Animation Replacer
         patchers.dynamic_animation_replacer_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     elif new_file_lower.endswith('.json'):
@@ -156,7 +158,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         else:
             patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
             if not patched:                                           
-                print(f'Warn: Possible missing patcher for: {new_file}')
+                write_warning(QCoreApplication.translate("patcher_conditions", "Possible missing patcher for: ") + new_file)
     elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
         patchers.pex_patcher(basename, new_file, form_id_map)
     elif new_file_lower.endswith('.toml'):
@@ -175,7 +177,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         else:
             patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
             if not patched:                                           
-                print(f'Warn: Possible missing patcher for: {new_file}')
+                write_warning(QCoreApplication.translate("patcher_conditions", "Possible missing patcher for: ") + new_file)
     elif new_file_lower.endswith('.yml'):
         if '\\dbd\\configurations\\' in new_file_lower:                                     # Dynamic Body Distribution
             patchers.dbd_patcher(basename, new_file, form_id_map, encoding_method=encoding)
@@ -184,7 +186,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         else:
             patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
             if not patched:                                           
-                print(f'Warn: Possible missing patcher for: {new_file}')
+                write_warning(QCoreApplication.translate("patcher_conditions", "Possible missing patcher for: ") + new_file)
     elif new_file_lower.endswith('.yaml'):
         if new_file_lower.endswith('_srd.yaml'):                                              # Sound record distributor YAML
             patchers.sound_record_distributor_patcher(basename, new_file, form_id_map, encoding_method=encoding)
@@ -199,7 +201,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         else:
             patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
             if not patched:                                           
-                print(f'Warn: Possible missing patcher for: {new_file}')
+                write_warning(QCoreApplication.translate("patcher_conditions", "Possible missing patcher for: ") + new_file)
     elif 'facegeom' in new_file_lower and new_file_lower.endswith('.nif'):                  # FaceGeom mesh patching
         patchers.facegeom_mesh_patcher(basename, new_file, form_id_map)
     elif new_file_lower.endswith('.seq'):                                                   # SEQ file patching
@@ -211,4 +213,4 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
     else:
         patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
         if not patched:                                           
-            print(f'Warn: Possible missing patcher for: {new_file}')
+            write_warning(QCoreApplication.translate("patcher_conditions", "Possible missing patcher for: ") + new_file)

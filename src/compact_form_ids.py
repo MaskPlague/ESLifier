@@ -12,6 +12,8 @@ from file_patchers import patchers
 from intervaltree import IntervalTree
 from full_form_processor import form_processor
 from create_cell_master import create_new_cell_plugin
+from log_stream import write_error, write_normal, write_progress, clear_and_leave_log_open
+from PyQt6.QtCore import QCoreApplication
 import patcher_conditions
 
 import platform
@@ -74,8 +76,8 @@ class CFIDs():
             with open(file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
         except Exception as e:
-            print(f'!Error: Failed to dump data to {file}')
-            print(e)
+            write_error(QCoreApplication.translate("Global", "Failed to dump data to ") + file)
+            write_error(e, True)
     
     def dump_dictionary(self, file, dictionary: dict):
         data = self.get_from_file(file)
@@ -85,8 +87,8 @@ class CFIDs():
             with open(file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
         except Exception as e:
-            print(f'!Error: Failed to dump data to {file}')
-            print(e)
+            write_error(QCoreApplication.translate("Global", "Failed to dump data to ") + file)
+            write_error(e, True)
     
     def get_from_file(self, file: str) -> dict:
         try:
@@ -124,8 +126,8 @@ class CFIDs():
                             else:
                                 new_file_hashes[lower_rel_path] = (sha256_hash, changed)
                     except Exception as e:
-                        print(f"!Error: Failed to hash file: {file}")
-                        print(e)
+                        write_error(QCoreApplication.translate("CFIDs","Failed to hash file: ") + file)
+                        write_error(e, True)
 
         self.dump_dictionary("ESLifier_Data/new_file_hashes.json", new_file_hashes)
 
@@ -133,11 +135,11 @@ class CFIDs():
                            add_cell_to_master: bool, files_to_patch: dict):
         self.do_generate_cell_master = add_cell_to_master
         self.form_id_map = {}
-        print(f"Editing Plugin: {os.path.basename(file_to_compact)}...")
+        write_normal(QCoreApplication.translate("CFIDs", "Editing Plugin: %1...").replace("%1", os.path.basename(file_to_compact)))
         self.compact_file(file_to_compact, all_dependents_have_skyrim_esm_as_master)
         self.get_form_id_map(file_to_compact)
         if dependents != []:
-            print(f"-  Patching {len(dependents)} Dependent Plugins...")
+            write_normal("-  "+QCoreApplication.translate("CFIDs", "Patching %1 Dependent Plugins...").replace("%1", str(len(dependents))))
             self.patch_dependent_plugins(file_to_compact, dependents, files_to_patch)
 
         name = os.path.basename(file_to_compact).lower()
@@ -147,7 +149,7 @@ class CFIDs():
                 patch_or_rename = files_to_patch[os.path.basename(file_to_compact).lower()]
 
             if name in self.bsa_masters:
-                print('-  Temporarily Extracting FaceGen/Voice files from BSA for patching...')
+                write_normal("-  "+ QCoreApplication.translate("CFIDs", "Temporarily Extracting FaceGen/Voice files from BSA for patching..."))
                 if not os.path.exists('bsa_extracted_temp/'):
                     os.makedirs('bsa_extracted_temp/')
                 else:
@@ -162,8 +164,8 @@ class CFIDs():
                             self.bsa_temp_extract(bsa_file, "\\facetint\\", name, startupinfo)
                             self.bsa_temp_extract(bsa_file, "\\facegeom\\", name, startupinfo)
                         except Exception as e:
-                            print(f'!Error Reading BSA: {file}')
-                            print(e)
+                            write_error(QCoreApplication.translate("CFIDs", "Error Reading BSA: ") + bsa_file)
+                            write_error(e, True)
                                             
                 rel_paths = []
                 for file in patch_or_rename:
@@ -181,19 +183,19 @@ class CFIDs():
                 
             to_patch, to_rename = self.sort_files_to_patch_or_rename(file_to_compact, patch_or_rename) #function to get files that need to be edited in some way to function correctly.
             if len(to_patch) > 0:
-                print(f"-  Patching {len(to_patch)} Dependent Files...")
+                write_normal("-  " + QCoreApplication.translate("CFIDs", "Patching %1 Dependent Files...").replace("%1", str(len(to_patch))))
                 if len(to_patch) > 20:
-                    print('\n')
+                    write_normal('',False)
                 self.patch_files_threader(file_to_compact, to_patch)
             if len(to_rename) > 0:
-                print(f"-  Renaming/Patching {len(to_rename)} Dependent Files...")
+                write_normal("-  " + QCoreApplication.translate("CFIDs", "Renaming/Patching %1 Dependent Files...").replace("%1", str(len(to_rename))))
                 if len(to_rename) > 20:
-                    print('\n')
+                    write_normal('',False)
                 self.rename_files_threader(file_to_compact, to_rename)
         if os.path.exists('bsa_extracted_temp/'):
-            print('-  Deleting temporarily Extracted FaceGen/Voice Files...')
+            write_normal("-  " + QCoreApplication.translate("CFIDs", "Deleting temporarily Extracted FaceGen/Voice Files..."))
             shutil.rmtree('bsa_extracted_temp/')
-        print('CLEAR ALT')
+        clear_and_leave_log_open()
         return self.original_files, self.winning_files_dict, self.master_byte_data, self.winning_file_history_dict, self.compacted_and_patched
     
     def bsa_temp_extract(self, bsa_file: str, type: str, name:str, startupinfo: subprocess.STARTUPINFO):
@@ -209,41 +211,41 @@ class CFIDs():
                         raise Exception(f"During Temp Extraction, {line}")
                     
     def set_flag(self, file: str):
-        print("-  Changing ESL flag in: " + os.path.basename(file))
+        write_normal("-  " + QCoreApplication.translate("CFIDs", "Changing ESL flag in: ") + os.path.basename(file))
         new_file, _1 = self.copy_file_to_output(file)
         try:
             with open(new_file, 'rb+') as f:
                 f.seek(9)
                 f.write(b'\x02')
         except Exception as e:
-            print('!Error: Failed to set ESL flag in {file}')
-            print(e)           
+            write_error(QCoreApplication.translate("Failed to set ESL flag in ") + file)
+            write_error(e, True)           
         return self.original_files, self.winning_file_history_dict
 
     def patch_new(self, compacted_file: str, dependents: list, files_to_patch: list, add_cell_to_master: bool):
         self.do_generate_cell_master = add_cell_to_master
         self.form_id_map = {}
-        print('Patching new plugins and files for ' + compacted_file + '...')
+        write_normal("-  " + QCoreApplication.translate("CFIDs", "Patching new plugins and files for %1...").replace("%1", compacted_file))
         self.master_byte = bytes.fromhex(self.master_byte_data[compacted_file]['master_byte'])
         self.updated_master_index = self.master_byte_data[compacted_file]['updated_master_index']
         self.compacted_and_patched[compacted_file] = []
         if dependents != []:
-            print("-  Patching New Dependent Plugins...")
+            write_normal("-  " + QCoreApplication.translate("CFIDs", "Patching New Dependent Plugins..."))
             self.patch_dependent_plugins(compacted_file, dependents, files_to_patch)
         if os.path.basename(compacted_file) in files_to_patch:
             to_patch, to_rename = self.sort_files_to_patch_or_rename(compacted_file, files_to_patch[os.path.basename(compacted_file)])
             self.get_form_id_map(compacted_file)
             if len(to_patch) > 0:
-                print(f"-  Patching {len(to_patch)} New Dependent Files...")
+                write_normal("-  " + QCoreApplication.translate("CFIDs", "Patching %1 New Dependent Files...").replace("%1", str(len(to_patch))))
                 if len(to_patch) > 20:
-                    print('\n')
+                    write_normal('',False)
                 self.patch_files_threader(compacted_file, to_patch)
             if len(to_rename) > 0:
-                print(f"-  Renaming/Patching {len(to_rename)} New Dependent Files...")
+                write_normal("-  " + QCoreApplication.translate("CFIDs", "Renaming/Patching %1 New Dependent Files...").replace("%1", str(len(to_rename))))
                 if len(to_rename) > 20:
-                    print('\n')
+                    write_normal('',False)
                 self.rename_files_threader(compacted_file, to_rename)
-        print('CLEAR ALT')
+        clear_and_leave_log_open()
         return self.original_files, self.winning_files_dict, self.master_byte_data, self.winning_file_history_dict, self.compacted_and_patched
 
     #Create a copy of the mod plugin we're compacting
@@ -266,8 +268,8 @@ class CFIDs():
                     f.close()
                 self.original_files[end_path.lower()] = [file, sha256_hash]
             except Exception as e:
-                print(f'!Error: Failed to hash {file}')
-                print(e)
+                write_error(QCoreApplication.translate("Failed to hash ") + file)
+                write_error(e, True)
         return new_file, end_path
     
     def get_rel_path(self, file: str) -> str:
@@ -331,15 +333,17 @@ class CFIDs():
     def rename_files(self, master: str, files: list[str]) -> None:
         facegeom_meshes = []
         master_base_name = os.path.basename(master)
+        percentage_str = ("-    " + QCoreApplication.translate("CFIDs", "Percentage: %1%") + 
+                        "\n-    "+ QCoreApplication.translate("CFIDs", "Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
         for file in files:
             if self.file_count > 20:
                 self.count += 1
-                percent = self.count / self.file_count * 100
                 factor = round(self.file_count * 0.001)
                 if factor == 0:
                     factor = 1
                 if (self.count % factor) >= (factor-1) or self.count >= self.file_count:
-                    print('\033[F\033[K-    Percentage: ' + str(round(percent,1)) +'%\n-    Files: ' + str(self.count) + '/' + str(self.file_count), end='\r')
+                    percent = round((self.count / self.file_count) * 100, 1)
+                    write_progress(round(percent), 1, percentage_str.format(percent, self.count, self.file_count))
             
             rel_path = self.get_rel_path(file)
             if 'facegendata' in file.lower(): # Meshes
@@ -432,15 +436,17 @@ class CFIDs():
         chunks.append(files[(split) * chunk_size:])
         self.count = 0
         self.file_count = len(files)
+        percentage_str = ("-  " + QCoreApplication.translate("CFIDs", "Percentage: %1%") + 
+                        "\n-  "+ QCoreApplication.translate("CFIDs", "Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
         for chunk in chunks:
             if self.file_count > 20:
                 self.count += 1
-                percent = self.count / self.file_count * 100
                 factor = round(self.file_count * 0.001)
                 if factor == 0:
                     factor = 1
                 if (self.count % factor) >= (factor-1) or self.count >= self.file_count:
-                    print('\033[F\033[K-  Percentage: ' + str(round(percent,1)) +'%\n-  Files: ' + str(self.count) + '/' + str(self.file_count), end='\r')
+                    percent = round(self.count / self.file_count * 100, 1)
+                    write_progress(round(percent), 1, percentage_str.format(percent, self.count, self.file_count))
             thread = threading.Thread(target=self.patch_files, args=(master, chunk))
             threads.append(thread)
             thread.start()
@@ -468,12 +474,12 @@ class CFIDs():
                                                                          self.master_byte, self.updated_master_index, self.do_generate_cell_master,
                                                                           self.additional_conditions, 'ansi')
                             else:
-                                print(f'!Error: Failed to patch file: {new_file}')
-                                print(e)
+                                write_error(QCoreApplication.translate("CFIDs", "Failed to patch file: ") + new_file)
+                                write_error(e, True)
                         self.compacted_and_patched[os.path.basename(master)].append(rel_path)
             except Exception as e:
-                print(f'!Error: Failed to patch file: {new_file}')
-                print(e)      
+                write_error(QCoreApplication.translate("CFIDs", "Failed to patch file: ") + new_file)
+                write_error(e, True)
 
     def decompress_data(self, data_list: list) -> tuple[list, list]:
         sizes_list = [[] for _ in range(len(data_list))]
@@ -485,7 +491,8 @@ class CFIDs():
                 try:
                     decompressed = zlib.decompress(data_list[i][28:])  # Decompress the form
                 except Exception as e:
-                    print(f'!Error: {e}\r at Header: {data_list[i][:24]} at Index: {i}' )
+                    write_error(QCoreApplication.translate("CFIDs", "Error decompressing form: %1\n at Header: %2 at Index: %3"
+                                                           ).replace("%1", str(e)).replace("%2", str(data_list[i][:24])).replace("%3", str(i)))
 
                 uncompressed_size_from_form = data_list[i][24:28]
                 sizes_list[i] = [len(data_list[i]), 0, i, len(data_list[i][28:]), uncompressed_size_from_form]
@@ -740,9 +747,9 @@ class CFIDs():
             else:
                 new_seq_file, rel_path_seq = None, None
             if new_seq_file and len(self.form_id_map) > 0:
-                print(f'-    {basename} + .seq')
+                write_normal(f'-    "{basename} + .seq')
             elif len(self.form_id_map) > 0:
-                print(f'-    {basename}')
+                write_normal(f'-    {basename}')
             thread = threading.Thread(target=self.patch_dependent, args=(new_file, file, form_id_file_data, rel_path, new_seq_file, rel_path_seq))
             threads.append(thread)
             thread.start()
@@ -816,16 +823,16 @@ class CFIDs():
                 self.compacted_and_patched[os.path.basename(file)].append(rel_path)
                 self.master_byte_data[os.path.basename(file)]= {'master_byte': master_byte.hex(), 'updated_master_index': updated_master_index}
         except Exception as e:
-            print(f'!Error: Failed to patch depdendent: {new_file}')
-            print(e)
+            write_error(QCoreApplication.translate("CFIDs", "Failed to patch dependent: ") + new_file)
+            write_error(e, True)
             return
 
         if new_seq_file:
             try:
                 patchers.dependent_seq_patcher(new_seq_file, form_id_replacements, updated_master_index, master_byte_for_seq, master_index_byte, update_byte=self.do_generate_cell_master)
             except Exception as e:
-                print(f'!Error: Failed to patch depdendent\'s SEQ file: {new_seq_file}')
-                print(e)
+                write_error(QCoreApplication.translate("CFIDs", "Failed to patch dependent's SEQ file: ") + new_seq_file)
+                write_error(e, True)
             with self.lock:
                 self.compacted_and_patched[os.path.basename(file)].append(rel_path_seq)
         return

@@ -2,6 +2,8 @@ import os
 import json
 import threading
 import struct
+from log_stream import write_error
+from PyQt6.QtCore import QCoreApplication
 
 class cell_scanner():
     def scan(mods_with_new_cells: list[str]):
@@ -47,7 +49,7 @@ class cell_scanner():
             with open(dependent, 'rb') as f:
                 dependent_data = f.read()
         except:
-            print(f'!Error: Failed to read data of {dependent}')
+            write_error(QCoreApplication.translate("Global", "Failed to read data of ") + dependent)
         data_list = cell_scanner.create_data_list(dependent_data)
         master_index = cell_scanner.get_master_index(mod, data_list)
         for form in data_list:
@@ -90,7 +92,7 @@ class cell_scanner():
             with open(file, 'w', encoding='utf-8') as f:
                 json.dump(cell_scanner.cell_changed_list, f, ensure_ascii=False, indent=4)
         except Exception as e:
-            print(f'!Error: Failed to dump data to {file}')
+            write_error(QCoreApplication.translate("Global", "Failed to dump data to ") + file)
 
     def create_data_list(data: bytes) -> list[bytes]:
         data_list = []

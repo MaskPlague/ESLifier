@@ -18,8 +18,12 @@ else:
 
 from plugin_qualification_checker import qualification_checker
 from dependency_getter import dependecy_getter
+from log_stream import write_error, write_normal, write_progress, write_remove, write_to_file, write_warning
 
-class scanner():
+from PyQt6.QtCore import QCoreApplication
+
+
+class scanner():    
     def scan(full_scan: bool) -> tuple[dict, dict] | None:
         scanner.bsa_blacklist = ['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
                     'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
@@ -35,7 +39,7 @@ class scanner():
         update_header: bool = settings.get('update_header', False)
         scanner.all_patcher_experimental: bool = settings.get('all_patcher_experimental', False)
         if scanner.all_patcher_experimental:
-            print("~Experimental all patcher mode enabled.")
+            write_to_file("Experimental all patcher mode enabled.")
         scanner.file_count: int = 0
         scanner.all_files: list[str] = []
         scanner.plugins: list[str] = []
@@ -102,7 +106,7 @@ class scanner():
         scanner.bsa_threads_by_ram = max(1, int(usable_ram / thread_memory_usage) * 7)
 
         scanner.extracted: list[str] = scanner.get_from_file('ESLifier_Data/extracted_bsa.json', list)
-        print('\n')
+
         plugins_list = scanner.get_plugins_list(plugins_txt_path)
         if scanner.mo2_mode:
             load_order, enabled_mods = scanner.get_modlist(modlist_txt_path)
@@ -117,12 +121,11 @@ class scanner():
         scanner.dump_to_file(file="ESLifier_Data/plugin_list.json", data=scanner.plugins)
         scanner.dump_to_file(file="ESLifier_Data/winning_files_dict.json", data=scanner.winning_files_dict)
 
-        print('\033[F\033[K-  Gathered ' + str(len(scanner.all_files)) +' total files.', end='\r')
-
+        write_remove(1, "-  " + QCoreApplication.translate("scanner", "Gathered %0 total files.").replace("%0", str(len(scanner.all_files))), True)
         if full_scan:
-            print('Getting Dependencies')
+            write_normal(QCoreApplication.translate("scanner", 'Getting Dependencies'))
             dependency_dictionary = dependecy_getter.scan()
-            print('Scanning Plugins')
+            write_normal(QCoreApplication.translate("scanner", 'Scanning Plugins'))
             flag_dict = qualification_checker.scan(path, update_header)
 
         scanner.get_file_masters()
@@ -135,7 +138,7 @@ class scanner():
 
         end_time = timeit.default_timer()
         time_taken = end_time - start_time
-        print(f'\033[F\033[K-  Time taken: ' + str(round(time_taken,2)) + ' seconds')
+        write_normal('-  ' + QCoreApplication.translate("scanner", 'Time taken: %1 seconds').replace("%1", str(round(time_taken,2))))
         if full_scan:
             return flag_dict, dependency_dictionary
     
@@ -161,12 +164,14 @@ class scanner():
         plugin_extensions = ('.esp', '.esm', '.esl')
         bsa_list = []
         temp_rel_paths = []
+        gathered_str = '-  ' + QCoreApplication.translate("scanner", "Gathered: ")
+        write_normal(gathered_str, False)
         for root, _, files in os.walk(path):
             root_level = len(root.split(os.sep))
             scanner.file_count += len(files)
             if loop == 50: #prevent spamming stdout and slowing down the program
                 loop = 0
-                print(f'\033[F\033[K-  Gathered: {scanner.file_count}\n-', end='\r')
+                write_remove(1, gathered_str + str(scanner.file_count))
             else:
                 loop += 1
             for file in files:
@@ -194,18 +199,20 @@ class scanner():
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         update_time = 0.1
+        extracting_str = QCoreApplication.translate("scanner", "Extracting %0/%1 BSA files (%2)").replace("%0", "{0}").replace("%1", "{1}").replace("%2", "{2}")
         for i, tup in enumerate(filtered_bsa_list):
             file = tup[1]
-            print(f'\033[F\033[K-  Extracting {i}/{bsa_length} BSA files ({os.path.basename(file)})\n\n', end='\r')
+            write_remove(1, extracting_str.format(i+1, bsa_length, os.path.basename(file)), True)
+            write_normal("",False)
             if file not in scanner.extracted:
                 try:
                     scanner.extract_bsa(file, startupinfo, update_time, ".pex")
                     scanner.extract_bsa(file, startupinfo, update_time, ".seq")
                     scanner.extracted.append(file)
                 except Exception as e:
-                    print(f'!Error Reading BSA: {file}')
-                    print(e)
-            print(f'\033[F\033[K')
+                    write_error(QCoreApplication.translate("scanner", "Error Reading BSA: ") + file)
+                    write_error(e, True)
+            write_remove(2, "")
 
         mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
 
@@ -213,7 +220,7 @@ class scanner():
             scanner.file_count += len(files)
             if loop == 50: #prevent spamming stdout and slowing down the program
                 loop = 0
-                print(f'\033[F\033[K-  Gathered: {scanner.file_count}\n-', end='\r')
+                write_remove(1, gathered_str + str(scanner.file_count))
             else:
                 loop += 1
             for file in files:
@@ -229,6 +236,7 @@ class scanner():
 
     def extract_bsa(file: str, startupinfo: subprocess.STARTUPINFO, update_time: float, filter: str):
         last = 0
+        extracting_str = "-  " + QCoreApplication.translate("scanner", "Extracting: ")
         with subprocess.Popen(
             ["bsarch/bsarch.exe", "unpack", file, "bsa_extracted", filter],
             stdout=subprocess.PIPE,
@@ -238,11 +246,11 @@ class scanner():
             ) as p:
                 for line in p.stdout:
                     if line.startswith('Unpacking error'):
-                        print(f'\033[F\033[K{line}', end='\r')
-                        raise Exception(f"Occured during unpacking via modified BSArch.exe")
+                        write_remove(1, line, True)
+                        raise Exception("Occured during unpacking via modified BSArch.exe")
                     if timeit.default_timer() - last > update_time:
                         last = timeit.default_timer()
-                        print(f'\033[F\033[K-  Extracting: {line}', end='\n')
+                        write_remove(1, extracting_str + line)
 
     def get_files_from_mods(mods_folder: str, enabled_mods: list, plugins_list: list, overwrite_path: str) -> tuple[dict, list, dict]:
         if not os.path.exists('bsa_extracted/'):
@@ -254,6 +262,8 @@ class scanner():
         plugin_names = []
         loop = 0
         file_count = 0
+        gathered_str = '-  ' + QCoreApplication.translate("scanner", "Gathered: ")
+        write_normal(gathered_str, False)
         #Get file from MO2's mods folder
         for mod_folder in os.listdir(mods_folder):
             mod_path = os.path.join(mods_folder, mod_folder)
@@ -264,7 +274,7 @@ class scanner():
                     root_level = len(root.split(os.sep))
                     if loop == 50: #prevent spamming stdout and slowing down the program
                         loop = 0
-                        print(f'\033[F\033[K-  Gathered: {file_count}\n-', end='\r')
+                        write_remove(1, gathered_str + str(file_count))
                     else:
                         loop += 1
                     for file in files:
@@ -300,7 +310,7 @@ class scanner():
                 file_count += len(files)
                 if loop == 50: #prevent spamming stdout and slowing down the program
                     loop = 0
-                    print(f'\033[F\033[K-  Gathered: {file_count}\n-', end='\r')
+                    write_remove(1, gathered_str + str(file_count))
                 else:
                     loop += 1
                 for file in files:
@@ -325,7 +335,7 @@ class scanner():
                             file = file[:index]
                         bsa_list.append([file.lower(), full_path])
         else:
-            print('Overwrite folder not found.\n')
+            write_to_file('Overwrite folder not found.\n')
 
         order_map = {plugin: index for index, plugin in enumerate(plugins_list)}
         filtered_bsa_list = [item for item in bsa_list if item[0] in order_map]
@@ -335,19 +345,21 @@ class scanner():
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         update_time = 0.1
+        extracting_str = QCoreApplication.translate("scanner", "Extracting %0/%1 BSA files (%2)").replace("%0", "{0}").replace("%1", "{1}").replace("%2", "{2}")
         #Extract Files from BSA
         for i, tup in enumerate(filtered_bsa_list):
             file = tup[1]
             if file not in scanner.extracted:
-                print(f'\033[F\033[K-  Extracting {i+1}/{bsa_length} BSA files ({os.path.basename(file)})\n\n', end='\r')
+                write_remove(1, extracting_str.format(i+1, bsa_length, os.path.basename(file)), True)
+                write_normal("",False)
                 try:
                     scanner.extract_bsa(file, startupinfo, update_time, ".pex")
                     scanner.extract_bsa(file, startupinfo, update_time, ".seq")
                     scanner.extracted.append(file)
                 except Exception as e:
-                    print(f'!Error Reading BSA: {file}')
-                    print(e)
-                print(f'\033[F\033[K')
+                    write_error(QCoreApplication.translate("scanner", 'Error Reading BSA: ') + file)
+                    write_error(e, True)
+                write_remove(2, "")
 
         mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
         #Get files that were extracted from BSA
@@ -355,7 +367,7 @@ class scanner():
             file_count += len(files)
             if loop == 50: #prevent spamming stdout and slowing down the program
                 loop = 0
-                print(f'\033[F\033[K-  Gathered: {file_count}\n-', end='\r')
+                write_remove(1, gathered_str + str(file_count))
             else:
                 loop += 1
             for file in files:
@@ -379,8 +391,8 @@ class scanner():
                 load_order = f.readlines()
                 f.close()
         except Exception as e:
-            print(f"!Error: failed to get modlist at {path}")
-            print(e)
+            write_error(QCoreApplication.translate("scanner", "Failed to get modlist at ") + path)
+            write_error(e, True)
 
         enabled_mods = []
         for line in load_order:
@@ -417,8 +429,8 @@ class scanner():
                 if line.startswith('*'):
                     active_plugins.append(line.strip()[1:-4].lower())
         except Exception as e:
-            print(f'!Error: failed to get plugins list at: {path}')
-            print(e)
+            write_error(QCoreApplication.translate("scanner", "Failed to get plugins list at: ") + path)
+            write_error(e, True)
             return []
         return active_plugins
 
@@ -435,11 +447,13 @@ class scanner():
         file_count = 0
         loop = 0
         cwd = os.getcwd()
+        winning_files_processed_str = QCoreApplication.translate("scanner", "Winning Files Processed: ")
+        write_remove(1, winning_files_processed_str)
         for file, mods in mod_files.items():
             file_count += 1
             if loop == 500:
                 loop = 0
-                print(f'\033[F\033[K-  Winning Files Processed: {file_count}\n-', end='\r')
+                write_remove(1, winning_files_processed_str + str(file_count))
             else:
                 loop += 1
             if len(mods) == 1:
@@ -490,8 +504,8 @@ class scanner():
             with open(file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
         except Exception as e:
-            print(f'!Error: Failed to dump data to: {file}')
-            print(e)
+            write_error(QCoreApplication.translate("scanner", "Failed to dump data to: ") + file)
+            write_error(e, True)
     
     def get_from_file(file: str, type: dict | list) -> list[str] | dict[str]:
         try:
@@ -523,7 +537,8 @@ class scanner():
         chunks = [scanner.all_files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
         chunks.append(scanner.all_files[(split) * chunk_size:])
 
-        print('Getting masters of loose files...\n\n')
+        write_normal(QCoreApplication.translate("scanner", 'Getting masters of loose files...'))
+        write_normal("", False)
         for chunk in chunks:
             thread = threading.Thread(target=scanner.file_processor, args=(chunk, pattern, pattern3, pattern4, pattern5))
             scanner.threads.append(thread)
@@ -532,7 +547,8 @@ class scanner():
         for thread in scanner.threads: thread.join()
         scanner.threads.clear()
 
-        print(f"\033[F\033[K-  Scanning .pex files\n\n")
+        write_remove(1, "-  " + QCoreApplication.translate("scanner", "Scanning .pex files"), True)
+        write_normal("", False)
         scanner.file_count = len(scanner.pex_files)
         scanner.count = 0
         if len(scanner.pex_files) > 8192 :
@@ -554,7 +570,7 @@ class scanner():
         for thread in scanner.threads: thread.join()
         scanner.threads.clear()
 
-        print(f"\033[F\033[K-  Scanning .dll SKSE plugins")
+        write_remove(1, "-  " + QCoreApplication.translate("scanner", "Scanning .dll SKSE plugins"), True)
         for file in scanner.dll_files:
             thread = threading.Thread(target=scanner.file_reader,args=(pattern2, file, 'dll'))
             scanner.threads.append(thread)
@@ -563,12 +579,12 @@ class scanner():
         for thread in scanner.threads: thread.join()
         scanner.threads.clear()
 
-        print("-  Sorting .seq files")
+        write_normal("-  " + QCoreApplication.translate("scanner", "Sorting .seq files"))
         scanner.seq_plugin_extension_processor(scanner.seq_files)
 
-        print("-  Scanning .bsa files")
-        scanner.file_count = len(scanner.bsa_files)
-        scanner.count = 0
+        write_normal("-  " + QCoreApplication.translate("scanner", "Scanning .bsa files"))
+        #scanner.file_count = len(scanner.bsa_files)
+        #scanner.count = 0
         if len(scanner.bsa_files) > 100:
             split = scanner.bsa_threads_by_ram
         elif len(scanner.bsa_files) > 10:
@@ -588,19 +604,21 @@ class scanner():
         
     def bsa_processor(files):
         for file in files:
-            scanner.count += 1
-            scanner.percentage = (scanner.count/scanner.file_count) * 100
+            #scanner.count += 1
+            #scanner.percentage = (scanner.count/scanner.file_count) * 100
             scanner.bsa_reader(file)
 
     def pex_processor(pattern2, files):
+        processed_string = ('-  ' + QCoreApplication.translate("scanner", "Processed: %0 %") +
+                            '\n-  ' + QCoreApplication.translate("scanner", "Files: %1/%2")).replace("%0", "{0}").replace("%1", "{1}").replace("%2", "{2}")
         for file in files:
             scanner.count += 1
-            scanner.percentage = (scanner.count / scanner.file_count) * 100
             factor = round(scanner.file_count * 0.01)
             if factor == 0:
                 factor = 1
             if (scanner.count % factor) >= (factor-1):
-                print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
+                scanner.percentage = round((scanner.count / scanner.file_count) * 100, 1)
+                write_progress(round(scanner.percentage), 1, processed_string.format(scanner.percentage, scanner.count, scanner.file_count))
             scanner.file_reader(pattern2, file, 'pex')
 
     def file_processor(files: list[str], pattern, pattern3, pattern4, pattern5):
@@ -608,16 +626,17 @@ class scanner():
         local_pex: list[str] = []
         local_dll: list[str] = []
         local_seq: list[str] = []
+        processed_string = ('-  ' + QCoreApplication.translate("scanner", "Processed: %0 %") +
+                            '\n-  ' + QCoreApplication.translate("scanner", "Files: %1/%2")).replace("%0", "{0}").replace("%1", "{1}").replace("%2", "{2}")
         for file in files:
             scanner.count += 1
-            scanner.percentage = (scanner.count / scanner.file_count) * 100
             file_lower = file.lower()
             factor = round(scanner.file_count * 0.01)
             if factor == 0:
                 factor = 1
             if (scanner.count % factor) >= (factor-1):
-                print('\033[F\033[K-    Processed: ' + str(round(scanner.percentage, 1)) + '%' + 
-                      '\n-    Files: ' + str(scanner.count) + '/' + str(scanner.file_count), end='\r')
+                scanner.percentage = round((scanner.count / scanner.file_count) * 100, 1)
+                write_progress(round(scanner.percentage), 1, processed_string.format(scanner.percentage, scanner.count, scanner.file_count))
             if ((file_lower.endswith(scanner.file_extensions) 
                  or (file_lower.endswith('config.txt') and 'plugins\\customskill' in file_lower))
                  and not (any(exclusion in file_lower for exclusion in scanner.exclude_contains) 
@@ -780,13 +799,12 @@ class scanner():
                                 if plugin not in scanner.dll_dict: scanner.dll_dict.update({plugin: []})
                                 if file not in scanner.dll_dict[plugin]: scanner.dll_dict[plugin].append(file)
             else:
-                print(f'!Warn: Missing file scan type for {file}')
-
+                write_warning(QCoreApplication.translate("scanner", "Missing file scan type for ") + file)
         except Exception as e:
-            print(f"!Error reading file {file}")
+            write_error(QCoreApplication.translate("scanner", "Error reading file ") + file)
             if reader_type == 'pex':
-                print('!pex file is likely corrupt.')
-            print(e)
+                write_error(QCoreApplication.translate("scanner",'!pex file is likely corrupt.'))
+            write_error(e, True)
 
     def bsa_reader(bsa_file):
         plugins = []
@@ -838,5 +856,5 @@ class scanner():
                 with scanner.lock:
                     scanner.bsa_dict[bsa_file] = plugins
         except Exception as e:
-            print(f'!Error Reading BSA: {bsa_file}')
-            print(e)
+            write_error(QCoreApplication.translate("scanner", "Error Reading BSA: ") + bsa_file)
+            write_error(e, True)

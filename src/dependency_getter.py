@@ -1,5 +1,7 @@
 import os
 import json
+from log_stream import write_error
+from PyQt6.QtCore import QCoreApplication
 
 class dependecy_getter():
     bsa_list = []
@@ -19,8 +21,8 @@ class dependecy_getter():
             with open(file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
         except Exception as e:
-            print(f'!Error: Failed to dump data to: {file}')
-            print(e)
+            write_error(QCoreApplication.translate("Global", "Failed to dump data to ") + file)
+            write_error(e, True)
     
     def get_from_file(file: str):
         try:
@@ -58,8 +60,8 @@ class dependecy_getter():
                 f.seek(0)
                 tes4_record = f.read(tes4_size)
         except Exception as e:
-            print(f"!Error: Failed to get master list of {file}")
-            print(e)
+            write_error(QCoreApplication.translate("Global", "Failed to get master list of " ) + file)
+            write_error(e, True)
             return []
         offset = 24
         while offset < tes4_size:

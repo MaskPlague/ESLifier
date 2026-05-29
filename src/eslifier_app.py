@@ -7,15 +7,15 @@ import traceback
 import webbrowser
 from datetime import datetime
 
-from PyQt6.QtCore import Qt, QObject, QThread, pyqtSignal
+from PyQt6.QtCore import Qt, QObject, QThread, pyqtSignal, QCoreApplication, QTranslator
 from PyQt6.QtGui import QPalette, QColor, QIcon
 from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMessageBox, QTabWidget, QVBoxLayout, QSizePolicy
 
 from settings_page import settings
 from main_page import main
-from log_stream import log_stream
+from log_stream import log_stream, write_to_file
 
-CURRENT_VERSION = '0.14.17'
+CURRENT_VERSION = '0.15.0'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
@@ -29,8 +29,11 @@ def verify_luhn_checksum(filename: str):
         computed_checksum = stored_checksum
 
     if computed_checksum != stored_checksum:
-        QMessageBox.critical(None, "File likely Corrupt", "The file is likely corrupt! Checksum mismatch. Redownload the file, if the issue persists then report this to the GitHub.")
-        raise RuntimeError("The file is likely corrupt! Checksum mismatch. Redownload the file, if the issue persists then report this to the GitHub.")
+        QMessageBox.critical(None, 
+                             QCoreApplication.translate("Global", "File likely Corrupt"), 
+                             QCoreApplication.translate("Global", "The file is likely corrupt! Checksum mismatch. Redownload the file, if the issue persists then report this to the GitHub.")
+                             )
+        raise RuntimeError(QCoreApplication.translate("Global", "The file is likely corrupt! Checksum mismatch. Redownload the file, if the issue persists then report this to the GitHub."))
     else:
         settings_path = os.path.normpath('ESLifier_Data/settings.json')
         if os.path.exists(settings_path):
@@ -42,7 +45,10 @@ def verify_luhn_checksum(filename: str):
                     f.truncate(0)
                     json.dump(settings_data, f, ensure_ascii=False, indent=4)
             except:
-                QMessageBox.warning(None, 'Access Error', 'Cannot access ESLifier_Data/settings.json')
+                QMessageBox.warning(None, 
+                                    QCoreApplication.translate("Global", 'File Access Error'), 
+                                    QCoreApplication.translate("Global", 'Cannot access ESLifier_Data/settings.json')
+                                    )
         else:
             os.makedirs(os.path.dirname(settings_path))
             settings_data = {"version": CURRENT_VERSION}
@@ -50,7 +56,10 @@ def verify_luhn_checksum(filename: str):
                 with open(settings_path, 'w', encoding='utf-8') as f:
                     json.dump(settings_data, f, ensure_ascii=False, indent=4)
             except:
-                QMessageBox.warning(None, 'Access Error', 'Cannot access/create ESLifier_Data/settings.json')
+                QMessageBox.warning(None, 
+                                    QCoreApplication.translate("Global", 'File Access Error'), 
+                                    QCoreApplication.translate("Global", 'Cannot access/create ESLifier_Data/settings.json')
+                                    )
 
 def luhn_checksum(data: bytes) -> int:
     total = 0
@@ -66,18 +75,22 @@ def connection_result(is_latest: bool, latest_version: str):
     if not is_latest:
         message = QMessageBox()
         message.setIcon(QMessageBox.Icon.Warning)
-        message.setWindowTitle("ESLifier Outdated")
-        message.setText(f"There exists a new version of ESLifier (v{latest_version}).\n"\
-                         "It is recommended to update as it could contain critical changes,\n"\
-                         "bug fixes, or additional file patchers.")
+        message.setWindowTitle(QCoreApplication.translate("Global", "ESLifier Outdated"))
+        message.setText(QCoreApplication.translate("Global", 
+                        "There exists a new version of ESLifier (v%1).\n"\
+                        "It is recommended to update as it could contain critical changes,\n"\
+                        "bug fixes, or additional file patchers.").replace("%1", latest_version)
+                        )
         def open_nexus():
             webbrowser.open("https://www.nexusmods.com/skyrimspecialedition/mods/145168?tab=files")
             message.show()
         def open_github():
             webbrowser.open("https://github.com/MaskPlague/ESLifier/releases/latest")
             message.show()
-        message.addButton("Open Nexus", QMessageBox.ButtonRole.AcceptRole).clicked.connect(open_nexus)
-        message.addButton("Open GitHub", QMessageBox.ButtonRole.AcceptRole).clicked.connect(open_github)
+        message.addButton(QCoreApplication.translate("Global", "Open Nexus"), 
+                          QMessageBox.ButtonRole.AcceptRole).clicked.connect(open_nexus)
+        message.addButton(QCoreApplication.translate("Global", "Open GitHub"), 
+                          QMessageBox.ButtonRole.AcceptRole).clicked.connect(open_github)
         message.addButton(QMessageBox.StandardButton.Close)
         message.show()
         
@@ -106,12 +119,18 @@ class github_connect(QObject):
         
 def conditions_connection_result(conditions_success: bool , ignored_success: bool):
     if not conditions_success:
-        QMessageBox.warning(None, 'Master Patcher Conditions Update Failed', 'Failed to download latest patcher conditions from GitHub.\n'\
-                                                                     'Ensure you have an active internet connection.\n'\
-                                                                     'Using outdated patcher conditions may cause certain files to not be patched.')
+        QMessageBox.warning(None, 
+                            QCoreApplication.translate("Global", 'Master Patcher Conditions Update Failed'), 
+                            QCoreApplication.translate("Global", 'Failed to download latest patcher conditions from GitHub.\n'\
+                                                                 'Ensure you have an active internet connection.\n'\
+                                                                 'Using outdated patcher conditions may cause certain files to not be patched.')
+                            )
     elif not ignored_success:
-        QMessageBox.warning(None, 'Master Ignored Files Update Failed', 'Failed to download latest ignored files list from GitHub.\n'\
-                                                                     'Ensure you have an active internet connection.')
+        QMessageBox.warning(None, 
+                            QCoreApplication.translate("Global", 'Master Ignored Files Update Failed'), 
+                            QCoreApplication.translate("Global", 'Failed to download latest ignored files list from GitHub.\n'\
+                                                                 'Ensure you have an active internet connection.')
+                            )
 
 class get_latest_patcher_conditions(QObject):
     finished_signal = pyqtSignal(bool, bool)
@@ -140,15 +159,15 @@ class get_latest_patcher_conditions(QObject):
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 local_conditions_version = -1
             if github_conditions_version <= local_conditions_version:
-                print(f"~Local master_patcher_conditions.json is version {local_conditions_version} which is up to date.")
+                write_to_file(f"Local master_patcher_conditions.json is version {local_conditions_version} which is up to date.")
                 return True
             with open(filename, "w", encoding="utf-8") as f:
                 json.dump(conditions_data, f, ensure_ascii=False, indent=4)
-            print(f"~Updated to master_patcher_conditions.json version {github_conditions_version} from GitHub.")
+            write_to_file(f"Updated to master_patcher_conditions.json version {github_conditions_version} from GitHub.")
             return True
         except Exception as e:
-            print("~Failed to update master_patcher_conditions.json; no connection?")
-            print(e)
+            write_to_file("Failed to update master_patcher_conditions.json; no connection?")
+            write_to_file(e)
             return False
         
     def download_ignored_files(self) -> bool:
@@ -171,15 +190,15 @@ class get_latest_patcher_conditions(QObject):
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 local_conditions_version = -1
             if github_conditions_version <= local_conditions_version:
-                print(f"~Local master_ignored_files.json is version {local_conditions_version} which is up to date.")
+                write_to_file(f"Local master_ignored_files.json is version {local_conditions_version} which is up to date.")
                 return True
             with open(filename, "w", encoding="utf-8") as f:
                 json.dump(conditions_data, f, ensure_ascii=False, indent=4)
-            print(f"~Updated to master_ignored_files.json version {github_conditions_version} from GitHub.")
+            write_to_file(f"Updated to master_ignored_files.json version {github_conditions_version} from GitHub.")
             return True
         except Exception as e:
-            print("~Failed to update master_ignored_files.json; no connection?")
-            print(e)
+            write_to_file("Failed to update master_ignored_files.json; no connection?")
+            write_to_file(e)
             return False
         
 def curdirIsWritable() -> bool:
@@ -211,12 +230,15 @@ class main_window(QMainWindow):
                 if VERSION_TUPLE > version_tuple:
                     verify_luhn_checksum('ESLifier.exe')
             elif not curdirIsWritable():
-                QMessageBox.critical(None, "EXE is in a Protected Folder!", "ESLifier is in a protected folder, please move its exe outside of any C:/User/USERNAME/ folder or program files folder.")
+                QMessageBox.critical(None, 
+                                     self.tr("EXE is in a Protected Folder!"), 
+                                     self.tr("ESLifier is in a protected folder, please move its exe outside of any C:/User/USERNAME/ folder or program files folder.")
+                                     )
                 return 
             else:
                 verify_luhn_checksum('ESLifier.exe')
         
-        self.setWindowTitle("ESLifier v" + CURRENT_VERSION)
+        self.setWindowTitle(self.tr("ESLifier v%0").replace("%0", CURRENT_VERSION))
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.resize(1300, 500)
         self.move(100,50)
@@ -243,7 +265,7 @@ class main_window(QMainWindow):
             self.conditions_connection.finished_signal.connect(conditions_connection_result)
             self.conditions_thread.start()
         else:
-            print("~GitHub connection is disabled via user's settings.")
+            write_to_file("GitHub connection is disabled via user's settings.")
 
         if COLOR_MODE == 'Light':
             palette = QPalette()
@@ -253,7 +275,7 @@ class main_window(QMainWindow):
             palette.setColor(QPalette.ColorRole.WindowText, QColor("White"))
             self.setPalette(palette)
 
-        self.main_widget = main(self.log_stream, self, COLOR_MODE)
+        self.main_widget = main(self, COLOR_MODE)
         self.update_settings()
         self.tabs = QTabWidget()
         if COLOR_MODE == 'Light':
@@ -286,11 +308,11 @@ class main_window(QMainWindow):
         self.SETTINGS_TAB = 1
         self.HELP_TAB = 2
 
-        self.tabs.addTab(self.main_widget, "  Main  ")
-        self.tabs.setTabToolTip(self.MAIN_TAB, "This is the Main Page, scan your skyrim folder and select plugins to flag or compress.")
-        self.tabs.addTab(self.settings_widget, "  Settings  ")
-        self.tabs.setTabToolTip(self.SETTINGS_TAB, "This is the settings page. Certain settings will effect what plugins will display after scanning.")
-        self.tabs.addTab(QWidget(), "  Help?  ")
+        self.tabs.addTab(self.main_widget, self.tr("  Main  "))
+        self.tabs.setTabToolTip(self.MAIN_TAB, self.tr("This is the Main Page, scan your skyrim folder and select plugins to flag or compress."))
+        self.tabs.addTab(self.settings_widget, self.tr("  Settings  "))
+        self.tabs.setTabToolTip(self.SETTINGS_TAB, self.tr("This is the settings page. Certain settings will effect what plugins will display after scanning."))
+        self.tabs.addTab(QWidget(), self.tr("  Help?  "))
         self.initial = True
         self.tabs.currentChanged.connect(self.tab_changed)
         self.previous_tab = self.MAIN_TAB
@@ -335,7 +357,7 @@ class main_window(QMainWindow):
         self.initial = False
         if not self.settings_widget.output_folder_name_valid or not 'eslifier' in self.settings_widget.settings['output_folder_name'].lower():
             self.tabs.setCurrentIndex(self.SETTINGS_TAB)
-            QMessageBox.warning(None, "Invalid Folder Name", f"Enter a valid output folder name.")
+            QMessageBox.warning(None, self.tr("Invalid Folder Name"), self.tr("Enter a valid output folder name."))
             self.tabs.blockSignals(False)
             return
         
@@ -351,43 +373,43 @@ class main_window(QMainWindow):
         output_path_exists = False
         data_path_exists = False
         if not os.path.exists('bsarch/bsarch.exe'):
-            error_message += ("The included BSArch.exe must be present in a folder\nnamed bsarch adjactent to ESLifier:\n\n"+
-                              f"{os.path.split(os.getcwd())[1]}/\n"+
-                              "├─── bsarch/\n"
-                              "│        └── BSArch.exe\n"
+            error_message += (self.tr("The included BSArch.exe must be present in a folder\nnamed bsarch adjactent to ESLifier:") + "\n\n"\
+                              f"{os.path.split(os.getcwd())[1]}/\n"\
+                              "├─── bsarch/\n"\
+                              "│        └── BSArch.exe\n"\
                               "└─── ESLifier.exe\n\n")
                               
         if not os.path.exists(output_path):
-            error_message += "Invalid Output Directory, it does not exist.\n"
+            error_message += self.tr("Invalid Output Directory, it does not exist.") + "\n"
         else:
             output_path_exists = True
         if not os.path.exists(data_path):
             if mo2_mode:
-                error_message += "Invalid MO2 Mods Directory, it does not exist.\n"
+                error_message += self.tr("Invalid MO2 Mods Directory, it does not exist.")+ "\n"
             else:
-                error_message += "Invalid Skyrim Data Directory, it does not exist.\n"
+                error_message += self.tr("Invalid Skyrim Data Directory, it does not exist.") + "\n"
         else:
             data_path_exists = True
         if output_path_exists and data_path_exists:
             output_path_drive, _ = os.path.splitdrive(output_path)
             data_path_drive, _ = os.path.splitdrive(data_path)
             if output_path_drive != data_path_drive:
-                error_message += "The Mods/Data Folder Path and the Output Folder Path must be on the same drive.\n"
+                error_message += self.tr("The Mods/Data Folder Path and the Output Folder Path must be on the same drive.") + "\n"
         if not plugins_txt.lower().endswith('.txt'):
-            error_message += "Invalid plugins.txt, the path should be to the file not directory.\n"
+            error_message += self.tr("Invalid plugins.txt, the path should be to the file not directory.") + "\n"
         if not os.path.exists(plugins_txt):
-            error_message += "Invalid plugins.txt, the file does not exist.\n"
+            error_message += self.tr("Invalid plugins.txt, the file does not exist.") + "\n"
         if mo2_mode and not os.path.exists(overwrite_path):
-            error_message += "Invalid Overwrite Directory, it does not exist.\n'"
+            error_message += self.tr("Invalid Overwrite Directory, it does not exist.") + "\n"
         if mo2_mode and not mo2_path.lower().endswith('modlist.txt'):
-            error_message += "Invalid MO2 modlist.txt, the path should be to the file not directory.\n"
+            error_message += self.tr("Invalid MO2 modlist.txt, the path should be to the file not directory.") + "\n"
         if mo2_mode and not os.path.exists(mo2_path):
-            error_message += "Invalid MO2 modlist.txt, the file does not exist.\n"
+            error_message += self.tr("Invalid MO2 modlist.txt, the file does not exist.") + "\n"
 
         if len(error_message) > 10:
             self.tabs.setCurrentIndex(self.SETTINGS_TAB)
             message = QMessageBox()
-            message.setWindowTitle("Path Validation Error")
+            message.setWindowTitle(self.tr("Path Validation Error"))
             message.setIcon(QMessageBox.Icon.Warning)
             message.setWindowIcon(QIcon(":/images/ESLifier.png"))
             message.setStyleSheet("""
@@ -405,12 +427,13 @@ class main_window(QMainWindow):
     def help_selected(self):
         help = QMessageBox()
         help.setIcon(QMessageBox.Icon.Information)
-        help.setWindowTitle("Help")
+        help.setWindowTitle(self.tr("Help"))
         help.setWindowIcon(QIcon(":/images/ESLifier.png"))
-        help.setText(
-            "Almost every element in the program has a tool tip that explains it.\n"+
-            "Tool tips can be seen by hovering over elements with the mouse.\n"+
-            "It is advised to read what everything does before doing anything.\n")
+        help_text = self.tr(
+                        "Almost every element in the program has a tool tip that explains it.\n"\
+                        "Tool tips can be seen by hovering over elements with the mouse.\n"\
+                        "It is advised to read what everything does before doing anything.\n")
+        help.setText(help_text)
         help.addButton(QMessageBox.StandardButton.Ok)
         def close():
             help.close()
@@ -419,7 +442,7 @@ class main_window(QMainWindow):
 
     def no_path_set(self):
         message = QMessageBox()
-        message.setWindowTitle("Missing Paths Error")
+        message.setWindowTitle(self.tr("Missing Paths Error"))
         message.setIcon(QMessageBox.Icon.Warning)
         message.setWindowIcon(QIcon(":/images/ESLifier.png"))
         message.setStyleSheet("""
@@ -427,7 +450,8 @@ class main_window(QMainWindow):
                 background-color: lightcoral;
             }""")
         message.setText(
-            "All paths must be set to leave the settings page!")
+            self.tr("All paths must be set to leave the settings page!")
+            )
         message.addButton(QMessageBox.StandardButton.Ok)
         def close():
             message.close()
@@ -543,6 +567,13 @@ class main_window(QMainWindow):
 
 try:
     app = QApplication(sys.argv)
+
+    translator = QTranslator()
+    lang_file = os.path.normpath("ESLifier_Data/translation.qm")
+    if os.path.exists(lang_file):
+        if translator.load(lang_file):
+            app.installTranslator(translator)
+
     palette = app.palette()
     background_color = palette.color(QPalette.ColorRole.Window)
 
@@ -563,7 +594,10 @@ except Exception as e:
             os.makedirs(os.path.normpath('ESLifier_Data/Crash Logs/'))
         with open(os.path.normpath(os.path.join('ESLifier_Data/Crash Logs/', crash_log)), 'w+', encoding='utf-8') as f:
             traceback.print_exc(file=f)
-        QMessageBox.critical(None, 'ESLifier Error', 'Check latest crash log in ESLifier_Data/Crash Logs')
+        QMessageBox.critical(None, 
+                             QCoreApplication.translate("Global", 'ESLifier Error'), 
+                             QCoreApplication.translate("Global", 'Check latest crash log in ESLifier_Data/Crash Logs')
+                             )
     except Exception as e1:
         crash_log_file = os.path.normpath(os.path.join(os.getcwd(), crash_log))
         try:
@@ -571,6 +605,11 @@ except Exception as e:
                 traceback.print_exc(file=f)
                 f.write(f'Failed to open crash log directory: \n')
                 f.write(e1)
-            QMessageBox.critical(None, 'ESLifier Error', f'Failed to open crash log directory, creating crash log at: {crash_log_file}')
+            QMessageBox.critical(None, 
+                                 QCoreApplication.translate("Global", 'ESLifier Error'), 
+                                 QCoreApplication.translate("Global", 'Failed to open crash log directory, creating crash log at: ') + crash_log_file
+                                 )
         except Exception as e2:
-            QMessageBox.critical(None, 'ESLifier Error', f'Failed to create crash log, error: {e2}\ncrash cause: {e}')
+            QMessageBox.critical(None, 
+                                 QCoreApplication.translate("Global", 'ESLifier Error'), 
+                                 QCoreApplication.translate("Global", 'Failed to create crash log, error: %1\ncrash cause: %2').replace("%1", "{0}").replace("%2", "{1}").format(e2, e))

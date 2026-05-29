@@ -4,6 +4,7 @@ import os
 
 import configparser
 import io
+from log_stream import write_to_file, write_ineligible
 
 class patchers():    
     def find_prev_non_alphanumeric(text: str, start_index: int, tokens: set[str] = ()):
@@ -116,7 +117,7 @@ class patchers():
                         data[offset+2:offset+5] = to_id_data["bytes"][::-1][1:]
                         offset += 6
                         if to_id_data["update_name"]:
-                            print(f'~Ineligible: {basename} -> ESLifier_Cell_Master.esm | 0x{integer_variable.hex()} -> 0x{to_id_data["hex_no_0"]} | {new_file}')
+                            write_ineligible(f'{basename} -> ESLifier_Cell_Master.esm | 0x{integer_variable.hex()} -> 0x{to_id_data["hex_no_0"]} | {new_file}')
                 elif not patch_arrays and data[offset:offset+2] == b'\x1E\x01':
                     patch_arrays = True
                 offset += 1
@@ -156,7 +157,7 @@ class patchers():
                             if to_id_data is not None:
                                 data[int_offset:int_offset+3] = to_id_data["bytes"][::-1][1:]
                                 if to_id_data["update_name"]:
-                                    print(f'~Ineligible: {basename} -> ESLifier_Cell_Master.esm | 0x{integer.hex()} -> 0x{to_id_data["hex_no_0"]} | {new_file}')
+                                    write_ineligible(f'{basename} -> ESLifier_Cell_Master.esm | 0x{integer.hex()} -> 0x{to_id_data["hex_no_0"]} | {new_file}')
             data = bytes(data)
             f.seek(0)
             f.truncate(0)
@@ -210,7 +211,7 @@ class patchers():
                             lines[i] = form_id_1 + '~' + "ESLifier_Cell_Master.esm" + ('\n' if plugin_1.endswith('\n') else '')
 
                     if replace_1 or replace_2 and print_replace:
-                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                        write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                         print_replace = False
             f.seek(0)
             f.truncate(0)
@@ -244,7 +245,7 @@ class patchers():
                                 lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
                             else:
                                 if print_replace:
-                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                     print_replace = False
                                 lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + "|ESLifier_Cell_Master.esm" + end
             f.seek(0)
@@ -288,7 +289,7 @@ class patchers():
                                     lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
                                 else:
                                     if print_replace:
-                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                        write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                         print_replace = False
                                     lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + sep +"ESLifier_Cell_Master.esm" + line[end_index:]
             f.seek(0)
@@ -332,7 +333,7 @@ class patchers():
                                     lines[i] = line[:middle_index] + '0x' + to_id_data["hex_no_0"] + end_of_line
                                 else:
                                     if print_replace:
-                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                        write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                         print_replace = False
                                     lines[i] = start_of_line + "ESLifier_Cell_Master.esm" + sep + '0x' + to_id_data["hex_no_0"] + line[end_index:]
             f.seek(0)
@@ -374,7 +375,7 @@ class patchers():
                                     start = len(start_of_line) + 6
                                 else:
                                     if print_replace:
-                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                        write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                         print_replace = False
                                     lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + "~ESLifier_Cell_Master.esm" + line[end_index:]
                                     start = len(start_of_line) + 6 + 20
@@ -409,7 +410,7 @@ class patchers():
                                 lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
                             else:
                                 if print_replace:
-                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                     print_replace = False
                                 lines[i] = line[:start_index] + "ESLifier_Cell_Master.esm|" + '0x' + to_id_data["hex_no_0"] + end_of_line
             f.seek(0)
@@ -456,7 +457,7 @@ class patchers():
                                         lines[i] = start_of_line + plugin + '|' + to_id_data["hex_no_0"] + end_of_line
                                     else:
                                         if print_replace:
-                                            print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                            write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                             print_replace = False
                                         lines[i] = start_of_line + "ESLifier_Cell_Master.esm|" + to_id_data["hex_no_0"] + end_of_line
                                         pos += len('ESLifier_Cell_Master.esm') - len(plugin)
@@ -492,7 +493,7 @@ class patchers():
                                     lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
                                 else:
                                     if print_replace:
-                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                        write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                         print_replace = False   
                                     lines[i] = line[:plugin_index+1] + "ESLifier_Cell_Master.esm" + sep + "0x" + to_id_data["hex_no_0"] + end_of_line
                             else:
@@ -500,7 +501,7 @@ class patchers():
                                     lines[i] = start_of_line + '00' + to_id_data["hex"] + end_of_line
                                 else:
                                     if print_replace:
-                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                        write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                         print_replace = False
                                     lines[i] = line[:plugin_index+1] + "ESLifier_Cell_Master.esm" + sep + "00" + to_id_data["hex"] + end_of_line
             f.seek(0)
@@ -855,7 +856,7 @@ class patchers():
                         lines[i] = _comp_single_value_form_id(line, valid_items_replace, form_id_map)
                         
             if not comp_print_replace:
-                print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
 
             f.seek(0)
             f.truncate(0)
@@ -1007,7 +1008,7 @@ class patchers():
                     lines[i] = _comp_variable_form_id(line, basename, global_replace, form_id_map)
 
             if not comp_print_replace:
-                print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
 
             f.seek(0)
             f.truncate(0)
@@ -1318,7 +1319,7 @@ class patchers():
                                     data = patchers.change_json_element(data, path, plugin + sep + '0x' + to_id_data["hex_no_0"])
                             else:
                                 if print_replace:
-                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                     print_replace = False  
                                 if not ox:
                                     data = patchers.change_json_element(data, path, "ESLifier_Cell_Master.esm" + sep + to_id_data["hex_no_0"])
@@ -1368,7 +1369,7 @@ class patchers():
                                     data = patchers.change_json_element(data, path, str(to_id_data["int"]) + sep + plugin)
                             else:
                                 if print_replace:
-                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                     print_replace = False  
                                 if not ox and not int_type_actual:
                                     data = patchers.change_json_element(data, path, to_id_data["hex_no_0"] + sep + "ESLifier_Cell_Master.esm")
@@ -1452,14 +1453,14 @@ class patchers():
                     try:
                         form_id_int = int(value, 16)
                     except:
-                        print(f"~Warn: Invalid Form ID of {value} in file {new_file}")
+                        write_to_file(f"Invalid Form ID of {value} in file {new_file}")
                         continue
                     to_id_data = form_id_map.get(form_id_int)
                     if to_id_data is not None:
                         data = patchers.change_json_element(data, path, to_id_data["hex_no_0"])
                         if to_id_data["update_name"]:
                             if print_replace:
-                                print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                 print_replace = False  
                             data = patchers.change_json_element(data, plugin_name_path, "ESLifier_Cell_Master.esm")
                 else:
@@ -1501,7 +1502,7 @@ class patchers():
                                     data = patchers.change_json_element(data, path, str(to_id_data["int"]) + '|' + plugin)
                             else:
                                 if print_replace:
-                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                     print_replace = False  
                                 if ox:
                                     data = patchers.change_json_element(data, path, '0x'+ to_id_data["hex_no_0"] + '|' + "ESLifier_Cell_Master.esm")
@@ -1571,7 +1572,7 @@ class patchers():
                                     value = start + '0x' + to_id_data["hex"] + end
                                 else:
                                     if print_replace:
-                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                        write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                         print_replace = False  
                                     value = start + '0x' + to_id_data["hex"] + '|ESLifier_Cell_Master.esm' + value[plugin_index+len(basename)+1:]
                                 changed = True
@@ -1660,7 +1661,7 @@ class patchers():
                                 lines[i] = line[:index+1] + '0x' + to_id_data["hex"] + line[end_index:]
                             else:
                                 if print_replace:
-                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                     print_replace = False
                                 lines[i] = line[:plugin_index] + 'ESLifier_Cell_Master.esm' + '" | 0x' + to_id_data["hex"] + line[end_index:]
             f.seek(0)
@@ -1694,7 +1695,7 @@ class patchers():
                                 lines[i] = line[:index+1] + to_id_data["hex"] + end_of_line
                             else:
                                 if print_replace:
-                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                     print_replace = False
                                 lines[i] = line[:plugin_index] + " ESLifier_Cell_Master.esm" + '|' + to_id_data["hex"] + end_of_line
             f.seek(0)
@@ -1809,7 +1810,7 @@ class patchers():
                         data = patchers.change_json_element(data, path, '00' + to_id_data["hex"])
                         if to_id_data["update_name"]:
                             if print_replace:
-                                print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                 print_replace = False  
                             data = patchers.change_json_element(data, plugin_path, "ESLifier_Cell_Master.esm")
                 else:
@@ -1848,7 +1849,7 @@ class patchers():
                                 data = patchers.change_json_element(data, path, to_id_data["hex"] + '|' + plugin)
                             else:
                                 if print_replace:
-                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                     print_replace = False  
                                 data = patchers.change_json_element(data, path, to_id_data["hex"] + '|' + "ESLifier_Cell_Master.esm")
             f.seek(0)
@@ -1878,7 +1879,7 @@ class patchers():
                                 data = patchers.change_json_element(data, path, plugin + '|0x' + to_id_data["hex_no_0"])
                             else:
                                 if print_replace:
-                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                     print_replace = False  
                                 data = patchers.change_json_element(data, path, "ESLifier_Cell_Master.esm" + '|0x' + to_id_data["hex_no_0"])
             f.seek(0)
@@ -1909,7 +1910,7 @@ class patchers():
                                     data = patchers.change_json_key(data, path[-1], plugin + '|' + to_id_data["hex_no_0"])
                                 else:
                                     if print_replace:
-                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                        write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                         print_replace = False
                                     data = patchers.change_json_key(data, path[-1], "ESLifier_Cell_Master.esm" + '|' + to_id_data["hex_no_0"])
                     index = value.index('|')
@@ -1922,7 +1923,7 @@ class patchers():
                                 data = patchers.change_json_element(data, path, plugin + '|' + to_id_data["hex_no_0"])
                             else:
                                 if print_replace:
-                                    print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                    write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                     print_replace = False
                                 data = patchers.change_json_element(data, path, "ESLifier_Cell_Master.esm" + '|' + to_id_data["hex_no_0"])
             f.seek(0)
@@ -1993,7 +1994,7 @@ class patchers():
                         data = patchers.change_json_element(data, form_id_path, to_id_data["int"])
                         if to_id_data["update_name"]:
                             if print_replace:
-                                print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                 print_replace = False
                             data = patchers.change_json_element(data, path, "ESLifier_Cell_Master.esm")
             f.seek(0)
@@ -2024,7 +2025,7 @@ class patchers():
                         data = patchers.change_json_element(data, path, "0x" + to_id_data["hex_no_0"])
                         if to_id_data["update_name"]:
                             if print_replace:
-                                print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                 print_replace = False
                             data = patchers.change_json_element(data, plugin_path, "ESLifier_Cell_Master.esm")
                 else:
@@ -2290,7 +2291,7 @@ class patchers():
                                     lines[i] = start_of_line + ox + to_id_data["hex_no_0"] + end_of_line
                                 else:
                                     if print_replace:
-                                        print(f'~Plugin Name Replaced: {basename} | {new_file}')
+                                        write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                         print_replace = False
                                     lines[i] = start_of_line + ox + to_id_data["hex_no_0"] + "|ESLifier_Cell_Master.esm" + line[end_index:]
             f.seek(0)

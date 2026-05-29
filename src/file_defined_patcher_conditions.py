@@ -2,6 +2,8 @@ import json5 as json
 import os
 from typing import Callable, Any
 from file_patchers import patchers
+from log_stream import write_error
+from PyQt6.QtCore import QCoreApplication
 
 class user_and_master_conditions_class():
     def __init__(self):
@@ -22,8 +24,8 @@ class user_and_master_conditions_class():
                     file_data: dict[str] = json.load(f)
                     conditions_data: list[dict[str, str | int]] = file_data.get("conditions", [])
         except Exception as e:
-            print(f"!Error: Issue in conditions file {filename}:")
-            print(e)
+            write_error(QCoreApplication.translate("Global", "Issue in conditions file %1:").replace("%1", filename))
+            write_error(e, True)
             return {}
         
         ini_conditions = []
@@ -70,8 +72,8 @@ class user_and_master_conditions_class():
                     "int_type": conditions.get("int_type", False),
                     "patcher": patcher_methods[conditions["patcher"]]})
             except Exception as e:
-                print(f"A condtion in {os.path.basename(filename)} is missing required fields or has an invalid patcher method.")
-                print(e)
+                write_error(QCoreApplication.translate("Global", "A condtion in %1 is missing required fields or has an invalid patcher method.").replace("%1", os.path.basename(filename)))
+                write_error(e, True)
         return conditions_dict
 
     def check_conditions(self, basename, file, file_lower, form_id_map):
@@ -105,7 +107,7 @@ class user_and_master_conditions_class():
                         kwargs.update({"encoding_method": "ansi"})
                         patcher_method(*args, **kwargs)
                     else:
-                        print(f'!Error: Failed to patch file: {file}')
-                        print(e)    
+                        write_error(QCoreApplication.translate("Global", "Failed to patch file: ") + file)
+                        write_error(e, True)    
                 return True
         return False

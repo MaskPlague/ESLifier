@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButt
 from PyQt6.QtGui import QIcon, QColor
 
 from blacklist import blacklist_window
+from log_stream import write_error
 
 from QToggle import QtToggle
 class settings(QWidget):
@@ -33,52 +34,52 @@ class settings(QWidget):
         self.file_dialog_2.setFileMode(QFileDialog.FileMode.ExistingFile)
 
         self.skyrim_folder_path_widget, self.skyrim_folder_path = self.create_path_widget(
-            "Data Folder Path",
-            "Set this to your Skyrim Special Edition Data folder that holds Skyrim.esm.",
-            'C:/Path/To/Skyrim Special Edition/Data',
+            self.tr("Data Folder Path"),
+            self.tr("Set this to your Skyrim Special Edition Data folder that holds Skyrim.esm."),
+            self.tr('C:/Path/To/Skyrim Special Edition/Data'),
             self.skyrim_folder_path_clicked,
             'skyrim_folder_path'
         )
         self.output_folder_path_widget, self.output_folder_path = self.create_path_widget(
-            "Output Folder Path",
-            "Set where you want the Output Folder to be generated.",
-            'C:/Path/To/The/Output/Folder/',
+            self.tr("Output Folder Path"),
+            self.tr("Set where you want the Output Folder to be generated."),
+            self.tr('C:/Path/To/The/Output/Folder/'),
             self.output_folder_path_clicked,
             'output_folder_path'
         )
         self.output_folder_name_widget, self.output_folder_name = self.create_output_name_text_input_widget(
-            "Output Folder Name",
-            "Change this to what you want to be the name of the Output Folder.",
+            self.tr("Output Folder Name"),
+            self.tr("Change this to what you want to be the name of the Output Folder."),
             "ESLifier Output"
         )
         self.overwrite_path_widget, self.overwrite_path = self.create_path_widget(
-            "Overwrite Path",
-            "Set this to your modlist\'s overwrite folder",
-            'C:/Path/To/Overwrite',
+            self.tr("Overwrite Path"),
+            self.tr("Set this to your modlist\'s overwrite folder"),
+            self.tr('C:/Path/To/Overwrite'),
             self.overwrite_path_clicked,
             'overwrite_path'
         )
         self.plugins_txt_path_widget, self.plugins_txt_path = self.create_path_widget(
-            "Plugins.txt Path",
-            "Set this to your modlist\'s plugins.txt",
-            'C:/Path/To/plugins.txt',
+            self.tr("Plugins.txt Path"),
+            self.tr("Set this to your modlist\'s plugins.txt"),
+            self.tr('C:/Path/To/plugins.txt'),
             self.plugins_txt_path_clicked,
             'plugins_txt_path'
         )
         self.mo2_modlist_txt_path_widget, self.mo2_modlist_txt_path = self.create_path_widget(
-            "Modlist.txt Path",
-            "Set this to your profile's modlist.txt",
-            'C:/Path/To/MO2/profiles/profile_name/modlist.txt',
+            self.tr("Modlist.txt Path"),
+            self.tr("Set this to your profile's modlist.txt"),
+            self.tr('C:/Path/To/MO2/profiles/profile_name/modlist.txt'),
             self.mo2_modlist_txt_path_clicked,
             'mo2_modlist_txt_path'
         )
         self.mo2_mode_widget, self.mo2_mode_toggle = self.create_toggle_widget(
-            "Enable MO2 Mode",
-            "MO2 users should not launch this executible through MO2,\n"+
-            "instead enable this setting. This will change the paths and scanner\n"+
-            "method to scan the MO2 mods folder and get winning file conflicts.\n"+
-            "Launching this program through MO2 drastically slows it down and may\n"+
-            "break certain functions.",
+            self.tr("Enable MO2 Mode"),
+            self.tr("MO2 users should not launch this executible through MO2,\n"\
+            "instead enable this setting. This will change the paths and scanner\n"\
+            "method to scan the MO2 mods folder and get winning file conflicts.\n"\
+            "Launching this program through MO2 drastically slows it down and may\n"\
+            "break certain functions."),
             "mo2_mode",
             default=False
         )
@@ -86,162 +87,162 @@ class settings(QWidget):
         self.mo2_mode_widget.layout().itemAt(2).widget().clicked.connect(self.skyrim_folder_path.clear)
         self.mo2_mode_widget.layout().itemAt(2).widget().clicked.connect(self.overwrite_path.clear)
         self.update_header_widget, self.update_header_toggle = self.create_toggle_widget(
-            "Allow Form IDs below 0x000800 + Update plugin headers to 1.71",
-            "Allow scanning and patching to use the new 1.71 header.\n"+
-            "Requires Backported Extended ESL Support on Skyrim versions below 1.6.1130.\n"+
-            "Changing this settings requires a re-scan.",
+            self.tr("Allow Form IDs below 0x000800 + Update plugin headers to 1.71"),
+            self.tr("Allow scanning and patching to use the new 1.71 header.\n"\
+            "Requires Backported Extended ESL Support on Skyrim versions below 1.6.1130.\n"\
+            "Changing this settings requires a re-scan."),
             "update_header",
             default=True
         )
         self.show_esms_widget, self.show_esms_toggle = self.create_toggle_widget(
-            "Show ESM Plugins",
-            "Display ESM plugins (.esm/ESM flagged).",
+            self.tr("Show ESM Plugins"),
+            self.tr("Display ESM plugins (.esm/ESM flagged)."),
             "show_esms",
             default=True
         )
         self.show_plugins_with_cells_widget, self.show_plugins_with_cells_toggle = self.create_toggle_widget(
-            "Show plugins with new CELL records",
-            "Bugs related to cells have been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+.\n"+
-            "For users of SSE Engine Fixes v7+ there is no reason to disable this.\n"+
-            "Display plugins with new CELL records.",
+            self.tr("Show plugins with new CELL records"),
+            self.tr("Bugs related to cells have been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+.\n"\
+            "For users of SSE Engine Fixes v7+ there is no reason to disable this.\n"\
+            "Display plugins with new CELL records."),
             "show_cells",
             default=True
         )
         self.enable_cell_changed_filter_widget, self.enable_cell_changed_filter_toggle = self.create_toggle_widget(
-            "Hide ESM plugins with new CELL records that are overwritten",
-            "The related bug has been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+. Disable this filter.\n"+
-            "Hide ESM plugins with new CELL records that have been changed by a dependent plugin.",
+            self.tr("Hide ESM plugins with new CELL records that are overwritten"),
+            self.tr("The related bug has been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+. Disable this filter.\n"\
+            "Hide ESM plugins with new CELL records that have been changed by a dependent plugin."),
             "enable_cell_changed_filter",
             default=True
         )
         self.enable_interior_cell_filter_widget, self.enable_interior_cell_filter_toggle = self.create_toggle_widget(
-            "Hide plugins with new interior CELL records",
-            "This bug has been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+. Disable this filter.\n"+
-            "Hide plugins with new interior CELL records as they can have issues when reloading\n"+
-            "a save without restarting the game.",
+            self.tr("Hide plugins with new interior CELL records"),
+            self.tr("This bug has been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+. Disable this filter.\n"\
+            "Hide plugins with new interior CELL records as they can have issues when reloading\n"\
+            "a save without restarting the game."),
             "enable_interior_cell_filter",
             default=False
         )
         self.enable_worldspaces_filter_widget, self.enable_worldspaces_filter_toggle = self.create_toggle_widget(
-            "Hide plugins with new WRLD (worldspace) records",
-            "Hide plugins with new worldspaces records as they can have the landscape disappear\n"+
-            "(no ground) when flagged as ESL.",
+            self.tr("Hide plugins with new WRLD (worldspace) records"),
+            self.tr("Hide plugins with new worldspaces records as they can have the landscape disappear\n"\
+            "(no ground) when flagged as ESL."),
             "filter_worldspaces",
             default=True
         )
         self.enable_weather_filter_widget, self.enable_weather_filter_toggle = self.create_toggle_widget(
-            "Hide plugins with new WTHR (weather) records",
-            "Hide plugins with new weather records as they can be referenced in ENB presets which are not patched",
+            self.tr("Hide plugins with new WTHR (weather) records"),
+            self.tr("Hide plugins with new weather records as they can be referenced in ENB presets which are not patched"),
             "filter_weathers",
             default=False
         )
         self.hide_left_columns_widget, self.hide_left_columns_text_input = self.create_text_input_widget(
-            "Hide left list columns visually",
-            "Hide specified columns visually. This does not affect what plugins are displayed.\n"+
-            "Specify the column names, comma seperated. Available: CELL, WRLD, ESM\n"+
-            "Example, hides the CELL and ESM flags: CELL,ESM",
+            self.tr("Hide left list columns visually"),
+            self.tr("Hide specified columns visually. This does not affect what plugins are displayed.\n"\
+            "Specify the column names, comma seperated. Available: CELL, WRLD, ESM\n"\
+            "Example, hides the CELL and ESM flags: CELL,ESM"),
             "CELL,ESM",
             "left_hidden_columns",
             ''
         )
         self.hide_right_columns_widget, self.hide_right_columns_text_input = self.create_text_input_widget(
-            "Hide right list columns visually",
-            "Hide specified columns visually. This does not affect what plugins are displayed.\n"+
-            "Specify the column names, comma seperated. Available: CELL, WRLD, WTHR, ESM, DEPENDENTS\n"+
-            "Example, hides the ESM flag and the dependent plugins: ESM,DEPENDENT",
+            self.tr("Hide right list columns visually"),
+            self.tr("Hide specified columns visually. This does not affect what plugins are displayed.\n"\
+            "Specify the column names, comma seperated. Available: CELL, WRLD, WTHR, ESM, DEPENDENTS\n"\
+            "Example, hides the ESM flag and the dependent plugins: ESM,DEPENDENT"),
             "ESM,DEPENDENTS",
             "right_hidden_columns",
             ''
         )
         self.show_plugins_possibly_refd_by_dlls_widget, self.show_plugins_possibly_refd_by_dlls_toggle = self.create_toggle_widget(
-            "Show plugins that are in SKSE dlls",
-            "Show or hide plugins that may have Form IDs hard-coded in SKSE dlls.",
+            self.tr("Show plugins that are in SKSE dlls"),
+            self.tr("Show or hide plugins that may have Form IDs hard-coded in SKSE dlls."),
             "show_dlls",
             default=False
         )
         self.persistent_ids_widget, self.persistent_ids_toggle = self.create_toggle_widget(
-            "Persist Form IDs between rebuilds",
-            "Make Form IDs re-compact to the same compacted Form IDs as the previous\n"+
-            "run, regardless of changes to the plugin such as adding a new Form ID in\n"+
-            "the middle of the existing Form IDs. (Doesn't work after clicking Reset Output)\n"+
-            "(i.e. adding 0x9A0B to a mod that only had 0x9A0A and 0x9A0C where\n"+
-            "the ids compacted to 0x80A and 0x80B respectively. Then the new Form ID\n"+
-            "will compact from 0x9A0B to 0x90C since the first two IDs existed previously\n"+
-            "but 0x9A0B did not and 0x90C is the next available compacted Form ID.)",
+            self.tr("Persist Form IDs between rebuilds"),
+            self.tr("Make Form IDs re-compact to the same compacted Form IDs as the previous\n"\
+            "run, regardless of changes to the plugin such as adding a new Form ID in\n"\
+            "the middle of the existing Form IDs. (Doesn't work after clicking Reset Output)\n"\
+            "(i.e. adding 0x9A0B to a mod that only had 0x9A0A and 0x9A0C where\n"\
+            "the ids compacted to 0x80A and 0x80B respectively. Then the new Form ID\n"\
+            "will compact from 0x9A0B to 0x90C since the first two IDs existed previously\n"\
+            "but 0x9A0B did not and 0x90C is the next available compacted Form ID.)"),
             "persistent_ids",
             default=True
         )
         self.persistent_ids_toggle.clicked.connect(self.persistent_ids_clicked)
         self.free_non_existent_widget, self.free_non_existent_toggle = self.create_toggle_widget(
-            "Free Non-Existent Form IDs",
-            "Allow ESLifier to free the allocation of a compacted Form ID if the\n"+
-            "original Form ID that the compacted Form ID is allocated to no longer exists.\n"+
-            "(i.e. if 0x9A0A no longer exists in the theoretical mod in the toolTip example\n"+
-            "of \"Persist Form IDs between rebuilds\", then adding 0x9A0B becomes -> 0x80A\n"+
-            "instead of 0x80C since 0x80A is free)",
+            self.tr("Free Non-Existent Form IDs"),
+            self.tr("Allow ESLifier to free the allocation of a compacted Form ID if the\n"\
+            "original Form ID that the compacted Form ID is allocated to no longer exists.\n"\
+            "(i.e. if 0x9A0A no longer exists in the theoretical mod in the toolTip example\n"\
+            "of \"Persist Form IDs between rebuilds\", then adding 0x9A0B becomes -> 0x80A\n"\
+            "instead of 0x80C since 0x80A is free)"),
             "free_non_existent",
             default=False
         )
         self.enable_patch_new_widget, self.enable_patch_new_toggle = self.create_toggle_widget(
-            "Enable the Patch New or Changed Files Button",
-            "Show the patch new button on the main page. Personally, I think it is useless\n"+
-            "and annoying to maintain. However, I'm sure there is someone who uses it so I'm\n"+
-            "keeping the option here to keep it enabled. Doesn't hash check if output has changed.",
+            self.tr("Enable the Patch New or Changed Files Button"),
+            self.tr("Show the patch new button on the main page. Personally, I think it is useless\n"\
+            "and annoying to maintain. However, I'm sure there is someone who uses it so I'm\n"\
+            "keeping the option here to keep it enabled. Doesn't hash check if output has changed."),
             "enable_patch_new",
             default=False
         )
         self.hash_output_widget, self.hash_output_toggle = self.create_toggle_widget(
-            "Hash the Output Folder to Detect Changes",
-            "Hash the output folder during certain actions to detect if a file has been changed\n"+
-            "since ESLifier last patched it. Can be time consuming.",
+            self.tr("Hash the Output Folder to Detect Changes"),
+            self.tr("Hash the output folder during certain actions to detect if a file has been changed\n"\
+            "since ESLifier last patched it. Can be time consuming."),
             "hash_output",
             default=True
         )
         self.check_for_updates_widget, self.check_for_updates_toggle = self.create_toggle_widget(
-            "Check for updates on start",
-            "Connect to GitHub on program start to check for updates",
+            self.tr("Check for updates on start"),
+            self.tr("Connect to GitHub on program start to check for updates"),
             "check_for_updates",
             default=True
         )
         self.blacklist_window = blacklist_window()
         self.edit_blacklist_widget = self.create_button_widget(
-            "Remove Plugins From Blacklist",
-            'Show window to remove plugins from the blacklist. You can add\n'+
-            'plugins to the blacklist by right clicking them on the Main page.',
-            'Edit Blacklist',
+            self.tr("Remove Plugins From Blacklist"),
+            self.tr('Show window to remove plugins from the blacklist. You can add\n'\
+            'plugins to the blacklist by right clicking them on the Main page.'),
+            self.tr('Edit Blacklist'),
             self.edit_blacklist_button_clicked
         )
         self.open_eslifier_data_widget = self.create_button_widget(
-            "Open ESLifier's Data Folder",
-            "This opens the folder where all of the dictionaries and Form ID maps are stored.",
-            "Open Folder",
+            self.tr("Open ESLifier's Data Folder"),
+            self.tr("This opens the folder where all of the dictionaries and Form ID maps are stored."),
+            self.tr("Open Folder"),
             self.open_eslifier_data
         )
         self.reset_settings_widget = self.create_button_widget(
-            "Reset All Settings",
+            self.tr("Reset All Settings"),
             None,
-            "Reset",
+            self.tr("Reset"),
             self.reset_settings_clicked
         )
         self.colors_select_widget = self.create_button_widget(
-            "Change Background Colors",
-            "This opens a color picker for the background colors",
-            "Open Color Picker",
+            self.tr("Change Background Colors"),
+            self.tr("This opens a color picker for the background colors"),
+            self.tr("Open Color Picker"),
             self.open_color_dialog
         )
         self.generate_cell_master_widget, self.generate_cell_master_toggle = self.create_toggle_widget(
-            "Generate Cell Master",
-            "As of SSE Engine Fixes v7+ this is no longer necessary\n"+
-            "for Skyrim version 1.6.1170+ and can be left disabled.\n"+
-            "This generates a master cell plugin to circumvent\n"+
-            "the ESM + ESL cell bug and the ESL worldspace bug.\n"+
-            "(This does not fix the interior ESL save reload bug).\n"+
-            "Requires an ESM plugin slot and is only useful if you\n"+
+            self.tr("Generate Cell Master"),
+            self.tr("As of SSE Engine Fixes v7+ this is no longer necessary\n"\
+            "for Skyrim version 1.6.1170+ and can be left disabled.\n"\
+            "This generates a master cell plugin to circumvent\n"\
+            "the ESM + ESL cell bug and the ESL worldspace bug.\n"\
+            "(This does not fix the interior ESL save reload bug).\n"\
+            "Requires an ESM plugin slot and is only useful if you\n"\
             "need to ESL flag more than one such plugin. Do not\n"
-            "forget to activate the new ESLifier_Cell_Master.esm that\n"+
-            "is generated. You may also need to re-sort your plugins.\n"+
-            "This disables the cell changed flag/filter for ESMs and\n"+
-            "the new worldspace flag/filter.",
+            "forget to activate the new ESLifier_Cell_Master.esm that\n"\
+            "is generated. You may also need to re-sort your plugins.\n"\
+            "This disables the cell changed flag/filter for ESMs and\n"\
+            "the new worldspace flag/filter."),
             "generate_cell_master",
             default=False   
         )
@@ -309,10 +310,10 @@ class settings(QWidget):
         settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
     def open_color_dialog(self):
-        inner_color = QColorDialog.getColor(QColor(self.inner_color), self, "Select Inner Color")
+        inner_color = QColorDialog.getColor(QColor(self.inner_color), self, self.tr("Select Inner Color"))
         if inner_color.isValid():
             self.inner_color = inner_color.name()
-        outer_color = QColorDialog.getColor(QColor(self.outer_color), self, "Select Outer Color")
+        outer_color = QColorDialog.getColor(QColor(self.outer_color), self, self.tr("Select Outer Color"))
         if outer_color.isValid():
             self.outer_color = outer_color.name()
         self.eslifier.update_settings()
@@ -335,21 +336,21 @@ class settings(QWidget):
     
     def skyrim_folder_path_clicked(self):
         if not self.mo2_mode_toggle.isChecked():
-            self.select_file_path(self.file_dialog, "Select the Skyrim Special Edition Data folder", 'skyrim_folder_path', self.skyrim_folder_path, None)
+            self.select_file_path(self.file_dialog, self.tr("Select the Skyrim Special Edition Data folder"), 'skyrim_folder_path', self.skyrim_folder_path, None)
         else:
-            self.select_file_path(self.file_dialog, "Select your MO2 mods folder", 'skyrim_folder_path', self.skyrim_folder_path, None)
+            self.select_file_path(self.file_dialog, self.tr("Select your MO2 mods folder"), 'skyrim_folder_path', self.skyrim_folder_path, None)
 
     def output_folder_path_clicked(self):
-        self.select_file_path(self.file_dialog, "Select where you want the output folder", 'output_folder_path', self.output_folder_path, None)
+        self.select_file_path(self.file_dialog, self.tr("Select where you want the output folder"), 'output_folder_path', self.output_folder_path, None)
 
     def overwrite_path_clicked(self):
-        self.select_file_path(self.file_dialog, "Select your MO2 overwrite folder", 'overwrite_path', self.overwrite_path, None)
+        self.select_file_path(self.file_dialog, self.tr("Select your MO2 overwrite folder"), 'overwrite_path', self.overwrite_path, None)
 
     def mo2_modlist_txt_path_clicked(self):
-        self.select_file_path(self.file_dialog_2, "Select your MO2 profile\'s modlist.txt", 'mo2_modlist_txt_path', self.mo2_modlist_txt_path, "Modlist (modlist.txt)")
+        self.select_file_path(self.file_dialog_2, self.tr("Select your MO2 profile\'s modlist.txt"), 'mo2_modlist_txt_path', self.mo2_modlist_txt_path, self.tr("Modlist") +" (modlist.txt)")
 
     def plugins_txt_path_clicked(self):
-        self.select_file_path(self.file_dialog_2, "Select your plugins.txt", 'plugins_txt_path', self.plugins_txt_path, "Load Order (plugins.txt)")
+        self.select_file_path(self.file_dialog_2, self.tr("Select your plugins.txt"), 'plugins_txt_path', self.plugins_txt_path, self.tr("Load Order")+ " (plugins.txt)")
 
     def create_path_widget(self, label_text, tooltip, placeholder, click_function, settings_key):
         layout = QHBoxLayout()
@@ -359,7 +360,7 @@ class settings(QWidget):
         line_edit = QLineEdit()
         line_edit.setText(self.settings.get(settings_key, ''))
         line_edit.editingFinished.connect(self.update_settings)
-        button = self.button_maker('Explore...', click_function, 100)
+        button = self.button_maker(self.tr('Explore...'), click_function, 100)
 
         widget.setLayout(layout)
         layout.addWidget(label)
@@ -392,30 +393,30 @@ class settings(QWidget):
 
     def mo2_mode_clicked(self):
         if self.mo2_mode_toggle.checkState() == Qt.CheckState.Checked:
-            self.skyrim_folder_path_widget.setToolTip("Set this to your Mod Organizer 2 mod's folder that holds all of your installed mods.")
-            self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText("MO2 Mod\'s Folder Path")
-            self.skyrim_folder_path.setPlaceholderText('C:/Path/To/MO2/mods')
+            self.skyrim_folder_path_widget.setToolTip(self.tr("Set this to your Mod Organizer 2 mod's folder that holds all of your installed mods."))
+            self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText(self.tr("MO2 Mod\'s Folder Path"))
+            self.skyrim_folder_path.setPlaceholderText(self.tr('C:/Path/To/MO2/mods'))
         else:
-            self.skyrim_folder_path_widget.setToolTip("Set this to your Skyrim Special Edition Data folder that holds Skyrim.esm.")
-            self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText("Data Folder Path")
-            self.skyrim_folder_path.setPlaceholderText('C:/Path/To/Skyrim Special Edition/Data')
+            self.skyrim_folder_path_widget.setToolTip(self.tr("Set this to your Skyrim Special Edition Data folder that holds Skyrim.esm."))
+            self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText(self.tr("Data Folder Path"))
+            self.skyrim_folder_path.setPlaceholderText(self.tr('C:/Path/To/Skyrim Special Edition/Data'))
     
     def cell_master_clicked(self):
         if self.generate_cell_master_toggle.checkState() == Qt.CheckState.Checked:
             self.enable_cell_changed_filter_widget.setEnabled(False)
             self.enable_cell_changed_filter_toggle.change_color(circle_color='LightCoral', bg_color='Grey', active_color='Grey')
-            self.enable_cell_changed_filter_widget.setToolTip("Disabled by Generate Cell Master setting.")
+            self.enable_cell_changed_filter_widget.setToolTip(self.tr("Disabled by Generate Cell Master setting."))
             self.enable_worldspaces_filter_widget.setEnabled(False)
             self.enable_worldspaces_filter_toggle.change_color(circle_color='LightCoral', bg_color='Grey', active_color='Grey')
-            self.enable_worldspaces_filter_widget.setToolTip("Disabled by Generate Cell Master setting.")
+            self.enable_worldspaces_filter_widget.setToolTip(self.tr("Disabled by Generate Cell Master setting."))
         else:
             self.enable_cell_changed_filter_widget.setEnabled(True)
             self.enable_cell_changed_filter_toggle.change_color()
-            self.enable_cell_changed_filter_widget.setToolTip("Hide ESM plugins with new CELL records that have been changed by a dependent plugin.")
+            self.enable_cell_changed_filter_widget.setToolTip(self.tr("Hide ESM plugins with new CELL records that have been changed by a dependent plugin."))
             self.enable_worldspaces_filter_widget.setEnabled(True)
             self.enable_worldspaces_filter_toggle.change_color()
-            self.enable_worldspaces_filter_widget.setToolTip("Hide plugins with new worldspaces records as they can have the landscape disappear\n"+
-                                                            "(no ground) when flagged as ESL.")
+            self.enable_worldspaces_filter_widget.setToolTip(self.tr("Hide plugins with new worldspaces records as they can have the landscape disappear\n"\
+                                                            "(no ground) when flagged as ESL."))
     
     def persistent_ids_clicked(self):
         if self.persistent_ids_toggle.checkState() == Qt.CheckState.Checked:
@@ -463,9 +464,9 @@ class settings(QWidget):
                 self.update_settings()
             else:
                 if 'eslifier' in text.lower():
-                    QMessageBox.warning(None, "Invalid Output Name", f"'{text}' is not a valid folder name.")
+                    QMessageBox.warning(None, self.tr("Invalid Output Name"), self.tr("'%1' is not a valid folder name.").replace("%1", text))
                 else:
-                    QMessageBox.warning(None, "Output Name missing 'ESLifier'", "The output name must have 'ESLifier' (case insenstive) in it for safety purposes.")
+                    QMessageBox.warning(None, self.tr("Output Name missing 'ESLifier'"), self.tr("The output name must have 'ESLifier' (case insenstive) in it for safety purposes."))
                 line_edit.setFocus()
                 self.output_folder_name_valid = False
 
@@ -519,7 +520,7 @@ class settings(QWidget):
             else:
                 subprocess.Popen(['open', os.path.dirname(directory)])
         except Exception as e:
-            print(f"Error opening file explorer: {e}")
+            write_error(self.tr("Error opening file explorer: ") + str(e))
 
     def reset_settings_clicked(self):
         confirm = QMessageBox()
@@ -528,8 +529,8 @@ class settings(QWidget):
             QMessageBox {
                 background-color: lightcoral;
             }""")
-        confirm.setText("Are you sure you want to reset all settings?")
-        confirm.setWindowTitle("Confirmation")
+        confirm.setText(self.tr("Are you sure you want to reset all settings?"))
+        confirm.setWindowTitle(self.tr("Confirmation"))
         confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
         confirm.addButton(QMessageBox.StandardButton.Yes)
         confirm.addButton(QMessageBox.StandardButton.Cancel)
@@ -566,7 +567,7 @@ class settings(QWidget):
             with open(settings_file, 'w+', encoding='utf-8') as f:
                 json.dump(self.settings, f, ensure_ascii=False, indent=4)
         except:
-            print("Failed to save settings.")
+            write_error(self.tr("Failed to save settings."))
 
     def update_settings(self, key = ''):
         self.settings['skyrim_folder_path'] = os.path.normpath(self.skyrim_folder_path.text()) if self.skyrim_folder_path.text() != '' else ''

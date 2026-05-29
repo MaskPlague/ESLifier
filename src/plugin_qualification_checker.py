@@ -4,6 +4,8 @@ import threading
 import zlib
 import struct
 import shutil
+from log_stream import write_error
+from PyQt6.QtCore import QCoreApplication
 
 class qualification_checker():
     def scan(path: str, update_header: bool) -> dict:
@@ -109,8 +111,8 @@ class qualification_checker():
                 data = f.read()
             data_list = qualification_checker.create_data_list(data)
         except Exception as e:
-            print(f'!Error: Failed to read plugin: {file}')
-            print(e) 
+            write_error(QCoreApplication.translate("Global", 'Failed to read plugin: ') + file)
+            write_error(e, True) 
             return False, False, False, False, False, False
 
         master_count, has_skyrim_esm_master = qualification_checker.get_master_count(data_list)

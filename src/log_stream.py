@@ -11,9 +11,81 @@ from PyQt6.QtWidgets import QMainWindow, QTextEdit, QMessageBox, QProgressBar, Q
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon
 
+import builtins
+DEBUG = getattr(sys, 'frozen', True)
+_ls: log_stream = None
+def write_to_file(text:str):
+    _ls.write_to_file(text)
+
+def write_normal(text:str, to_file:bool=True):
+    _ls.write_normal(text, to_file)
+
+def write_remove(remove_num_lines:int, text:str, write_to_file:bool=False):
+    _ls.write_remove(remove_num_lines, text, write_to_file)
+
+def write_progress(percent: int, remove_num_lines:int, text:str):
+    _ls.write_progress(percent, remove_num_lines, text)
+
+def write_patching(percent:int, text:str):
+    _ls.write_patching(percent, text)
+
+def write_warning(text:str):
+    _ls.write_warning(text)
+
+def write_error(text:str, is_exception_msg:bool=False):
+    _ls.write_error(text, is_exception_msg)
+
+def write_ineligible(text:str):
+    _ls.write_ineligible(text)
+
+def clear_and_close_log():
+    _ls.clear_and_close_log()
+
+def clear_and_leave_log_open():
+    _ls.clear_and_leave_log_open()
+
+#For Debugging
+if DEBUG:
+    class print_hijacker():
+        original_print_func = None
+        intercept_print = False
+
+        def __init__(self, lines, file):
+            self.original_print_func = print
+            builtins.print = self.print_to_log
+            self.lines = lines
+            self.file = file
+
+        def print_to_log(self, *args, **kwargs):
+            if DEBUG:
+                sys.__stdout__.write(f"LOG: {args}\n")
+                sys.__stdout__.flush()
+            if 'original' in kwargs:
+                kwargs.pop('original')
+                self.original_print_func(*args, **kwargs)
+            else:
+                sys.stdout.write(*args)
+
+        def print_to_console(self, *args, **kwargs):
+            for line in args:
+                sys.__stdout__.write(f"{line}\n")
+            sys.__stdout__.flush()
+
 class log_stream(QMainWindow):
+    _instance = None
+    _init = False
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super(log_stream, cls).__new__(cls)
+        return cls._instance
+
     def __init__(self, parent=None, version='0.0.0'):
+        if self._init:
+            return
+        self._init = True
         super().__init__(parent)
+        global _ls
+        _ls = log_stream()
         self.setWindowTitle('Log Stream')
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowCloseButtonHint & ~Qt.WindowType.Dialog)
         self.setFixedSize(400, 300)
@@ -38,7 +110,10 @@ class log_stream(QMainWindow):
         self.crash = False
         self.running = True
         self.center_on_parent()
-
+        self.lines = []
+        self.error_start = self.tr("[Error] ")
+        self.warning_start = self.tr("[Warning] ")
+        
         if not os.path.exists("ESLifier_Data/"):
             os.makedirs("ESLifier_Data/")
 
@@ -52,14 +127,13 @@ class log_stream(QMainWindow):
             if os.path.exists(src):
                 shutil.copy(src, dst)
         self.log_file = open("ESLifier_Data/ESLifier.log", 'w', encoding='utf-8')
-        formatted_datetime = '[' + datetime.now().isoformat(timespec='milliseconds') + ']\n'
-        self.log_file.write(formatted_datetime)
-        self.log_file.write(f'ESLifier Version v{version}\n')
-        self.log_file.write('Working directory is ' + os.getcwd() + '\n')
-        self.log_file.flush()
-        
-        sys.stdout = self
-        sys.stderr = self
+        write_to_file(f'ESLifier Version v{version}')
+        write_to_file('Working directory is ' + os.getcwd())
+        if DEBUG:
+            self.write_to_file("Debug Mode Enabled for Printing")
+            self.hijack_print = print_hijacker(self.lines, self.log_file)
+        #sys.stdout = self
+        #sys.stderr = self
         sys.excepthook = self.exception_hook
         threading.excepthook = self.threading_exception_hook
 
@@ -88,60 +162,79 @@ class log_stream(QMainWindow):
     def hide(self):
         self.progress_bar.reset()
         return super().hide()
+    
+    def clear_and_close_log(self):
+        self.list.put(("", 3))  # 3 clear and close
+    
+    def clear_and_leave_log_open(self):
+        self.list.put(("", 4))  # 4 clear and leave open
+    
+    def write_to_file(self, text:str):
+        formatted_datetime = '[' + datetime.now().isoformat(timespec='milliseconds') + '] '
+        self.log_file.write(formatted_datetime + text + '\n')
+        self.log_file.flush()
 
-    def write(self, text: str):
+    def write_normal(self, text:str, write_to_file:bool=True):
+        self.list.put((text, 0))    # 0 Normal
+        if write_to_file:
+            self.write_to_file(text)
+
+    def write_remove(self, remove_num_lines:int, text:str, write_to_file:bool=False):
+        self.list.put((text, 1, remove_num_lines)) # 1 remove
+        if write_to_file:
+            self.write_to_file(text)
+
+    def write_progress(self, percent: int, remove_num_lines:int, text:str):
+        self.percentage = percent
+        self.write_remove(remove_num_lines, text)
+
+    def write_patching(self, percent:int, text:str):
+        self.list.put((text, 0))    # 0 Normal
+        self.percentage = percent
+        self.write_to_file(text)
+
+    def write_warning(self, text:str):
+        if text not in self.missing_patchers:
+            self.missing_patchers.append(text)
+        if not 'red' in self.text_edit.styleSheet() and not 'lightblue' in self.text_edit.styleSheet():
+            self.text_edit.setStyleSheet("background-color: lightblue")
+        self.write_to_file(self.warning_start+text)
+
+    def write_error(self, text:str, is_exception_msg:bool=False):
         text = str(text)
-        if not text.startswith('~'):
-            self.list.put(text)
-        text = text.strip().removeprefix('\033[F\033[K')
-        if (text.startswith(('!', '~')) 
-            or not text.startswith(('-  Gathered:', '-  Winning', '-    Processed', '-  Percentage', '-    Percentage', '-  Extracting:', 'CLEAR')) 
-            and text != ''):
-            formatted_datetime = '[' + datetime.now().isoformat(timespec='milliseconds') + '] '
-            self.log_file.write(formatted_datetime + text.removeprefix('~') + '\n')
-            self.log_file.flush()
-        if text.startswith('Warn:'):
-            missing = text[36:]
-            if missing not in self.missing_patchers:
-                self.missing_patchers.append(missing)
-            if not 'red' in self.text_edit.styleSheet() and not 'lightblue' in self.text_edit.styleSheet():
-                self.text_edit.setStyleSheet("background-color: lightblue")
-        if text.startswith('!Error'):
-            self.errors.append(text.removeprefix('!Error'))
-        if '%' in text and '.' in text and ('-    Processed:' in text or '% Patching:' in text):
-            pindex = text.index('.')
-            cindex = text.index(':')
-            if cindex < pindex:
-                self.percentage = int(text[cindex+1:pindex])
-            else:
-                self.percentage = int(text[:pindex])
-                
-        if text.startswith('~Ineligible:'):
-            ineligible = text[12:]
-            self.ineligible.append(ineligible)
+        self.list.put((self.error_start+text, 0))    # 0 Normal
+        if not is_exception_msg:
+            self.errors.append(text)
+        self.write_to_file(self.error_start+text)
+
+    def write_ineligible(self, text:str):
+        if text not in self.write_ineligible:
+            self.ineligible.append(text)
+        self.write_to_file(text)
             
     def missing_patcher_warning(self):
         patcher_message = QMessageBox()
-        patcher_message.setWindowTitle("Possible Missing Patcher")
+        patcher_message.setWindowTitle(self.tr("Possible Missing Patcher"))
         patcher_message.setIcon(QMessageBox.Icon.Warning)
         patcher_message.setWindowIcon(QIcon(":/images/ESLifier.png"))
         patcher_message.setStyleSheet("""
             QMessageBox {
                 background-color: lightblue;
             }""")
-        text = ("ESLifier has come across one or more files it currently doesn't have a patcher or exclusion for.\n"+
-                "Check the ESLifier.log for more details.\n"+
-                "Please create a patcher request in the GitHub.\n\n")
+        text = (self.tr("ESLifier has come across one or more files it currently doesn't have a patcher or exclusion for.\n"\
+                "Check the ESLifier.log for more details.\n"\
+                "Please create a patcher request in the GitHub.") +
+                "\n\n")
         count = 0
         for line in self.missing_patchers:
             count += 1
             if count <= 10:
                 text += '\n' + line.strip()
         if count > 10:
-            text += '\nand ' + str(count - 10) + ' more.'
+            text += '\n' + self.tr('and %1 more.').replace("%1", str(count - 10))
         patcher_message.setText(text)
         patcher_message.addButton(QMessageBox.StandardButton.Ok)
-        github_button = patcher_message.addButton("Open GitHub Issue Page", QMessageBox.ButtonRole.NoRole)
+        github_button = patcher_message.addButton(self.tr("Open GitHub Issue Page"), QMessageBox.ButtonRole.NoRole)
         def close():
             patcher_message.close()
         def open_github():
@@ -153,32 +246,33 @@ class log_stream(QMainWindow):
 
     def error_warning(self):
         error_message = QMessageBox()
-        error_message.setWindowTitle("Errors Encountered")
+        error_message.setWindowTitle(self.tr("Errors Encountered"))
         error_message.setIcon(QMessageBox.Icon.Warning)
         error_message.setWindowIcon(QIcon(":/images/ESLifier.png"))
         error_message.setStyleSheet("""
             QMessageBox {
                 background-color: lightcoral;
             }""")
-        text = ("ESLifier has experienced one or more errors.\n"+
-                "Check the ESLifier.log for more details.\n"+
-                "Any .pex files listed are likely corrupt and you need to find a patch to fix them.\n\n")
+        text = (self.tr("ESLifier has experienced one or more errors.\n"\
+                "Check the ESLifier.log for more details.\n"\
+                "Any .pex files listed are likely corrupt and you need to find a patch to fix them.") + 
+                "\n\n")
         count = 0
-        github_button = error_message.addButton("Open GitHub Issue Page", QMessageBox.ButtonRole.NoRole)
+        github_button = error_message.addButton(self.tr("Open GitHub Issue Page"), QMessageBox.ButtonRole.NoRole)
         github_link = "https://github.com/MaskPlague/ESLifier/issues"
         for line in self.errors:
             count += 1
             if line.strip().lower().endswith('cwhcm_setchangeonquestprog_03.pex'):
-                text += '\n' + ("User needs to download and install the following mod and then re-scan:\n" +
+                text += '\n' + (self.tr("User needs to download and install the following mod and then re-scan:") + "\n"\
                                 "   OCW - Script Fix - cwhcm_setchangeonquestprog_03")
-                github_button.setText("Open OCW Script Fix mod page")
+                github_button.setText(self.tr("Open OCW Script Fix mod page"))
                 github_link = "https://www.nexusmods.com/skyrimspecialedition/mods/62720"
                 continue
             if count <= 10:
                 text += '\n' + line.strip()
 
         if count > 10:
-            text += '\nand ' + str(count - 10) + ' more.'
+            text += '\n' + self.tr('and %1 more.').replace("%1", str(count - 10))
         error_message.setText(text)
         error_message.addButton(QMessageBox.StandardButton.Ok)
         def close():
@@ -196,11 +290,11 @@ class log_stream(QMainWindow):
             QMessageBox {
                 background-color: lightcoral;
             }""")
-        eligibility_warning.setWindowTitle("Cell Master Patching Warning")
-        text = ("ESLifier has either come across one or more pex/ini files that are currently unpatchable.\n"+
-                "This is because there is currently no programmed method to replace a necessary\n"+
-                "plugin name with ESLifier_Cell_Master.esm in pex files and, certain ini files assume that\n"+
-                "every form ID in the ini is from the same plugin. The errors show the plugin name\n"+
+        eligibility_warning.setWindowTitle(self.tr("Cell Master Patching Warning"))
+        text = self.tr("ESLifier has either come across one or more pex/ini files that are currently unpatchable.\n"\
+                "This is because there is currently no programmed method to replace a necessary\n"\
+                "plugin name with ESLifier_Cell_Master.esm in pex files and, certain ini files assume that\n"\
+                "every form ID in the ini is from the same plugin. The errors show the plugin name\n"\
                 "that needs replacing, the form ID change, and the pex/ini file that isn't patched yet.\n\n")
         count = 0
         for line in self.ineligible:
@@ -208,7 +302,7 @@ class log_stream(QMainWindow):
             if count <= 10:
                 text += '\n' + line.strip()
         if count > 10:
-            text += '\nand ' + str(count - 10) + ' more.'
+            text += '\n' + self.tr('and %1 more.').replace("%1", str(count - 10))
         eligibility_warning.setText(text)
         eligibility_warning.addButton(QMessageBox.StandardButton.Ok)
         def close():
@@ -217,20 +311,23 @@ class log_stream(QMainWindow):
         eligibility_warning.show()
         self.ineligible.clear()
 
-
     def exception_hook(self, exc_type, exc_value, exc_traceback):
         self.crash = True
         self.running = False
         self.show()
+        self.lines.clear()
+        with self.list.mutex:
+            self.list.queue.clear()
         self.text_edit.setStyleSheet("background-color: red;")
-        print("\nAn exception has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data.\n")
-        traceback.print_tb(exc_traceback, limit=5)
-        print(f"Unhandled exception: {exc_value}")
-        print('\n')
+        self.write_normal(self.tr("An exception has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data."))
+        trace = traceback.format_tb(exc_traceback, 5)
+        self.write_normal(''.join(trace), False)
+        self.write_normal(f"Unhandled exception: {exc_value}", False)
+        self.write_normal('',False)
         try:
-            self.log_file.write('exception_hook -> Extended Traceback for debugging:\n')
-            traceback.print_tb(exc_traceback, limit=10, file=self.log_file)
-            self.log_file.flush()
+            trace_extended = traceback.format_tb(exc_traceback, 10)
+            self.write_to_file('exception_hook -> Extended Traceback for debugging:\n' + ''.join(trace_extended))
+            self.write_to_file(f"Unhandled exception: {exc_value}")
         except:
             pass
 
@@ -238,22 +335,21 @@ class log_stream(QMainWindow):
         self.crash = True
         self.running = False
         self.show()
+        self.lines.clear()
+        with self.list.mutex:
+            self.list.queue.clear()
         self.text_edit.setStyleSheet("background-color: red;")
-        print("\nAn exception has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data.\n")
-        traceback.print_tb(args.exc_traceback, limit=5)
-        print(f"Unhandled exception: {args.exc_value}")
-        print('\n')
+        self.write_normal(self.tr("An exception has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data."))
+        trace = traceback.format_tb(args.exc_traceback, 5)
+        self.write_normal(''.join(trace), False)
+        self.write_normal(f"Unhandled exception: {args.exc_value}", False)
+        self.write_normal('', False)
         try:
-            self.log_file.write('threading_exception_hook -> Extended Traceback for debugging:\n')
-            traceback.print_tb(args.exc_traceback, limit=10, file=self.log_file)
-            self.log_file.flush()
+            trace_extended = traceback.format_tb(args.exc_traceback, 10)
+            self.write_to_file('threading_exception_hook -> Extended Traceback for debugging:\n' + ''.join(trace_extended))
+            self.write_to_file(f"Unhandled exception: {args.exc_value}")
         except:
             pass
-
-
-    def flush(self):
-        if not self.log_file.closed:
-            self.log_file.flush()
 
     def closeEvent(self, a0):
         self.running = False
@@ -306,28 +402,36 @@ class log_stream(QMainWindow):
         for _ in range(length):
             if self.list.empty():
                 break
-            line = self.list.get()
-            self.update_text_widget(line)
+            text, *args = self.list.get()
+            self.update_text_widget(text, *args)
         if self.running:
             self.timer.start(50)
 
-    def update_text_widget(self, text: str):
+    def update_text_widget(self, text:str, *args):
         cursor = self.text_edit.textCursor()
         cursor.movePosition(cursor.MoveOperation.End)
-
-        if text.startswith("\033[F\033[K"):
-            lines = self.text_edit.toPlainText().split('\n')[:-3]
-            lines.append(text.removeprefix('\033[F\033[K'))
-            self.text_edit.setPlainText('\n'.join(lines))
-        elif 'CLEAR' == text:
+        self.hijack_print.print_to_console(text)
+        if args[0] == 1:
+            if args[1] == -1:
+                self.lines.clear()
+                self.lines.append(text)
+                self.text_edit.setPlainText('\n'.join(self.lines))
+            else:
+                remove_count = args[1]
+                for _ in range(0, remove_count):
+                    if self.lines:
+                        self.lines.pop()
+                self.lines.append(text)
+                self.text_edit.setPlainText('\n'.join(self.lines))
+        elif args[0] == 3: # clear and close
             self.percentage = 100
             self.log_file.flush()
             self.timer_clear.start(1500)
-        elif 'CLEAR ALT' == text:
+        elif args[0] == 4: # clear and leave open
             self.clear_alt()
-        else:
-            # Simply append new text if no ANSI codes are found
-            self.text_edit.insertPlainText(text)
+        else:   #args[0] == 0 # Simply append new text
+            self.lines.append(text)
+            self.text_edit.setPlainText('\n'.join(self.lines))
 
         # Ensure the cursor is at the end
         self.text_edit.setTextCursor(cursor)
@@ -335,6 +439,7 @@ class log_stream(QMainWindow):
     
     def clean_up(self):
         if not self.crash:
+            self.lines.clear()
             self.text_edit.setPlainText(None)
             self.hide()
         if len(self.missing_patchers) > 0:
@@ -346,6 +451,7 @@ class log_stream(QMainWindow):
     
     def clear_alt(self):
         if not self.crash:
+            self.lines.clear()
             self.text_edit.setPlainText(None)
             self.log_file.flush()
 

@@ -3,8 +3,9 @@ import subprocess
 import json
 import itertools
 from PyQt6.QtCore import Qt, QItemSelection
-from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QPushButton, QButtonGroup, QListWidget, QListWidgetItem
+from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QPushButton, QListWidget, QListWidgetItem
 from blacklist import blacklist
+from log_stream import write_error
 
 class list_compactable(QTableWidget):
     def __init__(self):
@@ -21,34 +22,39 @@ class list_compactable(QTableWidget):
         self.HIDER_COL = next(c)
         self.COL_COUNT = next(c)
         self.setColumnCount(self.COL_COUNT)
-        self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'WRLD Records', 'WTHR Records', 'SKSE DLL', 'ESM', 'Dependencies', '', 'Hider'])
-        self.horizontalHeaderItem(self.MOD_COL).setToolTip('This is the plugin name. Select which plugins you wish to compact.')
-        self.horizontalHeaderItem(self.CELL_COL).setToolTip('This is the CELL Record Flag. It can be completely ignored for users\n'+
-                                                            'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'+
-                                                            'Otherwise, if an ESM+ESL plugin creates a new CELL and another mod\n'+
-                                                            'changes that CELL then it may not work due to an engine bug. If an\n'+
-                                                            'ESL plugin creates a new interior CELL then that cell may experience\n'+
-                                                            'issues when reloading a save without restarting the game.\n'+
-                                                            '"New  CELL" indicates the presence of a new CELL record.\n'+
-                                                            '"!New Interior CELL!" indicates that a new CELL is an interior.\n'+
-                                                            '"!!New CELL Changed!!" indicates that a new CELL record from an ESM is changed\n'+
-                                                            'by a dependent plugin.\n'+
-                                                            '"!!Maxed Masters!!" indicates that a plugin or its dependent plugins\n'+
-                                                            'have the maximum amount of masters (254) and cannot add ESLifier_Cell_Master.esm\n'+
-                                                            'as a master for the ESL+ESM cell bug and ESL worldspace bug workarounds.')
-        self.horizontalHeaderItem(self.WRLD_COL).setToolTip('This is the WRLD Record Flag. It can be completely ignored for users\n'+
-                                                            'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'+
-                                                            'Otherwise, if an plugin is flagged ESL\n'+
-                                                            'then the new worldspace may have landscape issues (no ground).')
-        self.horizontalHeaderItem(self.WTHR_COL).setToolTip('This is the WTHR Record Flag. This is an indicator if a mod has a new weather record\n'+
-                                                            'Some mods weathers are referenced in ENB Presets which cannot be patched by ESLifier\n'+
-                                                            'It is at the user\'s discretion if a plugin with new weather should be compacted.')
-        self.horizontalHeaderItem(self.SKSE_COL).setToolTip('This is the skse DLL flag. If a dll has the plugin name in it then it may\n'+
-                                                            'have a LookUpForm() call that may break after compacting a flagged plugin.')
-        self.horizontalHeaderItem(self.ESM_COL).setToolTip('This is the ESM flag. If a plugin is an ESM then it will be flagged here.')
-        self.horizontalHeaderItem(self.DEP_COL).setToolTip('If a plugin has other plugins with it as a master, they will appear when\n'+
-                                                            'the button is clicked. These will also have their Form IDs automatically\n'+
-                                                            'patched to reflect the Master plugin\'s changes.')
+        self.setHorizontalHeaderLabels([self.tr('*   Mod'), self.tr('CELL Records'), self.tr('WRLD Records'), self.tr('WTHR Records'), 'SKSE DLL', 'ESM', self.tr('Dependencies'), '', 'Hider'])
+        self.horizontalHeaderItem(self.MOD_COL).setToolTip(self.tr('This is the plugin name. Select which plugins you wish to compact.'))
+        self.horizontalHeaderItem(self.CELL_COL).setToolTip(self.tr(
+                                                            'This is the CELL Record Flag. It can be completely ignored for users\n'\
+                                                            'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'\
+                                                            'Otherwise, if an ESM+ESL plugin creates a new CELL and another mod\n'\
+                                                            'changes that CELL then it may not work due to an engine bug. If an\n'\
+                                                            'ESL plugin creates a new interior CELL then that cell may experience\n'\
+                                                            'issues when reloading a save without restarting the game.\n'\
+                                                            '"New  CELL" indicates the presence of a new CELL record.\n'\
+                                                            '"!New Interior CELL!" indicates that a new CELL is an interior.\n'\
+                                                            '"!!New CELL Changed!!" indicates that a new CELL record from an ESM is changed\n'\
+                                                            'by a dependent plugin.\n'\
+                                                            '"!!Maxed Masters!!" indicates that a plugin or its dependent plugins\n'\
+                                                            'have the maximum amount of masters (254) and cannot add ESLifier_Cell_Master.esm\n'\
+                                                            'as a master for the ESL+ESM cell bug and ESL worldspace bug workarounds.'))
+        self.horizontalHeaderItem(self.WRLD_COL).setToolTip(self.tr(
+                                                            'This is the WRLD Record Flag. It can be completely ignored for users\n'\
+                                                            'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'\
+                                                            'Otherwise, if an plugin is flagged ESL\n'\
+                                                            'then the new worldspace may have landscape issues (no ground).'))
+        self.horizontalHeaderItem(self.WTHR_COL).setToolTip(self.tr(
+                                                            'This is the WTHR Record Flag. This is an indicator if a mod has a new weather record\n'\
+                                                            'Some mods weathers are referenced in ENB Presets which cannot be patched by ESLifier\n'\
+                                                            'It is at the user\'s discretion if a plugin with new weather should be compacted.'))
+        self.horizontalHeaderItem(self.SKSE_COL).setToolTip(self.tr(
+                                                            'This is the skse DLL flag. If a dll has the plugin name in it then it may\n'\
+                                                            'have a LookUpForm() call that may break after compacting a flagged plugin.'))
+        self.horizontalHeaderItem(self.ESM_COL).setToolTip(self.tr('This is the ESM flag. If a plugin is an ESM then it will be flagged here.'))
+        self.horizontalHeaderItem(self.DEP_COL).setToolTip(self.tr(
+                                                            'If a plugin has other plugins with it as a master, they will appear when\n'\
+                                                            'the button is clicked. These will also have their Form IDs automatically\n'\
+                                                            'patched to reflect the Master plugin\'s changes.'))
         self.setColumnHidden(self.HIDER_COL, True)
         self.horizontalHeader().sortIndicatorChanged.connect(self.hide_rows)
         self.verticalHeader().setHidden(True)
@@ -184,7 +190,7 @@ class list_compactable(QTableWidget):
                     else:
                         cumulative_tooltip += os.path.basename(dependency) + '\n'
                 if count > 15:
-                    item = QListWidgetItem(f'+{count-15} more...')
+                    item = QListWidgetItem(f'+{count-15} '+ self.tr('more...'))
                     item.setToolTip(cumulative_tooltip.strip())
                     list_widget_dependency_list.addItem(item)
                 list_widget_dependency_list.setSizeAdjustPolicy(QTableWidget.SizeAdjustPolicy.AdjustToContents)
@@ -206,55 +212,58 @@ class list_compactable(QTableWidget):
             self.setRowHidden(i, False)
             hide_row = False
             if 'new_cell' in flags:
-                item_cell_flag = QTableWidgetItem('New CELL')
+                item_cell_flag = QTableWidgetItem(self.tr('New CELL'))
                 if not self.cell_master:
-                    item_cell_flag.setToolTip('This mod has a new CELL record and no mods currently modify it.\n'+
-                                            'It is currently safe to ESL flag it.')
+                    item_cell_flag.setToolTip(self.tr('This mod has a new CELL record and no mods currently modify it.\n'\
+                                            'It is currently safe to ESL flag it.'))
                 else:
-                    item_cell_flag.setToolTip('This mod has a new CELL record. It is currently safe to ESL flag it')
+                    item_cell_flag.setToolTip(self.tr('This mod has a new CELL record. It is currently safe to ESL flag it'))
                 if not self.show_cells:
                     hide_row = True
                 if basename in self.cell_changed and not self.cell_master:
-                    item_cell_flag.setText('!!New CELL Changed!!')
-                    item_cell_flag.setToolTip('This mod is an ESM with a new CELL record that is modified by\n'+
-                                              'a dependent plugin. It is NOT recommended to ESL flag it as doing so\n'+
-                                              'will break temporary references in the new CELL.')
+                    item_cell_flag.setText(self.tr('!!New CELL Changed!!'))
+                    item_cell_flag.setToolTip(self.tr(
+                                                'This mod is an ESM with a new CELL record that is modified by\n'\
+                                                'a dependent plugin. It is NOT recommended to ESL flag it as doing so\n'\
+                                                'will break temporary references in the new CELL.'))
                     if self.filter_changed_cells:
                         hide_row = True
                 elif self.cell_master and 'maxed_masters' in flags and basename in self.cell_changed:
-                    item_cell_flag.setText('!!Maxed Masters!!')
-                    item_cell_flag.setToolTip('This mod is an ESM with a new CELL record that is modified by\n'+
-                                              'a dependent plugin. It or one of its dependents has the max of\n'+
-                                              '254 masters and cannot have the ESLifier_Cell_Master.esm plugin\n'+
-                                              'added as a master and thus the ESM + ESL cell bug workaround cannot\n'+
-                                              'be applied. It is NOT recommended to ESL flag it as doing so may\n'+
-                                              'break temporary references in its new CELL(s).')
+                    item_cell_flag.setText(self.tr('!!Maxed Masters!!'))
+                    item_cell_flag.setToolTip(self.tr(
+                                                'This mod is an ESM with a new CELL record that is modified by\n'\
+                                                'a dependent plugin. It or one of its dependents has the max of\n'\
+                                                '254 masters and cannot have the ESLifier_Cell_Master.esm plugin\n'\
+                                                'added as a master and thus the ESM + ESL cell bug workaround cannot\n'\
+                                                'be applied. It is NOT recommended to ESL flag it as doing so may\n'\
+                                                'break temporary references in its new CELL(s).'))
                     self.showColumn(self.CELL_COL)
                 elif 'new_interior_cell' in flags:
-                    item_cell_flag.setText('!New Interior CELL!')
-                    item_cell_flag.setToolTip('This mod has at least one new CELL record that is an interior cell.\n'+
-                                              'ESL interior cells do not reload gameplay changed references properly\n'+
-                                              'on a save game load unless the game itself has restarted.')
+                    item_cell_flag.setText(self.tr('!New Interior CELL!'))
+                    item_cell_flag.setToolTip(self.tr(
+                                                'This mod has at least one new CELL record that is an interior cell.\n'\
+                                                'ESL interior cells do not reload gameplay changed references properly\n'\
+                                                'on a save game load unless the game itself has restarted.'))
                     if self.filter_interior_cells:
                         hide_row = True
                 item_cell_flag.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.setItem(i, self.CELL_COL, item_cell_flag)
             if 'new_wrld' in flags and not self.cell_master:
-                item_wrld_flag = QTableWidgetItem('!!New WRLD!!')
-                item_wrld_flag.setToolTip('This mod has a new WRLD (worldspace) record which may lose landscape (the ground) when ESL flagged.')
+                item_wrld_flag = QTableWidgetItem(self.tr('!!New WRLD!!'))
+                item_wrld_flag.setToolTip(self.tr('This mod has a new WRLD (worldspace) record which may lose landscape (the ground) when ESL flagged.'))
                 if self.filter_worldspaces:
                     hide_row = True
                 self.setItem(i, self.WRLD_COL, item_wrld_flag)
             if 'new_wthr' in flags:
-                item_wthr_flag = QTableWidgetItem('!New WTHR!')
-                item_wthr_flag.setToolTip('This mod has a new WTHR (weather) record which can be referenced in\n'+
-                                          'ENB presets which are not patched.')
+                item_wthr_flag = QTableWidgetItem(self.tr('!New WTHR!'))
+                item_wthr_flag.setToolTip(self.tr('This mod has a new WTHR (weather) record which can be referenced in\n'\
+                                          'ENB presets which are not patched.'))
                 if self.filter_weather:
                     hide_row = True
                 self.setItem(i, self.WTHR_COL, item_wthr_flag)
             if basename.lower() in self.dll_dict:
-                item_dll = QTableWidgetItem('!!SKSE DLL!!')
-                tooltip = 'This mod\'s plugin name is present in the following SKSE dlls and\nmay break their FormLookup() function calls if a hard-coded form id is present:'
+                item_dll = QTableWidgetItem(self.tr('!!SKSE DLL!!'))
+                tooltip = self.tr("This mod's plugin name is present in the following SKSE dlls and\nmay break their FormLookup() function calls if a hard-coded form id is present:")
                 for dll in self.dll_dict[basename.lower()]:
                     tooltip += '\n- ' + os.path.basename(dll)
                 item_dll.setToolTip(tooltip)
@@ -263,7 +272,7 @@ class list_compactable(QTableWidget):
                 self.setItem(i, self.SKSE_COL, item_dll)
             if 'is_esm' in flags:
                 item_esm_flag = QTableWidgetItem('ESM')
-                item_esm_flag.setToolTip('This mod is an ESM.')
+                item_esm_flag.setToolTip(self.tr('This mod is an ESM.'))
                 if not self.show_esms:
                     hide_row = True
                 self.setItem(i, self.ESM_COL, item_esm_flag)
@@ -332,13 +341,13 @@ class list_compactable(QTableWidget):
 
         if selected_item:
             menu = QMenu(self)
-            select_all_action = menu.addAction("Select All")
-            check_all_action = menu.addAction("Check All")
-            uncheck_all_action = menu.addAction("Uncheck All")
-            invert_selection_action = menu.addAction("Invert Selection Checks")
-            check_previously_compacted_action = menu.addAction("Check Previously Compacted")
-            open_explorer_action = menu.addAction("Open in File Explorer")
-            add_to_blacklist_action = menu.addAction("Add Highlighted Mod(s) to Blacklist")
+            select_all_action = menu.addAction(self.tr("Select All"))
+            check_all_action = menu.addAction(self.tr("Check All"))
+            uncheck_all_action = menu.addAction(self.tr("Uncheck All"))
+            invert_selection_action = menu.addAction(self.tr("Invert Selection Checks"))
+            check_previously_compacted_action = menu.addAction(self.tr("Check Previously Compacted"))
+            open_explorer_action = menu.addAction(self.tr("Open in File Explorer"))
+            add_to_blacklist_action = menu.addAction(self.tr("Add Highlighted Mod(s) to Blacklist"))
             action = menu.exec(self.viewport().mapToGlobal(position))
             if action == open_explorer_action:
                 self.open_in_explorer(selected_item)
@@ -392,8 +401,8 @@ class list_compactable(QTableWidget):
                     if self.isRowHidden(row) == False and self.item(row, self.MOD_COL).checkState() == Qt.CheckState.Unchecked and self.item(row, self.MOD_COL).text() in previously_compacted:
                         self.item(row, self.MOD_COL).setCheckState(Qt.CheckState.Checked)
             except Exception as e:
-                print('!Error: Failed to get previously_compacted.json')
-                print(e)
+                write_error(self.tr('Failed to get previously_compacted.json'))
+                write_error(e, True)
 
         self.blockSignals(False)
     
@@ -420,7 +429,7 @@ class list_compactable(QTableWidget):
                 else:
                     subprocess.Popen(['open', os.path.dirname(file_directory)])
             except Exception as e:
-                print(f"Error opening file explorer: {e}")
+                write_error(self.tr("Error opening file explorer: ") + str(e))
 
     def add_to_blacklist(self, selected_items):
         mods = [item.text() for item in selected_items if item.column() == 0]

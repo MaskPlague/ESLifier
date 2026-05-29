@@ -1,4 +1,5 @@
 import struct
+from log_stream import write_error
 
 class form_processor():
     
@@ -226,7 +227,7 @@ class form_processor():
             if handler:
                 saved_forms.append(handler(i, form))
             else:
-                print(f'Missing form processing for record type: {record_type}')
+                write_error(f'Missing form processing for record type: {record_type}')
 
         return saved_forms
     

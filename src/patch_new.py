@@ -3,7 +3,7 @@ import os
 import hashlib
 import threading
 
-from PyQt6.QtCore import pyqtSignal, QThread, QObject
+from PyQt6.QtCore import pyqtSignal, QThread, QObject, QCoreApplication
 from PyQt6.QtWidgets import QMessageBox
 from PyQt6.QtGui import QIcon
 
@@ -12,6 +12,7 @@ from dependency_getter import dependecy_getter
 from compact_form_ids import CFIDs
 from cell_changed_scanner import cell_scanner
 from file_defined_patcher_conditions import user_and_master_conditions_class
+from log_stream import clear_and_close_log, clear_and_leave_log_open, write_error, write_normal, write_patching
 
 class patch_new():
     def scan_and_find(self, settings: dict[str, str|bool], main_parent):
@@ -20,31 +21,33 @@ class patch_new():
             and not os.path.exists(os.path.normpath('ESLifier_Data/esl_flagged.json'))):
             self.no_data_warning = QMessageBox()
             self.no_data_warning.setIcon(QMessageBox.Icon.Information)
-            self.no_data_warning.setWindowTitle("No Compacted/Patched Mods")
-            self.no_data_warning.setText("There are no existing compacted/patched mods for\n"+
-                                         "ESLifier to check for new files that need patching.\n"+
-                                         "Compact a mod on the Main page first. This button is for\n"+
-                                         "when you install a new mod and don't feel like rebuilding\n"+
-                                         "the entire output.")
+            self.no_data_warning.setWindowTitle(QCoreApplication.translate("patch_new", "No Compacted/Patched Mods"))
+            self.no_data_warning.setText(QCoreApplication.translate("patch_new", 
+                                        "There are no existing compacted/patched mods for\n"\
+                                        "ESLifier to check for new files that need patching.\n"\
+                                        "Compact a mod on the Main page first. This button is for\n"\
+                                        "when you install a new mod and don't feel like rebuilding\n"\
+                                        "the entire output."))
             self.no_data_warning.setWindowIcon(QIcon(":/images/ESLifier.png"))
             self.no_data_warning.addButton(QMessageBox.StandardButton.Ok)
             self.no_data_warning.show()
             self.main_parent.setEnabled(True)
-            print('CLEAR')
+            clear_and_close_log()
             return
         if not os.path.exists(os.path.normpath('ESLifier_data/master_byte_data.json')):
             self.output_not_new_warning = QMessageBox()
             self.output_not_new_warning.setIcon(QMessageBox.Icon.Information)
-            self.output_not_new_warning.setWindowTitle("Output is from outdated build.")
-            self.output_not_new_warning.setText("ESLifier cannot find the file master_byte_data.json\n"+
-                                                "in ESLifier_Data/, this is likely because the current\n"+
-                                                "ESLifier output was made on a version older than v0.12.0.\n"+
-                                                "This button needs an output made from v0.12.0+.")
+            self.output_not_new_warning.setWindowTitle(QCoreApplication.translate("patch_new", "Output is from outdated build."))
+            self.output_not_new_warning.setText(QCoreApplication.translate("patch_new", 
+                                                "ESLifier cannot find the file master_byte_data.json\n"\
+                                                "in ESLifier_Data/, this is likely because the current\n"\
+                                                "ESLifier output was made on a version older than v0.12.0.\n"\
+                                                "This button needs an output made from v0.12.0+."))
             self.output_not_new_warning.setWindowIcon(QIcon(":/images/ESLifier.png"))
             self.output_not_new_warning.addButton(QMessageBox.StandardButton.Ok)
             self.output_not_new_warning.show()
             self.main_parent.setEnabled(True)
-            print('CLEAR')
+            clear_and_close_log()
             return
         self.settings: dict = settings
         self.skyrim_folder_path: str = settings.get('skyrim_folder_path', '')
@@ -68,7 +71,7 @@ class patch_new():
 
     def create_delete_message(self, text, files_to_delete, winning_file_history_dict, only_remove, compacted_and_patched):
         self.delete_message = QMessageBox()
-        self.delete_message.setWindowTitle(f'Delete {len(files_to_delete)} files?')
+        self.delete_message.setWindowTitle(QCoreApplication.translate("patch_new", 'Delete %1 files?').replace("%1", str(len(files_to_delete))))
         self.delete_message.setText(text)
         self.delete_message.addButton(QMessageBox.StandardButton.Abort)
         self.delete_message.addButton(QMessageBox.StandardButton.Ok)
@@ -81,8 +84,8 @@ class patch_new():
             self.patch_new_scan_thread.quit()
             self.main_parent.setEnabled(True)
             self.main_parent.calculate_stats()
-            print('User canceled Patch New file deletion, aborting.')
-            print('CLEAR')
+            write_normal(QCoreApplication.translate("patch_new", 'User canceled Patch New file deletion, aborting.'))
+            clear_and_close_log()
             return
         self.delete_message.accepted.connect(accept)
         self.delete_message.rejected.connect(reject)
@@ -95,22 +98,24 @@ class patch_new():
         self.hash_mismatch_num = hash_mismatch_num
         self.file_conflict_num = file_conflict_num
         if len(skse_warnings) > 0:
-            text = ('The following mods have been compacted by ESLifier and have a dll that references their name.'+
-                    'These mods are likely referenced by a Form ID look up which means if the Form ID has been changed'+
-                    'by ESLifier, the SKSE dll may not function correctly. Mods:')
+            text = (QCoreApplication.translate("patch_new",
+                    'The following mods have been compacted by ESLifier and have a dll that references their name.'\
+                    'These mods are likely referenced by a Form ID look up which means if the Form ID has been changed'\
+                    'by ESLifier, the SKSE dll may not function correctly. Mods:'))
             for mod, dlls in skse_warnings:
-                text += '\nMod: ' + mod
-                text += '\n    DLLs: '
+                text += '\n' + QCoreApplication.translate("patch_new", 'Mod: ') + mod
+                text += '\n    ' + QCoreApplication.translate("patch_new", 'DLLs: ')
                 for i, dll in enumerate(dlls):
                     text += dll
                     if i < len(dlls) - 1:
                         text += '\n\t'
-            QMessageBox.warning(None, "Compacted mod referenced in SKSE dll.", text)
+            QMessageBox.warning(None, QCoreApplication.translate("patch_new", "Compacted mod referenced in SKSE dll."), text)
         if len(self.mod_list) > 0 and len(self.new_dependencies) > 0 :
-            print('\nChecking if New CELLs are Changed...')
+            write_normal('')
+            write_normal(QCoreApplication.translate("patch_new", 'Checking if New CELLs are Changed...'))
             cell_scanner.scan_new_dependents(self.mod_list, self.new_dependencies)
         if len(self.mod_list) == 0:
-            print("CLEAR")
+            clear_and_close_log()
             self.create_completion_message(0)
             self.main_parent.setEnabled(True)
         else:
@@ -142,31 +147,31 @@ class patch_new():
         self.patch_new_thread.start()
 
     def finished_patching(self, new_file_num):
-        print('Finished Patching New or Changed Dependencies and Files')
-        print('CLEAR')
+        write_normal(QCoreApplication.translate("patch_new", 'Finished Patching New or Changed Dependencies and Files'))
+        clear_and_close_log()
         self.create_completion_message(new_file_num)
         self.main_parent.setEnabled(True)
 
     def create_completion_message(self, new_file_num):
         self.patch_new_complete_message = QMessageBox()
-        self.patch_new_complete_message.setWindowTitle("Patch New Done")
+        self.patch_new_complete_message.setWindowTitle(QCoreApplication.translate("patch_new", "Patch New Done"))
         self.patch_new_complete_message.setIcon(QMessageBox.Icon.Information)
         self.patch_new_complete_message.setWindowIcon(QIcon(":/images/ESLifier.png"))
         if new_file_num > 0:
-            text = f'{new_file_num} new files that needed patching have been patched.'
+            text = QCoreApplication.translate("patch_new", "%1 new files that needed patching have been patched.").replace("%1", str(new_file_num))
         else:
-            text = 'No new files that need patching have been found.'
+            text = QCoreApplication.translate("patch_new", 'No new files that need patching have been found.')
             if self.mo2_mode and self.file_conflict_num > 0:
-                text += '\n   (or they were patched due to a conflict change)'
+                text += '\n   ' + QCoreApplication.translate("patch_new", '(or they were patched due to a conflict change)')
         if self.hash_mismatch_num > 0:
-            text += f'\n{self.hash_mismatch_num} files had hash mismatches and were corrected.'
+            text += '\n' + QCoreApplication.translate("patch_new", '%1 files had hash mismatches and were corrected.').replace("%1", str(self.hash_mismatch_num))
         else:
-            text += '\nNo files with a hash mismatched were found.'
+            text += '\n' + QCoreApplication.translate("patch_new", 'No files with a hash mismatched were found.')
         if self.mo2_mode:
             if self.file_conflict_num > 0:
-                text += f'\n{self.file_conflict_num} files had winning conflicts change and were corrected.'
+                text += '\n' + QCoreApplication.translate("patch_new", '%1 files had winning conflicts change and were corrected.').replace("%1", str(self.file_conflict_num))
             else:
-                text += '\nNo files with a winning conflict change were found.'
+                text += '\n' + QCoreApplication.translate("patch_new", 'No files with a winning conflict change were found.')
         self.patch_new_complete_message.setText(text)
         self.patch_new_complete_message.addButton(QMessageBox.StandardButton.Ok)
         self.patch_new_complete_message.accepted.connect(self.patch_new_complete_message.hide)
@@ -193,9 +198,9 @@ class PatchNewScannerWorker(QObject):
         self.main_parent = main_parent
 
     def detect_changes(self):
-        print('Scanning All Files:')
+        write_normal(self.tr('Scanning All Files:'))
         scanner.scan(False)
-        print('Getting Dependencies')
+        write_normal(self.tr('Getting Dependencies'))
         dependecy_getter.scan()
         try:
             if os.path.exists('ESLifier_Data/compacted_and_patched.json'):
@@ -223,12 +228,12 @@ class PatchNewScannerWorker(QObject):
             else:
                 winning_files_dict: dict[str, (str, list[str])] = {}
         except Exception as e:
-            print("!Error: Issue reading an ESLifier_Data file.")
-            print(e)
+            write_error(self.tr("Issue reading an ESLifier_Data file."))
+            write_error(e, True)
             self.finished_signal.emit({},{},{},0,0,[])
 
         self.hash_mismatches.clear()
-        print('Detecting Hash Changes...')
+        write_normal(self.tr('Detecting Hash Changes...'))
         if os.path.exists('ESLifier_Data/original_files.json'):
             threads: list[threading.Thread] = []
             with open('ESLifier_Data/original_files.json', 'r', encoding='utf-8') as f:
@@ -242,11 +247,11 @@ class PatchNewScannerWorker(QObject):
             for thread in threads:
                 thread.join()
 
-        print(f'Found {len(self.hash_mismatches)} Hash changes.')
+        write_normal(self.tr('Found %0 Hash changes.').replace("%0", str(len(self.hash_mismatches))))
 
         self.conflict_changes.clear()
         if self.mo2_mode:
-            print('Detecting Conflict Changes...')
+            write_normal(self.tr('Detecting Conflict Changes...'))
             if len(winning_file_history_dict) > 0:
                 for rel_path, prev_mod in winning_file_history_dict.copy().items():
                     (mod_name, full_path) = winning_files_dict.get(rel_path, (None, None))
@@ -255,7 +260,7 @@ class PatchNewScannerWorker(QObject):
                     elif mod_name == None:
                         self.conflict_changes.append((rel_path, os.path.join(self.output_path, rel_path), 'c'))
             
-            print(f'Found {len(self.conflict_changes)} Conflict Changes.')
+            write_normal(self.tr('Found %0 Conflict Changes.').replace("%0", str(len(self.conflict_changes))))
 
         if len(self.hash_mismatches) > 0 or len(self.conflict_changes) > 0:
             actual_cases_output_files = {}
@@ -333,14 +338,14 @@ class PatchNewScannerWorker(QObject):
                 if not added_to_list and full_path.startswith(self.output_path):
                     files_to_remove.append(full_path)
         if len(files_to_remove) > 0:
-            print("CLEAR ALT")
+            clear_and_leave_log_open()
             self.delete_and_patch_changed(files_to_remove, only_remove, winning_file_history_dict, compacted_and_patched)
         else:
             self.detect_new_files()
     
     def delete_and_patch_changed(self, files_to_remove: list[str], only_remove: bool,
                                   winning_file_history_dict: dict[str, list[str]], compacted_and_patched: dict):
-        print(f"Confirming files that need deleting...")
+        write_normal(self.tr("Confirming files that need deleting..."))
         output_folder_lowered = self.output_folder.lower()
         counter = 0
         plugins_to_delete = []
@@ -354,19 +359,19 @@ class PatchNewScannerWorker(QObject):
 
         if counter > 0:
             number_of_plugins_to_delete = len(plugins_to_delete)
-            text = f"Continuing will delete {counter} files from ESLifier's output"
+            text = self.tr("Continuing will delete %1 files from ESLifier's output").replace("%1", str(counter))
             if number_of_plugins_to_delete > 0:
-                text +=  f" of which {number_of_plugins_to_delete} are game plugins. "
+                text +=  self.tr(" of which %1 are game plugins. ").replace("%1", str(number_of_plugins_to_delete))
             else:
                 text += ". "
-            text += ("This action is destructive and cannot be undone. If you have made any edits to files in the ESLifier "\
+            text += self.tr("This action is destructive and cannot be undone. If you have made any edits to files in the ESLifier "\
                     "Output it is not advised to do so nor to continue.\nAre you sure you want to continue?")
 
             if number_of_plugins_to_delete > 0:
                 if number_of_plugins_to_delete > 10:
-                    text += '\nSome plugins that will be deleted include:'
+                    text += '\n' + self.tr('Some plugins that will be deleted include:')
                 else:
-                    text += '\nThe plugins that will be deleted are:'
+                    text += '\n' + self.tr('The plugins that will be deleted are:')
                 count = 0
                 for plugin in plugins_to_delete:
                     if count < 10:
@@ -375,7 +380,7 @@ class PatchNewScannerWorker(QObject):
                     else:
                         break
                 if number_of_plugins_to_delete > 10:
-                    text += f"\nand {number_of_plugins_to_delete - count} more..."
+                    text += '\n' + self.tr('and %1 more...').replace("%1", str(number_of_plugins_to_delete - count))
             self.delete_confirmation_signal.emit(text, files_that_exist_to_delete, winning_file_history_dict, only_remove, compacted_and_patched)
         else:
             self.delete_files(files_that_exist_to_delete, winning_file_history_dict, only_remove, compacted_and_patched)
@@ -399,7 +404,7 @@ class PatchNewScannerWorker(QObject):
             json.dump(winning_file_history_dict, f, ensure_ascii=False, indent=4)
         with open("ESLifier_Data/original_files.json", 'w', encoding='utf-8') as f:
             json.dump(original_files, f, ensure_ascii=False, indent=4)
-        print('CLEAR ALT')
+        clear_and_leave_log_open()
         self.main_parent.redoing_output = True
         self.main_parent.patch_new_running = True
         self.main_parent.patch_new_only_remove = only_remove
@@ -409,7 +414,8 @@ class PatchNewScannerWorker(QObject):
         if not os.path.exists("ESLifier_Data/compacted_and_patched.json"):
             self.finished_signal.emit({},{},{},0,0,[])
             return
-        print('\nGetting New Dependencies and Files')
+        write_normal('')
+        write_normal(self.tr('Getting New Dependencies and Files'))
         try:
             with open("ESLifier_Data/compacted_and_patched.json", 'r', encoding='utf-8') as f:
                 compacted_and_patched: dict[str, list[str]] = json.load(f)
@@ -420,8 +426,8 @@ class PatchNewScannerWorker(QObject):
             with open("ESLifier_Data/dll_dict.json", 'r', encoding='utf-8') as f:
                 dll_dict: dict[str, list[str]] = json.load(f)
         except Exception as e:
-            print(f'!Error: Failed to find a required dictionary.')
-            print(e)
+            write_error(self.tr('Failed to find a required dictionary.'))
+            write_error(e, True)
             self.finished_signal.emit([],{},{},0,0,[])
             return
 
@@ -507,7 +513,7 @@ class PatchNewWorker(QObject):
     def patch_new_files(self):
         total = len(self.files)
         count = 0
-        print("CLEAR ALT")
+        clear_and_leave_log_open()
         original_files: dict = self.get_from_file('ESLifier_Data/original_files.json')
         winning_files_dict: dict = self.get_from_file('ESLifier_Data/winning_files_dict.json')
         master_byte_data: dict = self.get_from_file('ESLifier_Data/master_byte_data.json')
@@ -519,13 +525,14 @@ class PatchNewWorker(QObject):
                       compacted_and_patched, master_byte_data, None, None, self.persistent_ids, self.free_non_existent, 
                       additional_file_patcher_conditions, False)
         if self.hash_output:
-            print("Hashing any existing files for changes...")
+            write_normal(self.tr("Hashing any existing files for changes..."))
             cfids.hash_output_files([], True)
-            print("CLEAR ALT")
+            clear_and_leave_log_open()
+        patching_str = self.tr("%0% Patching: %1/%2").replace("%0", "{0}").replace("%1", "{1}").replace("%2", "{2}")
         for file in self.files:
             count +=1
             percent = round((count/total)*100,1)
-            print(f'{percent}% Patching: {count}/{total}')
+            write_patching(percent, patching_str.format(percent, count, total))
             dependents = []
             if file in self.dependencies_dictionary:
                 dependents = self.dependencies_dictionary[file]
@@ -539,10 +546,10 @@ class PatchNewWorker(QObject):
             for file in files:
                 if file not in all_patched:
                     all_patched.append(file)
-        print('Saving Data...')
+        write_normal(self.tr('Saving Data...'))
         cfids.save_data()
         if self.hash_output:
-            print('Hashing output files for checking later changes...')
+            write_normal(self.tr('Hashing output files for checking later changes...'))
             cfids.hash_output_files([], True)
         self.finished_signal.emit(len(all_patched))
         return
@@ -559,8 +566,8 @@ class PatchNewWorker(QObject):
             with open(file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
         except Exception as e:
-            print(f'!Error: Failed to dump data to {file}')
-            print(e)
+            write_error(self.tr("Failed to dump data to ") + file)
+            write_error(e, True)
     
     def dump_dictionary(self, file, dictionary: dict):
         data = self.get_from_file(file)
@@ -570,8 +577,8 @@ class PatchNewWorker(QObject):
             with open(file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
         except Exception as e:
-            print(f'!Error: Failed to dump data to {file}')
-            print(e)
+            write_error(self.tr("Failed to dump data to ") + file)
+            write_error(e, True)
 
     def get_from_file(self, file: str) -> dict:
         try:

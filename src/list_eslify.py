@@ -7,6 +7,7 @@ from PyQt6.QtCore import Qt, QItemSelection
 from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem
 
 from blacklist import blacklist
+from log_stream import write_error
 
 class list_eslable(QTableWidget):
     def __init__(self):
@@ -20,26 +21,28 @@ class list_eslable(QTableWidget):
         self.HIDER_COL = next(c)
         self.COL_COUNT = next(c)
         self.setColumnCount(self.COL_COUNT)
-        self.setHorizontalHeaderLabels(['*   Mod', 'CELL Records', 'WRLD Records', 'ESM', '', 'Hider'])
-        self.horizontalHeaderItem(self.MOD_COL).setToolTip('This is the plugin name. Select which plugins you wish to flag as light.')
-        self.horizontalHeaderItem(self.CELL_COL).setToolTip('This is the CELL Record Flag. It can be completely ignored for users\n'+
-                                                            'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'+
-                                                            'Otherwise, if an ESM+ESL plugin creates a new CELL and another mod\n'+
-                                                            'changes that CELL then it may not work due to an engine bug. If an\n'+
-                                                            'ESL plugin creates a new interior CELL then that cell may experience\n'+
-                                                            'issues when reloading a save without restarting the game.\n'+
-                                                            '"New  CELL" indicates the presence of a new CELL record.\n'+
-                                                            '"!New Interior CELL!" indicates that a new CELL is an interior.\n'+
-                                                            '"!!New CELL Changed!!" indicates that a new CELL record from an ESM is changed\n'+
-                                                            'by a dependent plugin.\n'+
-                                                            '"!!Maxed Masters!!" indicates that a plugin or its dependent plugins\n'+
-                                                            'have the maximum amount of masters (254) and cannot add ESLifier_Cell_Master.esm\n'+
-                                                            'as a master for the ESL+ESM cell bug and ESL worldspace bug workarounds.')
-        self.horizontalHeaderItem(self.WRLD_COL).setToolTip('This is the WRLD Record Flag. It can be completely ignored for users\n'+
-                                                            'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'+
-                                                            'Otherwise, if an plugin is flagged ESL\n'+
-                                                            'then the new worldspace may have landscape issues (no ground).')
-        self.horizontalHeaderItem(self.ESM_COL).setToolTip('This is the ESM flag.')
+        self.setHorizontalHeaderLabels([self.tr('*   Mod'), self.tr('CELL Records'), self.tr('WRLD Records'), 'ESM', '', 'Hider'])
+        self.horizontalHeaderItem(self.MOD_COL).setToolTip(self.tr('This is the plugin name. Select which plugins you wish to flag as light.'))
+        self.horizontalHeaderItem(self.CELL_COL).setToolTip(self.tr(
+                                                            'This is the CELL Record Flag. It can be completely ignored for users\n'\
+                                                            'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'\
+                                                            'Otherwise, if an ESM+ESL plugin creates a new CELL and another mod\n'\
+                                                            'changes that CELL then it may not work due to an engine bug. If an\n'\
+                                                            'ESL plugin creates a new interior CELL then that cell may experience\n'\
+                                                            'issues when reloading a save without restarting the game.\n'\
+                                                            '"New  CELL" indicates the presence of a new CELL record.\n'\
+                                                            '"!New Interior CELL!" indicates that a new CELL is an interior.\n'\
+                                                            '"!!New CELL Changed!!" indicates that a new CELL record from an ESM is changed\n'\
+                                                            'by a dependent plugin.\n'\
+                                                            '"!!Maxed Masters!!" indicates that a plugin or its dependent plugins\n'\
+                                                            'have the maximum amount of masters (254) and cannot add ESLifier_Cell_Master.esm\n'\
+                                                            'as a master for the ESL+ESM cell bug and ESL worldspace bug workarounds.'))
+        self.horizontalHeaderItem(self.WRLD_COL).setToolTip(self.tr(
+                                                            'This is the WRLD Record Flag. It can be completely ignored for users\n'\
+                                                            'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'\
+                                                            'Otherwise, if an plugin is flagged ESL\n'\
+                                                            'then the new worldspace may have landscape issues (no ground).'))
+        self.horizontalHeaderItem(self.ESM_COL).setToolTip(self.tr('This is the ESM flag.'))
         self.setColumnHidden(self.HIDER_COL, True)
         self.horizontalHeader().sortIndicatorChanged.connect(self.hide_rows)
         self.verticalHeader().setHidden(True)
@@ -127,48 +130,52 @@ class list_eslable(QTableWidget):
             self.setRowHidden(i, False)
             hide_row = False
             if 'new_cell' in flags:
-                item_cell_flag = QTableWidgetItem('New CELL')
+                item_cell_flag = QTableWidgetItem(self.tr('New CELL'))
                 if not self.cell_master:
-                    item_cell_flag.setToolTip('This mod has a new CELL record and no mods currently modify it.\n'+
-                                            'It is currently safe to ESL flag it.')
+                    item_cell_flag.setToolTip(self.tr(
+                                            'This mod has a new CELL record and no mods currently modify it.\n'\
+                                            'It is currently safe to ESL flag it.'))
                 else:
-                    item_cell_flag.setToolTip('This mod has a new CELL record. It is currently safe to ESL flag it')
+                    item_cell_flag.setToolTip(self.tr('This mod has a new CELL record. It is currently safe to ESL flag it'))
                 if not self.show_cells:
                     hide_row = True
                 if basename in self.cell_changed and not self.cell_master:
-                    item_cell_flag.setText('!!New CELL Changed!!')
-                    item_cell_flag.setToolTip('This mod is an ESM with a new CELL record that is modified by\n'+
-                                              'a dependent plugin. It is NOT recommended to ESL flag it as doing so\n'+
-                                              'will break temporary references in the new CELL.')
+                    item_cell_flag.setText(self.tr('!!New CELL Changed!!'))
+                    item_cell_flag.setToolTip(self.tr(
+                                                'This mod is an ESM with a new CELL record that is modified by\n'\
+                                                'a dependent plugin. It is NOT recommended to ESL flag it as doing so\n'\
+                                                'will break temporary references in the new CELL.'))
                     if self.filter_changed_cells:
                         hide_row = True
                 elif self.cell_master and 'maxed_masters' in flags and basename in self.cell_changed:
-                    item_cell_flag.setText('!!Maxed Masters!!')
-                    item_cell_flag.setToolTip('This mod is an ESM with a new CELL record that is modified by\n'+
-                                              'a dependent plugin. It or one of its dependents has the max of\n'+
-                                              '254 masters and cannot have the ESLifier_Cell_Master.esm plugin\n'+
-                                              'added as a master and thus the ESM + ESL cell bug workaround cannot\n'+
-                                              'be applied. It is NOT recommended to ESL flag it as doing so may\n'+
-                                              'break temporary references in its new CELL(s).')
+                    item_cell_flag.setText(self.tr('!!Maxed Masters!!'))
+                    item_cell_flag.setToolTip(self.tr(
+                                                'This mod is an ESM with a new CELL record that is modified by\n'\
+                                                'a dependent plugin. It or one of its dependents has the max of\n'\
+                                                '254 masters and cannot have the ESLifier_Cell_Master.esm plugin\n'\
+                                                'added as a master and thus the ESM + ESL cell bug workaround cannot\n'\
+                                                'be applied. It is NOT recommended to ESL flag it as doing so may\n'\
+                                                'break temporary references in its new CELL(s).'))
                     self.showColumn(self.CELL_COL)
                 elif 'new_interior_cell' in flags:
-                    item_cell_flag.setText('!New Interior CELL!')
-                    item_cell_flag.setToolTip('This mod has at least one new CELL record that is an interior cell.\n'+
-                                              'ESL interior cells do not reload gameplay changed references properly\n'+
-                                              'on a save game load unless the game itself has restarted.')
+                    item_cell_flag.setText(self.tr('!New Interior CELL!'))
+                    item_cell_flag.setToolTip(self.tr(
+                                                'This mod has at least one new CELL record that is an interior cell.\n'\
+                                                'ESL interior cells do not reload gameplay changed references properly\n'\
+                                                'on a save game load unless the game itself has restarted.'))
                     if self.filter_interior_cells:
                         hide_row = True
                 item_cell_flag.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.setItem(i, self.CELL_COL, item_cell_flag)
             if 'new_wrld' in flags and not self.cell_master:
-                item_wrld_flag = QTableWidgetItem('!!New WRLD!!')
-                item_wrld_flag.setToolTip('This mod has a new WRLD (worldspace) record which may lose landscape (the ground) when ESL flagged.')
+                item_wrld_flag = QTableWidgetItem(self.tr('!!New WRLD!!'))
+                item_wrld_flag.setToolTip(self.tr('This mod has a new WRLD (worldspace) record which may lose landscape (the ground) when ESL flagged.'))
                 if self.filter_worldspaces:
                     hide_row = True
                 self.setItem(i, self.WRLD_COL, item_wrld_flag)
             if 'is_esm' in flags:
                 item_esm_flag = QTableWidgetItem('ESM')
-                item_esm_flag.setToolTip('This mod is an ESM.')
+                item_esm_flag.setToolTip(self.tr('This mod is an ESM.'))
                 if not self.show_esms:
                     hide_row = True
                 self.setItem(i, self.ESM_COL, item_esm_flag)
@@ -213,12 +220,12 @@ class list_eslable(QTableWidget):
         selected_item = self.item(self.rowAt(position.y()), 0)
         if selected_item:
             menu = QMenu(self)
-            select_all_action = menu.addAction("Select All")
-            check_all_action = menu.addAction("Check All")
-            uncheck_all_action = menu.addAction("Uncheck All")
-            invert_selection_action = menu.addAction("Invert Selection Checks")
-            open_explorer_action = menu.addAction("Open in File Explorer")
-            add_to_blacklist_action = menu.addAction("Add Highlighted Mod(s) to Blacklist")
+            select_all_action = menu.addAction(self.tr("Select All"))
+            check_all_action = menu.addAction(self.tr("Check All"))
+            uncheck_all_action = menu.addAction(self.tr("Uncheck All"))
+            invert_selection_action = menu.addAction(self.tr("Invert Selection Checks"))
+            open_explorer_action = menu.addAction(self.tr("Open in File Explorer"))
+            add_to_blacklist_action = menu.addAction(self.tr("Add Highlighted Mod(s) to Blacklist"))
             action = menu.exec(self.viewport().mapToGlobal(position))
             if action == open_explorer_action:
                 self.open_in_explorer(selected_item)
@@ -283,7 +290,7 @@ class list_eslable(QTableWidget):
                 else:
                     subprocess.Popen(['open', os.path.dirname(file_directory)])
             except Exception as e:
-                print(f"Error opening file explorer: {e}")
+                write_error(self.tr("Error opening file explorer: ") + str(e))
 
     def add_to_blacklist(self, selected_items):
         mods = [item.text() for item in selected_items if item.column() == self.MOD_COL]
@@ -301,6 +308,6 @@ class list_eslable(QTableWidget):
                     if self.isRowHidden(row) == False and self.item(row, self.MOD_COL).checkState() == Qt.CheckState.Unchecked and self.item(row, self.MOD_COL).text() in esl_flagged:
                         self.item(row, self.MOD_COL).setCheckState(Qt.CheckState.Checked)
             except Exception as e:
-                print('!Error: Failed to get esl_flagged.json')
-                print(e)
+                write_error(self.tr('Failed to get esl_flagged.json'))
+                write_error(e, True)
         self.blockSignals(False)
