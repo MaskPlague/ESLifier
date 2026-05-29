@@ -12,7 +12,7 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon
 
 import builtins
-DEBUG = getattr(sys, 'frozen', True)
+DEBUG = not getattr(sys, 'frozen', False)
 _ls: log_stream = None
 def write_to_file(text:str):
     _ls.write_to_file(text)
@@ -410,7 +410,8 @@ class log_stream(QMainWindow):
     def update_text_widget(self, text:str, *args):
         cursor = self.text_edit.textCursor()
         cursor.movePosition(cursor.MoveOperation.End)
-        self.hijack_print.print_to_console(text)
+        if DEBUG:
+            self.hijack_print.print_to_console(text)
         if args[0] == 1:
             if args[1] == -1:
                 self.lines.clear()
