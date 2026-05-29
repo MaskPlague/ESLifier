@@ -810,64 +810,69 @@ on a save game load unless the game itself has restarted.</source>
   <context>
     <name>log_stream</name>
     <message>
-      <location filename="src\log_stream.py" line="112" />
+      <location filename="src\log_stream.py" line="114" />
       <source>[Error] </source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="212" />
+      <location filename="src\log_stream.py" line="115" />
+      <source>[Warning] </source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="src\log_stream.py" line="217" />
       <source>Possible Missing Patcher</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="219" />
+      <location filename="src\log_stream.py" line="224" />
       <source>ESLifier has come across one or more files it currently doesn't have a patcher or exclusion for.
 Check the ESLifier.log for more details.
 Please create a patcher request in the GitHub.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="300" />
-      <location filename="src\log_stream.py" line="270" />
-      <location filename="src\log_stream.py" line="229" />
+      <location filename="src\log_stream.py" line="305" />
+      <location filename="src\log_stream.py" line="275" />
+      <location filename="src\log_stream.py" line="234" />
       <source>and %1 more.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="256" />
-      <location filename="src\log_stream.py" line="232" />
+      <location filename="src\log_stream.py" line="261" />
+      <location filename="src\log_stream.py" line="237" />
       <source>Open GitHub Issue Page</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="244" />
+      <location filename="src\log_stream.py" line="249" />
       <source>Errors Encountered</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="251" />
+      <location filename="src\log_stream.py" line="256" />
       <source>ESLifier has experienced one or more errors.
 Check the ESLifier.log for more details.
 Any .pex files listed are likely corrupt and you need to find a patch to fix them.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="261" />
+      <location filename="src\log_stream.py" line="266" />
       <source>User needs to download and install the following mod and then re-scan:</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="263" />
+      <location filename="src\log_stream.py" line="268" />
       <source>Open OCW Script Fix mod page</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="288" />
+      <location filename="src\log_stream.py" line="293" />
       <source>Cell Master Patching Warning</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="289" />
+      <location filename="src\log_stream.py" line="294" />
       <source>ESLifier has either come across one or more pex/ini files that are currently unpatchable.
 This is because there is currently no programmed method to replace a necessary
 plugin name with ESLifier_Cell_Master.esm in pex files and, certain ini files assume that
@@ -878,8 +883,8 @@ that needs replacing, the form ID change, and the pex/ini file that isn't patche
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="338" />
-      <location filename="src\log_stream.py" line="317" />
+      <location filename="src\log_stream.py" line="342" />
+      <location filename="src\log_stream.py" line="322" />
       <source>An exception has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data.</source>
       <translation type="unfinished" />
     </message>
