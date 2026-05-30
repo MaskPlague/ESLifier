@@ -99,7 +99,7 @@ class ESLifier(mobase.IPluginTool):
 
     def init(self, organiser = mobase.IOrganizer):
         self._organizer = organiser
-        icon_path = os.path.join(os.path.dirname(self._organizer.getPluginDataPath()), 'ESLifier MO2 Integration')
+        icon_path = os.path.join(os.path.dirname(self._organizer.getPluginDataPath()), 'ESLifier MO2 Integration', 'icons')
 
         self._init_state(icon_path)
         self._create_icons(icon_path)
