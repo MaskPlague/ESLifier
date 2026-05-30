@@ -2,19 +2,21 @@ import os
 import json
 
 try:
-    from PyQt6.QtCore import Qt, QCoreApplication, QTimer
+    from PyQt6.QtCore import Qt, QCoreApplication
     from PyQt6.QtWidgets import (QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMainWindow, 
                                  QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit)
+    from PyQt6.QtGui import QIcon
 except ImportError:
     from PyQt5.QtCore import Qt #type: ignore
     from PyQt5.QtWidgets import (QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMainWindow,  #type: ignore
                                  QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit)
-
+    from PyQt5.QtGui import QIcon #type: ignore
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import (QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMainWindow, 
                                  QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit)
+    from PyQt6.QtGui import QIcon
 
 class ESLifier_blacklist(QTableWidget):
     def tr(self, text):
@@ -180,7 +182,7 @@ class blacklist_window(QMainWindow):
     def tr(self, text):
         return QCoreApplication.translate("blacklist_window", text)
 
-    def __init__(self, remove_mode, check_problems):
+    def __init__(self, remove_mode, check_problems, icon_path):
         super().__init__()
         if remove_mode:
             self.setWindowTitle(self.tr("Select Mods to Remove From the Blacklist"))
@@ -189,6 +191,7 @@ class blacklist_window(QMainWindow):
 
         self.check_problems = check_problems
 
+        self.setWindowIcon(QIcon(icon_path + '\\ESLifier.ico'))
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
         self.blacklist = ESLifier_blacklist(remove_mode)
         self.setMinimumSize(800, 400)

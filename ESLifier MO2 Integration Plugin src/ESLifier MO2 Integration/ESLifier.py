@@ -112,7 +112,6 @@ class ESLifier(mobase.IPluginTool):
         QApplication.instance().aboutToQuit.connect(self._stop_worker_if_running)
 
         return True
-
     
     def _init_state(self):
         self.validGame = True
@@ -157,17 +156,17 @@ class ESLifier(mobase.IPluginTool):
 
     def _hook_up_callbacks(self, icon_path):
         self._organizer.onUserInterfaceInitialized(self.create)
-        self._organizer.onUserInterfaceInitialized(lambda *args: self._make_blacklist_windows(icon_path))
-        self._organizer.onUserInterfaceInitialized(self._create_settings_dialog)
+        self._organizer.onUserInterfaceInitialized(lambda *args: self._init_other_windows(icon_path))
+        self._organizer.onUserInterfaceInitialized(lambda *args: self._create_settings_dialog(icon_path))
         self._organizer.pluginList().onRefreshed(self.scan_files)
         self._organizer.pluginList().onPluginStateChanged(self.scan_if_cell_master_state_changed)
         self._organizer.onAboutToRun(self._stop_worker_if_running)
         self._organizer.modList().onModInstalled(self._stop_worker_if_running)
 
-    def _make_blacklist_windows(self, icon_path):
+    def _init_other_windows(self, icon_path):
         self.notifcation_display = notification_display_dialog(icon_path)
-        self.blacklist_add = blacklist_window(False, self.scan_files)
-        self.blacklist_remove = blacklist_window(True, self.scan_files)
+        self.blacklist_add = blacklist_window(False, self.scan_files, icon_path)
+        self.blacklist_remove = blacklist_window(True, self.scan_files, icon_path)
     
     def _throbber_iterate(self):
         if self.throbber_iterator > 3:
@@ -279,10 +278,12 @@ class ESLifier(mobase.IPluginTool):
         layout.addWidget(check_box, row, 1)
         return check_box
     
-    def _create_settings_dialog(self, *args):
+    def _create_settings_dialog(self, icon_path):
         self.settings_dialog = QDialog()
         layout = QGridLayout()
         self.settings_dialog.setLayout(layout)
+        self.settings_dialog.setWindowIcon(QIcon(icon_path + '\\ESLifier.ico'))
+        self.settings_dialog.setWindowTitle(self.tr("ESLifier Integration Settings"))
 
         self.notifications_check_box = self._create_label_check_box_setting_pair(layout, self.tr("Enable Notifications"), "Enable Notifications", 0)
         self.esms_check_box = self._create_label_check_box_setting_pair(layout, self.tr("Scan ESMs"), "Scan ESMs", 1)
