@@ -5,8 +5,8 @@ try:
     from PyQt6.QtCore import Qt, QCoreApplication
     from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit
 except ImportError:
-    from PyQt5.QtCore import Qt
-    from PyQt5.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit
+    from PyQt5.QtCore import Qt #type: ignore
+    from PyQt5.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit #type: ignore
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:

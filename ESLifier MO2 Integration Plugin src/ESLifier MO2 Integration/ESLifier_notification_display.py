@@ -5,9 +5,9 @@ try:
     from PyQt6.QtGui import QIcon
     from PyQt6.QtWidgets import QVBoxLayout, QTableWidget, QTableWidgetItem, QLabel, QDialog
 except ImportError:
-    from PyQt5.QtCore import Qt
-    from PyQt5.QtGui import QIcon
-    from PyQt5.QtWidgets import QVBoxLayout, QTableWidget, QTableWidgetItem, QLabel, QDialog
+    from PyQt5.QtCore import Qt #type: ignore
+    from PyQt5.QtGui import QIcon   #type: ignore
+    from PyQt5.QtWidgets import QVBoxLayout, QTableWidget, QTableWidgetItem, QLabel, QDialog    #type: ignore
             
 
 from typing import TYPE_CHECKING
