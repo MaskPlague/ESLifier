@@ -1,7 +1,7 @@
 import os
 
 try:
-    from PyQt6.QtCore import Qt
+    from PyQt6.QtCore import Qt, QCoreApplication
     from PyQt6.QtGui import QIcon
     from PyQt6.QtWidgets import QVBoxLayout, QTableWidget, QTableWidgetItem, QLabel, QDialog
 except ImportError:
@@ -17,6 +17,9 @@ if TYPE_CHECKING:
     from PyQt6.QtWidgets import QVBoxLayout, QTableWidget, QTableWidgetItem, QLabel, QDialog
 
 class notification_display_dialog(QDialog):
+    def tr(self, text):
+        return QCoreApplication.translate("notification_display_dialog", text)
+
     def __init__(self, icon_path):
         super().__init__()
         self.MOD_COL = 0
@@ -28,38 +31,38 @@ class notification_display_dialog(QDialog):
         main_layout = QVBoxLayout()
         self.setLayout(main_layout)
         self.setWindowIcon(QIcon(icon_path + '\\ESLifier.ico'))
-        self.setWindowTitle("ESLifier Notifications")
+        self.setWindowTitle(self.tr("ESLifier Notifications"))
 
-        self.master_not_enabled_label = QLabel("The ESLifier_Cell_Master.esm plugin exists but has not been enabled in the plugin list\n" \
-                                                "which can cause a CTD.")
+        self.master_not_enabled_label = QLabel(self.tr("The ESLifier_Cell_Master.esm plugin exists but has not been enabled in the plugin list\n"\
+                                                "which can cause a CTD."))
         main_layout.addWidget(self.master_not_enabled_label)
 
         self.lost_to_overwrite_table = self.make_table(1)
-        self.lost_to_overwrite_table_label = QLabel("The following files are present in both MO2's Overwrite folder and ESLifier's output.\n"\
+        self.lost_to_overwrite_table_label = QLabel(self.tr("The following files are present in both MO2's Overwrite folder and ESLifier's output.\n"\
                                                 "This means that ESLifier is likely losing a file conflict and needs these files moved to\n"\
-                                                "a mod that it can win the conflict with.")
+                                                "a mod that it can win the conflict with."))
         main_layout.addWidget(self.lost_to_overwrite_table_label)
         main_layout.addWidget(self.lost_to_overwrite_table)
 
         self.conflict_changes_table = self.make_table(1)
-        self.conflict_changes_table_label = QLabel("The following files have had their conflicts change since ESLifier last ran:\n"\
-                                                    "(Run the Patch New button in ESLifier.exe)")
+        self.conflict_changes_table_label = QLabel(self.tr("The following files have had their conflicts change since ESLifier last ran:\n"\
+                                                    "(Run the Patch New button in ESLifier.exe)"))
         main_layout.addWidget(self.conflict_changes_table_label)
         main_layout.addWidget(self.conflict_changes_table)
 
         self.hash_mismatch_table = self.make_table(1)
-        self.hash_mismatch_table_label = QLabel("The following files have been altered or removed since ESLifier last ran:\n"\
-                                                "(Run the Patch New button in ESLifier.exe)")
+        self.hash_mismatch_table_label = QLabel(self.tr("The following files have been altered or removed since ESLifier last ran:\n"\
+                                                "(Run the Patch New button in ESLifier.exe)"))
         main_layout.addWidget(self.hash_mismatch_table_label)
         main_layout.addWidget(self.hash_mismatch_table)
 
         self.needs_flag_table = self.make_table(self.COL_COUNT)
-        self.needs_flag_table_label = QLabel("The following plugins can be flagged as esl:")
+        self.needs_flag_table_label = QLabel(self.tr("The following plugins can be flagged as esl:"))
         main_layout.addWidget(self.needs_flag_table_label)
         main_layout.addWidget(self.needs_flag_table)
 
         self.needs_compacting_flag_table = self.make_table(self.COL_COUNT)
-        self.needs_compacting_flag_table_label = QLabel("The following plugins can be flagged as esl after compacting:")
+        self.needs_compacting_flag_table_label = QLabel(self.tr("The following plugins can be flagged as esl after compacting:"))
         main_layout.addWidget(self.needs_compacting_flag_table_label)
         main_layout.addWidget(self.needs_compacting_flag_table)
 
@@ -129,9 +132,9 @@ class notification_display_dialog(QDialog):
         table.setRowCount(len(data))
         table.setSortingEnabled(False)
         if isinstance(data, dict):
-            headers = ['Mod', 'Cell Flag', 'Worldspace Flag']
+            headers = [self.tr('Mod'), self.tr('Cell Flag'), self.tr('Worldspace Flag')]
             if weather:
-                headers.append('Weather Flag')
+                headers.append(self.tr('Weather Flag'))
                 table.showColumn(self.WTHR_COL)
             else:
                 table.hideColumn(self.WTHR_COL)
@@ -142,15 +145,15 @@ class notification_display_dialog(QDialog):
                 item.setToolTip(plugin)
                 table.setItem(i, self.MOD_COL, item)
                 if 'new_cell' in flags:
-                    item_cell_flag = QTableWidgetItem('New CELL')
+                    item_cell_flag = QTableWidgetItem(self.tr('New CELL'))
                     if 'new_interior_cell' in flags:
-                        item_cell_flag.setText('New Interior CELL')
+                        item_cell_flag.setText(self.tr('New Interior CELL'))
                     table.setItem(i, self.CELL_COL, item_cell_flag)
                 if 'new_wrld' in flags:
-                    item_wrld_flag = QTableWidgetItem('New Worldspace')
+                    item_wrld_flag = QTableWidgetItem(self.tr('New Worldspace'))
                     table.setItem(i, self.WRLD_COL, item_wrld_flag)
                 if 'new_wthr' in flags:
-                    item_wthr_flag = QTableWidgetItem('New Weather')
+                    item_wthr_flag = QTableWidgetItem(self.tr('New Weather'))
                     table.setItem(i, self.WTHR_COL, item_wthr_flag)
         else:
             for i, file in enumerate(data):

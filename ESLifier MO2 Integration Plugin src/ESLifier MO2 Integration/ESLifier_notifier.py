@@ -3,6 +3,11 @@ import json
 import threading
 import hashlib
 
+try:
+    from PyQt6.QtCore import QCoreApplication
+except ImportError:
+    from PyQt5.QtCore import QCoreApplciation
+
 from .ESLifier_qualification_checker import qualification_checker as light_check
 
 class check_files():    
@@ -102,9 +107,9 @@ class check_files():
                     with open(file, 'rb') as f:
                         data = f.read()
             if self.running and hashlib.sha256(data).hexdigest() != original_hash:
-                self.hash_mismatches.append("Hash Mismatch: " + file)
+                self.hash_mismatches.append(QCoreApplication.translate("ESLifier", "Hash Mismatch: ") + file)
         else:
-            self.hash_mismatches.append("Missing: " + file)
+            self.hash_mismatches.append(QCoreApplication.translate("ESLifier", "Missing: ") + file)
     
     def detect_conflict_change(self, old_winner, file, mod_list: list):
         try:

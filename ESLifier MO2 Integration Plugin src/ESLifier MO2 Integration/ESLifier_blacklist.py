@@ -2,7 +2,7 @@ import os
 import json
 
 try:
-    from PyQt6.QtCore import Qt
+    from PyQt6.QtCore import Qt, QCoreApplication
     from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit
 except ImportError:
     from PyQt5.QtCore import Qt
@@ -13,21 +13,24 @@ if TYPE_CHECKING:
     from PyQt6.QtCore import Qt
     from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit
 
-class blacklist(QTableWidget):
+class ESLifier_blacklist(QTableWidget):
+    def tr(self, text):
+        return QCoreApplication.translate("ESLifier_blacklist", text)
+
     def __init__(self, remove_mode):
         super().__init__()
         if remove_mode:
             self.setColumnCount(1)
-            self.setHorizontalHeaderLabels(['*   Blacklisted Mod'])
-            self.horizontalHeaderItem(0).setToolTip('These are the blacklisted plugins, select the mods you want to remove from the blacklist.')
+            self.setHorizontalHeaderLabels([self.tr("*   Blacklisted Mod")])
+            self.horizontalHeaderItem(0).setToolTip(self.tr('These are the blacklisted plugins, select the mods you want to remove from the blacklist.'))
         else:
             self.setColumnCount(5)
-            self.setHorizontalHeaderLabels(['*   ESLify-able Mod', 'Needs Compacting', 'New Cell', 'New Interior Cell', 'New Worldspace'])
-            self.horizontalHeaderItem(0).setToolTip('These are the ESLify-able plugins, select the mods you want to add to the blacklist.')
-            self.horizontalHeaderItem(1).setToolTip('Whether the mod needs comapcting or just the ESL flag.')
-            self.horizontalHeaderItem(2).setToolTip('If the plugin has a new cell.')
-            self.horizontalHeaderItem(3).setToolTip('If the plugin has a new Interior CELL.')
-            self.horizontalHeaderItem(4).setToolTip('If the plugin has a new worldspace.')
+            self.setHorizontalHeaderLabels([self.tr('*   ESLify-able Mod'), self.tr('Needs Compacting'), self.tr('New Cell'), self.tr('New Interior Cell'), self.tr('New Worldspace')])
+            self.horizontalHeaderItem(0).setToolTip(self.tr('These are the ESLify-able plugins, select the mods you want to add to the blacklist.'))
+            self.horizontalHeaderItem(1).setToolTip(self.tr('Whether the mod needs comapcting or just the ESL flag.'))
+            self.horizontalHeaderItem(2).setToolTip(self.tr('If the plugin has a new cell.'))
+            self.horizontalHeaderItem(3).setToolTip(self.tr('If the plugin has a new Interior CELL.'))
+            self.horizontalHeaderItem(4).setToolTip(self.tr('If the plugin has a new worldspace.'))
         self.verticalHeader().setHidden(True)
         self.setShowGrid(False)
         self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
@@ -60,18 +63,17 @@ class blacklist(QTableWidget):
                 self.setItem(i, 0, item)
                 self.setRowHidden(i, False)
                 if 'need_compacting' in flags:
-                    item_compacting = QTableWidgetItem('Needs Compacting')
+                    item_compacting = QTableWidgetItem(self.tr('Needs Compacting'))
                     self.setItem(i, 1, item_compacting)
                 if 'new_cell' in flags:
-                    item_cell = QTableWidgetItem('New Cell')
+                    item_cell = QTableWidgetItem(self.tr('New Cell'))
                     self.setItem(i, 2, item_cell)
                 if 'interior_cell' in flags:
-                    item_interior = QTableWidgetItem('Interior Cell')
+                    item_interior = QTableWidgetItem(self.tr('Interior Cell'))
                     self.setItem(i, 3, item_interior)
                 if 'new_wrld' in flags:
-                    item_wrld = QTableWidgetItem('New Worldspace')
+                    item_wrld = QTableWidgetItem(self.tr('New Worldspace'))
                     self.setItem(i, 4, item_wrld)
-
 
         def somethingChanged(itemChanged):
             self.blockSignals(True)
@@ -101,9 +103,9 @@ class blacklist(QTableWidget):
         selected_item = self.itemAt(position)
         if selected_item:
             menu = QMenu(self)
-            select_all_action = menu.addAction("Select All")
-            check_all_action = menu.addAction("Check All")
-            uncheck_all_action = menu.addAction("Uncheck All")
+            select_all_action = menu.addAction(self.tr("Select All"))
+            check_all_action = menu.addAction(self.tr("Check All"))
+            uncheck_all_action = menu.addAction(self.tr("Uncheck All"))
             action = menu.exec(self.viewport().mapToGlobal(position))
             if action == check_all_action:
                 self.check_all()
@@ -168,27 +170,30 @@ class blacklist(QTableWidget):
             with open(file, 'w', encoding='utf-8') as f:
                 json.dump(blacklist, f, ensure_ascii=False, indent=4)
         except Exception as e:
-            print(f'!Error: Failed to dump blacklist data to {file}')
+            print(f'Error: Failed to dump blacklist data to {file}')
             print(e)
         
 class blacklist_window(QMainWindow):
+    def tr(self, text):
+        return QCoreApplication.translate("blacklist_window", text)
+
     def __init__(self, remove_mode, check_problems):
         super().__init__()
         if remove_mode:
-            self.setWindowTitle("Select Mods to Remove From the Blacklist")
+            self.setWindowTitle(self.tr("Select Mods to Remove From the Blacklist"))
         else:
-            self.setWindowTitle("Select Mods to Add to Blacklist")
+            self.setWindowTitle(self.tr("Select Mods to Add to Blacklist"))
 
         self.check_problems = check_problems
 
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
-        self.blacklist = blacklist(remove_mode)
+        self.blacklist = ESLifier_blacklist(remove_mode)
         self.setMinimumSize(800, 400)
         blacklist_window_buttons_layout = QHBoxLayout()
         blacklist_window_buttons_widget = QWidget()
         blacklist_window_buttons_widget.setLayout(blacklist_window_buttons_layout)
 
-        cancel_button = QPushButton(' Done ')
+        cancel_button = QPushButton(self.tr(' Done '))
         def cancel():
             self.hide()
             self.blacklist.uncheck_all()
@@ -196,19 +201,19 @@ class blacklist_window(QMainWindow):
         cancel_button.clicked.connect(cancel)
 
         self.filter_blacklist = QLineEdit()
-        self.filter_blacklist.setPlaceholderText("Filter ")
-        self.filter_blacklist.setToolTip("Search Bar")
+        self.filter_blacklist.setPlaceholderText(self.tr("Filter "))
+        self.filter_blacklist.setToolTip(self.tr("Search Bar"))
         self.filter_blacklist.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.filter_blacklist.setClearButtonEnabled(True)
         self.filter_blacklist.textChanged.connect(self.search)
 
         if remove_mode:
-            remove_selected_from_blacklist_button = QPushButton(' Remove Selected From Blacklist ')
+            remove_selected_from_blacklist_button = QPushButton(self.tr(' Remove Selected From Blacklist '))
             remove_selected_from_blacklist_button.clicked.connect(self.blacklist.remove_from_blacklist)
             remove_selected_from_blacklist_button.clicked.connect(self.filter_blacklist.clear)
             blacklist_window_buttons_layout.addWidget(remove_selected_from_blacklist_button)
         else:
-            add_selected_to_blacklist_button = QPushButton(' Add Selected to Blacklist ')
+            add_selected_to_blacklist_button = QPushButton(self.tr(' Add Selected to Blacklist '))
             add_selected_to_blacklist_button.clicked.connect(self.blacklist.add_to_blacklist)
             add_selected_to_blacklist_button.clicked.connect(self.filter_blacklist.clear)
             blacklist_window_buttons_layout.addWidget(add_selected_to_blacklist_button)

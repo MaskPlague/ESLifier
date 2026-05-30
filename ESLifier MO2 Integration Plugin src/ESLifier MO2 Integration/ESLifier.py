@@ -265,14 +265,14 @@ class ESLifier(mobase.IPluginTool):
         self.master_not_enabled = False
         self.notification_button.hide()
     
-    def _create_label_check_box_setting_pair(self, layout: QGridLayout, text: str, row: int, tool_tip = None) -> QCheckBox:
+    def _create_label_check_box_setting_pair(self, layout: QGridLayout, text: str, setting: str, row: int, tool_tip = None) -> QCheckBox:
         label = QLabel(text)
         check_box = QCheckBox()
         if tool_tip:
             label.setToolTip(tool_tip)
             check_box.setToolTip(tool_tip)
         def changed():
-            self._organizer.setPluginSetting(self.name(), text, check_box.isChecked())
+            self._organizer.setPluginSetting(self.name(), setting, check_box.isChecked())
         check_box.stateChanged.connect(changed)
         layout.addWidget(label, row, 0)
         layout.addWidget(check_box, row, 1)
@@ -283,12 +283,12 @@ class ESLifier(mobase.IPluginTool):
         layout = QGridLayout()
         self.settings_dialog.setLayout(layout)
 
-        self.notifications_check_box = self._create_label_check_box_setting_pair(layout, "Enable Notifications", 0)
-        self.esms_check_box = self._create_label_check_box_setting_pair(layout, "Scan ESMs", 1)
-        self.header_check_box = self._create_label_check_box_setting_pair(layout, "Use 1.71 Header Range", 2)
-        self.compare_file_hashes_check_box = self._create_label_check_box_setting_pair(layout, "Compare File Hashes", 3, "Compare current file hashes to the hashes of the last ESLifier run.")
-        self.compare_only_game_plugins_check_box = self._create_label_check_box_setting_pair(layout, "Compare Only Game Plugins", 4, "If 'Compare File Hashes' and this are enabled:\nonly check game plugins (faster),\nelse compare all file hashes (slower).")
-        self.detect_file_conflict_changes_check_box = self._create_label_check_box_setting_pair(layout, "Detect Conflict Changes", 5, "Detect if a file conflict change has occured since ESLifier last ran.")
+        self.notifications_check_box = self._create_label_check_box_setting_pair(layout, self.tr("Enable Notifications"), "Enable Notifications", 0)
+        self.esms_check_box = self._create_label_check_box_setting_pair(layout, self.tr("Scan ESMs"), "Scan ESMs", 1)
+        self.header_check_box = self._create_label_check_box_setting_pair(layout, self.tr("Use 1.71 Header Range"), "Use 1.71 Header Range", 2)
+        self.compare_file_hashes_check_box = self._create_label_check_box_setting_pair(layout, self.tr("Compare File Hashes"), "Compare File Hashes", 3, self.tr("Compare current file hashes to the hashes of the last ESLifier run."))
+        self.compare_only_game_plugins_check_box = self._create_label_check_box_setting_pair(layout, self.tr("Compare Only Game Plugins"), "Compare Only Game Plugins", 4, self.tr("If 'Compare File Hashes' and this are enabled:\nonly check game plugins (faster),\nelse compare all file hashes (slower)."))
+        self.detect_file_conflict_changes_check_box = self._create_label_check_box_setting_pair(layout, self.tr("Detect Conflict Changes"), "Detect Conflict Changes", 5, self.tr("Detect if a file conflict change has occured since ESLifier last ran."))
 
         folder = self._organizer.pluginSetting(self.name(), "ESLifier Folder")
         if len(folder) > 30:
@@ -296,13 +296,13 @@ class ESLifier(mobase.IPluginTool):
         else:
             self.folder_path = QLabel(folder)
 
-        self.folder_path.setToolTip("Set this to the folder that holds ESLifier.exe")
+        self.folder_path.setToolTip(self.tr("Set this to the folder that holds ESLifier.exe"))
         layout.addWidget(self.folder_path, 6, 0)
-        path_button = self._button_maker("Explore", self.set_eslifier_path)
-        path_button.setToolTip("Set this to the folder that holds ESLifier.exe")
+        path_button = self._button_maker(self.tr("Explore"), self.set_eslifier_path)
+        path_button.setToolTip(self.tr("Set this to the folder that holds ESLifier.exe"))
         layout.addWidget(path_button, 6, 1)
 
-        done_button = QPushButton("Done")
+        done_button = QPushButton(self.tr("Done"))
         def done():
             self.settings_dialog.hide()
             self._organizer.refresh()
@@ -328,8 +328,8 @@ class ESLifier(mobase.IPluginTool):
     def no_path_set(self):
         error_message = QMessageBox(parent=self._parentWidget())
         error_message.setIcon(QMessageBox.Icon.Warning)
-        error_message.setWindowTitle("ESLifier Folder Not Set")
-        error_message.setText('Please set the ESLifier Folder setting of the ESLifier plugin in MO2\'s plugin settings or via the button.')
+        error_message.setWindowTitle(self.tr("ESLifier Folder Not Set"))
+        error_message.setText(self.tr('Please set the ESLifier Folder setting of the ESLifier plugin in MO2\'s plugin settings or via the button.'))
         error_message.addButton(QMessageBox.StandardButton.Ok)
         error_message.show()
 
@@ -361,7 +361,7 @@ class ESLifier(mobase.IPluginTool):
     def set_eslifier_path(self):
         dialog = QFileDialog()
         dialog.setFileMode(QFileDialog.FileMode.Directory)
-        path = dialog.getExistingDirectory(None, "Select the folder that holds ESLifier.exe.", self._organizer.pluginSetting("ESLifier", "ESLifier Folder"))
+        path = dialog.getExistingDirectory(None, self.tr("Select the folder that holds ESLifier.exe."), self._organizer.pluginSetting("ESLifier", "ESLifier Folder"))
         if path:
             self._organizer.setPluginSetting(self.name(), "ESLifier Folder", path)
             if len(path) > 30:
@@ -380,18 +380,18 @@ class ESLifier(mobase.IPluginTool):
             return
         v_layout = QVBoxLayout()
         self.main_dialog.setLayout(v_layout)
-        self.main_dialog.setWindowTitle('ESLifier MO2 Integration')
-        self.notification_button = self._button_maker("Show Notifications", self.display_notifications)
+        self.main_dialog.setWindowTitle(self.tr('ESLifier MO2 Integration'))
+        self.notification_button = self._button_maker(self.tr("Show Notifications"), self.display_notifications)
         self.notification_button.hide()
         p = self.notification_button.palette()
         p.setColor(p.ColorRole.ButtonText, QColor('Red'))
         self.notification_button.setPalette(p)
-        v_layout.addWidget(self._button_maker("Start ESLifier", self.start_eslifier, True))
-        v_layout.addWidget(self._button_maker("Add Plugins to Blacklist", self.add_to_blacklist))
-        v_layout.addWidget(self._button_maker("Remove Plugins from Blacklist", self.remove_from_blacklist))
-        v_layout.addWidget(self._button_maker("Change Plugin Settings", self.display_settings))
+        v_layout.addWidget(self._button_maker(self.tr("Start ESLifier"), self.start_eslifier, True))
+        v_layout.addWidget(self._button_maker(self.tr("Add Plugins to Blacklist"), self.add_to_blacklist))
+        v_layout.addWidget(self._button_maker(self.tr("Remove Plugins from Blacklist"), self.remove_from_blacklist))
+        v_layout.addWidget(self._button_maker(self.tr("Change Plugin Settings"), self.display_settings))
         v_layout.addWidget(self.notification_button)
-        v_layout.addWidget(self._button_maker("Exit", None, True))
+        v_layout.addWidget(self._button_maker(self.tr("Exit"), None, True))
         
         #Install notification button to MO2 tool bar
         tool_bar = self._parentWidget().findChild(QToolBar, 'toolBar')
@@ -461,7 +461,7 @@ class ESLifier(mobase.IPluginTool):
         else:
             self.folder_path.setStyleSheet("QLabel{color:red}")
         if self.folder_path.text().strip() == '':
-            self.folder_path.setText("Set ESLifier Folder")
+            self.folder_path.setText(self.tr("Set ESLifier Folder"))
 
         self.settings_dialog.raise_()
         self.settings_dialog.show()
