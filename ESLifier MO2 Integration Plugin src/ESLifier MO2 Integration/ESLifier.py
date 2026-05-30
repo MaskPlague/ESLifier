@@ -101,20 +101,20 @@ class ESLifier(mobase.IPluginTool):
         self._organizer = organiser
         icon_path = os.path.join(os.path.dirname(self._organizer.getPluginDataPath()), 'ESLifier MO2 Integration', 'icons')
 
-        self._init_state(icon_path)
+        self._init_state()
         self._create_icons(icon_path)
         self._create_throbber(icon_path)
 
         self._create_eslifier_button()
         
-        self._hook_up_callbacks()
+        self._hook_up_callbacks(icon_path)
 
         QApplication.instance().aboutToQuit.connect(self._stop_worker_if_running)
 
         return True
 
     
-    def _init_state(self, icon_path):
+    def _init_state(self):
         self.validGame = True
         self.main_dialog = QDialog()
         self.settings_dialog = QDialog()
@@ -131,11 +131,6 @@ class ESLifier(mobase.IPluginTool):
 
         self.scan_queue = QueueScan()
         self.scan_queue.callback = self.scan_files
-
-
-        self.notifcation_display = notification_display_dialog(icon_path)
-        self.blacklist_add = blacklist_window(False, self.scan_files)
-        self.blacklist_remove = blacklist_window(True, self.scan_files)
     
     def _create_icons(self, icon_path):
         self.eslifier_icon_default = QIcon(icon_path + '\\ESLifier.ico')
@@ -160,13 +155,19 @@ class ESLifier(mobase.IPluginTool):
         self.eslifier_button.setIcon(self.eslifier_icon_greyed_out)
         self.eslifier_button.clicked.connect(self.display)
 
-    def _hook_up_callbacks(self):
+    def _hook_up_callbacks(self, icon_path):
         self._organizer.onUserInterfaceInitialized(self.create)
+        self._organizer.onUserInterfaceInitialized(lambda *args: self._make_blacklist_windows(icon_path))
         self._organizer.onUserInterfaceInitialized(self._create_settings_dialog)
         self._organizer.pluginList().onRefreshed(self.scan_files)
         self._organizer.pluginList().onPluginStateChanged(self.scan_if_cell_master_state_changed)
         self._organizer.onAboutToRun(self._stop_worker_if_running)
         self._organizer.modList().onModInstalled(self._stop_worker_if_running)
+
+    def _make_blacklist_windows(self, icon_path):
+        self.notifcation_display = notification_display_dialog(icon_path)
+        self.blacklist_add = blacklist_window(False, self.scan_files)
+        self.blacklist_remove = blacklist_window(True, self.scan_files)
     
     def _throbber_iterate(self):
         if self.throbber_iterator > 3:
