@@ -160,124 +160,6 @@ else compare all file hashes (slower).</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="21" />
-      <source>*   Blacklisted Mod</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="22" />
-      <source>These are the blacklisted plugins, select the mods you want to remove from the blacklist.</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="25" />
-      <source>*   ESLify-able Mod</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="63" />
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="25" />
-      <source>Needs Compacting</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="66" />
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="25" />
-      <source>New Cell</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="25" />
-      <source>New Interior Cell</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="72" />
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="25" />
-      <source>New Worldspace</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="26" />
-      <source>These are the ESLify-able plugins, select the mods you want to add to the blacklist.</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="27" />
-      <source>Whether the mod needs comapcting or just the ESL flag.</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="28" />
-      <source>If the plugin has a new cell.</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="29" />
-      <source>If the plugin has a new Interior CELL.</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="30" />
-      <source>If the plugin has a new worldspace.</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="69" />
-      <source>Interior Cell</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="103" />
-      <source>Select All</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="104" />
-      <source>Check All</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="105" />
-      <source>Uncheck All</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="177" />
-      <source>Select Mods to Remove From the Blacklist</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="179" />
-      <source>Select Mods to Add to Blacklist</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="190" />
-      <source> Done </source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="198" />
-      <source>Filter </source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="199" />
-      <source>Search Bar</source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="205" />
-      <source> Remove Selected From Blacklist </source>
-      <translation type="unfinished" />
-    </message>
-    <message>
-      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="210" />
-      <source> Add Selected to Blacklist </source>
-      <translation type="unfinished" />
-    </message>
-    <message>
       <location filename="ESLifier MO2 Integration\ESLifier_notifier.py" line="110" />
       <source>Hash Mismatch: </source>
       <translation type="unfinished" />
@@ -285,6 +167,130 @@ else compare all file hashes (slower).</source>
     <message>
       <location filename="ESLifier MO2 Integration\ESLifier_notifier.py" line="112" />
       <source>Missing: </source>
+      <translation type="unfinished" />
+    </message>
+  </context>
+  <context>
+    <name>ESLifier_blacklist</name>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="24" />
+      <source>*   Blacklisted Mod</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="25" />
+      <source>These are the blacklisted plugins, select the mods you want to remove from the blacklist.</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="28" />
+      <source>*   ESLify-able Mod</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="66" />
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="28" />
+      <source>Needs Compacting</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="69" />
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="28" />
+      <source>New Cell</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="28" />
+      <source>New Interior Cell</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="75" />
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="28" />
+      <source>New Worldspace</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="29" />
+      <source>These are the ESLify-able plugins, select the mods you want to add to the blacklist.</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="30" />
+      <source>Whether the mod needs comapcting or just the ESL flag.</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="31" />
+      <source>If the plugin has a new cell.</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="32" />
+      <source>If the plugin has a new Interior CELL.</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="33" />
+      <source>If the plugin has a new worldspace.</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="72" />
+      <source>Interior Cell</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="106" />
+      <source>Select All</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="107" />
+      <source>Check All</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="108" />
+      <source>Uncheck All</source>
+      <translation type="unfinished" />
+    </message>
+  </context>
+  <context>
+    <name>blacklist_window</name>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="183" />
+      <source>Select Mods to Remove From the Blacklist</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="185" />
+      <source>Select Mods to Add to Blacklist</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="196" />
+      <source> Done </source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="204" />
+      <source>Filter </source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="205" />
+      <source>Search Bar</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="211" />
+      <source> Remove Selected From Blacklist </source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="ESLifier MO2 Integration\ESLifier_blacklist.py" line="216" />
+      <source> Add Selected to Blacklist </source>
       <translation type="unfinished" />
     </message>
   </context>
