@@ -106,7 +106,7 @@ class log_stream(QMainWindow):
         main_layout.addSpacing(10)
         main_layout.addWidget(self.text_edit)
         self.setCentralWidget(main_widget)
-        self.list = queue.Queue()
+        self.display_queue = queue.Queue()
         self.crash = False
         self.running = True
         self.center_on_parent()
@@ -164,10 +164,10 @@ class log_stream(QMainWindow):
         return super().hide()
     
     def clear_and_close_log(self):
-        self.list.put(("", 3))  # 3 clear and close
+        self.display_queue.put(("", 3))  # 3 clear and close
     
     def clear_and_leave_log_open(self):
-        self.list.put(("", 4))  # 4 clear and leave open
+        self.display_queue.put(("", 4))  # 4 clear and leave open
     
     def write_to_file(self, text:str):
         formatted_datetime = '[' + datetime.now().isoformat(timespec='milliseconds') + '] '
@@ -175,12 +175,12 @@ class log_stream(QMainWindow):
         self.log_file.flush()
 
     def write_normal(self, text:str, write_to_file:bool=True):
-        self.list.put((text, 0))    # 0 Normal
+        self.display_queue.put((text, 0))    # 0 Normal
         if write_to_file:
             self.write_to_file(text)
 
     def write_remove(self, remove_num_lines:int, text:str, write_to_file:bool=False):
-        self.list.put((text, 1, remove_num_lines)) # 1 remove
+        self.display_queue.put((text, 1, remove_num_lines)) # 1 remove
         if write_to_file:
             self.write_to_file(text)
 
@@ -189,7 +189,7 @@ class log_stream(QMainWindow):
         self.write_remove(remove_num_lines, text)
 
     def write_patching(self, percent:int, text:str):
-        self.list.put((text, 0))    # 0 Normal
+        self.display_queue.put((text, 0))    # 0 Normal
         self.percentage = percent
         self.write_to_file(text)
 
@@ -202,7 +202,7 @@ class log_stream(QMainWindow):
 
     def write_error(self, text:str, is_exception_msg:bool=False):
         text = str(text)
-        self.list.put((self.error_start+text, 0))    # 0 Normal
+        self.display_queue.put((self.error_start+text, 0))    # 0 Normal
         if not is_exception_msg:
             self.errors.append(text)
         self.write_to_file(self.error_start+text)
@@ -316,8 +316,8 @@ class log_stream(QMainWindow):
         self.running = False
         self.show()
         self.lines.clear()
-        with self.list.mutex:
-            self.list.queue.clear()
+        with self.display_queue.mutex:
+            self.display_queue.queue.clear()
         self.text_edit.setStyleSheet("background-color: red;")
         self.write_normal(self.tr("An exception has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data."))
         trace = traceback.format_tb(exc_traceback, 5)
@@ -336,8 +336,8 @@ class log_stream(QMainWindow):
         self.running = False
         self.show()
         self.lines.clear()
-        with self.list.mutex:
-            self.list.queue.clear()
+        with self.display_queue.mutex:
+            self.display_queue.queue.clear()
         self.text_edit.setStyleSheet("background-color: red;")
         self.write_normal(self.tr("An exception has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data."))
         trace = traceback.format_tb(args.exc_traceback, 5)
@@ -398,11 +398,11 @@ class log_stream(QMainWindow):
                 """)
                 if not self.progress_bar.paintingActive():
                     self.progress_bar.setValue(self.percentage)
-        length = self.list.qsize()
+        length = self.display_queue.qsize()
         for _ in range(length):
-            if self.list.empty():
+            if self.display_queue.empty():
                 break
-            text, *args = self.list.get()
+            text, *args = self.display_queue.get()
             self.update_text_widget(text, *args)
         if self.running:
             self.timer.start(50)
@@ -419,7 +419,7 @@ class log_stream(QMainWindow):
                 self.text_edit.setPlainText('\n'.join(self.lines))
             else:
                 remove_count = args[1]
-                for _ in range(0, remove_count):
+                for _ in range(remove_count):
                     if self.lines:
                         self.lines.pop()
                 self.lines.append(text)
