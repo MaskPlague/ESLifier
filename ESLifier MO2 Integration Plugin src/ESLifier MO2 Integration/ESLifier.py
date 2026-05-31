@@ -13,16 +13,9 @@ try:
     from PyQt6.QtWidgets import (QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton,
                                   QToolBar, QCheckBox, QLabel, QGridLayout, QWidget, QApplication)
 except ImportError:
-    from PyQt5.QtCore import QCoreApplication, QObject, pyqtSignal, QThread, QTimer #type: ignore
-    from PyQt5.QtGui import QIcon, QColor   #type: ignore
-    from PyQt5.QtWidgets import (QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton,  #type: ignore
-                                  QToolBar, QCheckBox, QLabel, QGridLayout, QWidget, QApplication)
-
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from PyQt6.QtCore import QCoreApplication, QObject, pyqtSignal, QThread, QTimer
-    from PyQt6.QtGui import QIcon, QColor
-    from PyQt6.QtWidgets import (QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton,
+    from PyQt5.QtCore import QCoreApplication, QObject, pyqtSignal, QThread, QTimer
+    from PyQt5.QtGui import QIcon, QColor
+    from PyQt5.QtWidgets import (QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton,
                                   QToolBar, QCheckBox, QLabel, QGridLayout, QWidget, QApplication)
             
 class QueueScan():

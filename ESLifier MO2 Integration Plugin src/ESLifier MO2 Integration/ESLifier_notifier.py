@@ -6,7 +6,7 @@ import hashlib
 try:
     from PyQt6.QtCore import QCoreApplication
 except ImportError:
-    from PyQt5.QtCore import QCoreApplciation #type: ignore
+    from PyQt5.QtCore import QCoreApplication 
 
 from .ESLifier_qualification_checker import qualification_checker as light_check
 

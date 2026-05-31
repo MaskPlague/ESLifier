@@ -7,16 +7,10 @@ try:
                                  QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit)
     from PyQt6.QtGui import QIcon
 except ImportError:
-    from PyQt5.QtCore import Qt #type: ignore
-    from PyQt5.QtWidgets import (QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMainWindow,  #type: ignore
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtWidgets import (QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMainWindow,
                                  QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit)
-    from PyQt5.QtGui import QIcon #type: ignore
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from PyQt6.QtCore import Qt
-    from PyQt6.QtWidgets import (QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMainWindow, 
-                                 QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit)
-    from PyQt6.QtGui import QIcon
+    from PyQt5.QtGui import QIcon
 
 class ESLifier_blacklist(QTableWidget):
     def tr(self, text):
