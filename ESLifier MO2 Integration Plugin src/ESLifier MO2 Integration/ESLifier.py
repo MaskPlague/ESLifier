@@ -58,7 +58,7 @@ class ESLifier(mobase.IPluginTool):
         return self.tr("ESLifier's MO2 Plugin Integration")
     
     def version(self) -> mobase.VersionInfo:
-        return mobase.VersionInfo(1, 5, 1, mobase.ReleaseType.FINAL)
+        return mobase.VersionInfo(1, 6, 0, mobase.ReleaseType.FINAL)
     
     def requirements(self):
         return [mobase.PluginRequirementFactory.gameDependency({
