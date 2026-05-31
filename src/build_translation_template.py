@@ -1,6 +1,5 @@
 import subprocess
 import os
-from datetime import datetime
 
 def create_template():
     working_directory = os.getcwd()
@@ -16,4 +15,5 @@ def create_template():
             print(line, end="")
     print('Done Creating template')
 
-create_template()
+if __name__ == "__main__":
+    create_template()
