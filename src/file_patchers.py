@@ -1644,6 +1644,49 @@ class patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             f.close()
 
+    def json_rim_combat_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str = 'utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data: dict = patchers.use_json5(string)
+
+            def item_parser(item: dict):
+                if item.get('mod','').lower() == basename:
+                    key = 'formID'
+                    fid: str = item.get(key, None)
+                    if not fid:
+                        key = 'form'    # might not be necessary as the source code seems to suggest that 'formID' is the only valid key and that 
+                                        # the example Skyrim.jsons in Poise and Posture are probably incorrect.
+                        fid: str = item.get(key, None)
+                        if not fid:
+                            return
+                    if not fid.startswith(('0x', '0X')):
+                        return
+                    form_id_int = int(fid, 16)
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data:
+                        item[key] = '0x' + to_id_data['hex_no_0']
+
+            def recursive_depth_parser(obj):
+                if isinstance(obj, list):
+                    for item in obj:
+                        recursive_depth_parser(item)
+                elif isinstance(obj, dict):
+                    if 'mod' in obj:
+                        item_parser(obj)
+                    else:
+                        for key, value in obj.items():
+                            recursive_depth_parser(value)
+
+            recursive_depth_parser(data)
+            f.seek(0)
+            f.truncate(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
+            f.close()
+
     def dynamic_animation_replacer_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -2352,7 +2395,7 @@ class patchers():
 
 #if __name__ == '__main__':
 #    basename = "thing.esp".lower()
-#    form_id_map = {3756539: {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'bytes': b'\x00\x0A\x0A', 'update_name': False}, 
-#                   2175263: {'hex_no_0': 'B0B', 'hex': '000B0B', "int": 10101, 'bytes': b'\x00\x0B\x0B', 'update_name': True}}
+#    form_id_map = {int('0xB3C5',16): {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'bytes': b'\x00\x0A\x0A', 'update_name': False}, 
+#                   int('0x12345',16): {'hex_no_0': 'B0B', 'hex': '000B0B', "int": 10101, 'bytes': b'\x00\x0B\x0B', 'update_name': True}}
 #    new_file = os.path.normpath(r)
-#    patchers.sound_record_distributor_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
+#    patchers.json_rim_combat_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
