@@ -149,10 +149,12 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
             patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif 'plugins\\firehurtsre\\' in new_file_lower:                                    # Fire Hurts RE/NG
             patchers.json_fire_hurts_re_patcher(basename, new_file, form_id_map, encoding_method=encoding)
-        elif 'undaunted\\groups\\' in new_file_lower:                                         # Undaunted
+        elif 'undaunted\\groups\\' in new_file_lower:                                       # Undaunted
             patchers.json_undaunted_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\achievementsdata\\' in new_file_lower:                                      # Achievement Injector
             patchers.json_achievement_injector_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+        elif 'plugins\\rimcombat\\' in new_file_lower:                                      # Rim Combat
+            patchers.json_rim_combat_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('_ligh.json') and '\\dyndolod_data\\' in new_file_lower:
             patchers.json_dyndolod_ligh_patcher(basename, new_file, form_id_map, master_byte, encoding_method=encoding)
         else:
