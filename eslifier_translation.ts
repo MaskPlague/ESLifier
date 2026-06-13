@@ -1605,11 +1605,11 @@ This button needs an output made from v0.12.0+.</source>
   <context>
     <name>patcher_conditions</name>
     <message>
-      <location filename="src\patcher_conditions.py" line="216" />
-      <location filename="src\patcher_conditions.py" line="204" />
-      <location filename="src\patcher_conditions.py" line="189" />
-      <location filename="src\patcher_conditions.py" line="180" />
-      <location filename="src\patcher_conditions.py" line="161" />
+      <location filename="src\patcher_conditions.py" line="218" />
+      <location filename="src\patcher_conditions.py" line="206" />
+      <location filename="src\patcher_conditions.py" line="191" />
+      <location filename="src\patcher_conditions.py" line="182" />
+      <location filename="src\patcher_conditions.py" line="163" />
       <location filename="src\patcher_conditions.py" line="61" />
       <source>Possible missing patcher for: </source>
       <translation type="unfinished" />
