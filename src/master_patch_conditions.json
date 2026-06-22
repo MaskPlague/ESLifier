@@ -1,5 +1,5 @@
 {
-    "version": 16,
+    "version": 17,
     "conditions": [
         {
             "extension": "json",
@@ -113,6 +113,12 @@
             "extension": "json",
             "contains": "/Plugins/StartGameSettings/",
             "patcher": "json_generic_plugin_sep_formid"
+        },
+        {
+            "extension": "ini",
+            "contains": "/BeeingFemale/AddOn/",
+            "patcher": "ini_plugin_sep_formid",
+            "separator": ":"
         }
     ]
 }
