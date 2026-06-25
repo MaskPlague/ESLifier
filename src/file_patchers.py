@@ -7,14 +7,14 @@ import io
 from log_stream import write_to_file, write_ineligible
 
 class patchers():    
-    def find_prev_non_alphanumeric(text: str, start_index: int, tokens: set[str] = ()):
+    def find_prev_non_alphanumeric(text: str, start_index: int, tokens: set[str] = {}):
         """Use this with care, do not use this to find the start of a plugin name as plugins are files and can contain non-alphanumeric characters"""
         for i in range(start_index, 0, -1):
             if (not text[i].isalnum() and text[i] != ' ') or text[i] in tokens:
                 return i
         return -1
 
-    def find_next_non_alphanumeric(text: str, start_index: int, tokens: set[str] = ()):
+    def find_next_non_alphanumeric(text: str, start_index: int, tokens: set[str] = {}):
         for i in range(start_index, len(text)):
             if not text[i].isalnum() or text[i] in tokens:
                 return i
@@ -355,7 +355,7 @@ class patchers():
                     for _ in range(count):
                         line = lines[i]
                         middle_index = line.lower().index('~'+basename, start)
-                        start_index = patchers.find_prev_non_alphanumeric(line, middle_index-2, tokens=(' '))
+                        start_index = patchers.find_prev_non_alphanumeric(line, middle_index-2, tokens={' '})
                         if final_index is not None and start_index > final_index:
                             continue
                         end_index = middle_index + len('~'+basename)
@@ -1078,7 +1078,7 @@ class patchers():
                 if basename+'|' in line.lower() and not line.startswith(';'):
                     line = lines[i]
                     middle_index = line.index('|')
-                    end_index = patchers.find_next_non_alphanumeric(line, middle_index+1, tokens=(" "))
+                    end_index = patchers.find_next_non_alphanumeric(line, middle_index+1, tokens={" "})
                     end_of_line = line[end_index:]
                     form_id = line[middle_index+1:end_index].strip()
                     form_id_int = int(form_id, 16)
@@ -1789,7 +1789,7 @@ class patchers():
                     patch_lines = line.lower().startswith(basename) or line.lower().startswith('"'+basename)
                 elif patch_lines and ':' in line:
                     end_index = line.index(':')
-                    start_index = patchers.find_prev_non_alphanumeric(line, end_index-1, tokens=(' ')) + 1
+                    start_index = patchers.find_prev_non_alphanumeric(line, end_index-1, tokens={' '}) + 1
                     form_id_int = int(line[start_index:end_index])
                     to_id_data = form_id_map.get(form_id_int)
                     if to_id_data is not None:
@@ -2316,7 +2316,7 @@ class patchers():
                         ox = ''
                         line = lines[i]
                         middle_index = line.index('|', start)
-                        start_index = patchers.find_prev_non_alphanumeric(line, middle_index-2, tokens=(' '))
+                        start_index = patchers.find_prev_non_alphanumeric(line, middle_index-2, tokens={' '})
                         end_index = line.index('.es', middle_index) + 4
                         plugin = line.lower()[middle_index+1:end_index].strip()
                         start_of_line = line[:start_index+1]
