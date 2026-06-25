@@ -265,12 +265,12 @@ crash cause: %2</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\file_defined_patcher_conditions.py" line="75" />
+      <location filename="src\file_defined_patcher_conditions.py" line="78" />
       <source>A condtion in %1 is missing required fields or has an invalid patcher method.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\file_defined_patcher_conditions.py" line="110" />
+      <location filename="src\file_defined_patcher_conditions.py" line="122" />
       <source>Failed to patch file: </source>
       <translation type="unfinished" />
     </message>
