@@ -9,7 +9,7 @@ from log_stream import write_to_file, write_ineligible
 class patchers():    
     def find_prev_non_alphanumeric(text: str, start_index: int, tokens: set[str] = {}):
         """Use this with care, do not use this to find the start of a plugin name as plugins are files and can contain non-alphanumeric characters"""
-        for i in range(start_index, 0, -1):
+        for i in range(start_index, -1, -1): #this was range(start_index, 0, -1) I have changed it to -1 as 0 was not 0 inclusive, I hope I didn't just break a bunch of stuff...
             if (not text[i].isalnum() and text[i] != ' ') or text[i] in tokens:
                 return i
         return -1
