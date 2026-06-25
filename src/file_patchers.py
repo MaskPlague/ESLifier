@@ -255,7 +255,9 @@ class patchers():
             f.write(''.join(lines))
             f.close()
 
-    def ini_formid_sep_plugin_patcher(basename: str, new_file: str, form_id_map: dict, sep: str = '~', encoding_method: str ='utf-8'):
+    def ini_formid_sep_plugin_patcher(basename: str, new_file: str, form_id_map: dict, 
+                                      sep: str = '~', tkns: set[str] = {" "}, fid_start: str = '0x', to_id_key: str = "hex_no_0",
+                                      encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             print_replace = True
@@ -267,7 +269,7 @@ class patchers():
                     for _ in range(count):
                         line = lines[i]
                         middle_index = line.index(sep, start)
-                        start_index = patchers.find_prev_non_alphanumeric(line, middle_index-2, tokens=(" "))
+                        start_index = patchers.find_prev_non_alphanumeric(line, middle_index-2, tokens=tkns)
                         if final_index is not None and start_index > final_index:
                             continue
                         end_index = line.index('.es', middle_index) + 4
@@ -288,18 +290,20 @@ class patchers():
                             to_id_data = form_id_map.get(form_id_int)
                             if to_id_data is not None:
                                 if not to_id_data["update_name"]:
-                                    lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
+                                    lines[i] = start_of_line + fid_start + to_id_data[to_id_key] + end_of_line
                                 else:
                                     if print_replace:
                                         write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                         print_replace = False
-                                    lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + sep +"ESLifier_Cell_Master.esm" + line[end_index:]
+                                    lines[i] = start_of_line + fid_start + to_id_data[to_id_key] + sep + "ESLifier_Cell_Master.esm" + line[end_index:]
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
             f.close()
 
-    def ini_plugin_sep_formid_patcher(basename: str, new_file: str, form_id_map: dict, sep: str = '~', encoding_method: str ='utf-8'):
+    def ini_plugin_sep_formid_patcher(basename: str, new_file: str, form_id_map: dict,
+                                      sep: str = '~', tkns: set[str] = {" "}, fid_start: str = '0x', to_id_key: str = "hex_no_0",
+                                      encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
             print_replace = True
@@ -314,7 +318,7 @@ class patchers():
                         if final_index is not None and start_index > final_index:
                             continue
                         middle_index = start_index + len(basename+sep)
-                        end_index = patchers.find_next_non_alphanumeric(line, middle_index+1, tokens=(" "))
+                        end_index = patchers.find_next_non_alphanumeric(line, middle_index+1, tokens=tkns)
                         plugin = line.lower()[start_index:middle_index-len(sep)].strip()
                         start_of_line = line[:start_index]
                         end_of_line = line[end_index:]
@@ -332,12 +336,12 @@ class patchers():
                             to_id_data = form_id_map.get(form_id_int)
                             if to_id_data is not None:
                                 if not to_id_data["update_name"]:
-                                    lines[i] = line[:middle_index] + '0x' + to_id_data["hex_no_0"] + end_of_line
+                                    lines[i] = line[:middle_index] + fid_start + to_id_data[to_id_key] + end_of_line
                                 else:
                                     if print_replace:
                                         write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                         print_replace = False
-                                    lines[i] = start_of_line + "ESLifier_Cell_Master.esm" + sep + '0x' + to_id_data["hex_no_0"] + line[end_index:]
+                                    lines[i] = start_of_line + "ESLifier_Cell_Master.esm" + sep + fid_start + to_id_data[to_id_key] + line[end_index:]
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))

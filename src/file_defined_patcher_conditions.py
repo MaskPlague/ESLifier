@@ -70,6 +70,9 @@ class user_and_master_conditions_class():
                     "endswith": os.path.normpath(conditions.get("endswith", "").lower().strip()),
                     "separator": conditions.get("separator", "").lower().strip(),
                     "int_type": conditions.get("int_type", False),
+                    "tkns": set(conditions.get("tokens", {" "})),
+                    "fid_start": conditions.get("fid_start", "0x"),
+                    "to_id_key": conditions.get("to_id_key", "hex_no_0"),
                     "patcher": patcher_methods[conditions["patcher"]]})
             except Exception as e:
                 write_error(QCoreApplication.translate("Global", "A condtion in %1 is missing required fields or has an invalid patcher method.").replace("%1", os.path.basename(filename)))
@@ -87,18 +90,29 @@ class user_and_master_conditions_class():
                 contains_flag = contains in file_lower
             if endswith != ".":
                 endswith_flag = file_lower.endswith(endswith)
+            print(contains_flag)
+            print(endswith_flag)
             if contains_flag and endswith_flag:
                 patcher_method = condition_set["patcher"]
                 if patcher_method == None: # if patcher == -1 then it is a file that needs no patching and can be skipped.
                     return True
                 separator_symbol = condition_set.get("separator", "")
                 int_type = condition_set.get("int_type", False)
+                tkns = condition_set.get("tokens", {" "})
+                fid_start = condition_set.get("fid_start", "0x")
+                to_id_key = condition_set.get("to_id_key", "hex_no_0")
                 args = [basename, file, form_id_map]
                 kwargs = {"encoding_method": "utf-8"}
                 if separator_symbol != "":
                     kwargs.update({"sep": separator_symbol})
                 if int_type:
                     kwargs.update({"int_type": True})
+                if tkns != {" "}:
+                    kwargs.update({"tkns": tkns})
+                if fid_start != "0x":
+                    kwargs.update({"fid_start": fid_start})
+                if to_id_key != "hex_no_0":
+                    kwargs.update({"to_id_key": to_id_key})
                 try:
                     patcher_method(*args, **kwargs)
                 except Exception as e:
