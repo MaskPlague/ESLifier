@@ -71,8 +71,8 @@ class user_and_master_conditions_class():
                     "separator": conditions.get("separator", "").lower().strip(),
                     "int_type": conditions.get("int_type", False),
                     "tkns": set(conditions.get("tokens", {" "})),
-                    "fid_start": conditions.get("fid_start", "0x"),
-                    "to_id_key": conditions.get("to_id_key", "hex_no_0"),
+                    "fid_start": conditions.get("fid_start"),
+                    "to_id_key": conditions.get("to_id_key"),
                     "patcher": patcher_methods[conditions["patcher"]]})
             except Exception as e:
                 write_error(QCoreApplication.translate("Global", "A condtion in %1 is missing required fields or has an invalid patcher method.").replace("%1", os.path.basename(filename)))
@@ -90,8 +90,6 @@ class user_and_master_conditions_class():
                 contains_flag = contains in file_lower
             if endswith != ".":
                 endswith_flag = file_lower.endswith(endswith)
-            print(contains_flag)
-            print(endswith_flag)
             if contains_flag and endswith_flag:
                 patcher_method = condition_set["patcher"]
                 if patcher_method == None: # if patcher == -1 then it is a file that needs no patching and can be skipped.
@@ -109,9 +107,9 @@ class user_and_master_conditions_class():
                     kwargs.update({"int_type": True})
                 if tkns != {" "}:
                     kwargs.update({"tkns": tkns})
-                if fid_start != "0x":
+                if fid_start is not None:
                     kwargs.update({"fid_start": fid_start})
-                if to_id_key != "hex_no_0":
+                if to_id_key is not None:
                     kwargs.update({"to_id_key": to_id_key})
                 try:
                     patcher_method(*args, **kwargs)
