@@ -181,7 +181,7 @@ class patchers():
                     replace_1 = False
                     replace_2 = False
                     if basename == plugin_1.lower().strip():
-                        if form_id_1.startswith('03x'): #Fix for incorrect form ids in "Seasons Ablaze Seasons Beta"
+                        if form_id_1.startswith('03x'): #Fix for incorrect form ids in "Aspens Ablaze Seasons Beta" file versions before 1.0.4
                             form_id_1 = '0x' + form_id_1[3:]
                         form_id_int_1 = int(form_id_1, 16)
                         to_id_data = form_id_map.get(form_id_int_1)
