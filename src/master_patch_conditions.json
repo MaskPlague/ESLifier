@@ -1,5 +1,5 @@
 {
-    "version": 17,
+    "version": 18,
     "conditions": [
         {
             "extension": "json",
@@ -119,6 +119,13 @@
             "contains": "/BeeingFemale/AddOn/",
             "patcher": "ini_plugin_sep_formid",
             "separator": ":"
+        },
+        {
+            "extension": "toml",
+            "contains": "Plugins/Recast/Patches/",
+            "fid_start": "0x00",
+            "to_id_key": "hex",
+            "patcher": "ini_formid_sep_plugin"
         }
     ]
 }
