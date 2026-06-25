@@ -123,3 +123,11 @@ class user_and_master_conditions_class():
                         write_error(e, True)    
                 return True
         return False
+
+#if __name__ == "__main__":
+#    t = user_and_master_conditions_class()
+#    print(t.user_and_master_conditions['toml'])
+#    form_id_map = {int('0x000A2C8E',16): {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'bytes': b'\x00\x0A\x0A', 'update_name': False}, 
+#                   int('0x0001A696',16): {'hex_no_0': 'B0B', 'hex': '000B0B', "int": 10101, 'bytes': b'\x00\x0B\x0B', 'update_name': False}}
+#    file = os.path.normpath(r)
+#    #t.check_conditions('thing.esp', file, file.lower(), form_id_map)
