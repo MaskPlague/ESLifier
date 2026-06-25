@@ -167,7 +167,7 @@ class get_latest_patcher_conditions(QObject):
             return True
         except Exception as e:
             write_to_file("Failed to update master_patcher_conditions.json; no connection?")
-            write_to_file(e)
+            write_to_file(f"{e}")
             return False
         
     def download_ignored_files(self) -> bool:
@@ -198,7 +198,7 @@ class get_latest_patcher_conditions(QObject):
             return True
         except Exception as e:
             write_to_file("Failed to update master_ignored_files.json; no connection?")
-            write_to_file(e)
+            write_to_file(f"{e}")
             return False
         
 def curdirIsWritable() -> bool:

@@ -170,8 +170,8 @@ class log_stream(QMainWindow):
         self.display_queue.put(("", 4))  # 4 clear and leave open
     
     def write_to_file(self, text:str):
-        formatted_datetime = '[' + datetime.now().isoformat(timespec='milliseconds') + '] '
-        self.log_file.write(formatted_datetime + text + '\n')
+        formatted_datetime = '[' + datetime.now().isoformat(timespec='milliseconds') + ']'
+        self.log_file.write(f"{formatted_datetime} {text}\n")
         self.log_file.flush()
 
     def write_normal(self, text:str, write_to_file:bool=True):
