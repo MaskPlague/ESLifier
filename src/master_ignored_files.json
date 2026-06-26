@@ -1,5 +1,5 @@
 {
-    "version": 13,
+    "version": 14,
     "ignored_files": [
         "BFCO_FX_CheckPreAttackIsOK.pex",
         "BFCO_FX_PlayIdleListKeyE.pex",
@@ -23,6 +23,8 @@
     ],
     "ignored_contains": [
         "SkyrimDiag_Incident_",
+        "SkyrimDiag_Crash_",
+        "Plugins/Tullius Ctd Logs/",
         "interface/Console_Cheatsheet/",
         "interface/PartySheet/Spells/",
         "Plugins/LoadTimeProfiler/LTP_summary_"
