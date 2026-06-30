@@ -239,6 +239,7 @@ class log_stream(QMainWindow):
             patcher_message.close()
         def open_github():
             webbrowser.open("https://github.com/MaskPlague/ESLifier/issues")
+            patcher_message.show()
         patcher_message.accepted.connect(close)
         github_button.clicked.connect(open_github)
         patcher_message.show()
@@ -279,6 +280,7 @@ class log_stream(QMainWindow):
             error_message.close()
         def open_github():
             webbrowser.open(github_link)
+            error_message.show()
         error_message.accepted.connect(close)
         github_button.clicked.connect(open_github)
         error_message.show()
