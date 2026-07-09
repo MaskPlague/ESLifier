@@ -11,12 +11,12 @@ try:
     from PyQt6.QtCore import QCoreApplication, QObject, pyqtSignal, QThread, QTimer
     from PyQt6.QtGui import QIcon, QColor
     from PyQt6.QtWidgets import (QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton,
-                                  QToolBar, QCheckBox, QLabel, QGridLayout, QWidget, QApplication)
+                                  QToolBar, QCheckBox, QLabel, QGridLayout, QApplication)
 except ImportError:
     from PyQt5.QtCore import QCoreApplication, QObject, pyqtSignal, QThread, QTimer
     from PyQt5.QtGui import QIcon, QColor
     from PyQt5.QtWidgets import (QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton,
-                                  QToolBar, QCheckBox, QLabel, QGridLayout, QWidget, QApplication)
+                                  QToolBar, QCheckBox, QLabel, QGridLayout, QApplication)
             
 class QueueScan():
     def __init__(self):
@@ -391,32 +391,15 @@ class ESLifier(mobase.IPluginTool):
         #Install notification button to MO2 tool bar
         tool_bar = self._parentWidget().findChild(QToolBar, 'toolBar')
         if tool_bar:
-            try:
-                next_install = False
-                installed = False
-                passed_one = False
-                for child in tool_bar.children():
-                    if type(child) == QWidget:
-                        next_install = True
-                    elif isinstance(child, QToolButton) and next_install and not passed_one:
-                        passed_one = True
-                    elif isinstance(child, QToolButton) and next_install and not installed and passed_one:
-                        installed = True
-                        child_action = child.actions()[0]
-                        tool_bar.insertWidget(child_action, self.eslifier_button)
-            except:
-                try:
-                    installed = False
-                    for child in tool_bar.children():
-                        if isinstance(child, QToolButton) and child.text() == 'Notifications':
-                            installed = True
-                            tool_bar.insertWidget(child_action, self.eslifier_button)
-                            break
-                    if not installed:
-                        raise NameError("Notifications not found")
-                except:
-                    action = tool_bar.children()[-9].actions()[0]
-                    tool_bar.insertWidget(action, self.eslifier_button)
+            installed = False
+            for child in tool_bar.actions():
+                if child.objectName() == "actionNotifications":
+                    tool_bar.insertWidget(child, self.eslifier_button)
+                    installed = True
+                    break
+
+            if not installed:
+                tool_bar.addWidget(self.eslifier_button)
 
     def _button_maker(self, name, function, hide=False):
         button = QPushButton(name)
