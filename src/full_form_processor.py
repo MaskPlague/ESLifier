@@ -2297,7 +2297,7 @@ class form_processor():
         return offsets
 
     def script_reader(form, offset, obj_format):
-        offsets = []
+        offsets_list = []
         script_name_size = struct.unpack("<H", form[offset:offset+2])[0]
         #script_name = form[offset+2:offset+script_name_size+2]
         offset += script_name_size + 2
@@ -2311,9 +2311,9 @@ class form_processor():
             offset += 2
             if property_type == 1:
                 if obj_format == 1:
-                    offsets.append(offset)
+                    offsets_list.append(offset)
                 elif obj_format == 2:
-                    offsets.append(offset+4)
+                    offsets_list.append(offset+4)
                 offset += 8
             elif property_type == 2:
                 string_size = struct.unpack("<H", form[offset:offset+2])[0]
@@ -2329,11 +2329,11 @@ class form_processor():
                 offset += 4
                 if obj_format == 1:
                     for _ in range(item_count):
-                        offsets.append(offset)
+                        offsets_list.append(offset)
                         offset += 8
                 else:
                     for _ in range(item_count):
-                        offsets.append(offset+4)
+                        offsets_list.append(offset+4)
                         offset += 8
             elif property_type == 12:
                 item_count = struct.unpack("<I", form[offset:offset+4])[0]
@@ -2353,10 +2353,10 @@ class form_processor():
                 item_count = struct.unpack("<I", form[offset:offset+4])[0]
                 offset += 4
                 offset += item_count
-        return offsets, offset
+        return offsets_list, offset
     
     def vmad_reader(form, offset):
-        offsets = []
+        offsets_list = []
         vmad_size = struct.unpack("<H", form[offset+4:offset+6])[0]
         vmad_end_offset = offset + 6 + vmad_size
         obj_format = struct.unpack("<H", form[offset+8:offset+10])[0]
@@ -2364,7 +2364,7 @@ class form_processor():
         offset += 12
         for _ in range(script_count):
             script_offsets, offset = form_processor.script_reader(form, offset, obj_format)
-            offsets.extend(script_offsets)
+            offsets_list.extend(script_offsets)
 
         if form[:4] in (b'INFO', b'PACK', b'PERK', b'QUST', b'SCEN') and offset < vmad_end_offset:
             if form[:4] == b'QUST':
@@ -2388,14 +2388,14 @@ class form_processor():
                 #Iterate through aliases
                 for _ in range(alias_count):
                     if obj_format == 1:
-                        offsets.append(offset)
+                        offsets_list.append(offset)
                     elif obj_format == 2:
-                        offsets.append(offset+4)
+                        offsets_list.append(offset+4)
                     offset += 12
                     alias_script_count = struct.unpack("<H", form[offset:offset+2])[0]
                     offset += 2
                     for _ in range(alias_script_count):
                         alias_script_offsets, offset = form_processor.script_reader(form, offset, obj_format)
-                        offsets.extend(alias_script_offsets)
+                        offsets_list.extend(alias_script_offsets)
         
-        return offsets
+        return offsets_list
