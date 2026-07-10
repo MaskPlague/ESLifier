@@ -2298,8 +2298,9 @@ class form_processor():
         #if function_index not in functions_with_param2=3_but_not_fid and form[idk:idk] != b'\x00\x00\x00\x00':
         #    offsets_list.append(idk)   # param
         offset += 8
-        offsets.append(offset+ 4)       # Function Reference
-        return offsets
+        if form[offset:offset+4] == b'\x02\x00\x00\x00':    # Run On: Reference
+            offsets_list.append(offset+ 4)                  # Reference FID
+        return offsets_list
 
     def script_reader(form, offset, obj_format):
         offsets_list = []
