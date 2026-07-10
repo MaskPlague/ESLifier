@@ -2274,7 +2274,10 @@ class form_processor():
         return [i, bytearray(form), FORM_offsets]
                     
     def ctda_reader(form, offset):
-        offsets = []
+        functions_with_param1_but_not_fid = {6, 8, 10, 11, 14, 36, 70, 98, 109, 131, 181, 247, 277, 289, 312, 325, 360, 368, 381, 397, 407, 432, 437, 446, 447, 473, 494, 528, 566, 567, 570, 571, 572, 576, 596, 597, 598, 600, 601, 602, 604, 605, 608, 610, 611, 612, 613, 614, 619, 620, 622, 626, 640, 644, 664, 675, 681, 684, 692, 696, 706}
+        functions_with_param2_but_not_fid = {53, 59, 79, 98, 122, 407, 448, 550, 584, 595, 629, 630, 639}
+        # functions_with_param3_but_not_fid = {576} # No functions with FID parameter 3
+        offsets_list = []
         offset += 6
         op_flag_byte = form[offset]
         flags = op_flag_byte & 0x1F  # Mask out the upper 3 bits, keeping only the lower 5 bits
@@ -2282,16 +2285,18 @@ class form_processor():
         offset += 4
         #If lower 5 bit 0x04 is set then use global and comparison value is a formid
         if use_global_flag: 
-            offsets.append(offset)  # ComparisonValue
+            offsets_list.append(offset)  # ComparisonValue
         offset += 4
         function_index = struct.unpack("<H", form[offset:offset+2])[0]
         offset += 4
-        #GetEventData is 4672 - 4096 = 576
-        if function_index == 576:
-            offsets.append(offset+ 4)   # param3
-        else:
-            offsets.append(offset)      # param1
-            offsets.append(offset+ 4)   # param2
+        # If a function has a param and we know it isn't a non-fid then it is either a form id or garbage data that doesn't matter
+        if function_index not in functions_with_param1_but_not_fid and form[offset:offset+4] != b'\x00\x00\x00\x00':
+            offsets_list.append(offset)      # param1
+        if function_index not in functions_with_param2_but_not_fid and form[offset+4:offset+8] != b'\x00\x00\x00\x00':
+            offsets_list.append(offset+ 4)   # param2
+        # No functions have param3 as a form ID.
+        #if function_index not in functions_with_param2=3_but_not_fid and form[idk:idk] != b'\x00\x00\x00\x00':
+        #    offsets_list.append(idk)   # param
         offset += 8
         offsets.append(offset+ 4)       # Function Reference
         return offsets
