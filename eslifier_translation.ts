@@ -237,24 +237,24 @@ Ensure you have an active internet connection.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\eslifier_app.py" line="614" />
-      <location filename="src\eslifier_app.py" line="609" />
-      <location filename="src\eslifier_app.py" line="598" />
+      <location filename="src\eslifier_app.py" line="615" />
+      <location filename="src\eslifier_app.py" line="610" />
+      <location filename="src\eslifier_app.py" line="599" />
       <source>ESLifier Error</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\eslifier_app.py" line="599" />
+      <location filename="src\eslifier_app.py" line="600" />
       <source>Check latest crash log in ESLifier_Data/Crash Logs</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\eslifier_app.py" line="610" />
+      <location filename="src\eslifier_app.py" line="611" />
       <source>Failed to open crash log directory, creating crash log at: </source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\eslifier_app.py" line="615" />
+      <location filename="src\eslifier_app.py" line="616" />
       <source>Failed to create crash log, error: %1
 crash cause: %2</source>
       <translation type="unfinished" />
@@ -832,47 +832,47 @@ Please create a patcher request in the GitHub.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="305" />
-      <location filename="src\log_stream.py" line="275" />
+      <location filename="src\log_stream.py" line="307" />
+      <location filename="src\log_stream.py" line="276" />
       <location filename="src\log_stream.py" line="234" />
       <source>and %1 more.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="261" />
+      <location filename="src\log_stream.py" line="262" />
       <location filename="src\log_stream.py" line="237" />
       <source>Open GitHub Issue Page</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="249" />
+      <location filename="src\log_stream.py" line="250" />
       <source>Errors Encountered</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="256" />
+      <location filename="src\log_stream.py" line="257" />
       <source>ESLifier has experienced one or more errors.
 Check the ESLifier.log for more details.
 Any .pex files listed are likely corrupt and you need to find a patch to fix them.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="266" />
+      <location filename="src\log_stream.py" line="267" />
       <source>User needs to download and install the following mod and then re-scan:</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="268" />
+      <location filename="src\log_stream.py" line="269" />
       <source>Open OCW Script Fix mod page</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="293" />
+      <location filename="src\log_stream.py" line="295" />
       <source>Cell Master Patching Warning</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="294" />
+      <location filename="src\log_stream.py" line="296" />
       <source>ESLifier has either come across one or more pex/ini files that are currently unpatchable.
 This is because there is currently no programmed method to replace a necessary
 plugin name with ESLifier_Cell_Master.esm in pex files and, certain ini files assume that
@@ -883,8 +883,8 @@ that needs replacing, the form ID change, and the pex/ini file that isn't patche
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\log_stream.py" line="342" />
-      <location filename="src\log_stream.py" line="322" />
+      <location filename="src\log_stream.py" line="344" />
+      <location filename="src\log_stream.py" line="324" />
       <source>An exception has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data.</source>
       <translation type="unfinished" />
     </message>
