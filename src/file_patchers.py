@@ -695,12 +695,12 @@ class patchers():
                     else:
                         variable += '*' + plugin_original
 
-            if var_end:
-                variable += variable_end + ' '
-            else:
-                variable += ' '
+                if var_end:
+                    variable += variable_end + ' '
+                else:
+                    variable += ' '
 
-            line = variable + line[equal_index:]
+                line = variable + line[equal_index:]
             
             # Only process the right-hand side if it's NOT a special variable (e.g. 0x00 = 0x01,0x02)
             # Prevents commas in DisplayNames from being wrongly split/processed.
