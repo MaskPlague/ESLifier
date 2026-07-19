@@ -110,7 +110,8 @@ class form_processor():
             b'AACT', b'ASTP', b'CLAS', b'CLFM', b'CSTY', b'DEBR',
             b'EYES', b'GMST', b'GRAS', b'IMAD', b'IMGS', b'KYWD',
             b'LCRT', b'LGTM', b'MATO', b'MOVT', b'REVB', b'SOPM',
-            b'SPGD', b'TXST', b'VTYP', b'WOOP', b'VOLI', b'LENS'
+            b'SPGD', b'TXST', b'VTYP', b'WOOP', b'VOLI', b'LENS',
+            b'SCPT', b'CLDC', b'HAIR', b'PWAT',
         }
         # Records with shared handler
         placed_records = {
@@ -191,12 +192,15 @@ class form_processor():
             b'PACK': form_processor.save_pack_data,
             b'PERK': form_processor.save_perk_data,
             b'PROJ': form_processor.save_proj_data,
+            b'PLYR': form_processor.save_plyr_data, #Probably should never see
             b'QUST': form_processor.save_qust_data,
             b'RACE': form_processor.save_race_data,
             b'REGN': form_processor.save_regn_data,
             b'RELA': form_processor.save_rela_data,
             b'RFCT': form_processor.save_rfct_data,
+            b'RGDL': form_processor.save_rgdl_data,
             b'SCEN': form_processor.save_scen_data,
+            b'SCOL': form_processor.save_scol_data,
             b'SCRL': form_processor.save_scrl_data,
             b'SHOU': form_processor.save_shou_data,
             b'SLGM': form_processor.save_slgm_data,
@@ -1750,6 +1754,19 @@ class form_processor():
             offset += field_size + 6
 
         return [i, bytearray(form), proj_offsets]
+    
+    def save_plyr_data(i, form):
+        plyr_fields = [b'PLYR']
+
+        plyr_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field, field_size, offset = form_processor.get_field_and_size(offset, form)
+            if field in plyr_fields and field_size >= 4:
+                plyr_offsets.append(offset + 6)
+            offset += field_size + 6
+
+        return [i, bytearray(form), plyr_offsets]
 
     def save_qust_data(i, form): 
         qust_fields = [b'QTGL', b'NAM0', b'ALCO', b'ALEQ', b'KNAM', b'ALRT', b'ALFL', b'ALFR', b'ALUA', b'CNTO', b'SPOR', b'OCOR', b'GWOR', b'ECOR', b'ALDN',
@@ -1887,6 +1904,25 @@ class form_processor():
 
         return [i, bytearray(form), rfct_offsets]
     
+    def save_rgdl_data(i, form): 
+        rgdl_fields = [b'XNAM', b'TNAM']
+        special_rgdl_fields = [b'VMAD', b'CTDA']
+
+        rgdl_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field, field_size, offset = form_processor.get_field_and_size(offset, form)
+            if field in rgdl_fields and field_size >= 4:
+                rgdl_offsets.append(offset + 6)
+            elif field in special_rgdl_fields:
+                if field == b'VMAD':
+                    rgdl_offsets.extend(form_processor.vmad_reader(form, offset))
+                elif field == b'CTDA':
+                    rgdl_offsets.extend(form_processor.ctda_reader(form, offset))
+            offset += field_size + 6
+
+        return [i, bytearray(form), rgdl_offsets]
+    
     def save_scen_data(i, form): 
         scen_fields = [b'PNAM', b'DATA']
         special_scen_fields = [b'VMAD', b'CTDA']
@@ -1905,6 +1941,20 @@ class form_processor():
             offset += field_size + 6
 
         return [i, bytearray(form), scen_offsets]
+    
+    def save_scol_data(i, form):
+        scol_fields = [b'ONAM']
+        special_scol_fields = [b'MODS']
+
+        scol_offsets = [12]
+        offset = 24
+        while offset < len(form):
+            field, field_size, offset = form_processor.get_field_and_size(offset, form)
+            if field in scol_fields and field_size >= 4:
+                scol_offsets.append(offset + 6)
+            elif field in special_scol_fields:
+                if field == b'MODS':
+                    scol_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
 
     def save_scrl_data(i, form): 
         scrl_fields = [b'MDOB', b'ETYP', b'YNAM', b'ZNAM', b'EFID']
