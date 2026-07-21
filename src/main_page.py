@@ -21,6 +21,21 @@ from patch_new import patch_new
 from log_stream import log_stream, write_error, write_normal, write_patching, write_progress, write_remove, write_to_file, clear_and_close_log, clear_and_leave_log_open
 from file_defined_patcher_conditions import user_and_master_conditions_class
 
+import platform
+import psutil
+if platform.system() == 'Windows':
+    from win32 import win32file
+    win32file._setmaxstdio(8192)
+
+total_ram = psutil.virtual_memory().available
+usable_ram = total_ram * 0.90
+thread_memory_usage = 30 * 1024 * 1024
+max_threads = max(1, int(usable_ram / thread_memory_usage))
+if max_threads > 8192:
+    MAX_THREADS = 8192
+else:
+    MAX_THREADS = max_threads
+
 class main(QWidget):
     def __init__(self, eslifier, COLOR_MODE):
         super().__init__()
@@ -1387,40 +1402,73 @@ class HashWorker(QObject):
         self.files = files
         self.new_file_hashes:dict = new_file_hashes
         self.get_rel_path = get_rel_path
+        self.lock = threading.Lock()
 
     def run(self):
-        size = 0
-        file_count = 0
-        files_to_remove = []
-        changed_hashes = []
-        to_hash_len = len(self.files)
+        self.size = 0
+        self.file_count = 0
+        self.files_to_remove = []
+        self.changed_hashes = []
+        self.to_hash_len = len(self.files)
         processed_str = ('-    ' + self.tr("Processed: %1%") + 
                        '\n-    ' + self.tr("Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
-        progress = 1
-        for file in self.files:
-            progress += 1
-            factor = round(to_hash_len * 0.01)
+        split = self.to_hash_len
+        if split > MAX_THREADS:
+            split = MAX_THREADS
+        chunk_size = self.to_hash_len // split
+        chunks = [self.files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
+        chunks.append(self.files[split * chunk_size:])
+        self.count = 0
+        self.hash_progress = 0
+        threads: list[threading.Thread] = [] 
+        for chunk in chunks:
+            thread = threading.Thread(target=self.hash_files, args=(chunk,))
+            threads.append(thread)
+            thread.start()
+
+        for thread in threads: thread.join()
+
+        write_progress(100, 1, processed_str.format(100.0, self.to_hash_len, self.to_hash_len))
+        self.finished.emit({
+            "size": self.size,
+            "file_count": self.file_count,
+            "files_to_remove": self.files_to_remove,
+            "changed_hashes": self.changed_hashes
+        })
+
+    def hash_files(self, files):
+        local_size = 0
+        local_file_count = 0
+        local_files_to_remove = []
+        local_changed_hashes = []
+        local_new_file_hashes = {}
+        processed_str = ('-    ' + self.tr("Processed: %1%") + 
+                       '\n-    ' + self.tr("Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
+        for file in files:
+            self.hash_progress += 1
+            factor = round(self.to_hash_len * 0.001)
             if factor == 0:
                 factor = 1
-            if (progress % factor) >= (factor-1):
-                percentage = round((progress / to_hash_len) * 100, 1)
-                write_progress(round(percentage), 1, processed_str.format(percentage, progress, to_hash_len))
+            if (self.hash_progress % factor) >= (factor-1):
+                percentage = round((self.hash_progress / self.to_hash_len) * 100, 1)
+                write_progress(round(percentage), 1, processed_str.format(percentage, self.hash_progress, self.to_hash_len))
             with open(file, 'rb') as f: 
                 sha256_hash = hashlib.sha256(f.read()).hexdigest()
                 f.close()
             rel_path = self.get_rel_path(file).lower()
             old_hash, changed = self.new_file_hashes.get(rel_path, (None, False))
             if old_hash == None or (old_hash == sha256_hash and not changed): 
-                files_to_remove.append(file) 
-                size += os.path.getsize(file)
-                file_count += 1
+                local_files_to_remove.append(file) 
+                local_size += os.path.getsize(file)
+                local_file_count += 1
             else: 
-                self.new_file_hashes[rel_path] = (old_hash, True) 
-                changed_hashes.append((file, rel_path))
-        write_progress(100, 1, processed_str.format(100.0, to_hash_len, to_hash_len))
-        self.finished.emit({
-            "size": size,
-            "file_count": file_count,
-            "files_to_remove": files_to_remove,
-            "changed_hashes": changed_hashes
-        })
+                local_new_file_hashes[rel_path] = (old_hash, True)
+                local_changed_hashes.append((file, rel_path))
+
+        with self.lock:
+            self.size += local_size
+            self.file_count += local_file_count
+            self.files_to_remove.extend(local_files_to_remove)
+            self.changed_hashes.extend(local_changed_hashes)
+            for key, item in local_new_file_hashes.items():
+                self.new_file_hashes[key] = item
