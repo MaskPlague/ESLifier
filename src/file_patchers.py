@@ -21,26 +21,32 @@ class patchers():
         return len(text)
     
     def facegeom_mesh_patcher(basename: str, new_file: str, form_id_map: dict):
+        bytes_basename = bytes(basename, 'utf-8')
+        basename_len = len(bytes_basename)
         with open(new_file, 'rb+') as f:
-            data = f.readlines()
-            bytes_basename = bytes(basename, 'utf-8')
-            form_id_dict = {old.lower().encode(): new.upper().encode() for old, new in form_id_map.items() if isinstance(old, str)}
-            for i, line in enumerate(data):
-                line_lower = line.lower()
-                if bytes_basename in line_lower: #check for plugin name, in file path, in line of nif file.
-                    count = line_lower.count(bytes_basename)
-                    start = 0
-                    for _ in range(count):
-                        esp_index = line_lower.find(bytes_basename, start)
-                        if esp_index == -1:
-                            break
-                        index = esp_index+ len(bytes_basename) + 3
-                        start = esp_index + 1
-                        to_id = form_id_dict.get(line[index:index+6].lower(), None)
-                        if to_id is not None:
-                            data[i] = data[i][:index] + to_id + data[i][index+6:]
+            org_data = f.read()
+            data_lower = org_data.lower()
+            data = bytearray(org_data)
+            start = 0
+            while True:
+                esp_index = data_lower.find(bytes_basename, start)
+                if esp_index == -1:
+                    break
+                    
+                index = esp_index + basename_len + 3
+                
+                if index + 6 <= len(data):
+                    to_id = form_id_map.get(bytes(data_lower[index:index+6]), None)
+                    
+                    if to_id is not None:
+                        data[index:index+6] = to_id
+                        
+                start = esp_index + 1
+
             f.seek(0)
-            f.writelines(data)
+            f.truncate(0)
+            f.write(data)
+            f.close()
 
     def seq_patcher(new_file: str, form_id_map: dict, updated_master_index:int, master_byte: bytes, update_byte: bool):
         with open(new_file, 'rb+') as f:

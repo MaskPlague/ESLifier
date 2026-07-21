@@ -385,10 +385,10 @@ class CFIDs():
             
             rel_path = self.get_rel_path(file)
             if 'facegendata' in file.lower(): # Meshes
-                with self.semaphore:
-                    from_id = file[-10:-4]
-                    to_id = self.form_id_map.get(from_id.lower(), None)
-                    if to_id is not None:
+                from_id = file[-10:-4]
+                to_id = self.form_id_map.get(from_id.lower(), None)
+                if to_id is not None:
+                    with self.semaphore:
                         new_file, rel_path_new_file = self.copy_file_to_output(file)
                         renamed_file = new_file[:-10] + to_id.upper() + new_file[-4:]
                         with self.lock:
@@ -402,11 +402,11 @@ class CFIDs():
                             if 'facegeom' in new_file.lower() and master_base_name.lower() in new_file.lower():
                                 facegeom_meshes.append(renamed_file)
             elif file[-6] == "_" or file[-7] == "_": # Voice
-                with self.semaphore:
-                    index = file.rfind('_') - 6
-                    from_id = file[index:index+6]
-                    to_id = self.form_id_map.get(from_id.lower(), None)
-                    if to_id is not None:
+                index = file.rfind('_') - 6
+                from_id = file[index:index+6]
+                to_id = self.form_id_map.get(from_id.lower(), None)
+                if to_id is not None:
+                    with self.semaphore:
                         new_file, rel_path_new_file = self.copy_file_to_output(file)
                         index = new_file.rfind('_') - 6
                         renamed_file = new_file[:index] + to_id.upper() + new_file[index+6:]
@@ -439,11 +439,13 @@ class CFIDs():
             from_id_hex = bytes.fromhex(form_id_conversion[0])[:3][::-1].hex().upper()
             from_id_int = int.from_bytes(bytes.fromhex(form_id_conversion[0])[:3], byteorder='little')
             from_id_bytes = bytes.fromhex(form_id_conversion[0])
+            from_id_hex_bytes_lower = from_id_hex.lower().encode() 
 
             to_id_hex = bytes.fromhex(form_id_conversion[1])[:3][::-1].hex().upper()
             to_id_int = int.from_bytes(bytes.fromhex(form_id_conversion[1])[:3], byteorder='little')
             to_id_bytes = bytes.fromhex(form_id_conversion[1])
             to_id_hex_no_0 = to_id_hex.lstrip('0')
+            to_id_hex_bytes_upper = to_id_hex.encode()
             if to_id_hex_no_0 == '':
                 to_id_hex_no_0 = '0'
             
@@ -462,6 +464,7 @@ class CFIDs():
             
             self.form_id_map[from_id_bytes] = to_id_bytes
             self.form_id_map[from_id_hex.lower()] = to_id_hex.lower()
+            self.form_id_map[from_id_hex_bytes_lower] = to_id_hex_bytes_upper
 
     def patch_files_threader(self, master: str, files: list[str]):
         threads = []
