@@ -103,33 +103,71 @@ class CFIDs():
         new_file_hashes: dict = self.get_from_file("ESLifier_Data/new_file_hashes.json")
         local_compacted_and_patched = self.get_from_file("ESLifier_Data/compacted_and_patched.json")
         lowered_output = self.output_folder.lower()
+        write_normal(QCoreApplication.translate("CFIDs", "Getting files to hash..."))
         for _1, values in local_compacted_and_patched.items():
             for rel_path in values:
                 lower_rel_path = rel_path.lower()
                 if lower_rel_path not in to_hash and not lower_rel_path.endswith(('.pex', '.esp', '.esl', '.esm')):
                     full_path = os.path.normpath(os.path.join(lowered_output, lower_rel_path))
-                    to_hash[lower_rel_path] = full_path
-
+                    if os.path.exists(full_path):
+                        to_hash[lower_rel_path] = full_path
+        self.file_count = len(to_hash)
+        if self.file_count > 0:
+            split = self.file_count
+            if split > MAX_THREADS:
+                split = MAX_THREADS
+            chunk_size = self.file_count // split
+            items = list(to_hash.items())
+            chunks = [dict(items[i * chunk_size:(i + 1) * chunk_size]) for i in range(split)]
+            chunks.append(dict(items[split * chunk_size:]))
+            self.count = 0
+            self.hash_progress = 0
+            threads: list[threading.Thread] = [] 
+            processed_str = ('-    ' + QCoreApplication.translate("HashWorker", "Processed: %1%") + 
+                        '\n-    ' + QCoreApplication.translate("HashWorker", "Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
+            write_progress(0, 1, processed_str.format(0.0, 0, self.file_count))
+            for chunk in chunks:
+                thread = threading.Thread(target=self.hash_files, args=(chunk, files_to_not_hash, before_patching, new_file_hashes))
+                threads.append(thread)
+                thread.start()
+            
+            for thread in threads: 
+                thread.join()
+        
+            write_progress(100, 1, processed_str.format(100.0, self.file_count, self.file_count))
+            self.dump_dictionary("ESLifier_Data/new_file_hashes.json", new_file_hashes)
+    
+    def hash_files(self, to_hash, files_to_not_hash: set, before_patching, new_file_hashes: dict):
+        processed_str = ('-    ' + QCoreApplication.translate("HashWorker", "Processed: %1%") + 
+                       '\n-    ' + QCoreApplication.translate("HashWorker", "Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
+        local_new_file_hashes = {}
         for lower_rel_path, file in to_hash.items():
+            self.hash_progress += 1
+            factor = round(self.file_count * 0.01)
+            if factor == 0:
+                factor = 1
+            if (self.hash_progress % factor) >= (factor-1):
+                percentage = round((self.hash_progress / self.file_count) * 100, 1)
+                write_progress(round(percentage), 1, processed_str.format(percentage, self.hash_progress, self.file_count))
             if file not in files_to_not_hash:
-                if os.path.exists(file):
-                    try:
-                        with open(file, 'rb') as f:
-                            sha256_hash = hashlib.sha256(f.read()).hexdigest()
-                            f.close()
-                        old_hash, changed = new_file_hashes.get(lower_rel_path, (None, False))
-                        if not before_patching:
-                            new_file_hashes[lower_rel_path] = (sha256_hash, changed)
-                        elif before_patching:
-                            if old_hash != None and old_hash != sha256_hash:
-                                new_file_hashes[lower_rel_path] = (sha256_hash, True)
-                            else:
-                                new_file_hashes[lower_rel_path] = (sha256_hash, changed)
-                    except Exception as e:
-                        write_error(QCoreApplication.translate("CFIDs","Failed to hash file: ") + file)
-                        write_error(e, True)
-
-        self.dump_dictionary("ESLifier_Data/new_file_hashes.json", new_file_hashes)
+                try:
+                    with open(file, 'rb') as f:
+                        sha256_hash = hashlib.sha256(f.read()).hexdigest()
+                        f.close()
+                    old_hash, changed = new_file_hashes.get(lower_rel_path, (None, False))
+                    if not before_patching:
+                        local_new_file_hashes[lower_rel_path] = (sha256_hash, changed)
+                    elif before_patching:
+                        if old_hash != None and old_hash != sha256_hash:
+                            local_new_file_hashes[lower_rel_path] = (sha256_hash, True)
+                        else:
+                            local_new_file_hashes[lower_rel_path] = (sha256_hash, changed)
+                except Exception as e:
+                    write_error(QCoreApplication.translate("CFIDs","Failed to hash file: ") + file)
+                    write_error(e, True)
+        with self.lock:
+            for key, item in local_new_file_hashes.items():
+                new_file_hashes[key] = item
 
     def compact_and_patch(self, file_to_compact: str, dependents: list, all_dependents_have_skyrim_esm_as_master: bool,
                            add_cell_to_master: bool, files_to_patch: dict):
