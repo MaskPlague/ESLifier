@@ -61,7 +61,7 @@ class scanner():
         user_ignored_files = [item.lower() for item in scanner.get_from_file("ESLifier_Data/ignored_files.json", list)]
         master_ignored_files.extend(user_ignored_files)
 
-        scanner.ignored_files = tuple(master_ignored_files)
+        scanner.ignored_files = set(master_ignored_files)
         scanner.file_extensions = tuple([item.lower() for item in ('.ini', '.json', '.jslot', '.toml', '_conditions.txt', '.yaml', '.yml')])
 
         exclude_contains = [item.lower() for item in (
@@ -163,7 +163,7 @@ class scanner():
         loop = 0
         plugin_extensions = ('.esp', '.esm', '.esl')
         bsa_list = []
-        temp_rel_paths = []
+        temp_rel_paths = set()
         gathered_str = '-  ' + QCoreApplication.translate("scanner", "Gathered: ")
         write_normal(gathered_str, False)
         for root, _, files in os.walk(path):
@@ -181,7 +181,7 @@ class scanner():
                 full_path = os.path.join(root, file)
                 rel_path = os.path.relpath(full_path, path).lower()
                 scanner.all_files.append(full_path)
-                temp_rel_paths.append(rel_path)
+                temp_rel_paths.add(rel_path)
                 if path_level == root_level and file_lower.endswith(plugin_extensions):
                     scanner.plugins.append(full_path)
                 if path_level == root_level and file_lower.endswith('.bsa') and file_lower not in scanner.bsa_blacklist:
