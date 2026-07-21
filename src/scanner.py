@@ -213,11 +213,10 @@ class scanner():
                     write_error(QCoreApplication.translate("scanner", "Error Reading BSA: ") + file)
                     write_error(e, True)
                 write_remove(2, "")
-
-        mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
+        cwd = os.getcwd()
+        mod_folder = os.path.join(cwd, 'bsa_extracted/')
         loop = 0
         for root, _, files in os.walk('bsa_extracted/'):
-            #scanner.file_count += len(files)
             for file in files:
                 scanner.file_count += 1
                 if loop == 75: #prevent spamming stdout and slowing down the program
@@ -227,7 +226,7 @@ class scanner():
                     loop += 1
                 if file.lower() in scanner.ignored_files:
                     continue
-                full_path = os.path.join(root, file)
+                full_path = os.path.normpath(os.path.join(cwd, root, file))
                 relative_path = os.path.relpath(full_path, mod_folder).lower()
                 if relative_path not in temp_rel_paths:
                     scanner.all_files.append(full_path)
