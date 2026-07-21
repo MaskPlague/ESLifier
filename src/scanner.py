@@ -215,15 +215,16 @@ class scanner():
                 write_remove(2, "")
 
         mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
-
-        for root, dirs, files in os.walk('bsa_extracted/'):
-            scanner.file_count += len(files)
-            if loop == 50: #prevent spamming stdout and slowing down the program
-                loop = 0
-                write_remove(1, gathered_str + str(scanner.file_count))
-            else:
-                loop += 1
+        loop = 0
+        for root, _, files in os.walk('bsa_extracted/'):
+            #scanner.file_count += len(files)
             for file in files:
+                scanner.file_count += 1
+                if loop == 75: #prevent spamming stdout and slowing down the program
+                    loop = 0
+                    write_remove(1, gathered_str + str(scanner.file_count))
+                else:
+                    loop += 1
                 if file.lower() in scanner.ignored_files:
                     continue
                 full_path = os.path.join(root, file)
