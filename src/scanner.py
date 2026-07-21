@@ -25,9 +25,9 @@ from PyQt6.QtCore import QCoreApplication
 
 class scanner():    
     def scan(full_scan: bool) -> tuple[dict, dict] | None:
-        scanner.bsa_blacklist = ['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
+        scanner.bsa_blacklist = set(['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
                     'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
-                    'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa']
+                    'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa'])
         start_time = timeit.default_timer()
         settings: dict = scanner.get_from_file('ESLifier_Data/settings.json', dict)
         path: str = settings.get('skyrim_folder_path', '')
@@ -115,7 +115,7 @@ class scanner():
         else:
             scanner.get_files_from_skyrim_folder(path, plugins_list)
 
-        scanner.plugin_basename_list = [os.path.basename(plugin).lower() for plugin in scanner.plugins]
+        scanner.plugin_basename_list: set = set([os.path.basename(plugin).lower() for plugin in scanner.plugins])
 
         scanner.dump_to_file(file="ESLifier_Data/extracted_bsa.json", data=scanner.extracted)
         scanner.dump_to_file(file="ESLifier_Data/plugin_list.json", data=scanner.plugins)
@@ -385,7 +385,7 @@ class scanner():
 
         return mod_files, plugin_names, cases_of_files
 
-    def get_modlist(path: str) -> tuple[list[str], list[str]]:
+    def get_modlist(path: str) -> tuple[list[str], set[str]]:
         load_order = []
         try:
             with open(path, 'r', encoding='utf-8') as f:
@@ -417,7 +417,7 @@ class scanner():
         load_order.append('bsa_extracted_eslifier_scan')
         load_order.reverse()
         load_order.append('overwrite_eslifier_scan')
-        return load_order, enabled_mods
+        return load_order, set(enabled_mods)
     
     def get_plugins_list(path: str) -> list:
         lines = []
@@ -774,10 +774,10 @@ class scanner():
                 offset += 2 + struct.unpack('>H', data[offset:offset+2])[0]
                 string_count = struct.unpack('>H', data[offset:offset+2])[0]
                 offset += 2
-                strings = []
+                strings = set()
                 for _ in range(string_count):
                     string_length = struct.unpack('>H', data[offset:offset+2])[0]
-                    strings.append(data[offset+2:offset+2+string_length].lower().decode())
+                    strings.add(data[offset+2:offset+2+string_length].lower().decode())
                     offset += 2 + string_length
                 if 'getformfromfile' in strings: #or 'getmodbyname' in strings:
                     for string in strings:
@@ -808,7 +808,7 @@ class scanner():
             write_error(e, True)
 
     def bsa_reader(bsa_file):
-        plugins = []
+        plugins = set()
         pattern_1 = re.compile(rb'([^\\]+\.es[pml])')
         try:
             with scanner.file_semaphore:
@@ -845,7 +845,7 @@ class scanner():
                                 if match:
                                     plugin = match.group(0).decode()
                                     if plugin not in plugins:
-                                        plugins.append(plugin)
+                                        plugins.add(plugin)
                             time = timeit.default_timer() - start_time
                             offset += folder_record_size
                         if time > max_time:
@@ -853,9 +853,9 @@ class scanner():
                         mm.close()
                     f.close()
 
-            if plugins != []:
+            if plugins:
                 with scanner.lock:
-                    scanner.bsa_dict[bsa_file] = plugins
+                    scanner.bsa_dict[bsa_file] = list(plugins)
         except Exception as e:
             write_error(QCoreApplication.translate("scanner", "Error Reading BSA: ") + bsa_file)
             write_error(e, True)
