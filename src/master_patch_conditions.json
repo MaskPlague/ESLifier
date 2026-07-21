@@ -1,5 +1,5 @@
 {
-    "version": 18,
+    "version": 19,
     "conditions": [
         {
             "extension": "json",
@@ -125,6 +125,12 @@
             "contains": "Plugins/Recast/Patches/",
             "fid_start": "0x00",
             "to_id_key": "hex",
+            "patcher": "ini_formid_sep_plugin"
+        },
+        {
+            "extension": "ini",
+            "endswith": "_CRD.ini",
+            "separator": " ~ ",
             "patcher": "ini_formid_sep_plugin"
         }
     ]
