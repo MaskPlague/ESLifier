@@ -291,6 +291,14 @@ class main(QWidget):
                 checked.append(self.list_compact.item(row, self.list_compact.MOD_COL).toolTip())
         if checked != []:
             file_masters = self.get_from_file('ESLifier_Data/file_masters.json')
+            bsa_dict: dict = self.get_from_file('ESLifier_Data/bsa_dict.json')
+            bsa_masters = {}
+            for key, items in bsa_dict.items():
+                for item in items:
+                    if item in bsa_masters:
+                        bsa_masters[item].append(key)
+                    else:
+                        bsa_masters[item] = [key]
             self.confirm = self.create_confirmation(icon=QMessageBox.Icon.Information)
             self.confirm.setWindowTitle(self.tr("Getting estimated disk usage..."))
             self.confirm.setText(self.tr('Getting estimated disk usage...'))
@@ -323,17 +331,23 @@ class main(QWidget):
                         if file_lower not in counted and os.path.exists(file):
                             size += os.path.getsize(file)
                             counted.add(file_lower)
+                if mod_basename in bsa_masters:
+                    for file in bsa_masters[mod_basename]:
+                        file_lower = file.lower()
+                        if file_lower not in counted and os.path.exists(file):
+                            size += os.path.getsize(file)
+                            counted.add(file_lower)
             total, used, free = shutil.disk_usage(self.output_folder_path)
             free_space = round(free / (1024**3), 3)
             if size > 1024 ** 3:
                 calculated_size = round(size / (1024 ** 3), 3)
-                self.confirm.setText(self.tr("This may generate up to %1 GBs of new files\nand you have %2 GBs of space left.\nAre you sure you want to continue?").replace("%1", str(calculated_size)).replace("%2", str(free_space)))
+                self.confirm.setText(self.tr("This may generate up to %1 GBs of new files\nand you have %2 GBs of space left (this may be inaccurate due to unpacking compressed BSA).\nAre you sure you want to continue?").replace("%1", str(calculated_size)).replace("%2", str(free_space)))
             elif size > 1048576:
                 calculated_size = round(size / 1048576, 2)
-                self.confirm.setText(self.tr("This may generate up to %1 MBs of new files\nand you have %2 GBs of space left.\nAre you sure you want to continue?").replace("%1", str(calculated_size)).replace("%2", str(free_space)))
+                self.confirm.setText(self.tr("This may generate up to %1 MBs of new files\nand you have %2 GBs of space left (this may be inaccurate due to unpacking compressed BSA).\nAre you sure you want to continue?").replace("%1", str(calculated_size)).replace("%2", str(free_space)))
             else:
                 calculated_size = round(size / 1024, 2)
-                self.confirm.setText(self.tr("This may generate up to %1 KBs of new files\nand you have %2 GBs of space left.\nAre you sure you want to continue?").replace("%1", str(calculated_size)).replace("%2", str(free_space)))
+                self.confirm.setText(self.tr("This may generate up to %1 KBs of new files\nand you have %2 GBs of space left (this may be inaccurate due to unpacking compressed BSA).\nAre you sure you want to continue?").replace("%1", str(calculated_size)).replace("%2", str(free_space)))
             if size >= free:
                 self.confirm.setText(self.tr('Not enough space!\nNeeded space: %1\nSpace left: %2 GBs').replace("%1", str((round(size / 1024**3,3)))).replace("%2", str(free_space)))
                 self.confirm.removeButton(QMessageBox.StandardButton.Yes)
