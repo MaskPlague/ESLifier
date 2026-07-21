@@ -49,7 +49,7 @@ class CFIDs():
         self.winning_file_history_dict = winning_file_history_dict
         self.compacted_and_patched: dict[str, list[str]] = compacted_and_patched
         self.master_byte_data = master_byte_data
-        self.bsa_masters = bsa_masters
+        self.bsa_masters = set(bsa_masters)
         self.bsa_dict = bsa_dict
         self.persistent_ids: bool = persistent_ids
         self.free_non_existent: bool = free_non_existent
@@ -98,7 +98,7 @@ class CFIDs():
             data = {}
         return data
 
-    def hash_output_files(self, files_to_not_hash: list[str], before_patching:bool = False) -> dict:
+    def hash_output_files(self, files_to_not_hash: set[str], before_patching:bool = False) -> dict:
         to_hash = {}
         new_file_hashes: dict = self.get_from_file("ESLifier_Data/new_file_hashes.json")
         local_compacted_and_patched = self.get_from_file("ESLifier_Data/compacted_and_patched.json")
@@ -167,10 +167,10 @@ class CFIDs():
                             write_error(QCoreApplication.translate("CFIDs", "Error Reading BSA: ") + bsa_file)
                             write_error(e, True)
                                             
-                rel_paths = []
+                rel_paths = set()
                 for file in patch_or_rename:
                     rel_path: str = self.get_rel_path(file)
-                    rel_paths.append(rel_path.lower())
+                    rel_paths.add(rel_path.lower())
 
                 start = os.path.join(os.getcwd(), 'bsa_extracted_temp')
                 for root, dir, files in os.walk('bsa_extracted_temp/'):
@@ -179,7 +179,7 @@ class CFIDs():
                         rel_path = os.path.relpath(full_path, start).lower()
                         if rel_path not in rel_paths and file.endswith(('.nif', '.dds', '.fuz', '.xwm', '.wav', '.lip')):
                             patch_or_rename.append(full_path)
-                            rel_paths.append(rel_path)
+                            rel_paths.add(rel_path)
                 
             to_patch, to_rename = self.sort_files_to_patch_or_rename(file_to_compact, patch_or_rename) #function to get files that need to be edited in some way to function correctly.
             if len(to_patch) > 0:
@@ -296,8 +296,8 @@ class CFIDs():
         files_to_patch = []
         files_to_rename = []
         split_name = os.path.splitext(os.path.basename(master))[0].lower()
-        matchers = ['.pex', '.ini', '_conditions.txt', '.json', '.jslot', '.yaml', '.yml',
-                    split_name + '.seq', '.toml', 'netscriptframework\\plugins\\customskill']
+        matchers = set(['.pex', '.ini', '_conditions.txt', '.json', '.jslot', '.yaml', '.yml',
+                    split_name + '.seq', '.toml', 'netscriptframework\\plugins\\customskill'])
         for file in files:
             file_lower = file.lower()
             if any(match in file_lower for match in matchers):
@@ -595,7 +595,7 @@ class CFIDs():
             new_cell_form_ids = self.create_cell_master_class.add_cells(data_list, grup_struct, master_count, os.path.basename(file))
             data_list, updated_master_index = self.add_cell_master_to_masters(data_list)
 
-        form_id_list = []
+        form_id_list: list[bytes, bytes] = []
         #Get all new form ids in plugin
         for form in data_list:
             if form[:4] not in (b'GRUP', b'TES4') and form[15] >= master_count and [form[12:16], form[:4]] not in form_id_list:
@@ -610,7 +610,7 @@ class CFIDs():
 
         form_id_list.sort(key= lambda x: struct.unpack('<I', x[0])[0])
 
-        all_form_ids_list = [form_id for form_id, record_type in form_id_list]
+        all_form_ids_list = set([form_id for form_id, record_type in form_id_list])
 
         if self.update_header and master_count != 0 and has_skyrim_esm_master and all_dependents_have_skyrim_esm_as_master:
             new_id = binascii.unhexlify(master_count.to_bytes().hex() + '000000')
@@ -639,16 +639,16 @@ class CFIDs():
             form_id_list.remove([old_id, type])
             new_form_ids.remove([new_decimal, new_id])
 
-        matched_ids = []
+        matched_ids = set()
         form_id_replacements = []
         #If a form id map already exists we want to compact the Form IDs the exact same as they were before
         if self.persistent_ids and os.path.exists(form_id_file_name):
             with open(form_id_file_name, 'r', encoding='utf-8') as f:
                 form_id_file_data = f.readlines()
             if self.do_generate_cell_master:
-                old_ids_of_new_cells = [old_id for old_id, new_id in new_cell_form_ids]
+                old_ids_of_new_cells = set([old_id for old_id, new_id in new_cell_form_ids])
             else:
-                old_ids_of_new_cells = []
+                old_ids_of_new_cells = set()
             for i in range(len(form_id_file_data)):
                 form_id_conversion = form_id_file_data[i].split('|')
                 from_id = bytes.fromhex(form_id_conversion[0])[:3] + master_byte
@@ -664,8 +664,8 @@ class CFIDs():
                 elif not self.free_non_existent:
                     form_id_replacements.append([from_id, to_id])
         if len(form_id_replacements) > 0:
-            matched_from_ids = [from_id[:4] for from_id, to_id in form_id_replacements]
-            matched_to_ids = [to_id[:4] for from_id, to_id in form_id_replacements]
+            matched_from_ids = set([from_id[:4] for from_id, to_id in form_id_replacements])
+            matched_to_ids = set([to_id[:4] for from_id, to_id in form_id_replacements])
             form_id_list[:] = [[old_id, type] for old_id, type in form_id_list if old_id not in matched_from_ids]
             new_form_ids[:] = [[new_decimal, new_id] for new_decimal, new_id in new_form_ids if new_id not in matched_to_ids]
 
@@ -679,7 +679,7 @@ class CFIDs():
                     if new_last_two_digits == last_two_digits:
                         form_id_replacements.append([form_id, new_id])
                         new_form_ids.remove([new_decimal, new_id])
-                        matched_ids.append(form_id)
+                        matched_ids.add(form_id)
                         break
 
         for form_id, _ in form_id_list:
@@ -716,7 +716,7 @@ class CFIDs():
         form_id_replacements_no_master_byte = {old_id[:3]: new_id[:3] if len(new_id) <= 4 else new_id[:4] for old_id, new_id in form_id_replacements}
         
         data_list = form_processor.patch_form_data(data_list, saved_forms, form_id_replacements_no_master_byte, master_byte, 
-                                                   set(all_form_ids_list), self.do_generate_cell_master, updated_master_index)
+                                                   all_form_ids_list, self.do_generate_cell_master, updated_master_index)
 
         data_list, sizes_list = self.recompress_data(data_list, sizes_list)
 
