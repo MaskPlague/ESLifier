@@ -202,9 +202,9 @@ class scanner():
         extracting_str = QCoreApplication.translate("scanner", "Extracting %0/%1 BSA files (%2)").replace("%0", "{0}").replace("%1", "{1}").replace("%2", "{2}")
         for i, tup in enumerate(filtered_bsa_list):
             file = tup[1]
-            write_remove(1, extracting_str.format(i+1, bsa_length, os.path.basename(file)), True)
-            write_normal("",False)
             if file not in scanner.extracted:
+                write_remove(1, extracting_str.format(i+1, bsa_length, os.path.basename(file)), True)
+                write_normal("",False)
                 try:
                     scanner.extract_bsa(file, startupinfo, update_time, ".pex")
                     scanner.extract_bsa(file, startupinfo, update_time, ".seq")
@@ -212,7 +212,7 @@ class scanner():
                 except Exception as e:
                     write_error(QCoreApplication.translate("scanner", "Error Reading BSA: ") + file)
                     write_error(e, True)
-            write_remove(2, "")
+                write_remove(2, "")
 
         mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
 
