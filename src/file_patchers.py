@@ -262,7 +262,7 @@ class patchers():
             lines = f.readlines()
             print_replace = True
             for i, line in enumerate(lines):
-                if basename in line.lower() and sep in line and not line.startswith(';'):
+                if sep+basename in line.lower() and not line.startswith(';'):
                     count = line.lower().count(sep)
                     start = 0
                     final_index = line.index(';') if ';' in line else None
@@ -273,11 +273,11 @@ class patchers():
                         if final_index is not None and start_index > final_index:
                             continue
                         end_index = line.index('.es', middle_index) + 4
-                        plugin = line.lower()[middle_index+1:end_index].strip()
+                        plugin = line.lower()[middle_index+len(sep):end_index].strip()
                         start_of_line = line[:start_index+1]
                         end_of_line = line[middle_index:]
                         form_id = line[start_index+1:middle_index].strip()
-                        start = middle_index+1
+                        start = middle_index+len(sep)
                         if not form_id.lower().startswith('0x'):
                             continue
                         if len(form_id) > 8: # 0x accounts for 2
@@ -2401,7 +2401,7 @@ class patchers():
 
 #if __name__ == '__main__':
 #    basename = "thing.esp".lower()
-#    form_id_map = {int('0xB3C5',16): {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'bytes': b'\x00\x0A\x0A', 'update_name': False}, 
+#    form_id_map = {int('0x3004EB',16): {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'bytes': b'\x00\x0A\x0A', 'update_name': False}, 
 #                   int('0x12345',16): {'hex_no_0': 'B0B', 'hex': '000B0B', "int": 10101, 'bytes': b'\x00\x0B\x0B', 'update_name': True}}
 #    new_file = os.path.normpath(r)
-#    patchers.json_rim_combat_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
+#    patchers.ini_formid_sep_plugin_patcher(basename, new_file, form_id_map, sep=" ~ ", encoding_method='utf-8')
