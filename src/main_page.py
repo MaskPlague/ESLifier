@@ -750,8 +750,10 @@ class main(QWidget):
                 QTimer.singleShot(3000, enable_and_set_text)
                 confirm2.show()
             self.calculate_stats()
+            clear_and_close_log()
 
         confirm.accepted.connect(accepted)
+        confirm.rejected.connect(clear_and_close_log)
         confirm.show()
 
     def rebuild_output(self):
@@ -812,6 +814,7 @@ class main(QWidget):
             self.scan()
 
         confirm.accepted.connect(accepted)
+        confirm.rejected.connect(clear_and_close_log)
         confirm.show()
 
     def reset_bsa(self):
@@ -977,7 +980,6 @@ class main(QWidget):
 
         write_normal(self.tr("Hashing for changes complete."))
         write_normal(self.tr("Found %1 changed files.").replace("%1", str(len(changed_hashes))))
-        clear_and_close_log()
         changed_rel_paths_to_switch = []
 
         if changed_hashes:
