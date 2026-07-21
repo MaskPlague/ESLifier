@@ -35,14 +35,14 @@ class CFIDs():
     def __init__(self, skyrim_folder_path: str, output_folder_path: str, output_folder_name: str, overwrite_path: str, update_header: bool, mo2_mode: bool,
                   create_cell_master_class: create_new_cell_plugin, original_files: dict, winning_files_dict: dict, winning_file_history_dict: dict,
                   compacted_and_patched: dict, master_byte_data:dict, bsa_masters: list, bsa_dict: dict, persistent_ids: bool, free_non_existent: bool,
-                  additional_file_patcher_conditions, all_patcher_experimental):
-        self.skyrim_folder_path = os.path.normpath(skyrim_folder_path)
-        self.output_folder_path = os.path.normpath(output_folder_path)
-        self.output_folder_name = os.path.normpath(output_folder_name)
-        self.output_folder = os.path.normpath(os.path.join(output_folder_path, output_folder_name))
-        self.overwrite_path = os.path.normpath(overwrite_path)
-        self.mo2_mode = mo2_mode
-        self.update_header = update_header
+                  additional_file_patcher_conditions, all_patcher_experimental: bool):
+        self.skyrim_folder_path: str = os.path.normpath(skyrim_folder_path)
+        self.output_folder_path: str = os.path.normpath(output_folder_path)
+        self.output_folder_name: str = os.path.normpath(output_folder_name)
+        self.output_folder: str = os.path.normpath(os.path.join(output_folder_path, output_folder_name))
+        self.overwrite_path: str = os.path.normpath(overwrite_path)
+        self.mo2_mode: bool = mo2_mode
+        self.update_header: bool = update_header
         self.create_cell_master_class = create_cell_master_class
         self.original_files: dict = original_files
         self.winning_files_dict: dict = winning_files_dict
@@ -51,12 +51,12 @@ class CFIDs():
         self.master_byte_data = master_byte_data
         self.bsa_masters = bsa_masters
         self.bsa_dict = bsa_dict
-        self.persistent_ids = persistent_ids
-        self.free_non_existent = free_non_existent
+        self.persistent_ids: bool = persistent_ids
+        self.free_non_existent: bool = free_non_existent
         self.lock = threading.Lock()
         self.semaphore = threading.Semaphore(1000)
         self.additional_conditions = additional_file_patcher_conditions
-        self.all_patcher_experimental = all_patcher_experimental
+        self.all_patcher_experimental: bool = all_patcher_experimental
 
     def save_data(self):
         self.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json', self.compacted_and_patched)
