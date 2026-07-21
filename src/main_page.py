@@ -49,7 +49,7 @@ class main(QWidget):
         self.compact_worker = None
         self.patch_and_flag_worker = None
         self.scanner_worker = None
-        self.files_to_not_hash = []
+        self.files_to_not_hash = set()
         self.create()
 
     def create(self):
@@ -1127,10 +1127,10 @@ class main(QWidget):
                         total_size += os.path.getsize(item.toolTip())
                         total_file_count += 1
                     else:
-                        self.files_to_not_hash.append(item.toolTip().lower())
+                        self.files_to_not_hash.add(item.toolTip().lower())
             elif self.hash_changed_option == 'keep_all':
                 for file, rel_path in self.changed_hashes:
-                    self.files_to_not_hash.append(os.path.normpath(file).lower())
+                    self.files_to_not_hash.add(os.path.normpath(file).lower())
         if self.calculate_requester == 'reset_output':
             self.reset_output_next(files_to_remove, total_size, total_file_count, changed_rel_paths_to_switch)
         elif self.calculate_requester == 'rebuild_output':
@@ -1240,7 +1240,7 @@ class ScannerWorker(QObject):
 
 class CompactorWorker(QObject):
     finished_signal = pyqtSignal()
-    def __init__(self, checked, dependency_dictionary, files_to_not_hash, settings: dict):
+    def __init__(self, checked, dependency_dictionary, files_to_not_hash: set, settings: dict):
         super().__init__()
         self.checked = checked
         self.dependency_dictionary = dependency_dictionary
@@ -1254,7 +1254,7 @@ class CompactorWorker(QObject):
         self.generate_cell_master = settings.get('generate_cell_master', True)
         self.persistent_ids = settings.get('persistent_ids', True)
         self.free_non_existent = settings.get('free_non_existent', False)
-        self.files_to_not_hash = files_to_not_hash
+        self.files_to_not_hash: set = files_to_not_hash
         self.hash_output = settings.get('hash_output', True)
         self.all_patcher_experimental = settings.get('all_patcher_experimental', False)
         
@@ -1287,7 +1287,7 @@ class CompactorWorker(QObject):
                       self.persistent_ids, self.free_non_existent, additional_file_patcher_conditions, self.all_patcher_experimental)
         if self.hash_output:
             write_normal(self.tr("Hashing any existing files for changes..."))
-            cfids.hash_output_files([], True)
+            cfids.hash_output_files(set(), True)
         clear_and_leave_log_open()
         patching_str = self.tr("%0% Patching: %1/%2").replace("%0", "{0}").replace("%1", "{1}").replace("%2", "{2}")
         for file in self.checked:
@@ -1353,7 +1353,7 @@ class FlagWorker(QObject):
         winning_file_history_dict = {}
         additional_file_patcher_conditions = user_and_master_conditions_class()
         cfids = CFIDs(self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, True, self.mo2_mode, 
-                      None, original_files, winning_files_dict, winning_file_history_dict, None, None, None, None, None, None, additional_file_patcher_conditions, False)
+                      None, original_files, winning_files_dict, winning_file_history_dict, {}, {}, [], {}, None, None, additional_file_patcher_conditions, False)
         for file in self.files:
             original_files, winning_file_history_dict = cfids.set_flag(file)
         self.dump_dictionary('ESLifier_Data/original_files.json', original_files)
