@@ -497,30 +497,29 @@ class CFIDs():
 
     #Patches each file type in a different way as each has Form IDs present in a different format
     def patch_files(self, master: str, files: list[str]):
+        basename_cased = os.path.basename(master)
+        basename = basename_cased.lower()
+        local_compacted_and_patched_list = []
         for file in files:
             new_file, rel_path = self.copy_file_to_output(file)
             new_file_lower = new_file.lower()
-            basename = os.path.basename(master).lower()
-            try:
-                with self.semaphore:
-                    with self.lock:
-                        try:
-                            patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, self.form_id_map, 
-                                                                     self.master_byte, self.updated_master_index, self.do_generate_cell_master,
-                                                                     self.additional_conditions, 'utf-8')
-                        except Exception as e:
-                            exception_type = type(e)
-                            if exception_type == UnicodeDecodeError:
-                                patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, self.form_id_map, 
-                                                                         self.master_byte, self.updated_master_index, self.do_generate_cell_master,
-                                                                          self.additional_conditions, 'ansi')
-                            else:
-                                write_error(QCoreApplication.translate("CFIDs", "Failed to patch file: ") + new_file)
-                                write_error(e, True)
-                        self.compacted_and_patched[os.path.basename(master)].append(rel_path)
-            except Exception as e:
-                write_error(QCoreApplication.translate("CFIDs", "Failed to patch file: ") + new_file)
-                write_error(e, True)
+            with self.semaphore:
+                try:
+                    patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, self.form_id_map, 
+                                                                self.master_byte, self.updated_master_index, self.do_generate_cell_master,
+                                                                self.additional_conditions, 'utf-8')
+                except Exception as e:
+                    exception_type = type(e)
+                    if exception_type == UnicodeDecodeError:
+                        patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, self.form_id_map, 
+                                                                    self.master_byte, self.updated_master_index, self.do_generate_cell_master,
+                                                                    self.additional_conditions, 'ansi')
+                    else:
+                        write_error(QCoreApplication.translate("CFIDs", "Failed to patch file: ") + new_file)
+                        write_error(e, True)
+                local_compacted_and_patched_list.append(rel_path)            
+        with self.lock:
+            self.compacted_and_patched[basename_cased].extend(local_compacted_and_patched_list)
 
     def decompress_data(self, data_list: list) -> tuple[list, list]:
         sizes_list = [[] for _ in range(len(data_list))]
