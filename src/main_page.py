@@ -354,15 +354,20 @@ class main(QWidget):
                             counted.add(file_lower)
             total, used, free = shutil.disk_usage(self.output_folder_path)
             free_space = round(free / (1024**3), 3)
+            free_space_continuation_message = self.tr(
+                    "This may generate up to %1 %2 of new files\n"\
+                    "(this may be inaccurate due to unpacking compressed BSA)\n"\
+                    "and you have %3 GBs of space left.\n"\
+                    "Are you sure you want to continue?")
             if size > 1024 ** 3:
                 calculated_size = round(size / (1024 ** 3), 3)
-                self.confirm.setText(self.tr("This may generate up to %1 GBs of new files\nand you have %2 GBs of space left (this may be inaccurate due to unpacking compressed BSA).\nAre you sure you want to continue?").replace("%1", str(calculated_size)).replace("%2", str(free_space)))
+                self.confirm.setText(free_space_continuation_message.replace("%1", str(calculated_size)).replace("%2", self.tr("GBs")).replace("%3", str(free_space)))
             elif size > 1048576:
                 calculated_size = round(size / 1048576, 2)
-                self.confirm.setText(self.tr("This may generate up to %1 MBs of new files\nand you have %2 GBs of space left (this may be inaccurate due to unpacking compressed BSA).\nAre you sure you want to continue?").replace("%1", str(calculated_size)).replace("%2", str(free_space)))
+                self.confirm.setText(free_space_continuation_message.replace("%1", str(calculated_size)).replace("%2", self.tr("MBs")).replace("%3", str(free_space)))
             else:
                 calculated_size = round(size / 1024, 2)
-                self.confirm.setText(self.tr("This may generate up to %1 KBs of new files\nand you have %2 GBs of space left (this may be inaccurate due to unpacking compressed BSA).\nAre you sure you want to continue?").replace("%1", str(calculated_size)).replace("%2", str(free_space)))
+                self.confirm.setText(free_space_continuation_message.replace("%1", str(calculated_size)).replace("%2", self.tr("KBs")).replace("%3", str(free_space)))
             if size >= free:
                 self.confirm.setText(self.tr('Not enough space!\nNeeded space: %1\nSpace left: %2 GBs').replace("%1", str((round(size / 1024**3,3)))).replace("%2", str(free_space)))
                 self.confirm.removeButton(QMessageBox.StandardButton.Yes)
@@ -1413,20 +1418,21 @@ class HashWorker(QObject):
         processed_str = ('-    ' + self.tr("Processed: %1%") + 
                        '\n-    ' + self.tr("Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
         split = self.to_hash_len
-        if split > MAX_THREADS:
-            split = MAX_THREADS
-        chunk_size = self.to_hash_len // split
-        chunks = [self.files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
-        chunks.append(self.files[split * chunk_size:])
-        self.count = 0
-        self.hash_progress = 0
-        threads: list[threading.Thread] = [] 
-        for chunk in chunks:
-            thread = threading.Thread(target=self.hash_files, args=(chunk,))
-            threads.append(thread)
-            thread.start()
+        if split > 0:
+            if split > MAX_THREADS:
+                split = MAX_THREADS
+            chunk_size = self.to_hash_len // split
+            chunks = [self.files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
+            chunks.append(self.files[split * chunk_size:])
+            self.count = 0
+            self.hash_progress = 0
+            threads: list[threading.Thread] = [] 
+            for chunk in chunks:
+                thread = threading.Thread(target=self.hash_files, args=(chunk,))
+                threads.append(thread)
+                thread.start()
 
-        for thread in threads: thread.join()
+            for thread in threads: thread.join()
 
         write_progress(100, 1, processed_str.format(100.0, self.to_hash_len, self.to_hash_len))
         self.finished.emit({
