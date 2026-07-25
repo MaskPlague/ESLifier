@@ -93,6 +93,7 @@ class cell_scanner():
                 json.dump(cell_scanner.cell_changed_list, f, ensure_ascii=False, indent=4)
         except Exception as e:
             write_error(QCoreApplication.translate("Global", "Failed to dump data to ") + file)
+            write_error(e, True)
 
     def create_data_list(data: bytes) -> list[bytes]:
         data_list = []
