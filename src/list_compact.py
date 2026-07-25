@@ -384,7 +384,7 @@ class list_compactable(QTableWidget):
         self.blockSignals(True)
         selection = QItemSelection()
         for row in range(self.rowCount()):
-            if self.isRowHidden(row) == False:
+            if not self.isRowHidden(row):
                 selection.select(self.model().index(row, self.MOD_COL), self.model().index(row, self.model().columnCount() - 1))
         selection_model = self.selectionModel()
         selection_model.select(selection, selection_model.SelectionFlag.ClearAndSelect)
@@ -398,7 +398,7 @@ class list_compactable(QTableWidget):
                     previously_compacted = json.load(f)
                     f.close()
                 for row in range(self.rowCount()):
-                    if self.isRowHidden(row) == False and self.item(row, self.MOD_COL).checkState() == Qt.CheckState.Unchecked and self.item(row, self.MOD_COL).text() in previously_compacted:
+                    if not self.isRowHidden(row) and self.item(row, self.MOD_COL).checkState() == Qt.CheckState.Unchecked and self.item(row, self.MOD_COL).text() in previously_compacted:
                         self.item(row, self.MOD_COL).setCheckState(Qt.CheckState.Checked)
             except Exception as e:
                 write_error(self.tr('Failed to get previously_compacted.json'))
