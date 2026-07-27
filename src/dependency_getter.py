@@ -1,6 +1,7 @@
 import os
 import json
 from log_stream import write_error
+from data_holder import _global
 from PyQt6.QtCore import QCoreApplication
 
 class dependecy_getter():
@@ -9,7 +10,6 @@ class dependecy_getter():
         dependecy_getter.dependency_dictionary = {}
         dependecy_getter.missing_skyrim_as_master = {}
         dependecy_getter.maxed_masters = []
-        dependecy_getter.plugins = dependecy_getter.get_from_file("ESLifier_Data/plugin_list.json")
         dependecy_getter.create_dependency_dictionary()
         dependecy_getter.dump_to_file("ESLifier_Data/dependency_dictionary.json", dependecy_getter.dependency_dictionary)
         dependecy_getter.dump_to_file("ESLifier_Data/missing_skyrim_as_master.json", dependecy_getter.missing_skyrim_as_master)
@@ -34,11 +34,11 @@ class dependecy_getter():
     
     def create_dependency_dictionary():
         plugin_names = []
-        for plugin in dependecy_getter.plugins:
+        for plugin in _global.plugins:
             plugin_names.append(os.path.basename(plugin).lower())
 
         dependecy_getter.dependency_dictionary = {plugin: [] for plugin in plugin_names}
-        for plugin in dependecy_getter.plugins:
+        for plugin in _global.plugins:
             masters = dependecy_getter.get_masters(plugin)
             if len(masters) > 0:
                 for master in masters:
