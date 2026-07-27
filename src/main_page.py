@@ -560,10 +560,17 @@ class main(QWidget):
             message = QMessageBox()
             message.setWindowTitle(self.tr("Finished"))
             message.setWindowIcon(QIcon(":/images/ESLifier.png"))
-            message.setText(self.tr("If you're using MO2 or Vortex then make sure the ESLifier Output is installed as a mod and let it win any file conflicts. "\
-                            "For MO2 users: If you generate the output folder in your mods folder for the first time, then make sure to hit "\
-                            "refresh in MO2.\n"\
-                            "For Vortex users: Make sure to redeploy before using this program again."))
+            if _global.mod_manager_mode == 0:
+                message.setText(self.tr("Good luck manually modding."))
+            elif _global.mod_manager_mode == 1:
+                message.setText(self.tr("Make sure the ESLifier Output is installed as a mod and let it win any file conflicts by making the "\
+                                        "output go 'After All' conflicts. " \
+                                        "If you generate the output folder in your mod staging folder for the first time, then make sure "\
+                                        "to restart Vortex to install the output."))
+            elif _global.mod_manager_mode == 2:
+                message.setText(self.tr("Make sure the ESLifier Output is installed as a mod and let it win any file conflicts. "\
+                                        "If you generate the output folder in your mods folder for the first time, then make sure to hit "\
+                                        "refresh in MO2."))
             message.addButton(QMessageBox.StandardButton.Ok).setText(self.tr("Ok"))
             def shown():
                 message.hide()
@@ -657,6 +664,22 @@ class main(QWidget):
                 self.confirm.show()
     
     def completed_scan(self, eslifiy_flag_dict, compact_flag_dict, dependency_dictionary):
+        if _global.vortex_error != -1:
+            clear_and_close_log()
+            confirm = self.create_confirmation('lightcoral')
+            if _global.vortex_error == 0:
+                confirm.setText(self.tr("Please close Vortex, ESLifier cannot accesss it's database while Vortex is open."))
+            elif _global.vortex_error == 2:
+                confirm.setText(self.tr("ESLifier detected that a cyclic rule is set in Vortex, please correct it first."))
+            elif isinstance(_global.vortex_error, Exception):
+                confirm.setText(self.tr(f"ESLifier has come across an error while scanning Vortex data: {e}"))
+            def accept():
+                confirm.hide()
+            confirm.setStandardButtons(QMessageBox.StandardButton.Ok)
+            confirm.accepted.connect(accept)
+            confirm.show()
+            self.setEnabled(True)
+            return
         self.list_eslify.flag_dict = eslifiy_flag_dict
         self.list_compact.flag_dict = compact_flag_dict
         self.dependency_dictionary = dependency_dictionary
@@ -1253,6 +1276,9 @@ class ScannerWorker(QObject):
     def scan_run(self):
         write_remove(-1, self.tr('Scanning All Files:'), True)
         flag_dict, dependency_dictionary = scanner.scan(True)
+        if _global.vortex_error != -1:
+            self.finished_signal.emit({}, {}, {})
+            return
         write_normal(self.tr('Checking if New CELLs are Changed'))
         plugins_with_cells = [plugin for plugin, flags in flag_dict.items() if 'new_cell' in flags]
         cell_scanner.scan(plugins_with_cells)
