@@ -5,14 +5,14 @@ import zlib
 import struct
 import shutil
 from log_stream import write_error
+from data_holder import _global
 from PyQt6.QtCore import QCoreApplication
 
 class qualification_checker():
     def scan(path: str, update_header: bool) -> dict:
         qualification_checker.lock = threading.Lock()
-        all_plugins: list[str] = qualification_checker.get_from_file("ESLifier_Data/plugin_list.json")
         qualification_checker.maxed_masters = qualification_checker.get_from_file("ESLifier_Data/maxed_masters.json")
-        plugins = [plugin for plugin in all_plugins if not plugin.lower().endswith('.esl')]
+        plugins = [plugin for plugin in _global.plugins if not plugin.lower().endswith('.esl')]
         qualification_checker.missing_skyrim_esm_as_master: dict[str, str] = qualification_checker.get_from_file("ESLifier_Data/missing_skyrim_as_master.json")
         qualification_checker.dependent_dict: dict[str, list[str]] = qualification_checker.get_from_file("ESLifier_Data/dependency_dictionary.json")
         qualification_checker.flag_dict = {}
@@ -82,7 +82,6 @@ class qualification_checker():
                         flag_dict[plugin].append('new_wthr')
                     if is_esm:
                         flag_dict[plugin].append('is_esm')
-                        
                         
         with qualification_checker.lock:
             for key, value in flag_dict.items():
