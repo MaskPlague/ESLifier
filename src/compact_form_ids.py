@@ -370,8 +370,8 @@ class CFIDs():
                     with self.semaphore:
                         new_file, rel_path_new_file = self.copy_file_to_output(file)
                         renamed_file = new_file[:-10] + to_id.upper() + new_file[-4:]
-                        with self.lock:
-                            os.replace(new_file, renamed_file)
+                        #with self.lock:
+                        os.replace(new_file, renamed_file)
                         rel_path_renamed_file = rel_path_new_file[:-10] + to_id.upper() + rel_path_new_file[-4:]
                         with self.lock:
                             self.compacted_and_patched[master_base_name].add(rel_path_new_file)
