@@ -12,6 +12,7 @@ from file_patchers import patchers
 from intervaltree import IntervalTree
 from full_form_processor import form_processor
 from create_cell_master import create_new_cell_plugin
+from data_holder import _global
 from log_stream import write_error, write_normal, write_progress, clear_and_leave_log_open
 from PyQt6.QtCore import QCoreApplication
 import patcher_conditions
@@ -32,17 +33,12 @@ else:
     MAX_THREADS = max_threads
 
 class CFIDs():
-    def __init__(self, skyrim_folder_path: str, output_folder_path: str, output_folder_name: str, overwrite_path: str, update_header: bool, mo2_mode: bool,
-                  create_cell_master_class: create_new_cell_plugin, original_files: dict, winning_files_dict: dict, winning_file_history_dict: dict,
-                  compacted_and_patched: dict, master_byte_data:dict, bsa_masters: list, bsa_dict: dict, persistent_ids: bool, free_non_existent: bool,
-                  additional_file_patcher_conditions, all_patcher_experimental: bool):
-        self.skyrim_folder_path: str = os.path.normpath(skyrim_folder_path)
-        self.output_folder_path: str = os.path.normpath(output_folder_path)
-        self.output_folder_name: str = os.path.normpath(output_folder_name)
-        self.output_folder: str = os.path.normpath(os.path.join(output_folder_path, output_folder_name))
-        self.overwrite_path: str = os.path.normpath(overwrite_path)
-        self.mo2_mode: bool = mo2_mode
-        self.update_header: bool = update_header
+    def __init__(self, create_cell_master_class: create_new_cell_plugin, original_files: dict, winning_files_dict: dict, winning_file_history_dict: dict,
+                  compacted_and_patched: dict[str, set[str]], master_byte_data:dict, bsa_masters: list, bsa_dict: dict,
+                  additional_file_patcher_conditions):
+        self.output_folder_name: str = os.path.normpath(_global.output_folder_name)
+        self.output_folder: str = _global.output_folder_joined_path
+        self.update_header: bool = _global.update_header
         self.create_cell_master_class = create_cell_master_class
         self.original_files: dict = original_files
         self.winning_files_dict: dict = winning_files_dict
@@ -51,12 +47,10 @@ class CFIDs():
         self.master_byte_data = master_byte_data
         self.bsa_masters = set(bsa_masters)
         self.bsa_dict = bsa_dict
-        self.persistent_ids: bool = persistent_ids
-        self.free_non_existent: bool = free_non_existent
         self.lock = threading.Lock()
         self.semaphore = threading.Semaphore(1000)
         self.additional_conditions = additional_file_patcher_conditions
-        self.all_patcher_experimental: bool = all_patcher_experimental
+        self.all_patcher_experimental: bool = _global.all_patcher_experimental
 
     def save_data(self):
         self.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json', self.compacted_and_patched)
@@ -212,7 +206,7 @@ class CFIDs():
                     rel_paths.add(rel_path.lower())
 
                 start = os.path.join(os.getcwd(), 'bsa_extracted_temp')
-                for root, dir, files in os.walk('bsa_extracted_temp/'):
+                for root, _, files in os.walk('bsa_extracted_temp/'):
                     for file in files:
                         full_path = os.path.normpath(os.path.join(root, file))
                         rel_path = os.path.relpath(full_path, start).lower()
@@ -261,8 +255,8 @@ class CFIDs():
             write_error(e, True)           
         return self.original_files, self.winning_file_history_dict
 
-    def patch_new(self, compacted_file: str, dependents: list, files_to_patch: list, add_cell_to_master: bool):
-        self.do_generate_cell_master = add_cell_to_master
+    def patch_new(self, compacted_file: str, dependents: list, files_to_patch: list):
+        self.do_generate_cell_master = _global.generate_cell_master
         self.form_id_map = {}
         write_normal("-  " + QCoreApplication.translate("CFIDs", "Patching new plugins and files for %1...").replace("%1", compacted_file))
         self.master_byte = bytes.fromhex(self.master_byte_data[compacted_file]['master_byte'])
@@ -290,7 +284,7 @@ class CFIDs():
     #Create a copy of the mod plugin we're compacting
     def copy_file_to_output(self, file: str) -> tuple[str, str]:
         end_path: str = self.get_rel_path(file)
-        new_file: str = os.path.normpath(os.path.join(os.path.join(self.output_folder_path, self.output_folder_name), end_path))
+        new_file: str = os.path.normpath(os.path.join(self.output_folder, end_path))
         (winning_mod, _) = self.winning_files_dict.get(end_path.lower(), (None, None))
         if winning_mod != None and winning_mod != self.output_folder_name:
             self.winning_file_history_dict[end_path.lower()] = winning_mod
@@ -312,23 +306,7 @@ class CFIDs():
         return new_file, end_path
     
     def get_rel_path(self, file: str) -> str:
-        if 'bsa_extracted' in file:
-            if 'bsa_extracted_temp' in file:
-                start = os.path.join(os.getcwd(), 'bsa_extracted_temp/')
-            else:
-                start = os.path.join(os.getcwd(), 'bsa_extracted/')
-            rel_path = os.path.normpath(os.path.relpath(file, start))
-        elif self.mo2_mode and file.lower().startswith(self.overwrite_path.lower()):
-            rel_path = os.path.normpath(os.path.relpath(file, self.overwrite_path))
-        else:
-            if self.mo2_mode:
-                parts = os.path.normpath(os.path.relpath(file, self.skyrim_folder_path)).split(os.sep)
-                if len(parts) != 1:
-                    parts = parts[1:]
-                rel_path = os.path.join(*parts)
-            else:
-                rel_path = os.path.normpath(os.path.relpath(file, self.skyrim_folder_path))
-        return rel_path
+        return _global.get_rel_path(file)
     
     #Sort the file masters list into files that only need patching and files that need renaming and maybe patching
     def sort_files_to_patch_or_rename(self, master: str, files: list[str]) -> tuple[list[str], list[str]]:
@@ -679,7 +657,7 @@ class CFIDs():
         matched_ids = set()
         form_id_replacements = []
         #If a form id map already exists we want to compact the Form IDs the exact same as they were before
-        if self.persistent_ids and os.path.exists(form_id_file_name):
+        if _global.persistent_ids and os.path.exists(form_id_file_name):
             with open(form_id_file_name, 'r', encoding='utf-8') as f:
                 form_id_file_data = f.readlines()
             if self.do_generate_cell_master:
@@ -698,7 +676,7 @@ class CFIDs():
                     to_id = bytes.fromhex(form_id_conversion[1])[:4]
                 if from_id in all_form_ids_list:
                     form_id_replacements.append([from_id, to_id])
-                elif not self.free_non_existent:
+                elif not _global.free_non_existent:
                     form_id_replacements.append([from_id, to_id])
         if len(form_id_replacements) > 0:
             matched_from_ids = set([from_id[:4] for from_id, to_id in form_id_replacements])
