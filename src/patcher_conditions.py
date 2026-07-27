@@ -159,7 +159,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
             patchers.json_dyndolod_ligh_patcher(basename, new_file, form_id_map, master_byte, encoding_method=encoding)
         else:
             patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
-            if not patched:                                           
+            if not patched and not new_file_lower.endswith("\\collection.json"):                                           
                 write_warning(QCoreApplication.translate("patcher_conditions", "Possible missing patcher for: ") + new_file)
     elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
         patchers.pex_patcher(basename, new_file, form_id_map)
