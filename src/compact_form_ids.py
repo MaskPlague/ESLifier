@@ -47,7 +47,7 @@ class CFIDs():
         self.original_files: dict = original_files
         self.winning_files_dict: dict = winning_files_dict
         self.winning_file_history_dict = winning_file_history_dict
-        self.compacted_and_patched: dict[str, list[str]] = compacted_and_patched
+        self.compacted_and_patched: dict[str, set[str]] = compacted_and_patched
         self.master_byte_data = master_byte_data
         self.bsa_masters = set(bsa_masters)
         self.bsa_dict = bsa_dict
@@ -64,17 +64,18 @@ class CFIDs():
         self.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', self.winning_file_history_dict)
         self.dump_dictionary('ESLifier_Data/master_byte_data.json', self.master_byte_data)
 
-    def dump_compacted_and_patched(self, file, dictionary: dict[str, list[str]]):
-        data: dict[str, list[str]] = self.get_from_file(file)
+    def dump_compacted_and_patched(self, file, dictionary: dict[str, set[str]]):
+        data_with_list: dict[str, list[str]] = self.get_from_file(file)
+        data = {key: set(value) for key, value in data_with_list.items()}
         for key, value in dictionary.items():
             if key not in data:
-                data[key] = []
+                data[key] = set()
             for item in value:
-                if item.lower() not in data[key]:
-                    data[key].append(item.lower())
+                data[key].add(item.lower())
+        data_serialiazable = {key: list(value) for key, value in data.items()}
         try:
             with open(file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=4)
+                json.dump(data_serialiazable, f, ensure_ascii=False, indent=4)
         except Exception as e:
             write_error(QCoreApplication.translate("Global", "Failed to dump data to ") + file)
             write_error(e, True)
@@ -266,7 +267,7 @@ class CFIDs():
         write_normal("-  " + QCoreApplication.translate("CFIDs", "Patching new plugins and files for %1...").replace("%1", compacted_file))
         self.master_byte = bytes.fromhex(self.master_byte_data[compacted_file]['master_byte'])
         self.updated_master_index = self.master_byte_data[compacted_file]['updated_master_index']
-        self.compacted_and_patched[compacted_file] = []
+        self.compacted_and_patched[compacted_file] = set()
         if dependents != []:
             write_normal("-  " + QCoreApplication.translate("CFIDs", "Patching New Dependent Plugins..."))
             self.patch_dependent_plugins(compacted_file, dependents, files_to_patch)
@@ -395,10 +396,8 @@ class CFIDs():
                             os.replace(new_file, renamed_file)
                         rel_path_renamed_file = rel_path_new_file[:-10] + to_id.upper() + rel_path_new_file[-4:]
                         with self.lock:
-                            if rel_path_new_file not in self.compacted_and_patched[master_base_name]:
-                                self.compacted_and_patched[master_base_name].append(rel_path_new_file)
-                            if rel_path_renamed_file not in self.compacted_and_patched[master_base_name]:
-                                self.compacted_and_patched[master_base_name].append(rel_path_renamed_file)
+                            self.compacted_and_patched[master_base_name].add(rel_path_new_file)
+                            self.compacted_and_patched[master_base_name].add(rel_path_renamed_file)
                             if 'facegeom' in new_file.lower() and master_base_name.lower() in new_file.lower():
                                 facegeom_meshes.append(renamed_file)
             elif file[-6] == "_" or file[-7] == "_": # Voice
@@ -415,12 +414,10 @@ class CFIDs():
                         index = rel_path_new_file.rfind('_') - 6
                         rel_path_renamed_file = rel_path_new_file[:index] + to_id.upper() + rel_path_new_file[index+6:]
                         with self.lock:
-                            if rel_path_new_file not in self.compacted_and_patched[master_base_name]:
-                                self.compacted_and_patched[master_base_name].append(rel_path_new_file)
-                            if rel_path_renamed_file not in self.compacted_and_patched[master_base_name]:
-                                self.compacted_and_patched[master_base_name].append(rel_path_renamed_file)
+                            self.compacted_and_patched[master_base_name].add(rel_path_new_file)
+                            self.compacted_and_patched[master_base_name].add(rel_path_renamed_file)
 
-            self.compacted_and_patched[master_base_name].append(rel_path.lower())
+            self.compacted_and_patched[master_base_name].add(rel_path.lower())
         if facegeom_meshes != []:
             self.patch_files(master, facegeom_meshes)
         return
@@ -499,7 +496,7 @@ class CFIDs():
     def patch_files(self, master: str, files: list[str]):
         basename_cased = os.path.basename(master)
         basename = basename_cased.lower()
-        local_compacted_and_patched_list = []
+        local_compacted_and_patched_list = set()
         for file in files:
             new_file, rel_path = self.copy_file_to_output(file)
             new_file_lower = new_file.lower()
@@ -517,9 +514,9 @@ class CFIDs():
                     else:
                         write_error(QCoreApplication.translate("CFIDs", "Failed to patch file: ") + new_file)
                         write_error(e, True)
-                local_compacted_and_patched_list.append(rel_path)            
+                local_compacted_and_patched_list.add(rel_path)            
         with self.lock:
-            self.compacted_and_patched[basename_cased].extend(local_compacted_and_patched_list)
+            self.compacted_and_patched[basename_cased].update(local_compacted_and_patched_list)
 
     def decompress_data(self, data_list: list) -> tuple[list, list]:
         sizes_list = [[] for _ in range(len(data_list))]
@@ -766,7 +763,7 @@ class CFIDs():
             f.write(b''.join(data_list))
             f.close()
 
-        self.compacted_and_patched[os.path.basename(new_file)] = []
+        self.compacted_and_patched[os.path.basename(new_file)] = set()
         
     #replaced the old form ids with the new ones in all files that have the comapacted file as a master
     def patch_dependent_plugins(self, file: str, dependents: list, file_masters: dict):
@@ -860,7 +857,7 @@ class CFIDs():
                 dependent_file.close()
 
             with self.lock:
-                self.compacted_and_patched[os.path.basename(file)].append(rel_path)
+                self.compacted_and_patched[os.path.basename(file)].add(rel_path)
                 self.master_byte_data[os.path.basename(file)]= {'master_byte': master_byte.hex(), 'updated_master_index': updated_master_index}
         except Exception as e:
             write_error(QCoreApplication.translate("CFIDs", "Failed to patch dependent: ") + new_file)
@@ -874,7 +871,7 @@ class CFIDs():
                 write_error(QCoreApplication.translate("CFIDs", "Failed to patch dependent's SEQ file: ") + new_seq_file)
                 write_error(e, True)
             with self.lock:
-                self.compacted_and_patched[os.path.basename(file)].append(rel_path_seq)
+                self.compacted_and_patched[os.path.basename(file)].add(rel_path_seq)
         return
 
     #gets what master index the file is in inside of the dependent's data
