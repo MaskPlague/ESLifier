@@ -2,7 +2,7 @@ import json
 import os
 import subprocess
 
-from PyQt6.QtCore import Qt, QRegularExpression
+from PyQt6.QtCore import Qt, QRegularExpression, pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QFileDialog, QFrame, QColorDialog
 from PyQt6.QtGui import QIcon, QColor
 
@@ -11,7 +11,9 @@ from log_stream import write_error
 
 from QToggle import QtToggle
 class settings(QWidget):
-    def __init__(self, COLOR_MODE, eslifier):
+    settings_updated = pyqtSignal()
+    need_to_rebuild_lists = pyqtSignal()
+    def __init__(self, COLOR_MODE):
         super().__init__()
         self.setFocus()
         settings_layout = QVBoxLayout()
@@ -25,7 +27,6 @@ class settings(QWidget):
         self.output_folder_name_valid = True
         self.settings = self.get_settings_from_file()
         self.default_settings = {}
-        self.eslifier = eslifier
 
         self.file_dialog = QFileDialog()
         self.file_dialog.setFileMode(QFileDialog.FileMode.Directory)
@@ -59,6 +60,13 @@ class settings(QWidget):
             self.overwrite_path_clicked,
             'overwrite_path'
         )
+        self.vortex_data_path_widget, self.vortex_data_path = self.create_path_widget(
+            self.tr("Vortex Data Path"),
+            self.tr("Set this to Vortex's data folder (the folder that holds the \"state.v2\" and \"skyrimse\" folders)."),
+            self.tr('C:/Users/USER/AppData/Roaming/Vortex or C:/ProgramData/vortex'),
+            self.vortex_data_path_clicked,
+            'vortex_data_path'
+        )
         self.plugins_txt_path_widget, self.plugins_txt_path = self.create_path_widget(
             self.tr("Plugins.txt Path"),
             self.tr("Set this to your modlist\'s plugins.txt"),
@@ -73,19 +81,19 @@ class settings(QWidget):
             self.mo2_modlist_txt_path_clicked,
             'mo2_modlist_txt_path'
         )
-        self.mo2_mode_widget, self.mo2_mode_toggle = self.create_toggle_widget(
-            self.tr("Enable MO2 Mode"),
-            self.tr("MO2 users should not launch this executible through MO2,\n"\
-            "instead enable this setting. This will change the paths and scanner\n"\
-            "method to scan the MO2 mods folder and get winning file conflicts.\n"\
-            "Launching this program through MO2 drastically slows it down and may\n"\
-            "break certain functions."),
-            "mo2_mode",
-            default=False
+        self.mod_manager_mode_widget, self.mod_manager_mode_toggle = self.create_toggle_widget(
+            self.tr("Mod Manager: None"),
+            self.tr("Users without a mod manager should get a mod manager. ESLifier is not\n"\
+                    "meant to be used with manual modding but should still work at least once."),
+            "mod_manager_mode",
+            active_color='deepskyblue',
+            tri_state=True,
+            default=0
         )
-        self.mo2_mode_widget.layout().itemAt(2).widget().clicked.connect(self.mo2_mode_clicked)
-        self.mo2_mode_widget.layout().itemAt(2).widget().clicked.connect(self.skyrim_folder_path.clear)
-        self.mo2_mode_widget.layout().itemAt(2).widget().clicked.connect(self.overwrite_path.clear)
+        self.mod_manager_mode_widget.layout().itemAt(2).widget().clicked.connect(self.mod_mananger_mode_clicked)
+        self.mod_manager_mode_widget.layout().itemAt(2).widget().clicked.connect(self.skyrim_folder_path.clear)
+        self.mod_manager_mode_widget.layout().itemAt(2).widget().clicked.connect(self.overwrite_path.clear)
+        self.mod_manager_mode_widget.layout().itemAt(2).widget().clicked.connect(self.vortex_data_path.clear)
         self.update_header_widget, self.update_header_toggle = self.create_toggle_widget(
             self.tr("Allow Form IDs below 0x000800 + Update plugin headers to 1.71"),
             self.tr("Allow scanning and patching to use the new 1.71 header.\n"\
@@ -134,6 +142,12 @@ class settings(QWidget):
             self.tr("Hide plugins with new WTHR (weather) records"),
             self.tr("Hide plugins with new weather records as they can be referenced in ENB presets which are not patched"),
             "filter_weathers",
+            default=False
+        )
+        self.enable_seq_filter_widget, self.enable_seq_filter_toggle = self.create_toggle_widget(
+            self.tr("Hide plugins that have SEQ files"),
+            self.tr("Hide plugins that have SEQ files as ESL flagging it may cause dialogue for it to not work until you save and reload in game."),
+            "filter_seq",
             default=False
         )
         self.hide_left_columns_widget, self.hide_left_columns_text_input = self.create_text_input_widget(
@@ -250,10 +264,11 @@ class settings(QWidget):
 
         self.set_init_widget_values()
         
-        self.update_settings()
+        self.update_settings_from_app_state()
         
-        settings_layout.addWidget(self.mo2_mode_widget)
+        settings_layout.addWidget(self.mod_manager_mode_widget)
         settings_layout.addWidget(self.skyrim_folder_path_widget)
+        settings_layout.addWidget(self.vortex_data_path_widget)
         settings_layout.addWidget(self.output_folder_path_widget)
         settings_layout.addWidget(self.output_folder_name_widget)
         settings_layout.addWidget(self.overwrite_path_widget)
@@ -292,6 +307,7 @@ class settings(QWidget):
         column_1.addWidget(self.enable_interior_cell_filter_widget)
         column_1.addWidget(self.enable_worldspaces_filter_widget)
         column_1.addWidget(self.enable_weather_filter_widget)
+        column_1.addWidget(self.enable_seq_filter_widget)
         column_1.addWidget(self.show_plugins_possibly_refd_by_dlls_widget)
         column_1.addWidget(self.generate_cell_master_widget)
         column_1.addWidget(self.hide_left_columns_widget)
@@ -316,7 +332,7 @@ class settings(QWidget):
         outer_color = QColorDialog.getColor(QColor(self.outer_color), self, self.tr("Select Outer Color"))
         if outer_color.isValid():
             self.outer_color = outer_color.name()
-        self.eslifier.update_settings()
+        self.settings_updated.emit()
 
     def button_maker(self, text, function, width):
         button = QPushButton()
@@ -332,10 +348,10 @@ class settings(QWidget):
             path = dialog.getExistingDirectory(self, title, self.settings.get(setting_key, ""))
         if path:
             line_edit.setText(os.path.normpath(path))
-        self.update_settings()
+        self.update_settings_from_app_state()
     
     def skyrim_folder_path_clicked(self):
-        if not self.mo2_mode_toggle.isChecked():
+        if not self.mod_manager_mode_toggle.isChecked():
             self.select_file_path(self.file_dialog, self.tr("Select the Skyrim Special Edition Data folder"), 'skyrim_folder_path', self.skyrim_folder_path, None)
         else:
             self.select_file_path(self.file_dialog, self.tr("Select your MO2 mods folder"), 'skyrim_folder_path', self.skyrim_folder_path, None)
@@ -345,6 +361,9 @@ class settings(QWidget):
 
     def overwrite_path_clicked(self):
         self.select_file_path(self.file_dialog, self.tr("Select your MO2 overwrite folder"), 'overwrite_path', self.overwrite_path, None)
+
+    def vortex_data_path_clicked(self):
+        self.select_file_path(self.file_dialog, self.tr("Select your vortex data folder"), 'vortex_data_path', self.vortex_data_path, None)
 
     def mo2_modlist_txt_path_clicked(self):
         self.select_file_path(self.file_dialog_2, self.tr("Select your MO2 profile\'s modlist.txt"), 'mo2_modlist_txt_path', self.mo2_modlist_txt_path, self.tr("Modlist") +" (modlist.txt)")
@@ -359,7 +378,7 @@ class settings(QWidget):
         label = QLabel(label_text)
         line_edit = QLineEdit()
         line_edit.setText(self.settings.get(settings_key, ''))
-        line_edit.editingFinished.connect(self.update_settings)
+        line_edit.editingFinished.connect(self.update_settings_from_app_state)
         button = self.button_maker(self.tr('Explore...'), click_function, 100)
 
         widget.setLayout(layout)
@@ -375,14 +394,20 @@ class settings(QWidget):
         self.default_settings[settings_key] = {"type": "path", "default": '', "widget": line_edit}
         return widget, line_edit
     
-    def create_toggle_widget(self, label_text, tooltip, setting_key, default=False):
+    def create_toggle_widget(self, label_text, tooltip, setting_key, 
+                             bg_color: str = 'Light Grey', circle_color: str = 'Grey',active_color: str = 'palegreen',partial_color: str = 'orange',
+                             tri_state=False, default=False):
         layout = QHBoxLayout()
         widget = QWidget()
         widget.setToolTip(tooltip)
         label = QLabel(label_text)
-        toggle = QtToggle()
-        toggle.setChecked(self.settings.get(setting_key, default))
-        toggle.clicked.connect(lambda: self.update_settings(setting_key))
+        toggle = QtToggle(bg_color=bg_color, circle_color=circle_color, active_color=active_color, partial_color=partial_color, tri_state=tri_state)
+        setting_value = self.settings.get(setting_key, default)
+        if isinstance(setting_value, bool):
+            toggle.setChecked(setting_value)
+        else:
+            toggle.setCheckState(Qt.CheckState(setting_value))
+        toggle.clicked.connect(lambda: self.update_settings_from_app_state(setting_key))
         
         widget.setLayout(layout)
         layout.addWidget(label)
@@ -391,15 +416,32 @@ class settings(QWidget):
         self.default_settings[setting_key] = {"type": "toggle", "default": default, "widget": toggle}
         return widget, toggle
 
-    def mo2_mode_clicked(self):
-        if self.mo2_mode_toggle.checkState() == Qt.CheckState.Checked:
+    def mod_mananger_mode_clicked(self):
+        if self.mod_manager_mode_toggle.checkState() == Qt.CheckState.Checked:
+            self.mod_manager_mode_widget.layout().itemAt(0).widget().setText(self.tr("Mod Manager: MO2"))
             self.skyrim_folder_path_widget.setToolTip(self.tr("Set this to your Mod Organizer 2 mod's folder that holds all of your installed mods."))
             self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText(self.tr("MO2 Mod\'s Folder Path"))
             self.skyrim_folder_path.setPlaceholderText(self.tr('C:/Path/To/MO2/mods'))
-        else:
+            self.mod_manager_mode_widget.setToolTip(
+                self.tr("MO2 users should not launch this executible through MO2,\n"\
+                        "Launching this program through MO2 drastically slows it down and may\n"\
+                        "break certain functions."))
+        elif self.mod_manager_mode_toggle.checkState() == Qt.CheckState.PartiallyChecked:
+            self.mod_manager_mode_widget.layout().itemAt(0).widget().setText(self.tr("Mod Manager: Vortex"))
             self.skyrim_folder_path_widget.setToolTip(self.tr("Set this to your Skyrim Special Edition Data folder that holds Skyrim.esm."))
             self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText(self.tr("Data Folder Path"))
             self.skyrim_folder_path.setPlaceholderText(self.tr('C:/Path/To/Skyrim Special Edition/Data'))
+            #TODO: This
+            self.mod_manager_mode_widget.setToolTip(
+                self.tr("Vortex users PLACEHOLDER MESSAGE"))
+        else:
+            self.mod_manager_mode_widget.layout().itemAt(0).widget().setText(self.tr("Mod Manager: None"))
+            self.skyrim_folder_path_widget.setToolTip(self.tr("Set this to your Skyrim Special Edition Data folder that holds Skyrim.esm."))
+            self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText(self.tr("Data Folder Path"))
+            self.skyrim_folder_path.setPlaceholderText(self.tr('C:/Path/To/Skyrim Special Edition/Data'))
+            self.mod_manager_mode_widget.setToolTip(
+                self.tr("Users without a mod manager should get a mod manager. ESLifier is not\n"\
+                        "meant to be used with manual modding but should still work at least once."))
     
     def cell_master_clicked(self):
         if self.generate_cell_master_toggle.checkState() == Qt.CheckState.Checked:
@@ -461,7 +503,7 @@ class settings(QWidget):
             text = line_edit.text()
             if regex.match(text).hasMatch() and 'eslifier' in text.lower():
                 self.output_folder_name_valid = True
-                self.update_settings()
+                self.update_settings_from_app_state()
             else:
                 if 'eslifier' in text.lower():
                     QMessageBox.warning(None, self.tr("Invalid Output Name"), self.tr("'%1' is not a valid folder name.").replace("%1", text))
@@ -494,7 +536,7 @@ class settings(QWidget):
         line_edit = QLineEdit()
 
         line_edit.setText(self.settings.get(setting_key, ''))
-        line_edit.editingFinished.connect(lambda: self.update_settings(setting_key))
+        line_edit.editingFinished.connect(lambda: self.update_settings_from_app_state(setting_key))
 
         widget.setLayout(layout)
         layout.addWidget(label)
@@ -543,7 +585,10 @@ class settings(QWidget):
             for settings_key, setting_data in self.default_settings.items():
                 setting_type = setting_data["type"]
                 if setting_type == "toggle":
-                    setting_data["widget"].setChecked(setting_data["default"])
+                    if isinstance(setting_data["default"], bool):
+                        setting_data["widget"].setChecked(setting_data["default"])
+                    else:
+                        setting_data["widget"].setCheckState(Qt.CheckState((setting_data["default"])))
                 elif setting_type == "path":
                     setting_data["widget"].clear()
                 elif setting_type == "text":
@@ -551,7 +596,7 @@ class settings(QWidget):
 
             self.inner_color = '#713585'
             self.outer_color = 'Gray'
-            self.update_settings()
+            self.update_settings_from_app_state()
         confirm.accepted.connect(acccepted)
         confirm.show()
         
@@ -569,7 +614,7 @@ class settings(QWidget):
         except:
             write_error(self.tr("Failed to save settings."))
 
-    def update_settings(self, key = ''):
+    def update_settings_from_app_state(self, key = ''):
         self.settings['skyrim_folder_path'] = os.path.normpath(self.skyrim_folder_path.text()) if self.skyrim_folder_path.text() != '' else ''
         self.settings['output_folder_path'] = os.path.normpath(self.output_folder_path.text()) if self.output_folder_path.text() != '' else ''
         if self.output_folder_name_valid:
@@ -577,10 +622,12 @@ class settings(QWidget):
         self.settings['overwrite_path'] = os.path.normpath(self.overwrite_path.text()) if self.overwrite_path.text() != '' else ''
         self.settings['plugins_txt_path'] = os.path.normpath(self.plugins_txt_path.text()) if self.plugins_txt_path.text() != '' else ''
         self.settings['mo2_modlist_txt_path'] = os.path.normpath(self.mo2_modlist_txt_path.text()) if self.mo2_modlist_txt_path.text() != '' else ''
-        self.settings['mo2_mode'] = self.mo2_mode_toggle.isChecked()
+        self.settings['vortex_data_path'] = os.path.normpath(self.vortex_data_path.text()) if self.vortex_data_path.text() != '' else ''
+        self.settings['mod_manager_mode'] = self.mod_manager_mode_toggle.checkState().value
         self.settings['update_header'] = self.update_header_toggle.isChecked()
         self.settings['show_esms'] = self.show_esms_toggle.isChecked()
         self.settings['show_cells'] = self.show_plugins_with_cells_toggle.isChecked()
+        self.settings['filter_seq'] = self.enable_seq_filter_toggle.isChecked()
         self.settings['enable_cell_changed_filter'] = self.enable_cell_changed_filter_toggle.isChecked()
         self.settings['enable_interior_cell_filter'] = self.enable_interior_cell_filter_toggle.isChecked()
         self.settings['filter_worldspaces'] = self.enable_worldspaces_filter_toggle.isChecked()
@@ -597,11 +644,22 @@ class settings(QWidget):
         self.settings['inner_color'] = self.inner_color
         self.settings['outer_color'] = self.outer_color
 
-        self.mo2_mode_clicked()
-        if self.mo2_mode_toggle.isChecked():
+        self.mod_mananger_mode_clicked()
+        if self.mod_manager_mode_toggle.checkState() == Qt.CheckState.Checked:
             self.mo2_modlist_txt_path_widget.show()
             self.overwrite_path_widget.show()
+            self.plugins_txt_path_widget.show()
+            self.vortex_data_path_widget.hide()
+        elif self.mod_manager_mode_toggle.checkState() == Qt.CheckState.PartiallyChecked:
+            self.vortex_data_path_widget.show()
+            self.skyrim_folder_path.show()
+            self.mo2_modlist_txt_path_widget.hide()
+            self.plugins_txt_path_widget.hide()
+            self.overwrite_path_widget.hide()
         else:
+            self.skyrim_folder_path.show()
+            self.plugins_txt_path.show()
+            self.vortex_data_path_widget.hide()
             self.mo2_modlist_txt_path_widget.hide()
             self.overwrite_path_widget.hide()
         self.cell_master_clicked()
@@ -611,13 +669,15 @@ class settings(QWidget):
 
         if key in ('show_esms', 'show_cells', 'enable_cell_changed_filter', 'enable_interior_cell_filter', 
                    'filter_worldspaces', 'filter_weathers', 'show_dlls', 'generate_cell_master', 'reset',
-                   'left_hidden_columns', 'right_hidden_columns'):
-            self.eslifier.rebuild_lists = True
+                   'left_hidden_columns', 'right_hidden_columns', 'filter_seq'):
+            self.need_to_rebuild_lists.emit()
         
     def get_settings_from_file(self):
         try:
             with open('ESLifier_Data/settings.json', 'r', encoding='utf-8') as f:
-                settings = json.load(f)
+                settings: dict = json.load(f)
+                if 'mo2_mode' in settings:
+                    settings['mod_manager_mode'] = 2 if settings.pop('mo2_mode') else 1
                 return settings
         except:
             return {}
