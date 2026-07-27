@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMessageBox, QTa
 from settings_page import settings
 from main_page import main
 from log_stream import log_stream, write_to_file
+from data_holder import _global
 
 CURRENT_VERSION = '0.15.5'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
@@ -275,7 +276,8 @@ class main_window(QMainWindow):
             palette.setColor(QPalette.ColorRole.WindowText, QColor("White"))
             self.setPalette(palette)
 
-        self.main_widget = main(self, COLOR_MODE)
+        self.main_widget = main(COLOR_MODE)
+        _global.init(self.settings_widget)
         self.update_settings()
         self.tabs = QTabWidget()
         if COLOR_MODE == 'Light':
@@ -459,35 +461,10 @@ class main_window(QMainWindow):
         message.show()
 
     def update_settings(self):
-        self.settings_widget.update_settings()
+        self.settings_widget.update_settings_from_app_state()
+        _global.update_from_settings()
         self.set_colors()
-        self.main_widget.skyrim_folder_path =                   self.settings_widget.settings.get('skyrim_folder_path', '')
-        self.main_widget.output_folder_path =                   self.settings_widget.settings.get('output_folder_path', '')
-        self.main_widget.output_folder_name =                   self.settings_widget.settings.get('output_folder_name', "ESLifier Output")
-        self.main_widget.mo2_mode =                             self.settings_widget.settings.get('mo2_mode', False)
-        self.main_widget.modlist_txt_path =                     self.settings_widget.settings.get('mo2_modlist_txt_path', '')
-        self.main_widget.plugins_txt_path =                     self.settings_widget.settings.get('plugins_txt_path', '')
-        self.main_widget.overwrite_path =                       self.settings_widget.settings.get('overwrite_path', '')
-        self.main_widget.update_header =                        self.settings_widget.settings.get('update_header', True)
-        self.main_widget.generate_cell_master =                 self.settings_widget.settings.get('generate_cell_master', True)
-        self.main_widget.list_compact.filter_changed_cells =    self.settings_widget.settings.get('enable_cell_changed_filter', True)
-        self.main_widget.list_compact.filter_interior_cells =   self.settings_widget.settings.get('enable_interior_cell_filter', False)
-        self.main_widget.list_compact.show_cells =              self.settings_widget.settings.get('show_cells', True)
-        self.main_widget.list_compact.show_esms =               self.settings_widget.settings.get('show_esms', True)
-        self.main_widget.list_compact.show_dlls =               self.settings_widget.settings.get('show_dlls', False)
-        self.main_widget.list_compact.filter_worldspaces =      self.settings_widget.settings.get('filter_worldspaces', True)
-        self.main_widget.list_compact.filter_weather =          self.settings_widget.settings.get('filter_weathers', False)
-        self.main_widget.list_compact.cell_master =             self.settings_widget.settings.get('generate_cell_master', True)
-        self.main_widget.list_eslify.hidden_columns =           self.settings_widget.settings.get('left_hidden_columns', '')
-        self.main_widget.list_compact.hidden_columns =          self.settings_widget.settings.get('right_hidden_columns', '')
-        self.main_widget.list_eslify.filter_changed_cells =     self.settings_widget.settings.get('enable_cell_changed_filter', True)
-        self.main_widget.list_eslify.filter_interior_cells =    self.settings_widget.settings.get('enable_interior_cell_filter', False)
-        self.main_widget.list_eslify.show_cells =               self.settings_widget.settings.get('show_cells', True)
-        self.main_widget.list_eslify.show_esms =                self.settings_widget.settings.get('show_esms', True)
-        self.main_widget.list_eslify.filter_worldspaces =       self.settings_widget.settings.get('filter_worldspaces', True)
-        self.main_widget.list_eslify.cell_master =              self.settings_widget.settings.get('generate_cell_master', True)
-        self.main_widget.settings =                             self.settings_widget.settings.copy()
-        self.main_widget.hash_output =                          self.settings_widget.settings.get('hash_output', True)
+        self.main_widget.update_data()
 
         if self.settings_widget.settings.get('enable_patch_new', False):
             self.main_widget.scan_and_patch_new_button_spacer.changeSize(10, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
