@@ -490,7 +490,7 @@ class CFIDs():
                                                                     self.master_byte, self.updated_master_index, self.do_generate_cell_master,
                                                                     self.additional_conditions, 'ansi')
                     else:
-                        write_error(QCoreApplication.translate("CFIDs", "Failed to patch file: ") + new_file)
+                        write_error(QCoreApplication.translate("Global", "Failed to patch file: ") + new_file)
                         write_error(e, True)
                 local_compacted_and_patched_list.add(rel_path)            
         with self.lock:
@@ -838,7 +838,7 @@ class CFIDs():
                 self.compacted_and_patched[os.path.basename(file)].add(rel_path)
                 self.master_byte_data[os.path.basename(file)]= {'master_byte': master_byte.hex(), 'updated_master_index': updated_master_index}
         except Exception as e:
-            write_error(QCoreApplication.translate("CFIDs", "Failed to patch dependent: ") + new_file)
+            write_error(QCoreApplication.translate("Global", "Failed to patch dependent: ") + new_file)
             write_error(e, True)
             return
 
