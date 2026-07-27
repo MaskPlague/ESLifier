@@ -9,6 +9,7 @@ import psutil
 import struct
 import platform
 
+from data_holder import _global
 if platform.system() == 'Windows':
     from win32 import win32file
     win32file._setmaxstdio(8192)
@@ -29,20 +30,19 @@ class scanner():
                     'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
                     'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa'])
         start_time = timeit.default_timer()
-        settings: dict = scanner.get_from_file('ESLifier_Data/settings.json', dict)
-        path: str = settings.get('skyrim_folder_path', '')
-        scanner.mo2_mode: bool = settings.get('mo2_mode', False)
-        scanner.output_file_name = settings.get('output_folder_name', 'ESLifier Output')
-        modlist_txt_path: str = settings.get('mo2_modlist_txt_path', '')
-        plugins_txt_path: str = settings.get('plugins_txt_path', '')
-        scanner.overwrite_path: str = settings.get('overwrite_path', '')
-        update_header: bool = settings.get('update_header', False)
-        scanner.all_patcher_experimental: bool = settings.get('all_patcher_experimental', False)
+        path: str = _global.skyrim_folder_path
+        scanner.mod_manager_mode: int = _global.mod_manager_mode
+        scanner.output_file_name = _global.output_folder_name
+        modlist_txt_path: str = _global.mo2_modlist_txt_path
+        vortex_data_path = _global.vortex_data_path
+        scanner.overwrite_path: str = _global.overwrite_path
+        update_header: bool = _global.update_header
+        scanner.all_patcher_experimental: bool = _global.all_patcher_experimental
         if scanner.all_patcher_experimental:
             write_to_file("Experimental all patcher mode enabled.")
         scanner.file_count: int = 0
         scanner.all_files: list[str] = []
-        scanner.plugins: list[str] = []
+        _global.plugins.clear()
         scanner.file_dict: dict[str, list[str]] = {}
         scanner.bsa_dict: dict[str, list[str]] = {}
         scanner.dll_dict: dict[str, list[str]] = {}
@@ -115,10 +115,9 @@ class scanner():
         else:
             scanner.get_files_from_skyrim_folder(path, plugins_list)
 
-        scanner.plugin_basename_list: set = set([os.path.basename(plugin).lower() for plugin in scanner.plugins])
+        scanner.plugin_basename_list: set = set([os.path.basename(plugin).lower() for plugin in _global.plugins])
 
         scanner.dump_to_file(file="ESLifier_Data/extracted_bsa.json", data=scanner.extracted)
-        scanner.dump_to_file(file="ESLifier_Data/plugin_list.json", data=scanner.plugins)
         scanner.dump_to_file(file="ESLifier_Data/winning_files_dict.json", data=scanner.winning_files_dict)
 
         write_remove(1, "-  " + QCoreApplication.translate("scanner", "Gathered %0 total files.").replace("%0", str(len(scanner.all_files))), True)
@@ -140,6 +139,7 @@ class scanner():
         time_taken = end_time - start_time
         write_normal('-  ' + QCoreApplication.translate("scanner", 'Time taken: %1 seconds').replace("%1", str(round(time_taken,2))))
         if full_scan:
+            _global.mods_with_seq = [mod for mod, files in scanner.file_dict.items() if files and files[-1].lower().endswith('.seq')]
             return flag_dict, dependency_dictionary
     
     def sort_bsa_files(bsa_dict: dict, plugins: list) -> dict:
@@ -517,7 +517,7 @@ class scanner():
 
     def get_file_masters():
         plugin_names = []
-        for plugin in scanner.plugins: plugin_names.append(os.path.basename(plugin).lower())
+        for plugin in _global.plugins: plugin_names.append(os.path.basename(plugin).lower())
         #pattern = re.compile(r'(?:~|:\s*|\||=|,|-|")\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\)?)\s*(?:\||,|"|$)')
         pattern = re.compile(r'(?:~|:\s*|\||=|,|-|"|\*)\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\)?)\s*(?:\||,|"|$|\n)')
         pattern2 = re.compile(rb'\x00([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\x00', flags=re.DOTALL)
@@ -660,7 +660,7 @@ class scanner():
                             local_dict.update({plugin: []})
                         if file not in local_dict[plugin]: 
                             local_dict[plugin].append(file)
-                    except Exception as e:
+                    except Exception:
                         pass
             elif file_lower.endswith('.dds') and '\\facetint\\' in file_lower :
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
@@ -670,7 +670,7 @@ class scanner():
                             local_dict.update({plugin: []})
                         if file not in local_dict[plugin]: 
                             local_dict[plugin].append(file)
-                    except Exception as e:
+                    except Exception:
                         pass
             elif '\\sound\\voice\\' in file_lower:
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
@@ -680,7 +680,7 @@ class scanner():
                             local_dict.update({plugin: []})
                         if file not in local_dict[plugin]: 
                             local_dict[plugin].append(file)
-                    except Exception as e:
+                    except Exception:
                         pass
             elif (scanner.all_patcher_experimental 
                   and not file_lower.endswith(
