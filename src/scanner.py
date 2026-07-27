@@ -23,7 +23,6 @@ from log_stream import write_error, write_normal, write_progress, write_remove, 
 
 from PyQt6.QtCore import QCoreApplication
 
-
 class scanner():    
     def scan(full_scan: bool) -> tuple[dict, dict] | None:
         scanner.bsa_blacklist = set(['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
@@ -357,7 +356,7 @@ class scanner():
                     scanner.extract_bsa(file, startupinfo, update_time, ".seq")
                     scanner.extracted.append(file)
                 except Exception as e:
-                    write_error(QCoreApplication.translate("scanner", 'Error Reading BSA: ') + file)
+                    write_error(QCoreApplication.translate("scanner", "Error Reading BSA: ") + file)
                     write_error(e, True)
                 write_remove(2, "")
 
@@ -504,7 +503,7 @@ class scanner():
             with open(file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
         except Exception as e:
-            write_error(QCoreApplication.translate("scanner", "Failed to dump data to: ") + file)
+            write_error(QCoreApplication.translate("Global", "Failed to dump data to: ") + file)
             write_error(e, True)
     
     def get_from_file(file: str, type: dict | list) -> list[str] | dict[str]:
