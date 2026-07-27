@@ -1,0 +1,9 @@
+PyQt6
+intervalTree
+Regex
+requests
+pyinstaller
+#leveldb
+plyvel
+psutil
+json5
