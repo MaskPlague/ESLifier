@@ -18,6 +18,7 @@ from compact_form_ids import CFIDs
 from cell_changed_scanner import cell_scanner
 from create_cell_master import create_new_cell_plugin
 from patch_new import patch_new
+from data_holder import _global
 from log_stream import log_stream, write_error, write_normal, write_patching, write_progress, write_remove, write_to_file, clear_and_close_log, clear_and_leave_log_open
 from file_defined_patcher_conditions import user_and_master_conditions_class
 
@@ -37,29 +38,21 @@ else:
     MAX_THREADS = max_threads
 
 class main(QWidget):
-    def __init__(self, eslifier, COLOR_MODE):
+    def __init__(self, COLOR_MODE):
         super().__init__()
         self.skyrim_folder_path = ''
         self.output_folder_path = ''
         self.output_folder_name = ''
-        self.modlist_txt_path = ''
-        self.plugins_txt_path = ''
-        self.overwrite_path = ''
         self.scanned = False
         self.cell_master_warned = False
-        self.mo2_mode = False
-        self.update_header = True
         self.dependency_dictionary: dict[str, list[str]] = {}
         self.redoing_output = False
         self.patch_new_running = False
         self.patch_new_only_remove = False
         self.generate_cell_master = False
-        self.hash_output = True
         self.log_stream: log_stream = log_stream()
-        self.eslifier = eslifier
         self.COLOR_MODE = COLOR_MODE
         self.start_time = timeit.default_timer()
-        self.settings = {}
         self.flag_worker = None
         self.compact_worker = None
         self.patch_and_flag_worker = None
@@ -271,6 +264,32 @@ class main(QWidget):
         
         self.setLayout(self.main_layout)
         splitter.setSizes([300,1200,1200])
+
+    def update_data(self):
+        self.skyrim_folder_path =   _global.skyrim_folder_path
+        self.output_folder_path =   _global.output_folder_path
+        self.output_folder_name =   _global.output_folder_name
+        self.generate_cell_master = _global.generate_cell_master
+
+        self.list_compact.filter_changed_cells =    _global._settings.get('enable_cell_changed_filter', True)
+        self.list_compact.filter_interior_cells =   _global._settings.get('enable_interior_cell_filter', False)
+        self.list_compact.show_cells =              _global._settings.get('show_cells', True)
+        self.list_compact.show_esms =               _global._settings.get('show_esms', True)
+        self.list_compact.show_dlls =               _global._settings.get('show_dlls', False)
+        self.list_compact.filter_seq =              _global._settings.get('filter_seq', False)
+        self.list_compact.filter_worldspaces =      _global._settings.get('filter_worldspaces', True)
+        self.list_compact.filter_weather =          _global._settings.get('filter_weathers', False)
+        self.list_compact.cell_master =             _global._settings.get('generate_cell_master', True)
+        self.list_compact.hidden_columns =          _global._settings.get('right_hidden_columns', '')
+
+        self.list_eslify.filter_seq =               _global._settings.get('filter_seq', False)
+        self.list_eslify.filter_changed_cells =     _global._settings.get('enable_cell_changed_filter', True)
+        self.list_eslify.filter_interior_cells =    _global._settings.get('enable_interior_cell_filter', False)
+        self.list_eslify.show_cells =               _global._settings.get('show_cells', True)
+        self.list_eslify.show_esms =                _global._settings.get('show_esms', True)
+        self.list_eslify.filter_worldspaces =       _global._settings.get('filter_worldspaces', True)
+        self.list_eslify.cell_master =              _global.generate_cell_master
+        self.list_eslify.hidden_columns =           _global._settings.get('left_hidden_columns', '')
     
     def search_eslify(self):
         if len(self.filter_eslify.text()) > 0:
@@ -380,7 +399,7 @@ class main(QWidget):
             self.setEnabled(True)
 
     def compact_confirmed(self, checked):
-        write_to_file(f'Compacting Plugins [MO2 Mode = {self.mo2_mode}]')
+        write_to_file(f'Compacting Plugins [Mod Manager Mode = {_global.mod_manager_mode}]')
         self.confirm.hide()
         self.start_time = timeit.default_timer()
         for row in range(self.list_compact.rowCount()):
@@ -389,7 +408,7 @@ class main(QWidget):
                 self.list_compact.item(row,self.list_compact.MOD_COL).setFlags(self.list_compact.item(row,self.list_compact.MOD_COL).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
         self.log_stream.show()
         self.compact_thread = QThread()
-        self.compact_worker = CompactorWorker(checked, self.dependency_dictionary, self.files_to_not_hash, self.settings)
+        self.compact_worker = CompactorWorker(checked, self.dependency_dictionary, self.files_to_not_hash)
         self.compact_worker.moveToThread(self.compact_thread)
         self.compact_thread.started.connect(self.compact_worker.run)
         self.compact_worker.finished_signal.connect(
@@ -427,6 +446,7 @@ class main(QWidget):
                 if mod_lower not in counted and os.path.exists(mod):
                     size += os.path.getsize(mod)
                     counted.add(mod_lower)
+                # if not new_interior_cell then the mod's dependents don't need patching for ESLifier_Cell_Master and thus shouldn't be counted
                 if not 'new_interior_cell' in self.list_eslify.flag_dict[mod]:
                     continue
                 mod_basename = os.path.basename(mod_lower)
@@ -465,7 +485,7 @@ class main(QWidget):
             self.setEnabled(True)
 
     def eslify_confirmed(self, checked):
-        write_to_file(f'ESL Flagging Plugins [MO2 Mode = {self.mo2_mode}]')
+        write_to_file(f'ESL Flagging Plugins [Mod Manager Mode = {_global.mod_manager_mode}]')
         self.confirm.hide()
         for row in range(self.list_eslify.rowCount()):
             if self.list_eslify.item(row, self.list_eslify.MOD_COL).checkState() == Qt.CheckState.Checked:
@@ -505,8 +525,7 @@ class main(QWidget):
             full_list = files.copy()
             full_list.extend(patch_and_flag)
             self.flag_and_patch_thread = QThread()
-            self.patch_and_flag_worker = CompactorWorker(patch_and_flag, self.dependency_dictionary, 
-                                                         self.files_to_not_hash, self.settings)
+            self.patch_and_flag_worker = CompactorWorker(patch_and_flag, self.dependency_dictionary, self.files_to_not_hash)
             self.patch_and_flag_worker.moveToThread(self.flag_and_patch_thread)
             self.flag_and_patch_thread.started.connect(self.patch_and_flag_worker.run)
             self.patch_and_flag_worker.finished_signal.connect(self.flag_and_patch_thread.quit)
@@ -525,7 +544,7 @@ class main(QWidget):
 
     def create_flag_worker(self, files, patch_and_flag = []):
         self.flag_thread = QThread()
-        self.flag_worker = FlagWorker(files, self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, self.mo2_mode)
+        self.flag_worker = FlagWorker(files)
         self.flag_worker.moveToThread(self.flag_thread)
         self.flag_thread.started.connect(self.flag_worker.flag_files)
         self.flag_worker.finished_signal.connect(self.flag_thread.quit)
@@ -616,7 +635,7 @@ class main(QWidget):
         self.setEnabled(False)
         self.scan_thread = QThread()
         def run_scan():
-            write_to_file(f'Running Scan [MO2 Mode = {self.mo2_mode}]')
+            write_to_file(f'Running Scan [Mode Manager Mode = {_global.mod_manager_mode}]')
             self.log_stream.show()
             self.scanner_worker = ScannerWorker()
             self.scanner_worker.moveToThread(self.scan_thread)
@@ -707,7 +726,7 @@ class main(QWidget):
             write_error(self.tr('Issue occured getting the output folder during output reset.'))
             return
 
-        if self.hash_output:
+        if _global.hash_output:
             self.calculate_existing_output_threaded('reset_output')
         else:
             files_to_remove, size, file_count = self.calculate_existing_output()
@@ -722,7 +741,7 @@ class main(QWidget):
                 "This action will delete %2 files and %3 MBs of data from the output."
             ).replace("%1", self.output_folder_name).replace("%2", str(file_count)).replace("%3", str(calculated_size)))
         def accepted():
-            write_to_file(f'Resetting Output [MO2 Mode = {self.mo2_mode}]')
+            write_to_file(f'Resetting Output [Mode Manager Mode = {_global.mod_manager_mode}]')
             confirm.hide()
             if os.path.exists('ESLifier_Data/compacted_and_patched.json'):
                 try:
@@ -749,7 +768,7 @@ class main(QWidget):
             self.list_eslify.flag_dict = {}
             self.list_compact.create()
             self.list_eslify.create()
-            if os.path.exists('ESLifier_Data/new_file_hashes.json') and self.hash_output:
+            if os.path.exists('ESLifier_Data/new_file_hashes.json') and _global.hash_output:
                 self.update_changed_rel_paths_in_new_files_hashes(changed_rel_paths_to_switch)
                 def accepted2():
                     if os.path.exists('ESLifier_Data/new_file_hashes.json'):
@@ -796,7 +815,7 @@ class main(QWidget):
             self.log_stream.show()
             write_error(self.tr('Issue occured getting the output folder during output rebuild.'))
             return
-        if self.hash_output:
+        if _global.hash_output:
             self.calculate_existing_output_threaded('rebuild_output')
         else:
             files_to_remove, size, file_count = self.calculate_existing_output()
@@ -812,7 +831,7 @@ class main(QWidget):
                 "re-scan, flag, compact, and patch all previously output files that fit the current filters."
             ).replace("%1", self.output_folder_name).replace("%2", str(file_count)).replace("%3", str(calculated_size)))
         def accepted():
-            write_to_file(f'Starting Output Rebuild [MO2 Mode = {self.mo2_mode}]')
+            write_to_file(f'Starting Output Rebuild [Mode Manager Mode = {_global.mod_manager_mode}]')
             confirm.hide()
             previously_compacted = []
             previously_esl_flagged = []
@@ -862,7 +881,7 @@ class main(QWidget):
                 "and then click this button.")
         confirm.setText(confirm_text)
         def accepted():
-            write_to_file(f'Resetting BSA [MO2 Mode = {self.mo2_mode}]')
+            write_to_file(f'Resetting BSA [Mode Manager Mode = {_global.mod_manager_mode}]')
             confirm.hide()
             if os.path.exists('ESLifier_Data/extracted_bsa.json'):
                 os.remove('ESLifier_Data/extracted_bsa.json')
@@ -870,7 +889,7 @@ class main(QWidget):
                 def delete_directory(dir_path):
                     try:
                         shutil.rmtree(dir_path)
-                    except Exception as e:
+                    except Exception:
                         pass
 
                 def delete_subdirectories_threaded(parent_dir):
@@ -947,23 +966,7 @@ class main(QWidget):
         return confirm
     
     def get_rel_path(self, file: str) -> str:
-        if 'bsa_extracted' in file:
-            if 'bsa_extracted_temp' in file:
-                start = os.path.join(os.getcwd(), 'bsa_extracted_temp/')
-            else:
-                start = os.path.join(os.getcwd(), 'bsa_extracted/')
-            rel_path = os.path.normpath(os.path.relpath(file, start))
-        elif self.mo2_mode and file.lower().startswith(self.overwrite_path.lower()):
-            rel_path = os.path.normpath(os.path.relpath(file, self.overwrite_path))
-        else:
-            if self.mo2_mode:
-                parts = os.path.normpath(os.path.relpath(file, self.skyrim_folder_path)).split(os.sep)
-                if len(parts) != 1:
-                    parts = parts[1:]
-                rel_path = os.path.join(*parts)
-            else:
-                rel_path = os.path.normpath(os.path.relpath(file, self.skyrim_folder_path))
-        return rel_path
+        return _global.get_rel_path(file)
     
     def calculate_existing_output(self):
         size = 0
@@ -998,7 +1001,7 @@ class main(QWidget):
         write_normal(self.tr("Hashing output for changes..."))
         write_normal("", False)
         self.hasher_thread = QThread()
-        self.hasher_worker = HashWorker(files_to_hash, self.new_file_hashes, self.get_rel_path)
+        self.hasher_worker = HashWorker(files_to_hash, self.new_file_hashes)
         self.hasher_worker.moveToThread(self.hasher_thread)
         self.hasher_thread.started.connect(self.hasher_worker.run)
         self.hasher_worker.finished.connect(self.on_hashing_finished)
@@ -1234,10 +1237,10 @@ class main(QWidget):
         confirm = self.create_confirmation()
         confirm.setText(self.tr("Are you sure you want to scan and patch new/changed files?"))
         def accepted():
-            write_to_file(f'Starting Patch New Process [MO2 Mode = {self.mo2_mode}]')
+            write_to_file(f'Starting Patch New Process [Mode Manager Mode = {_global.mod_manager_mode}]')
             confirm.hide()
             self.log_stream.show()
-            self.patch_new.scan_and_find(self.settings.copy(), self)
+            self.patch_new.scan_and_find(self)
         confirm.accepted.connect(accepted)
         confirm.rejected.connect(lambda: self.setEnabled(True))
         confirm.show()
@@ -1260,23 +1263,14 @@ class ScannerWorker(QObject):
 
 class CompactorWorker(QObject):
     finished_signal = pyqtSignal()
-    def __init__(self, checked, dependency_dictionary, files_to_not_hash: set, settings: dict):
+    def __init__(self, checked, dependency_dictionary, files_to_not_hash: set):
         super().__init__()
         self.checked = checked
         self.dependency_dictionary = dependency_dictionary
-        self.skyrim_folder_path: str = settings.get('skyrim_folder_path', '')
-        self.output_folder_path = settings.get('output_folder_path', '')
-        self.output_folder_name = settings.get('output_folder_name', 'ESLifier Output')
-        self.overwrite_path: str = os.path.normpath(settings.get('overwrite_path', ''))
-        self.mo2_mode: bool = settings.get('mo2_mode', False)
-        self.update_header: bool = settings.get('update_header', False)
+        self.update_header: bool = _global.update_header
         self.create_new_cell_plugin = create_new_cell_plugin()
-        self.generate_cell_master = settings.get('generate_cell_master', True)
-        self.persistent_ids = settings.get('persistent_ids', True)
-        self.free_non_existent = settings.get('free_non_existent', False)
+        self.generate_cell_master = _global.generate_cell_master
         self.files_to_not_hash: set = files_to_not_hash
-        self.hash_output = settings.get('hash_output', True)
-        self.all_patcher_experimental = settings.get('all_patcher_experimental', False)
         
     def run(self):
         total = len(self.checked)
@@ -1290,7 +1284,7 @@ class CompactorWorker(QObject):
         with open("ESLifier_Data/flag_dictionary.json", 'r', encoding='utf-8') as f:
             flag_dict = json.load(f)
         if self.generate_cell_master:
-            self.create_new_cell_plugin.generate(os.path.join(self.output_folder_path, self.output_folder_name))
+            self.create_new_cell_plugin.generate(_global.output_folder_joined_path)
         finalize = False
         original_files: dict = self.get_from_file('ESLifier_Data/original_files.json')
         winning_files_dict: dict = self.get_from_file('ESLifier_Data/winning_files_dict.json')
@@ -1302,10 +1296,9 @@ class CompactorWorker(QObject):
             bsa_masters.extend(value)
 
         additional_file_patcher_conditions = user_and_master_conditions_class()
-        cfids = CFIDs(self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, self.update_header, self.mo2_mode,
-                      self.create_new_cell_plugin, original_files, winning_files_dict, {}, {}, master_byte_data, bsa_masters, bsa_dict,
-                      self.persistent_ids, self.free_non_existent, additional_file_patcher_conditions, self.all_patcher_experimental)
-        if self.hash_output:
+        cfids = CFIDs(self.create_new_cell_plugin, original_files, winning_files_dict, {}, {}, master_byte_data, bsa_masters, bsa_dict,
+                       additional_file_patcher_conditions)
+        if _global.hash_output:
             write_normal(self.tr("Hashing any existing files for changes..."))
             cfids.hash_output_files(set(), True)
         clear_and_leave_log_open()
@@ -1340,7 +1333,7 @@ class CompactorWorker(QObject):
             self.create_new_cell_plugin.finalize_plugin()
         write_normal(self.tr('Saving Data...'))
         cfids.save_data()
-        if self.hash_output:
+        if _global.hash_output:
             write_normal(self.tr('Hashing output files for checking later changes...'))
             cfids.hash_output_files(self.files_to_not_hash)
         write_normal(self.tr("Patching Complete"))
@@ -1358,13 +1351,8 @@ class CompactorWorker(QObject):
     
 class FlagWorker(QObject):
     finished_signal = pyqtSignal()
-    def __init__(self, files, skyrim_folder_path, output_folder_path, output_folder_name, overwrite_path, mo2_mode):
+    def __init__(self, files):
         self.files = files
-        self.skyrim_folder_path = skyrim_folder_path
-        self.output_folder_path = output_folder_path
-        self.output_folder_name = output_folder_name
-        self.overwrite_path = overwrite_path
-        self.mo2_mode = mo2_mode
         super().__init__()
     
     def flag_files(self):
@@ -1372,8 +1360,7 @@ class FlagWorker(QObject):
         winning_files_dict = self.get_from_file('ESLifier_Data/winning_files_dict.json')
         winning_file_history_dict = {}
         additional_file_patcher_conditions = user_and_master_conditions_class()
-        cfids = CFIDs(self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, True, self.mo2_mode, 
-                      None, original_files, winning_files_dict, winning_file_history_dict, {}, {}, [], {}, None, None, additional_file_patcher_conditions, False)
+        cfids = CFIDs(None, original_files, winning_files_dict, winning_file_history_dict, {}, {}, [], {}, additional_file_patcher_conditions)
         for file in self.files:
             original_files, winning_file_history_dict = cfids.set_flag(file)
         self.dump_dictionary('ESLifier_Data/original_files.json', original_files)
@@ -1389,7 +1376,7 @@ class FlagWorker(QObject):
                 json.dump(data, f, ensure_ascii=False, indent=4)
         except Exception as e:
             write_error(self.tr("Failed to dump data to ") + file)
-            write_error(e, False)
+            write_error(e, True)
     
     def get_from_file(self, file: str) -> dict:
         try:
@@ -1402,11 +1389,10 @@ class FlagWorker(QObject):
 
 class HashWorker(QObject):
     finished = pyqtSignal(dict)
-    def __init__(self, files, new_file_hashes, get_rel_path):
+    def __init__(self, files, new_file_hashes):
         super().__init__()
         self.files = files
         self.new_file_hashes:dict = new_file_hashes
-        self.get_rel_path = get_rel_path
         self.lock = threading.Lock()
 
     def run(self):
@@ -1461,7 +1447,7 @@ class HashWorker(QObject):
             with open(file, 'rb') as f: 
                 sha256_hash = hashlib.sha256(f.read()).hexdigest()
                 f.close()
-            rel_path = self.get_rel_path(file).lower()
+            rel_path = _global.get_rel_path(file).lower()
             old_hash, changed = self.new_file_hashes.get(rel_path, (None, False))
             if old_hash == None or (old_hash == sha256_hash and not changed): 
                 local_files_to_remove.append(file) 
