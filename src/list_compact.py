@@ -6,6 +6,7 @@ from PyQt6.QtCore import Qt, QItemSelection
 from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QPushButton, QListWidget, QListWidgetItem
 from blacklist import blacklist
 from log_stream import write_error
+from data_holder import _global
 
 class list_compactable(QTableWidget):
     def __init__(self):
@@ -16,13 +17,15 @@ class list_compactable(QTableWidget):
         self.WRLD_COL = next(c)
         self.WTHR_COL = next(c)
         self.SKSE_COL = next(c)
+        self.SEQ_COL = next(c)
         self.ESM_COL = next(c)
         self.DEP_COL = next(c)
         self.DEP_DISP_COL = next(c)
         self.HIDER_COL = next(c)
         self.COL_COUNT = next(c)
         self.setColumnCount(self.COL_COUNT)
-        self.setHorizontalHeaderLabels([self.tr('*   Mod'), self.tr('CELL Records'), self.tr('WRLD Records'), self.tr('WTHR Records'), 'SKSE DLL', 'ESM', self.tr('Dependencies'), '', 'Hider'])
+        self.setHorizontalHeaderLabels([self.tr('*   Mod'), self.tr('CELL Records'), self.tr('WRLD Records'), 
+                                        self.tr('WTHR Records'), 'SKSE DLL', 'SEQ', 'ESM', self.tr('Dependencies'), '', 'Hider'])
         self.horizontalHeaderItem(self.MOD_COL).setToolTip(self.tr('This is the plugin name. Select which plugins you wish to compact.'))
         self.horizontalHeaderItem(self.CELL_COL).setToolTip(self.tr(
                                                             'This is the CELL Record Flag. It can be completely ignored for users\n'\
@@ -50,6 +53,11 @@ class list_compactable(QTableWidget):
         self.horizontalHeaderItem(self.SKSE_COL).setToolTip(self.tr(
                                                             'This is the skse DLL flag. If a dll has the plugin name in it then it may\n'\
                                                             'have a LookUpForm() call that may break after compacting a flagged plugin.'))
+        self.horizontalHeaderItem(self.SEQ_COL).setToolTip(self.tr(
+                                                            'Mods with SEQ files can be subject to the quest bug that prevents dialogue from\n'\
+                                                            'working, all that needs to be done in game is save and reload and the bug will\n'\
+                                                            'be fixed. This flag exists so users who don\'t want to deal with this bug can\n'\
+                                                            'avoid ESLifiying mods with SEQ files.'))
         self.horizontalHeaderItem(self.ESM_COL).setToolTip(self.tr('This is the ESM flag. If a plugin is an ESM then it will be flagged here.'))
         self.horizontalHeaderItem(self.DEP_COL).setToolTip(self.tr(
                                                             'If a plugin has other plugins with it as a master, they will appear when\n'\
@@ -72,6 +80,7 @@ class list_compactable(QTableWidget):
         self.show_cells = True
         self.show_dlls = True
         self.show_esms = True
+        self.filter_seq = False
         self.filter_changed_cells = True
         self.filter_interior_cells = False
         self.filter_worldspaces = False
@@ -113,6 +122,9 @@ class list_compactable(QTableWidget):
 
         if not self.show_dlls: self.hideColumn(self.SKSE_COL)
         else: self.showColumn(self.SKSE_COL)
+
+        if not self.filter_seq and not 'SEQ' in hidden_columns: self.showColumn(self.SEQ_COL)
+        else: self.hideColumn(self.SEQ_COL)
 
         if self.filter_worldspaces or self.cell_master or 'WRLD' in hidden_columns: self.hideColumn(self.WRLD_COL) 
         else: self.showColumn(self.WRLD_COL)
@@ -199,6 +211,7 @@ class list_compactable(QTableWidget):
 
         for i, (plugin, flags) in enumerate(local_dict.items()):
             basename:str = os.path.basename(plugin)
+            basename_lower:str = basename.lower()
             item = QTableWidgetItem(basename)
             if basename in self.compacted:
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
@@ -261,24 +274,30 @@ class list_compactable(QTableWidget):
                 if self.filter_weather:
                     hide_row = True
                 self.setItem(i, self.WTHR_COL, item_wthr_flag)
-            if basename.lower() in self.dll_dict:
+            if basename_lower in self.dll_dict:
                 item_dll = QTableWidgetItem(self.tr('!!SKSE DLL!!'))
                 tooltip = self.tr("This mod's plugin name is present in the following SKSE dlls and\nmay break their FormLookup() function calls if a hard-coded form id is present:")
-                for dll in self.dll_dict[basename.lower()]:
+                for dll in self.dll_dict[basename_lower]:
                     tooltip += '\n- ' + os.path.basename(dll)
                 item_dll.setToolTip(tooltip)
                 if not self.show_dlls:
                     hide_row = True
                 self.setItem(i, self.SKSE_COL, item_dll)
+            if basename_lower in _global.mods_with_seq:
+                item_seq_flag = QTableWidgetItem('SEQ')
+                item_seq_flag.setToolTip(self.tr('This mod has an SEQ file which may cause dialogue for it to not work until you save and reload in game.'))
+                if self.filter_seq:
+                    hide_row = True
+                self.setItem(i, self.SEQ_COL, item_seq_flag)
             if 'is_esm' in flags:
                 item_esm_flag = QTableWidgetItem('ESM')
                 item_esm_flag.setToolTip(self.tr('This mod is an ESM.'))
                 if not self.show_esms:
                     hide_row = True
                 self.setItem(i, self.ESM_COL, item_esm_flag)
-            if self.dependency_list[basename.lower()] != []:
+            if self.dependency_list[basename_lower] != []:
                 dL = QPushButton("Show")
-                dL.clicked.connect(lambda _, mod_key=basename.lower(): display_dependencies(mod_key))
+                dL.clicked.connect(lambda _, mod_key=basename_lower: display_dependencies(mod_key))
                 dL.setMaximumSize(90,22)
                 dL.setMinimumSize(90,22)
                 dL.setStyleSheet("""

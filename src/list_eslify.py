@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidget
 
 from blacklist import blacklist
 from log_stream import write_error
+from data_holder import _global
 
 class list_eslable(QTableWidget):
     def __init__(self):
@@ -16,12 +17,13 @@ class list_eslable(QTableWidget):
         self.MOD_COL = next(c)
         self.CELL_COL = next(c)
         self.WRLD_COL = next(c)
+        self.SEQ_COL = next(c)
         self.ESM_COL = next(c)
         self.SPACER_COL = next(c)
         self.HIDER_COL = next(c)
         self.COL_COUNT = next(c)
         self.setColumnCount(self.COL_COUNT)
-        self.setHorizontalHeaderLabels([self.tr('*   Mod'), self.tr('CELL Records'), self.tr('WRLD Records'), 'ESM', '', 'Hider'])
+        self.setHorizontalHeaderLabels([self.tr('*   Mod'), self.tr('CELL Records'), self.tr('WRLD Records'), 'SEQ', 'ESM', '', 'Hider'])
         self.horizontalHeaderItem(self.MOD_COL).setToolTip(self.tr('This is the plugin name. Select which plugins you wish to flag as light.'))
         self.horizontalHeaderItem(self.CELL_COL).setToolTip(self.tr(
                                                             'This is the CELL Record Flag. It can be completely ignored for users\n'\
@@ -42,6 +44,11 @@ class list_eslable(QTableWidget):
                                                             'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'\
                                                             'Otherwise, if an plugin is flagged ESL\n'\
                                                             'then the new worldspace may have landscape issues (no ground).'))
+        self.horizontalHeaderItem(self.SEQ_COL).setToolTip(self.tr(
+                                                            'Mods with SEQ files can be subject to the quest bug that prevents dialogue from\n'\
+                                                            'working, all that needs to be done in game is save and reload and the bug will\n'\
+                                                            'be fixed. This flag exists so users who don\'t want to deal with this bug can\n'\
+                                                            'avoid ESLifiying mods with SEQ files.'))
         self.horizontalHeaderItem(self.ESM_COL).setToolTip(self.tr('This is the ESM flag.'))
         self.setColumnHidden(self.HIDER_COL, True)
         self.horizontalHeader().sortIndicatorChanged.connect(self.hide_rows)
@@ -58,6 +65,7 @@ class list_eslable(QTableWidget):
         self.flag_dict = {}
         self.show_cells = True
         self.show_esms = True
+        self.filter_seq = False
         self.filter_changed_cells = True
         self.filter_interior_cells = False
         self.filter_worldspaces = False
@@ -96,6 +104,9 @@ class list_eslable(QTableWidget):
         if self.show_cells and not 'CELL' in hidden_columns: self.showColumn(self.CELL_COL)
         else: self.hideColumn(self.CELL_COL)
 
+        if not self.filter_seq and not 'SEQ' in hidden_columns: self.showColumn(self.SEQ_COL)
+        else: self.hideColumn(self.SEQ_COL)
+
         if self.filter_worldspaces or self.cell_master or 'WRLD' in hidden_columns: self.hideColumn(self.WRLD_COL)
         else: self.showColumn(self.WRLD_COL)
 
@@ -121,7 +132,8 @@ class list_eslable(QTableWidget):
         self.setRowCount(len(local_dict))
 
         for i, (plugin, flags) in enumerate(local_dict.items()):
-            basename = os.path.basename(plugin)
+            basename: str = os.path.basename(plugin)
+            basename_lower: str = basename.lower()
             item = QTableWidgetItem(basename)
             item.setToolTip(plugin)
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
@@ -173,6 +185,12 @@ class list_eslable(QTableWidget):
                 if self.filter_worldspaces:
                     hide_row = True
                 self.setItem(i, self.WRLD_COL, item_wrld_flag)
+            if basename_lower in _global.mods_with_seq:
+                item_seq_flag = QTableWidgetItem('SEQ')
+                item_seq_flag.setToolTip(self.tr('This mod has an SEQ file which may cause dialogue for it to not work until you save and reload in game.'))
+                if self.filter_seq:
+                    hide_row = True
+                self.setItem(i, self.SEQ_COL, item_seq_flag)
             if 'is_esm' in flags:
                 item_esm_flag = QTableWidgetItem('ESM')
                 item_esm_flag.setToolTip(self.tr('This mod is an ESM.'))
