@@ -437,9 +437,10 @@ class settings(QWidget):
                         "break certain functions."))
         elif self.mod_manager_mode_toggle.checkState() == Qt.CheckState.PartiallyChecked:
             self.mod_manager_mode_widget.layout().itemAt(0).widget().setText(self.tr("Mod Manager: Vortex"))
-            self.skyrim_folder_path_widget.setToolTip(self.tr("Set this to your Skyrim Special Edition Data folder that holds Skyrim.esm."))
-            self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText(self.tr("Data Folder Path"))
-            self.skyrim_folder_path.setPlaceholderText(self.tr('C:/Path/To/Skyrim Special Edition/Data'))
+            self.output_folder_path_widget.setToolTip(self.tr("Set where you want the Output Folder to be generated. For example: Vortex's 'Mod Staging Folder'."))
+            #self.skyrim_folder_path_widget.setToolTip(self.tr("Set this to your Skyrim Special Edition Data folder that holds Skyrim.esm."))
+            #self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText(self.tr("Data Folder Path"))
+            #self.skyrim_folder_path.setPlaceholderText(self.tr('C:/Path/To/Skyrim Special Edition/Data'))
             #TODO: This
             self.mod_manager_mode_widget.setToolTip(
                 self.tr("Vortex users PLACEHOLDER MESSAGE"))
@@ -663,13 +664,14 @@ class settings(QWidget):
             self.vortex_data_path_widget.hide()
         elif self.mod_manager_mode_toggle.checkState() == Qt.CheckState.PartiallyChecked:
             self.vortex_data_path_widget.show()
-            self.skyrim_folder_path.show()
+            #self.skyrim_folder_path_widget.show()
+            self.skyrim_folder_path_widget.hide()
             self.mo2_modlist_txt_path_widget.hide()
             self.plugins_txt_path_widget.hide()
             self.overwrite_path_widget.hide()
         else:
-            self.skyrim_folder_path.show()
-            self.plugins_txt_path.show()
+            self.skyrim_folder_path_widget.show()
+            self.plugins_txt_path_widget.show()
             self.vortex_data_path_widget.hide()
             self.mo2_modlist_txt_path_widget.hide()
             self.overwrite_path_widget.hide()
