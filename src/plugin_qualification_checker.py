@@ -17,10 +17,10 @@ class qualification_checker():
         qualification_checker.dependent_dict: dict[str, list[str]] = qualification_checker.get_from_file("ESLifier_Data/dependency_dictionary.json")
         qualification_checker.flag_dict = {}
         qualification_checker.max_record_number = 4096
-        if os.path.exists('ESLifier_Data/EDIDs'):
-            shutil.rmtree('ESLifier_Data/EDIDs')
-        if not os.path.exists("ESLifier_Data/EDIDs"):
-            os.makedirs("ESLifier_Data/EDIDs")
+        #if os.path.exists('ESLifier_Data/EDIDs'):
+        #    shutil.rmtree('ESLifier_Data/EDIDs')
+        #if not os.path.exists("ESLifier_Data/EDIDs"):
+        #    os.makedirs("ESLifier_Data/EDIDs")
         if os.path.exists('ESLifier_Data/Cell_IDs'):
             shutil.rmtree('ESLifier_Data/Cell_IDs')
         if not os.path.exists('ESLifier_Data/Cell_IDs/'):
