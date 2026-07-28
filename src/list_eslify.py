@@ -72,6 +72,7 @@ class list_eslable(QTableWidget):
         self.cell_master = False
         self.hidden_columns = ""
         self.blacklist = blacklist()
+        self.previously_esl_flagged_exists = False
 
         self.setStyleSheet("""
             QTableWidget::item{
@@ -99,6 +100,7 @@ class list_eslable(QTableWidget):
         self.setSortingEnabled(False)
         self.clearContents()
 
+        self.previously_esl_flagged_exists = os.path.exists('ESLifier_Data/previously_esl_flagged.json')
         hidden_columns = [col.strip().upper() for col in self.hidden_columns.split(',')]
 
         if self.show_cells and not 'CELL' in hidden_columns: self.showColumn(self.CELL_COL)
@@ -242,6 +244,8 @@ class list_eslable(QTableWidget):
             check_all_action = menu.addAction(self.tr("Check All"))
             uncheck_all_action = menu.addAction(self.tr("Uncheck All"))
             invert_selection_action = menu.addAction(self.tr("Invert Selection Checks"))
+            if self.previously_esl_flagged_exists:
+                check_previously_esl_flagged_action = menu.addAction(self.tr("Check Previously ESL Flagged"))
             open_explorer_action = menu.addAction(self.tr("Open in File Explorer"))
             add_to_blacklist_action = menu.addAction(self.tr("Add Highlighted Mod(s) to Blacklist"))
             action = menu.exec(self.viewport().mapToGlobal(position))
@@ -253,6 +257,8 @@ class list_eslable(QTableWidget):
                 self.uncheck_all()
             if action == select_all_action:
                 self.select_all()
+            if self.previously_esl_flagged_exists and action == check_previously_esl_flagged_action:
+                self.check_previously_esl_flagged()
             if action == invert_selection_action:
                 selected_items = self.selectedItems()
                 self.invert_selection(selected_items)
@@ -317,15 +323,15 @@ class list_eslable(QTableWidget):
 
     def check_previously_esl_flagged(self):
         self.blockSignals(True)
-        if os.path.exists('ESLifier_Data/esl_flagged.json'):
+        if os.path.exists('ESLifier_Data/previously_esl_flagged.json'):
             try:
-                with open('ESLifier_Data/esl_flagged.json', 'r', encoding='utf-8') as f:
+                with open('ESLifier_Data/previously_esl_flagged.json', 'r', encoding='utf-8') as f:
                     esl_flagged = json.load(f)
                     f.close()
                 for row in range(self.rowCount()):
                     if not self.isRowHidden(row) and self.item(row, self.MOD_COL).checkState() == Qt.CheckState.Unchecked and self.item(row, self.MOD_COL).text() in esl_flagged:
                         self.item(row, self.MOD_COL).setCheckState(Qt.CheckState.Checked)
             except Exception as e:
-                write_error(self.tr('Failed to get esl_flagged.json'))
+                write_error(self.tr('Failed to get previously_esl_flagged.json'))
                 write_error(e, True)
         self.blockSignals(False)
