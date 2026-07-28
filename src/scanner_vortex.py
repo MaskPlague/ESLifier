@@ -13,8 +13,8 @@ if TYPE_CHECKING:
 
 class Vortex():
     scanner: scanner = None
-    def get_load_order(parser: VortexDBParser, profile_id: str, installed_mods: dict[str, dict]) -> list[str]:
-        profiles: dict[str, dict] = parser.get_section("persistent###profiles###") or {}
+    def get_load_order(profile_id: str, installed_mods: dict[str, dict]) -> list[str]:
+        profiles: dict[str, dict] = VortexDBParser.get_section("persistent###profiles###") or {}
         mod_state_data: dict[str, dict[str, bool|str]] = profiles.get(profile_id, {}).get("modState", {})
         
         enabled_mods: set[str] = set()
@@ -73,7 +73,6 @@ class Vortex():
         return load_order, installed_mods
 
     def get_file_conflict_resolution(
-        level_db: VortexDBParser, 
         ordered_mod_ids: list[str], 
         mod_files: dict[str, list[str]],
         installed_mods: dict[str, list]
@@ -89,8 +88,6 @@ class Vortex():
 
             yielded_files_per_mod[mod_id] = normalized_yields
 
-        #print(ordered_mod_ids)
-        #.append('bsa_extracted_eslifier_scan')
         ordered_mod_ids.insert(0, 'bsa_extracted_eslifier_scan')
         load_order_index = {mod_id: i for i, mod_id in enumerate(ordered_mod_ids)}
 
@@ -123,21 +120,21 @@ class Vortex():
 
         return file_resolution
 
-    def get_last_used_skyrim_profile(parser:VortexDBParser):
-        profile_data = parser.get_section("settings###profiles###")
+    def get_last_used_skyrim_profile():
+        profile_data = VortexDBParser.get_section("settings###profiles###")
         return profile_data.get('lastActiveProfile',{}).get("skyrimse", None)
 
-    def get_plugins_list(vortex_data_path, profile_id) -> list[str]:
-        return Vortex.scanner.get_plugins_list(os.path.join(vortex_data_path, "skyrimse", "profiles", profile_id, "plugins.txt"))
+    def get_plugins_list(profile_id) -> list[str]:
+        return Vortex.scanner.get_plugins_list(os.path.join(_global.vortex_data_path, "skyrimse", "profiles", profile_id, "plugins.txt"))
         
-    def get_winning_file_conflicts(vortex_data_path, parser: VortexDBParser):
-        profile_id = Vortex.get_last_used_skyrim_profile(parser)
+    def get_winning_file_conflicts():
+        profile_id = Vortex.get_last_used_skyrim_profile()
         
-        plugins_list: list[str] = Vortex.get_plugins_list(vortex_data_path, profile_id)
+        plugins_list: list[str] = Vortex.get_plugins_list(profile_id)
 
-        installed_mods: dict[str, dict] = parser.get_section("persistent###mods###skyrimse###") or {}
-        ordered_mod_ids, installed_mods = Vortex.get_load_order(parser, profile_id, installed_mods)
-        mod_staging_folder = os.path.normpath(parser.get_key_value("settings###mods###installPath###").removeprefix('"').removesuffix('"'))
+        installed_mods: dict[str, dict] = VortexDBParser.get_section("persistent###mods###skyrimse###") or {}
+        ordered_mod_ids, installed_mods = Vortex.get_load_order(profile_id, installed_mods)
+        mod_staging_folder = os.path.normpath(VortexDBParser.get_key_value("settings###mods###installPath###").removeprefix('"').removesuffix('"'))
         mod_files = {}
         cases: dict[str, str] = {}
         plugin_extensions = ('.esp', '.esl', '.esm')
@@ -208,7 +205,6 @@ class Vortex():
                 mod_files[relative_path].append('bsa_extracted_eslifier_scan')
 
         conflict_map: dict[str, list[str]] = Vortex.get_file_conflict_resolution(
-            parser, 
             ordered_mod_ids,
             mod_files,
             installed_mods
@@ -216,7 +212,17 @@ class Vortex():
         
         #TODO: probably going to ignore the skyrim_data_folder as all files that suddenly appear/are generated should not need patching...
         winning_files = []
+        file_count = 0
+        loop = 0
+        winning_files_processed_str = QCoreApplication.translate("scanner", "Winning Files Processed: ")
+        write_remove(1, winning_files_processed_str)
         for relative_path, providing_mods in conflict_map.items():
+            file_count += 1
+            if loop == 500:
+                loop = 0
+                write_remove(1, winning_files_processed_str + str(file_count))
+            else:
+                loop += 1
             if len(providing_mods) == 1:
                 #data_folder_file = False
                 mod = providing_mods[0]
@@ -257,24 +263,13 @@ class Vortex():
                 plugins.append(plugin)
         return winning_files, plugins, plugins_list, mod_staging_folder
 
-    def get_winning_files(vortex_data_path) -> (list | int | Exception):
-        vortex_db_path = os.path.normpath(os.path.join(vortex_data_path, "state.v2"))
-        readibility_flag = VortexDBParser.is_db_readable(vortex_db_path)
+    def get_winning_files() -> tuple[list, list, list, str]:
+        readibility_flag = VortexDBParser.is_readable()
         # 1: ok, 0: locked, e: E
         if readibility_flag == 1:
-            parser = VortexDBParser(vortex_db_path)
-            return Vortex.get_winning_file_conflicts(vortex_data_path, parser)
+            return Vortex.get_winning_file_conflicts()
         else:
             _global.vortex_error = readibility_flag
             return [], [], [], ''
-
-if __name__ == "__main__":
-    vortex_data_path = "C:/ProgramData/vortex"
-    vortex_db_path = os.path.normpath(os.path.join(vortex_data_path, "state.v2"))
-    readibility_flag = VortexDBParser.is_db_readable(vortex_db_path)
-    if readibility_flag == 1:
-        parser = VortexDBParser(vortex_db_path)
-        section = parser.get_section()
-        print(section.keys())
         
         
