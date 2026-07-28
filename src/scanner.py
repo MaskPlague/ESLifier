@@ -121,6 +121,7 @@ class scanner():
             #likely do the get files from skyrim folder at the same time as scanning vortex mod staging folder, if not exists in mod staging then add to dict
             Vortex.scanner = scanner
             scanner.all_files, _global.plugins, plugins_list, _global.mod_staging_folder = Vortex.get_winning_files()
+            _global.update_mod_staging_folder_vars()
             scanner.file_count = len(scanner.all_files)
             if _global.vortex_error != -1:
                 return {}, {}
@@ -438,13 +439,13 @@ class scanner():
         for file in files:
             esp, esl, esm = file[0] + '.esp', file[0] + '.esl', file[0] + '.esm'
             if esp in scanner.file_dict:
-                _global.mods_with_seq.append(esp)
+                _global.mods_with_seq[esp] = file[1]
                 scanner.file_dict[esp].add(file[1])
             elif esl in scanner.file_dict:
-                _global.mods_with_seq.append(esl)
+                _global.mods_with_seq[esl] = file[1]
                 scanner.file_dict[esl].add(file[1])
             elif esm in scanner.file_dict:
-                _global.mods_with_seq.append(esm)
+                _global.mods_with_seq[esm] = file[1]
                 scanner.file_dict[esm].add(file[1])
 
     def file_reader(pattern, file: str, reader_type):
