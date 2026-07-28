@@ -88,6 +88,7 @@ class list_compactable(QTableWidget):
         self.cell_master = False
         self.hidden_columns = ""
         self.blacklist = blacklist()
+        self.previously_compacted_exists = False
 
         self.setStyleSheet("""
             QTableWidget::item{
@@ -115,6 +116,7 @@ class list_compactable(QTableWidget):
     def create(self):
         self.setSortingEnabled(False)
         self.clearContents()
+        self.previously_compacted_exists = os.path.exists("ESLifier_Data/previously_compacted.json")
         hidden_columns = [col.strip().upper() for col in self.hidden_columns.split(',')]
 
         if self.show_cells and not "CELL" in hidden_columns: self.showColumn(self.CELL_COL)
@@ -364,7 +366,8 @@ class list_compactable(QTableWidget):
             check_all_action = menu.addAction(self.tr("Check All"))
             uncheck_all_action = menu.addAction(self.tr("Uncheck All"))
             invert_selection_action = menu.addAction(self.tr("Invert Selection Checks"))
-            check_previously_compacted_action = menu.addAction(self.tr("Check Previously Compacted"))
+            if self.previously_compacted_exists:
+                check_previously_compacted_action = menu.addAction(self.tr("Check Previously Compacted"))
             open_explorer_action = menu.addAction(self.tr("Open in File Explorer"))
             add_to_blacklist_action = menu.addAction(self.tr("Add Highlighted Mod(s) to Blacklist"))
             action = menu.exec(self.viewport().mapToGlobal(position))
@@ -376,7 +379,7 @@ class list_compactable(QTableWidget):
                 self.uncheck_all()
             if action == select_all_action:
                 self.select_all()
-            if action == check_previously_compacted_action:
+            if self.previously_compacted_exists and action == check_previously_compacted_action:
                 self.check_previously_compacted()
             if action == invert_selection_action:
                 selected_items = self.selectedItems()
