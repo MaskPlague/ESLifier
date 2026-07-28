@@ -208,8 +208,15 @@ class settings(QWidget):
         self.hash_output_widget, self.hash_output_toggle = self.create_toggle_widget(
             self.tr("Hash the Output Folder to Detect Changes"),
             self.tr("Hash the output folder during certain actions to detect if a file has been changed\n"\
-            "since ESLifier last patched it. Can be time consuming."),
+            "since ESLifier last patched it. Enabling this after you have already created an output will\n"\
+            "not work correctly. Can be time consuming."),
             "hash_output",
+            default=True
+        )
+        self.hash_plugins_warn_widget, self.hash_plugins_warn_toggle = self.create_toggle_widget(
+            self.tr("Warn About Changed Plugins in Output Folder"),
+            self.tr("Uses the output hash to also warn about plugins that have changed in the output."),
+            "hash_plugins_warn",
             default=True
         )
         self.check_for_updates_widget, self.check_for_updates_toggle = self.create_toggle_widget(
@@ -315,6 +322,7 @@ class settings(QWidget):
         column_2.addWidget(self.persistent_ids_widget)
         column_2.addWidget(self.free_non_existent_widget)
         column_2.addWidget(self.hash_output_widget)
+        column_2.addWidget(self.hash_plugins_warn_widget)
         column_2.addWidget(self.enable_patch_new_widget)
         column_2.addWidget(self.edit_blacklist_widget)
         column_2.addWidget(self.open_eslifier_data_widget)
@@ -419,6 +427,7 @@ class settings(QWidget):
     def mod_mananger_mode_clicked(self):
         if self.mod_manager_mode_toggle.checkState() == Qt.CheckState.Checked:
             self.mod_manager_mode_widget.layout().itemAt(0).widget().setText(self.tr("Mod Manager: MO2"))
+            self.output_folder_path_widget.setToolTip(self.tr("Set where you want the Output Folder to be generated. For example: MO2's 'mods' folder."))
             self.skyrim_folder_path_widget.setToolTip(self.tr("Set this to your Mod Organizer 2 mod's folder that holds all of your installed mods."))
             self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText(self.tr("MO2 Mod\'s Folder Path"))
             self.skyrim_folder_path.setPlaceholderText(self.tr('C:/Path/To/MO2/mods'))
@@ -436,6 +445,7 @@ class settings(QWidget):
                 self.tr("Vortex users PLACEHOLDER MESSAGE"))
         else:
             self.mod_manager_mode_widget.layout().itemAt(0).widget().setText(self.tr("Mod Manager: None"))
+            self.output_folder_path_widget.setToolTip(self.tr("Set where you want the Output Folder to be generated."))
             self.skyrim_folder_path_widget.setToolTip(self.tr("Set this to your Skyrim Special Edition Data folder that holds Skyrim.esm."))
             self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText(self.tr("Data Folder Path"))
             self.skyrim_folder_path.setPlaceholderText(self.tr('C:/Path/To/Skyrim Special Edition/Data'))
@@ -641,6 +651,7 @@ class settings(QWidget):
         self.settings['free_non_existent'] = self.free_non_existent_toggle.isChecked()
         self.settings['enable_patch_new'] = self.enable_patch_new_toggle.isChecked()
         self.settings['hash_output'] = self.hash_output_toggle.isChecked()
+        self.settings['hash_plugins_warn'] = self.hash_plugins_warn_toggle.isChecked()
         self.settings['inner_color'] = self.inner_color
         self.settings['outer_color'] = self.outer_color
 
