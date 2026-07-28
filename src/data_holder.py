@@ -23,9 +23,9 @@ class _global():
 
     # Non-Persistent Variables
     plugins = [] #plugins list
-    mods_with_seq = []
-    vortex_error = -1
-
+    mods_with_seq = [] #mods that have seq files
+    vortex_error = -1 #storage for vortex error across classes
+    bsa_dict = {}
 
     def init(settings_widget: settings):
         _global._settings = settings_widget.settings
