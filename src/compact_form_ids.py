@@ -97,15 +97,28 @@ class CFIDs():
         to_hash = {}
         new_file_hashes: dict = self.get_from_file("ESLifier_Data/new_file_hashes.json")
         local_compacted_and_patched = self.get_from_file("ESLifier_Data/compacted_and_patched.json")
+        local_esl_flagged: list[str] = self.get_from_file("ESLifier_Data/esl_flagged.json")
         lowered_output = self.output_folder.lower()
         write_normal(QCoreApplication.translate("CFIDs", "Getting files to hash..."))
-        for _1, values in local_compacted_and_patched.items():
+        for compacted, values in local_compacted_and_patched.items():
+            compacted_lower = compacted.lower()
+            if  compacted_lower not in to_hash:
+                full_path = os.path.normpath(os.path.join(lowered_output, compacted_lower))
+                if os.path.exists(full_path):
+                    to_hash[compacted_lower] = full_path
             for rel_path in values:
                 lower_rel_path = rel_path.lower()
-                if lower_rel_path not in to_hash and not lower_rel_path.endswith(('.pex', '.esp', '.esl', '.esm')):
+                if lower_rel_path not in to_hash:# and (_global.hash_plugins or not lower_rel_path.endswith(('.esp', '.esl', '.esm'))):
                     full_path = os.path.normpath(os.path.join(lowered_output, lower_rel_path))
                     if os.path.exists(full_path):
                         to_hash[lower_rel_path] = full_path
+        for file in local_esl_flagged:
+            file_lower = file.lower()
+            if file_lower not in to_hash:
+                full_path = os.path.normpath(os.path.join(lowered_output, file_lower))
+                if os.path.exists(full_path):
+                    to_hash[file_lower] = full_path
+
         self.file_count = len(to_hash)
         if self.file_count > 0:
             split = self.file_count
