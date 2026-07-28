@@ -59,19 +59,19 @@ class _global():
         elif _global.mod_manager_mode == 2 and file.lower().startswith(_global.overwrite_path.lower()):
             rel_path = os.path.normpath(os.path.relpath(file, _global.overwrite_path))
         else:
-            if _global.mod_manager_mode == 2:
+            if _global.mod_manager_mode == 2:   # MO2
                 parts = os.path.normpath(os.path.relpath(file, _global.skyrim_folder_path)).split(os.sep)
                 if len(parts) != 1:
                     parts = parts[1:]
                 rel_path = os.path.join(*parts)
-            elif _global.mod_manager_mode == 1:
-                if file.startswith(_global.mod_staging_folder):
-                    parts = os.path.normpath(os.path.relpath(file, _global.mod_staging_folder)).split(os.sep)
-                else:
-                    parts = os.path.normpath(os.path.relpath(file, _global.skyrim_folder_path)).split(os.sep)
+            elif _global.mod_manager_mode == 1: # Vortex
+                #if file.startswith(_global.mod_staging_folder):
+                parts = os.path.normpath(os.path.relpath(file, _global.mod_staging_folder)).split(os.sep)
+                #else: #Disabled this since we are not currently using skyrim_folder_path
+                #    parts = os.path.normpath(os.path.relpath(file, _global.skyrim_folder_path)).split(os.sep)
                 if len(parts) != 1:
                     parts = parts[1:]
                 rel_path = os.path.join(*parts)
-            else:
+            else:                               # Manual?
                 rel_path = os.path.normpath(os.path.relpath(file, _global.skyrim_folder_path))
         return rel_path
