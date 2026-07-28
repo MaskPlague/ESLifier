@@ -18,10 +18,11 @@ class _global():
     persistent_ids = True
     free_non_existent = False
     hash_output = True
+    hash_plugins_warn = True
     all_patcher_experimental = False
-    mod_staging_folder = ''
 
     # Non-Persistent Variables
+    mod_staging_folder = '' #set by vortex scanner after reading state.v2
     plugins = [] #plugins list
     mods_with_seq = [] #mods that have seq files
     vortex_error = -1 #storage for vortex error across classes
@@ -44,6 +45,7 @@ class _global():
         _global.persistent_ids =              _global._settings.get('persistent_ids', True)
         _global.free_non_existent =           _global._settings.get('free_non_existent', False)
         _global.hash_output =                 _global._settings.get('hash_output', True)
+        _global.hash_plugins_warn =           _global._settings.get('hash_plugins_warn', True)
         _global.all_patcher_experimental =    _global._settings.get('all_patcher_experimental', False)
         _global.output_folder_joined_path =   os.path.normpath(os.path.join(_global.output_folder_path, _global.output_folder_name))
 
