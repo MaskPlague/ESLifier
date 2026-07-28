@@ -1560,14 +1560,13 @@ class HashWorker(QObject):
         self.results = []
         self.hash_progress = 0
         
-        threads = []
+        threads: list[threading.Thread] = []
         for chunk in chunks:
-            t = threading.Thread(target=self.hash_files, args=(chunk,))
-            threads.append(t)
-            t.start()
+            thread = threading.Thread(target=self.hash_files, args=(chunk,))
+            threads.append(thread)
+            thread.start()
             
-        for t in threads:
-            t.join()
+        for thread in threads: thread.join()
             
         size = 0
         file_count = 0
