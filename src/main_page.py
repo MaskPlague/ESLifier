@@ -19,6 +19,7 @@ from cell_changed_scanner import cell_scanner
 from create_cell_master import create_new_cell_plugin
 from patch_new import patch_new
 from data_holder import _global
+from vortex_database_reader import VortexDBParser
 from log_stream import log_stream, write_error, write_normal, write_patching, write_progress, write_remove, write_to_file, clear_and_close_log, clear_and_leave_log_open
 from file_defined_patcher_conditions import user_and_master_conditions_class
 
@@ -346,10 +347,9 @@ class main(QWidget):
             if self.list_compact.item(row, self.list_compact.MOD_COL).checkState() == Qt.CheckState.Checked and not self.list_compact.item(row, self.list_compact.HIDER_COL):
                 checked.append(self.list_compact.item(row, self.list_compact.MOD_COL).toolTip())
         if checked != []:
-            file_masters = self.get_from_file('ESLifier_Data/file_masters.json')
-            bsa_dict: dict = self.get_from_file('ESLifier_Data/bsa_dict.json')
+            file_masters = self.get_from_file(FILE_MASTERS_JSON)
             bsa_masters = {}
-            for key, items in bsa_dict.items():
+            for key, items in _global.bsa_dict.items():
                 for item in items:
                     if item in bsa_masters:
                         bsa_masters[item].append(key)
@@ -566,7 +566,7 @@ class main(QWidget):
 
     def create_flag_worker(self, files, patch_and_flag = []):
         self.flag_thread = QThread()
-        self.flag_worker = FlagWorker(files)
+        self.flag_worker = FlagWorker(files, self.files_to_not_hash)
         self.flag_worker.moveToThread(self.flag_thread)
         self.flag_thread.started.connect(self.flag_worker.flag_files)
         self.flag_worker.finished_signal.connect(self.flag_thread.quit)
@@ -694,7 +694,9 @@ class main(QWidget):
             elif _global.vortex_error == 2:
                 confirm.setText(self.tr("ESLifier detected that a cyclic rule is set in Vortex, please correct it first."))
             elif isinstance(_global.vortex_error, Exception):
-                confirm.setText(self.tr(f"ESLifier has come across an error while scanning Vortex data: {e}"))
+                confirm.setText(self.tr(f"ESLifier has come across an error while scanning Vortex data: %0").replace("%0", str(_global.vortex_error)))
+            _global.vortex_error = -1
+            self.scanned = False
             def accept():
                 confirm.hide()
             confirm.setStandardButtons(QMessageBox.StandardButton.Ok)
@@ -718,13 +720,13 @@ class main(QWidget):
             write_error(e, True)
         write_normal(self.tr('Done Scanning'))
         if self.redoing_output and not self.patch_new_only_remove:
-            if os.path.exists('ESLifier_Data/esl_flagged.json'):
+            if os.path.exists(PREVIOUSLY_ESL_FLAGGED_JSON):
                 clear_and_leave_log_open()
                 self.list_eslify.check_previously_esl_flagged()
-                if not self.patch_new_running:
-                    os.remove('ESLifier_Data/esl_flagged.json')
+                #if not self.patch_new_running:
+                #    os.remove(ESL_FLAGGED_JSON)
                 self.eslify_selected_clicked()
-            elif os.path.exists('ESLifier_Data/previously_compacted.json'):
+            elif os.path.exists(PREVIOUSLY_COMPACTED_JSON):
                 self.list_compact.check_previously_compacted()
                 self.compact_selected_clicked()
         elif self.redoing_output and self.patch_new_only_remove:
@@ -776,6 +778,38 @@ class main(QWidget):
         else:
             files_to_remove, size, file_count = self.calculate_existing_output()
             self.reset_output_next(files_to_remove, size, file_count, [])
+
+    def create_removal_confirmation(self, text:str, function, next_function = None):
+        confirm = self.create_confirmation('tomato')
+        confirm.setText(text)
+        yes_button = QPushButton("3 " + self.tr("Yes"))
+        confirm.addButton(yes_button, QMessageBox.ButtonRole.YesRole)
+        confirm.setStandardButtons(QMessageBox.StandardButton.No)
+        confirm.button(QMessageBox.StandardButton.No).setText(self.tr("No"))
+        confirm.setDefaultButton(QMessageBox.StandardButton.No)
+        yes_button.setEnabled(False)
+        def close_confirm():
+            confirm.close()
+        confirm.accepted.connect(close_confirm)
+        confirm.accepted.connect(function)
+        if next_function is not None:
+            confirm.accepted.connect(next_function)
+            confirm.rejected.connect(next_function)
+        def update_text(text):
+            try:
+                yes_button.setText(text)
+            except:
+                pass
+        QTimer.singleShot(1000, lambda: update_text("2 " + self.tr("Yes")))
+        QTimer.singleShot(2000, lambda: update_text("1 " + self.tr("Yes")))
+        def enable_and_set_text():
+            try:
+                yes_button.setEnabled(True)
+                yes_button.setText(self.tr("Yes"))
+            except:
+                pass
+        QTimer.singleShot(3000, enable_and_set_text)
+        return confirm
     
     def reset_output_next(self, files_to_remove, size, file_count, changed_rel_paths_to_switch):
         confirm = self.create_confirmation('lightcoral')
@@ -816,40 +850,38 @@ class main(QWidget):
             self.list_eslify.flag_dict = {}
             self.list_compact.create()
             self.list_eslify.create()
-            if os.path.exists('ESLifier_Data/new_file_hashes.json') and _global.hash_output:
+            def previous_removal_confirmation():
+                def accepted3():
+                    if os.path.exists(PREVIOUSLY_ESL_FLAGGED_JSON):
+                        os.remove(PREVIOUSLY_ESL_FLAGGED_JSON)
+                    if os.path.exists(PREVIOUSLY_COMPACTED_JSON):
+                        os.remove(PREVIOUSLY_COMPACTED_JSON)
+                    confirm2.hide()
+                confirm3 = self.create_removal_confirmation(
+                    self.tr("Would you like to remove the ESLifier Data that stores\n"\
+                            "info used to reselect your previously ESL flagged/compacted\n"\
+                            "mods? This is not exactly recommended."),
+                    accepted3
+                )
+                confirm3.show()
+            if os.path.exists(NEW_FILE_HASHES_JSON) and _global.hash_output:
                 self.update_changed_rel_paths_in_new_files_hashes(changed_rel_paths_to_switch)
                 def accepted2():
-                    if os.path.exists('ESLifier_Data/new_file_hashes.json'):
-                        os.remove('ESLifier_Data/new_file_hashes.json')
-                    confirm2.hide()
-                confirm2 = self.create_confirmation('tomato')
-                confirm2.setText(self.tr("Would you like to remove the ESLifier Output hash info?\n"\
-                                "This is how ESLifier can tell if a file in the output\n"\
-                                "has been changed after ESLifier patched it.\n"\
-                                "This is NOT recommended, especially if you kept any\n"\
-                                "changed files."))
-                yes_button = QPushButton("3 " + self.tr("Yes"))
-                confirm2.addButton(yes_button, QMessageBox.ButtonRole.YesRole)
-                confirm2.setStandardButtons(QMessageBox.StandardButton.No)
-                confirm2.button(QMessageBox.StandardButton.No).setText(self.tr("No"))
-                confirm2.setDefaultButton(QMessageBox.StandardButton.No)
-                yes_button.setEnabled(False)
-                confirm2.accepted.connect(accepted2)
-                def update_text(text):
-                    try:
-                        yes_button.setText(text)
-                    except:
-                        pass
-                QTimer.singleShot(1000, lambda: update_text("2 " + self.tr("Yes")))
-                QTimer.singleShot(2000, lambda: update_text("1 " + self.tr("Yes")))
-                def enable_and_set_text():
-                    try:
-                        yes_button.setEnabled(True)
-                        yes_button.setText(self.tr("Yes"))
-                    except:
-                        pass
-                QTimer.singleShot(3000, enable_and_set_text)
+                    if os.path.exists(NEW_FILE_HASHES_JSON):
+                        os.remove(NEW_FILE_HASHES_JSON)
+                confirm2 = self.create_removal_confirmation(
+                    self.tr("Would you like to remove the ESLifier Output hash info?\n"\
+                            "This is how ESLifier can tell if a file in the output\n"\
+                            "has been changed after ESLifier patched it.\n"\
+                            "This is NOT recommended, especially if you kept any\n"\
+                            "changed files."),
+                    accepted2,
+                    previous_removal_confirmation
+                )
                 confirm2.show()
+            else:
+                previous_removal_confirmation()
+
             self.calculate_stats()
             clear_and_close_log()
 
@@ -863,6 +895,24 @@ class main(QWidget):
             self.log_stream.show()
             write_error(self.tr('Issue occured getting the output folder during output rebuild.'))
             return
+        if _global.mod_manager_mode == 1:
+            return_val = VortexDBParser.is_db_readable(_global.vortex_data_path)
+            if return_val != 1:
+                confirm = self.create_confirmation('lightcoral')
+                if _global.vortex_error == 0:
+                    confirm.setText(self.tr("Please close Vortex, ESLifier cannot accesss it's database while Vortex is open."))
+                elif _global.vortex_error == 2:
+                    confirm.setText(self.tr("ESLifier detected that a cyclic rule is set in Vortex, please correct it first."))
+                elif isinstance(_global.vortex_error, Exception):
+                    confirm.setText(self.tr(f"ESLifier has come across an error while scanning Vortex data: %0").replace('%0', str(return_val)))
+                self.scanned = False
+                def accept():
+                    confirm.hide()
+                confirm.setStandardButtons(QMessageBox.StandardButton.Ok)
+                confirm.accepted.connect(accept)
+                confirm.show()
+                return
+
         if _global.hash_output:
             self.calculate_existing_output_threaded('rebuild_output')
         else:
@@ -885,10 +935,6 @@ class main(QWidget):
             previously_esl_flagged = []
             if os.path.exists(NEW_FILE_HASHES_JSON):
                 self.update_changed_rel_paths_in_new_files_hashes(changed_rel_paths_to_switch)
-            if os.path.exists('ESLifier_Data/esl_flagged.json'):
-                with open('ESLifier_Data/esl_flagged.json', 'r', encoding='utf-8') as fef:
-                    previously_esl_flagged = json.load(fef)
-                    fef.close()
             if os.path.exists(COMPACTED_AND_PATCHED_JSON):
                 compacted_and_patched_dict = {}
                 with open(COMPACTED_AND_PATCHED_JSON, 'r', encoding='utf-8') as f:
@@ -899,6 +945,12 @@ class main(QWidget):
                     json.dump(previously_compacted, f, ensure_ascii=False, indent=4)
                     f.close()
                 os.remove(COMPACTED_AND_PATCHED_JSON)
+            if os.path.exists(ESL_FLAGGED_JSON):
+                previously_esl_flagged = self.get_from_file(ESL_FLAGGED_JSON)
+                if os.path.exists(PREVIOUSLY_ESL_FLAGGED_JSON):
+                    os.remove(PREVIOUSLY_ESL_FLAGGED_JSON)
+                shutil.copy(ESL_FLAGGED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON)
+                os.remove(ESL_FLAGGED_JSON)
             if os.path.exists(ORIGINAL_FILES_JSON):
                 os.remove(ORIGINAL_FILES_JSON)
             if os.path.exists(WINNING_FILE_HISTORY_DICT_JSON):
@@ -1036,7 +1088,7 @@ class main(QWidget):
         self.total_progress = 0
         self.files_to_remove = []
         self.changed_hashes = []
-        self.new_file_hashes = self.get_from_file('ESLifier_Data/new_file_hashes.json')
+        self.new_file_hashes = self.get_from_file(NEW_FILE_HASHES_JSON)
 
         files_to_hash = []
         for root, _, files in os.walk(self.output_folder_full):
@@ -1053,6 +1105,27 @@ class main(QWidget):
         self.hasher_worker.finished.connect(self.on_hashing_finished)
         self.hasher_worker.finished.connect(self.hasher_thread.quit)
         self.hasher_thread.start()
+
+    def create_changed_hash_list_widget(self):
+        def somethingChanged(item_changed:QListWidgetItem):
+            listWidget.blockSignals(True)
+            if item_changed in listWidget.selectedItems():
+                if item_changed.checkState() == Qt.CheckState.Checked:
+                    for x in listWidget.selectedItems():
+                        x.setCheckState(Qt.CheckState.Checked)
+                else:
+                    for x in listWidget.selectedItems():
+                        x.setCheckState(Qt.CheckState.Unchecked)
+            listWidget.blockSignals(False)
+
+        listWidget = QListWidget()
+        listWidget.itemChanged.connect(somethingChanged)
+        listWidget.setEditTriggers(QListWidget.EditTrigger.NoEditTriggers)
+        listWidget.setSelectionBehavior(QListWidget.SelectionBehavior.SelectRows)
+        listWidget.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
+        listWidget.setAutoScroll(True)
+
+        return listWidget
 
     def on_hashing_finished(self, result):
         total_size: int = result["size"]
@@ -1075,30 +1148,12 @@ class main(QWidget):
             dialog.setStyleSheet("QDialog {background-color: tomato;}")
             dialog.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
 
-            def somethingChanged(item_changed:QListWidgetItem):
-                listWidget.blockSignals(True)
-                if item_changed in listWidget.selectedItems():
-                    if item_changed.checkState() == Qt.CheckState.Checked:
-                        for x in listWidget.selectedItems():
-                            x.setCheckState(Qt.CheckState.Checked)
-                    else:
-                        for x in listWidget.selectedItems():
-                            x.setCheckState(Qt.CheckState.Unchecked)
-                listWidget.blockSignals(False)
-
-            listWidget = QListWidget()
-            listWidget.itemChanged.connect(somethingChanged)
-            listWidget.setEditTriggers(QListWidget.EditTrigger.NoEditTriggers)
-            listWidget.setSelectionBehavior(QListWidget.SelectionBehavior.SelectRows)
-            listWidget.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
-            listWidget.setAutoScroll(True)
             layout = QVBoxLayout()
             buttons_widget = QWidget()
             buttons_layout = QHBoxLayout()
             buttons_widget.setLayout(buttons_layout)
             
             filter = QLineEdit()
-            buttons_layout.addWidget(filter)
             filter.setPlaceholderText(self.tr("Filter"))
             filter.setToolTip(self.tr("Search bar"))
             filter.setMinimumWidth(50)
@@ -1106,17 +1161,33 @@ class main(QWidget):
             filter.setAlignment(Qt.AlignmentFlag.AlignRight)
             filter.setClearButtonEnabled(True)
 
+            plugin_files = []
+            other_files = []
+            for file, rel_path in changed_hashes:
+                if rel_path.endswith(('.esp', '.es', '.esm')):
+                    plugin_files.append((file, rel_path))
+                else:
+                    other_files.append((file, rel_path))
+
+            plugins_listWidget = self.create_changed_hash_list_widget()
+            other_listWidget = self.create_changed_hash_list_widget()
+    
             def filtered():
                 if len(filter.text()) > 0:
-                    items = listWidget.findItems(filter.text(), Qt.MatchFlag.MatchContains)
-                    if len(items) > 0:
-                        for i in range(listWidget.count()):
-                            listWidget.setRowHidden(i, False if listWidget.item(i) in items else True)
+                    items = plugins_listWidget.findItems(filter.text(), Qt.MatchFlag.MatchContains)
+                    for i in range(plugins_listWidget.count()):
+                        plugins_listWidget.setRowHidden(i, False if plugins_listWidget.item(i) in items else True)
+                    items = other_listWidget.findItems(filter.text(), Qt.MatchFlag.MatchContains)
+                    for i in range(other_listWidget.count()):
+                        other_listWidget.setRowHidden(i, False if other_listWidget.item(i) in items else True)
                 else:
-                    for i in range(listWidget.count()):
-                        listWidget.setRowHidden(i, False)
-
+                    for i in range(plugins_listWidget.count()):
+                        plugins_listWidget.setRowHidden(i, False)
+                    for i in range(other_listWidget.count()):
+                        other_listWidget.setRowHidden(i, False)
+    
             filter.textEdited.connect(filtered)
+            buttons_layout.addWidget(filter)
             
             self.hash_changed_option = 'keep_all'
             def delete_selected():
@@ -1143,22 +1214,40 @@ class main(QWidget):
             buttons_layout.addWidget(delete_selected_button)
             buttons_layout.addWidget(keep_all_button)
             dialog.setLayout(layout)
-            label = QLabel(self.tr("The following files have had their hashes change since they were patched by ESLifier.\n"\
-                            "These files could be config or data storage files that you may want to keep.\n"\
-                            "Select the files you would like to remove and select \"Delete Selected\",\n"\
-                            "select \"Delete All\" to delete all files regardless of selection,\n"\
-                            "or select \"Keep All\" to not delete any files."))
-            layout.addWidget(label)
-            layout.addWidget(listWidget)
-            layout.addWidget(buttons_widget)
-            
-            for file, rel_path in changed_hashes:
+
+            for file, rel_path in plugin_files:
                 item = QListWidgetItem(rel_path)
                 item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
                 item.setCheckState(Qt.CheckState.Unchecked)
                 item.setToolTip(os.path.normpath(file))
                 item.setData(0, rel_path)
-                listWidget.addItem(item)
+                plugins_listWidget.addItem(item)
+
+            for file, rel_path in other_files:
+                item = QListWidgetItem(rel_path)
+                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+                item.setCheckState(Qt.CheckState.Unchecked)
+                item.setToolTip(os.path.normpath(file))
+                item.setData(0, rel_path)
+                other_listWidget.addItem(item)
+
+            if plugin_files:
+                label_plugins = QLabel(self.tr("The following plugins have had their hashes change since they were patched by ESLifier.\n"\
+                                               "This could be because you or another program changed them. Be VERY careful as deleting\n"\
+                                                "or not deleting these could have consequences."))
+                layout.addWidget(label_plugins)
+                layout.addWidget(plugins_listWidget)
+            if other_files:
+                other_label = QLabel(self.tr("The following files have had their hashes change since they were patched by ESLifier.\n"\
+                                "These files could be config or data storage files that you may want to keep."))
+                layout.addWidget(other_label)
+                layout.addWidget(other_listWidget)
+            choices_label = QLabel(self.tr("Select the files you would like to remove and select \"Delete Selected\",\n"\
+                                            "select \"Delete All\" to delete all files regardless of selection,\n"\
+                                            "or select \"Keep All\" to not delete any files."))
+            layout.addWidget(choices_label)
+            layout.addWidget(buttons_widget)
+
             
             def rename_2():
                 delete_selected_button.setText("2 " + self.tr("Delete Selected"))
@@ -1181,13 +1270,11 @@ class main(QWidget):
             dialog.exec()
             self.files_to_not_hash.clear()
 
-            if self.hash_changed_option == 'delete_all':
-                for file, rel_path in changed_hashes:
-                    files_to_remove.append(file)
-                    changed_rel_paths_to_switch.append(rel_path)
-                    total_size += os.path.getsize(file)
-                    total_file_count += 1
-            elif self.hash_changed_option == 'delete_selected':
+            def get_files_to_remove(listWidget: QListWidget):
+                nonlocal total_size
+                nonlocal total_file_count
+                nonlocal files_to_remove
+                nonlocal changed_rel_paths_to_switch
                 for index in range(0, listWidget.count()):
                     item = listWidget.item(index)
                     if item.checkState() == Qt.CheckState.Checked:
@@ -1196,7 +1283,20 @@ class main(QWidget):
                         total_size += os.path.getsize(item.toolTip())
                         total_file_count += 1
                     else:
-                        self.files_to_not_hash.add(item.toolTip().lower())
+                        self.files_to_not_hash.add(item.toolTip().lower())                
+
+            if self.hash_changed_option == 'delete_all':
+                for file, rel_path in changed_hashes:
+                    files_to_remove.append(file)
+                    changed_rel_paths_to_switch.append(rel_path)
+                    total_size += os.path.getsize(file)
+                    total_file_count += 1
+            elif self.hash_changed_option == 'delete_selected':
+                if plugin_files:
+                    get_files_to_remove(plugins_listWidget)
+                if other_files:
+                    get_files_to_remove(other_listWidget)
+
             elif self.hash_changed_option == 'keep_all':
                 for file, rel_path in self.changed_hashes:
                     self.files_to_not_hash.add(os.path.normpath(file).lower())
@@ -1338,11 +1438,11 @@ class CompactorWorker(QObject):
         master_byte_data: dict = self.get_from_file(MASTER_BYTE_DATA_JSON)
         files_to_patch: dict = self.get_from_file(FILE_MASTERS_JSON)
         bsa_masters = []
-        for value in bsa_dict.values():
+        for value in _global.bsa_dict.values():
             bsa_masters.extend(value)
 
         additional_file_patcher_conditions = user_and_master_conditions_class()
-        cfids = CFIDs(self.create_new_cell_plugin, original_files, winning_files_dict, {}, {}, master_byte_data, bsa_masters, bsa_dict,
+        cfids = CFIDs(self.create_new_cell_plugin, original_files, winning_files_dict, {}, {}, master_byte_data, bsa_masters,
                        additional_file_patcher_conditions)
         if _global.hash_output:
             write_normal(self.tr("Hashing any existing files for changes..."))
@@ -1397,8 +1497,9 @@ class CompactorWorker(QObject):
     
 class FlagWorker(QObject):
     finished_signal = pyqtSignal()
-    def __init__(self, files):
+    def __init__(self, files, files_to_not_hash):
         self.files = files
+        self.files_to_not_hash = files_to_not_hash
         super().__init__()
     
     def flag_files(self):
@@ -1406,11 +1507,15 @@ class FlagWorker(QObject):
         winning_files_dict = self.get_from_file(WINNING_FILES_DICT_JSON)
         winning_file_history_dict = {}
         additional_file_patcher_conditions = user_and_master_conditions_class()
-        cfids = CFIDs(None, original_files, winning_files_dict, winning_file_history_dict, {}, {}, [], {}, additional_file_patcher_conditions)
+        cfids = CFIDs(None, original_files, winning_files_dict, winning_file_history_dict, {}, {}, [], additional_file_patcher_conditions)
+        if _global.hash_output:
+            write_normal(self.tr("Hashing any existing files for changes..."))
+            cfids.hash_output_files(set(), True)
         for file in self.files:
             original_files, winning_file_history_dict = cfids.set_flag(file)
-        self.dump_dictionary('ESLifier_Data/original_files.json', original_files)
-        self.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', winning_file_history_dict)
+        if _global.hash_output:
+            write_normal(self.tr('Hashing output files for checking later changes...'))
+            cfids.hash_output_files(self.files_to_not_hash)
         self.dump_dictionary(ORIGINAL_FILES_JSON, original_files)
         self.dump_dictionary(WINNING_FILE_HISTORY_DICT_JSON, winning_file_history_dict)
         self.finished_signal.emit()
@@ -1492,6 +1597,8 @@ class HashWorker(QObject):
             if (self.hash_progress % factor) >= (factor-1):
                 percentage = round((self.hash_progress / self.to_hash_len) * 100, 1)
                 write_progress(round(percentage), 1, processed_str.format(percentage, self.hash_progress, self.to_hash_len))
+            if not _global.hash_plugins_warn and file.lower().endswith(('.esp', '.esl', '.esm')):
+                continue
             with open(file, 'rb') as f: 
                 sha256_hash = hashlib.sha256(f.read()).hexdigest()
                 f.close()
