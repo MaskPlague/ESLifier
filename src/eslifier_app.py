@@ -586,6 +586,8 @@ except Exception as e:
     crash_log = f'crash-{timestamp}.log'
     try:
         sys.stderr = sys.__stderr__
+        if not os.path.exists('ESLifier_Data'):
+            os.mkdir(os.path.normpath('ESLifier_Data'))
         if os.path.exists('ESLifier_Data') and not os.path.exists('ESlifier_Data/Crash Logs'):
             os.makedirs(os.path.normpath('ESLifier_Data/Crash Logs/'))
         with open(os.path.normpath(os.path.join('ESLifier_Data/Crash Logs/', crash_log)), 'w+', encoding='utf-8') as f:
