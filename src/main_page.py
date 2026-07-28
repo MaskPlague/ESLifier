@@ -37,6 +37,28 @@ if max_threads > 8192:
 else:
     MAX_THREADS = max_threads
 
+ESLIFIER_DATA_FOLDER = "ESLifier_Data/"
+
+CELL_IDS_FOLDER =                   ESLIFIER_DATA_FOLDER + "Cell_IDs"
+
+ESLIFIER_LOG_FILE =                 ESLIFIER_DATA_FOLDER + "ESLifier.log"
+
+PREVIOUSLY_COMPACTED_JSON =         ESLIFIER_DATA_FOLDER + "previously_compacted.json" 
+ESL_FLAGGED_JSON =                  ESLIFIER_DATA_FOLDER + "esl_flagged.json"
+PREVIOUSLY_ESL_FLAGGED_JSON =       ESLIFIER_DATA_FOLDER + "previously_esl_flagged.json"
+ORIGINAL_FILES_JSON =               ESLIFIER_DATA_FOLDER + "original_files.json"
+FILE_MASTERS_JSON =                 ESLIFIER_DATA_FOLDER + "file_masters.json"
+NEW_FILE_HASHES_JSON =              ESLIFIER_DATA_FOLDER + "new_file_hashes.json"
+WINNING_FILE_HISTORY_DICT_JSON =    ESLIFIER_DATA_FOLDER + "winning_file_history_dict.json"
+WINNING_FILES_DICT_JSON =           ESLIFIER_DATA_FOLDER + "winning_files_dict.json"
+COMPACTED_AND_PATCHED_JSON =        ESLIFIER_DATA_FOLDER + "compacted_and_patched.json"
+MASTER_BYTE_DATA_JSON =             ESLIFIER_DATA_FOLDER + "master_byte_data.json"
+EXTRACTED_BSA_JSON =                ESLIFIER_DATA_FOLDER + "extracted_bsa.json"
+FORM_ID_MAPS_JSON =                 ESLIFIER_DATA_FOLDER + "Form_ID_Maps"
+CELL_MASTER_INFO_JSON =             ESLIFIER_DATA_FOLDER + "cell_master_info.json"
+FLAG_DICTIONARY_JSON =              ESLIFIER_DATA_FOLDER + "flag_dictionary.json"
+MISSING_SKYRIM_AS_MASTER_JSON =     ESLIFIER_DATA_FOLDER + "missing_skyrim_as_master.json"
+
 class main(QWidget):
     def __init__(self, COLOR_MODE):
         super().__init__()
@@ -426,7 +448,7 @@ class main(QWidget):
             if self.list_eslify.item(row, self.list_eslify.MOD_COL).checkState() == Qt.CheckState.Checked and not self.list_eslify.item(row, self.list_eslify.HIDER_COL):
                 checked.append(self.list_eslify.item(row, self.list_eslify.MOD_COL).toolTip())
         if checked != []:
-            file_masters: dict[str, list[str]] = self.get_from_file('ESLifier_Data/file_masters.json')
+            file_masters: dict[str, list[str]] = self.get_from_file(FILE_MASTERS_JSON)
             self.confirm = self.create_confirmation(icon=QMessageBox.Icon.Information)
             self.confirm.setWindowTitle(self.tr("Getting estimated disk usage..."))
             self.confirm.setText(self.tr('Getting estimated disk usage...'))
@@ -504,7 +526,7 @@ class main(QWidget):
         else:
             self.create_flag_worker(checked)
         try:
-            with open('ESLifier_Data/esl_flagged.json', 'r', encoding='utf-8') as f:
+            with open(ESL_FLAGGED_JSON, 'r', encoding='utf-8') as f:
                 esl_flagged_data = json.load(f)
         except:
             esl_flagged_data = []
@@ -513,7 +535,7 @@ class main(QWidget):
             if basename not in esl_flagged_data:
                 esl_flagged_data.append(basename)
         try:
-            with open('ESLifier_Data/esl_flagged.json', 'w', encoding='utf-8') as f:
+            with open(ESL_FLAGGED_JSON, 'w', encoding='utf-8') as f:
                 json.dump(esl_flagged_data, f, ensure_ascii=False, indent=4)
                 f.close()
         except Exception as e:
@@ -613,7 +635,7 @@ class main(QWidget):
                 self.list_eslify.create()
             if not self.redoing_output:
                 clear_and_close_log()
-            elif self.redoing_output and os.path.exists('ESLifier_Data/previously_compacted.json'):
+            elif self.redoing_output and os.path.exists(PREVIOUSLY_COMPACTED_JSON):
                 clear_and_leave_log_open()
                 self.list_compact.check_previously_compacted()
                 checked = 0
@@ -725,7 +747,7 @@ class main(QWidget):
     
     def update_changed_rel_paths_in_new_files_hashes(self, changed_rel_paths_to_switch):
         try:
-            with open('ESLifier_Data/new_file_hashes.json', 'r+', encoding='utf-8') as f:
+            with open(NEW_FILE_HASHES_JSON, 'r+', encoding='utf-8') as f:
                 try:
                     new_file_hashes:dict = json.load(f)
                 except:
@@ -766,26 +788,29 @@ class main(QWidget):
         def accepted():
             write_to_file(f'Resetting Output [Mode Manager Mode = {_global.mod_manager_mode}]')
             confirm.hide()
-            if os.path.exists('ESLifier_Data/compacted_and_patched.json'):
+            if os.path.exists(COMPACTED_AND_PATCHED_JSON):
                 try:
                     compacted_and_patched_dict = {}
-                    with open('ESLifier_Data/compacted_and_patched.json', 'r', encoding='utf-8') as fcp:
-                        compacted_and_patched_dict = json.load(fcp)
-                        with open('ESLifier_Data/previously_compacted.json', 'w', encoding='utf-8') as fpc:
-                            previously_compacted = [key for key in compacted_and_patched_dict.keys()]
-                            json.dump(previously_compacted, fpc, ensure_ascii=False, indent=4)
-                            fpc.close()
-                        fcp.close()
-                    os.remove('ESLifier_Data/compacted_and_patched.json')
+                    with open(COMPACTED_AND_PATCHED_JSON, 'r', encoding='utf-8') as f:
+                        compacted_and_patched_dict = json.load(f)
+                        f.close()
+                    previously_compacted = [key for key in compacted_and_patched_dict.keys()]
+                    with open(PREVIOUSLY_COMPACTED_JSON, 'w', encoding='utf-8') as f:
+                        json.dump(previously_compacted, f, ensure_ascii=False, indent=4)
+                        f.close()
+                    os.remove(COMPACTED_AND_PATCHED_JSON)
                 except Exception as e:
                     write_error(self.tr("Failed in Compacted and Patched deletion process."))
                     write_error(e, True)
-            if os.path.exists('ESLifier_Data/esl_flagged.json'):
-                os.remove('ESLifier_Data/esl_flagged.json')
-            if os.path.exists('ESLifier_Data/original_files.json'):
-                os.remove('ESLifier_Data/original_files.json')
-            if os.path.exists('ESLifier_Data/master_byte_data.json'):
-                os.remove('ESLifier_Data/master_byte_data.json')
+            if os.path.exists(ESL_FLAGGED_JSON):
+                if os.path.exists(PREVIOUSLY_ESL_FLAGGED_JSON):
+                    os.remove(PREVIOUSLY_ESL_FLAGGED_JSON)
+                shutil.copy(ESL_FLAGGED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON)
+                os.remove(ESL_FLAGGED_JSON)
+            if os.path.exists(ORIGINAL_FILES_JSON):
+                os.remove(ORIGINAL_FILES_JSON)
+            if os.path.exists(MASTER_BYTE_DATA_JSON):
+                os.remove(MASTER_BYTE_DATA_JSON)
             self.delete_output(self.output_folder_full, files_to_remove)
             self.list_compact.flag_dict = {}
             self.list_eslify.flag_dict = {}
@@ -858,29 +883,30 @@ class main(QWidget):
             confirm.hide()
             previously_compacted = []
             previously_esl_flagged = []
-            if os.path.exists('ESLifier_Data/new_file_hashes.json'):
+            if os.path.exists(NEW_FILE_HASHES_JSON):
                 self.update_changed_rel_paths_in_new_files_hashes(changed_rel_paths_to_switch)
-            if os.path.exists('ESLifier_Data/compacted_and_patched.json'):
-                with open('ESLifier_Data/compacted_and_patched.json', 'r', encoding='utf-8') as fcp:
-                    compacted_and_patched_dict = json.load(fcp)
-                    with open('ESLifier_Data/previously_compacted.json', 'w', encoding='utf-8') as fpc:
-                        previously_compacted = [key for key in compacted_and_patched_dict.keys()]
-                        json.dump(previously_compacted, fpc, ensure_ascii=False, indent=4)
-                        fpc.close()
-                    fcp.close()
-                os.remove('ESLifier_Data/compacted_and_patched.json')
             if os.path.exists('ESLifier_Data/esl_flagged.json'):
                 with open('ESLifier_Data/esl_flagged.json', 'r', encoding='utf-8') as fef:
                     previously_esl_flagged = json.load(fef)
                     fef.close()
-            if os.path.exists('ESLifier_Data/original_files.json'):
-                os.remove('ESLifier_Data/original_files.json')
-            if os.path.exists("ESLifier_Data/winning_file_history_dict.json"):
-                os.remove("ESLifier_Data/winning_file_history_dict.json")
-            if os.path.exists("ESLifier_Data/winning_files_dict.json"):
-                os.remove("ESLifier_Data/winning_files_dict.json")
-            if os.path.exists('ESLifier_Data/master_byte_data.json'):
-                os.remove('ESLifier_Data/master_byte_data.json')
+            if os.path.exists(COMPACTED_AND_PATCHED_JSON):
+                compacted_and_patched_dict = {}
+                with open(COMPACTED_AND_PATCHED_JSON, 'r', encoding='utf-8') as f:
+                    compacted_and_patched_dict = json.load(f)
+                    f.close()
+                previously_compacted = [key for key in compacted_and_patched_dict.keys()]
+                with open(PREVIOUSLY_COMPACTED_JSON, 'w', encoding='utf-8') as f:
+                    json.dump(previously_compacted, f, ensure_ascii=False, indent=4)
+                    f.close()
+                os.remove(COMPACTED_AND_PATCHED_JSON)
+            if os.path.exists(ORIGINAL_FILES_JSON):
+                os.remove(ORIGINAL_FILES_JSON)
+            if os.path.exists(WINNING_FILE_HISTORY_DICT_JSON):
+                os.remove(WINNING_FILE_HISTORY_DICT_JSON)
+            if os.path.exists(WINNING_FILES_DICT_JSON):
+                os.remove(WINNING_FILES_DICT_JSON)
+            if os.path.exists(MASTER_BYTE_DATA_JSON):
+                os.remove(MASTER_BYTE_DATA_JSON)
             if len(previously_compacted) == 0 and len(previously_esl_flagged) == 0:
                 QMessageBox.warning(None, self.tr("No Existing Output Data"), self.tr("There is no existing output data for ESLifier to use."))
                 return
@@ -906,8 +932,8 @@ class main(QWidget):
         def accepted():
             write_to_file(f'Resetting BSA [Mode Manager Mode = {_global.mod_manager_mode}]')
             confirm.hide()
-            if os.path.exists('ESLifier_Data/extracted_bsa.json'):
-                os.remove('ESLifier_Data/extracted_bsa.json')
+            if os.path.exists(EXTRACTED_BSA_JSON):
+                os.remove(EXTRACTED_BSA_JSON)
             if os.path.exists('bsa_extracted/'):
                 def delete_directory(dir_path):
                     try:
@@ -948,7 +974,7 @@ class main(QWidget):
                 write_error(self.tr("Error opening folder: ") + str(e))
 
     def open_log(self):
-        log_file = os.path.join(os.getcwd(), "ESLifier_Data/ESLifier.log")
+        log_file = os.path.join(os.getcwd(), ESLIFIER_LOG_FILE)
         if os.path.exists(log_file):
             try:
                 if os.name == 'nt':
@@ -987,9 +1013,6 @@ class main(QWidget):
             confirm.setDefaultButton(QMessageBox.StandardButton.Cancel)
         confirm.setEnabled = newSetEnabled
         return confirm
-    
-    def get_rel_path(self, file: str) -> str:
-        return _global.get_rel_path(file)
     
     def calculate_existing_output(self):
         size = 0
@@ -1043,7 +1066,7 @@ class main(QWidget):
         changed_rel_paths_to_switch = []
 
         if changed_hashes:
-            with open('ESLifier_Data/new_file_hashes.json', 'w', encoding='utf-8') as f:
+            with open(NEW_FILE_HASHES_JSON, 'w', encoding='utf-8') as f:
                 json.dump(self.new_file_hashes, f, ensure_ascii=False, indent=4)
                 f.close()
             dialog = QDialog()
@@ -1199,18 +1222,16 @@ class main(QWidget):
         
     def delete_output(self, output_folder: str, files_to_remove: list[str], remove_maps=True):
         QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
-        if remove_maps and os.path.exists('ESLifier_Data/Form_ID_Maps'):
-            shutil.rmtree('ESLifier_Data/Form_ID_Maps')
-        if os.path.exists('ESLifier_Data/EDIDs'):
-            shutil.rmtree('ESLifier_Data/EDIDs')
-        if os.path.exists('ESLifier_Data/Cell_IDs'):
-            shutil.rmtree('ESLifier_Data/Cell_IDs')
-        if os.path.exists('ESLifier_Data/cell_master_info.json'):
-            os.remove('ESLifier_Data/cell_master_info.json')
-        if os.path.exists("ESLifier_Data/winning_file_history_dict.json"):
-            os.remove("ESLifier_Data/winning_file_history_dict.json")
-        if os.path.exists("ESLifier_Data/winning_files_dict.json"):
-            os.remove("ESLifier_Data/winning_files_dict.json")
+        if remove_maps and os.path.exists(FORM_ID_MAPS_JSON):
+            shutil.rmtree(FORM_ID_MAPS_JSON)
+        if os.path.exists(CELL_IDS_FOLDER):
+            shutil.rmtree(CELL_IDS_FOLDER)
+        if os.path.exists(CELL_MASTER_INFO_JSON):
+            os.remove(CELL_MASTER_INFO_JSON)
+        if os.path.exists(WINNING_FILE_HISTORY_DICT_JSON):
+            os.remove(WINNING_FILE_HISTORY_DICT_JSON)
+        if os.path.exists(WINNING_FILES_DICT_JSON):
+            os.remove(WINNING_FILES_DICT_JSON)
         if os.path.exists(output_folder) and 'eslifier' in output_folder.lower():
             for file in files_to_remove:
                 if os.path.exists(file):
@@ -1303,20 +1324,19 @@ class CompactorWorker(QObject):
         count = 0
         if self.update_header:
             try:
-                with open("ESLifier_Data/missing_skyrim_as_master.json", 'r', encoding='utf-8') as f:
+                with open(MISSING_SKYRIM_AS_MASTER_JSON, 'r', encoding='utf-8') as f:
                     missing_skyrim_esm = json.load(f)
             except:
                 missing_skyrim_esm = {}
-        with open("ESLifier_Data/flag_dictionary.json", 'r', encoding='utf-8') as f:
+        with open(FLAG_DICTIONARY_JSON, 'r', encoding='utf-8') as f:
             flag_dict = json.load(f)
         if self.generate_cell_master:
             self.create_new_cell_plugin.generate(_global.output_folder_joined_path)
         finalize = False
-        original_files: dict = self.get_from_file('ESLifier_Data/original_files.json')
-        winning_files_dict: dict = self.get_from_file('ESLifier_Data/winning_files_dict.json')
-        master_byte_data: dict = self.get_from_file('ESLifier_Data/master_byte_data.json')
-        files_to_patch: dict = self.get_from_file('ESLifier_Data/file_masters.json')
-        bsa_dict: dict = self.get_from_file('ESLifier_Data/bsa_dict.json')
+        original_files: dict = self.get_from_file(ORIGINAL_FILES_JSON)
+        winning_files_dict: dict = self.get_from_file(WINNING_FILES_DICT_JSON)
+        master_byte_data: dict = self.get_from_file(MASTER_BYTE_DATA_JSON)
+        files_to_patch: dict = self.get_from_file(FILE_MASTERS_JSON)
         bsa_masters = []
         for value in bsa_dict.values():
             bsa_masters.extend(value)
@@ -1382,8 +1402,8 @@ class FlagWorker(QObject):
         super().__init__()
     
     def flag_files(self):
-        original_files = self.get_from_file('ESLifier_Data/original_files.json')
-        winning_files_dict = self.get_from_file('ESLifier_Data/winning_files_dict.json')
+        original_files = self.get_from_file(ORIGINAL_FILES_JSON)
+        winning_files_dict = self.get_from_file(WINNING_FILES_DICT_JSON)
         winning_file_history_dict = {}
         additional_file_patcher_conditions = user_and_master_conditions_class()
         cfids = CFIDs(None, original_files, winning_files_dict, winning_file_history_dict, {}, {}, [], {}, additional_file_patcher_conditions)
@@ -1391,6 +1411,8 @@ class FlagWorker(QObject):
             original_files, winning_file_history_dict = cfids.set_flag(file)
         self.dump_dictionary('ESLifier_Data/original_files.json', original_files)
         self.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', winning_file_history_dict)
+        self.dump_dictionary(ORIGINAL_FILES_JSON, original_files)
+        self.dump_dictionary(WINNING_FILE_HISTORY_DICT_JSON, winning_file_history_dict)
         self.finished_signal.emit()
 
     def dump_dictionary(self, file, dictionary: dict):
