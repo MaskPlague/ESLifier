@@ -5,6 +5,7 @@ import threading
 import timeit
 import hashlib
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal, QTimer, QThreadPool
 from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QApplication,
@@ -1549,36 +1550,46 @@ class HashWorker(QObject):
         self.lock = threading.Lock()
 
     def run(self):
-        self.size = 0
-        self.file_count = 0
-        self.files_to_remove = []
-        self.changed_hashes = []
         self.to_hash_len = len(self.files)
+        
+        thread_count = min(16, (os.cpu_count() or 4))
+        chunk_size = max(1, self.to_hash_len // thread_count)
+
+        chunks = [self.files[i:i + chunk_size] for i in range(0, self.to_hash_len, chunk_size)]
+        
+        self.results = []
+        self.hash_progress = 0
+        
+        threads = []
+        for chunk in chunks:
+            t = threading.Thread(target=self.hash_files, args=(chunk,))
+            threads.append(t)
+            t.start()
+            
+        for t in threads:
+            t.join()
+            
+        size = 0
+        file_count = 0
+        files_to_remove = []
+        changed_hashes = []
+        
+        for local_size, local_count, local_remove, local_changed, local_new in self.results:
+            size += local_size
+            file_count += local_count
+            files_to_remove.extend(local_remove)
+            changed_hashes.extend(local_changed)
+            self.new_file_hashes.update(local_new)
+            
         processed_str = ('-    ' + self.tr("Processed: %1%") + 
                        '\n-    ' + self.tr("Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
-        split = self.to_hash_len
-        if split > 0:
-            if split > MAX_THREADS:
-                split = MAX_THREADS
-            chunk_size = self.to_hash_len // split
-            chunks = [self.files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
-            chunks.append(self.files[split * chunk_size:])
-            self.count = 0
-            self.hash_progress = 0
-            threads: list[threading.Thread] = [] 
-            for chunk in chunks:
-                thread = threading.Thread(target=self.hash_files, args=(chunk,))
-                threads.append(thread)
-                thread.start()
-
-            for thread in threads: thread.join()
-
+        
         write_progress(100, 1, processed_str.format(100.0, self.to_hash_len, self.to_hash_len))
         self.finished.emit({
-            "size": self.size,
-            "file_count": self.file_count,
-            "files_to_remove": self.files_to_remove,
-            "changed_hashes": self.changed_hashes
+            "size": size,
+            "file_count": file_count,
+            "files_to_remove": files_to_remove,
+            "changed_hashes": changed_hashes
         })
 
     def hash_files(self, files):
@@ -1589,33 +1600,51 @@ class HashWorker(QObject):
         local_new_file_hashes = {}
         processed_str = ('-    ' + self.tr("Processed: %1%") + 
                        '\n-    ' + self.tr("Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
+        update_factor = max(1, round(self.to_hash_len * 0.001))
+        local_progress_batch = 0
+
+        get_rel_path = _global.get_rel_path
+        warn = _global.hash_plugins_warn
+
         for file in files:
-            self.hash_progress += 1
-            factor = round(self.to_hash_len * 0.001)
-            if factor == 0:
-                factor = 1
-            if (self.hash_progress % factor) >= (factor-1):
-                percentage = round((self.hash_progress / self.to_hash_len) * 100, 1)
-                write_progress(round(percentage), 1, processed_str.format(percentage, self.hash_progress, self.to_hash_len))
-            if not _global.hash_plugins_warn and file.lower().endswith(('.esp', '.esl', '.esm')):
+            if not warn and file.lower().endswith(('.esp', '.esl', '.esm')):
+                local_progress_batch += 1
                 continue
-            with open(file, 'rb') as f: 
-                sha256_hash = hashlib.sha256(f.read()).hexdigest()
-                f.close()
-            rel_path = _global.get_rel_path(file).lower()
+                
+            try:
+                with open(file, 'rb') as f:
+                    sha256_hash = hashlib.sha256(f.read()).hexdigest()
+            except Exception:
+                local_progress_batch += 1
+                continue
+                
+            rel_path = get_rel_path(file).lower()
             old_hash, changed = self.new_file_hashes.get(rel_path, (None, False))
-            if old_hash == None or (old_hash == sha256_hash and not changed): 
-                local_files_to_remove.append(file) 
-                local_size += os.path.getsize(file)
+            
+            if old_hash is None or (old_hash == sha256_hash and not changed):
+                local_files_to_remove.append(file)
+                try:
+                    local_size += os.path.getsize(file)
+                except OSError: pass
                 local_file_count += 1
-            else: 
+            else:
                 local_new_file_hashes[rel_path] = (old_hash, True)
                 local_changed_hashes.append((file, rel_path))
+                
+            local_progress_batch += 1
+            if local_progress_batch >= update_factor:
+                with self.lock:
+                    self.hash_progress += local_progress_batch
+                    current_prog = self.hash_progress
+                local_progress_batch = 0
+                
+                percentage = round((current_prog / self.to_hash_len) * 100, 1)
+                write_progress(round(percentage), 1, processed_str.format(percentage, current_prog, self.to_hash_len))
+                
+        # Add any remaining progress for this batch
+        if local_progress_batch > 0:
+            with self.lock:
+                self.hash_progress += local_progress_batch
 
         with self.lock:
-            self.size += local_size
-            self.file_count += local_file_count
-            self.files_to_remove.extend(local_files_to_remove)
-            self.changed_hashes.extend(local_changed_hashes)
-            for key, item in local_new_file_hashes.items():
-                self.new_file_hashes[key] = item
+            self.results.append((local_size, local_file_count, local_files_to_remove, local_changed_hashes, local_new_file_hashes))
