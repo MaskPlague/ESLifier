@@ -144,10 +144,10 @@ class scanner():
 
         scanner.get_file_masters()
 
-        bsa_dict = scanner.sort_bsa_files(scanner.bsa_dict, plugins_list)
+        _global.bsa_dict = scanner.sort_bsa_files(scanner.bsa_dict, plugins_list)
 
         scanner.dump_to_file(file="ESLifier_Data/file_masters.json", data=scanner.file_dict)
-        scanner.dump_to_file(file="ESLifier_Data/bsa_dict.json", data=bsa_dict)
+        #scanner.dump_to_file(file="ESLifier_Data/bsa_dict.json", data=bsa_dict)
         scanner.dump_to_file(file="ESLifier_Data/dll_dict.json", data=scanner.dll_dict)
 
         end_time = timeit.default_timer()
