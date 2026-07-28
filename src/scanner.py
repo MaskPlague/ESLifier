@@ -46,7 +46,8 @@ class scanner():
         scanner.file_count: int = 0
         scanner.all_files: list[str] = []
         _global.plugins.clear()
-        scanner.file_dict: dict[str, list[str]] = {}
+        _global.mods_with_seq.clear()
+        scanner.file_dict: dict[str, set[str]] = {}
         scanner.bsa_dict: dict[str, list[str]] = {}
         scanner.dll_dict: dict[str, list[str]] = {}
         scanner.bsa_files: list[str] = []
@@ -108,7 +109,7 @@ class scanner():
         thread_memory_usage = 2.5 * (1024**3)
         scanner.bsa_threads_by_ram = max(1, int(usable_ram / thread_memory_usage) * 7)
 
-        scanner.extracted: list[str] = scanner.get_from_file('ESLifier_Data/extracted_bsa.json', list)
+        scanner.extracted: set[str] = set(scanner.get_from_file('ESLifier_Data/extracted_bsa.json', list))
         
         if scanner.mod_manager_mode == 2: # MO2
             MO2.scanner = scanner
@@ -130,7 +131,7 @@ class scanner():
             plugins_list = scanner.get_plugins_list(plugins_txt_path)
             NoManager.get_files_from_skyrim_folder(path, plugins_list)
 
-        scanner.plugin_basename_list: set = set([os.path.basename(plugin).lower() for plugin in _global.plugins])
+        scanner.plugin_basename_list: set[str] = set([os.path.basename(plugin).lower() for plugin in _global.plugins])
 
         scanner.dump_to_file(file="ESLifier_Data/extracted_bsa.json", data=scanner.extracted)
         scanner.dump_to_file(file="ESLifier_Data/winning_files_dict.json", data=scanner.winning_files_dict)
@@ -154,7 +155,6 @@ class scanner():
         time_taken = end_time - start_time
         write_normal('-  ' + QCoreApplication.translate("scanner", 'Time taken: %1 seconds').replace("%1", str(round(time_taken,2))))
         if full_scan:
-            _global.mods_with_seq = [mod for mod, files in scanner.file_dict.items() if files and files[-1].lower().endswith('.seq')]
             return flag_dict, dependency_dictionary
     
     def sort_bsa_files(bsa_dict: dict, plugins: list) -> dict:
@@ -207,7 +207,7 @@ class scanner():
                 try:
                     scanner.extract_bsa(file, startupinfo, update_time, ".pex")
                     scanner.extract_bsa(file, startupinfo, update_time, ".seq")
-                    scanner.extracted.append(file)
+                    scanner.extracted.add(file)
                 except Exception as e:
                     write_error(QCoreApplication.translate("scanner", "Error Reading BSA: ") + file)
                     write_error(e, True)
@@ -229,10 +229,19 @@ class scanner():
             return []
         return active_plugins
 
-    def dump_to_file(file: str, data: list | dict):
+    def dump_to_file(file: str, data: list | dict | set):
+        if isinstance(data, dict):
+            to_dump = {}
+            for key, value in data.items():
+                if isinstance(value, set):
+                    to_dump.update({key: list(value)})
+                else:
+                    to_dump.update({key: value})
+        else:
+            to_dump = list(data)
         try:
             with open(file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=4)
+                json.dump(to_dump, f, ensure_ascii=False, indent=4)
         except Exception as e:
             write_error(QCoreApplication.translate("Global", "Failed to dump data to: ") + file)
             write_error(e, True)
@@ -248,13 +257,12 @@ class scanner():
     def get_file_masters():
         plugin_names = []
         for plugin in _global.plugins: plugin_names.append(os.path.basename(plugin).lower())
-        #pattern = re.compile(r'(?:~|:\s*|\||=|,|-|")\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\)?)\s*(?:\||,|"|$)')
-        pattern = re.compile(r'(?:~|:\s*|\||=|,|-|"|\*)\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\)?)\s*(?:\||,|"|$|\n)')
-        pattern2 = re.compile(rb'\x00([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\x00', flags=re.DOTALL)
-        pattern3 = re.compile(r'\\facegeom\\([a-zA-Z0-9_\-\'\?\!\(\)\[\]\,\s]+\.es[pml])\\')
-        pattern4 = re.compile(r'\\facetint\\([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\\')
-        pattern5 = re.compile(r'\\sound\\voice\\([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\\')
-        scanner.file_dict = {plugin: [] for plugin in plugin_names}
+        unused_plugin_pattern = re.compile(r'(?:~|:\s*|\||=|,|-|"|\*)\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\)?)\s*(?:\||,|"|$|\n)')
+        dll_byte_pattern = re.compile(rb'\x00([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\x00', flags=re.DOTALL)
+        facegeom_pattern = re.compile(r'\\facegeom\\([a-zA-Z0-9_\-\'\?\!\(\)\[\]\,\s]+\.es[pml])\\')
+        facetint_pattern = re.compile(r'\\facetint\\([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\\')
+        voice_pattern = re.compile(r'\\sound\\voice\\([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\\')
+        scanner.file_dict = {plugin: set() for plugin in plugin_names}
         scanner.count = 0
         if len(scanner.all_files) > 500000:
             split = max(1, scanner.max_threads_by_ram)
@@ -270,7 +278,7 @@ class scanner():
         write_normal(QCoreApplication.translate("scanner", 'Getting masters of loose files...'))
         write_normal("", False)
         for chunk in chunks:
-            thread = threading.Thread(target=scanner.file_processor, args=(chunk, pattern, pattern3, pattern4, pattern5))
+            thread = threading.Thread(target=scanner.file_processor, args=(chunk, unused_plugin_pattern, facegeom_pattern, facetint_pattern, voice_pattern))
             scanner.threads.append(thread)
             thread.start()
 
@@ -293,7 +301,7 @@ class scanner():
         chunks = [scanner.pex_files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
         chunks.append(scanner.pex_files[(split) * chunk_size:])
         for chunk in chunks:
-            thread = threading.Thread(target=scanner.pex_processor, args=(pattern2, chunk,))
+            thread = threading.Thread(target=scanner.pex_processor, args=(dll_byte_pattern, chunk,))
             scanner.threads.append(thread)
             thread.start()
 
@@ -302,7 +310,7 @@ class scanner():
 
         write_remove(1, "-  " + QCoreApplication.translate("scanner", "Scanning .dll SKSE plugins"), True)
         for file in scanner.dll_files:
-            thread = threading.Thread(target=scanner.file_reader,args=(pattern2, file, 'dll'))
+            thread = threading.Thread(target=scanner.file_reader,args=(dll_byte_pattern, file, 'dll'))
             scanner.threads.append(thread)
             thread.start()
 
@@ -351,8 +359,8 @@ class scanner():
                 write_progress(round(scanner.percentage), 1, processed_string.format(scanner.percentage, scanner.count, scanner.file_count))
             scanner.file_reader(pattern2, file, 'pex')
 
-    def file_processor(files: list[str], pattern, pattern3, pattern4, pattern5):
-        local_dict: dict[str, list[str]] = {}
+    def file_processor(files: list[str], pattern, facegeom_pattern, facetint_pattern, voice_pattern):
+        local_dict: dict[str, set[str]] = {}
         local_pex: list[str] = []
         local_dll: list[str] = []
         local_seq: list[str] = []
@@ -372,7 +380,7 @@ class scanner():
                  and not (any(exclusion in file_lower for exclusion in scanner.exclude_contains) 
                           or file_lower.endswith(scanner.exclude_endswith))
                 ):
-                thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
+                thread = threading.Thread(target=scanner.file_reader,args=(None, file, 'r'))
                 scanner.threads.append(thread)
                 thread.start()
             elif file_lower.endswith('.pex'):
@@ -385,31 +393,28 @@ class scanner():
             elif file_lower.endswith('.nif') and '\\facegeom\\' in file_lower:
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
-                        plugin = re.search(pattern3, file_lower).group(1)
+                        plugin = re.search(facegeom_pattern, file_lower).group(1)
                         if plugin not in local_dict: 
-                            local_dict.update({plugin: []})
-                        if file not in local_dict[plugin]: 
-                            local_dict[plugin].append(file)
+                            local_dict.update({plugin: set()})
+                        local_dict[plugin].add(file)
                     except Exception:
                         pass
             elif file_lower.endswith('.dds') and '\\facetint\\' in file_lower :
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
-                        plugin = re.search(pattern4, file_lower).group(1)
+                        plugin = re.search(facetint_pattern, file_lower).group(1)
                         if plugin not in local_dict: 
-                            local_dict.update({plugin: []})
-                        if file not in local_dict[plugin]: 
-                            local_dict[plugin].append(file)
+                            local_dict.update({plugin: set()})
+                        local_dict[plugin].add(file)
                     except Exception:
                         pass
             elif '\\sound\\voice\\' in file_lower:
                 if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
                     try: 
-                        plugin = re.search(pattern5, file_lower).group(1)
+                        plugin = re.search(voice_pattern, file_lower).group(1)
                         if plugin not in local_dict: 
-                            local_dict.update({plugin: []})
-                        if file not in local_dict[plugin]: 
-                            local_dict[plugin].append(file)
+                            local_dict.update({plugin: set()})
+                        local_dict[plugin].add(file)
                     except Exception:
                         pass
             elif (scanner.all_patcher_experimental 
@@ -421,7 +426,7 @@ class scanner():
                   and not (any(exclusion in file_lower for exclusion in scanner.exclude_contains) 
                           or file_lower.endswith(scanner.exclude_endswith))
                  ):
-                thread = threading.Thread(target=scanner.file_reader,args=(pattern, file, 'r'))
+                thread = threading.Thread(target=scanner.file_reader,args=(None, file, 'r'))
                 scanner.threads.append(thread)
                 thread.start()
         with scanner.lock:     
@@ -432,17 +437,20 @@ class scanner():
                 if key in scanner.plugin_basename_list:
                     if key not in scanner.file_dict:
                         scanner.file_dict.update({key: []})
-                    scanner.file_dict[key].extend(values_list)
+                    scanner.file_dict[key].update(values_list)
 
     def seq_plugin_extension_processor(files):
         for file in files:
             esp, esl, esm = file[0] + '.esp', file[0] + '.esl', file[0] + '.esm'
             if esp in scanner.file_dict:
-                if file[1] not in scanner.file_dict[esp]: scanner.file_dict[esp].append(file[1])
+                _global.mods_with_seq.append(esp)
+                scanner.file_dict[esp].add(file[1])
             elif esl in scanner.file_dict:
-                if file[1] not in scanner.file_dict[esl]: scanner.file_dict[esl].append(file[1])
+                _global.mods_with_seq.append(esl)
+                scanner.file_dict[esl].add(file[1])
             elif esm in scanner.file_dict:
-                if file[1] not in scanner.file_dict[esm]: scanner.file_dict[esm].append(file[1])
+                _global.mods_with_seq.append(esm)
+                scanner.file_dict[esm].add(file[1])
 
     def file_reader(pattern, file: str, reader_type):
         try:
@@ -469,8 +477,9 @@ class scanner():
                     with scanner.lock:
                         for plugin in plugins:
                             if plugin in scanner.plugin_basename_list:
-                                if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
-                                if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+                                if plugin not in scanner.file_dict: 
+                                    scanner.file_dict.update({plugin: set()})
+                                scanner.file_dict[plugin].add(file)
                 else:
                     with scanner.file_semaphore:
                         with open(file, 'r', encoding='utf-8', errors='ignore') as f:
@@ -490,8 +499,9 @@ class scanner():
                                     found_plugins.add(plugin)
                     with scanner.lock:                  
                         for plugin in found_plugins:
-                            if plugin not in scanner.file_dict: scanner.file_dict.update({plugin: []})
-                            if file not in scanner.file_dict[plugin]: scanner.file_dict[plugin].append(file)
+                            if plugin not in scanner.file_dict: 
+                                scanner.file_dict.update({plugin: set()})
+                            scanner.file_dict[plugin].add(file)
 
             elif reader_type == 'pex':
                 with scanner.file_semaphore:
@@ -512,8 +522,9 @@ class scanner():
                     for string in strings:
                         if string.endswith(('.esp', '.esl', '.esm')) and string in scanner.plugin_basename_list:#not ':' in string and not '/' in string and not '\\' in string:
                             with scanner.lock:
-                                if string not in scanner.file_dict: scanner.file_dict.update({string: []})
-                                if file not in scanner.file_dict[string]: scanner.file_dict[string].append(file)
+                                if string not in scanner.file_dict: 
+                                    scanner.file_dict.update({string: set()})
+                                scanner.file_dict[string].add(file)
                 elif 'bsa_extracted\\' in file:
                     os.remove(file)
             elif reader_type == 'dll':
