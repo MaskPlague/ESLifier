@@ -857,7 +857,6 @@ class main(QWidget):
                         os.remove(PREVIOUSLY_ESL_FLAGGED_JSON)
                     if os.path.exists(PREVIOUSLY_COMPACTED_JSON):
                         os.remove(PREVIOUSLY_COMPACTED_JSON)
-                    confirm2.hide()
                 confirm3 = self.create_removal_confirmation(
                     self.tr("Would you like to remove the ESLifier Data that stores\n"\
                             "info used to reselect your previously ESL flagged/compacted\n"\
@@ -946,12 +945,16 @@ class main(QWidget):
                     json.dump(previously_compacted, f, ensure_ascii=False, indent=4)
                     f.close()
                 os.remove(COMPACTED_AND_PATCHED_JSON)
+            elif os.path.exists(PREVIOUSLY_COMPACTED_JSON):
+                previously_compacted = self.get_from_file(PREVIOUSLY_COMPACTED_JSON)
             if os.path.exists(ESL_FLAGGED_JSON):
                 previously_esl_flagged = self.get_from_file(ESL_FLAGGED_JSON)
                 if os.path.exists(PREVIOUSLY_ESL_FLAGGED_JSON):
                     os.remove(PREVIOUSLY_ESL_FLAGGED_JSON)
                 shutil.copy(ESL_FLAGGED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON)
                 os.remove(ESL_FLAGGED_JSON)
+            elif os.path.exists(PREVIOUSLY_ESL_FLAGGED_JSON):
+                previously_esl_flagged = self.get_from_file(PREVIOUSLY_ESL_FLAGGED_JSON)
             if os.path.exists(ORIGINAL_FILES_JSON):
                 os.remove(ORIGINAL_FILES_JSON)
             if os.path.exists(WINNING_FILE_HISTORY_DICT_JSON):
