@@ -24,6 +24,9 @@ def write_normal(text:str, to_file:bool=True):
 def write_remove(remove_num_lines:int, text:str, write_to_file:bool=False):
     _ls.write_remove(remove_num_lines, text, write_to_file)
 
+def write_insert(insert_location:int, text:str, write_to_file:bool=False):
+    _ls.write_insert(insert_location, text, write_to_file)
+
 def write_progress(percent: int, remove_num_lines:int, text:str):
     _ls.write_progress(percent, remove_num_lines, text)
 
@@ -44,6 +47,7 @@ def clear_and_close_log():
 
 def clear_and_leave_log_open():
     _ls.clear_and_leave_log_open()
+
 
 #For Debugging
 if DEBUG:
@@ -182,6 +186,11 @@ class log_stream(QMainWindow):
 
     def write_remove(self, remove_num_lines:int, text:str, write_to_file:bool=False):
         self.display_queue.put((text, 1, remove_num_lines)) # 1 remove
+        if write_to_file:
+            self.write_to_file(text)
+
+    def write_insert(self, insert_location:int, text:str, write_to_file:bool=False):
+        self.display_queue.put((text, 5, insert_location))  # 5 insert
         if write_to_file:
             self.write_to_file(text)
 
@@ -433,6 +442,9 @@ class log_stream(QMainWindow):
             self.timer_clear.start(1500)
         elif args[0] == 4: # clear and leave open
             self.clear_alt()
+        elif args[0] == 5:
+            self.lines.insert(args[1], text)
+            self.text_edit.setPlainText('\n'.join(self.lines))
         else:   #args[0] == 0 # Simply append new text
             self.lines.append(text)
             self.text_edit.setPlainText('\n'.join(self.lines))
