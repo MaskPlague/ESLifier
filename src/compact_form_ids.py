@@ -13,7 +13,7 @@ from intervaltree import IntervalTree
 from full_form_processor import form_processor
 from create_cell_master import create_new_cell_plugin
 from data_holder import _global
-from log_stream import write_error, write_normal, write_progress, clear_and_leave_log_open
+from log_stream import write_error, write_normal, write_progress, clear_and_leave_log_open, write_insert
 from PyQt6.QtCore import QCoreApplication
 import patcher_conditions
 
@@ -180,12 +180,16 @@ class CFIDs():
                            add_cell_to_master: bool, files_to_patch: dict):
         self.do_generate_cell_master = add_cell_to_master
         self.form_id_map = {}
+        get_rel_path = _global.get_rel_path
         write_normal(QCoreApplication.translate("CFIDs", "Editing Plugin: %1...").replace("%1", os.path.basename(file_to_compact)))
         self.compact_file(file_to_compact, all_dependents_have_skyrim_esm_as_master)
         self.get_form_id_map(file_to_compact)
-        if dependents != []:
+        dependent_thread: threading.Thread = None
+        if dependents:
             write_normal("-  "+QCoreApplication.translate("CFIDs", "Patching %1 Dependent Plugins...").replace("%1", str(len(dependents))))
-            self.patch_dependent_plugins(file_to_compact, dependents, files_to_patch)
+            #self.patch_dependent_plugins(file_to_compact, dependents, files_to_patch)
+            dependent_thread = threading.Thread(target=self.patch_dependent_plugins, args=(file_to_compact, dependents, files_to_patch))
+            dependent_thread.start()
 
         name = os.path.basename(file_to_compact).lower()
         if name in files_to_patch or name in self.bsa_masters:
@@ -214,7 +218,7 @@ class CFIDs():
                                             
                 rel_paths = set()
                 for file in patch_or_rename:
-                    rel_path: str = self.get_rel_path(file)
+                    rel_path: str = get_rel_path(file)
                     rel_paths.add(rel_path.lower())
 
                 start = os.path.join(os.getcwd(), 'bsa_extracted_temp')
@@ -225,7 +229,7 @@ class CFIDs():
                         if rel_path not in rel_paths and file.endswith(('.nif', '.dds', '.fuz', '.xwm', '.wav', '.lip')):
                             patch_or_rename.append(full_path)
                             rel_paths.add(rel_path)
-                
+            
             to_patch, to_rename = self.sort_files_to_patch_or_rename(file_to_compact, patch_or_rename) #function to get files that need to be edited in some way to function correctly.
             if len(to_patch) > 0:
                 write_normal("-  " + QCoreApplication.translate("CFIDs", "Patching %1 Dependent Files...").replace("%1", str(len(to_patch))))
@@ -240,6 +244,8 @@ class CFIDs():
         if os.path.exists('bsa_extracted_temp/'):
             write_normal("-  " + QCoreApplication.translate("CFIDs", "Deleting temporarily Extracted FaceGen/Voice Files..."))
             shutil.rmtree('bsa_extracted_temp/')
+        if dependent_thread is not None:
+            dependent_thread.join()
         clear_and_leave_log_open()
         return self.original_files, self.winning_files_dict, self.master_byte_data, self.winning_file_history_dict, self.compacted_and_patched
     
@@ -293,32 +299,33 @@ class CFIDs():
         clear_and_leave_log_open()
         return self.original_files, self.winning_files_dict, self.master_byte_data, self.winning_file_history_dict, self.compacted_and_patched
 
-    #Create a copy of the mod plugin we're compacting
+    #Create a copy of the mod plugin we're compacting/patching/etc.
     def copy_file_to_output(self, file: str) -> tuple[str, str]:
-        end_path: str = self.get_rel_path(file)
+        end_path: str = _global.get_rel_path(file)
+        end_path_lower = end_path.lower()
         new_file: str = os.path.normpath(os.path.join(self.output_folder, end_path))
-        (winning_mod, _) = self.winning_files_dict.get(end_path.lower(), (None, None))
-        if winning_mod != None and winning_mod != self.output_folder_name:
-            self.winning_file_history_dict[end_path.lower()] = winning_mod
-        with self.lock:
-            if not os.path.exists(os.path.dirname(new_file)):
-                os.makedirs(os.path.dirname(new_file))
-            if not os.path.exists(new_file):
-                shutil.copy(file, new_file)
-        if ((end_path.lower() not in self.original_files or self.original_files[end_path.lower()] != file) and 
-            'bsa_extracted' not in file and self.output_folder_name not in file):
+        winning_mod, _ = self.winning_files_dict.get(end_path_lower, (None, None))
+        if winning_mod is not None and winning_mod != self.output_folder_name:
+            self.winning_file_history_dict[end_path_lower] = winning_mod
+
+        os.makedirs(os.path.dirname(new_file), exist_ok=True)
+        if not os.path.exists(new_file):
+            with self.lock:
+                if not os.path.exists(new_file):
+                    shutil.copy(file, new_file)
+        orig_file_data = self.original_files.get(end_path_lower)
+        if ((orig_file_data is None or orig_file_data[0] != file) 
+            and 'bsa_extracted' not in file 
+            and self.output_folder_name not in file):
             try:
                 with open(file, 'rb') as f:
                     sha256_hash = hashlib.sha256(f.read()).hexdigest()
-                    f.close()
-                self.original_files[end_path.lower()] = [file, sha256_hash]
+
+                self.original_files[end_path_lower] = [file, sha256_hash]
             except Exception as e:
                 write_error(QCoreApplication.translate("Failed to hash ") + file)
                 write_error(e, True)
         return new_file, end_path
-    
-    def get_rel_path(self, file: str) -> str:
-        return _global.get_rel_path(file)
     
     #Sort the file masters list into files that only need patching and files that need renaming and maybe patching
     def sort_files_to_patch_or_rename(self, master: str, files: list[str]) -> tuple[list[str], list[str]]:
@@ -364,6 +371,8 @@ class CFIDs():
         master_base_name = os.path.basename(master)
         percentage_str = ("-    " + QCoreApplication.translate("CFIDs", "Percentage: %1%") + 
                         "\n-    "+ QCoreApplication.translate("CFIDs", "Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
+
+        get_rel_path = _global.get_rel_path
         for file in files:
             if self.file_count > 20:
                 self.count += 1
@@ -374,7 +383,7 @@ class CFIDs():
                     percent = round((self.count / self.file_count) * 100, 1)
                     write_progress(round(percent), 1, percentage_str.format(percent, self.count, self.file_count))
             
-            rel_path = self.get_rel_path(file)
+            rel_path = get_rel_path(file)
             if 'facegendata' in file.lower(): # Meshes
                 from_id = file[-10:-4]
                 to_id = self.form_id_map.get(from_id.lower(), None)
@@ -388,8 +397,8 @@ class CFIDs():
                         with self.lock:
                             self.compacted_and_patched[master_base_name].add(rel_path_new_file)
                             self.compacted_and_patched[master_base_name].add(rel_path_renamed_file)
-                            if 'facegeom' in new_file.lower() and master_base_name.lower() in new_file.lower():
-                                facegeom_meshes.append(renamed_file)
+                        if 'facegeom' in new_file.lower() and master_base_name.lower() in new_file.lower():
+                            facegeom_meshes.append(renamed_file)
             elif file[-6] == "_" or file[-7] == "_": # Voice
                 index = file.rfind('_') - 6
                 from_id = file[index:index+6]
@@ -399,8 +408,8 @@ class CFIDs():
                         new_file, rel_path_new_file = self.copy_file_to_output(file)
                         index = new_file.rfind('_') - 6
                         renamed_file = new_file[:index] + to_id.upper() + new_file[index+6:]
-                        with self.lock:
-                            os.replace(new_file, renamed_file)
+                        #with self.lock:
+                        os.replace(new_file, renamed_file)
                         index = rel_path_new_file.rfind('_') - 6
                         rel_path_renamed_file = rel_path_new_file[:index] + to_id.upper() + rel_path_new_file[index+6:]
                         with self.lock:
@@ -609,7 +618,6 @@ class CFIDs():
                 f.write(b'\x48\xE1\xDA\x3F')
             f.seek(0)
             data = f.read()
-            f.close()
 
         data_list, grup_struct = self.create_data_list(data)
 
@@ -676,6 +684,7 @@ class CFIDs():
                 old_ids_of_new_cells = set([old_id for old_id, new_id in new_cell_form_ids])
             else:
                 old_ids_of_new_cells = set()
+            free_non_existent = _global.free_non_existent
             for i in range(len(form_id_file_data)):
                 form_id_conversion = form_id_file_data[i].split('|')
                 from_id = bytes.fromhex(form_id_conversion[0])[:3] + master_byte
@@ -688,7 +697,7 @@ class CFIDs():
                     to_id = bytes.fromhex(form_id_conversion[1])[:4]
                 if from_id in all_form_ids_list:
                     form_id_replacements.append([from_id, to_id])
-                elif not _global.free_non_existent:
+                elif not free_non_existent:
                     form_id_replacements.append([from_id, to_id])
         if len(form_id_replacements) > 0:
             matched_from_ids = set([from_id[:4] for from_id, to_id in form_id_replacements])
@@ -751,7 +760,6 @@ class CFIDs():
 
         with open(new_file, 'wb') as f:
             f.write(b''.join(data_list))
-            f.close()
 
         self.compacted_and_patched[os.path.basename(new_file)] = set()
         
@@ -763,28 +771,38 @@ class CFIDs():
         with open(form_id_file_name, 'r', encoding='utf-8') as form_id_file:
             form_id_file_data = form_id_file.readlines()
 
-        threads: list[threading.Thread] = []
+        form_id_replacements_base = []
+        for i in range(len(form_id_file_data)):
+            form_id_conversion = form_id_file_data[i].split('|')
+            from_id = bytes.fromhex(form_id_conversion[0])[:3]
+            id = bytes.fromhex(form_id_conversion[1])
+            form_id_replacements_base.append((from_id, id))
 
+        threads: list[threading.Thread] = []
+        insert_counter = 3
+        import time
         for dependent in dependents:
             new_file, rel_path = self.copy_file_to_output(dependent)
             basename: str = os.path.basename(new_file)
             basename_lower = basename.lower()
-            if len(file_masters) > 0 and basename_lower in file_masters and len(file_masters[basename_lower]) > 0 and file_masters[basename_lower][-1].lower().endswith('.seq'):
-                new_seq_file, rel_path_seq = self.copy_file_to_output(file_masters[basename_lower][-1])
+            dependent_seq = _global.mods_with_seq.get(basename_lower)
+            if dependent_seq:
+                new_seq_file, rel_path_seq = self.copy_file_to_output(dependent_seq)
             else:
                 new_seq_file, rel_path_seq = None, None
             if new_seq_file and len(self.form_id_map) > 0:
-                write_normal(f'-    "{basename} + .seq')
+                write_insert(insert_counter, f'-    "{basename} + .seq', True)
             elif len(self.form_id_map) > 0:
-                write_normal(f'-    {basename}')
-            thread = threading.Thread(target=self.patch_dependent, args=(new_file, file, form_id_file_data, rel_path, new_seq_file, rel_path_seq))
+                write_insert(insert_counter, f'-    {basename}', True)
+            insert_counter += 1
+            thread = threading.Thread(target=self.patch_dependent, args=(new_file, file, form_id_replacements_base, rel_path, new_seq_file, rel_path_seq))
             threads.append(thread)
             thread.start()
 
         for thread in threads:
             thread.join()
 
-    def patch_dependent(self, new_file: str, file: str, form_id_file_data: list[str], rel_path: str, new_seq_file: str, rel_path_seq: str):
+    def patch_dependent(self, new_file: str, file: str, form_id_replacements_base: list[tuple[str, str]], rel_path: str, new_seq_file: str, rel_path_seq: str):
         form_id_replacements = []
         try:
             with open(new_file, 'rb+') as dependent_file:
@@ -797,58 +815,52 @@ class CFIDs():
 
                 dependent_data = dependent_file.read()
 
-                data_list, grup_struct = self.create_data_list(dependent_data)
-            
-                data_list, sizes_list = self.decompress_data(data_list)
+            data_list, grup_struct = self.create_data_list(dependent_data)
+        
+            data_list, sizes_list = self.decompress_data(data_list)
 
-                master_index = self.get_master_index(file, data_list)
+            master_index = self.get_master_index(file, data_list)
 
-                master_index_byte = master_index.to_bytes()
+            master_index_byte = master_index.to_bytes()
 
-                form_id_list = []
-                master_byte = b''
-                master_byte_for_seq = self.get_master_count(data_list)[0].to_bytes()
-                updated_master_index: int = -1
-                if self.do_generate_cell_master:
-                    #Get all new form ids in plugin
-                    for form in data_list:
-                        if form[:4] not in (b'GRUP', b'TES4') and form[15] >= master_index and form[12:16] not in form_id_list:
-                            form_id_list.append(form[12:16])
-                    master_byte = master_byte_for_seq
-                    with self.lock:
-                        data_list, updated_master_index = self.add_cell_master_to_masters(data_list)
+            form_id_list = []
+            master_byte = b''
+            master_byte_for_seq = self.get_master_count(data_list)[0].to_bytes()
+            updated_master_index: int = -1
+            if self.do_generate_cell_master:
+                #Get all new form ids in plugin
+                for form in data_list:
+                    if form[:4] not in (b'GRUP', b'TES4') and form[15] >= master_index and form[12:16] not in form_id_list:
+                        form_id_list.append(form[12:16])
+                master_byte = master_byte_for_seq
+                #with self.lock:
+                data_list, updated_master_index = self.add_cell_master_to_masters(data_list)
 
-                saved_forms = form_processor.save_all_form_data(data_list)
+            saved_forms = form_processor.save_all_form_data(data_list)
 
-                #TODO: Optimize this, there is no point in splitting the form id map data each dependent
-                for i in range(len(form_id_file_data)):
-                    form_id_conversion = form_id_file_data[i].split('|')
-                    from_id = bytes.fromhex(form_id_conversion[0])[:3]
-                    id = bytes.fromhex(form_id_conversion[1])
-                    if len(id) > 4 and self.do_generate_cell_master:
-                        if updated_master_index == -1:
-                            to_id = id[:3] + master_byte
-                        else:
-                            to_id = id[:3] + updated_master_index.to_bytes()
+            for from_id, id in form_id_replacements_base:
+                if len(id) > 4 and self.do_generate_cell_master:
+                    if updated_master_index == -1:
+                        to_id = id[:3] + master_byte
                     else:
-                        to_id = id[:3]
-                    form_id_replacements.append([from_id, to_id])
-                form_id_replacements_dict = {key: value for key, value in form_id_replacements}
-                data_list = form_processor.patch_form_data_dependent(data_list, saved_forms, form_id_replacements_dict, master_index_byte, master_byte,
-                                                                    set(form_id_list), self.do_generate_cell_master, updated_master_index)
+                        to_id = id[:3] + updated_master_index.to_bytes()
+                else:
+                    to_id = id[:3]
+                form_id_replacements.append([from_id, to_id])
+            form_id_replacements_dict = {key: value for key, value in form_id_replacements}
+            data_list = form_processor.patch_form_data_dependent(data_list, saved_forms, form_id_replacements_dict, master_index_byte, master_byte,
+                                                                set(form_id_list), self.do_generate_cell_master, updated_master_index)
 
-                data_list, sizes_list = self.recompress_data(data_list, sizes_list)
-                
-                data_list = self.update_grup_sizes(data_list, grup_struct, sizes_list)
-
-                dependent_file.seek(0)
+            data_list, sizes_list = self.recompress_data(data_list, sizes_list)
+            
+            data_list = self.update_grup_sizes(data_list, grup_struct, sizes_list)
+            with open(new_file, 'rb+') as dependent_file:
                 dependent_file.truncate(0)
                 dependent_file.write(b''.join(data_list))
-                dependent_file.close()
 
             with self.lock:
                 self.compacted_and_patched[os.path.basename(file)].add(rel_path)
-                self.master_byte_data[os.path.basename(file)]= {'master_byte': master_byte.hex(), 'updated_master_index': updated_master_index}
+                self.master_byte_data[os.path.basename(file)] = {'master_byte': master_byte.hex(), 'updated_master_index': updated_master_index}
         except Exception as e:
             write_error(QCoreApplication.translate("Global", "Failed to patch dependent: ") + new_file)
             write_error(e, True)
