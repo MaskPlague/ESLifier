@@ -34,8 +34,7 @@ else:
 
 class CFIDs():
     def __init__(self, create_cell_master_class: create_new_cell_plugin, original_files: dict, winning_files_dict: dict, winning_file_history_dict: dict,
-                  compacted_and_patched: dict[str, set[str]], master_byte_data:dict, bsa_masters: list, bsa_dict: dict,
-                  additional_file_patcher_conditions):
+                  compacted_and_patched: dict[str, set[str]], master_byte_data:dict, bsa_masters: list, additional_file_patcher_conditions):
         self.output_folder_name: str = os.path.normpath(_global.output_folder_name)
         self.output_folder: str = _global.output_folder_joined_path
         self.update_header: bool = _global.update_header
@@ -46,7 +45,7 @@ class CFIDs():
         self.compacted_and_patched: dict[str, set[str]] = compacted_and_patched
         self.master_byte_data = master_byte_data
         self.bsa_masters = set(bsa_masters)
-        self.bsa_dict = bsa_dict
+        self.bsa_dict = _global.bsa_dict
         self.lock = threading.Lock()
         self.semaphore = threading.Semaphore(1000)
         self.additional_conditions = additional_file_patcher_conditions
