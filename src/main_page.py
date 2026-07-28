@@ -691,7 +691,7 @@ class main(QWidget):
             clear_and_close_log()
             confirm = self.create_confirmation('lightcoral')
             if _global.vortex_error == 0:
-                confirm.setText(self.tr("Please close Vortex, ESLifier cannot accesss it's database while Vortex is open."))
+                confirm.setText(self.tr("Please close Vortex, ESLifier cannot accesss Vortex's database while it is open."))
             elif _global.vortex_error == 2:
                 confirm.setText(self.tr("ESLifier detected that a cyclic rule is set in Vortex, please correct it first."))
             elif isinstance(_global.vortex_error, Exception):
@@ -897,11 +897,11 @@ class main(QWidget):
             write_error(self.tr('Issue occured getting the output folder during output rebuild.'))
             return
         if _global.mod_manager_mode == 1:
-            return_val = VortexDBParser.is_db_readable(_global.vortex_data_path)
+            return_val = VortexDBParser.is_readable()
             if return_val != 1:
                 confirm = self.create_confirmation('lightcoral')
                 if _global.vortex_error == 0:
-                    confirm.setText(self.tr("Please close Vortex, ESLifier cannot accesss it's database while Vortex is open."))
+                    confirm.setText(self.tr("Please close Vortex, ESLifier cannot accesss Vortex's database while it is open."))
                 elif _global.vortex_error == 2:
                     confirm.setText(self.tr("ESLifier detected that a cyclic rule is set in Vortex, please correct it first."))
                 elif isinstance(_global.vortex_error, Exception):
