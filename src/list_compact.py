@@ -443,8 +443,8 @@ class list_compactable(QTableWidget):
                                             "header 1.71 without Skyrim.esm as a master):") + "\n"
                     not_valid_text = self.tr("The following plugins cannot be re-compacted because they no longer meet the conditions "\
                                         "(maybe new records exceed max count or it is now filtered out from settings or it is already ESL):") + "\n"
-                    not_found_text = self.tr("The following plugins cannot be re-compacted because they no-longer exist (this should be okay "\
-                                             "assuming you deleted these on purpose):") + "\n"
+                    not_found_text = self.tr("The following plugins cannot be re-compacted because they no-longer exist or have been "\
+                                             "blacklisted (this should be okay assuming you deleted these on purpose):") + "\n"
                     any_missing = False
                     any_not_valid = False
                     any_not_found = False
