@@ -563,7 +563,7 @@ class main_window(QMainWindow):
 
 try:
     app = QApplication(sys.argv)
-
+    #app.setStyle('Fusion') # Not setting this but leaving it here just in case I need to
     translator = QTranslator()
     lang_file = os.path.normpath("ESLifier_Data/translation.qm")
     if os.path.exists(lang_file):
