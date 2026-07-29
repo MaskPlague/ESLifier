@@ -256,12 +256,12 @@ class scanner():
         return data
 
     def get_file_masters():
-        #Regex is slow so this is unused. I'm leaving it here in case I have a future use for it as this is a fairly robust pattern
+        #Regex is slow so this is unused. I'm leaving it here in case I have a future use for it as these are fairly robust patterns
         #unused_plugin_pattern = re.compile(r'(?:~|:\s*|\||=|,|-|"|\*)\s*(?:\(?([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\)?)\s*(?:\||,|"|$|\n)')
-        dll_byte_pattern = re.compile(rb'\x00([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\x00', flags=re.DOTALL)
-        facegeom_pattern = re.compile(r'\\facegeom\\([a-zA-Z0-9_\-\'\?\!\(\)\[\]\,\s]+\.es[pml])\\')
-        facetint_pattern = re.compile(r'\\facetint\\([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\\')
-        voice_pattern = re.compile(r'\\sound\\voice\\([a-z0-9\_\'\-\?\!\(\)\[\]\,\s]+\.es[pml])\\')
+        #facegeom_pattern = re.compile(r'\\facegeom\\([a-zA-Z0-9_\-\'\?\!\(\)\[\]\,\s\.]+\.es[pml])\\')
+        #facetint_pattern = re.compile(r'\\facetint\\([a-z0-9\_\'\-\?\!\(\)\[\]\,\s\.]+\.es[pml])\\')
+        #voice_pattern = re.compile(r'\\sound\\voice\\([a-z0-9\_\'\-\?\!\(\)\[\]\,\s\.]+\.es[pml])\\')
+        dll_byte_pattern = re.compile(rb'\x00([a-z0-9\_\'\-\?\!\(\)\[\]\,\s\.]+\.es[pml])\x00', flags=re.DOTALL)
         scanner.file_dict = {plugin: set() for plugin in scanner.plugin_basename_set}
         scanner.count = 0
         if len(scanner.all_files) > 500000:
@@ -278,7 +278,7 @@ class scanner():
         write_normal(QCoreApplication.translate("scanner", 'Getting masters of loose files...'))
         write_normal("", False)
         for chunk in chunks:
-            thread = threading.Thread(target=scanner.file_processor, args=(chunk, facegeom_pattern, facetint_pattern, voice_pattern))
+            thread = threading.Thread(target=scanner.file_processor, args=(chunk,))
             scanner.threads.append(thread)
             thread.start()
 
@@ -356,7 +356,7 @@ class scanner():
                 write_progress(round(scanner.percentage), 1, processed_string.format(scanner.percentage, scanner.count, scanner.file_count))
             scanner.file_reader(pattern2, file, 'pex')
 
-    def file_processor(files: list[str], facegeom_pattern, facetint_pattern, voice_pattern):
+    def file_processor(files: list[str]):
         local_dict: dict[str, set[str]] = {}
         local_pex: list[str] = []
         local_dll: list[str] = []
@@ -385,33 +385,24 @@ class scanner():
             elif file_lower.endswith('.seq'):
                 plugin = os.path.splitext(os.path.basename(file))[0]
                 local_seq.append([plugin.lower(), file])
-            elif file_lower.endswith('.nif') and '\\facegeom\\' in file_lower:
-                if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
-                    try: 
-                        plugin = re.search(facegeom_pattern, file_lower).group(1)
-                        if plugin not in local_dict: 
-                            local_dict.update({plugin: set()})
-                        local_dict[plugin].add(file)
-                    except Exception:
-                        pass
-            elif file_lower.endswith('.dds') and '\\facetint\\' in file_lower :
-                if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
-                    try: 
-                        plugin = re.search(facetint_pattern, file_lower).group(1)
-                        if plugin not in local_dict: 
-                            local_dict.update({plugin: set()})
-                        local_dict[plugin].add(file)
-                    except Exception:
-                        pass
-            elif '\\sound\\voice\\' in file_lower:
-                if '.esp' in file_lower or '.esm' in file_lower or '.esl' in file_lower:
-                    try: 
-                        plugin = re.search(voice_pattern, file_lower).group(1)
-                        if plugin not in local_dict: 
-                            local_dict.update({plugin: set()})
-                        local_dict[plugin].add(file)
-                    except Exception:
-                        pass
+            elif file_lower.endswith('.nif') and '\\facegeom\\' in file_lower and '.es' in file_lower:
+                plugin = file_lower.split('\\facegeom\\')[1].split(os.sep)[0]
+                if plugin.endswith(('.esp', '.esl', '.esm')):
+                    if plugin not in local_dict:
+                        local_dict[plugin] = set()
+                    local_dict[plugin].add(file)
+            elif file_lower.endswith('.dds') and '\\facetint\\' in file_lower and '.es' in file_lower:
+                plugin = file_lower.split('\\facetint\\')[1].split(os.sep)[0]
+                if plugin.endswith(('.esp', '.esl', '.esm')):
+                    if plugin not in local_dict:
+                        local_dict[plugin] = set()
+                    local_dict[plugin].add(file)
+            elif '\\sound\\voice\\' in file_lower and '.es' in file_lower:
+                plugin = file_lower.split('\\sound\\voice\\')[1].split(os.sep)[0]
+                if plugin.endswith(('.esp', '.esl', '.esm')):
+                    if plugin not in local_dict:
+                        local_dict[plugin] = set()
+                    local_dict[plugin].add(file)
             elif (scanner.all_patcher_experimental 
                   and not file_lower.endswith(
                       ('.psc', '.tri', '.nif', '.dds', '.osd', '.osp', '.hkx', '.pdb', '.dll', '.esp', '.esl', '.esm',
