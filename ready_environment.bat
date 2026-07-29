@@ -5,3 +5,5 @@ call conda activate eslifier_env
 call conda install -y leveldb
 
 call conda install -y --file requirements.txt --channel conda-forge
+
+call pip install PyQt6-stubs
