@@ -199,7 +199,6 @@ class CFIDs():
         dependent_thread: threading.Thread = None
         if dependents:
             write_normal("-  "+QCoreApplication.translate("CFIDs", "Patching %1 Dependent Plugins...").replace("%1", str(len(dependents))))
-            #self.patch_dependent_plugins(file_to_compact, dependents, files_to_patch)
             dependent_thread = threading.Thread(target=self.patch_dependent_plugins, args=(file_to_compact, dependents, files_to_patch))
             dependent_thread.start()
 
