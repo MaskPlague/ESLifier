@@ -5,7 +5,6 @@ import threading
 import timeit
 import hashlib
 import subprocess
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal, QTimer, QThreadPool
 from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QApplication,
@@ -138,9 +137,9 @@ class main(QWidget):
             self.tr("Scan for new plugins and files that were not\n"\
             "present during intial compacting and patching\n"\
             "and then patch those new plugins and files.\n"\
-            "If in MO2 mode, it will also detect file\n"\
+            "If in MO2/Vortex mode, it will also detect file\n"\
             "conflict changes but requires the output mod\n"\
-            "in MO2 to match the exact same name as the\n"\
+            "in MO2/Vortex to match the exact same name as the\n"\
             "output folder in the settings.\n"\
             "This cannot detect changes in BSA and will NOT\n"\
             "check if the files in the output have been\n"\
@@ -587,7 +586,7 @@ class main(QWidget):
                 message.setText(self.tr("Good luck manually modding."))
             elif _global.mod_manager_mode == 1:
                 message.setText(self.tr("Make sure the ESLifier Output is installed as a mod and let it win any file conflicts by making the "\
-                                        "output go 'After All' conflicts. " \
+                                        "output go 'After All' conflicts. Make sure to re-deploy your mods." \
                                         "If you generate the output folder in your mod staging folder for the first time, then make sure "\
                                         "to restart Vortex to install the output."))
             elif _global.mod_manager_mode == 2:
@@ -926,7 +925,9 @@ class main(QWidget):
             self.tr(
                 "Are you sure you want to recreate the output folder %1?\n" \
                 "This action will delete %2 files and %3 MBs of data from the output and\n" \
-                "re-scan, flag, compact, and patch all previously output files that fit the current filters."
+                "re-scan, flag, compact, and patch all previously output files that fit the current filters.\n" \
+                "If deletion of the output folder takes more than 5 seconds, blame your anti-virus\n"\
+                "and maybe move your output/game install to a non-protected folder."
             ).replace("%1", self.output_folder_name).replace("%2", str(file_count)).replace("%3", str(calculated_size)))
         def accepted():
             write_to_file(f'Starting Output Rebuild [Mode Manager Mode = {_global.mod_manager_mode}]')
@@ -981,7 +982,7 @@ class main(QWidget):
                 "Are you sure you want to reset the Extracted BSA List?\n"\
                 "This will cause the next scan to take significantly longer as the BSA files will\n"\
                 "need to be extracted again and irrelevant script files will need to be filtered.\n\n"\
-                "This can take a short bit and will freeze the UI\n"\
+                "This can take a short bit and may freeze the UI\n"\
                 "or you can manually delete the \"bsa_extracted/\" folder\n"\
                 "and then click this button.")
         confirm.setText(confirm_text)
@@ -1310,9 +1311,9 @@ class main(QWidget):
             self.rebuild_output_next(files_to_remove, total_size, total_file_count, changed_rel_paths_to_switch)
     
     def prune_empty_dirs_recursive(self, path, output_folder):
+        #in this use case os.listdir and os.scandir are the same speed
         if not os.path.isdir(path):
             return
-
         for entry in os.listdir(path):
             full_path = os.path.join(path, entry)
             if os.path.isdir(full_path):
