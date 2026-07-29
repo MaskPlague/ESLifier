@@ -1411,7 +1411,7 @@ class ScannerWorker(QObject):
         write_normal(self.tr('Checking if New CELLs are Changed'))
         plugins_with_cells = [plugin for plugin, flags in flag_dict.items() if 'new_cell' in flags]
         cell_scanner.scan(plugins_with_cells)
-        eslify_flag_dict = {p: f for p, f in flag_dict.items() if 'need_compacting' not in f}
+        eslify_flag_dict = {p: f for p, f in flag_dict.items() if 'need_compacting' not in f and 'adhseam_problem' not in f}
         compact_flag_dict = {p: f for p, f in flag_dict.items() if 'need_compacting' in f}
         self.finished_signal.emit(eslify_flag_dict, compact_flag_dict, dependency_dictionary)
         return
