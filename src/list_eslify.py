@@ -4,10 +4,10 @@ import json
 import itertools
 
 from PyQt6.QtCore import Qt, QItemSelection
-from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem
+from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMessageBox
 
 from blacklist import blacklist
-from log_stream import write_error
+from log_stream import write_error, write_to_file
 from data_holder import _global
 
 class list_eslable(QTableWidget):
@@ -325,12 +325,67 @@ class list_eslable(QTableWidget):
         self.blockSignals(True)
         if os.path.exists('ESLifier_Data/previously_esl_flagged.json'):
             try:
+                selected = set()
                 with open('ESLifier_Data/previously_esl_flagged.json', 'r', encoding='utf-8') as f:
                     esl_flagged = json.load(f)
                     f.close()
                 for row in range(self.rowCount()):
                     if not self.isRowHidden(row) and self.item(row, self.MOD_COL).checkState() == Qt.CheckState.Unchecked and self.item(row, self.MOD_COL).text() in esl_flagged:
                         self.item(row, self.MOD_COL).setCheckState(Qt.CheckState.Checked)
+                        selected.add(self.item(row, self.MOD_COL).text())
+                pef = set(esl_flagged)
+                diff = pef - selected
+                # Warn about files that couldn't be reselected.
+                if diff:
+                    missing_skyrim_as_master:dict = self.get_data_from_file("ESLifier_Data/missing_skyrim_as_master.json", dict)
+                    compacted_and_patched:dict = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json", dict)
+                    reversed_msam: dict[str, set] = {}
+                    for k, v in missing_skyrim_as_master.items():
+                        if v not in reversed_msam:
+                            reversed_msam[v] = set()
+                        reversed_msam[v].add(os.path.basename(k))
+                    text = ""
+                    plugins = set([os.path.basename(plugin) for plugin in _global.plugins])
+                    missing_text = self.tr("The following plugins cannot be re-ESL flagged because they have dependents that are missing "\
+                                           "Skyrim.esm as a master and the dependent references records from the master "\
+                                            "(this limits the master to record space 0x800-0xFFF or 2048 records since the dependent cannot be record "\
+                                            "header 1.71 without Skyrim.esm as a master):") + "\n"
+                    not_valid_text = self.tr("The following plugins cannot be re-ESL flagged because they no longer meet the conditions "\
+                                            "(maybe new records exceed max count or it is now filtered out from settings or it is already ESL):") + "\n"
+                    not_found_text = self.tr("The following plugins cannot be re-ESL flagged because they no-longer exist (this should be okay "\
+                                             "assuming you deleted these on purpose):") + "\n"
+                    any_missing = False
+                    any_not_valid = False
+                    any_not_found = False
+                    for mod in diff:
+                        if mod in plugins:
+                            missing = reversed_msam.get(mod)
+                            if missing:
+                                any_missing = True
+                                missing_text += "- " + mod + "\n"
+                                for dep in missing:
+                                    missing_text += "   | " + dep + "\n"
+                            elif mod.lower() not in compacted_and_patched:
+                                any_not_valid = True
+                                not_valid_text += "- " + mod + "\n"
+                        else:
+                            any_not_found = True
+                            not_found_text += "- " + mod + "\n"
+                    if any_missing:
+                        text += missing_text
+                        if any_not_valid or any_not_found:
+                            text += "\n"
+                    if any_not_valid:
+                        text += not_valid_text
+                        if any_not_found:
+                            text += "\n"
+                    if any_not_found:
+                        text += not_found_text
+
+                    text += "\n"
+                    text += self.tr("Plugins that cannot be re-compacted can have adverse effects on ongoing saves. Please be careful.")
+                    write_to_file(text)
+                    QMessageBox.warning(None, "Warning", text, QMessageBox.StandardButton.Ok)
             except Exception as e:
                 write_error(self.tr('Failed to get previously_esl_flagged.json'))
                 write_error(e, True)
