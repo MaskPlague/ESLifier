@@ -58,7 +58,7 @@ class qualification_checker():
         for plugin in plugins:
             alread_esl, is_esm = qualification_checker.already_esl(plugin)
             if not alread_esl:
-                esl_allowed, need_compacting, new_cell, interior_cell, new_wrld, new_wthr = qualification_checker.file_reader(plugin, update_header, is_esm)
+                esl_allowed, need_compacting, new_cell, interior_cell, new_wrld, new_wthr, adhseam = qualification_checker.file_reader(plugin, update_header, is_esm)
                 if esl_allowed:
                     flag_dict[plugin] = []
                     if need_compacting:
@@ -82,6 +82,8 @@ class qualification_checker():
                         flag_dict[plugin].append('new_wthr')
                     if is_esm:
                         flag_dict[plugin].append('is_esm')
+                elif adhseam:
+                    flag_dict[plugin] = ['adhseam_problem']
                         
         with qualification_checker.lock:
             for key, value in flag_dict.items():
@@ -112,12 +114,12 @@ class qualification_checker():
         except Exception as e:
             write_error(QCoreApplication.translate("Global", 'Failed to read plugin: ') + file)
             write_error(e, True) 
-            return False, False, False, False, False, False
+            return False, False, False, False, False, False, True
 
         master_count, has_skyrim_esm_master = qualification_checker.get_master_count(data_list)
 
         if update_header:
-            dependents = qualification_checker.dependent_dict[basename.lower()]
+            dependents = set(qualification_checker.dependent_dict[basename.lower()])
             all_dependents_have_skyrim_esm_as_master = True
             for plugin_without_skyrim_esm_as_master, master_0 in qualification_checker.missing_skyrim_esm_as_master.items():
                 if plugin_without_skyrim_esm_as_master in dependents and basename == master_0:
@@ -143,7 +145,7 @@ class qualification_checker():
             if record_type not in (b'GRUP', b'TES4') and form[15] >= master_count:
                 count += 1
                 if count > num_max_records:
-                    return False, False, False, False, False, False
+                    return False, False, False, False, False, False, not all_dependents_have_skyrim_esm_as_master and update_header
                 if int.from_bytes(form[12:15][::-1]) > qualification_checker.max_record_number:
                     need_compacting = True
                 if record_type == b'CELL':
@@ -198,7 +200,7 @@ class qualification_checker():
             with open(cell_form_id_file, 'w', encoding='utf-8') as f:
                 for form_id in cell_form_ids:
                     f.write(form_id + '\n')
-        return True, need_compacting, new_cell, interior_cell_flag, new_wrld, new_wthr
+        return True, need_compacting, new_cell, interior_cell_flag, new_wrld, new_wthr, not all_dependents_have_skyrim_esm_as_master and update_header
 
     def already_esl(file: str) -> tuple[bool, bool]:
         with open(file, 'rb') as f:
