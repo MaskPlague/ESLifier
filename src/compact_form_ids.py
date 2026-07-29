@@ -47,6 +47,7 @@ class CFIDs():
         self.bsa_masters = set(bsa_masters)
         self.bsa_dict = _global.bsa_dict
         self.lock = threading.Lock()
+        #Semaphore prevents the Erno to many open files
         self.semaphore = threading.Semaphore(1000)
         self.additional_conditions = additional_file_patcher_conditions
         self.all_patcher_experimental: bool = _global.all_patcher_experimental
