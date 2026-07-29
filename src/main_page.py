@@ -651,7 +651,8 @@ class main(QWidget):
                     self.patch_new.finished_rebuilding()
                 else:
                     clear_and_close_log()
-                    self.setEnabled(True)
+                    self.redoing_output = False
+                    #self.setEnabled(True)
             else:
                 clear_and_close_log()
                 self.setEnabled(True)
