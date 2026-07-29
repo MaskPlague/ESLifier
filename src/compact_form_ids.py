@@ -176,6 +176,18 @@ class CFIDs():
             for key, item in local_new_file_hashes.items():
                 new_file_hashes[key] = item
 
+    def bsa_temp_extract(self, bsa_file: str, type: str, name:str, startupinfo: subprocess.STARTUPINFO):
+        with subprocess.Popen(
+            ["bsarch/bsarch.exe", "unpack", bsa_file, "bsa_extracted_temp", type + name],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            startupinfo=startupinfo,
+            text=True
+            ) as p:
+                for line in p.stdout:
+                    if line.startswith('Unpacking error'):
+                        raise Exception(f"During Temp Extraction, {line}")
+
     def compact_and_patch(self, file_to_compact: str, dependents: list, all_dependents_have_skyrim_esm_as_master: bool,
                            add_cell_to_master: bool, files_to_patch: dict):
         self.do_generate_cell_master = add_cell_to_master
@@ -248,18 +260,6 @@ class CFIDs():
             dependent_thread.join()
         clear_and_leave_log_open()
         return self.original_files, self.winning_files_dict, self.master_byte_data, self.winning_file_history_dict, self.compacted_and_patched
-    
-    def bsa_temp_extract(self, bsa_file: str, type: str, name:str, startupinfo: subprocess.STARTUPINFO):
-        with subprocess.Popen(
-            ["bsarch/bsarch.exe", "unpack", bsa_file, "bsa_extracted_temp", type + name],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            startupinfo=startupinfo,
-            text=True
-            ) as p:
-                for line in p.stdout:
-                    if line.startswith('Unpacking error'):
-                        raise Exception(f"During Temp Extraction, {line}")
                     
     def set_flag(self, file: str):
         write_normal("-  " + QCoreApplication.translate("CFIDs", "Changing ESL flag in: ") + os.path.basename(file))
