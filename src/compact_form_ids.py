@@ -215,24 +215,31 @@ class CFIDs():
                 else:
                     shutil.rmtree('bsa_extracted_temp/')
                     os.makedirs('bsa_extracted_temp/')
+
                 startupinfo = subprocess.STARTUPINFO()
                 startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                temp_extraction_threads: list[threading.Thread] = []
+                path_parts = ("\\voice\\", "\\facetint\\", "\\facegeom\\")
                 for bsa_file, values in self.bsa_dict.items():
                     if name in values:
-                        try:
-                            self.bsa_temp_extract(bsa_file, "\\voice\\", name, startupinfo)
-                            self.bsa_temp_extract(bsa_file, "\\facetint\\", name, startupinfo)
-                            self.bsa_temp_extract(bsa_file, "\\facegeom\\", name, startupinfo)
-                        except Exception as e:
-                            write_error(QCoreApplication.translate("CFIDs", "Error Reading BSA: ") + bsa_file)
-                            write_error(e, True)
-                                            
+                        if ' - textures' in os.path.basename(bsa_file).lower():
+                            thread = threading.Thread(target=self.bsa_temp_extract, args=(bsa_file, "\\facetint\\", name, startupinfo,))
+                            temp_extraction_threads.append(thread)
+                            thread.start()
+                        else:
+                            for part in path_parts:
+                                thread = threading.Thread(target=self.bsa_temp_extract, args=(bsa_file, part, name, startupinfo,))
+                                temp_extraction_threads.append(thread)
+                                thread.start()
+
                 rel_paths = set()
                 for file in patch_or_rename:
                     rel_path: str = get_rel_path(file)
                     rel_paths.add(rel_path.lower())
 
-                start = os.path.join(os.getcwd(), 'bsa_extracted_temp')
+                for thread in temp_extraction_threads:
+                    thread.join()
+
                 start = os.path.join(_global.cwd, 'bsa_extracted_temp')
                 for root, _, files in os.walk('bsa_extracted_temp/'):
                     for file in files:
