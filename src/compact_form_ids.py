@@ -13,7 +13,7 @@ from file_patchers import patchers
 from full_form_processor import form_processor
 from create_cell_master import create_new_cell_plugin
 from data_holder import _global
-from log_stream import write_error, write_normal, write_progress, clear_and_leave_log_open, write_insert
+from log_stream import write_error, write_normal, write_progress, clear_and_leave_log_open, write_insert, write_to_file
 from PyQt6.QtCore import QCoreApplication
 import patcher_conditions
 
@@ -233,6 +233,7 @@ class CFIDs():
                     rel_paths.add(rel_path.lower())
 
                 start = os.path.join(os.getcwd(), 'bsa_extracted_temp')
+                start = os.path.join(_global.cwd, 'bsa_extracted_temp')
                 for root, _, files in os.walk('bsa_extracted_temp/'):
                     for file in files:
                         full_path = os.path.normpath(os.path.join(root, file))
