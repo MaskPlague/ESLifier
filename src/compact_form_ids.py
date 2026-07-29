@@ -839,7 +839,7 @@ class CFIDs():
             else:
                 new_seq_file, rel_path_seq = None, None
             if new_seq_file and len(self.form_id_map) > 0:
-                write_insert(insert_counter, f'-    "{basename} + .seq', True)
+                write_insert(insert_counter, f'-    {basename} + .seq', True)
             elif len(self.form_id_map) > 0:
                 write_insert(insert_counter, f'-    {basename}', True)
             insert_counter += 1
