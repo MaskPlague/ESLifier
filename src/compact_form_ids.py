@@ -9,7 +9,7 @@ import hashlib
 import json
 
 from file_patchers import patchers
-from intervaltree import IntervalTree
+#from intervaltree import IntervalTree
 from full_form_processor import form_processor
 from create_cell_master import create_new_cell_plugin
 from data_holder import _global
@@ -585,17 +585,56 @@ class CFIDs():
                 data_list.append(data[offset:offset_end])
                 offset = offset_end
             index += 1
-            
+
+        #NEW
+        grup_struct = {}
+        events = []
+        for (indx, start, end) in grup_list:
+            events.append((start, 1, indx))
+            events.append((end, -1, indx))
+        events.sort()
+        overlap_map = {i: set() for i in range(len(data_list_offsets))}
+        sorted_offsets = sorted(enumerate(data_list_offsets), key=lambda x: x[1])
+        event_idx = 0  
+        active_intervals = set()
+
+        for offset_idx, offset in sorted_offsets:
+            while event_idx < len(events) and events[event_idx][0] <= offset:
+                coord, typ, data_index = events[event_idx]
+                if typ == 1:
+                    active_intervals.add(data_index)
+                else:
+                    active_intervals.remove(data_index)
+                event_idx += 1
+            overlap_map[offset_idx] = set(active_intervals)
+
+        for i, offset_idx in enumerate(range(len(data_list_offsets))):
+            indices = list(overlap_map[offset_idx])
+            if i in indices:
+                indices.remove(i)
+            grup_struct[i] = sorted(indices)
+        #ORIGINAL
+        '''
         tree = IntervalTree()
         for i, (index, start, end) in enumerate(grup_list):
             tree[start:end] = index
 
-        grup_struct = {}
-
+        old_grup_struct = {}
         for i, data_offset in enumerate(data_list_offsets):
             is_inside_of = [interval.data for interval in tree[data_offset]]
-            grup_struct[i] = sorted([index for index in is_inside_of if index != i])
-
+            old_grup_struct[i] = sorted([index for index in is_inside_of if index != i])
+        same = True
+        for key, value in old_grup_struct.items():
+            if grup_struct[key] != value:
+                same = False
+                break
+        for key, value in grup_struct.items():
+            if old_grup_struct[key] != value:
+                same = False
+                break
+        write_to_file(f"are same: {old_grup_struct == grup_struct}")
+        write_to_file(f"are same deep: {same}")
+        '''
         return data_list, grup_struct
     
     #Compacts master file and returns the new mod folder
