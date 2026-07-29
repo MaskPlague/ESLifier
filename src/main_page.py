@@ -1327,21 +1327,23 @@ class main(QWidget):
                 write_to_file(f"Warn: Could not remove {path}: {e}")
         
     def delete_output(self, output_folder: str, files_to_remove: list[str], remove_maps=True):
-        QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))
-        if remove_maps and os.path.exists(FORM_ID_MAPS_JSON):
-            shutil.rmtree(FORM_ID_MAPS_JSON)
-        if os.path.exists(CELL_IDS_FOLDER):
-            shutil.rmtree(CELL_IDS_FOLDER)
-        if os.path.exists(CELL_MASTER_INFO_JSON):
-            os.remove(CELL_MASTER_INFO_JSON)
-        if os.path.exists(WINNING_FILE_HISTORY_DICT_JSON):
-            os.remove(WINNING_FILE_HISTORY_DICT_JSON)
-        if os.path.exists(WINNING_FILES_DICT_JSON):
-            os.remove(WINNING_FILES_DICT_JSON)
+        QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))   
+        if remove_maps:
+            shutil.rmtree(FORM_ID_MAPS_JSON, ignore_errors=True)
+        shutil.rmtree(CELL_IDS_FOLDER, ignore_errors=True)
+        def silent_remove(file_path):
+            try:
+                os.remove(file_path)
+            except FileNotFoundError:
+                pass
+            except OSError as e:
+                write_to_file(f"Warn: Could not remove {file_path}: {e}")
+        silent_remove(CELL_MASTER_INFO_JSON)
+        silent_remove(WINNING_FILE_HISTORY_DICT_JSON)
+        silent_remove(WINNING_FILES_DICT_JSON)
         if os.path.exists(output_folder) and 'eslifier' in output_folder.lower():
             for file in files_to_remove:
-                if os.path.exists(file):
-                    os.remove(file)
+                silent_remove(file)
             self.prune_empty_dirs_recursive(output_folder, output_folder)
         QApplication.restoreOverrideCursor()
 
