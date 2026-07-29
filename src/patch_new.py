@@ -502,21 +502,6 @@ class PatchNewWorker(QObject):
         self.finished_signal.emit(len(all_patched))
         return
     
-    def dump_compacted_and_patched(self, file, dictionary: dict[str, list[str]]):
-        data: dict[str, list[str]] = self.get_from_file(file)
-        for key, value in dictionary.items():
-            if key not in data:
-                data[key] = []
-            for item in value:
-                if item.lower() not in data[key]:
-                    data[key].append(item.lower())
-        try:
-            with open(file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=4)
-        except Exception as e:
-            write_error(self.tr("Failed to dump data to ") + file)
-            write_error(e, True)
-    
     def dump_dictionary(self, file, dictionary: dict):
         data = self.get_from_file(file)
         for key, values in dictionary.items():
