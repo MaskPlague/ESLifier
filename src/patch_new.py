@@ -12,10 +12,11 @@ from dependency_getter import dependecy_getter
 from compact_form_ids import CFIDs
 from cell_changed_scanner import cell_scanner
 from file_defined_patcher_conditions import user_and_master_conditions_class
+from data_holder import _global
 from log_stream import clear_and_close_log, clear_and_leave_log_open, write_error, write_normal, write_patching
 
 class patch_new():
-    def scan_and_find(self, settings: dict[str, str|bool], main_parent):
+    def scan_and_find(self, main_parent):
         self.main_parent = main_parent
         if (not os.path.exists(os.path.normpath('ESLifier_Data/compacted_and_patched.json')) 
             and not os.path.exists(os.path.normpath('ESLifier_Data/esl_flagged.json'))):
@@ -49,19 +50,12 @@ class patch_new():
             self.main_parent.setEnabled(True)
             clear_and_close_log()
             return
-        self.settings: dict = settings
-        self.skyrim_folder_path: str = settings.get('skyrim_folder_path', '')
-        self.output_folder_path = settings.get('output_folder_path', '')
-        self.output_folder_name = settings.get('output_folder_name', 'ESLifier Output')
-        self.modlist_txt_path: str = settings.get('mo2_modlist_txt_path', '')
-        self.plugins_txt_path: str = settings.get('plugins_txt_path', '')
-        self.overwrite_path: str = settings.get('overwrite_path', '')
-        self.mo2_mode: bool = settings.get('mo2_mode', False)
-        self.update_header: bool = settings.get('update_header', False)
-        self.generate_cell_master = settings.get('generate_cell_master', True)
+        self.mod_manager_mode: bool = _global.mod_manager_mode
+        self.update_header: bool = _global.update_header
+        self.generate_cell_master = _global.generate_cell_master
 
         self.patch_new_scan_thread = QThread()
-        self.scanner_worker = PatchNewScannerWorker(settings.copy(), self.main_parent)
+        self.scanner_worker = PatchNewScannerWorker(self.main_parent)
         self.scanner_worker.moveToThread(self.patch_new_scan_thread)
         self.patch_new_scan_thread.started.connect(self.scanner_worker.detect_changes)
         self.scanner_worker.finished_signal.connect(self.completed_scan)
@@ -121,25 +115,9 @@ class patch_new():
         else:
             self.patch_new_plugins_and_files()
 
-    def get_rel_path(self, file, skyrim_folder_path):
-        if 'bsa_extracted' in file:
-            if 'bsa_extracted_temp' in file:
-                start = os.path.join(os.getcwd(), 'bsa_extracted_temp/')
-            else:
-                start = os.path.join(os.getcwd(), 'bsa_extracted/')
-            rel_path = os.path.normpath(os.path.relpath(file, start))
-        elif self.mo2_mode and file.lower().startswith(self.overwrite_path.lower()):
-            rel_path = os.path.normpath(os.path.relpath(file, self.overwrite_path))
-        else:
-            if self.mo2_mode:
-                rel_path = os.path.join(*os.path.normpath(os.path.relpath(file, skyrim_folder_path)).split(os.sep)[1:])
-            else:
-                rel_path = os.path.normpath(os.path.relpath(file, skyrim_folder_path))
-        return rel_path
-
     def patch_new_plugins_and_files(self):
         self.patch_new_thread = QThread()
-        self.patch_worker = PatchNewWorker(self.mod_list, self.new_dependencies, self.new_files, self.settings.copy())
+        self.patch_worker = PatchNewWorker(self.mod_list, self.new_dependencies, self.new_files)
         self.patch_worker.moveToThread(self.patch_new_thread)
         self.patch_new_thread.started.connect(self.patch_worker.patch_new_files)
         self.patch_worker.finished_signal.connect(self.finished_patching)
@@ -161,13 +139,13 @@ class patch_new():
             text = QCoreApplication.translate("patch_new", "%1 new files that needed patching have been patched.").replace("%1", str(new_file_num))
         else:
             text = QCoreApplication.translate("patch_new", 'No new files that need patching have been found.')
-            if self.mo2_mode and self.file_conflict_num > 0:
+            if self.mod_manager_mode != 0 and self.file_conflict_num > 0:
                 text += '\n   ' + QCoreApplication.translate("patch_new", '(or they were patched due to a conflict change)')
         if self.hash_mismatch_num > 0:
             text += '\n' + QCoreApplication.translate("patch_new", '%1 files had hash mismatches and were corrected.').replace("%1", str(self.hash_mismatch_num))
         else:
             text += '\n' + QCoreApplication.translate("patch_new", 'No files with a hash mismatched were found.')
-        if self.mo2_mode:
+        if self.mod_manager_mode != 0:
             if self.file_conflict_num > 0:
                 text += '\n' + QCoreApplication.translate("patch_new", '%1 files had winning conflicts change and were corrected.').replace("%1", str(self.file_conflict_num))
             else:
@@ -184,13 +162,11 @@ class patch_new():
 class PatchNewScannerWorker(QObject):
     finished_signal = pyqtSignal(list, dict, dict, int, int, list)
     delete_confirmation_signal = pyqtSignal(str, list, dict, bool, dict)
-    def __init__(self, settings:dict[str, str|bool], main_parent):
+    def __init__(self, main_parent):
         super().__init__()
-        self.skyrim_folder_path: str = settings.get('skyrim_folder_path', '')
-        self.overwrite_path: str = settings.get('overwrite_path', '')
-        self.output_folder: str = settings.get('output_folder_name', 'ESLifier Output')
-        self.output_path: str = os.path.join(settings.get('output_folder_path', ''), self.output_folder)
-        self.mo2_mode: bool = settings.get('mo2_mode', False)
+        self.output_folder_name: str = _global.output_folder_name
+        self.output_path: str = _global.output_folder_joined_path
+        self.mod_manager_mode: bool = _global.mod_manager_mode
         self.hash_mismatches = []
         self.conflict_changes = []
         self.lock = threading.Lock()
@@ -250,7 +226,7 @@ class PatchNewScannerWorker(QObject):
         write_normal(self.tr('Found %0 Hash changes.').replace("%0", str(len(self.hash_mismatches))))
 
         self.conflict_changes.clear()
-        if self.mo2_mode:
+        if self.mod_manager_mode != 0:
             write_normal(self.tr('Detecting Conflict Changes...'))
             if len(winning_file_history_dict) > 0:
                 for rel_path, prev_mod in winning_file_history_dict.copy().items():
@@ -266,13 +242,13 @@ class PatchNewScannerWorker(QObject):
             actual_cases_output_files = {}
             for files in file_masters.values():
                 for file in files:
-                    rel_path = self.get_rel_path(file, self.skyrim_folder_path)
+                    rel_path = _global.get_rel_path(file)
                     if rel_path.lower() not in actual_cases_output_files:
                         actual_cases_output_files[rel_path.lower()] = os.path.join(self.output_path, rel_path)
 
             for deps in dependencies.values():
                 for dep in deps:
-                    rel_path = self.get_rel_path(dep, self.skyrim_folder_path)
+                    rel_path = _global.get_rel_path(dep)
                     if rel_path.lower() not in actual_cases_output_files:
                         actual_cases_output_files[rel_path.lower()] = os.path.join(self.output_path, rel_path)
         
@@ -346,12 +322,12 @@ class PatchNewScannerWorker(QObject):
     def delete_and_patch_changed(self, files_to_remove: list[str], only_remove: bool,
                                   winning_file_history_dict: dict[str, list[str]], compacted_and_patched: dict):
         write_normal(self.tr("Confirming files that need deleting..."))
-        output_folder_lowered = self.output_folder.lower()
+        output_folder_name_lowered = self.output_folder_name.lower()
         counter = 0
         plugins_to_delete = []
         files_that_exist_to_delete = []
         for file in files_to_remove:
-            if os.path.exists(file) and output_folder_lowered in file.lower():
+            if os.path.exists(file) and output_folder_name_lowered in file.lower():
                 counter += 1
                 files_that_exist_to_delete.append(file)
                 if file.lower().endswith(('.esp','.esm','.esl')):
@@ -395,7 +371,7 @@ class PatchNewScannerWorker(QObject):
             if os.path.exists(file):
                 os.remove(file)
                 deleted_count += 1
-            cased_rel_path = self.get_rel_path(file, self.skyrim_folder_path)
+            cased_rel_path = _global.get_rel_path(file)
             if cased_rel_path.lower() in winning_file_history_dict:
                 winning_file_history_dict.pop(cased_rel_path.lower())
             if cased_rel_path.lower() in original_files:
@@ -442,14 +418,14 @@ class PatchNewScannerWorker(QObject):
                 dependencies_list = dependencies[master.lower()]
             
             for file in file_masters_list:
-                rel_path = self.get_rel_path(file, self.skyrim_folder_path)
+                rel_path = _global.get_rel_path(file)
                 if rel_path.lower() not in patched_files: 
                     if master not in new_files:
                         new_files[master] = []
                     new_files[master].append(file)
 
             for file in dependencies_list:
-                rel_path = self.get_rel_path(file, self.skyrim_folder_path)
+                rel_path = _global.get_rel_path(file)
                 if rel_path.lower() not in patched_files: 
                     if master not in new_dependencies:
                         new_dependencies[master] = []
@@ -474,41 +450,15 @@ class PatchNewScannerWorker(QObject):
                     data = f.read()
             if hashlib.sha256(data).hexdigest() != original_hash:
                 with self.lock:
-                    self.hash_mismatches.append((self.get_rel_path(file, self.skyrim_folder_path), file))
-
-    def get_rel_path(self, file: str, skyrim_folder_path: str):
-        if 'bsa_extracted' in file:
-            if 'bsa_extracted_temp' in file:
-                start = os.path.join(os.getcwd(), 'bsa_extracted_temp/')
-            else:
-                start = os.path.join(os.getcwd(), 'bsa_extracted/')
-            rel_path = os.path.normpath(os.path.relpath(file, start))
-        elif self.mo2_mode and file.lower().startswith(self.overwrite_path.lower()):
-            rel_path = os.path.normpath(os.path.relpath(file, self.overwrite_path))
-        else:
-            if self.mo2_mode:
-                rel_path = os.path.join(*os.path.normpath(os.path.relpath(file, skyrim_folder_path)).split(os.sep)[1:])
-            else:
-                rel_path = os.path.normpath(os.path.relpath(file, skyrim_folder_path))
-        return rel_path
+                    self.hash_mismatches.append((_global.get_rel_path(file), file))
 
 class PatchNewWorker(QObject):
     finished_signal = pyqtSignal(int)
-    def __init__(self, files: list, dependencies_dictionary: dict, file_dictionary: dict, settings: dict):
+    def __init__(self, files: list, dependencies_dictionary: dict, file_dictionary: dict):
         super().__init__()
         self.files = files
         self.dependencies_dictionary = dependencies_dictionary
         self.file_dictionary = file_dictionary
-        self.skyrim_folder_path: str = settings.get('skyrim_folder_path', '')
-        self.output_folder_path = settings.get('output_folder_path', '')
-        self.output_folder_name = settings.get('output_folder_name', 'ESLifier Output')
-        self.overwrite_path: str = os.path.normpath(settings.get('overwrite_path', ''))
-        self.mo2_mode: bool = settings.get('mo2_mode', False)
-        self.update_header: bool = settings.get('update_header', False)
-        self.generate_cell_master = settings.get('generate_cell_master', True)
-        self.persistent_ids = settings.get('persistent_ids', True)
-        self.free_non_existent = settings.get('free_non_existent', False)
-        self.hash_output = settings.get('hash_output', True)
 
     def patch_new_files(self):
         total = len(self.files)
@@ -520,11 +470,9 @@ class PatchNewWorker(QObject):
         winning_file_history_dict = {}
         compacted_and_patched = {}
         additional_file_patcher_conditions = user_and_master_conditions_class()
-        cfids = CFIDs(self.skyrim_folder_path, self.output_folder_path, self.output_folder_name, self.overwrite_path, 
-                      self.update_header, self.mo2_mode, None, original_files, winning_files_dict, winning_file_history_dict, 
-                      compacted_and_patched, master_byte_data, None, None, self.persistent_ids, self.free_non_existent, 
-                      additional_file_patcher_conditions, False)
-        if self.hash_output:
+        cfids = CFIDs(None, original_files, winning_files_dict, winning_file_history_dict, 
+                      compacted_and_patched, master_byte_data, [], additional_file_patcher_conditions)
+        if _global.hash_output:
             write_normal(self.tr("Hashing any existing files for changes..."))
             cfids.hash_output_files([], True)
             clear_and_leave_log_open()
@@ -536,7 +484,7 @@ class PatchNewWorker(QObject):
             dependents = []
             if file in self.dependencies_dictionary:
                 dependents = self.dependencies_dictionary[file]
-            cfids.patch_new(file, dependents, self.file_dictionary, self.generate_cell_master)
+            cfids.patch_new(file, dependents, self.file_dictionary)
         all_patched = []
         for files in self.dependencies_dictionary.values():
             for file in files:
@@ -548,7 +496,7 @@ class PatchNewWorker(QObject):
                     all_patched.append(file)
         write_normal(self.tr('Saving Data...'))
         cfids.save_data()
-        if self.hash_output:
+        if _global.hash_output:
             write_normal(self.tr('Hashing output files for checking later changes...'))
             cfids.hash_output_files([], True)
         self.finished_signal.emit(len(all_patched))
@@ -577,7 +525,7 @@ class PatchNewWorker(QObject):
             with open(file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
         except Exception as e:
-            write_error(self.tr("Failed to dump data to ") + file)
+            write_error(QCoreApplication.translate("Global", "Failed to dump data to ",) + file)
             write_error(e, True)
 
     def get_from_file(self, file: str) -> dict:
