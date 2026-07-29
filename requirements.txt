@@ -1,9 +1,9 @@
 PyQt6
-intervalTree
+#intervalTree # Removed
 Regex
 requests
 pyinstaller
-#leveldb
+#leveldb # Has own command in the .bat
 plyvel
 psutil
 json5
