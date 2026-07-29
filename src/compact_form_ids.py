@@ -330,19 +330,21 @@ class CFIDs():
     def sort_files_to_patch_or_rename(self, master: str, files: list[str]) -> tuple[list[str], list[str]]:
         files_to_patch = []
         files_to_rename = []
-        split_name = os.path.splitext(os.path.basename(master))[0].lower()
+        master_basename = os.path.basename(master)
+        master_basename_lower = master_basename.lower()
+        split_name = os.path.splitext(master_basename)[0].lower()
         matchers = set(['.pex', '.ini', '_conditions.txt', '.json', '.jslot', '.yaml', '.yml',
                     split_name + '.seq', '.toml', 'netscriptframework\\plugins\\customskill'])
         for file in files:
             file_lower = file.lower()
             if any(match in file_lower for match in matchers):
                 files_to_patch.append(file)
-            elif os.path.basename(master).lower() in file_lower and ('facegeom' in file_lower or 'voice' in file_lower or 'facetint' in file_lower):
+            elif master_basename_lower in file_lower and ('facegeom' in file_lower or 'voice' in file_lower or 'facetint' in file_lower):
                 files_to_rename.append(file)
             elif self.all_patcher_experimental:
                 files_to_patch.append(file)
             else:
-                raise TypeError(f"{os.path.basename(master).lower()} - File: {file} \nhas no patching method but it is in file_masters...")
+                raise TypeError(f"{master_basename_lower} - File: {file} \nhas no patching method but it is in file_masters...")
         return files_to_patch, files_to_rename
 
     def rename_files_threader(self, master: str, files: list[str]):
