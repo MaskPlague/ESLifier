@@ -480,7 +480,7 @@ class PatchNewWorker(QObject):
         for file in self.files:
             count +=1
             percent = round((count/total)*100,1)
-            write_patching(percent, patching_str.format(percent, count, total))
+            write_patching(int(percent), patching_str.format(percent, count, total))
             dependents = []
             if file in self.dependencies_dictionary:
                 dependents = self.dependencies_dictionary[file]
