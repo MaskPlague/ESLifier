@@ -1919,12 +1919,15 @@ class patchers():
                             to_id_data = form_id_map.get(form_id_int)
                             if to_id_data is not None:
                                 if not to_id_data["update_name"]:
-                                    data = patchers.change_json_key(data, path[-1], plugin + '|' + to_id_data["hex_no_0"])
+                                    new_key = plugin + '|' + to_id_data["hex_no_0"]
+                                    data = patchers.change_json_key(data, path[-1], new_key)
                                 else:
                                     if print_replace:
                                         write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                         print_replace = False
-                                    data = patchers.change_json_key(data, path[-1], "ESLifier_Cell_Master.esm" + '|' + to_id_data["hex_no_0"])
+                                    new_key = "ESLifier_Cell_Master.esm" + '|' + to_id_data["hex_no_0"]
+                                    data = patchers.change_json_key(data, path[-1], new_key)
+                                path[-1] = new_key
                     index = value.index('|')
                     plugin = value[:index]
                     form_id_int = int(value[index+1:], 16)
