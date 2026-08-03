@@ -274,7 +274,7 @@ class log_stream(QMainWindow):
         for line in self.errors:
             count += 1
             if line.strip().lower().endswith('cwhcm_setchangeonquestprog_03.pex'):
-                text += '\n' + (self.tr("User needs to download and install the following mod and then re-scan:") + "\n"\
+                text += '\n' + (self.tr("User needs to download and install the following mod, click reset BSA, and then re-scan:") + "\n"\
                                 "   OCW - Script Fix - cwhcm_setchangeonquestprog_03")
                 github_button.setText(self.tr("Open OCW Script Fix mod page"))
                 github_link = "https://www.nexusmods.com/skyrimspecialedition/mods/62720"
