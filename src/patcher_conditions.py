@@ -157,6 +157,8 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
             patchers.json_rim_combat_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('_ligh.json') and '\\dyndolod_data\\' in new_file_lower:
             patchers.json_dyndolod_ligh_patcher(basename, new_file, form_id_map, master_byte, encoding_method=encoding)
+        elif '\\luma\\' in new_file_lower:                                                  # Luma
+            patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, sep=':', encoding_method=encoding)
         else:
             patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
             if not patched and not new_file_lower.endswith("\\collection.json"):                                           

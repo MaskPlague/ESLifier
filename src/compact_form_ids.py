@@ -342,14 +342,22 @@ class CFIDs():
         master_basename = os.path.basename(master)
         master_basename_lower = master_basename.lower()
         split_name = os.path.splitext(master_basename)[0].lower()
-        matchers = set(['.pex', '.ini', '_conditions.txt', '.json', '.jslot', '.yaml', '.yml',
-                    split_name + '.seq', '.toml', 'netscriptframework\\plugins\\customskill'])
+        #matchers = set(['.pex', '.ini', '_conditions.txt', '.json', '.jslot', '.yaml', '.yml',
+        #            split_name + '.seq', '.toml', 'netscriptframework\\plugins\\customskill'])
+        extensions = ('.pex', '.ini', '.json', '.toml', '_conditions.txt', '.jslot', '.yaml', '.yml', split_name+'.seq')
         for file in files:
             file_lower = file.lower()
-            if any(match in file_lower for match in matchers):
+            valid_ext = file_lower.endswith(extensions)
+            file_is_luma = valid_ext and file_lower.endswith('.json') and '\\luma\\' in file_lower
+            #only search for string if not already valid_ext to save on string operation
+            is_customskillframework = not valid_ext and 'netscriptframework\\plugins\\customskill' in file_lower
+
+            if (valid_ext or is_customskillframework) and not file_is_luma:
                 files_to_patch.append(file)
-            elif master_basename_lower in file_lower and ('facegeom' in file_lower or 'voice' in file_lower or 'facetint' in file_lower):
+            elif master_basename_lower in file_lower and ('facegeom' in file_lower or 'voice' in file_lower or 'facetint' in file_lower or file_is_luma):
                 files_to_rename.append(file)
+            elif file_is_luma:
+                files_to_patch.append(file)
             elif self.all_patcher_experimental:
                 files_to_patch.append(file)
             else:
@@ -378,6 +386,7 @@ class CFIDs():
     #Rename each file in the list of files from the old Form IDs to the new Form IDs
     def rename_files(self, master: str, files: list[str]) -> None:
         facegeom_meshes = []
+        luma_json = []
         master_base_name = os.path.basename(master)
         percentage_str = ("-    " + QCoreApplication.translate("CFIDs", "Percentage: %1%") + 
                         "\n-    "+ QCoreApplication.translate("CFIDs", "Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
@@ -394,7 +403,8 @@ class CFIDs():
                     write_progress(round(percent), 1, percentage_str.format(percent, self.count, self.file_count))
             
             rel_path = get_rel_path(file)
-            if 'facegendata' in file.lower(): # Meshes
+            file_lower = file.lower()
+            if 'facegendata' in file_lower: # Meshes
                 from_id = file[-10:-4]
                 to_id = self.form_id_map.get(from_id.lower(), None)
                 if to_id is not None:
@@ -425,10 +435,27 @@ class CFIDs():
                         with self.lock:
                             self.compacted_and_patched[master_base_name].add(rel_path_new_file)
                             self.compacted_and_patched[master_base_name].add(rel_path_renamed_file)
+            elif file_lower.endswith('.json') and '\\luma\\' in file_lower:
+                from_id = file[-11:-5]
+                to_id = self.form_id_map.get(from_id.lower(), None)
+                if to_id is not None:
+                    with self.semaphore:
+                        new_file, rel_path_new_file = self.copy_file_to_output(file)
+                        renamed_file = new_file[:-11] + to_id.upper() + new_file[-5:]
+                        os.replace(new_file, renamed_file)
+                        rel_path_renamed_file = rel_path_new_file[:-11] + to_id.upper() + rel_path_new_file[-5:]
+                        with self.lock:
+                            self.compacted_and_patched[master_base_name].add(rel_path_new_file)
+                            self.compacted_and_patched[master_base_name].add(rel_path_renamed_file)
+                        luma_json.append(renamed_file)
+                else:
+                    luma_json.append(file)
 
             self.compacted_and_patched[master_base_name].add(rel_path.lower())
-        if facegeom_meshes != []:
+        if facegeom_meshes:
             self.patch_files(master, facegeom_meshes)
+        if luma_json:
+            self.patch_files(master, luma_json)
         return
 
     #Create the Form ID map which is a list of tuples that holds four Form Ids that are in \xMASTER\x00\x00\x00 order:
