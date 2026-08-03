@@ -1,4 +1,5 @@
 from settings_page import settings
+from log_stream import write_to_file
 import os
 
 class _global():
@@ -29,14 +30,15 @@ class _global():
     skyrim_folder_path_len = 0
     mod_staging_folder_lower = ''
     mod_staging_folder_len = 0
+
     cwd = os.getcwd()
 
     # Non-Persistent Variables
     mod_staging_folder = '' #set by vortex scanner after reading state.v2
     plugins = [] #plugins list
-    mods_with_seq = {} #mods that have seq files
     vortex_error = -1 #storage for vortex error across classes
-    bsa_dict = {}
+    bsa_dict = {}   #{bsa_file: list[mod]} bsa and the mods they contain
+    pex_with_getmodbyname: dict[str, set[str]] = {} #{mod: set(pex)} mods with pex with getmodbyname
 
     def init(settings_widget: settings):
         _global._settings = settings_widget.settings

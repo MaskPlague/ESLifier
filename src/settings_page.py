@@ -150,10 +150,17 @@ class settings(QWidget):
             "filter_seq",
             default=False
         )
+        self.enable_pex_filter_widget, self.enable_pex_filter_toggle = self.create_toggle_widget(
+            self.tr("Hide plugins that have PEX files with GetModByName"),
+            self.tr("Hide plugins that have PEX files that call the papyrus function 'GetModByName' on\n'\
+                    'them as that function only works properly on non-ESL plugins."),
+            "filter_pex",
+            default=False
+        )
         self.hide_left_columns_widget, self.hide_left_columns_text_input = self.create_text_input_widget(
             self.tr("Hide left list columns visually"),
             self.tr("Hide specified columns visually. This does not affect what plugins are displayed.\n"\
-            "Specify the column names, comma seperated. Available: CELL, WRLD, ESM\n"\
+            "Specify the column names, comma seperated. Available: CELL, WRLD, SEQ, PEX, ESM\n"\
             "Example, hides the CELL and ESM flags: CELL,ESM"),
             "CELL,ESM",
             "left_hidden_columns",
@@ -162,7 +169,7 @@ class settings(QWidget):
         self.hide_right_columns_widget, self.hide_right_columns_text_input = self.create_text_input_widget(
             self.tr("Hide right list columns visually"),
             self.tr("Hide specified columns visually. This does not affect what plugins are displayed.\n"\
-            "Specify the column names, comma seperated. Available: CELL, WRLD, WTHR, ESM, DEPENDENTS\n"\
+            "Specify the column names, comma seperated. Available: CELL, WRLD, WTHR, SEQ, PEX, ESM, DEPENDENTS\n"\
             "Example, hides the ESM flag and the dependent plugins: ESM,DEPENDENT"),
             "ESM,DEPENDENTS",
             "right_hidden_columns",
@@ -315,6 +322,7 @@ class settings(QWidget):
         column_1.addWidget(self.enable_worldspaces_filter_widget)
         column_1.addWidget(self.enable_weather_filter_widget)
         column_1.addWidget(self.enable_seq_filter_widget)
+        column_1.addWidget(self.enable_pex_filter_widget)
         column_1.addWidget(self.show_plugins_possibly_refd_by_dlls_widget)
         column_1.addWidget(self.generate_cell_master_widget)
         column_1.addWidget(self.hide_left_columns_widget)
@@ -639,6 +647,7 @@ class settings(QWidget):
         self.settings['show_esms'] = self.show_esms_toggle.isChecked()
         self.settings['show_cells'] = self.show_plugins_with_cells_toggle.isChecked()
         self.settings['filter_seq'] = self.enable_seq_filter_toggle.isChecked()
+        self.settings['filter_pex'] = self.enable_pex_filter_toggle.isChecked()
         self.settings['enable_cell_changed_filter'] = self.enable_cell_changed_filter_toggle.isChecked()
         self.settings['enable_interior_cell_filter'] = self.enable_interior_cell_filter_toggle.isChecked()
         self.settings['filter_worldspaces'] = self.enable_worldspaces_filter_toggle.isChecked()

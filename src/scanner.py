@@ -439,6 +439,25 @@ class scanner():
                 _global.mods_with_seq[esm] = file[1]
                 scanner.file_dict[esm].add(file[1])
 
+    def check_if_modbyname_uses_plugin_names(data: bytes, plugins: set[str], file: str, offset: int, strings: list[bytes]):
+        plugin_bytes = []
+        plugins_indexes = {}
+        for plugin in plugins:
+            plugin_bytes.append([plugin.encode(), plugin])
+        for plugin_name_bytes, plugin_name in plugin_bytes:
+            if plugin_name_bytes in strings:
+                plugins_indexes[strings.index(plugin_name_bytes).to_bytes(2)] = plugin_name
+        getmodbyname_index = strings.index(b'getmodbyname').to_bytes(2)
+        data_size = len(data)
+        while offset < data_size:
+            if data[offset:offset+2] == getmodbyname_index and data[offset+10:offset+11] == b'\x02':
+                plugin_name = plugins_indexes.get(data[offset+11:offset+13])
+                if plugin_name:
+                    if plugin_name not in _global.pex_with_getmodbyname:
+                        _global.pex_with_getmodbyname[plugin_name] = set()
+                    _global.pex_with_getmodbyname[plugin_name].add(file)
+            offset += 1
+
     def file_reader(pattern, file: str, reader_type):
         try:
             file_lower = file.lower()
@@ -510,24 +529,35 @@ class scanner():
                 with scanner.file_semaphore:
                     with open(file, 'rb') as f:
                         data = f.read()
-                        f.close()
                 offset = 18 + struct.unpack('>H', data[16:18])[0]
                 offset += 2 + struct.unpack('>H', data[offset:offset+2])[0]
                 offset += 2 + struct.unpack('>H', data[offset:offset+2])[0]
                 string_count = struct.unpack('>H', data[offset:offset+2])[0]
                 offset += 2
                 strings = set()
+                strings_lowered_bytes = []
                 for _ in range(string_count):
                     string_length = struct.unpack('>H', data[offset:offset+2])[0]
-                    strings.add(data[offset+2:offset+2+string_length].lower().decode())
+                    string_lowered = data[offset+2:offset+2+string_length].lower()
+                    strings_lowered_bytes.append(string_lowered)
+                    strings.add(string_lowered.decode())
                     offset += 2 + string_length
-                if 'getformfromfile' in strings: #or 'getmodbyname' in strings:
+                gfff = 'getformfromfile' in strings
+                gmbn = 'getmodbyname' in strings
+                if gfff or gmbn: #'getformfromfile' in strings: #or 'getmodbyname' in strings:
+                    plugins = set()
                     for string in strings:
                         if string.endswith(('.esp', '.esl', '.esm')) and string in scanner.plugin_basename_set:#not ':' in string and not '/' in string and not '\\' in string:
                             with scanner.lock:
-                                if string not in scanner.file_dict: 
-                                    scanner.file_dict.update({string: set()})
-                                scanner.file_dict[string].add(file)
+                                if gfff:
+                                    if string not in scanner.file_dict: 
+                                        scanner.file_dict[string] = set()
+                                    scanner.file_dict[string].add(file)
+                                if gmbn:
+                                    plugins.add(string)
+                    if gmbn:
+                        scanner.check_if_modbyname_uses_plugin_names(data, plugins, file, offset, strings_lowered_bytes)
+
                 elif 'bsa_extracted\\' in file:
                     os.remove(file)
             elif reader_type == 'dll':

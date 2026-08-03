@@ -18,6 +18,7 @@ class list_compactable(QTableWidget):
         self.WTHR_COL = next(c)
         self.SKSE_COL = next(c)
         self.SEQ_COL = next(c)
+        self.PEX_COL = next(c)
         self.ESM_COL = next(c)
         self.DEP_COL = next(c)
         self.DEP_DISP_COL = next(c)
@@ -25,7 +26,7 @@ class list_compactable(QTableWidget):
         self.COL_COUNT = next(c)
         self.setColumnCount(self.COL_COUNT)
         self.setHorizontalHeaderLabels([self.tr('*   Mod'), self.tr('CELL Records'), self.tr('WRLD Records'), 
-                                        self.tr('WTHR Records'), 'SKSE DLL', 'SEQ', 'ESM', self.tr('Dependencies'), '', 'Hider'])
+                                        self.tr('WTHR Records'), 'SKSE DLL', 'SEQ', 'PEX', 'ESM', self.tr('Dependencies'), '', 'Hider'])
         self.horizontalHeaderItem(self.MOD_COL).setToolTip(self.tr('This is the plugin name. Select which plugins you wish to compact.'))
         self.horizontalHeaderItem(self.CELL_COL).setToolTip(self.tr(
                                                             'This is the CELL Record Flag. It can be completely ignored for users\n'\
@@ -58,6 +59,11 @@ class list_compactable(QTableWidget):
                                                             'working, all that needs to be done in game is save and reload and the bug will\n'\
                                                             'be fixed. This flag exists so users who don\'t want to deal with this bug can\n'\
                                                             'avoid ESLifiying mods with SEQ files.'))
+        self.horizontalHeaderItem(self.PEX_COL).setToolTip(self.tr(
+                                                            'Mods with PEX files that call the papyrus function "GetModByName" and use it to\n'\
+                                                            'determine if a plugin is installed may partially break if the plugin is flagged ESL\n'\
+                                                            'as said function only works for non-ESL plugins. This flag indicates that the plugin\n'\
+                                                            'has one or more PEX files that call the function on the relevant plugin (see flag tooltip).'))
         self.horizontalHeaderItem(self.ESM_COL).setToolTip(self.tr('This is the ESM flag. If a plugin is an ESM then it will be flagged here.'))
         self.horizontalHeaderItem(self.DEP_COL).setToolTip(self.tr(
                                                             'If a plugin has other plugins with it as a master, they will appear when\n'\
@@ -81,6 +87,7 @@ class list_compactable(QTableWidget):
         self.show_dlls = True
         self.show_esms = True
         self.filter_seq = False
+        self.filter_pex = False
         self.filter_changed_cells = True
         self.filter_interior_cells = False
         self.filter_worldspaces = False
@@ -127,6 +134,9 @@ class list_compactable(QTableWidget):
 
         if not self.filter_seq and not 'SEQ' in hidden_columns: self.showColumn(self.SEQ_COL)
         else: self.hideColumn(self.SEQ_COL)
+
+        if not self.filter_pex and not 'PEX' in hidden_columns: self.showColumn(self.PEX_COL)
+        else: self.hideColumn(self.PEX_COL)
 
         if self.filter_worldspaces or self.cell_master or 'WRLD' in hidden_columns: self.hideColumn(self.WRLD_COL) 
         else: self.showColumn(self.WRLD_COL)
@@ -291,6 +301,15 @@ class list_compactable(QTableWidget):
                 if self.filter_seq:
                     hide_row = True
                 self.setItem(i, self.SEQ_COL, item_seq_flag)
+            if basename_lower in _global.pex_with_getmodbyname:
+                item_pex_flag = QTableWidgetItem('PEX')
+                pex_tooltip = self.tr("This plugin has one or more PEX files that call 'GetModByName' on this plugin: ")
+                for pex in _global.pex_with_getmodbyname[basename_lower]:
+                    pex_tooltip += '\n- ' + os.path.basename(pex)
+                item_pex_flag.setToolTip(pex_tooltip)
+                if self.filter_pex:
+                    hide_row = True
+                self.setItem(i, self.PEX_COL, item_pex_flag)
             if 'is_esm' in flags:
                 item_esm_flag = QTableWidgetItem('ESM')
                 item_esm_flag.setToolTip(self.tr('This mod is an ESM.'))
