@@ -584,14 +584,14 @@ class main(QWidget):
             message = QMessageBox()
             message.setWindowTitle(self.tr("Finished"))
             message.setWindowIcon(QIcon(":/images/ESLifier.png"))
-            if _global.mod_manager_mode == 0:
-                message.setText(self.tr("Good luck manually modding."))
-            elif _global.mod_manager_mode == 1:
+            if _global.mod_manager_mode == 0: #Manutal?
+                message.setText(self.tr("ESLifier has finished. The altered files are in your ESLifier Output."))
+            elif _global.mod_manager_mode == 1: #Vortex
                 message.setText(self.tr("Make sure the ESLifier Output is installed as a mod and let it win any file conflicts by making the "\
                                         "output go 'After All' conflicts. Make sure to re-deploy your mods." \
                                         "If you generate the output folder in your mod staging folder for the first time, then make sure "\
-                                        "to restart Vortex to install the output."))
-            elif _global.mod_manager_mode == 2:
+                                        "to restart Vortex to install the output. Make sure that all of your plugins are still enabled."))
+            elif _global.mod_manager_mode == 2: #MO2
                 message.setText(self.tr("Make sure the ESLifier Output is installed as a mod and let it win any file conflicts. "\
                                         "If you generate the output folder in your mods folder for the first time, then make sure to hit "\
                                         "refresh in MO2."))
