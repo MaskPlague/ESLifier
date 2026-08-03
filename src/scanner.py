@@ -519,7 +519,9 @@ class scanner():
                                             found_plugins.add(possible_plugin)
                                             break  
                                 index += 3
-
+                    file_lower = file.lower()
+                    if file_lower.endswith('.json') and '\\luma\\' in file_lower:
+                        found_plugins.add(file.split(os.sep)[-2].lower())
                     with scanner.lock:                  
                         for plugin in found_plugins:
                             if plugin not in scanner.file_dict: 
