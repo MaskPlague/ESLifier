@@ -8,6 +8,7 @@ import mmap
 import psutil
 import struct
 import platform
+import pefile
 
 from data_holder import _global
 from scanner_mo2 import MO2
@@ -562,6 +563,11 @@ class scanner():
                     os.remove(file)
             elif reader_type == 'dll':
                 with scanner.file_semaphore:
+                    if file.endswith('EngineFixes.dll'):
+                        pe = pefile.PE(file)
+                        if hasattr(pe, "VS_FIXEDFILEINFO"):
+                            verinfo = pe.VS_FIXEDFILEINFO[0]
+                            _global.engine_fixes_v7_or_newer =  verinfo.FileVersionMS >> 16 >= 7,
                     with open(file, 'rb') as f:
                         r = re.findall(pattern,f.read().lower())
                         f.close()

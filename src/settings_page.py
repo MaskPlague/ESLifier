@@ -97,8 +97,8 @@ class settings(QWidget):
         self.update_header_widget, self.update_header_toggle = self.create_toggle_widget(
             self.tr("Allow Form IDs below 0x000800 + Update plugin headers to 1.71"),
             self.tr("Allow scanning and patching to use the new 1.71 header.\n"\
-            "Requires Backported Extended ESL Support on Skyrim versions below 1.6.1130.\n"\
-            "Changing this settings requires a re-scan."),
+                    "Requires Backported Extended ESL Support on Skyrim versions below 1.6.1130.\n"\
+                    "Changing this settings requires a re-scan."),
             "update_header",
             default=True
         )
@@ -111,30 +111,32 @@ class settings(QWidget):
         self.show_plugins_with_cells_widget, self.show_plugins_with_cells_toggle = self.create_toggle_widget(
             self.tr("Show plugins with new CELL records"),
             self.tr("Bugs related to cells have been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+.\n"\
-            "For users of SSE Engine Fixes v7+ there is no reason to disable this.\n"\
-            "Display plugins with new CELL records."),
+                    "For users of SSE Engine Fixes v7+ ESLifier will ignore this setting and show them regardless.\n"\
+                    "Display plugins with new CELL records."),
             "show_cells",
             default=True
         )
         self.enable_cell_changed_filter_widget, self.enable_cell_changed_filter_toggle = self.create_toggle_widget(
             self.tr("Hide ESM plugins with new CELL records that are overwritten"),
             self.tr("The related bug has been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+. Disable this filter.\n"\
-            "Hide ESM plugins with new CELL records that have been changed by a dependent plugin."),
+                    "For users of SSE Engine Fixes v7+ ESLifier will ignore this setting and show them regardless.\n"\
+                    "Hide ESM plugins with new CELL records that have been changed by a dependent plugin."),
             "enable_cell_changed_filter",
-            default=True
+            default=False
         )
         self.enable_interior_cell_filter_widget, self.enable_interior_cell_filter_toggle = self.create_toggle_widget(
             self.tr("Hide plugins with new interior CELL records"),
-            self.tr("This bug has been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+. Disable this filter.\n"\
-            "Hide plugins with new interior CELL records as they can have issues when reloading\n"\
-            "a save without restarting the game."),
+            self.tr("This bug has been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+.\n"\
+                    "For users of SSE Engine Fixes v7+ ESLifier will ignore this setting and show them regardless.\n"
+                    "Hide plugins with new interior CELL records as they can have issues when reloading\n"\
+                    "a save without restarting the game."),
             "enable_interior_cell_filter",
             default=False
         )
         self.enable_worldspaces_filter_widget, self.enable_worldspaces_filter_toggle = self.create_toggle_widget(
             self.tr("Hide plugins with new WRLD (worldspace) records"),
             self.tr("Hide plugins with new worldspaces records as they can have the landscape disappear\n"\
-            "(no ground) when flagged as ESL."),
+                    "(no ground) when flagged as ESL."),
             "filter_worldspaces",
             default=True
         )

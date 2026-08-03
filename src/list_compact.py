@@ -126,7 +126,7 @@ class list_compactable(QTableWidget):
         self.previously_compacted_exists = os.path.exists("ESLifier_Data/previously_compacted.json")
         hidden_columns = [col.strip().upper() for col in self.hidden_columns.split(',')]
 
-        if self.show_cells and not "CELL" in hidden_columns: self.showColumn(self.CELL_COL)
+        if self.show_cells and not _global.engine_fixes_v7_or_newer and not "CELL" in hidden_columns: self.showColumn(self.CELL_COL)
         else: self.hideColumn(self.CELL_COL)
 
         if not self.show_dlls: self.hideColumn(self.SKSE_COL)
@@ -236,7 +236,7 @@ class list_compactable(QTableWidget):
             self.setItem(i, self.MOD_COL, item)
             self.setRowHidden(i, False)
             hide_row = False
-            if 'new_cell' in flags:
+            if 'new_cell' in flags and not _global.engine_fixes_v7_or_newer:
                 item_cell_flag = QTableWidgetItem(self.tr('New CELL'))
                 if not self.cell_master:
                     item_cell_flag.setToolTip(self.tr('This mod has a new CELL record and no mods currently modify it.\n'\

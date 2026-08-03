@@ -34,8 +34,10 @@ class _global():
     cwd = os.getcwd()
 
     # Non-Persistent Variables
+    engine_fixes_v7_or_newer = False
     mod_staging_folder = '' #set by vortex scanner after reading state.v2
     plugins = [] #plugins list
+    mods_with_seq = {} #{mod: seq_file} mods that have seq files
     vortex_error = -1 #storage for vortex error across classes
     bsa_dict = {}   #{bsa_file: list[mod]} bsa and the mods they contain
     pex_with_getmodbyname: dict[str, set[str]] = {} #{mod: set(pex)} mods with pex with getmodbyname
@@ -66,37 +68,30 @@ class _global():
         _global.overwrite_path_len =        len(_global.overwrite_path)
         _global.skyrim_folder_path_lower =  _global.skyrim_folder_path.lower()
         _global.skyrim_folder_path_len =    len(_global.skyrim_folder_path)
+        if _global._settings.get('dump_global', False):
+            _global.debug_dump_vars()
 
     def update_mod_staging_folder_vars():
         _global.mod_staging_folder_lower =  _global.mod_staging_folder.lower()
         _global.mod_staging_folder_len =    len(_global.mod_staging_folder)
 
-    '''def get_rel_path_old(file: str) -> str:
-        if 'bsa_extracted' in file:
-            if 'bsa_extracted_temp' in file:
-                start = os.path.join(_global.cwd, 'bsa_extracted_temp/')
-            else:
-                start = os.path.join(_global.cwd, 'bsa_extracted/')
-            rel_path = os.path.normpath(os.path.relpath(file, start))
-        elif _global.mod_manager_mode == 2 and file.lower().startswith(_global.overwrite_path_lower):
-            rel_path = os.path.normpath(os.path.relpath(file, _global.overwrite_path))
-        else:
-            if _global.mod_manager_mode == 2:   # MO2
-                parts = os.path.normpath(os.path.relpath(file, _global.skyrim_folder_path)).split(os.sep)
-                if len(parts) != 1:
-                    parts = parts[1:]
-                rel_path = os.path.join(*parts)
-            elif _global.mod_manager_mode == 1: # Vortex
-                #if file.startswith(_global.mod_staging_folder):
-                parts = os.path.normpath(os.path.relpath(file, _global.mod_staging_folder)).split(os.sep)
-                #else: #Disabled this since we are not currently using skyrim_folder_path
-                #    parts = os.path.normpath(os.path.relpath(file, _global.skyrim_folder_path)).split(os.sep)
-                if len(parts) != 1:
-                    parts = parts[1:]
-                rel_path = os.path.join(*parts)
-            else:                               # Manual?
-                rel_path = os.path.normpath(os.path.relpath(file, _global.skyrim_folder_path))
-        return rel_path'''
+    def debug_dump_vars():
+        thing = dict(vars(_global))
+        string = '\n_global dump:\n'
+        for key, value in thing.items():
+            if not callable(value) and not key.startswith('_'):
+                if isinstance(value, dict):
+                    string += str(key) + ":\n"
+                    for k, v in value.items():
+                        if isinstance(v, list) or isinstance(v, set):
+                            string += "    " + str(k) + ": \n"
+                            for v2 in v:
+                                string += "        " + str(v2) + "\n"
+                        else:
+                            string += "    " + str(k) + ": " + str(v) + "\n"
+                else:
+                    string += str(key) + ": " + str(value) + '\n'
+        write_to_file(string)
 
     def get_rel_path(file: str) -> str:
         file_norm = file.replace('\\', os.sep).replace('/', os.sep)

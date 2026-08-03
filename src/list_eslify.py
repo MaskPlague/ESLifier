@@ -110,7 +110,7 @@ class list_eslable(QTableWidget):
         self.previously_esl_flagged_exists = os.path.exists('ESLifier_Data/previously_esl_flagged.json')
         hidden_columns = [col.strip().upper() for col in self.hidden_columns.split(',')]
 
-        if self.show_cells and not 'CELL' in hidden_columns: self.showColumn(self.CELL_COL)
+        if self.show_cells and not _global.engine_fixes_v7_or_newer and not 'CELL' in hidden_columns: self.showColumn(self.CELL_COL)
         else: self.hideColumn(self.CELL_COL)
 
         if not self.filter_seq and not 'SEQ' in hidden_columns: self.showColumn(self.SEQ_COL)
@@ -150,7 +150,7 @@ class list_eslable(QTableWidget):
             self.setItem(i, self.MOD_COL, item)
             self.setRowHidden(i, False)
             hide_row = False
-            if 'new_cell' in flags:
+            if 'new_cell' in flags and not _global.engine_fixes_v7_or_newer:
                 item_cell_flag = QTableWidgetItem(self.tr('New CELL'))
                 if not self.cell_master:
                     item_cell_flag.setToolTip(self.tr(
