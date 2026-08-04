@@ -227,7 +227,8 @@ class MO2():
             file = os.path.join(mo2_base_dir, "ModOrganizer.ini")
 
             ini = configparser.ConfigParser()
-            ini.read(file)
+            
+            ini.read(file, encoding='utf-8')
 
             profiles_dir = ''
             if ini.has_option('Settings', 'profiles_directory'):
