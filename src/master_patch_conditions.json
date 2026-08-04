@@ -1,5 +1,5 @@
 {
-    "version": 19,
+    "version": 20,
     "conditions": [
         {
             "extension": "json",
@@ -132,6 +132,11 @@
             "endswith": "_CRD.ini",
             "separator": " ~ ",
             "patcher": "ini_formid_sep_plugin"
+        },
+        {
+            "extension": "json",
+            "contains": "interface/CMStats/",
+            "patcher": "json_generic_plugin_sep_formid"
         }
     ]
 }
