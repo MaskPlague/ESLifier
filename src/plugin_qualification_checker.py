@@ -8,6 +8,7 @@ from log_stream import write_error
 from data_holder import _global
 from PyQt6.QtCore import QCoreApplication
 
+#TODO: Maybe ignore form 43 plugins? IDK if necessary, need to check what happened on mod page, I thought I handled 43 v 44 somewhere
 class qualification_checker():
     def scan(_=None) -> dict:
         qualification_checker.lock = threading.Lock()

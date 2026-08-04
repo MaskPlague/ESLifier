@@ -618,6 +618,7 @@ class scanner():
                             folder_length = int.from_bytes(mm[location:location+1])
                             folder_path = mm[location+1:location+folder_length].decode(errors='ignore')
 
+                            #TODO: consider splitting this if statement into multiple and using split('thing')[1].split(sep)[0]
                             if ('facegeom\\' in folder_path or 'facetint\\' in folder_path or 'sound\\voice' in folder_path) and ('.esp' in folder_path or '.esl' in folder_path or '.esm' in folder_path):
                                 match = re.search(pattern_1, folder_path.encode())
                                 if match:
