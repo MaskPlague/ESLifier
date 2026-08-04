@@ -19,6 +19,9 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
     AutoBody
     Base Object Swapper
     Completionist
+    Container Item Distributor
+    Container Record Distributor
+    Crafting Inventory Extender
     Description Framework
     DtryKeyUtil
     DynDOLOD Rules
@@ -48,6 +51,7 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
     Achievement Injector
     Alternate Perspective
     CaptiveFollowers
+    Character Menu - Custom Stats Framework
     CoMAP
     Container Distribution Framework
     Creature Framework
@@ -67,10 +71,12 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
     Inte's Devious Devices - Equip
     Inte's Skyrim - Utility Mod
     Inventory Injector
+    Lazy Followers
     Let Your Hair Down
     Magic Fixes and Tweaks SKSE
     M.A.R.A.S.
     MCM Helper
+    New Skill Menu - NSM
     OBody NG
     Open Animation Replacer
     OStim Standalone
@@ -86,6 +92,8 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
     Sound Record Distributor
     Spell Organizer
     Spell Research
+    Start Game Settings
+    Status Indicator Framework
     Undaunted
     XEMI Utility
   </details>
@@ -97,6 +105,7 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
     Dynamic Animation Casting
     Loki Poise
     Precision
+    Recast
     True Directional Movement
     YATSM - Yet Another Soul Trap Manager
   </details>
@@ -104,9 +113,18 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
   <details>
     <summary>.YAML Files</summary>
 
+    Acheron
     Precision - Unofficial Locational Damage Framework
     SLP+ Stripping/SOS/Voices
     Sound record distributor
+  </details>
+
+  <details>
+    <summary>.YML Files</summary>
+
+    Acheron
+    Alchemy Of Time
+    Dynamic Body Distribution
   </details>
 
   <details>
