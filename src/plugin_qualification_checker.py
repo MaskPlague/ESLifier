@@ -9,7 +9,7 @@ from data_holder import _global
 from PyQt6.QtCore import QCoreApplication
 
 class qualification_checker():
-    def scan(path: str, update_header: bool) -> dict:
+    def scan(_=None) -> dict:
         qualification_checker.lock = threading.Lock()
         qualification_checker.maxed_masters = qualification_checker.get_from_file("ESLifier_Data/maxed_masters.json")
         plugins = [plugin for plugin in _global.plugins if not plugin.lower().endswith('.esl')]
@@ -25,6 +25,7 @@ class qualification_checker():
             shutil.rmtree('ESLifier_Data/Cell_IDs')
         if not os.path.exists('ESLifier_Data/Cell_IDs/'):
             os.makedirs('ESLifier_Data/Cell_IDs/')
+        update_header = _global.update_header
         if update_header:
             qualification_checker.num_max_records = 4096
         else:
