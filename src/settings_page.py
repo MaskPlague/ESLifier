@@ -1,9 +1,10 @@
 import json
 import os
 import subprocess
+import configparser
 
 from PyQt6.QtCore import Qt, QRegularExpression, pyqtSignal
-from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QFileDialog, QFrame, QColorDialog
+from PyQt6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QFileDialog, QFrame, QColorDialog, QComboBox
 from PyQt6.QtGui import QIcon, QColor
 
 from blacklist import blacklist_window
@@ -59,6 +60,12 @@ class settings(QWidget):
             self.tr('C:/Path/To/MO2/Instance'),
             self.mo2_base_path_clicked,
             'mo2_base_path'
+        )
+        self.mo2_profile_widget, self.mo2_profile = self.create_combo_box_widget(
+            self.tr("MO2 Profile"),
+            self.tr("Set this to your modlist's MO2 profile."),
+            self.tr("Select Profile"),
+            'mo2_profile'
         )
         self.vortex_data_path_widget, self.vortex_data_path = self.create_path_widget(
             self.tr("Vortex Data Path"),
@@ -280,6 +287,7 @@ class settings(QWidget):
         settings_layout.addWidget(self.skyrim_folder_path_widget)
         settings_layout.addWidget(self.vortex_data_path_widget)
         settings_layout.addWidget(self.mo2_base_path_widget)
+        settings_layout.addWidget(self.mo2_profile_widget)
         settings_layout.addWidget(self.output_folder_path_widget)
         settings_layout.addWidget(self.output_folder_name_widget)
         settings_layout.addWidget(self.plugins_txt_path_widget)
@@ -370,8 +378,39 @@ class settings(QWidget):
     def output_folder_path_clicked(self):
         self.select_file_path(self.file_dialog, self.tr("Select where you want the output folder"), 'output_folder_path', self.output_folder_path, None)
 
+    def get_mo2_profiles(self):
+        mo2_base_dir = os.path.normpath(self.settings.get('mo2_base_path'))
+        file = os.path.join(mo2_base_dir, "ModOrganizer.ini")
+        if os.path.exists(file):
+            ini = configparser.ConfigParser()
+            
+            ini.read(file, encoding='utf-8')
+
+            if ini.has_option('Settings', 'base_directory'):
+                mo2_base_dir = os.path.normpath(ini.get('Settings', 'base_directory'))
+
+            if ini.has_option('Settings', 'profiles_directory'):
+                mo2_profiles_dir = os.path.normpath(ini.get('Settings', 'profiles_directory'))
+            else:
+                mo2_profiles_dir = os.path.normpath(os.path.join(mo2_base_dir, "profiles"))
+            self.settings['mo2_profiles_dir'] = mo2_profiles_dir
+            profiles = set()
+            for profile in os.listdir(mo2_profiles_dir):
+                profiles.add(profile)
+            return profiles
+
+    def populate_mo2_profiles(self):
+        profiles = self.get_mo2_profiles()
+        current = self.mo2_profile.currentText()
+        self.mo2_profile.clear()
+        if profiles:
+            self.mo2_profile.addItems(profiles)
+            index = self.mo2_profile.findText(current)
+            self.mo2_profile.setCurrentIndex(index)
+
     def mo2_base_path_clicked(self):
         self.select_file_path(self.file_dialog, self.tr("Select your MO2 instance folder"), 'mo2_base_path', self.mo2_base_path, None)
+        self.populate_mo2_profiles()
 
     def vortex_data_path_clicked(self):
         self.select_file_path(self.file_dialog, self.tr("Select your vortex data folder"), 'vortex_data_path', self.vortex_data_path, None)
@@ -401,6 +440,26 @@ class settings(QWidget):
         line_edit.setMaximumWidth(550)
         self.default_settings[settings_key] = {"type": "path", "default": '', "widget": line_edit}
         return widget, line_edit
+
+    def create_combo_box_widget(self, label_text, tooltip, placeholder, settings_key):
+        layout = QHBoxLayout()
+        widget = QWidget()
+        widget.setToolTip(tooltip)
+        label = QLabel(label_text)
+        combo_box = QComboBox()
+        combo_box.addItem(self.settings.get(settings_key, ''))
+        combo_box.currentIndexChanged.connect(self.update_settings_from_app_state)
+
+        widget.setLayout(layout)
+        layout.addWidget(label)
+        layout.addSpacing(10)
+        layout.addWidget(combo_box)
+
+        combo_box.setPlaceholderText(placeholder)
+        combo_box.setMinimumWidth(666)
+        combo_box.setMaximumWidth(1000)
+        self.default_settings[settings_key] = {"type": "combo_box", "default": '', "widget": combo_box}
+        return widget, combo_box
     
     def create_toggle_widget(self, label_text, tooltip, setting_key, 
                              bg_color: str = 'Light Grey', circle_color: str = 'Grey',active_color: str = 'palegreen',partial_color: str = 'orange',
@@ -599,6 +658,8 @@ class settings(QWidget):
                     setting_data["widget"].clear()
                 elif setting_type == "text":
                     setting_data["widget"].setText(setting_data["default"])
+                elif setting_type == 'combo_box':
+                    setting_data["widget"].clear()
 
             self.inner_color = '#713585'
             self.outer_color = 'Gray'
@@ -609,6 +670,7 @@ class settings(QWidget):
     def set_init_widget_values(self):
         self.inner_color = self.settings.get('inner_color', '#713585')
         self.outer_color = self.settings.get('outer_color', 'Gray')
+        self.populate_mo2_profiles()
 
     def save_settings_to_file(self):
         settings_file = os.path.normpath('ESLifier_Data/settings.json')
@@ -626,6 +688,7 @@ class settings(QWidget):
         if self.output_folder_name_valid:
             self.settings['output_folder_name'] = self.output_folder_name.text()
         self.settings['mo2_base_path'] = os.path.normpath(self.mo2_base_path.text()) if self.mo2_base_path.text() != '' else ''
+        self.settings['mo2_profile'] = self.mo2_profile.currentText()
         self.settings['plugins_txt_path'] = os.path.normpath(self.plugins_txt_path.text()) if self.plugins_txt_path.text() != '' else ''
         self.settings['vortex_data_path'] = os.path.normpath(self.vortex_data_path.text()) if self.vortex_data_path.text() != '' else ''
         self.settings['mod_manager_mode'] = self.mod_manager_mode_toggle.checkState().value
@@ -654,6 +717,7 @@ class settings(QWidget):
         self.mod_mananger_mode_clicked()
         if self.mod_manager_mode_toggle.checkState() == Qt.CheckState.Checked:
             self.mo2_base_path_widget.show()
+            self.mo2_profile_widget.show()
             self.vortex_data_path_widget.hide()
             self.skyrim_folder_path_widget.hide()
             self.plugins_txt_path_widget.hide()
@@ -662,12 +726,14 @@ class settings(QWidget):
             #self.skyrim_folder_path_widget.show()
             self.skyrim_folder_path_widget.hide()
             self.mo2_base_path_widget.hide()
+            self.mo2_profile_widget.hide()
             self.plugins_txt_path_widget.hide()
         else:
             self.skyrim_folder_path_widget.show()
             self.plugins_txt_path_widget.show()
             self.vortex_data_path_widget.hide()
             self.mo2_base_path_widget.hide()
+            self.mo2_profile_widget.hide()
         self.cell_master_clicked()
         self.persistent_ids_clicked()
 

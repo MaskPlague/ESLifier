@@ -11,6 +11,8 @@ class _global():
     output_folder_joined_path:str = ''
     mo2_base_path:str = ''
     mo2_overwrite_path:str = ''
+    mo2_profile:str = ''
+    mo2_profiles_dir:str = ''
     plugins_txt_path:str = ''
     mo2_modlist_txt_path:str = ''
     mo2_mods_folder:str = ''
@@ -60,6 +62,8 @@ class _global():
         _global.output_folder_name =                _global._settings.get('output_folder_name', "ESLifier Output")
         _global.mod_manager_mode =                  _global._settings.get('mod_manager_mode', 0)
         _global.mo2_base_path =                     _global._settings.get('mo2_base_path', '')
+        _global.mo2_profile =                       _global._settings.get('mo2_profile', 'Default')
+        _global.mo2_profiles_dir =                  _global._settings.get('mo2_profiles_dir')
         _global.vortex_data_path =                  _global._settings.get('vortex_data_path', '')
         _global.vortex_db_path =                    os.path.normpath(os.path.join(_global.vortex_data_path, "state.v2"))
         if _global.mod_manager_mode == 0:

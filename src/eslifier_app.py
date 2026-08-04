@@ -16,7 +16,7 @@ from main_page import main
 from log_stream import log_stream, write_to_file
 from data_holder import _global
 
-CURRENT_VERSION = '0.16.3'
+CURRENT_VERSION = '0.16.4'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
@@ -352,7 +352,8 @@ class main_window(QMainWindow):
                 and (self.settings_widget.settings['plugins_txt_path'] == ''
                      or self.settings_widget.settings['skyrim_folder_path'] == ''))
             or (self.settings_widget.settings['mod_manager_mode'] == 2 
-                and self.settings_widget.settings['mo2_base_path'] == '')
+                and (self.settings_widget.settings['mo2_base_path'] == ''
+                     or self.settings_widget.settings['mo2_profile'] == ''))
             or (self.settings_widget.settings['mod_manager_mode'] == 1
                 and self.settings_widget.settings['vortex_data_path'] == '')):
             self.tabs.setCurrentIndex(self.SETTINGS_TAB)
@@ -373,6 +374,8 @@ class main_window(QMainWindow):
         mod_manager_mode = self.settings_widget.settings['mod_manager_mode']
         if mod_manager_mode == 2:
             mo2_base_path = self.settings_widget.settings['mo2_base_path']
+            mo2_profile = self.settings_widget.settings['mo2_profile']
+            mo2_profiles_dir = self.settings_widget.settings['mo2_profiles_dir']
         elif mod_manager_mode == 1:
             vortex_data_path = self.settings_widget.settings['vortex_data_path']
         elif mod_manager_mode == 0:
@@ -422,6 +425,15 @@ class main_window(QMainWindow):
             else:
                 if not os.path.exists(os.path.join(mo2_base_path, 'ModOrganizer.ini')):
                     error_message += self.tr("Invalid MO2 Directory, it exists but does not contain the file 'ModOrganizer.ini' in it.") + "\n"
+                p_dir = os.path.join(mo2_profiles_dir, mo2_profile)
+                if not os.path.exists(p_dir):
+                    error_message += self.tr("Invalid MO2 Profile, it does not exist.") + "\n"
+                else:
+                    if not os.path.exists(os.path.join(p_dir, 'plugins.txt')):
+                        error_message += self.tr("Invalid MO2 Profile, it does exist but it doesn't contain 'plugins.txt'") +"\n"
+                    if not os.path.exists(os.path.join(p_dir, 'modlist.txt')):
+                        error_message += self.tr("Invalid MO2 Profile, it does exist but it doesn't contain 'modlist.txt'") +"\n"
+
 
         if len(error_message) > 10:
             self.tabs.setCurrentIndex(self.SETTINGS_TAB)
