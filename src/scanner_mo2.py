@@ -230,11 +230,8 @@ class MO2():
             
             ini.read(file, encoding='utf-8')
 
-            profiles_dir = ''
-            if ini.has_option('Settings', 'profiles_directory'):
-                profiles_dir = os.path.normpath(ini.get('Settings', 'profiles_directory'))
-            else:
-                profiles_dir = os.path.normpath(os.path.join(mo2_base_dir, "profiles"))
+            if ini.has_option('Settings', 'base_directory'):
+                mo2_base_dir = os.path.normpath(ini.get('Settings', 'base_directory'))
 
             if ini.has_option('Settings', 'mod_directory'):
                 _global.mo2_mods_folder = os.path.normpath(ini.get('Settings', 'mod_directory'))
@@ -259,12 +256,10 @@ class MO2():
                 _global.mo2_error = 1
                 return
 
-            # Could do [11:-1] instead of prefix/suffix but idk if it is always a byte array, so this is safer
-            selected_profile = ini.get('General', 'selected_profile').removeprefix('@ByteArray(').removesuffix(')')
-
-            profile = os.path.join(profiles_dir, selected_profile)
+            profile = os.path.join(_global.mo2_profiles_dir, _global.mo2_profile)
             _global.plugins_txt_path = os.path.normpath(os.path.join(profile, 'plugins.txt'))
             _global.mo2_modlist_txt_path = os.path.normpath(os.path.join(profile, 'modlist.txt'))
+            print(_global.plugins_txt_path)
         except Exception as e:
             _global.mo2_error = e
 
