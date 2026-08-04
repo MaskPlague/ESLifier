@@ -79,7 +79,7 @@ class QtToggle(QCheckBox):
         
         p.end()
 
-    def change_color(self, bg_color='Light Grey', circle_color='Grey', active_color='White'):
+    def change_color(self, bg_color='Light Grey', circle_color='Grey', active_color='palegreen'):
         self._circle_color = circle_color
         self._active_color = active_color
         self._bg_color = bg_color
