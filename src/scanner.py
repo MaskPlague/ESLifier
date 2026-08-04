@@ -39,6 +39,8 @@ class scanner():
         scanner.all_patcher_experimental: bool = _global.all_patcher_experimental
         if scanner.all_patcher_experimental:
             write_to_file("Experimental all patcher mode enabled.")
+        if not os.path.exists('bsa_extracted'):
+            os.makedirs('bsa_extracted')
         scanner.file_count: int = 0
         scanner.all_files: list[str] = []
         _global.plugins.clear()
