@@ -135,6 +135,12 @@ class Vortex():
         installed_mods: dict[str, dict] = VortexDBParser.get_section("persistent###mods###skyrimse###") or {}
         ordered_mod_ids, installed_mods = Vortex.get_load_order(profile_id, installed_mods)
         mod_staging_folder = os.path.normpath(VortexDBParser.get_key_value("settings###mods###installPath###").removeprefix('"').removesuffix('"'))
+        mod_staging_folder_drive, _ = os.path.splitdrive(mod_staging_folder)
+        output_folder_drive, _ = os.path.splitdrive(_global.output_folder_path)
+        #Output and mod staging folder must be on same drive
+        if mod_staging_folder_drive != output_folder_drive:
+            _global.vortex_error = 3
+            return [], [], [], ''
         mod_files = {}
         cases: dict[str, str] = {}
         plugin_extensions = ('.esp', '.esl', '.esm')
