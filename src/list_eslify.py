@@ -145,9 +145,13 @@ class list_eslable(QTableWidget):
             basename: str = os.path.basename(plugin)
             basename_lower: str = basename.lower()
             item = QTableWidgetItem(basename)
+            if basename in self.flagged:
+                item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
+                item.setCheckState(Qt.CheckState.PartiallyChecked)
+            else:
+                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+                item.setCheckState(Qt.CheckState.Unchecked)
             item.setToolTip(plugin)
-            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-            item.setCheckState(Qt.CheckState.Unchecked)
             self.setItem(i, self.MOD_COL, item)
             self.setRowHidden(i, False)
             hide_row = False
