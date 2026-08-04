@@ -716,7 +716,7 @@ class main(QWidget):
         elif _global.mo2_error == 1:
             confirm.setText(self.tr("The MO2 instance's Overwrite folder and the Output Folder Path must be on the same drive."))
         elif isinstance(_global.mo2_error, Exception):
-            confirm.setText(self.tr(f"ESLifier has come across an error while reading MO2's ini: %0").replace("%0", str(_global.vortex_error)))
+            confirm.setText(self.tr(f"ESLifier has come across an error while reading MO2's ini: %0").replace("%0", str(_global.mo2_error)))
         _global.mo2_error = -1
         self.scanned = False
         def accept():
