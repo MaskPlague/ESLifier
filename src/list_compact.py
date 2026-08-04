@@ -154,15 +154,15 @@ class list_compactable(QTableWidget):
         self.dependency_list:dict = self.get_data_from_file("ESLifier_Data/dependency_dictionary.json", dict)
         self.compacted:dict = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json", dict)
         self.dll_dict:dict = self.get_data_from_file("ESLifier_Data/dll_dict.json", dict)
-        self.blacklist_list: list[str] = self.get_data_from_file('ESLifier_Data/blacklist.json', list)
-        self.cell_changed:list[str] = self.get_data_from_file("ESLifier_Data/cell_changed.json", list)
+        self.blacklist_list: set[str] = set(self.get_data_from_file('ESLifier_Data/blacklist.json', list))
+        self.cell_changed: set[str] = set(self.get_data_from_file("ESLifier_Data/cell_changed.json", list))
 
         if self.cell_master:
-            self.blacklist_list.extend(["ccafdsse001-dwesanctuary.esm",
+            self.blacklist_list.update(set(["ccafdsse001-dwesanctuary.esm",
                                         "ccbgssse025-advdsgs.esm",
                                         "ccbgssse031-advcyrus.esm",
                                         "cceejsse001-hstead.esm",
-                                        "cceejsse005-cave.esm"])
+                                        "cceejsse005-cave.esm"]))
 
         local_dict = self.flag_dict.copy()
         for mod in self.flag_dict:
