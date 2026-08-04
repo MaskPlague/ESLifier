@@ -73,6 +73,7 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
     Inventory Injector
     Lazy Followers
     Let Your Hair Down
+    Luma Utility
     Magic Fixes and Tweaks SKSE
     M.A.R.A.S.
     MCM Helper
@@ -84,6 +85,7 @@ Nexus Mods [ESLifier MO2 Integration Plugin](https://www.nexusmods.com/skyrimspe
     Player Equipment Manager
     Race Compatibility SKSE
     Rain Extinguished Fires
+    Rim Combat
     Skyrim Unbound
     SL Config/Expressions/Animations
     SL Scaler
