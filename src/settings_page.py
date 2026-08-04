@@ -379,7 +379,7 @@ class settings(QWidget):
         self.select_file_path(self.file_dialog, self.tr("Select where you want the output folder"), 'output_folder_path', self.output_folder_path, None)
 
     def get_mo2_profiles(self):
-        mo2_base_dir = os.path.normpath(self.settings.get('mo2_base_path'))
+        mo2_base_dir = os.path.normpath(self.settings.get('mo2_base_path', ''))
         file = os.path.join(mo2_base_dir, "ModOrganizer.ini")
         if os.path.exists(file):
             ini = configparser.ConfigParser()
