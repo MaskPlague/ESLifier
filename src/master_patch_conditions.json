@@ -1,5 +1,5 @@
 {
-    "version": 20,
+    "version": 21,
     "conditions": [
         {
             "extension": "json",
@@ -136,6 +136,11 @@
         {
             "extension": "json",
             "contains": "interface/CMStats/",
+            "patcher": "json_generic_plugin_sep_formid"
+        },
+        {
+            "extension": "json",
+            "contains": "interface/CMSkills/",
             "patcher": "json_generic_plugin_sep_formid"
         }
     ]
