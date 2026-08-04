@@ -16,7 +16,7 @@ from main_page import main
 from log_stream import log_stream, write_to_file
 from data_holder import _global
 
-CURRENT_VERSION = '0.16.1'
+CURRENT_VERSION = '0.16.2'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
