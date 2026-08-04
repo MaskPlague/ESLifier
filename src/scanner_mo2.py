@@ -259,7 +259,6 @@ class MO2():
             profile = os.path.join(_global.mo2_profiles_dir, _global.mo2_profile)
             _global.plugins_txt_path = os.path.normpath(os.path.join(profile, 'plugins.txt'))
             _global.mo2_modlist_txt_path = os.path.normpath(os.path.join(profile, 'modlist.txt'))
-            print(_global.plugins_txt_path)
         except Exception as e:
             _global.mo2_error = e
 
