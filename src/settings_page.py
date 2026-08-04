@@ -136,7 +136,7 @@ class settings(QWidget):
         )
         self.enable_weather_filter_widget, self.enable_weather_filter_toggle = self.create_toggle_widget(
             self.tr("Hide plugins with new WTHR (weather) records"),
-            self.tr("Hide plugins with new weather records as they can be referenced in ENB presets which are not patched"),
+            self.tr("Hide plugins with new weather records as they can be referenced in ENB presets which are not patched."),
             "filter_weathers",
             default=False
         )
