@@ -286,7 +286,7 @@ crash cause: %2</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner.py" line="245" />
+      <location filename="src\scanner.py" line="247" />
       <source>Failed to dump data to: </source>
       <translation type="unfinished" />
     </message>
@@ -1806,95 +1806,95 @@ This button needs an output made from v0.12.0+.</source>
   <context>
     <name>scanner</name>
     <message>
-      <location filename="src\scanner.py" line="138" />
+      <location filename="src\scanner.py" line="140" />
       <source>Gathered %0 total files.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner.py" line="140" />
+      <location filename="src\scanner.py" line="142" />
       <source>Getting Dependencies</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner.py" line="142" />
+      <location filename="src\scanner.py" line="144" />
       <source>Scanning Plugins</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner.py" line="155" />
+      <location filename="src\scanner.py" line="157" />
       <source>Time taken: %1 seconds</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner.py" line="174" />
+      <location filename="src\scanner.py" line="176" />
       <source>Extracting: </source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner.py" line="199" />
+      <location filename="src\scanner.py" line="201" />
       <source>Extracting %0/%1 BSA files (%2)</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner.py" line="639" />
-      <location filename="src\scanner.py" line="211" />
+      <location filename="src\scanner.py" line="641" />
+      <location filename="src\scanner.py" line="213" />
       <source>Error Reading BSA: </source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner.py" line="226" />
+      <location filename="src\scanner.py" line="228" />
       <source>Failed to get plugins list at: </source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner.py" line="276" />
+      <location filename="src\scanner.py" line="278" />
       <source>Getting masters of loose files...</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner.py" line="286" />
+      <location filename="src\scanner.py" line="288" />
       <source>Scanning .pex files</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner.py" line="309" />
+      <location filename="src\scanner.py" line="311" />
       <source>Scanning .dll SKSE plugins</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner.py" line="318" />
+      <location filename="src\scanner.py" line="320" />
       <source>Sorting .seq files</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner.py" line="321" />
+      <location filename="src\scanner.py" line="323" />
       <source>Scanning .bsa files</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner.py" line="362" />
-      <location filename="src\scanner.py" line="345" />
+      <location filename="src\scanner.py" line="364" />
+      <location filename="src\scanner.py" line="347" />
       <source>Processed: %0 %</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner.py" line="363" />
-      <location filename="src\scanner.py" line="346" />
+      <location filename="src\scanner.py" line="365" />
+      <location filename="src\scanner.py" line="348" />
       <source>Files: %1/%2</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner.py" line="581" />
+      <location filename="src\scanner.py" line="583" />
       <source>Missing file scan type for </source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner.py" line="583" />
+      <location filename="src\scanner.py" line="585" />
       <source>Error reading file </source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner.py" line="585" />
+      <location filename="src\scanner.py" line="587" />
       <source>!pex file is likely corrupt.</source>
       <translation type="unfinished" />
     </message>
