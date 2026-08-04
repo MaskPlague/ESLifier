@@ -687,6 +687,27 @@ class main(QWidget):
                 self.confirm.accept()
             else:
                 self.confirm.show()
+
+    def vortex_error(self):
+        clear_and_close_log()
+        confirm = self.create_confirmation('lightcoral')
+        if _global.vortex_error == 0:
+            confirm.setText(self.tr("Please close Vortex, ESLifier cannot accesss Vortex's database while it is open."))
+        elif _global.vortex_error == 2:
+            confirm.setText(self.tr("ESLifier detected that a cyclic rule is set in Vortex, please correct it first."))
+        elif _global.vortex_error == 3:
+            confirm.setText(self.tr("Vortex's Mod Staging Folder and ESLifier's Output Folder must be on the same drive."))
+        elif isinstance(_global.vortex_error, Exception):
+            confirm.setText(self.tr(f"ESLifier has come across an error while scanning Vortex data: %0").replace("%0", str(_global.vortex_error)))
+        _global.vortex_error = -1
+        self.scanned = False
+        def accept():
+            confirm.hide()
+        confirm.setStandardButtons(QMessageBox.StandardButton.Ok)
+        confirm.accepted.connect(accept)
+        confirm.show()
+        self.setEnabled(True)
+
     def mo2_error(self):
         clear_and_close_log()
         confirm = self.create_confirmation('lightcoral')
@@ -703,25 +724,12 @@ class main(QWidget):
         confirm.setStandardButtons(QMessageBox.StandardButton.Ok)
         confirm.accepted.connect(accept)
         confirm.show()
+        self.setEnabled(True)
     
     def completed_scan(self, eslifiy_flag_dict, compact_flag_dict, dependency_dictionary):
         if _global.vortex_error != -1:
-            clear_and_close_log()
-            confirm = self.create_confirmation('lightcoral')
-            if _global.vortex_error == 0:
-                confirm.setText(self.tr("Please close Vortex, ESLifier cannot accesss Vortex's database while it is open."))
-            elif _global.vortex_error == 2:
-                confirm.setText(self.tr("ESLifier detected that a cyclic rule is set in Vortex, please correct it first."))
-            elif isinstance(_global.vortex_error, Exception):
-                confirm.setText(self.tr(f"ESLifier has come across an error while scanning Vortex data: %0").replace("%0", str(_global.vortex_error)))
-            _global.vortex_error = -1
-            self.scanned = False
-            def accept():
-                confirm.hide()
-            confirm.setStandardButtons(QMessageBox.StandardButton.Ok)
-            confirm.accepted.connect(accept)
-            confirm.show()
-            self.setEnabled(True)
+            self.vortex_error()
+            return
         if _global.mo2_error != -1:
             self.mo2_error()
             return
@@ -917,12 +925,12 @@ class main(QWidget):
             return
         if _global.mod_manager_mode == 1:
             return_val = VortexDBParser.is_readable()
+            #If not readable (1)
             if return_val != 1:
                 confirm = self.create_confirmation('lightcoral')
-                if _global.vortex_error == 0:
+                # 0 means locked by vortex
+                if return_val == 0:
                     confirm.setText(self.tr("Please close Vortex, ESLifier cannot accesss Vortex's database while it is open."))
-                elif _global.vortex_error == 2:
-                    confirm.setText(self.tr("ESLifier detected that a cyclic rule is set in Vortex, please correct it first."))
                 elif isinstance(_global.vortex_error, Exception):
                     confirm.setText(self.tr(f"ESLifier has come across an error while scanning Vortex data: %0").replace('%0', str(return_val)))
                 self.scanned = False
