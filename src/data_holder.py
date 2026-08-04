@@ -30,6 +30,10 @@ class _global():
     skyrim_folder_path_len = 0
     mod_staging_folder_lower = ''
     mod_staging_folder_len = 0
+    output_folder_joined_path_lower = ''
+    output_folder_joined_path_len = 0
+    bsa_extracted_path_len = 0
+    bsa_extracted_temp_path_len = 0
 
     cwd = os.getcwd()
 
@@ -103,13 +107,9 @@ class _global():
         # ESLifier BSA Extracted
         if 'bsa_extracted' in file_norm:
             if 'bsa_extracted_temp' in file_norm:
-                idx = file_norm.find('bsa_extracted_temp')
-                if idx != -1:
-                    return file_norm[idx + 18:].lstrip(os.sep)
+                return file_norm[_global.bsa_extracted_temp_path_len:].lstrip(os.sep)
             else:
-                idx = file_norm.find('bsa_extracted')
-                if idx != -1:
-                    return file_norm[idx + 13:].lstrip(os.sep)
+                return file_norm[_global.bsa_extracted_path_len:].lstrip(os.sep)
 
         file_lower = file_norm.lower()
 
@@ -138,3 +138,6 @@ class _global():
         # Manual Mode
         if file_lower.startswith(_global.skyrim_folder_path_lower):
             return file_norm[_global.skyrim_folder_path_len:].lstrip(os.sep)
+
+        if file_lower.startswith(_global.output_folder_joined_path_lower):
+            return file_norm[_global.output_folder_joined_path_len:].lstrip(os.sep)
