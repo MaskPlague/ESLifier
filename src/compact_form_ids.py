@@ -241,11 +241,11 @@ class CFIDs():
                 for thread in temp_extraction_threads:
                     thread.join()
 
-                start = os.path.join(_global.cwd, 'bsa_extracted_temp')
-                for root, _, files in os.walk('bsa_extracted_temp/'):
+                bsa_extracted_temp = os.path.normpath(os.path.join(_global.cwd, 'bsa_extracted_temp'))
+                for root, _, files in os.walk(bsa_extracted_temp):
                     for file in files:
                         full_path = os.path.normpath(os.path.join(root, file))
-                        rel_path = os.path.relpath(full_path, start).lower()
+                        rel_path = os.path.relpath(full_path, bsa_extracted_temp).lower()
                         if rel_path not in rel_paths and file.endswith(('.nif', '.dds', '.fuz', '.xwm', '.wav', '.lip')):
                             patch_or_rename.append(full_path)
                             rel_paths.add(rel_path)
