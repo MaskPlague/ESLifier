@@ -451,9 +451,9 @@ class settings(QWidget):
             #self.skyrim_folder_path_widget.setToolTip(self.tr("Set this to your Skyrim Special Edition Data folder that holds Skyrim.esm."))
             #self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText(self.tr("Data Folder Path"))
             #self.skyrim_folder_path.setPlaceholderText(self.tr('C:/Path/To/Skyrim Special Edition/Data'))
-            #TODO: This
             self.mod_manager_mode_widget.setToolTip(
-                self.tr("Vortex users PLACEHOLDER MESSAGE"))
+                self.tr("Vortex users can also set this to None to scan the way ESLiifer originally\n"\
+                        "dealth with Vortex if you prefer/need that."))
         else:
             self.mod_manager_mode_widget.layout().itemAt(0).widget().setText(self.tr("Mod Manager: None"))
             self.output_folder_path_widget.setToolTip(self.tr("Set where you want the Output Folder to be generated."))
@@ -462,7 +462,8 @@ class settings(QWidget):
             self.skyrim_folder_path.setPlaceholderText(self.tr('C:/Path/To/Skyrim Special Edition/Data'))
             self.mod_manager_mode_widget.setToolTip(
                 self.tr("Users without a mod manager should get a mod manager. ESLifier is not\n"\
-                        "meant to be used with manual modding but should still work at least once."))
+                        "meant to be used with manual modding but should still work at least once.\n"\
+                        "You can also use this mode for the original way Vortex was dealt with."))
     
     def cell_master_clicked(self):
         if self.generate_cell_master_toggle.checkState() == Qt.CheckState.Checked:
