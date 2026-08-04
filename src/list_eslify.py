@@ -228,11 +228,11 @@ class list_eslable(QTableWidget):
             if item_changed in self.selectedItems():
                 if item_changed.checkState() == Qt.CheckState.Checked:
                     for x in self.selectedItems():
-                        if x.column() == self.MOD_COL:
+                        if x.column() == self.MOD_COL and x.checkState() != Qt.CheckState.PartiallyChecked:
                             x.setCheckState(Qt.CheckState.Checked)
                 else:
                     for x in self.selectedItems():
-                        if x.column() == self.MOD_COL:
+                        if x.column() == self.MOD_COL and x.checkState() != Qt.CheckState.PartiallyChecked:
                             x.setCheckState(Qt.CheckState.Unchecked)
             self.blockSignals(False)
 
