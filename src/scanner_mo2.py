@@ -1,6 +1,8 @@
 from log_stream import write_error, write_normal, write_progress, write_remove, write_to_file, write_warning
 from PyQt6.QtCore import QCoreApplication
+from data_holder import _global
 import os
+import configparser
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -8,14 +10,14 @@ if TYPE_CHECKING:
 
 class MO2():
     scanner: scanner = None
-    def get_modlist(path: str) -> tuple[list[str], set[str]]:
+    def get_modlist() -> tuple[list[str], set[str]]:
         load_order = []
         try:
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(_global.mo2_modlist_txt_path, 'r', encoding='utf-8') as f:
                 load_order = f.readlines()
                 f.close()
         except Exception as e:
-            write_error(QCoreApplication.translate("scanner", "Failed to get modlist at ") + path)
+            write_error(QCoreApplication.translate("scanner", "Failed to get modlist at ") + _global.mo2_modlist_txt_path)
             write_error(e, True)
 
         enabled_mods = []
@@ -42,9 +44,11 @@ class MO2():
         load_order.append('overwrite_eslifier_scan')
         return load_order, set(enabled_mods)
 
-    def get_winning_files(mods_folder: str, load_order: list, enabled_mods: list, plugins_list: list) -> tuple[list, list]:
-        mods_folder = os.path.normpath(mods_folder)
-        overwrite_path = os.path.normpath(MO2.scanner.overwrite_path)
+    def get_winning_files(plugins_list: list) -> tuple[list, list]:
+        load_order:list[str]
+        load_order, enabled_mods = MO2.get_modlist()
+        mods_folder = os.path.normpath(_global.mo2_mods_folder)
+        overwrite_path = os.path.normpath(_global.mo2_overwrite_path)
         mod_folder_level = len(mods_folder.split(os.sep))
         overwrite_level = len(overwrite_path.split(os.sep)) - 1
         mod_files: dict[str, list[str]]
@@ -107,7 +111,7 @@ class MO2():
         return_list = [winning_file for winning_file, _ in winning_files]
         return return_list, plugins
 
-    def get_files_from_mods(mods_folder: str, enabled_mods: list, plugins_list: list, overwrite_path: str) -> tuple[dict, list, dict]:
+    def get_files_from_mods(mods_folder: str, enabled_mods: set, plugins_list: list, overwrite_path: str) -> tuple[dict, list, dict]:
         if not os.path.exists('bsa_extracted/'):
             os.makedirs('bsa_extracted/')
         mod_files: dict[str, list[str]] = {}
@@ -216,5 +220,50 @@ class MO2():
                 mod_files[relative_path].append('bsa_extracted_eslifier_scan')
 
         return mod_files, plugin_names, cases_of_files
-    
+
+    def get_instance_paths():
+        try:
+            mo2_base_dir = os.path.normpath(_global.mo2_base_path)
+            file = os.path.join(mo2_base_dir, "ModOrganizer.ini")
+
+            ini = configparser.ConfigParser()
+            ini.read(file)
+
+            profiles_dir = ''
+            if ini.has_option('Settings', 'profiles_directory'):
+                profiles_dir = os.path.normpath(ini.get('Settings', 'profiles_directory'))
+            else:
+                profiles_dir = os.path.normpath(os.path.join(mo2_base_dir, "profiles"))
+
+            if ini.has_option('Settings', 'mod_directory'):
+                _global.mo2_mods_folder = os.path.normpath(ini.get('Settings', 'mod_directory'))
+            else:
+                _global.mo2_mods_folder = os.path.normpath(os.path.join(mo2_base_dir, 'mods'))
+
+            mods_folder_drive, _ = os.path.splitdrive(_global.mo2_mods_folder)
+            output_folder_drive, _ = os.path.splitdrive(_global.output_folder_path)
+            #Output and mo2 mods folder must be on same drive
+            if mods_folder_drive != output_folder_drive:
+                _global.mo2_error = 0
+                return
+
+            if ini.has_option('Settings', 'overwrite_directory'):
+                _global.mo2_overwrite_path = os.path.normpath(ini.get('Settings', 'overwrite_directory'))
+            else:
+                _global.mo2_overwrite_path = os.path.normpath(os.path.join(mo2_base_dir, 'overwrite'))
+
+            overwrite_folder_drive, _ = os.path.splitdrive(_global.mo2_overwrite_path)
+            #Output and mo2 overwrite folder must be on same drive
+            if overwrite_folder_drive != output_folder_drive:
+                _global.mo2_error = 1
+                return
+
+            # Could do [11:-1] instead of prefix/suffix but idk if it is always a byte array, so this is safer
+            selected_profile = ini.get('General', 'selected_profile').removeprefix('@ByteArray(').removesuffix(')')
+
+            profile = os.path.join(profiles_dir, selected_profile)
+            _global.plugins_txt_path = os.path.normpath(os.path.join(profile, 'plugins.txt'))
+            _global.mo2_modlist_txt_path = os.path.normpath(os.path.join(profile, 'modlist.txt'))
+        except Exception as e:
+            _global.mo2_error = e
 

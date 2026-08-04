@@ -53,12 +53,12 @@ class settings(QWidget):
             self.tr("Change this to what you want to be the name of the Output Folder."),
             "ESLifier Output"
         )
-        self.overwrite_path_widget, self.overwrite_path = self.create_path_widget(
-            self.tr("Overwrite Path"),
-            self.tr("Set this to your modlist\'s overwrite folder"),
-            self.tr('C:/Path/To/Overwrite'),
-            self.overwrite_path_clicked,
-            'overwrite_path'
+        self.mo2_base_path_widget, self.mo2_base_path = self.create_path_widget(
+            self.tr("MO2 Instance Directory"),
+            self.tr("Set this to your modlist\'s MO2 Instance folder, the folder that holds 'ModOrganizer.ini'."),
+            self.tr('C:/Path/To/MO2/Instance'),
+            self.mo2_base_path_clicked,
+            'mo2_base_path'
         )
         self.vortex_data_path_widget, self.vortex_data_path = self.create_path_widget(
             self.tr("Vortex Data Path"),
@@ -74,13 +74,6 @@ class settings(QWidget):
             self.plugins_txt_path_clicked,
             'plugins_txt_path'
         )
-        self.mo2_modlist_txt_path_widget, self.mo2_modlist_txt_path = self.create_path_widget(
-            self.tr("Modlist.txt Path"),
-            self.tr("Set this to your profile's modlist.txt"),
-            self.tr('C:/Path/To/MO2/profiles/profile_name/modlist.txt'),
-            self.mo2_modlist_txt_path_clicked,
-            'mo2_modlist_txt_path'
-        )
         self.mod_manager_mode_widget, self.mod_manager_mode_toggle = self.create_toggle_widget(
             self.tr("Mod Manager: None"),
             self.tr("Users without a mod manager should get a mod manager. ESLifier is not\n"\
@@ -92,8 +85,9 @@ class settings(QWidget):
         )
         self.mod_manager_mode_widget.layout().itemAt(2).widget().clicked.connect(self.mod_mananger_mode_clicked)
         self.mod_manager_mode_widget.layout().itemAt(2).widget().clicked.connect(self.skyrim_folder_path.clear)
-        self.mod_manager_mode_widget.layout().itemAt(2).widget().clicked.connect(self.overwrite_path.clear)
+        self.mod_manager_mode_widget.layout().itemAt(2).widget().clicked.connect(self.mo2_base_path.clear)
         self.mod_manager_mode_widget.layout().itemAt(2).widget().clicked.connect(self.vortex_data_path.clear)
+        self.mod_manager_mode_widget.layout().itemAt(2).widget().clicked.connect(self.plugins_txt_path.clear)
         self.update_header_widget, self.update_header_toggle = self.create_toggle_widget(
             self.tr("Allow Form IDs below 0x000800 + Update plugin headers to 1.71"),
             self.tr("Allow scanning and patching to use the new 1.71 header.\n"\
@@ -157,7 +151,7 @@ class settings(QWidget):
             self.tr("Hide plugins that have PEX files that call the papyrus function 'GetModByName' on\n'\
                     'them as that function only works properly on non-ESL plugins."),
             "filter_pex",
-            default=False
+            default=True
         )
         self.hide_left_columns_widget, self.hide_left_columns_text_input = self.create_text_input_widget(
             self.tr("Hide left list columns visually"),
@@ -285,11 +279,10 @@ class settings(QWidget):
         settings_layout.addWidget(self.mod_manager_mode_widget)
         settings_layout.addWidget(self.skyrim_folder_path_widget)
         settings_layout.addWidget(self.vortex_data_path_widget)
+        settings_layout.addWidget(self.mo2_base_path_widget)
         settings_layout.addWidget(self.output_folder_path_widget)
         settings_layout.addWidget(self.output_folder_name_widget)
-        settings_layout.addWidget(self.overwrite_path_widget)
         settings_layout.addWidget(self.plugins_txt_path_widget)
-        settings_layout.addWidget(self.mo2_modlist_txt_path_widget)
 
         column_wrapper = QHBoxLayout()
         column_wrapper_widget = QWidget()
@@ -377,14 +370,11 @@ class settings(QWidget):
     def output_folder_path_clicked(self):
         self.select_file_path(self.file_dialog, self.tr("Select where you want the output folder"), 'output_folder_path', self.output_folder_path, None)
 
-    def overwrite_path_clicked(self):
-        self.select_file_path(self.file_dialog, self.tr("Select your MO2 overwrite folder"), 'overwrite_path', self.overwrite_path, None)
+    def mo2_base_path_clicked(self):
+        self.select_file_path(self.file_dialog, self.tr("Select your MO2 instance folder"), 'mo2_base_path', self.mo2_base_path, None)
 
     def vortex_data_path_clicked(self):
         self.select_file_path(self.file_dialog, self.tr("Select your vortex data folder"), 'vortex_data_path', self.vortex_data_path, None)
-
-    def mo2_modlist_txt_path_clicked(self):
-        self.select_file_path(self.file_dialog_2, self.tr("Select your MO2 profile\'s modlist.txt"), 'mo2_modlist_txt_path', self.mo2_modlist_txt_path, self.tr("Modlist") +" (modlist.txt)")
 
     def plugins_txt_path_clicked(self):
         self.select_file_path(self.file_dialog_2, self.tr("Select your plugins.txt"), 'plugins_txt_path', self.plugins_txt_path, self.tr("Load Order")+ " (plugins.txt)")
@@ -438,9 +428,6 @@ class settings(QWidget):
         if self.mod_manager_mode_toggle.checkState() == Qt.CheckState.Checked:
             self.mod_manager_mode_widget.layout().itemAt(0).widget().setText(self.tr("Mod Manager: MO2"))
             self.output_folder_path_widget.setToolTip(self.tr("Set where you want the Output Folder to be generated. For example: MO2's 'mods' folder."))
-            self.skyrim_folder_path_widget.setToolTip(self.tr("Set this to your Mod Organizer 2 mod's folder that holds all of your installed mods."))
-            self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText(self.tr("MO2 Mod\'s Folder Path"))
-            self.skyrim_folder_path.setPlaceholderText(self.tr('C:/Path/To/MO2/mods'))
             self.mod_manager_mode_widget.setToolTip(
                 self.tr("MO2 users should not launch this executible through MO2,\n"\
                         "Launching this program through MO2 drastically slows it down and may\n"\
@@ -457,9 +444,6 @@ class settings(QWidget):
         else:
             self.mod_manager_mode_widget.layout().itemAt(0).widget().setText(self.tr("Mod Manager: None"))
             self.output_folder_path_widget.setToolTip(self.tr("Set where you want the Output Folder to be generated."))
-            self.skyrim_folder_path_widget.setToolTip(self.tr("Set this to your Skyrim Special Edition Data folder that holds Skyrim.esm."))
-            self.skyrim_folder_path_widget.layout().itemAt(0).widget().setText(self.tr("Data Folder Path"))
-            self.skyrim_folder_path.setPlaceholderText(self.tr('C:/Path/To/Skyrim Special Edition/Data'))
             self.mod_manager_mode_widget.setToolTip(
                 self.tr("Users without a mod manager should get a mod manager. ESLifier is not\n"\
                         "meant to be used with manual modding but should still work at least once.\n"\
@@ -641,9 +625,8 @@ class settings(QWidget):
         self.settings['output_folder_path'] = os.path.normpath(self.output_folder_path.text()) if self.output_folder_path.text() != '' else ''
         if self.output_folder_name_valid:
             self.settings['output_folder_name'] = self.output_folder_name.text()
-        self.settings['overwrite_path'] = os.path.normpath(self.overwrite_path.text()) if self.overwrite_path.text() != '' else ''
+        self.settings['mo2_base_path'] = os.path.normpath(self.mo2_base_path.text()) if self.mo2_base_path.text() != '' else ''
         self.settings['plugins_txt_path'] = os.path.normpath(self.plugins_txt_path.text()) if self.plugins_txt_path.text() != '' else ''
-        self.settings['mo2_modlist_txt_path'] = os.path.normpath(self.mo2_modlist_txt_path.text()) if self.mo2_modlist_txt_path.text() != '' else ''
         self.settings['vortex_data_path'] = os.path.normpath(self.vortex_data_path.text()) if self.vortex_data_path.text() != '' else ''
         self.settings['mod_manager_mode'] = self.mod_manager_mode_toggle.checkState().value
         self.settings['update_header'] = self.update_header_toggle.isChecked()
@@ -670,23 +653,21 @@ class settings(QWidget):
 
         self.mod_mananger_mode_clicked()
         if self.mod_manager_mode_toggle.checkState() == Qt.CheckState.Checked:
-            self.mo2_modlist_txt_path_widget.show()
-            self.overwrite_path_widget.show()
-            self.plugins_txt_path_widget.show()
+            self.mo2_base_path_widget.show()
             self.vortex_data_path_widget.hide()
+            self.skyrim_folder_path_widget.hide()
+            self.plugins_txt_path_widget.hide()
         elif self.mod_manager_mode_toggle.checkState() == Qt.CheckState.PartiallyChecked:
             self.vortex_data_path_widget.show()
             #self.skyrim_folder_path_widget.show()
             self.skyrim_folder_path_widget.hide()
-            self.mo2_modlist_txt_path_widget.hide()
+            self.mo2_base_path_widget.hide()
             self.plugins_txt_path_widget.hide()
-            self.overwrite_path_widget.hide()
         else:
             self.skyrim_folder_path_widget.show()
             self.plugins_txt_path_widget.show()
             self.vortex_data_path_widget.hide()
-            self.mo2_modlist_txt_path_widget.hide()
-            self.overwrite_path_widget.hide()
+            self.mo2_base_path_widget.hide()
         self.cell_master_clicked()
         self.persistent_ids_clicked()
 
@@ -694,7 +675,7 @@ class settings(QWidget):
 
         if key in ('show_esms', 'show_cells', 'enable_cell_changed_filter', 'enable_interior_cell_filter', 
                    'filter_worldspaces', 'filter_weathers', 'show_dlls', 'generate_cell_master', 'reset',
-                   'left_hidden_columns', 'right_hidden_columns', 'filter_seq'):
+                   'left_hidden_columns', 'right_hidden_columns', 'filter_seq', 'filter_pex'):
             self.need_to_rebuild_lists.emit()
         
     def get_settings_from_file(self):

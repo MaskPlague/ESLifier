@@ -348,14 +348,13 @@ class main_window(QMainWindow):
     def path_validator(self):
         self.tabs.blockSignals(True)
         if (self.settings_widget.settings['output_folder_path'] == ''
-            or self.settings_widget.settings['skyrim_folder_path'] == ''
-            or (self.settings_widget.settings['mod_manager_mode'] != 1 
-                and self.settings_widget.settings['plugins_txt_path'] == '')
+            or (self.settings_widget.settings['mod_manager_mode'] == 0 
+                and (self.settings_widget.settings['plugins_txt_path'] == ''
+                     or self.settings_widget.settings['skyrim_folder_path'] == ''))
             or (self.settings_widget.settings['mod_manager_mode'] == 2 
-                and (self.settings_widget.settings['mo2_modlist_txt_path'] == '' 
-                     or self.settings_widget.settings['overwrite_path'] == ''))
+                and self.settings_widget.settings['mo2_base_path'] == '')
             or (self.settings_widget.settings['mod_manager_mode'] == 1
-                and (self.settings_widget.settings['vortex_data_path'] == ''))):
+                and self.settings_widget.settings['vortex_data_path'] == '')):
             self.tabs.setCurrentIndex(self.SETTINGS_TAB)
             self.tabs.blockSignals(False)
             if not self.initial:
@@ -371,52 +370,43 @@ class main_window(QMainWindow):
             return
         
         output_path = self.settings_widget.settings['output_folder_path']
-        data_path = self.settings_widget.settings['skyrim_folder_path']
-        plugins_txt = self.settings_widget.settings['plugins_txt_path']
         mod_manager_mode = self.settings_widget.settings['mod_manager_mode']
         if mod_manager_mode == 2:
-            mo2_path = self.settings_widget.settings['mo2_modlist_txt_path']
-            overwrite_path = self.settings_widget.settings['overwrite_path']
+            mo2_base_path = self.settings_widget.settings['mo2_base_path']
         elif mod_manager_mode == 1:
             vortex_data_path = self.settings_widget.settings['vortex_data_path']
+        elif mod_manager_mode == 0:
+            plugins_txt = self.settings_widget.settings['plugins_txt_path']
+            data_path = self.settings_widget.settings['skyrim_folder_path']
 
         error_message = ''
-        output_path_exists = False
-        data_path_exists = False
+
         if not os.path.exists('bsarch/bsarch.exe'):
             error_message += (self.tr("The included BSArch.exe must be present in a folder\nnamed bsarch adjactent to ESLifier:") + "\n\n"\
                               f"{os.path.split(os.getcwd())[1]}/\n"\
                               "├─── bsarch/\n"\
                               "│        └── BSArch.exe\n"\
                               "└─── ESLifier.exe\n\n")
-                              
+
         if not os.path.exists(output_path):
             error_message += self.tr("Invalid Output Directory, it does not exist.") + "\n"
+            output_path_exists = False
         else:
             output_path_exists = True
-        if not os.path.exists(data_path):
-            if mod_manager_mode == 2:
-                error_message += self.tr("Invalid MO2 Mods Directory, it does not exist.")+ "\n"
-            else:
-                error_message += self.tr("Invalid Skyrim Data Directory, it does not exist.") + "\n"
-        else:
-            data_path_exists = True
-        if output_path_exists and data_path_exists:
             output_path_drive, _ = os.path.splitdrive(output_path)
-            data_path_drive, _ = os.path.splitdrive(data_path)
-            if output_path_drive != data_path_drive:
-                error_message += self.tr("The Mods/Data Folder Path and the Output Folder Path must be on the same drive.") + "\n"
-        if mod_manager_mode != 1:
+
+        if mod_manager_mode == 0:
             if not plugins_txt.lower().endswith('.txt'):
                 error_message += self.tr("Invalid plugins.txt, the path should be to the file not directory.") + "\n"
             if not os.path.exists(plugins_txt):
                 error_message += self.tr("Invalid plugins.txt, the file does not exist.") + "\n"
-        if mod_manager_mode == 2 and not os.path.exists(overwrite_path):
-            error_message += self.tr("Invalid Overwrite Directory, it does not exist.") + "\n"
-        if mod_manager_mode == 2 and not mo2_path.lower().endswith('modlist.txt'):
-            error_message += self.tr("Invalid MO2 modlist.txt, the path should be to the file not directory.") + "\n"
-        if mod_manager_mode == 2 and not os.path.exists(mo2_path):
-            error_message += self.tr("Invalid MO2 modlist.txt, the file does not exist.") + "\n"
+            if not os.path.exists(data_path):
+                error_message += self.tr("Invalid Skyrim Data Directory, it does not exist.") + "\n"
+            else:
+                data_path_drive, _ = os.path.splitdrive(data_path)
+                if output_path_exists and output_path_drive != data_path_drive:
+                    error_message += self.tr("The Data Folder Path and the Output Folder Path must be on the same drive.") + "\n"
+
         if mod_manager_mode == 1:
             if not os.path.exists(vortex_data_path):
                 error_message += self.tr("Invalid Vortex Data Directory, it does not exist.") + "\n"
@@ -425,6 +415,13 @@ class main_window(QMainWindow):
                     error_message += self.tr("Invalid Vortex Data Directory, it exists but is invalid as the folder 'state.v2' does not exist in it.") + "\n"
                 if not os.path.exists(os.path.join(vortex_data_path, "skyrimse")):
                     error_message += self.tr("Invalid Vortex Data Directory, it exists but is invalid as the folder 'skyrimse' does not exist in it.") + "\n"
+                
+        if mod_manager_mode == 2:
+            if not os.path.exists(mo2_base_path):
+                error_message += self.tr("Invalid MO2 Directory, it does not exist.") + "\n"
+            else:
+                if not os.path.exists(os.path.join(mo2_base_path, 'ModOrganizer.ini')):
+                    error_message += self.tr("Invalid MO2 Directory, it exists but does not contain the file 'ModOrganizer.ini' in it.") + "\n"
 
         if len(error_message) > 10:
             self.tabs.setCurrentIndex(self.SETTINGS_TAB)

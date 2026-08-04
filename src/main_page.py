@@ -687,6 +687,22 @@ class main(QWidget):
                 self.confirm.accept()
             else:
                 self.confirm.show()
+    def mo2_error(self):
+        clear_and_close_log()
+        confirm = self.create_confirmation('lightcoral')
+        if _global.mo2_error == 0:
+            confirm.setText(self.tr("The MO2 instance's Mods folder and the Output Folder Path must be on the same drive."))
+        elif _global.mo2_error == 1:
+            confirm.setText(self.tr("The MO2 instance's Overwrite folder and the Output Folder Path must be on the same drive."))
+        elif isinstance(_global.mo2_error, Exception):
+            confirm.setText(self.tr(f"ESLifier has come across an error while reading MO2's ini: %0").replace("%0", str(_global.vortex_error)))
+        _global.mo2_error = -1
+        self.scanned = False
+        def accept():
+            confirm.hide()
+        confirm.setStandardButtons(QMessageBox.StandardButton.Ok)
+        confirm.accepted.connect(accept)
+        confirm.show()
     
     def completed_scan(self, eslifiy_flag_dict, compact_flag_dict, dependency_dictionary):
         if _global.vortex_error != -1:
@@ -706,6 +722,8 @@ class main(QWidget):
             confirm.accepted.connect(accept)
             confirm.show()
             self.setEnabled(True)
+        if _global.mo2_error != -1:
+            self.mo2_error()
             return
         self.list_eslify.flag_dict = eslifiy_flag_dict
         self.list_compact.flag_dict = compact_flag_dict

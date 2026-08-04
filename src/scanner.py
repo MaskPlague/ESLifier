@@ -34,12 +34,8 @@ class scanner():
                     'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
                     'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa'])
         start_time = timeit.default_timer()
-        path: str = _global.skyrim_folder_path
         scanner.mod_manager_mode: int = _global.mod_manager_mode
         scanner.output_file_name = _global.output_folder_name
-        modlist_txt_path: str = _global.mo2_modlist_txt_path
-        scanner.overwrite_path: str = _global.overwrite_path
-        update_header: bool = _global.update_header
         scanner.all_patcher_experimental: bool = _global.all_patcher_experimental
         if scanner.all_patcher_experimental:
             write_to_file("Experimental all patcher mode enabled.")
@@ -113,10 +109,12 @@ class scanner():
         
         if scanner.mod_manager_mode == 2: # MO2
             MO2.scanner = scanner
-            plugins_txt_path: str = _global.plugins_txt_path
-            plugins_list = scanner.get_plugins_list(plugins_txt_path)
-            load_order, enabled_mods = MO2.get_modlist(modlist_txt_path)
-            scanner.all_files, _global.plugins = MO2.get_winning_files(path, load_order, enabled_mods, plugins_list)
+            MO2.get_instance_paths()
+            if _global.mo2_error != -1:
+                return {}, {}
+            plugins_list = scanner.get_plugins_list(_global.plugins_txt_path)
+            scanner.all_files, _global.plugins = MO2.get_winning_files(plugins_list)
+            _global.update_mo2_vars()
             scanner.file_count = len(scanner.all_files)
         elif scanner.mod_manager_mode == 1: # Vortex
             #likely do the get files from skyrim folder at the same time as scanning vortex mod staging folder, if not exists in mod staging then add to dict
@@ -128,12 +126,11 @@ class scanner():
                 return {}, {}
         else: #Manually modding?
             NoManager.scanner = scanner
-            plugins_txt_path: str = _global.plugins_txt_path
-            plugins_list = scanner.get_plugins_list(plugins_txt_path)
-            NoManager.get_files_from_skyrim_folder(path, plugins_list)
+            plugins_list = scanner.get_plugins_list(_global.plugins_txt_path)
+            NoManager.get_files_from_skyrim_folder(_global.skyrim_folder_path, plugins_list)
 
         scanner.plugin_basename_set: set[str] = set([os.path.basename(plugin).lower() for plugin in _global.plugins])
-        scanner.max_plugin_len = max((len(p) for p in scanner.plugin_basename_set))
+        scanner.max_plugin_len = max((len(p) for p in scanner.plugin_basename_set), default=0)
 
         scanner.dump_to_file(file="ESLifier_Data/extracted_bsa.json", data=scanner.extracted)
         scanner.dump_to_file(file="ESLifier_Data/winning_files_dict.json", data=scanner.winning_files_dict)
@@ -143,7 +140,7 @@ class scanner():
             write_normal(QCoreApplication.translate("scanner", 'Getting Dependencies'))
             dependency_dictionary = dependecy_getter.scan()
             write_normal(QCoreApplication.translate("scanner", 'Scanning Plugins'))
-            flag_dict = qualification_checker.scan(path, update_header)
+            flag_dict = qualification_checker.scan()
 
         scanner.get_file_masters()
 

@@ -9,9 +9,11 @@ class _global():
     output_folder_path:str = ''
     output_folder_name:str = ''
     output_folder_joined_path:str = ''
-    overwrite_path:str = ''
+    mo2_base_path:str = ''
+    mo2_overwrite_path:str = ''
     plugins_txt_path:str = ''
     mo2_modlist_txt_path:str = ''
+    mo2_mods_folder:str = ''
     vortex_data_path:str = ''
     vortex_db_path:str = ''
     mod_manager_mode = 0
@@ -24,10 +26,12 @@ class _global():
     all_patcher_experimental = False
 
     # Vars for get_rel_path
-    overwrite_path_lower = ''
-    overwrite_path_len = 0
+    mo2_overwrite_path_lower = ''
+    mo2_overwrite_path_len = 0
     skyrim_folder_path_lower = ''
     skyrim_folder_path_len = 0
+    mo2_mods_folder_lower = ''
+    mo2_mods_folder_len = 0
     mod_staging_folder_lower = ''
     mod_staging_folder_len = 0
     output_folder_joined_path_lower = ''
@@ -43,6 +47,7 @@ class _global():
     plugins = [] #plugins list
     mods_with_seq = {} #{mod: seq_file} mods that have seq files
     vortex_error = -1 #storage for vortex error across classes
+    mo2_error = -1 #storage for mo2 error across classes
     bsa_dict = {}   #{bsa_file: list[mod]} bsa and the mods they contain
     pex_with_getmodbyname: dict[str, set[str]] = {} #{mod: set(pex)} mods with pex with getmodbyname
 
@@ -54,11 +59,11 @@ class _global():
         _global.output_folder_path =                _global._settings.get('output_folder_path', '')
         _global.output_folder_name =                _global._settings.get('output_folder_name', "ESLifier Output")
         _global.mod_manager_mode =                  _global._settings.get('mod_manager_mode', 0)
-        _global.mo2_modlist_txt_path =              _global._settings.get('mo2_modlist_txt_path', '')
+        _global.mo2_base_path =                     _global._settings.get('mo2_base_path', '')
         _global.vortex_data_path =                  _global._settings.get('vortex_data_path', '')
         _global.vortex_db_path =                    os.path.normpath(os.path.join(_global.vortex_data_path, "state.v2"))
-        _global.plugins_txt_path =                  _global._settings.get('plugins_txt_path', '')
-        _global.overwrite_path =                    _global._settings.get('overwrite_path', '')
+        if _global.mod_manager_mode == 0:
+            _global.plugins_txt_path =                  _global._settings.get('plugins_txt_path', '')
         _global.update_header =                     _global._settings.get('update_header', True)
         _global.generate_cell_master =              _global._settings.get('generate_cell_master', True)
         _global.persistent_ids =                    _global._settings.get('persistent_ids', True)
@@ -69,19 +74,26 @@ class _global():
         _global.output_folder_joined_path =         os.path.normpath(os.path.join(_global.output_folder_path, _global.output_folder_name))
         _global.output_folder_joined_path_lower =   _global.output_folder_joined_path.lower()
         _global.output_folder_joined_path_len =     len(_global.output_folder_joined_path)
-        _global.overwrite_path_lower =              _global.overwrite_path.lower()
-        _global.overwrite_path_len =                len(_global.overwrite_path)
+
         _global.skyrim_folder_path_lower =          _global.skyrim_folder_path.lower()
         _global.skyrim_folder_path_len =            len(_global.skyrim_folder_path)
-        _global.bsa_extracted_path_len =            len(os.path.join(_global.cwd, 'bsa_extracted'))
-        _global.bsa_extracted_temp_path_len =       len(os.path.join(_global.cwd, 'bsa_extracted_temp'))
+
+        _global.bsa_extracted_path_len =            len(os.path.normpath(os.path.join(_global.cwd, 'bsa_extracted')))
+        _global.bsa_extracted_temp_path_len =       len(os.path.normpath(os.path.join(_global.cwd, 'bsa_extracted_temp')))
 
         if _global._settings.get('dump_global', False):
             _global.debug_dump_vars()
 
     def update_mod_staging_folder_vars():
-        _global.mod_staging_folder_lower =  _global.mod_staging_folder.lower()
-        _global.mod_staging_folder_len =    len(_global.mod_staging_folder)
+        _global.mod_staging_folder_lower =          _global.mod_staging_folder.lower()
+        _global.mod_staging_folder_len =            len(_global.mod_staging_folder)
+
+    def update_mo2_vars():
+        _global.mo2_mods_folder_lower =             _global.mo2_mods_folder.lower()
+        _global.mo2_mods_folder_len =               len(_global.mo2_mods_folder)
+
+        _global.mo2_overwrite_path_lower =          _global.mo2_overwrite_path.lower()
+        _global.mo2_overwrite_path_len =            len(_global.mo2_overwrite_path)
 
     def debug_dump_vars():
         thing = dict(vars(_global))
@@ -114,13 +126,13 @@ class _global():
         file_lower = file_norm.lower()
 
         # MO2 Overwrite Path
-        if _global.mod_manager_mode == 2 and file_lower.startswith(_global.overwrite_path_lower):
-            return file_norm[_global.overwrite_path_len:].lstrip(os.sep)
+        if _global.mod_manager_mode == 2 and file_lower.startswith(_global.mo2_overwrite_path_lower):
+            return file_norm[_global.mo2_overwrite_path_len:].lstrip(os.sep)
 
         # MO2 Mode
         if _global.mod_manager_mode == 2:
-            if file_lower.startswith(_global.skyrim_folder_path_lower):
-                remainder = file_norm[_global.skyrim_folder_path_len:].lstrip(os.sep)
+            if file_lower.startswith(_global.mo2_mods_folder_lower):
+                remainder = file_norm[_global.mo2_mods_folder_len:].lstrip(os.sep)
                 idx = remainder.find(os.sep)
                 if idx != -1:
                     return remainder[idx+1:]
