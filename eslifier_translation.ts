@@ -2095,7 +2095,7 @@ a save without restarting the game.</source>
     </message>
     <message>
       <location filename="src\settings_page.py" line="139" />
-      <source>Hide plugins with new weather records as they can be referenced in ENB presets which are not patched</source>
+      <source>Hide plugins with new weather records as they can be referenced in ENB presets which are not patched.</source>
       <translation type="unfinished" />
     </message>
     <message>
