@@ -87,7 +87,7 @@
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\compact_form_ids.py" line="949" />
+      <location filename="src\compact_form_ids.py" line="948" />
       <source>Failed to patch dependent's SEQ file: </source>
       <translation type="unfinished" />
     </message>
@@ -166,7 +166,7 @@
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\compact_form_ids.py" line="941" />
+      <location filename="src\compact_form_ids.py" line="940" />
       <source>Failed to patch dependent: </source>
       <translation type="unfinished" />
     </message>
@@ -1919,7 +1919,7 @@ This button needs an output made from v0.12.0+.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner_vortex.py" line="223" />
+      <location filename="src\scanner_vortex.py" line="226" />
       <location filename="src\scanner_mo2.py" line="62" />
       <source>Winning Files Processed: </source>
       <translation type="unfinished" />
@@ -1955,7 +1955,7 @@ This button needs an output made from v0.12.0+.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="505" />
+      <location filename="src\settings_page.py" line="527" />
       <location filename="src\settings_page.py" line="47" />
       <source>Set where you want the Output Folder to be generated.</source>
       <translation type="unfinished" />
@@ -2006,100 +2006,100 @@ This button needs an output made from v0.12.0+.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="71" />
+      <location filename="src\settings_page.py" line="74" />
       <source>Vortex Data Path</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="72" />
+      <location filename="src\settings_page.py" line="75" />
       <source>Set this to Vortex's data folder (the folder that holds the "state.v2" and "skyrimse" folders).</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="73" />
+      <location filename="src\settings_page.py" line="76" />
       <source>C:/Users/USER/AppData/Roaming/Vortex or C:/ProgramData/vortex</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="78" />
+      <location filename="src\settings_page.py" line="81" />
       <source>Plugins.txt Path</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="79" />
+      <location filename="src\settings_page.py" line="82" />
       <source>Set this to your modlist's plugins.txt</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="80" />
+      <location filename="src\settings_page.py" line="83" />
       <source>C:/Path/To/plugins.txt</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="504" />
-      <location filename="src\settings_page.py" line="85" />
+      <location filename="src\settings_page.py" line="526" />
+      <location filename="src\settings_page.py" line="88" />
       <source>Mod Manager: None</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="86" />
+      <location filename="src\settings_page.py" line="89" />
       <source>Users without a mod manager should get a mod manager. ESLifier is not
 meant to be used with manual modding but should still work at least once.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="99" />
+      <location filename="src\settings_page.py" line="102" />
       <source>Allow Form IDs below 0x000800 + Update plugin headers to 1.71</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="100" />
+      <location filename="src\settings_page.py" line="103" />
       <source>Allow scanning and patching to use the new 1.71 header.
 Requires Backported Extended ESL Support on Skyrim versions below 1.6.1130.
 Changing this settings requires a re-scan.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="107" />
+      <location filename="src\settings_page.py" line="110" />
       <source>Show ESM Plugins</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="108" />
+      <location filename="src\settings_page.py" line="111" />
       <source>Display ESM plugins (.esm/ESM flagged).</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="113" />
+      <location filename="src\settings_page.py" line="116" />
       <source>Show plugins with new CELL records</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="114" />
+      <location filename="src\settings_page.py" line="117" />
       <source>Bugs related to cells have been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+.
 For users of SSE Engine Fixes v7+ ESLifier will ignore this setting and show them regardless.
 Display plugins with new CELL records.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="121" />
+      <location filename="src\settings_page.py" line="124" />
       <source>Hide ESM plugins with new CELL records that are overwritten</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="122" />
+      <location filename="src\settings_page.py" line="125" />
       <source>The related bug has been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+. Disable this filter.
 For users of SSE Engine Fixes v7+ ESLifier will ignore this setting and show them regardless.
 Hide ESM plugins with new CELL records that have been changed by a dependent plugin.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="129" />
+      <location filename="src\settings_page.py" line="132" />
       <source>Hide plugins with new interior CELL records</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="130" />
+      <location filename="src\settings_page.py" line="133" />
       <source>This bug has been fixed by SSE Engine Fixes v7+ for Skyrim 1.6.1170+.
 For users of SSE Engine Fixes v7+ ESLifier will ignore this setting and show them regardless.
 Hide plugins with new interior CELL records as they can have issues when reloading
@@ -2107,89 +2107,89 @@ a save without restarting the game.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="138" />
+      <location filename="src\settings_page.py" line="141" />
       <source>Hide plugins with new WRLD (worldspace) records</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="525" />
-      <location filename="src\settings_page.py" line="139" />
+      <location filename="src\settings_page.py" line="547" />
+      <location filename="src\settings_page.py" line="142" />
       <source>Hide plugins with new worldspaces records as they can have the landscape disappear
 (no ground) when flagged as ESL.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="145" />
+      <location filename="src\settings_page.py" line="148" />
       <source>Hide plugins with new WTHR (weather) records</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="146" />
+      <location filename="src\settings_page.py" line="149" />
       <source>Hide plugins with new weather records as they can be referenced in ENB presets which are not patched.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="151" />
+      <location filename="src\settings_page.py" line="154" />
       <source>Hide plugins that have SEQ files</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="152" />
+      <location filename="src\settings_page.py" line="155" />
       <source>Hide plugins that have SEQ files as ESL flagging it may cause dialogue for it to not work until you save and reload in game.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="157" />
+      <location filename="src\settings_page.py" line="160" />
       <source>Hide plugins that have PEX files with GetModByName</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="158" />
+      <location filename="src\settings_page.py" line="161" />
       <source>Hide plugins that have PEX files that call the papyrus function 'GetModByName' on
 '                    'them as that function only works properly on non-ESL plugins.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="164" />
+      <location filename="src\settings_page.py" line="167" />
       <source>Hide left list columns visually</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="165" />
+      <location filename="src\settings_page.py" line="168" />
       <source>Hide specified columns visually. This does not affect what plugins are displayed.
 Specify the column names, comma seperated. Available: CELL, WRLD, SEQ, PEX, ESM
 Example, hides the CELL and ESM flags: CELL,ESM</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="173" />
+      <location filename="src\settings_page.py" line="176" />
       <source>Hide right list columns visually</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="174" />
+      <location filename="src\settings_page.py" line="177" />
       <source>Hide specified columns visually. This does not affect what plugins are displayed.
 Specify the column names, comma seperated. Available: CELL, WRLD, WTHR, SEQ, PEX, ESM, DEPENDENTS
 Example, hides the ESM flag and the dependent plugins: ESM,DEPENDENT</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="182" />
+      <location filename="src\settings_page.py" line="185" />
       <source>Show plugins that are in SKSE dlls</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="183" />
+      <location filename="src\settings_page.py" line="186" />
       <source>Show or hide plugins that may have Form IDs hard-coded in SKSE dlls.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="188" />
+      <location filename="src\settings_page.py" line="191" />
       <source>Persist Form IDs between rebuilds</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="189" />
+      <location filename="src\settings_page.py" line="192" />
       <source>Make Form IDs re-compact to the same compacted Form IDs as the previous
 run, regardless of changes to the plugin such as adding a new Form ID in
 the middle of the existing Form IDs. (Doesn't work after clicking Reset Output)
@@ -2200,12 +2200,12 @@ but 0x9A0B did not and 0x90C is the next available compacted Form ID.)</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="201" />
+      <location filename="src\settings_page.py" line="204" />
       <source>Free Non-Existent Form IDs</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="202" />
+      <location filename="src\settings_page.py" line="205" />
       <source>Allow ESLifier to free the allocation of a compacted Form ID if the
 original Form ID that the compacted Form ID is allocated to no longer exists.
 (i.e. if 0x9A0A no longer exists in the theoretical mod in the toolTip example
@@ -2214,112 +2214,112 @@ instead of 0x80C since 0x80A is free)</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="211" />
+      <location filename="src\settings_page.py" line="214" />
       <source>Enable the Patch New or Changed Files Button</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="212" />
+      <location filename="src\settings_page.py" line="215" />
       <source>Show the patch new button on the main page. Personally, I think it is useless
 and annoying to maintain. However, I'm sure there is someone who uses it so I'm
 keeping the option here to keep it enabled. Doesn't hash check if output has changed.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="219" />
+      <location filename="src\settings_page.py" line="222" />
       <source>Hash the Output Folder to Detect Changes</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="220" />
+      <location filename="src\settings_page.py" line="223" />
       <source>Hash the output folder during certain actions to detect if a file has been changed
 since ESLifier last patched it. Enabling this after you have already created an output will
 not work correctly. Can be time consuming.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="227" />
+      <location filename="src\settings_page.py" line="230" />
       <source>Warn About Changed Plugins in Output Folder</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="228" />
+      <location filename="src\settings_page.py" line="231" />
       <source>Uses the output hash to also warn about plugins that have changed in the output.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="233" />
+      <location filename="src\settings_page.py" line="236" />
       <source>Check for updates on start</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="234" />
+      <location filename="src\settings_page.py" line="237" />
       <source>Connect to GitHub on program start to check for updates</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="240" />
+      <location filename="src\settings_page.py" line="243" />
       <source>Remove Plugins From Blacklist</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="241" />
+      <location filename="src\settings_page.py" line="244" />
       <source>Show window to remove plugins from the blacklist. You can add
 plugins to the blacklist by right clicking them on the Main page.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="243" />
+      <location filename="src\settings_page.py" line="246" />
       <source>Edit Blacklist</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="247" />
+      <location filename="src\settings_page.py" line="250" />
       <source>Open ESLifier's Data Folder</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="248" />
+      <location filename="src\settings_page.py" line="251" />
       <source>This opens the folder where all of the dictionaries and Form ID maps are stored.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="249" />
+      <location filename="src\settings_page.py" line="252" />
       <source>Open Folder</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="253" />
+      <location filename="src\settings_page.py" line="256" />
       <source>Reset All Settings</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="255" />
+      <location filename="src\settings_page.py" line="258" />
       <source>Reset</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="259" />
+      <location filename="src\settings_page.py" line="262" />
       <source>Change Background Colors</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="260" />
+      <location filename="src\settings_page.py" line="263" />
       <source>This opens a color picker for the background colors</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="261" />
+      <location filename="src\settings_page.py" line="264" />
       <source>Open Color Picker</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="265" />
+      <location filename="src\settings_page.py" line="268" />
       <source>Generate Cell Master</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="266" />
+      <location filename="src\settings_page.py" line="269" />
       <source>As of SSE Engine Fixes v7+ this is no longer necessary
 for Skyrim version 1.6.1170+ and can be left disabled.
 This generates a master cell plugin to circumvent
@@ -2334,143 +2334,143 @@ the new worldspace flag/filter.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="348" />
+      <location filename="src\settings_page.py" line="351" />
       <source>Select Inner Color</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="351" />
+      <location filename="src\settings_page.py" line="354" />
       <source>Select Outer Color</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="374" />
+      <location filename="src\settings_page.py" line="377" />
       <source>Select the Skyrim Special Edition Data folder</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="376" />
+      <location filename="src\settings_page.py" line="379" />
       <source>Select your MO2 mods folder</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="379" />
+      <location filename="src\settings_page.py" line="382" />
       <source>Select where you want the output folder</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="412" />
+      <location filename="src\settings_page.py" line="415" />
       <source>Select your MO2 instance folder</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="416" />
+      <location filename="src\settings_page.py" line="419" />
       <source>Select your vortex data folder</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="419" />
+      <location filename="src\settings_page.py" line="422" />
       <source>Select your plugins.txt</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="419" />
+      <location filename="src\settings_page.py" line="422" />
       <source>Load Order</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="429" />
+      <location filename="src\settings_page.py" line="432" />
       <source>Explore...</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="488" />
+      <location filename="src\settings_page.py" line="510" />
       <source>Mod Manager: MO2</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="489" />
+      <location filename="src\settings_page.py" line="511" />
       <source>Set where you want the Output Folder to be generated. For example: MO2's 'mods' folder.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="491" />
+      <location filename="src\settings_page.py" line="513" />
       <source>MO2 users should not launch this executible through MO2,
 Launching this program through MO2 drastically slows it down and may
 break certain functions.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="495" />
+      <location filename="src\settings_page.py" line="517" />
       <source>Mod Manager: Vortex</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="496" />
+      <location filename="src\settings_page.py" line="518" />
       <source>Set where you want the Output Folder to be generated. For example: Vortex's 'Mod Staging Folder'.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="501" />
+      <location filename="src\settings_page.py" line="523" />
       <source>Vortex users can also set this to None to scan the way ESLiifer originally
 dealth with Vortex if you prefer/need that.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="507" />
+      <location filename="src\settings_page.py" line="529" />
       <source>Users without a mod manager should get a mod manager. ESLifier is not
 meant to be used with manual modding but should still work at least once.
 You can also use this mode for the original way Vortex was dealt with.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="518" />
-      <location filename="src\settings_page.py" line="515" />
+      <location filename="src\settings_page.py" line="540" />
+      <location filename="src\settings_page.py" line="537" />
       <source>Disabled by Generate Cell Master setting.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="522" />
+      <location filename="src\settings_page.py" line="544" />
       <source>Hide ESM plugins with new CELL records that have been changed by a dependent plugin.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="574" />
+      <location filename="src\settings_page.py" line="596" />
       <source>Invalid Output Name</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="574" />
+      <location filename="src\settings_page.py" line="596" />
       <source>'%1' is not a valid folder name.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="576" />
+      <location filename="src\settings_page.py" line="598" />
       <source>Output Name missing 'ESLifier'</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="576" />
+      <location filename="src\settings_page.py" line="598" />
       <source>The output name must have 'ESLifier' (case insenstive) in it for safety purposes.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="630" />
+      <location filename="src\settings_page.py" line="652" />
       <source>Error opening file explorer: </source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="639" />
+      <location filename="src\settings_page.py" line="661" />
       <source>Are you sure you want to reset all settings?</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="640" />
+      <location filename="src\settings_page.py" line="662" />
       <source>Confirmation</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="683" />
+      <location filename="src\settings_page.py" line="705" />
       <source>Failed to save settings.</source>
       <translation type="unfinished" />
     </message>
