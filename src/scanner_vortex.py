@@ -180,7 +180,7 @@ class Vortex():
                             mod_files[relative_path].append(mod_folder)
                             if file_lower.endswith(plugin_extensions):
                                 plugin_names.append(file)
-                            if root_level == mod_folder_level and file_lower.endswith('.bsa') and file_lower not in Vortex.scanner.bsa_blacklist:
+                            elif is_mod_root_level and file_lower.endswith('.bsa') and file_lower not in Vortex.scanner.bsa_blacklist:
                                 file = file[:-4]
                                 if ' - textures' in file_lower:
                                     index = file.lower().index(' - textures')
