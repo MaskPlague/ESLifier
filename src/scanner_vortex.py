@@ -167,6 +167,9 @@ class Vortex():
                             file_lower = file.lower()
                             if file_lower in Vortex.scanner.ignored_files:
                                 continue
+                            is_mod_root_level = root_level == mod_folder_level
+                            if is_mod_root_level and file_lower == "collection.json":
+                                continue
                             # Get the relative file path
                             full_path = os.path.join(root, file)
                             relative_path = os.path.relpath(full_path, mod_staging_folder)
