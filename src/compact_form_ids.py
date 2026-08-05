@@ -856,7 +856,6 @@ class CFIDs():
 
         threads: list[threading.Thread] = []
         insert_counter = 3
-        import time
         for dependent in dependents:
             new_file, rel_path = self.copy_file_to_output(dependent)
             basename: str = os.path.basename(new_file)
