@@ -67,6 +67,9 @@ class settings(QWidget):
             self.tr("Select Profile"),
             'mo2_profile'
         )
+        self.mo2_base_path.textChanged.connect(self.mo2_profile.clear)
+        self.mo2_base_path.editingFinished.connect(self.mo2_profile.clear)
+        self.mo2_base_path.editingFinished.connect(self.populate_mo2_profiles)
         self.vortex_data_path_widget, self.vortex_data_path = self.create_path_widget(
             self.tr("Vortex Data Path"),
             self.tr("Set this to Vortex's data folder (the folder that holds the \"state.v2\" and \"skyrimse\" folders)."),
@@ -456,6 +459,25 @@ class settings(QWidget):
         layout.addWidget(combo_box)
 
         combo_box.setPlaceholderText(placeholder)
+
+        def update_style():
+            is_empty = "true" if combo_box.currentIndex() == -1 else "false"
+            
+            combo_box.setProperty("empty", is_empty)
+            combo_box.style().unpolish(combo_box)
+            combo_box.style().polish(combo_box)
+
+        combo_box.setStyleSheet("""
+            QComboBox[empty="true"] {
+                background-color: #FFCCCC;
+                border: 1px solid red;
+            }
+            QComboBox[empty="false"] {
+            }
+            """)
+        combo_box.currentIndexChanged.connect(update_style)
+        
+        update_style()
         combo_box.setMinimumWidth(666)
         combo_box.setMaximumWidth(1000)
         self.default_settings[settings_key] = {"type": "combo_box", "default": '', "widget": combo_box}
