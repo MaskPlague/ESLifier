@@ -37,7 +37,7 @@ class NoManager():
                 temp_rel_paths.add(rel_path)
                 if path_level == root_level and file_lower.endswith(plugin_extensions):
                     _global.plugins.append(full_path)
-                if path_level == root_level and file_lower.endswith('.bsa') and file_lower not in NoManager.scanner.bsa_blacklist:
+                elif path_level == root_level and file_lower.endswith('.bsa') and file_lower not in NoManager.scanner.bsa_blacklist:
                     file = file[:-4]
                     if ' - textures' in file_lower:
                         index = file_lower.index(' - textures')
@@ -63,6 +63,5 @@ class NoManager():
                 relative_path = os.path.relpath(full_path, mod_folder).lower()
                 if relative_path not in temp_rel_paths:
                     NoManager.scanner.all_files.append(full_path)
-                else:
-                    if os.path.exists(full_path):
-                        os.remove(full_path)
+                elif os.path.exists(full_path):
+                    os.remove(full_path)
