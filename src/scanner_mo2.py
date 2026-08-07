@@ -235,6 +235,8 @@ class MO2():
 
             if ini.has_option('Settings', 'mod_directory'):
                 _global.mo2_mods_folder = os.path.normpath(ini.get('Settings', 'mod_directory'))
+                if _global.mo2_mods_folder.startswith("%BASE_DIR%"):
+                    _global.mo2_mods_folder = os.path.normpath(_global.mo2_mods_folder.replace("%BASE_DIR%", mo2_base_dir))
             else:
                 _global.mo2_mods_folder = os.path.normpath(os.path.join(mo2_base_dir, 'mods'))
 
@@ -247,6 +249,8 @@ class MO2():
 
             if ini.has_option('Settings', 'overwrite_directory'):
                 _global.mo2_overwrite_path = os.path.normpath(ini.get('Settings', 'overwrite_directory'))
+                if _global.mo2_overwrite_path.startswith("%BASE_DIR%"):
+                    _global.mo2_overwrite_path = os.path.normpath(_global.mo2_overwrite_path.replace("%BASE_DIR%", mo2_base_dir))
             else:
                 _global.mo2_overwrite_path = os.path.normpath(os.path.join(mo2_base_dir, 'overwrite'))
 
