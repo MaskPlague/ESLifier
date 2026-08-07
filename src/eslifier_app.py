@@ -16,7 +16,7 @@ from main_page import main
 from log_stream import log_stream, write_to_file
 from data_holder import _global
 
-CURRENT_VERSION = '0.16.6'
+CURRENT_VERSION = '0.16.7'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
@@ -373,14 +373,14 @@ class main_window(QMainWindow):
         output_path = self.settings_widget.settings['output_folder_path']
         mod_manager_mode = self.settings_widget.settings['mod_manager_mode']
         if mod_manager_mode == 2:
-            mo2_base_path = self.settings_widget.settings['mo2_base_path']
-            mo2_profile = self.settings_widget.settings['mo2_profile']
-            mo2_profiles_dir = self.settings_widget.settings['mo2_profiles_dir']
+            mo2_base_path:str = self.settings_widget.settings['mo2_base_path']
+            mo2_profile:str = self.settings_widget.settings['mo2_profile']
+            mo2_profiles_dir:str = self.settings_widget.settings['mo2_profiles_dir']
         elif mod_manager_mode == 1:
-            vortex_data_path = self.settings_widget.settings['vortex_data_path']
+            vortex_data_path:str = self.settings_widget.settings['vortex_data_path']
         elif mod_manager_mode == 0:
-            plugins_txt = self.settings_widget.settings['plugins_txt_path']
-            data_path = self.settings_widget.settings['skyrim_folder_path']
+            plugins_txt:str = self.settings_widget.settings['plugins_txt_path']
+            data_path:str = self.settings_widget.settings['skyrim_folder_path']
 
         error_message = ''
 
@@ -396,7 +396,7 @@ class main_window(QMainWindow):
             output_path_exists = False
         else:
             output_path_exists = True
-            output_path_drive, _ = os.path.splitdrive(output_path)
+            output_path_drive = os.path.splitdrive(output_path)[0].lower()
 
         if mod_manager_mode == 0:
             if not plugins_txt.lower().endswith('.txt'):
@@ -406,7 +406,7 @@ class main_window(QMainWindow):
             if not os.path.exists(data_path):
                 error_message += self.tr("Invalid Skyrim Data Directory, it does not exist.") + "\n"
             else:
-                data_path_drive, _ = os.path.splitdrive(data_path)
+                data_path_drive = os.path.splitdrive(data_path)[0].lower()
                 if output_path_exists and output_path_drive != data_path_drive:
                     error_message += self.tr("The Data Folder Path and the Output Folder Path must be on the same drive.") + "\n"
 
