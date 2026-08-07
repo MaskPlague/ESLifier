@@ -1955,7 +1955,7 @@ This button needs an output made from v0.12.0+.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="527" />
+      <location filename="src\settings_page.py" line="529" />
       <location filename="src\settings_page.py" line="47" />
       <source>Set where you want the Output Folder to be generated.</source>
       <translation type="unfinished" />
@@ -2036,7 +2036,7 @@ This button needs an output made from v0.12.0+.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="526" />
+      <location filename="src\settings_page.py" line="528" />
       <location filename="src\settings_page.py" line="88" />
       <source>Mod Manager: None</source>
       <translation type="unfinished" />
@@ -2112,7 +2112,7 @@ a save without restarting the game.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="547" />
+      <location filename="src\settings_page.py" line="549" />
       <location filename="src\settings_page.py" line="142" />
       <source>Hide plugins with new worldspaces records as they can have the landscape disappear
 (no ground) when flagged as ESL.</source>
@@ -2359,118 +2359,118 @@ the new worldspace flag/filter.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="415" />
+      <location filename="src\settings_page.py" line="417" />
       <source>Select your MO2 instance folder</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="419" />
+      <location filename="src\settings_page.py" line="421" />
       <source>Select your vortex data folder</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="422" />
+      <location filename="src\settings_page.py" line="424" />
       <source>Select your plugins.txt</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="422" />
+      <location filename="src\settings_page.py" line="424" />
       <source>Load Order</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="432" />
+      <location filename="src\settings_page.py" line="434" />
       <source>Explore...</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="510" />
+      <location filename="src\settings_page.py" line="512" />
       <source>Mod Manager: MO2</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="511" />
+      <location filename="src\settings_page.py" line="513" />
       <source>Set where you want the Output Folder to be generated. For example: MO2's 'mods' folder.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="513" />
+      <location filename="src\settings_page.py" line="515" />
       <source>MO2 users should not launch this executible through MO2,
 Launching this program through MO2 drastically slows it down and may
 break certain functions.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="517" />
+      <location filename="src\settings_page.py" line="519" />
       <source>Mod Manager: Vortex</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="518" />
+      <location filename="src\settings_page.py" line="520" />
       <source>Set where you want the Output Folder to be generated. For example: Vortex's 'Mod Staging Folder'.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="523" />
+      <location filename="src\settings_page.py" line="525" />
       <source>Vortex users can also set this to None to scan the way ESLiifer originally
 dealth with Vortex if you prefer/need that.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="529" />
+      <location filename="src\settings_page.py" line="531" />
       <source>Users without a mod manager should get a mod manager. ESLifier is not
 meant to be used with manual modding but should still work at least once.
 You can also use this mode for the original way Vortex was dealt with.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="540" />
-      <location filename="src\settings_page.py" line="537" />
+      <location filename="src\settings_page.py" line="542" />
+      <location filename="src\settings_page.py" line="539" />
       <source>Disabled by Generate Cell Master setting.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="544" />
+      <location filename="src\settings_page.py" line="546" />
       <source>Hide ESM plugins with new CELL records that have been changed by a dependent plugin.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="596" />
+      <location filename="src\settings_page.py" line="598" />
       <source>Invalid Output Name</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="596" />
+      <location filename="src\settings_page.py" line="598" />
       <source>'%1' is not a valid folder name.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="598" />
+      <location filename="src\settings_page.py" line="600" />
       <source>Output Name missing 'ESLifier'</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="598" />
+      <location filename="src\settings_page.py" line="600" />
       <source>The output name must have 'ESLifier' (case insenstive) in it for safety purposes.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="652" />
+      <location filename="src\settings_page.py" line="654" />
       <source>Error opening file explorer: </source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="661" />
+      <location filename="src\settings_page.py" line="663" />
       <source>Are you sure you want to reset all settings?</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="662" />
+      <location filename="src\settings_page.py" line="664" />
       <source>Confirmation</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\settings_page.py" line="705" />
+      <location filename="src\settings_page.py" line="707" />
       <source>Failed to save settings.</source>
       <translation type="unfinished" />
     </message>
