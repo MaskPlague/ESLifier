@@ -394,6 +394,8 @@ class settings(QWidget):
 
             if ini.has_option('Settings', 'profiles_directory'):
                 mo2_profiles_dir = os.path.normpath(ini.get('Settings', 'profiles_directory'))
+                if mo2_profiles_dir.startswith("%BASE_DIR%"):
+                    mo2_profiles_dir = os.path.normpath(mo2_profiles_dir.replace("%BASE_DIR%", mo2_base_dir))
             else:
                 mo2_profiles_dir = os.path.normpath(os.path.join(mo2_base_dir, "profiles"))
             self.settings['mo2_profiles_dir'] = mo2_profiles_dir
