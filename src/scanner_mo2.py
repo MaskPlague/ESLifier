@@ -240,8 +240,8 @@ class MO2():
             else:
                 _global.mo2_mods_folder = os.path.normpath(os.path.join(mo2_base_dir, 'mods'))
 
-            mods_folder_drive, _ = os.path.splitdrive(_global.mo2_mods_folder)
-            output_folder_drive, _ = os.path.splitdrive(_global.output_folder_path)
+            mods_folder_drive = os.path.splitdrive(_global.mo2_mods_folder)[0].lower()
+            output_folder_drive = os.path.splitdrive(_global.output_folder_path)[0].lower()
             #Output and mo2 mods folder must be on same drive
             if mods_folder_drive != output_folder_drive:
                 _global.mo2_error = 0
@@ -254,7 +254,7 @@ class MO2():
             else:
                 _global.mo2_overwrite_path = os.path.normpath(os.path.join(mo2_base_dir, 'overwrite'))
 
-            overwrite_folder_drive, _ = os.path.splitdrive(_global.mo2_overwrite_path)
+            overwrite_folder_drive = os.path.splitdrive(_global.mo2_overwrite_path)[0].lower()
             #Output and mo2 overwrite folder must be on same drive
             if overwrite_folder_drive != output_folder_drive:
                 _global.mo2_error = 1
