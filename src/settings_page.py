@@ -385,7 +385,7 @@ class settings(QWidget):
         mo2_base_dir = os.path.normpath(self.settings.get('mo2_base_path', ''))
         file = os.path.join(mo2_base_dir, "ModOrganizer.ini")
         if os.path.exists(file):
-            ini = configparser.ConfigParser()
+            ini = configparser.ConfigParser(interpolation=None)
             
             ini.read(file, encoding='utf-8')
 
