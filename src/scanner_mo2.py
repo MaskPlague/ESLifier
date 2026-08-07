@@ -226,7 +226,7 @@ class MO2():
             mo2_base_dir = os.path.normpath(_global.mo2_base_path)
             file = os.path.join(mo2_base_dir, "ModOrganizer.ini")
 
-            ini = configparser.ConfigParser()
+            ini = configparser.ConfigParser(interpolation=None)
             
             ini.read(file, encoding='utf-8')
 
