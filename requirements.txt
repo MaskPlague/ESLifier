@@ -2,7 +2,10 @@ PyQt6
 #intervalTree # Removed
 Regex
 requests
-pyinstaller
+pywin32
+#nuitka
+pefile
+#pyinstaller # likely want to build your own to prevent false positives from AV
 #leveldb # Has own command in the .bat
 plyvel
 psutil
