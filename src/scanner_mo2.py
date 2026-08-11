@@ -54,7 +54,7 @@ class MO2():
         mod_files: dict[str, list[str]]
         plugin_names: list[str]
         cases: dict[str, str]
-        mod_files, plugin_names, cases = MO2.get_files_from_mods(mods_folder, enabled_mods, plugins_list, overwrite_path)
+        mod_files, plugin_names, cases = MO2.get_files_from_mods(mods_folder, enabled_mods, plugins_list, overwrite_path, load_order)
         winning_files: list[list[str, str]] = []
         file_count = 0
         loop = 0
@@ -99,6 +99,7 @@ class MO2():
         plugin_extensions = ('.esp', '.esl', '.esm')
         plugins = []
         plugin_names_lowered = [plugin.lower() for plugin in plugin_names]
+        write_to_file(plugin_names_lowered)
         for file, overwrite in winning_files:
             file_level = len(file.split(os.sep))
             if overwrite:
@@ -106,18 +107,20 @@ class MO2():
             else:
                 level = mod_folder_level
             if file_level == level + 2 and file.lower().endswith(plugin_extensions) and not file.endswith("ESLifier_Cell_Master.esm"):
+                write_to_file(os.path.basename(file.lower()))
                 plugin = os.path.join(os.path.dirname(file), plugin_names[plugin_names_lowered.index(os.path.basename(file.lower()))])
                 plugins.append(plugin)
         return_list = [winning_file for winning_file, _ in winning_files]
         return return_list, plugins
 
-    def get_files_from_mods(mods_folder: str, enabled_mods: set, plugins_list: list, overwrite_path: str) -> tuple[dict, list, dict]:
+    def get_files_from_mods(mods_folder: str, enabled_mods: set, plugins_list: list, overwrite_path: str, load_order:list[str]) -> tuple[dict, list, dict]:
         if not os.path.exists('bsa_extracted/'):
             os.makedirs('bsa_extracted/')
         mod_files: dict[str, list[str]] = {}
         cases_of_files: dict[str, str] = {}
         bsa_list = []
-        bsa_dict_temp = {}
+        bsa_dict_temp: dict[str, list[str]] = {}
+        bsa_file_name_dict: dict[str, str] = {}
         plugin_extensions = ('.esp', '.esl', '.esm')
         plugin_names = set()
         loop = 0
@@ -138,37 +141,44 @@ class MO2():
                     else:
                         loop += 1
                     for file in files:
-                        if file != 'meta.ini':
-                            file_lower = file.lower()
-                            if file_lower in MO2.scanner.ignored_files:
-                                continue
-                            # Get the relative file path
-                            full_path = os.path.join(root, file)
-                            relative_path = os.path.relpath(full_path, mods_folder)
-                            part = relative_path.split(os.sep)
-                            cased = os.path.join(*part[1:])
-                            relative_path = cased.lower()
-                            if '.mohidden' in relative_path: #if the file or containing folder is mod organizer hidden, skip it
-                                continue
-                            # Track the file paths by mod
-                            if relative_path not in mod_files:
-                                mod_files[relative_path] = []
-                                cases_of_files[relative_path] = cased
-                            mod_files[relative_path].append(mod_folder)
-                            if file_lower.endswith(plugin_extensions):
-                                plugin_names.add(file)
-                            elif root_level == mod_folder_level and file_lower.endswith('.bsa') and file_lower not in MO2.scanner.bsa_blacklist:
-                                file = file[:-4]
-                                if ' - textures' in file_lower:
-                                    index = file.lower().index(' - textures')
-                                    file = file[:index]
-                                #bsa_list.append([file.lower(), full_path])
-                                bsa_dict_temp[file.lower()] = full_path
+                        file_lower = file.lower()
+                        if file_lower in MO2.scanner.ignored_files:
+                            continue
+                        is_mod_root_level = root_level == mod_folder_level
+                        if is_mod_root_level and file_lower == "meta.ini":
+                            continue
+                        # Get the relative file path
+                        full_path = os.path.join(root, file)
+                        relative_path = os.path.relpath(full_path, mods_folder)
+                        part = relative_path.split(os.sep)
+                        cased = os.path.join(*part[1:])
+                        relative_path = cased.lower()
+                        if '.mohidden' in relative_path: #if the file or containing folder is mod organizer hidden, skip it
+                            continue
+                        # Track the file paths by mod
+                        if relative_path not in mod_files:
+                            mod_files[relative_path] = []
+                            cases_of_files[relative_path] = cased
+                        mod_files[relative_path].append(mod_folder)
+                        if is_mod_root_level and file_lower.endswith(plugin_extensions):
+                            plugin_names.add(file)
+                        elif is_mod_root_level and file_lower.endswith('.bsa') and file_lower not in MO2.scanner.bsa_blacklist:
+                            bsa_file = file[:-4]
+                            bsa_lower = bsa_file.lower()
+                            if ' - textures' in bsa_lower:
+                                index = bsa_lower.index(' - textures')
+                                bsa_lower = bsa_lower[:index]
+                            if not file_lower in bsa_dict_temp:
+                                bsa_dict_temp[file_lower] = []
+                                bsa_file_name_dict[file_lower] = bsa_lower
+                            bsa_dict_temp[file_lower].append(mod_folder)
 
         #Get files from MO2's overwrite folder
         if os.path.exists(overwrite_path):
+            overwrite_level = len(overwrite_path.split(os.sep))
             for root, dirs, files in os.walk(overwrite_path):
                 file_count += len(files)
+                root_level = len(root.split(os.sep))
                 if loop == 50: #prevent spamming stdout and slowing down the program
                     loop = 0
                     write_remove(1, gathered_str + str(file_count))
@@ -178,6 +188,7 @@ class MO2():
                     file_lower = file.lower()
                     if file_lower in MO2.scanner.ignored_files:
                         continue
+                    is_file_root_level = root_level == overwrite_level
                     full_path = os.path.join(root, file)
                     cased = os.path.relpath(full_path, overwrite_path)
                     relative_path = cased.lower()
@@ -187,21 +198,40 @@ class MO2():
                         mod_files[relative_path] = []
                         cases_of_files[relative_path] = cased
                     mod_files[relative_path].append('overwrite_eslifier_scan')
-                    if file_lower.endswith(plugin_extensions):
+                    if is_file_root_level and file_lower.endswith(plugin_extensions):
                         if file not in plugin_names:
                             plugin_names.add(file)
-                    elif file_lower.endswith('.bsa') and file_lower not in MO2.scanner.bsa_blacklist:
-                        file = file[:-4]
-                        if ' - textures' in file_lower:
-                            index = file_lower.index(' - textures')
-                            file = file[:index]
-                        #bsa_list.append([file.lower(), full_path])
-                        #Since we are scanning overwrite, if the bsa exists it should win the bsa conflict
-                        bsa_dict_temp[file.lower()] = full_path
+                    elif is_file_root_level and file_lower.endswith('.bsa') and file_lower not in MO2.scanner.bsa_blacklist:
+                        bsa_file = file[:-4]
+                        bsa_lower = bsa_file.lower()
+                        if ' - textures' in bsa_lower:
+                            index = bsa_lower.index(' - textures')
+                            bsa_lower = bsa_lower[:index]
+                        if not file_lower in bsa_dict_temp:
+                            bsa_dict_temp[file_lower] = []
+                            bsa_file_name_dict[file_lower] = bsa_lower
+                        bsa_dict_temp[file_lower].append('overwrite_eslifier_scan')
         else:
             write_to_file('Overwrite folder not found.\n')
-                                
-        bsa_list = [[file, full_path] for file, full_path in bsa_dict_temp.items()]
+        #BSA list is expacted to be like: [[mod_name, full_path], [mod_name2, full_path2]] where mod_name is (mod_name).esp without ext 
+        # for sorting by plugin during extraction. mod_name is obtained from (mod_name).bsa
+        bsa_list = []
+        for relative_path, mods in bsa_dict_temp.items():
+            if len(mods) == 1:
+                mod = mods[0]
+                if mod == 'overwrite_eslifier_scan':
+                    file_path = os.path.join(overwrite_path, relative_path)
+                else:
+                    file_path = os.path.join(mods_folder, mod, relative_path)
+                bsa_list.append([bsa_file_name_dict[relative_path], file_path])
+            else:
+                mods_sorted = sorted(mods, key=lambda mod: load_order.index(mod))
+                if mods_sorted[-1] == 'overwrite_eslifier_scan':
+                    file_path = os.path.join(overwrite_path, relative_path)
+                else:
+                    file_path = os.path.join(mods_folder, mods_sorted[-1], relative_path)
+                bsa_list.append([bsa_file_name_dict[relative_path], file_path])
+        
         MO2.scanner.extract_scripts_and_seq_from_bsa(bsa_list, plugins_list)
 
         mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
