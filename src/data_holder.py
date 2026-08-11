@@ -175,3 +175,9 @@ class _global():
                 return file_norm[_global.output_folder_joined_path_len:].lstrip(os.sep)
 
 
+        raise RuntimeError(
+            QCoreApplication.translate(
+                "Global", 
+                "No relative file path method for file: %1, aborting program execution for safety. Report this to the GitHub with your settings.json."
+                ).replace("%1", file)
+            )
