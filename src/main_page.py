@@ -679,8 +679,8 @@ class main(QWidget):
             confirm.setStandardButtons(QMessageBox.StandardButton.Ok)
             confirm.accepted.connect(accept)
             confirm.show()
-            return False
-        return True
+            return True
+        return False
         
     def scan(self):
         if _global.mod_manager_mode == 1:
@@ -816,7 +816,7 @@ class main(QWidget):
         except Exception as e:
             write_error(self.tr("Failed to open new_file_hashes.json"))
             write_error(e, True)
-    
+
     def reset_output(self):
         self.output_folder_full = os.path.join(self.output_folder_path, self.output_folder_name)
         if self.output_folder_full.lower() == self.skyrim_folder_path.lower() or self.output_folder_full.lower() == self.output_folder_path.lower():
