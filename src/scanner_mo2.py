@@ -117,8 +117,9 @@ class MO2():
         mod_files: dict[str, list[str]] = {}
         cases_of_files: dict[str, str] = {}
         bsa_list = []
+        bsa_dict_temp = {}
         plugin_extensions = ('.esp', '.esl', '.esm')
-        plugin_names = []
+        plugin_names = set()
         loop = 0
         file_count = 0
         gathered_str = '-  ' + QCoreApplication.translate("scanner", "Gathered: ")
@@ -155,13 +156,14 @@ class MO2():
                                 cases_of_files[relative_path] = cased
                             mod_files[relative_path].append(mod_folder)
                             if file_lower.endswith(plugin_extensions):
-                                plugin_names.append(file)
+                                plugin_names.add(file)
                             elif root_level == mod_folder_level and file_lower.endswith('.bsa') and file_lower not in MO2.scanner.bsa_blacklist:
                                 file = file[:-4]
                                 if ' - textures' in file_lower:
                                     index = file.lower().index(' - textures')
                                     file = file[:index]
-                                bsa_list.append([file.lower(), full_path])
+                                #bsa_list.append([file.lower(), full_path])
+                                bsa_dict_temp[file.lower()] = full_path
 
         #Get files from MO2's overwrite folder
         if os.path.exists(overwrite_path):
@@ -186,16 +188,20 @@ class MO2():
                         cases_of_files[relative_path] = cased
                     mod_files[relative_path].append('overwrite_eslifier_scan')
                     if file_lower.endswith(plugin_extensions):
-                        plugin_names.append(file)
+                        if file not in plugin_names:
+                            plugin_names.add(file)
                     elif file_lower.endswith('.bsa') and file_lower not in MO2.scanner.bsa_blacklist:
                         file = file[:-4]
                         if ' - textures' in file_lower:
                             index = file_lower.index(' - textures')
                             file = file[:index]
-                        bsa_list.append([file.lower(), full_path])
+                        #bsa_list.append([file.lower(), full_path])
+                        #Since we are scanning overwrite, if the bsa exists it should win the bsa conflict
+                        bsa_dict_temp[file.lower()] = full_path
         else:
             write_to_file('Overwrite folder not found.\n')
-
+                                
+        bsa_list = [[file, full_path] for file, full_path in bsa_dict_temp.items()]
         MO2.scanner.extract_scripts_and_seq_from_bsa(bsa_list, plugins_list)
 
         mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
@@ -219,7 +225,7 @@ class MO2():
                     cases_of_files[relative_path] = relative_path
                 mod_files[relative_path].append('bsa_extracted_eslifier_scan')
 
-        return mod_files, plugin_names, cases_of_files
+        return mod_files, list(plugin_names), cases_of_files
 
     def get_instance_paths():
         try:
