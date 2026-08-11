@@ -662,8 +662,30 @@ class main(QWidget):
         if not self.redoing_output:
             self.setEnabled(True)
             self.calculate_stats()
+
+    def check_if_vortex_db_is_readable_and_warn_if_it_is_not(self):
+        return_val = VortexDBParser.is_readable()
+        #If not readable (1)
+        if return_val != 1:
+            confirm = self.create_confirmation('lightcoral')
+            # 0 means locked by vortex
+            if return_val == 0:
+                confirm.setText(self.tr("Please close Vortex, ESLifier cannot accesss Vortex's database while it is open."))
+            elif isinstance(_global.vortex_error, Exception):
+                confirm.setText(self.tr(f"ESLifier has come across an error while scanning Vortex data: %0").replace('%0', str(return_val)))
+            self.scanned = False
+            def accept():
+                confirm.hide()
+            confirm.setStandardButtons(QMessageBox.StandardButton.Ok)
+            confirm.accepted.connect(accept)
+            confirm.show()
+            return False
+        return True
         
     def scan(self):
+        if _global.mod_manager_mode == 1:
+            if self.check_if_vortex_db_is_readable_and_warn_if_it_is_not():
+                return
         self.setEnabled(False)
         self.scan_thread = QThread()
         def run_scan():
@@ -802,6 +824,10 @@ class main(QWidget):
             write_error(self.tr('Issue occured getting the output folder during output reset.'))
             return
 
+        if _global.mod_manager_mode == 1:
+            if self.check_if_vortex_db_is_readable_and_warn_if_it_is_not():
+                return
+
         if _global.hash_output:
             self.calculate_existing_output_threaded('reset_output')
         else:
@@ -923,22 +949,9 @@ class main(QWidget):
             self.log_stream.show()
             write_error(self.tr('Issue occured getting the output folder during output rebuild.'))
             return
+
         if _global.mod_manager_mode == 1:
-            return_val = VortexDBParser.is_readable()
-            #If not readable (1)
-            if return_val != 1:
-                confirm = self.create_confirmation('lightcoral')
-                # 0 means locked by vortex
-                if return_val == 0:
-                    confirm.setText(self.tr("Please close Vortex, ESLifier cannot accesss Vortex's database while it is open."))
-                elif isinstance(_global.vortex_error, Exception):
-                    confirm.setText(self.tr(f"ESLifier has come across an error while scanning Vortex data: %0").replace('%0', str(return_val)))
-                self.scanned = False
-                def accept():
-                    confirm.hide()
-                confirm.setStandardButtons(QMessageBox.StandardButton.Ok)
-                confirm.accepted.connect(accept)
-                confirm.show()
+            if self.check_if_vortex_db_is_readable_and_warn_if_it_is_not():
                 return
 
         if _global.hash_output:
@@ -1414,6 +1427,9 @@ class main(QWidget):
         self.stats.setText(stats_text)
 
     def scan_and_patch_new(self):
+        if _global.mod_manager_mode == 1:
+            if self.check_if_vortex_db_is_readable_and_warn_if_it_is_not():
+                return
         self.setEnabled(False)
         confirm = self.create_confirmation()
         confirm.setText(self.tr("Are you sure you want to scan and patch new/changed files?"))
