@@ -201,7 +201,6 @@ class Vortex():
                                 if ' - textures' in file_lower:
                                     index = bsa_file.lower().index(' - textures')
                                     bsa_file = bsa_file[:index]
-                                #bsa_list.append([mod_folder, file.lower(), full_path])
                                 if not file_lower in bsa_dict_temp:
                                     bsa_dict_temp[file_lower] = []
                                     bsa_file_name_dict[file_lower] = bsa_file.lower()
@@ -241,7 +240,6 @@ class Vortex():
                             if ' - textures' in bsa_lower:
                                 index = bsa_lower.lower().index(' - textures')
                                 bsa_lower = bsa_lower[:index]
-                            #bsa_list.append([file.lower(), full_path])
                             if not file_lower in bsa_dict_temp:
                                 bsa_dict_temp[file_lower] = []
                                 bsa_file_name_dict[file_lower] = bsa_lower
@@ -252,6 +250,8 @@ class Vortex():
             installed_mods
         )
         write_to_file(len(bsa_conflict_map))
+        #BSA list is expacted to be like: [[mod_name, full_path], [mod_name2, full_path2]] where mod_name is (mod_name).esp without ext 
+        # for sorting by plugin during extraction. mod_name is obtained from (mod_name).bsa
         bsa_list = []
         for relative_path, providing_mods in bsa_conflict_map.items():
             if len(providing_mods) == 1:
