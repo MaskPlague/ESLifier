@@ -270,7 +270,6 @@ class Vortex():
             mod_files,
             installed_mods
         )
-        write_to_file(ordered_mod_ids)
         winning_files = []
         file_count = 0
         loop = 0
@@ -283,9 +282,6 @@ class Vortex():
                 write_remove(1, winning_files_processed_str + str(file_count))
             else:
                 loop += 1
-            if relative_path.endswith('018auri.esp'):
-                write_to_file(relative_path)
-                write_to_file(providing_mods)
             if len(providing_mods) == 1:
                 data_folder_file = False
                 mod = providing_mods[0]
