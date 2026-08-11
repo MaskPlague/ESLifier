@@ -2,6 +2,8 @@ from settings_page import settings
 from log_stream import write_to_file
 import os
 
+from PyQt6.QtCore import QCoreApplication
+
 class _global():
     # Commonly Accessed Settings
     _settings: dict = {}
@@ -58,7 +60,6 @@ class _global():
         _global._settings = settings_widget.settings
 
     def update_from_settings():     
-        _global.skyrim_folder_path =                _global._settings.get('skyrim_folder_path', '')
         _global.output_folder_path =                _global._settings.get('output_folder_path', '')
         _global.output_folder_name =                _global._settings.get('output_folder_name', "ESLifier Output")
         _global.mod_manager_mode =                  _global._settings.get('mod_manager_mode', 0)
@@ -68,6 +69,7 @@ class _global():
         _global.vortex_data_path =                  _global._settings.get('vortex_data_path', '')
         _global.vortex_db_path =                    os.path.normpath(os.path.join(_global.vortex_data_path, "state.v2"))
         if _global.mod_manager_mode == 0:
+            _global.skyrim_folder_path =                _global._settings.get('skyrim_folder_path', '')
             _global.plugins_txt_path =                  _global._settings.get('plugins_txt_path', '')
         _global.vortex_restore_backups =            _global._settings.get('vortex_restore_backups', True)
         _global.update_header =                     _global._settings.get('update_header', True)
@@ -154,7 +156,7 @@ class _global():
         # Vortex Mode
         if _global.mod_manager_mode == 1:
             # SSE Data Folder Path
-            if file_lower.startswith(_global.skyrim_folder_path_lower):
+            if _global.skyrim_folder_path and file_lower.startswith(_global.skyrim_folder_path_lower):
                 return file_norm[_global.skyrim_folder_path_len:].lstrip(os.sep)
             # Mod Staging Folder
             elif file_lower.startswith(_global.mod_staging_folder_lower):
@@ -165,8 +167,11 @@ class _global():
                 return remainder
 
         # Manual Mode
-        if file_lower.startswith(_global.skyrim_folder_path_lower):
-            return file_norm[_global.skyrim_folder_path_len:].lstrip(os.sep)
+        if _global.mod_manager_mode == 0:
+            if file_lower.startswith(_global.skyrim_folder_path_lower):
+                return file_norm[_global.skyrim_folder_path_len:].lstrip(os.sep)
 
-        if file_lower.startswith(_global.output_folder_joined_path_lower):
-            return file_norm[_global.output_folder_joined_path_len:].lstrip(os.sep)
+            if file_lower.startswith(_global.output_folder_joined_path_lower):
+                return file_norm[_global.output_folder_joined_path_len:].lstrip(os.sep)
+
+
