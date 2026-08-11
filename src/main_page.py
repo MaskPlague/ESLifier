@@ -914,7 +914,7 @@ class main(QWidget):
                 confirm3 = self.create_removal_confirmation(
                     self.tr("Would you like to remove the ESLifier Data that stores\n"\
                             "info used to reselect your previously ESL flagged/compacted\n"\
-                            "mods? Do this only if you are full reset."),
+                            "mods? Do this only if you are performing a full reset."),
                     accepted3
                 )
                 confirm3.show()
