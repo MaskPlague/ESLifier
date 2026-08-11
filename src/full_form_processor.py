@@ -236,8 +236,8 @@ class form_processor():
         return saved_forms
     
     def save_achr_data(i, form):
-        achr_fields = [b'NAME', b'XEZN', b'INAM', b'XMRC', b'XAPR', b'XLRT', b'XHOR', b'XOWN', b'XESP', b'XLCN', b'XLRL', b'XEMI', b'XMBR', b'TNAM']
-        special_achr_fields = [b'PDTO', b'VMAD', b'XLKR']
+        achr_fields = {b'NAME', b'XEZN', b'INAM', b'XMRC', b'XAPR', b'XLRT', b'XHOR', b'XOWN', b'XESP', b'XLCN', b'XLRL', b'XEMI', b'XMBR', b'TNAM'}
+        special_achr_fields = {b'PDTO', b'VMAD', b'XLKR'}
 
         achr_offsets = [12]
         offset = 24
@@ -258,8 +258,8 @@ class form_processor():
         return [i, bytearray(form), achr_offsets]
     
     def save_acti_data(i, form):
-        acti_fields = [b'SNAM', b'VNAM', b'WNAM', b'KNAM']
-        special_acti_fields = [b'KWDA', b'MODS', b'VMAD', b'DSTD', b'DMDS']
+        acti_fields = {b'SNAM', b'VNAM', b'WNAM', b'KNAM'}
+        special_acti_fields = {b'KWDA', b'MODS', b'VMAD', b'DSTD', b'DMDS'}
 
         acti_offsets = [12]
         offset = 24
@@ -285,8 +285,8 @@ class form_processor():
         return [i, bytearray(form), acti_offsets]
 
     def save_addn_data(i, form):
-        addn_fields = [b'SNAM']
-        special_addn_fields = [b'MODS']
+        addn_fields = {b'SNAM'}
+        special_addn_fields = {b'MODS'}
 
         addn_offsets = [12]
         offset = 24
@@ -302,8 +302,8 @@ class form_processor():
         return [i, bytearray(form), addn_offsets]
 
     def save_alch_data(i, form):
-        alch_fields = [b'YNAM', b'ZNAM', b'EFID', b'ETYP']
-        special_alch_fields = [b'KWDA', b'ENIT', b'MODS', b'CTDA', b'DSTD', b'DMDS']
+        alch_fields = {b'YNAM', b'ZNAM', b'EFID', b'ETYP'}
+        special_alch_fields = {b'KWDA', b'ENIT', b'MODS', b'CTDA', b'DSTD', b'DMDS'}
 
         alch_offsets = [12]
         offset = 24
@@ -331,8 +331,8 @@ class form_processor():
         return [i, bytearray(form), alch_offsets]
 
     def save_ammo_data(i, form):
-        ammo_fields = [b'YNAM', b'ZNAM', b'DATA']
-        special_ammo_fields = [b'KWDA', b'MODS', b'DSTD', b'DMDS']
+        ammo_fields = {b'YNAM', b'ZNAM', b'DATA'}
+        special_ammo_fields = {b'KWDA', b'MODS', b'DSTD', b'DMDS'}
 
         ammo_offsets = [12]
         offset = 24
@@ -355,7 +355,7 @@ class form_processor():
         return [i, bytearray(form), ammo_offsets]
 
     def save_anio_data(i, form):
-        special_anio_fields = [b'MODS']
+        special_anio_fields = {b'MODS'}
 
         anio_offsets = [12]
         offset = 24
@@ -369,8 +369,8 @@ class form_processor():
         return [i, bytearray(form), anio_offsets]
 
     def save_appa_data(i, form):
-        appa_fields = [b'YNAM', b'ZNAM']
-        special_appa_fields = [b'DSTD', b'DMDS', b'VMAD', b'MODS']
+        appa_fields = {b'YNAM', b'ZNAM'}
+        special_appa_fields = {b'DSTD', b'DMDS', b'VMAD', b'MODS'}
 
         appa_offsets = [12]
         offset = 24
@@ -393,8 +393,8 @@ class form_processor():
         return [i, bytearray(form), appa_offsets]
 
     def save_arma_data(i, form):
-        arma_fields = [b'RNAM', b'NAM0', b'NAM1', b'NAM2', b'NAM3', b'MODL', b'SNDD', b'ONAM']
-        special_arma_fields = [b'MO2S', b'MO3S', b'MO4S', b'MO5S']
+        arma_fields = {b'RNAM', b'NAM0', b'NAM1', b'NAM2', b'NAM3', b'MODL', b'SNDD', b'ONAM'}
+        special_arma_fields = {b'MO2S', b'MO3S', b'MO4S', b'MO5S'}
 
         arma_offsets = [12]
         offset = 24
@@ -410,8 +410,8 @@ class form_processor():
         return [i, bytearray(form), arma_offsets]
     
     def save_armo_data(i, form):
-        armo_fields = [b'EITM', b'YNAM', b'ZNAM', b'ETYP', b'BIDS', b'BAMT', b'RNAM', b'MODL', b'TNAM']
-        special_armo_fields = [b'KWDA', b'VMAD', b'MODS', b'MO2S', b'MO4S', b'DSTD', b'DMDS']
+        armo_fields = {b'EITM', b'YNAM', b'ZNAM', b'ETYP', b'BIDS', b'BAMT', b'RNAM', b'MODL', b'TNAM'}
+        special_armo_fields = {b'KWDA', b'VMAD', b'MODS', b'MO2S', b'MO4S', b'DSTD', b'DMDS'}
 
         armo_offsets = [12]
         offset = 24
@@ -436,7 +436,7 @@ class form_processor():
         return [i, bytearray(form), armo_offsets]
 
     def save_arto_data(i, form):
-        special_arto_fields = [b'MODS']
+        special_arto_fields = {b'MODS'}
 
         arto_offsets = [12]
         offset = 24
@@ -450,7 +450,7 @@ class form_processor():
         return [i, bytearray(form), arto_offsets]
 
     def save_aspc_data(i, form):
-        aspc_fields = [b'SNAM', b'RDAT', b'BNAM']
+        aspc_fields = {b'SNAM', b'RDAT', b'BNAM'}
 
         aspc_offsets = [12]
         offset = 24
@@ -463,7 +463,7 @@ class form_processor():
         return [i, bytearray(form), aspc_offsets]
 
     def save_avif_data(i, form):
-        avif_fields = [b'PNAM', b'SNAM']
+        avif_fields = {b'PNAM', b'SNAM'}
 
         avif_offsets = [12]
         offset = 24
@@ -476,8 +476,8 @@ class form_processor():
         return [i, bytearray(form), avif_offsets]
 
     def save_book_data(i, form):
-        book_fields = [b'YNAM', b'ZNAM', b'INAM']
-        special_book_fields = [b'VMAD', b'MODS', b'DSTD', b'DMDS', b'KWDA', b'DATA']
+        book_fields = {b'YNAM', b'ZNAM', b'INAM'}
+        special_book_fields = {b'VMAD', b'MODS', b'DSTD', b'DMDS', b'KWDA', b'DATA'}
 
         book_offsets = [12]
         offset = 24
@@ -504,8 +504,8 @@ class form_processor():
         return [i, bytearray(form), book_offsets]
 
     def save_bptd_data(i, form):
-        bptd_fields = [b'RAGA'] # Might not be necessary
-        special_bptd_fields = [b'MODS', b'BPND']
+        bptd_fields = {b'RAGA'} # Might not be necessary
+        special_bptd_fields = {b'MODS', b'BPND'}
 
         bptd_offsets = [12]
         offset = 24
@@ -529,8 +529,8 @@ class form_processor():
         return [i, bytearray(form), bptd_offsets]
 
     def save_cams_data(i, form):
-        cams_fields = [b'MNAM']
-        special_cams_fields = [b'MODS']
+        cams_fields = {b'MNAM'}
+        special_cams_fields = {b'MODS'}
 
         cams_offsets = [12]
         offset = 24
@@ -546,8 +546,8 @@ class form_processor():
         return [i, bytearray(form), cams_offsets]
 
     def save_cell_data(i, form):
-        cell_fields = [b'LTMP', b'XLCN', b'XCWT', b'XOWN', b'XILL', b'XCCM', b'XCAS', b'XEZN', b'XCMO', b'XCIM']
-        special_cell_fields = [b'XCLR']
+        cell_fields = {b'LTMP', b'XLCN', b'XCWT', b'XOWN', b'XILL', b'XCCM', b'XCAS', b'XEZN', b'XCMO', b'XCIM'}
+        special_cell_fields = {b'XCLR'}
 
         cell_offsets = [12]
         offset = 24
@@ -563,7 +563,7 @@ class form_processor():
         return [i, bytearray(form), cell_offsets]
 
     def save_clmt_data(i, form):
-        special_clmt_fields = [b'WLST', b'MODS']
+        special_clmt_fields = {b'WLST', b'MODS'}
 
         clmt_offsets = [12]
         offset = 24
@@ -584,8 +584,8 @@ class form_processor():
         return [i, bytearray(form), clmt_offsets]
 
     def save_cobj_data(i, form):
-        cobj_fields = [b'CNAM', b'BNAM', b'CNTO']
-        special_cobj_fields = [b'COED', b'CTDA']
+        cobj_fields = {b'CNAM', b'BNAM', b'CNTO'}
+        special_cobj_fields = {b'COED', b'CTDA'}
 
         cobj_offsets = [12]
         offset = 24
@@ -604,7 +604,7 @@ class form_processor():
         return [i, bytearray(form), cobj_offsets]
 
     def save_coll_data(i, form):
-        special_coll_fields = [b'CNAM']
+        special_coll_fields = {b'CNAM'}
 
         coll_offsets = [12]
         offset = 24
@@ -624,8 +624,8 @@ class form_processor():
         return [i, bytearray(form), coll_offsets]
     
     def save_cont_data(i, form):
-        cont_fields = [b'SNAM', b'QNAM', b'CNTO']
-        special_cont_fields = [b'MODS', b'VMAD', b'COED', b'DSTD', b'DMDS']
+        cont_fields = {b'SNAM', b'QNAM', b'CNTO'}
+        special_cont_fields = {b'MODS', b'VMAD', b'COED', b'DSTD', b'DMDS'}
 
         cont_offsets = [12]
         offset = 24
@@ -651,8 +651,8 @@ class form_processor():
         return [i, bytearray(form), cont_offsets]
 
     def save_cpth_data(i, form):
-        cpth_fields = [b'SNAM']
-        special_cpth_fields = [b'ANAM', b'CTDA']
+        cpth_fields = {b'SNAM'}
+        special_cpth_fields = {b'ANAM', b'CTDA'}
 
         cpth_offsets = [12]
         offset = 24
@@ -671,7 +671,7 @@ class form_processor():
         return [i, bytearray(form), cpth_offsets]
 
     def save_dial_data(i, form):
-        dial_fields = [b'QNAM', b'BNAM']
+        dial_fields = {b'QNAM', b'BNAM'}
 
         dial_offsets = [12]
         offset = 24
@@ -684,7 +684,7 @@ class form_processor():
         return [i, bytearray(form), dial_offsets]
     
     def save_dlbr_data(i, form):
-        dlbr_fields = [b'QNAM', b'SNAM']
+        dlbr_fields = {b'QNAM', b'SNAM'}
 
         dlbr_offsets = [12]
         offset = 24
@@ -697,7 +697,7 @@ class form_processor():
         return [i, bytearray(form), dlbr_offsets]
     
     def save_dlvw_data(i, form):
-        dlvw_fields = [b'QNAM', b'BNAM', b'TNAM']
+        dlvw_fields = {b'QNAM', b'BNAM', b'TNAM'}
 
         dlvw_offsets = [12]
         offset = 24
@@ -710,7 +710,7 @@ class form_processor():
         return [i, bytearray(form), dlvw_offsets]
 
     def save_dobj_data(i, form): 
-        special_dobj_fields = [b'DNAM']
+        special_dobj_fields = {b'DNAM'}
 
         dobj_offsets = [12]
         offset = 24
@@ -729,8 +729,8 @@ class form_processor():
         return [i, bytearray(form), dobj_offsets]
 
     def save_door_data(i, form): 
-        door_fields = [b'SNAM', b'ANAM', b'BNAM', b'TNAM']
-        special_door_fields = [b'VMAD', b'MODS', b'DSTD', b'DMDS']
+        door_fields = {b'SNAM', b'ANAM', b'BNAM', b'TNAM'}
+        special_door_fields = {b'VMAD', b'MODS', b'DSTD', b'DMDS'}
 
         door_offsets = [12]
         offset = 24
@@ -753,7 +753,7 @@ class form_processor():
         return [i, bytearray(form), door_offsets]
 
     def save_dual_data(i, form): 
-        special_dual_fields = [b'DATA']
+        special_dual_fields = {b'DATA'}
 
         dual_offsets = [12]
         offset = 24
@@ -772,7 +772,7 @@ class form_processor():
         return [i, bytearray(form), dual_offsets]
 
     def save_eczn_data(i, form): 
-        special_eczn_fields = [b'DATA']
+        special_eczn_fields = {b'DATA'}
 
         eczn_offsets = [12]
         offset = 24
@@ -787,7 +787,7 @@ class form_processor():
         return [i, bytearray(form), eczn_offsets]
 
     def save_efsh_data(i, form): 
-        special_efsh_fields = [b'DATA']
+        special_efsh_fields = {b'DATA'}
 
         efsh_offsets = [12]
         offset = 24
@@ -802,8 +802,8 @@ class form_processor():
         return [i, bytearray(form), efsh_offsets]
 
     def save_ench_data(i, form):
-        ench_fields = [b'EFID']
-        special_ench_fields = [b'ENIT', b'CTDA']
+        ench_fields = {b'EFID'}
+        special_ench_fields = {b'ENIT', b'CTDA'}
 
         ench_offsets = [12]
         offset = 24
@@ -825,7 +825,7 @@ class form_processor():
         return [i, bytearray(form), ench_offsets]
 
     def save_equp_data(i, form): 
-        special_equp_fields = [b'PNAM']
+        special_equp_fields = {b'PNAM'}
 
         equp_offsets = [12]
         offset = 24
@@ -839,8 +839,8 @@ class form_processor():
         return [i, bytearray(form), equp_offsets]
 
     def save_expl_data(i, form): 
-        expl_fields = [b'EITM', b'MNAM']
-        special_FORM_fields = [b'DATA', b'MODS']
+        expl_fields = {b'EITM', b'MNAM'}
+        special_FORM_fields = {b'DATA', b'MODS'}
 
         expl_offsets = [12]
         offset = 24
@@ -864,8 +864,8 @@ class form_processor():
         return [i, bytearray(form), expl_offsets]
 
     def save_fact_data(i, form): 
-        fact_fields = [b'XNAM', b'JAIL', b'WAIT', b'STOL', b'PLCN', b'CRGR', b'JOUT', b'VEND', b'VENC']
-        special_fact_fields = [b'PLVD', b'CTDA']
+        fact_fields = {b'XNAM', b'JAIL', b'WAIT', b'STOL', b'PLCN', b'CRGR', b'JOUT', b'VEND', b'VENC'}
+        special_fact_fields = {b'PLVD', b'CTDA'}
 
         fact_offsets = [12]
         offset = 24
@@ -883,8 +883,8 @@ class form_processor():
         return [i, bytearray(form), fact_offsets]
 
     def save_flor_data(i, form): 
-        flor_fields = [b'PFIG', b'SNAM']
-        special_flor_fields = [b'KWDA', b'VMAD', b'MODS', b'DSTD', b'DMDS']
+        flor_fields = {b'PFIG', b'SNAM'}
+        special_flor_fields = {b'KWDA', b'VMAD', b'MODS', b'DSTD', b'DMDS'}
 
         flor_offsets = [12]
         offset = 24
@@ -909,7 +909,7 @@ class form_processor():
         return [i, bytearray(form), flor_offsets]
 
     def save_flst_data(i, form): 
-        flst_fields = [b'LNAM']
+        flst_fields = {b'LNAM'}
 
         flst_offsets = [12]
         offset = 24
@@ -922,7 +922,7 @@ class form_processor():
         return [i, bytearray(form), flst_offsets]
 
     def save_fstp_data(i, form): 
-        fstp_fields = [b'DATA']
+        fstp_fields = {b'DATA'}
 
         fstp_offsets = [12]
         offset = 24
@@ -935,7 +935,7 @@ class form_processor():
         return [i, bytearray(form), fstp_offsets]
 
     def save_fsts_data(i, form): 
-        special_fsts_fields = [b'DATA']
+        special_fsts_fields = {b'DATA'}
 
         fsts_offsets = [12]
         offset = 24
@@ -949,8 +949,8 @@ class form_processor():
         return [i, bytearray(form), fsts_offsets]
 
     def save_furn_data(i, form): 
-        furn_fields = [b'KNAM', b'NAM1', b'FNMK']
-        special_furn_fields = [b'VMAD', b'MODS', b'KWDA', b'DSTD', b'DMDS']
+        furn_fields = {b'KNAM', b'NAM1', b'FNMK'}
+        special_furn_fields = {b'VMAD', b'MODS', b'KWDA', b'DSTD', b'DMDS'}
 
         furn_offsets = [12]
         offset = 24
@@ -975,7 +975,7 @@ class form_processor():
         return [i, bytearray(form), furn_offsets]
 
     def save_glob_data(i, form): 
-        special_glob_fields = [b'VMAD'] #probably not necessary
+        special_glob_fields = {b'VMAD'} #probably not necessary
 
         glob_offsets = [12]
         offset = 24
@@ -997,8 +997,8 @@ class form_processor():
         return [i, bytearray(form), grup_offsets]
 
     def save_hazd_data(i, form): 
-        hazd_fields = [b'MNAM']
-        special_hazd_fields = [b'DATA', b'MODS']
+        hazd_fields = {b'MNAM'}
+        special_hazd_fields = {b'DATA', b'MODS'}
 
         hazd_offsets = [12]
         offset = 24
@@ -1020,8 +1020,8 @@ class form_processor():
         return [i, bytearray(form), hazd_offsets]
 
     def save_hdpt_data(i, form): 
-        hdpt_fields = [b'HNAM', b'TNAM', b'RNAM', b'CNAM']
-        special_hdpt_fields = [b'MODS']
+        hdpt_fields = {b'HNAM', b'TNAM', b'RNAM', b'CNAM'}
+        special_hdpt_fields = {b'MODS'}
 
         hdpt_offsets = [12]
         offset = 24
@@ -1037,7 +1037,7 @@ class form_processor():
         return [i, bytearray(form), hdpt_offsets]
     
     def save_idle_data(i, form): 
-        special_idle_fields = [b'CTDA', b'ANAM']
+        special_idle_fields = {b'CTDA', b'ANAM'}
 
         idle_offsets = [12]
         offset = 24
@@ -1054,7 +1054,7 @@ class form_processor():
         return [i, bytearray(form), idle_offsets]
 
     def save_idlm_data(i, form): 
-        special_idlm_fields = [b'IDLA', b'MODS']
+        special_idlm_fields = {b'IDLA', b'MODS'}
 
         idlm_offsets = [12]
         offset = 24
@@ -1070,8 +1070,8 @@ class form_processor():
         return [i, bytearray(form), idlm_offsets]
 
     def save_info_data(i, form): 
-        info_fields = [b'PNAM', b'TCLT', b'DNAM', b'SNAM', b'LNAM', b'ANAM', b'TWAT', b'ONAM', b'TPIC']
-        special_info_fields = [b'VMAD', b'TRDT', b'CTDA']
+        info_fields = {b'PNAM', b'TCLT', b'DNAM', b'SNAM', b'LNAM', b'ANAM', b'TWAT', b'ONAM', b'TPIC'}
+        special_info_fields = {b'VMAD', b'TRDT', b'CTDA'}
 
         info_offsets = [12]
         offset = 24
@@ -1091,8 +1091,8 @@ class form_processor():
         return [i, bytearray(form), info_offsets]
 
     def save_ingr_data(i, form): 
-        ingr_fields = [b'YNAM', b'ZNAM', b'EFID', b'ETYP']
-        special_ingr_fields = [b'VMAD', b'KWDA', b'CTDA', b'MODS', b'DSTD', b'DMDS']
+        ingr_fields = {b'YNAM', b'ZNAM', b'EFID', b'ETYP'}
+        special_ingr_fields = {b'VMAD', b'KWDA', b'CTDA', b'MODS', b'DSTD', b'DMDS'}
 
         ingr_offsets = [12]
         offset = 24
@@ -1119,8 +1119,8 @@ class form_processor():
         return [i, bytearray(form), ingr_offsets]
 
     def save_ipct_data(i, form): 
-        ipct_fields = [b'DNAM', b'ENAM', b'SNAM', b'NAM1', b'NAM2']
-        special_ipct_fields = [b'MODS']
+        ipct_fields = {b'DNAM', b'ENAM', b'SNAM', b'NAM1', b'NAM2'}
+        special_ipct_fields = {b'MODS'}
 
         ipct_offsets = [12]
         offset = 24
@@ -1136,7 +1136,7 @@ class form_processor():
         return [i, bytearray(form), ipct_offsets]
 
     def save_ipds_data(i, form): 
-        special_ipds_fields = [b'PNAM']
+        special_ipds_fields = {b'PNAM'}
 
         ipds_offsets = [12]
         offset = 24
@@ -1151,8 +1151,8 @@ class form_processor():
         return [i, bytearray(form), ipds_offsets]
 
     def save_keym_data(i, form): 
-        keym_fields = [b'YNAM', b'ZNAM']
-        special_keym_fields = [b'VMAD', b'KWDA', b'MODS', b'DSTD', b'DMDS']
+        keym_fields = {b'YNAM', b'ZNAM'}
+        special_keym_fields = {b'VMAD', b'KWDA', b'MODS', b'DSTD', b'DMDS'}
 
         keym_offsets = [12]
         offset = 24
@@ -1177,7 +1177,7 @@ class form_processor():
         return [i, bytearray(form), keym_offsets]
 
     def save_land_data(i, form): 
-        land_fields = [b'ATXT', b'BTXT']
+        land_fields = {b'ATXT', b'BTXT'}
 
         land_offsets = [12]
         offset = 24
@@ -1190,8 +1190,8 @@ class form_processor():
         return [i, bytearray(form), land_offsets]
 
     def save_lctn_data(i, form):
-        lctn_fields = [b'ACEC', b'LCEC', b'PNAM', b'NAM1', b'FNAM', b'MNAM', b'NAM0']
-        special_lctn_fields = [b'ACPR', b'LCPR', b'RCPR', b'ACUN', b'LCUN', b'ACSR', b'LCSR', b'ACEP', b'LCEP', b'ACID', b'LCID', b'KWDA']
+        lctn_fields = {b'ACEC', b'LCEC', b'PNAM', b'NAM1', b'FNAM', b'MNAM', b'NAM0'}
+        special_lctn_fields = {b'ACPR', b'LCPR', b'RCPR', b'ACUN', b'LCUN', b'ACSR', b'LCSR', b'ACEP', b'LCEP', b'ACID', b'LCID', b'KWDA'}
 
         lctn_offsets = [12]
         offset = 24
@@ -1232,8 +1232,8 @@ class form_processor():
         return [i, bytearray(form), lctn_offsets]
 
     def save_ligh_data(i, form): 
-        ligh_fields = [b'SNAM', b'LNAM']
-        special_ligh_fields = [b'VMAD', b'DSTD', b'DMDS', b'MODS']
+        ligh_fields = {b'SNAM', b'LNAM'}
+        special_ligh_fields = {b'VMAD', b'DSTD', b'DMDS', b'MODS'}
 
         ligh_offsets = [12]
         offset = 24
@@ -1256,8 +1256,8 @@ class form_processor():
         return [i, bytearray(form), ligh_offsets]
 
     def save_lscr_data(i, form): 
-        lscr_fields = [b'NNAM']
-        special_lscr_fields = [b'CTDA']
+        lscr_fields = {b'NNAM'}
+        special_lscr_fields = {b'CTDA'}
 
         lscr_offsets = [12]
         offset = 24
@@ -1273,7 +1273,7 @@ class form_processor():
         return [i, bytearray(form), lscr_offsets]
 
     def save_ltex_data(i, form): 
-        ltex_fields = [b'TNAM', b'MNAM', b'GNAM']
+        ltex_fields = {b'TNAM', b'MNAM', b'GNAM'}
 
         ltex_offsets = [12]
         offset = 24
@@ -1286,8 +1286,8 @@ class form_processor():
         return [i, bytearray(form), ltex_offsets]
     
     def save_lvli_data(i, form): 
-        lvli_fields = [b'LVLG']
-        special_lvli_fields = [b'LVLO', b'COED']
+        lvli_fields = {b'LVLG'}
+        special_lvli_fields = {b'LVLO', b'COED'}
 
         lvli_offsets = [12]
         offset = 24
@@ -1306,8 +1306,8 @@ class form_processor():
         return [i, bytearray(form), lvli_offsets]
 
     def save_lvln_data(i, form): 
-        lvln_fields = [b'LVLG']
-        special_lvln_fields = [b'MODS', b'LVLO', b'COED']
+        lvln_fields = {b'LVLG'}
+        special_lvln_fields = {b'MODS', b'LVLO', b'COED'}
 
         lvln_offsets = [12]
         offset = 24
@@ -1328,7 +1328,7 @@ class form_processor():
         return [i, bytearray(form), lvln_offsets]
 
     def save_lvsp_data(i, form):
-        special_lvsp_fields = [b'LVLO']
+        special_lvsp_fields = {b'LVLO'}
 
         lvsp_offsets = [12]
         offset = 24
@@ -1342,7 +1342,7 @@ class form_processor():
         return [i, bytearray(form), lvsp_offsets]
 
     def save_matt_data(i, form): 
-        matt_fields = [b'HNAM', b'PNAM']
+        matt_fields = {b'HNAM', b'PNAM'}
 
         matt_offsets = [12]
         offset = 24
@@ -1355,8 +1355,8 @@ class form_processor():
         return [i, bytearray(form), matt_offsets]
 
     def save_mesg_data(i, form): 
-        mesg_fields = [b'QNAM', b'INAM']
-        special_mesg_fields = [b'CTDA']
+        mesg_fields = {b'QNAM', b'INAM'}
+        special_mesg_fields = {b'CTDA'}
 
         mesg_offsets = [12]
         offset = 24
@@ -1372,8 +1372,8 @@ class form_processor():
         return [i, bytearray(form), mesg_offsets]
 
     def save_mgef_data(i, form):
-        mgef_fields = [b'MDOB', b'ESCE']
-        special_mgef_fields = [b'KWDA', b'SNDD', b'CTDA', b'VMAD', b'DATA']
+        mgef_fields = {b'MDOB', b'ESCE'}
+        special_mgef_fields = {b'KWDA', b'SNDD', b'CTDA', b'VMAD', b'DATA'}
 
         mgef_offsets = [12]
         offset = 24
@@ -1417,8 +1417,8 @@ class form_processor():
         return [i, bytearray(form), mgef_offsets]
 
     def save_misc_data(i, form): 
-        misc_fields = [b'YNAM', b'ZNAM']
-        special_misc_fields = [b'VMAD', b'MODS', b'DSTD', b'DMDS', b'KWDA']
+        misc_fields = {b'YNAM', b'ZNAM'}
+        special_misc_fields = {b'VMAD', b'MODS', b'DSTD', b'DMDS', b'KWDA'}
 
         misc_offsets = [12]
         offset = 24
@@ -1443,8 +1443,8 @@ class form_processor():
         return [i, bytearray(form), misc_offsets]
 
     def save_mstt_data(i, form): 
-        mstt_fields = [b'SNAM']
-        special_mstt_fields = [b'MODS', b'DSTD', b'DMDS']
+        mstt_fields = {b'SNAM'}
+        special_mstt_fields = {b'MODS', b'DSTD', b'DMDS'}
 
         mstt_offsets = [12]
         offset = 24
@@ -1465,7 +1465,7 @@ class form_processor():
         return [i, bytearray(form), mstt_offsets]
 
     def save_musc_data(i, form): 
-        special_musc_fields = [b'TNAM']
+        special_musc_fields = {b'TNAM'}
 
         musc_offsets = [12]
         offset = 24
@@ -1479,7 +1479,7 @@ class form_processor():
         return [i, bytearray(form), musc_offsets]
 
     def save_must_data(i, form): 
-        special_must_fields = [b'CTDA', b'SNAM']
+        special_must_fields = {b'CTDA', b'SNAM'}
         
         must_offsets = [12]
         offset = 24
@@ -1500,7 +1500,7 @@ class form_processor():
         return [i, bytearray(form), must_offsets]
     
     def save_navi_data(i, form): 
-        special_navi_fields = [b'NVMI', b'NVPP', b'NVSI']
+        special_navi_fields = {b'NVMI', b'NVPP', b'NVSI'}
 
         navi_offsets = [12]
         offset = 24
@@ -1551,7 +1551,7 @@ class form_processor():
         return [i, bytearray(form), navi_offsets]
 
     def save_navm_data(i, form): 
-        special_navm_fields = [b'NVNM', b'ONAM']
+        special_navm_fields = {b'NVNM', b'ONAM'}
 
         navm_offsets = [12]
         offset = 24
@@ -1586,8 +1586,8 @@ class form_processor():
         return [i, bytearray(form), navm_offsets]
 
     def save_note_data(i, form): 
-        note_fields = [b'ONAM', b'YNAM', b'ZNAM', b'SNAM']
-        special_note_fields = [b'TNAM', b'VMAD', b'MODS']
+        note_fields = {b'ONAM', b'YNAM', b'ZNAM', b'SNAM'}
+        special_note_fields = {b'TNAM', b'VMAD', b'MODS'}
 
         note_offsets = [12]
         offset = 24
@@ -1609,9 +1609,9 @@ class form_processor():
         return [i, bytearray(form), note_offsets]
 
     def save_npc__data(i, form): 
-        npc__fields = [b'INAM', b'VTCK', b'TPLT', b'RNAM', b'SPLO', b'WNAM', b'ANAM', b'ATKR', b'SPOR', b'OCOR', b'GWOR', b'ECOR', b'PKID', b'CNTO',
-                       b'CNAM', b'PNAM', b'HCLF', b'ZNAM', b'GNAM', b'CSDI', b'CSCR', b'DOFT', b'SOFT', b'DPLT', b'CRIF', b'FTST', b'SNAM', b'PRKR']
-        special_npc__fields = [b'VMAD', b'DSTD', b'DMDS', b'ATKD', b'COED', b'KWDA']
+        npc__fields = {b'INAM', b'VTCK', b'TPLT', b'RNAM', b'SPLO', b'WNAM', b'ANAM', b'ATKR', b'SPOR', b'OCOR', b'GWOR', b'ECOR', b'PKID', b'CNTO',
+                       b'CNAM', b'PNAM', b'HCLF', b'ZNAM', b'GNAM', b'CSDI', b'CSCR', b'DOFT', b'SOFT', b'DPLT', b'CRIF', b'FTST', b'SNAM', b'PRKR'}
+        special_npc__fields = {b'VMAD', b'DSTD', b'DMDS', b'ATKD', b'COED', b'KWDA'}
 
         npc__offsets = [12]
         offset = 24
@@ -1641,7 +1641,7 @@ class form_processor():
         return [i, bytearray(form), npc__offsets]
 
     def save_otft_data(i, form): 
-        special_otft_fields = [b'INAM']
+        special_otft_fields = {b'INAM'}
 
         otft_offsets = [12]
         offset = 24
@@ -1655,8 +1655,8 @@ class form_processor():
         return [i, bytearray(form), otft_offsets]
     
     def save_pack_data(i, form): 
-        pack_fields = [b'CNAM', b'QNAM', b'TPIC', b'INAM']
-        special_pack_fields = [b'VMAD', b'CTDA', b'IDLA', b'PKCU', b'PDTO', b'PLDT', b'PTDA']
+        pack_fields = {b'CNAM', b'QNAM', b'TPIC', b'INAM'}
+        special_pack_fields = {b'VMAD', b'CTDA', b'IDLA', b'PKCU', b'PDTO', b'PLDT', b'PTDA'}
 
         pack_offsets = [12]
         offset = 24
@@ -1679,8 +1679,8 @@ class form_processor():
         return [i, bytearray(form), pack_offsets]
 
     def save_perk_data(i, form): 
-        perk_fields = [b'NNAM']
-        special_perk_fields = [b'VMAD', b'CTDA', b'DATA', b'EPFD']
+        perk_fields = {b'NNAM'}
+        special_perk_fields = {b'VMAD', b'CTDA', b'DATA', b'EPFD'}
 
         perk_offsets = [12]
         offset = 24
@@ -1707,8 +1707,8 @@ class form_processor():
         return [i, bytearray(form), perk_offsets]
 
     def save_placed_data(i, form): 
-        placed_fields = [b'NAME', b'XEZN', b'XOWN', b'XPWR', b'XAPR', b'XESP', b'XEMI', b'XMBR', b'XLRL', b'XLRT']
-        special_placed_fields = [b'VMAD', b'XLKR']
+        placed_fields = {b'NAME', b'XEZN', b'XOWN', b'XPWR', b'XAPR', b'XESP', b'XEMI', b'XMBR', b'XLRL', b'XLRT'}
+        special_placed_fields = {b'VMAD', b'XLKR'}
 
         placed_offsets = [12]
         offset = 24
@@ -1728,7 +1728,7 @@ class form_processor():
         return [i, bytearray(form), placed_offsets]
 
     def save_proj_data(i, form): 
-        special_proj_fields = [b'DSTD', b'DATA', b'DMDS', b'MODS']
+        special_proj_fields = {b'DSTD', b'DATA', b'DMDS', b'MODS'}
 
         proj_offsets = [12]
         offset = 24
@@ -1756,7 +1756,7 @@ class form_processor():
         return [i, bytearray(form), proj_offsets]
     
     def save_plyr_data(i, form):
-        plyr_fields = [b'PLYR']
+        plyr_fields = {b'PLYR'}
 
         plyr_offsets = [12]
         offset = 24
@@ -1769,9 +1769,9 @@ class form_processor():
         return [i, bytearray(form), plyr_offsets]
 
     def save_qust_data(i, form): 
-        qust_fields = [b'QTGL', b'NAM0', b'ALCO', b'ALEQ', b'KNAM', b'ALRT', b'ALFL', b'ALFR', b'ALUA', b'CNTO', b'SPOR', b'OCOR', b'GWOR', b'ECOR', b'ALDN',
-                        b'ALSP', b'ALFC', b'ALPC', b'VTCK', b'QSTA']
-        special_qust_fields = [b'VMAD', b'CTDA', b'KWDA', b'COED']
+        qust_fields = {b'QTGL', b'NAM0', b'ALCO', b'ALEQ', b'KNAM', b'ALRT', b'ALFL', b'ALFR', b'ALUA', b'CNTO', b'SPOR', b'OCOR', b'GWOR', b'ECOR', b'ALDN',
+                        b'ALSP', b'ALFC', b'ALPC', b'VTCK', b'QSTA'}
+        special_qust_fields = {b'VMAD', b'CTDA', b'KWDA', b'COED'}
 
         qust_offsets = [12]
         offset = 24
@@ -1794,9 +1794,9 @@ class form_processor():
         return [i, bytearray(form), qust_offsets]
 
     def save_race_data(i, form): 
-        race_fields = [b'SPLO', b'WNAM', b'ATKR', b'GNAM', b'NAM4', b'NAM5', b'NAM7', b'ONAM', b'LNAM', b'MTYP', b'QNAM', b'UNES', b'WKMV', b'HEAD', b'RPRF', b'DFTF', b'ENAM',
-                        b'RNMV', b'SWMV', b'FLMV', b'SNMV', b'SPMV', b'RPRM', b'AHCM', b'FTSM', b'DFTM', b'TIND', b'TINC', b'NAM8', b'RNAM', b'AHCF', b'FTSF', b'HNAM']
-        special_race_fields = [b'KWDA', b'VTCK', b'DNAM', b'HCLF', b'ATKD', b'MODS']
+        race_fields = {b'SPLO', b'WNAM', b'ATKR', b'GNAM', b'NAM4', b'NAM5', b'NAM7', b'ONAM', b'LNAM', b'MTYP', b'QNAM', b'UNES', b'WKMV', b'HEAD', b'RPRF', b'DFTF', b'ENAM',
+                        b'RNMV', b'SWMV', b'FLMV', b'SNMV', b'SPMV', b'RPRM', b'AHCM', b'FTSM', b'DFTM', b'TIND', b'TINC', b'NAM8', b'RNAM', b'AHCF', b'FTSF', b'HNAM'}
+        special_race_fields = {b'KWDA', b'VTCK', b'DNAM', b'HCLF', b'ATKD', b'MODS'}
 
         race_offsets = [12]
         offset = 24
@@ -1820,9 +1820,9 @@ class form_processor():
         return [i, bytearray(form), race_offsets]
     
     def save_refr_data(i, form):
-        refr_fields = [b'NAME', b'LNAM', b'INAM', b'XLRM', b'XEMI', b'XLIB', b'XLRT', b'XOWN', b'XEZN', b'XMBR', b'XPWR', b'XATR', b'INAM', b'XLRL', b'XAPR', 
-                       b'XTEL', b'XNDP', b'XESP', b'XLTW', b'XTNM', b'XCZC', b'XCZR', b'XSPC', b'XLCN']
-        special_refr_fields = [b'PDTO', b'XLOC', b'XLKR', b'XPOD', b'VMAD', b'XORD']
+        refr_fields = {b'NAME', b'LNAM', b'INAM', b'XLRM', b'XEMI', b'XLIB', b'XLRT', b'XOWN', b'XEZN', b'XMBR', b'XPWR', b'XATR', b'INAM', b'XLRL', b'XAPR', 
+                       b'XTEL', b'XNDP', b'XESP', b'XLTW', b'XTNM', b'XCZC', b'XCZR', b'XSPC', b'XLCN'}
+        special_refr_fields = {b'PDTO', b'XLOC', b'XLKR', b'XPOD', b'VMAD', b'XORD'}
 
         refr_offsets = [12]
         offset = 24
@@ -1848,8 +1848,8 @@ class form_processor():
         return [i, bytearray(form), refr_offsets]
 
     def save_regn_data(i, form): 
-        regn_fields = [b'WNAM', b'RDMO', b'RDGS', b'RDOT']
-        special_regn_fields = [b'RDSA', b'RDWT']
+        regn_fields = {b'WNAM', b'RDMO', b'RDGS', b'RDOT'}
+        special_regn_fields = {b'RDSA', b'RDWT'}
 
         regn_offsets = [12]
         offset = 24
@@ -1873,7 +1873,7 @@ class form_processor():
         return [i, bytearray(form), regn_offsets]
 
     def save_rela_data(i, form): 
-        special_rela_fields = [b'DATA']
+        special_rela_fields = {b'DATA'}
 
         rela_offsets = [12]
         offset = 24
@@ -1890,7 +1890,7 @@ class form_processor():
         return [i, bytearray(form), rela_offsets]
 
     def save_rfct_data(i, form): 
-        special_rfct_fields = [b'DATA']
+        special_rfct_fields = {b'DATA'}
 
         rfct_offsets = [12]
         offset = 24
@@ -1905,8 +1905,8 @@ class form_processor():
         return [i, bytearray(form), rfct_offsets]
     
     def save_rgdl_data(i, form): 
-        rgdl_fields = [b'XNAM', b'TNAM']
-        special_rgdl_fields = [b'VMAD', b'CTDA']
+        rgdl_fields = {b'XNAM', b'TNAM'}
+        special_rgdl_fields = {b'VMAD', b'CTDA'}
 
         rgdl_offsets = [12]
         offset = 24
@@ -1924,8 +1924,8 @@ class form_processor():
         return [i, bytearray(form), rgdl_offsets]
     
     def save_scen_data(i, form): 
-        scen_fields = [b'PNAM', b'DATA']
-        special_scen_fields = [b'VMAD', b'CTDA']
+        scen_fields = {b'PNAM', b'DATA'}
+        special_scen_fields = {b'VMAD', b'CTDA'}
 
         scen_offsets = [12]
         offset = 24
@@ -1943,8 +1943,8 @@ class form_processor():
         return [i, bytearray(form), scen_offsets]
     
     def save_scol_data(i, form):
-        scol_fields = [b'ONAM']
-        special_scol_fields = [b'MODS']
+        scol_fields = {b'ONAM'}
+        special_scol_fields = {b'MODS'}
 
         scol_offsets = [12]
         offset = 24
@@ -1957,8 +1957,8 @@ class form_processor():
                     scol_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
 
     def save_scrl_data(i, form): 
-        scrl_fields = [b'MDOB', b'ETYP', b'YNAM', b'ZNAM', b'EFID']
-        special_scrl_fields = [b'CTDA', b'KWDA', b'SPIT', b'DSTD', b'DMDS', b'MODS']
+        scrl_fields = {b'MDOB', b'ETYP', b'YNAM', b'ZNAM', b'EFID'}
+        special_scrl_fields = {b'CTDA', b'KWDA', b'SPIT', b'DSTD', b'DMDS', b'MODS'}
 
         scrl_offsets = [12]
         offset = 24
@@ -1985,8 +1985,8 @@ class form_processor():
         return [i, bytearray(form), scrl_offsets]
 
     def save_shou_data(i, form): 
-        shou_fields = [b'MDOB']
-        special_shou_fields = [b'SNAM']
+        shou_fields = {b'MDOB'}
+        special_shou_fields = {b'SNAM'}
 
         shou_offsets = [12]
         offset = 24
@@ -2003,8 +2003,8 @@ class form_processor():
         return [i, bytearray(form), shou_offsets]
 
     def save_slgm_data(i, form): 
-        slgm_fields = [b'NAM0', b'ZNAM', b'YNAM']
-        special_slgm_fields = [b'KWDA', b'MODS', b'DSTD', b'DMDS']
+        slgm_fields = {b'NAM0', b'ZNAM', b'YNAM'}
+        special_slgm_fields = {b'KWDA', b'MODS', b'DSTD', b'DMDS'}
 
         slgm_offsets = [12]
         offset = 24
@@ -2027,8 +2027,8 @@ class form_processor():
         return [i, bytearray(form), slgm_offsets]
 
     def save_smbn_data(i, form): 
-        smbn_fields = [b'PNAM', b'SNAM']
-        special_smbn_fields = [b'CTDA']
+        smbn_fields = {b'PNAM', b'SNAM'}
+        special_smbn_fields = {b'CTDA'}
 
         smbn_offsets = [12]
         offset = 24
@@ -2044,8 +2044,8 @@ class form_processor():
         return [i, bytearray(form), smbn_offsets]
 
     def save_smen_data(i, form): 
-        smen_fields = [b'PNAM', b'SNAM']
-        special_smen_fields = [b'CTDA']
+        smen_fields = {b'PNAM', b'SNAM'}
+        special_smen_fields = {b'CTDA'}
 
         smen_offsets = [12]
         offset = 24
@@ -2061,8 +2061,8 @@ class form_processor():
         return [i, bytearray(form), smen_offsets]
 
     def save_smqn_data(i, form): 
-        smqn_fields = [b'PNAM', b'SNAM', b'NNAM']
-        special_smqn_fields = [b'CTDA']
+        smqn_fields = {b'PNAM', b'SNAM', b'NNAM'}
+        special_smqn_fields = {b'CTDA'}
 
         smqn_offsets = [12]
         offset = 24
@@ -2078,7 +2078,7 @@ class form_processor():
         return [i, bytearray(form), smqn_offsets]
 
     def save_snct_data(i, form): 
-        snct_fields = [b'PNAM']
+        snct_fields = {b'PNAM'}
 
         snct_offsets = [12]
         offset = 24
@@ -2091,8 +2091,8 @@ class form_processor():
         return [i, bytearray(form), snct_offsets]
 
     def save_sndr_data(i, form): 
-        sndr_fields = [b'GNAM', b'SNAM', b'ONAM']
-        special_sndr_fields = [b'CTDA']
+        sndr_fields = {b'GNAM', b'SNAM', b'ONAM'}
+        special_sndr_fields = {b'CTDA'}
 
         sndr_offsets = [12]
         offset = 24
@@ -2108,7 +2108,7 @@ class form_processor():
         return [i, bytearray(form), sndr_offsets]
 
     def save_soun_data(i, form): 
-        soun_fields = [b'SDSC']
+        soun_fields = {b'SDSC'}
 
         soun_offsets = [12]
         offset = 24
@@ -2121,8 +2121,8 @@ class form_processor():
         return [i, bytearray(form), soun_offsets]
 
     def save_spel_data(i, form): 
-        spel_fields = [b'MDOB', b'ETYP', b'EFID']
-        special_spel_fields = [b'CTDA', b'SPIT', b'KWDA']
+        spel_fields = {b'MDOB', b'ETYP', b'EFID'}
+        special_spel_fields = {b'CTDA', b'SPIT', b'KWDA'}
 
         spel_offsets = [12]
         offset = 24
@@ -2142,7 +2142,7 @@ class form_processor():
         return [i, bytearray(form), spel_offsets]
 
     def save_stat_data(i, form):
-        special_stat_fields = [b'DNAM', b'MODS']
+        special_stat_fields = {b'DNAM', b'MODS'}
 
         stat_offsets = [12]
         offset = 24
@@ -2158,8 +2158,8 @@ class form_processor():
         return [i, bytearray(form), stat_offsets]
 
     def save_tact_data(i, form): 
-        tact_fields = [b'SNAM', b'VNAM']
-        special_tact_fields = [b'VMAD', b'MODS', b'KWDA', b'DSTD', b'DMDS']
+        tact_fields = {b'SNAM', b'VNAM'}
+        special_tact_fields = {b'VMAD', b'MODS', b'KWDA', b'DSTD', b'DMDS'}
 
         tact_offsets = [12]
         offset = 24
@@ -2184,7 +2184,7 @@ class form_processor():
         return [i, bytearray(form), tact_offsets]
     
     def save_tes4_data(i, form): 
-        special_tes4_fields = [b'ONAM']
+        special_tes4_fields = {b'ONAM'}
 
         tes4_offsets = []
         offset = 24
@@ -2198,8 +2198,8 @@ class form_processor():
         return [i, bytearray(form), tes4_offsets]
 
     def save_tree_data(i, form):
-        tree_fields = [b'PFIG', b'SNAM']
-        special_tree_fields = [b'MODS']
+        tree_fields = {b'PFIG', b'SNAM'}
+        special_tree_fields = {b'MODS'}
 
         tree_offsets = [12]
         offset = 24
@@ -2215,7 +2215,7 @@ class form_processor():
         return [i, bytearray(form), tree_offsets]
 
     def save_watr_data(i, form): 
-        watr_fields = [b'XNAM', b'SNAM', b'INAM', b'TNAM']
+        watr_fields = {b'XNAM', b'SNAM', b'INAM', b'TNAM'}
 
         watr_offsets = [12]
         offset = 24
@@ -2228,8 +2228,8 @@ class form_processor():
         return [i, bytearray(form), watr_offsets]
 
     def save_weap_data(i, form): 
-        weap_fields = [b'BAMT', b'BIDS', b'CNAM', b'EITM', b'ETYP', b'INAM', b'NAM7', b'NAM8', b'NAM9', b'SNAM', b'TNAM', b'UNAM', b'WNAM', b'XNAM', b'YNAM', b'ZNAM']
-        special_weap_fields = [b'CRDT', b'KWDA' , b'MODS', b'MO3S', b'VMAD', b'DSTD', b'DMDS']
+        weap_fields = {b'BAMT', b'BIDS', b'CNAM', b'EITM', b'ETYP', b'INAM', b'NAM7', b'NAM8', b'NAM9', b'SNAM', b'TNAM', b'UNAM', b'WNAM', b'XNAM', b'YNAM', b'ZNAM'}
+        special_weap_fields = {b'CRDT', b'KWDA' , b'MODS', b'MO3S', b'VMAD', b'DSTD', b'DMDS'}
 
         weap_offsets = [12]
         offset = 24
@@ -2259,8 +2259,8 @@ class form_processor():
         return [i, bytearray(form), weap_offsets]
 
     def save_wrld_data(i, form): 
-        wrld_fields = [b'LTMP', b'XEZN', b'XLCN', b'CNAM', b'NAM2', b'NAM3', b'WNAM', b'PNAM', b'ZNAM']
-        special_wrld_fields = [b'RNAM', b'MODS']
+        wrld_fields = {b'LTMP', b'XEZN', b'XLCN', b'CNAM', b'NAM2', b'NAM3', b'WNAM', b'PNAM', b'ZNAM'}
+        special_wrld_fields = {b'RNAM', b'MODS'}
 
         wrld_offsets = [12]
         offset = 24
@@ -2283,8 +2283,8 @@ class form_processor():
         return [i, bytearray(form), wrld_offsets]
 
     def save_wthr_data(i, form): 
-        wthr_fields = [b'MNAM', b'NNAM', b'TNAM', b'SNAM', b'GNAM']
-        special_wthr_fields = [b'IMSP', b'HNAM', b'MODS']
+        wthr_fields = {b'MNAM', b'NNAM', b'TNAM', b'SNAM', b'GNAM'}
+        special_wthr_fields = {b'IMSP', b'HNAM', b'MODS'}
 
         wthr_offsets = [12]
         offset = 24
@@ -2306,8 +2306,8 @@ class form_processor():
 
     #Template for each type of form
     def save_FORM_data(i, form): 
-        FORM_fields = [b'']
-        special_FORM_fields = [b'']
+        FORM_fields = {b''}
+        special_FORM_fields = {b''}
 
         FORM_offsets = [12]
         offset = 24
