@@ -116,6 +116,10 @@ class _global():
                                 string += "        " + str(v2) + "\n"
                         else:
                             string += "    " + str(k) + ": " + str(v) + "\n"
+                elif isinstance(value, (list, set)):
+                    string += str(key) + ":\n"
+                    for item in value:
+                        string += "    " + str(item) + ": \n"
                 else:
                     string += str(key) + ": " + str(value) + '\n'
         write_to_file(string)
