@@ -97,6 +97,7 @@ class settings(QWidget):
             self.output_folder_path_clicked,
             'output_folder_path'
         )
+        self.mod_manager_mode_widget.layout().itemAt(2).widget().clicked.connect(self.output_folder_path.clear)
         self.output_folder_name_widget, self.output_folder_name = self.create_output_name_text_input_widget(
             self.tr("Output Folder Name"),
             self.tr("Change this to what you want to be the name of the Output Folder."),
@@ -512,6 +513,7 @@ class settings(QWidget):
                     instances.append(item_path)
 
         if portable_instance:
+            instances.sort()
             instances.insert(0, portable_instance)
 
         return instances
@@ -532,6 +534,8 @@ class settings(QWidget):
                 instances.append(shared_vortex_path)
         except:
             pass
+        if instances:
+            instances.sort()
         return instances
 
     def mo2_base_path_clicked(self):
@@ -604,7 +608,6 @@ class settings(QWidget):
             instances = self.get_mo2_instances()
 
         if instances:
-            instances.sort()
             _local_combo_box:QComboBox = None
             if combo_box is not None:
                 _local_combo_box = combo_box
