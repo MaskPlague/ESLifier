@@ -157,12 +157,13 @@ class Vortex():
         loop = 0
         plugin_names = set()
         bsa_list = []
+        bsa_dict_temp:dict[str, list[str]] = {}
+        bsa_file_name_dict:dict[str, str] = {}
         file_count = 0
         gathered_str = '-  ' + QCoreApplication.translate("scanner", "Gathered: ")
         write_normal(gathered_str, False)
         mod_folder_level = len(mod_staging_folder.split(os.sep)) + 1
         skyrim_data_level = len(skyrim_folder_path.split(os.sep))
-        bsa_dict_temp = {}
         for mod_folder in os.listdir(mod_staging_folder):
             mod_path = os.path.join(mod_staging_folder, mod_folder)
             if os.path.isdir(mod_path) and mod_folder in ordered_mod_ids:
@@ -175,12 +176,12 @@ class Vortex():
                     else:
                         loop += 1
                     for file in files:
-                        if file != 'meta.ini' and file != '__folder_managed_by_vortex':
+                        if file != '__folder_managed_by_vortex':
                             file_lower = file.lower()
                             if file_lower in Vortex.scanner.ignored_files:
                                 continue
                             is_mod_root_level = root_level == mod_folder_level
-                            if is_mod_root_level and file_lower == "collection.json":
+                            if is_mod_root_level and (file_lower == "collection.json" or file_lower == "meta.ini"):
                                 continue
                             # Get the relative file path
                             full_path = os.path.join(root, file)
@@ -196,12 +197,15 @@ class Vortex():
                             if is_mod_root_level and file_lower.endswith(plugin_extensions):
                                 plugin_names.add(file)
                             elif is_mod_root_level and file_lower.endswith('.bsa') and file_lower not in Vortex.scanner.bsa_blacklist:
-                                file = file[:-4]
+                                bsa_file = file[:-4]
                                 if ' - textures' in file_lower:
-                                    index = file.lower().index(' - textures')
-                                    file = file[:index]
-                                #bsa_list.append([file.lower(), full_path])
-                                bsa_dict_temp[file.lower()] = full_path
+                                    index = bsa_file.lower().index(' - textures')
+                                    bsa_file = bsa_file[:index]
+                                #bsa_list.append([mod_folder, file.lower(), full_path])
+                                if not file_lower in bsa_dict_temp:
+                                    bsa_dict_temp[file_lower] = []
+                                    bsa_file_name_dict[file_lower] = bsa_file.lower()
+                                bsa_dict_temp[file_lower].append(mod_folder)
 
         #Get files from Skyrim's Data folder
         if os.path.exists(skyrim_folder_path):
@@ -214,34 +218,59 @@ class Vortex():
                 else:
                     loop += 1
                 for file in files:
-                    file_lower = file.lower()
-                    if file_lower in Vortex.scanner.ignored_files:
-                        continue
-                    is_file_root_level = root_level == skyrim_data_level
-                    if is_file_root_level and file_lower == "collection.json":
-                        continue
-                    full_path = os.path.join(root, file)
-                    cased = os.path.relpath(full_path, skyrim_folder_path)
-                    relative_path = cased.lower()
-                    if relative_path not in mod_files:
-                        mod_files[relative_path] = []
-                        cases[relative_path] = cased
-                    mod_files[relative_path].append('data_folder_file_eslifier_scan')
-                    if is_file_root_level and file_lower.endswith(plugin_extensions):
-                        if file not in plugin_names:
-                            plugin_names.add(file)
-                    elif is_file_root_level and file_lower.endswith('.bsa') and file_lower not in Vortex.scanner.bsa_blacklist:
-                        bsa_file = file[:-4]
-                        if ' - textures' in file_lower:
-                            index = file_lower.index(' - textures')
-                            bsa_file = bsa_file[:index]
-                        #bsa_list.append([file.lower(), full_path])
-                        bsa_file_lower = bsa_file.lower()
-                        #Since we are scanning the Data folder, if a bsa exists in the Mod Stagning folder then we don't need the one in the Data folder
-                        if bsa_file_lower not in bsa_dict_temp:
-                            bsa_dict_temp[bsa_file_lower] = full_path
+                    if file != '__folder_managed_by_vortex':
+                        file_lower = file.lower()
+                        if file_lower in Vortex.scanner.ignored_files:
+                            continue
+                        is_file_root_level = root_level == skyrim_data_level
+                        if is_file_root_level and (file_lower == "collection.json" or file_lower == "meta.ini"):
+                            continue
+                        full_path = os.path.join(root, file)
+                        cased = os.path.relpath(full_path, skyrim_folder_path)
+                        relative_path = cased.lower()
+                        if relative_path not in mod_files:
+                            mod_files[relative_path] = []
+                            cases[relative_path] = cased
+                        mod_files[relative_path].append('data_folder_file_eslifier_scan')
+                        if is_file_root_level and file_lower.endswith(plugin_extensions):
+                            if file not in plugin_names:
+                                plugin_names.add(file)
+                        elif is_file_root_level and file_lower.endswith('.bsa') and file_lower not in Vortex.scanner.bsa_blacklist:
+                            bsa_file = file[:-4]
+                            bsa_lower = bsa_file.lower()
+                            if ' - textures' in bsa_lower:
+                                index = bsa_lower.lower().index(' - textures')
+                                bsa_lower = bsa_lower[:index]
+                            #bsa_list.append([file.lower(), full_path])
+                            if not file_lower in bsa_dict_temp:
+                                bsa_dict_temp[file_lower] = []
+                                bsa_file_name_dict[file_lower] = bsa_lower
+                            bsa_dict_temp[file_lower].append('data_folder_file_eslifier_scan')
+        bsa_conflict_map: dict[str, list[str]] = Vortex.get_file_conflict_resolution(
+            ordered_mod_ids,
+            bsa_dict_temp,
+            installed_mods
+        )
+        write_to_file(len(bsa_conflict_map))
+        bsa_list = []
+        for relative_path, providing_mods in bsa_conflict_map.items():
+            if len(providing_mods) == 1:
+                mod = providing_mods[0]
+                if mod == 'data_folder_file_eslifier_scan':
+                    file_path = os.path.join(skyrim_folder_path, relative_path)
+                else:
+                    file_path = os.path.join(mod_staging_folder, mod, relative_path)
+                bsa_list.append([bsa_file_name_dict[relative_path], file_path])
+            else:
+                if providing_mods[-1] == 'data_folder_file_eslifier_scan':
+                    file_path = os.path.join(skyrim_folder_path, relative_path)
+                else:
+                    file_path = os.path.join(mod_staging_folder, providing_mods[-1], relative_path)
+                bsa_list.append([bsa_file_name_dict[relative_path], file_path])
+        #bsa_list = [[bsa_file, full_path] for bsa_file, full_path in bsa_dict_temp.values()]
+        write_to_file(len(bsa_list))
+        write_to_file(bsa_list)
 
-        bsa_list = [[file, full_path] for file, full_path in bsa_dict_temp.items()]
         Vortex.scanner.extract_scripts_and_seq_from_bsa(bsa_list, plugins_list)
         cwd = os.getcwd()
         mod_folder = os.path.join(cwd, 'bsa_extracted/')
