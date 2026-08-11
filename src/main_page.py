@@ -588,7 +588,7 @@ class main(QWidget):
                 message.setText(self.tr("ESLifier has finished. The altered files are in your ESLifier Output."))
             elif _global.mod_manager_mode == 1: #Vortex
                 message.setText(self.tr("Make sure the ESLifier Output is installed as a mod and let it win any file conflicts by making the "\
-                                        "output go 'After All' conflicts. Make sure to re-deploy your mods." \
+                                        "output go 'After All' conflicts. Make sure to re-deploy your mods. " \
                                         "If you generate the output folder in your mod staging folder for the first time, then make sure "\
                                         "to restart Vortex to install the output. Make sure that all of your plugins are still enabled."))
             elif _global.mod_manager_mode == 2: #MO2
@@ -995,6 +995,7 @@ class main(QWidget):
                 os.remove(MASTER_BYTE_DATA_JSON)
             if len(previously_compacted) == 0 and len(previously_esl_flagged) == 0:
                 QMessageBox.warning(None, self.tr("No Existing Output Data"), self.tr("There is no existing output data for ESLifier to use."))
+                clear_and_close_log()
                 return
             self.delete_output(self.output_folder_full, files_to_remove, remove_maps=False)
             self.calculate_stats()
