@@ -1384,8 +1384,22 @@ class main(QWidget):
         silent_remove(WINNING_FILE_HISTORY_DICT_JSON)
         silent_remove(WINNING_FILES_DICT_JSON)
         if os.path.exists(output_folder) and 'eslifier' in output_folder.lower():
-            for file in files_to_remove:
-                silent_remove(file)
+            #if vortex then we need to restore any .vortex_backup
+            if _global.mod_manager_mode == 1 and _global.vortex_restore_backups:
+                gamedata = VortexDBParser.get_section("settings###gameMode###discovered###skyrimse")
+                skyrim_folder_path = os.path.normpath(os.path.join(gamedata.get('path'), "Data"))
+
+                for file in files_to_remove:
+                    rel_path = os.path.relpath(file, output_folder)
+                    data_folder_file_path = os.path.join(skyrim_folder_path, rel_path)
+                    vortex_backup_path = data_folder_file_path + '.vortex_backup'
+                    if os.path.exists(vortex_backup_path) and os.path.samefile(file, data_folder_file_path):
+                        silent_remove(data_folder_file_path)
+                        shutil.copy(vortex_backup_path, data_folder_file_path)
+                    silent_remove(file)
+            else:
+                for file in files_to_remove:
+                    silent_remove(file)
             self.prune_empty_dirs_recursive(output_folder, output_folder)
         QApplication.restoreOverrideCursor()
 

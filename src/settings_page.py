@@ -129,6 +129,16 @@ class settings(QWidget):
             self.populate_mod_manager_instances,
             'vortex_data_path'
         )
+        self.vortex_restore_backup_files_widget, self.vortex_restore_backup_files = self.create_toggle_widget(
+            self.tr("Restore '.vortex_backup' Files"),
+            self.tr("If a file exists in your SSE Data folder and it conflicts with a new file in a Mod Staging Folder mod, "\
+                    "such as the ESLifier Output mod then Vortex creates a .vortex_backup file of the original Data Folder "\
+                    "file. This setting allows ESLifier to restore the .vortex_backup file when the one in the output is deleted "\
+                    "since the backup file is not restored unless you disable the output and redeploy in Vortex or completely "\
+                    "purge your mods and redeploy in Vortex. You should probably leave this enabled."),
+            'vortex_restore_backups',
+            default=True
+        )
         self.plugins_txt_path_widget, self.plugins_txt_path = self.create_path_widget(
             self.tr("Plugins.txt Path"),
             self.tr("Set this to your modlist\'s plugins.txt"),
@@ -332,6 +342,7 @@ class settings(QWidget):
         settings_layout.addWidget(self.output_folder_path_widget)
         settings_layout.addWidget(self.output_folder_name_widget)
         settings_layout.addWidget(self.plugins_txt_path_widget)
+        settings_layout.addWidget(self.vortex_restore_backup_files_widget)
 
         column_wrapper = QHBoxLayout()
         column_wrapper_widget = QWidget()
@@ -939,6 +950,7 @@ class settings(QWidget):
         self.settings['mo2_profile'] = self.mo2_profile.currentText()
         self.settings['plugins_txt_path'] = os.path.normpath(self.plugins_txt_path.text()) if self.plugins_txt_path.text() != '' else ''
         self.settings['vortex_data_path'] = os.path.normpath(self.vortex_data_path.lineEdit().text()) if self.vortex_data_path.lineEdit().text() != '' else ''
+        self.settings['vortex_restore_backups'] = self.vortex_restore_backup_files.isChecked()
         self.settings['mod_manager_mode'] = self.mod_manager_mode_toggle.checkState().value
         self.settings['update_header'] = self.update_header_toggle.isChecked()
         self.settings['show_esms'] = self.show_esms_toggle.isChecked()

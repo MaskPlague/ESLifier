@@ -18,6 +18,7 @@ class _global():
     mo2_mods_folder:str = ''
     vortex_data_path:str = ''
     vortex_db_path:str = ''
+    vortex_restore_backups = True
     mod_manager_mode = 0
     update_header = True
     generate_cell_master = False
@@ -68,6 +69,7 @@ class _global():
         _global.vortex_db_path =                    os.path.normpath(os.path.join(_global.vortex_data_path, "state.v2"))
         if _global.mod_manager_mode == 0:
             _global.plugins_txt_path =                  _global._settings.get('plugins_txt_path', '')
+        _global.vortex_restore_backups =            _global._settings.get('vortex_restore_backups', True)
         _global.update_header =                     _global._settings.get('update_header', True)
         _global.generate_cell_master =              _global._settings.get('generate_cell_master', True)
         _global.persistent_ids =                    _global._settings.get('persistent_ids', True)

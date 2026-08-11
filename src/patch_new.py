@@ -2,6 +2,7 @@ import json
 import os
 import hashlib
 import threading
+import shutil
 
 from PyQt6.QtCore import pyqtSignal, QThread, QObject, QCoreApplication
 from PyQt6.QtWidgets import QMessageBox
@@ -13,6 +14,7 @@ from compact_form_ids import CFIDs
 from cell_changed_scanner import cell_scanner
 from file_defined_patcher_conditions import user_and_master_conditions_class
 from data_holder import _global
+from vortex_database_reader import VortexDBParser
 from log_stream import clear_and_close_log, clear_and_leave_log_open, write_error, write_normal, write_patching
 
 class patch_new():
@@ -367,15 +369,38 @@ class PatchNewScannerWorker(QObject):
         with open("ESLifier_Data/original_files.json", 'r', encoding='utf-8') as f:
             original_files: dict[str, list[str]] = json.load(f)
         deleted_count = 0
-        for file in files_to_remove:
-            if os.path.exists(file):
-                os.remove(file)
-                deleted_count += 1
-            cased_rel_path = _global.get_rel_path(file)
-            if cased_rel_path.lower() in winning_file_history_dict:
-                winning_file_history_dict.pop(cased_rel_path.lower())
-            if cased_rel_path.lower() in original_files:
-                original_files.pop(cased_rel_path.lower())
+        if _global.mod_manager_mode == 1 and _global.vortex_restore_backups:
+            gamedata = VortexDBParser.get_section("settings###gameMode###discovered###skyrimse")
+            skyrim_folder_path = os.path.normpath(os.path.join(gamedata.get('path'), "Data"))
+
+            for file in files_to_remove:
+                if os.path.exists(file):
+                    rel_path = os.path.relpath(file, self.output_path)
+                    data_folder_file_path = os.path.join(skyrim_folder_path, rel_path)
+                    vortex_backup_path = data_folder_file_path + '.vortex_backup'
+                    if os.path.exists(vortex_backup_path) and os.path.samefile(file, data_folder_file_path):
+                        os.remove(data_folder_file_path)
+                        shutil.copy(vortex_backup_path, data_folder_file_path)
+                    os.remove(file)
+                    deleted_count += 1
+
+                cased_rel_path:str = _global.get_rel_path(file)
+                if cased_rel_path.lower() in winning_file_history_dict:
+                    winning_file_history_dict.pop(cased_rel_path.lower())
+                if cased_rel_path.lower() in original_files:
+                    original_files.pop(cased_rel_path.lower())
+        else:
+            for file in files_to_remove:
+                if os.path.exists(file):
+                    os.remove(file)
+                    deleted_count += 1
+
+                cased_rel_path:str = _global.get_rel_path(file)
+                if cased_rel_path.lower() in winning_file_history_dict:
+                    winning_file_history_dict.pop(cased_rel_path.lower())
+                if cased_rel_path.lower() in original_files:
+                    original_files.pop(cased_rel_path.lower())
+
         with open("ESLifier_Data/winning_file_history_dict.json", 'w', encoding='utf-8') as f:
             json.dump(winning_file_history_dict, f, ensure_ascii=False, indent=4)
         with open("ESLifier_Data/original_files.json", 'w', encoding='utf-8') as f:
