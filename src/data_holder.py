@@ -92,6 +92,9 @@ class _global():
         _global.mod_staging_folder_lower =          _global.mod_staging_folder.lower()
         _global.mod_staging_folder_len =            len(_global.mod_staging_folder)
 
+        _global.skyrim_folder_path_lower =          _global.skyrim_folder_path.lower()
+        _global.skyrim_folder_path_len =            len(_global.skyrim_folder_path)
+
     def update_mo2_vars():
         _global.mo2_mods_folder_lower =             _global.mo2_mods_folder.lower()
         _global.mo2_mods_folder_len =               len(_global.mo2_mods_folder)
@@ -129,13 +132,13 @@ class _global():
 
         file_lower = file_norm.lower()
 
-        # MO2 Overwrite Path
-        if _global.mod_manager_mode == 2 and file_lower.startswith(_global.mo2_overwrite_path_lower):
-            return file_norm[_global.mo2_overwrite_path_len:].lstrip(os.sep)
-
         # MO2 Mode
         if _global.mod_manager_mode == 2:
-            if file_lower.startswith(_global.mo2_mods_folder_lower):
+            # Overwrite
+            if file_lower.startswith(_global.mo2_overwrite_path_lower):
+                return file_norm[_global.mo2_overwrite_path_len:].lstrip(os.sep)
+            # Mods Folder
+            elif file_lower.startswith(_global.mo2_mods_folder_lower):
                 remainder = file_norm[_global.mo2_mods_folder_len:].lstrip(os.sep)
                 idx = remainder.find(os.sep)
                 if idx != -1:
@@ -143,8 +146,12 @@ class _global():
                 return remainder
 
         # Vortex Mode
-        elif _global.mod_manager_mode == 1:
-            if file_lower.startswith(_global.mod_staging_folder_lower):
+        if _global.mod_manager_mode == 1:
+            # SSE Data Folder Path
+            if file_lower.startswith(_global.skyrim_folder_path_lower):
+                return file_norm[_global.skyrim_folder_path_len:].lstrip(os.sep)
+            # Mod Staging Folder
+            elif file_lower.startswith(_global.mod_staging_folder_lower):
                 remainder = file_norm[_global.mod_staging_folder_len:].lstrip(os.sep)
                 idx = remainder.find(os.sep)
                 if idx != -1:
