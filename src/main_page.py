@@ -83,19 +83,15 @@ class main(QWidget):
         self.files_to_not_hash = set()
         self.create()
 
-    def create(self):
-        self.eslify = QLabel(self.tr("ESLify"))
-        self.eslify.setToolTip(self.tr("List of plugins that meet ESL conditions."))
-        self.compact = QLabel(self.tr("Compact + ESLify"))
-        self.compact.setToolTip(
+    def create_top_lables(self):
+        self.eslify_label = QLabel(self.tr("ESLify"))
+        self.eslify_label.setToolTip(self.tr("List of plugins that meet ESL conditions."))
+        self.compact_label = QLabel(self.tr("Compact + ESLify"))
+        self.compact_label.setToolTip(
             self.tr("List of plugins that can be compacted to fit ESL conditions.\n"\
             "The \'Compact/ESLify Selected\' button will also ESL the selected plugin(s)."))
 
-        self.patch_new = patch_new()
-
-        self.list_eslify = list_eslable()
-        self.list_compact = list_compactable()
-
+    def create_mains_buttons(self):
         self.button_eslify = QPushButton(self.tr("ESLify Selected"))
         self.button_eslify.setToolTip(
             self.tr("This button will ESL flag all selected files. If the update plugin headers setting\n"\
@@ -178,6 +174,7 @@ class main(QWidget):
             self.open_log
         )
 
+    def create_filters(self):
         self.filter_eslify = QLineEdit()
         self.filter_eslify.setPlaceholderText(self.tr("Filter "))
         self.filter_eslify.setToolTip(self.tr("Search Bar"))
@@ -195,6 +192,18 @@ class main(QWidget):
         self.filter_compact.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.filter_compact.setClearButtonEnabled(True)
         self.filter_compact.textChanged.connect(self.search_compact)
+
+    def create(self):
+        self.create_top_lables()
+
+        self.patch_new = patch_new()
+
+        self.list_eslify = list_eslable()
+        self.list_compact = list_compactable()
+
+        self.create_mains_buttons()
+
+        self.create_filters()
 
         self.main_layout = QVBoxLayout()
         self.settings_layout = QVBoxLayout()
@@ -217,14 +226,14 @@ class main(QWidget):
         splitter.setStyleSheet("QSplitter::handle { background: transparent; border: none; }")
 
         #Bottom of center Column
-        self.h_layout3 = QHBoxLayout()
-        self.h_layout3.addWidget(self.button_eslify)
-        self.h_layout3.addWidget(self.filter_eslify)
+        self.h_bottom_layout1 = QHBoxLayout()
+        self.h_bottom_layout1.addWidget(self.button_eslify)
+        self.h_bottom_layout1.addWidget(self.filter_eslify)
 
         #Bottom of right Column
-        self.h_layout5 = QHBoxLayout()
-        self.h_layout5.addWidget(self.button_compact)
-        self.h_layout5.addWidget(self.filter_compact)
+        self.h_bottom_layout2 = QHBoxLayout()
+        self.h_bottom_layout2.addWidget(self.button_compact)
+        self.h_bottom_layout2.addWidget(self.filter_compact)
 
         def create_line():
             widget = QFrame()
@@ -268,14 +277,15 @@ class main(QWidget):
         self.v_layout0.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         #Center Column
-        self.v_layout1.addWidget(self.eslify)
+        self.v_layout1.addWidget(self.eslify_label)
         self.v_layout1.addWidget(self.list_eslify)
-        self.v_layout1.addLayout(self.h_layout3)
+        self.v_layout1.addLayout(self.h_bottom_layout1)
+
         
         #Right Column
-        self.v_layout2.addWidget(self.compact)
+        self.v_layout2.addWidget(self.compact_label)
         self.v_layout2.addWidget(self.list_compact)
-        self.v_layout2.addLayout(self.h_layout5)
+        self.v_layout2.addLayout(self.h_bottom_layout2)
 
         #self.main_layout.addWidget(self.button_scan)
         self.main_layout.addWidget(splitter)
