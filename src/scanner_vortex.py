@@ -145,8 +145,8 @@ class Vortex():
         gamedata = VortexDBParser.get_section("settings###gameMode###discovered###skyrimse")
         skyrim_folder_path = os.path.normpath(os.path.join(gamedata.get('path'), "Data"))
 
-        mod_staging_folder_drive, _ = os.path.splitdrive(mod_staging_folder)
-        output_folder_drive, _ = os.path.splitdrive(_global.output_folder_path)
+        mod_staging_folder_drive = os.path.splitdrive(mod_staging_folder)[0].lower()
+        output_folder_drive = os.path.splitdrive(_global.output_folder_path)[0].lower()
         #Output and mod staging folder must be on same drive
         if mod_staging_folder_drive != output_folder_drive:
             _global.vortex_error = 3
