@@ -99,7 +99,6 @@ class MO2():
         plugin_extensions = ('.esp', '.esl', '.esm')
         plugins = []
         plugin_names_lowered = [plugin.lower() for plugin in plugin_names]
-        write_to_file(plugin_names_lowered)
         for file, overwrite in winning_files:
             file_level = len(file.split(os.sep))
             if overwrite:
@@ -107,7 +106,6 @@ class MO2():
             else:
                 level = mod_folder_level
             if file_level == level + 2 and file.lower().endswith(plugin_extensions) and not file.endswith("ESLifier_Cell_Master.esm"):
-                write_to_file(os.path.basename(file.lower()))
                 plugin = os.path.join(os.path.dirname(file), plugin_names[plugin_names_lowered.index(os.path.basename(file.lower()))])
                 plugins.append(plugin)
         return_list = [winning_file for winning_file, _ in winning_files]

@@ -249,7 +249,6 @@ class Vortex():
             bsa_dict_temp,
             installed_mods
         )
-        write_to_file(len(bsa_conflict_map))
         #BSA list is expacted to be like: [[mod_name, full_path], [mod_name2, full_path2]] where mod_name is (mod_name).esp without ext 
         # for sorting by plugin during extraction. mod_name is obtained from (mod_name).bsa
         bsa_list = []
@@ -268,8 +267,6 @@ class Vortex():
                     file_path = os.path.join(mod_staging_folder, providing_mods[-1], relative_path)
                 bsa_list.append([bsa_file_name_dict[relative_path], file_path])
         #bsa_list = [[bsa_file, full_path] for bsa_file, full_path in bsa_dict_temp.values()]
-        write_to_file(len(bsa_list))
-        write_to_file(bsa_list)
 
         Vortex.scanner.extract_scripts_and_seq_from_bsa(bsa_list, plugins_list)
         cwd = os.getcwd()
