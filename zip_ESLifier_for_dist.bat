@@ -7,7 +7,13 @@ echo Zipping Translation for Distribution
 
 cd "dist"
 
-echo Zipping ESLifier for Distribution
+echo Zipping ESLifier EXE for Distribution
 %SEVEN_ZIP% a "ESLifier.zip" "bsarch" "ESLifier.exe"
+
+echo Zipping ESLifier One Dir for Distribution
+%SEVEN_ZIP% a "ESLifier_OneDir.zip" "bsarch"
+cd "ESLifier"
+%SEVEN_ZIP% a "..\ESLifier_OneDir.zip" "ESLifier.exe" "_internal"
+
 
 echo Done
