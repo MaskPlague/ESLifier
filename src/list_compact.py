@@ -389,7 +389,7 @@ class list_compactable(list_parent_class):
                 selected_items = self.selectedItems()
                 self.add_to_blacklist(selected_items)
 
-    def check_previously_compacted(self, previously_compacted:list[str]=None, calc_diff:bool=True):
+    def check_previously_compacted(self, previously_compacted:list[str]=None, full_warning:bool=True):
         self.blockSignals(True)
         if os.path.exists('ESLifier_Data/previously_compacted.json') or previously_compacted is not None:
             try:
@@ -405,7 +405,7 @@ class list_compactable(list_parent_class):
                         selected.add(self.item(row, self.MOD_COL).text())
                 diff = compacted_set - selected
                 # Warn about files that couldn't be reselected.
-                if diff and calc_diff:
+                if diff and full_warning:
                     missing_skyrim_as_master:dict = self.get_data_from_file("ESLifier_Data/missing_skyrim_as_master.json", dict)
                     compacted_and_patched:dict = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json", dict)
                     reversed_msam: dict[str, set] = {}
