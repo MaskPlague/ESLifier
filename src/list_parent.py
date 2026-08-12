@@ -2,9 +2,9 @@ import os
 import subprocess
 import json
 
-from PyQt6.QtCore import Qt, QItemSelection, pyqtSignal
-from PyQt6.QtWidgets import (QTableWidget, QTableWidgetItem, QMessageBox, QFileDialog)
-from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import Qt, QItemSelection, pyqtSignal, QVariantAnimation, QTimer
+from PyQt6.QtWidgets import (QTableWidget, QTableWidgetItem, QMessageBox, QFileDialog, QLineEdit)
+from PyQt6.QtGui import QIcon, QColor, QPalette
 from blacklist import blacklist
 from log_stream import write_error
 
@@ -27,6 +27,34 @@ class list_parent_class(QTableWidget):
     save_file_dialog:QFileDialog = None
     check_previous_text:str = ''
     filter:QLineEdit = None
+
+    def apply_flash_color(self, color):
+        self.setStyleSheet(
+            self.original_stylesheet + f"QTableWidget {{ background-color: {color.name()}; }}"
+        )
+        self.filter.setStyleSheet(f"QLineEdit {{ background-color: {color.name()}; }}")
+
+    def reset_style_sheet(self):
+        self.setStyleSheet(self.original_stylesheet)
+        self.filter.setStyleSheet("")
+
+    def init_filter_flash(self):
+        self.flash_anim = QVariantAnimation(self)
+        self.flash_anim.setDuration(300)
+        base_color = self.palette().color(QPalette.ColorRole.Base)
+        if base_color.lightness() < 128:
+            flash_color = QColor("#5c1a1a") 
+        else:
+            flash_color = QColor("#ffb3b3")
+        self.flash_anim.setStartValue(base_color)
+        self.flash_anim.setKeyValueAt(0.5, flash_color)
+        self.flash_anim.setEndValue(base_color)
+        self.flash_anim.setLoopCount(2)
+        self.flash_anim.valueChanged.connect(self.apply_flash_color)
+        self.flash_anim.finished.connect(self.reset_style_sheet)
+        self.flash_timer_reminder = QTimer()
+        self.flash_timer_reminder.setInterval(2600)
+        self.flash_timer_reminder.timeout.connect(self.flash_anim.start)
 
     def __init__(self):
         super().__init__()
@@ -51,6 +79,7 @@ class list_parent_class(QTableWidget):
             }
         """
         self.setStyleSheet(self.original_stylesheet)
+        self.init_filter_flash()
 
     def create_list():
         pass
