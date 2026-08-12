@@ -26,6 +26,7 @@ class list_parent_class(QTableWidget):
     file_dialog:QFileDialog = None
     save_file_dialog:QFileDialog = None
     check_previous_text:str = ''
+    filter:QLineEdit = None
 
     def __init__(self):
         super().__init__()
@@ -68,6 +69,26 @@ class list_parent_class(QTableWidget):
         except:
             data = data_type()
         return data
+
+    def filter_search(self):
+        if len(self.filter.text()) > 0:
+            items = self.findItems(self.filter.text(), Qt.MatchFlag.MatchContains)
+            for i in range(self.rowCount()):
+                self.setRowHidden(i, False if (self.item(i, self.MOD_COL) in items and not self.item(i, self.HIDER_COL)) else True)
+            if not items:
+                if self.flash_anim.state() == QVariantAnimation.State.Running:
+                    return
+                self.flash_anim.start()
+                self.flash_timer_reminder.start()
+            else:
+                if self.flash_anim.state() == QVariantAnimation.State.Running:
+                    self.flash_timer_reminder.stop()
+                    self.flash_anim.stop()
+                    self.flash_anim.finished.emit()
+        else:
+            self.flash_timer_reminder.stop()
+            for i in range(self.rowCount()):
+                self.setRowHidden(i, True if self.item(i, self.HIDER_COL) else False)
 
     def check_all(self):
         self.blockSignals(True)

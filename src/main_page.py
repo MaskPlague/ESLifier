@@ -182,8 +182,9 @@ class main(QWidget):
         self.filter_eslify.setMaximumWidth(150)
         self.filter_eslify.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.filter_eslify.setClearButtonEnabled(True)
-        self.filter_eslify.textChanged.connect(self.search_eslify)
-        self.list_eslify.list_created_signal.connect(self.search_eslify)
+        self.list_eslify.filter = self.filter_eslify
+        self.filter_eslify.textChanged.connect(self.list_eslify.filter_search)
+        self.list_eslify.list_created_signal.connect(self.list_eslify.filter_search)
 
         self.filter_compact = QLineEdit()
         self.filter_compact.setPlaceholderText(self.tr("Filter "))
@@ -192,8 +193,9 @@ class main(QWidget):
         self.filter_compact.setMaximumWidth(150)
         self.filter_compact.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.filter_compact.setClearButtonEnabled(True)
-        self.filter_compact.textChanged.connect(self.search_compact)
-        self.list_compact.list_created_signal.connect(self.search_compact)
+        self.list_compact.filter = self.filter_compact
+        self.filter_compact.textChanged.connect(self.list_compact.filter_search)
+        self.list_compact.list_created_signal.connect(self.list_compact.filter_search)
 
     def create_widget(self):
         self.create_top_lables()
@@ -327,26 +329,6 @@ class main(QWidget):
         self.list_eslify.filter_worldspaces =       _global._settings.get('filter_worldspaces', True)
         self.list_eslify.cell_master =              _global.generate_cell_master
         self.list_eslify.hidden_columns =           _global._settings.get('left_hidden_columns', '')
-    
-    def search_eslify(self):
-        if len(self.filter_eslify.text()) > 0:
-            items = self.list_eslify.findItems(self.filter_eslify.text(), Qt.MatchFlag.MatchContains)
-            if len(items) > 0:
-                for i in range(self.list_eslify.rowCount()):
-                    self.list_eslify.setRowHidden(i, False if (self.list_eslify.item(i,self.list_eslify.MOD_COL) in items and not self.list_eslify.item(i, self.list_eslify.HIDER_COL)) else True)
-        else:
-            for i in range(self.list_eslify.rowCount()):
-                self.list_eslify.setRowHidden(i, True if self.list_eslify.item(i, self.list_eslify.HIDER_COL) else False)
-
-    def search_compact(self):
-        if len(self.filter_compact.text()) > 0:
-            items = self.list_compact.findItems(self.filter_compact.text(), Qt.MatchFlag.MatchContains)
-            if len(items) > 0:
-                for i in range(self.list_compact.rowCount()):
-                    self.list_compact.setRowHidden(i, False if (self.list_compact.item(i, self.list_compact.MOD_COL) in items and not self.list_compact.item(i, self.list_compact.HIDER_COL)) else True)
-        else:
-            for i in range(self.list_compact.rowCount()):
-                self.list_compact.setRowHidden(i, True if self.list_compact.item(i, self.list_compact.HIDER_COL) else False)
 
     def set_false_redoing_output(self):
         self.redoing_output = False
