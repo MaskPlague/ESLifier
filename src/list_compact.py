@@ -107,27 +107,6 @@ class list_compactable(list_parent_class):
         self.hidden_columns = ""
         self.previously_compacted_exists = False
 
-        self.setStyleSheet("""
-            QTableWidget::item{
-                border-top: 1px solid gray;
-            }
-            QTableWidget::item::selected{
-                background-color: rgb(150,150,150);
-            }
-            QTableWidget::item::hover{
-                background-color: rgb(200,200,200);
-            }
-            QTableWidget::indicator:checked{
-                image: url(:/images/checked.png);
-            }
-            QTableWidget::indicator:unchecked{
-                image: url(:/images/unchecked.png);
-            }
-            QTableWidget::indicator:indeterminate{
-                image:url(:/images/partially_checked.png);
-            }
-        """)
-
         self.create_list()
 
     def create_list(self):

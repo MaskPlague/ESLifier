@@ -29,6 +29,27 @@ class list_parent_class(QTableWidget):
 
     def __init__(self):
         super().__init__()
+        self.original_stylesheet = """
+            QTableWidget::item{
+                border-top: 1px solid gray;
+            }
+            QTableWidget::item::selected{
+                background-color: rgb(150,150,150);
+            }
+            QTableWidget::item::hover{
+                background-color: rgb(200,200,200);
+            }
+            QTableWidget::indicator:checked{
+                image: url(:/images/checked.png);
+            }
+            QTableWidget::indicator:unchecked{
+                image: url(:/images/unchecked.png);
+            }
+            QTableWidget::indicator:indeterminate{
+                image:url(:/images/partially_checked.png);
+            }
+        """
+        self.setStyleSheet(self.original_stylesheet)
 
     def create_list():
         pass
