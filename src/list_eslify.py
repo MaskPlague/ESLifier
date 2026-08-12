@@ -1,20 +1,20 @@
 import os
-import subprocess
 import json
 import itertools
 
-from PyQt6.QtCore import Qt, QItemSelection
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMessageBox, QFileDialog
-from PyQt6.QtGui import QIcon
 
 from blacklist import blacklist
 from log_stream import write_error, write_to_file
 from data_holder import _global
+from list_parent import list_parent_class
 
-class list_eslable(QTableWidget):
+class list_eslable(list_parent_class):
     def __init__(self):
         super().__init__()
         c = itertools.count()
+        # Items that need to be set in list_base
         self.MOD_COL = next(c)
         self.CELL_COL = next(c)
         self.WRLD_COL = next(c)
@@ -24,6 +24,14 @@ class list_eslable(QTableWidget):
         self.SPACER_COL = next(c)
         self.HIDER_COL = next(c)
         self.COL_COUNT = next(c)
+        self.blacklist = blacklist()
+        self.file_dialog = QFileDialog()
+        self.file_dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+        self.save_file_dialog = QFileDialog()
+        self.save_file_dialog.setFileMode(QFileDialog.FileMode.AnyFile)
+        self.check_previous_func = self.check_previously_esl_flagged
+        self.check_previous_text = self.tr("Import ESLify List Selection")
+
         self.setColumnCount(self.COL_COUNT)
         self.setHorizontalHeaderLabels([self.tr('*   Mod'), self.tr('CELL Records'), self.tr('WRLD Records'), 'SEQ', 'PEX', 'ESM', '', 'Hider'])
         self.horizontalHeaderItem(self.MOD_COL).setToolTip(self.tr('This is the plugin name. Select which plugins you wish to flag as light.'))
@@ -79,10 +87,7 @@ class list_eslable(QTableWidget):
         self.filter_worldspaces = False
         self.cell_master = False
         self.hidden_columns = ""
-        self.blacklist = blacklist()
         self.previously_esl_flagged_exists = False
-        self.file_dialog = QFileDialog()
-        self.file_dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
 
         self.setStyleSheet("""
             QTableWidget::item{
@@ -118,6 +123,9 @@ class list_eslable(QTableWidget):
 
         if not self.filter_seq and not 'SEQ' in hidden_columns: self.showColumn(self.SEQ_COL)
         else: self.hideColumn(self.SEQ_COL)
+
+        if not self.filter_pex and not 'PEX' in hidden_columns: self.showColumn(self.PEX_COL)
+        else: self.hideColumn(self.PEX_COL)
 
         if self.filter_worldspaces or self.cell_master or 'WRLD' in hidden_columns: self.hideColumn(self.WRLD_COL)
         else: self.showColumn(self.WRLD_COL)
@@ -244,21 +252,6 @@ class list_eslable(QTableWidget):
         self.itemChanged.connect(somethingChanged)
         self.resizeRowsToContents()
         self.setSortingEnabled(True)
-
-    def hide_rows(self):
-        for row in range(self.rowCount()):
-            if self.item(row, self.HIDER_COL):
-                self.setRowHidden(row, True)
-            else:
-                self.setRowHidden(row, False)
-
-    def get_data_from_file(self, file, data_type):
-        try:
-            with open(file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-        except:
-            data = data_type()
-        return data
     
     def contextMenu(self, position):
         selected_item = self.item(self.rowAt(position.y()), 0)
@@ -296,61 +289,6 @@ class list_eslable(QTableWidget):
             if action == add_to_blacklist_action:
                 selected_items = self.selectedItems()
                 self.add_to_blacklist(selected_items)
-
-    def check_all(self):
-        self.blockSignals(True)
-        for i in range(self.rowCount()):
-            if not self.isRowHidden(i) and self.item(i, self.MOD_COL).checkState() == Qt.CheckState.Unchecked:
-                self.item(i, self.MOD_COL).setCheckState(Qt.CheckState.Checked)
-        self.blockSignals(False)
-
-    def uncheck_all(self):
-        self.blockSignals(True)
-        for i in range(self.rowCount()):
-            if self.item(i, self.MOD_COL).checkState() == Qt.CheckState.Checked:
-                self.item(i, self.MOD_COL).setCheckState(Qt.CheckState.Unchecked)
-        self.blockSignals(False)
-
-    def select_all(self):
-        self.blockSignals(True)
-        selection = QItemSelection()
-        for row in range(self.rowCount()):
-            if not self.isRowHidden(row):
-                selection.select(self.model().index(row, self.MOD_COL), self.model().index(row, self.model().columnCount() - 1))
-        selection_model = self.selectionModel()
-        selection_model.select(selection, selection_model.SelectionFlag.ClearAndSelect)
-        self.blockSignals(False)
-    
-    def invert_selection(self, selected_items):
-        self.blockSignals(True)
-        for item in selected_items:
-            if item.checkState() == Qt.CheckState.Checked:
-                if item.column() == self.MOD_COL:
-                    item.setCheckState(Qt.CheckState.Unchecked)
-            elif item.checkState() == Qt.CheckState.Unchecked:
-                if item.column() == self.MOD_COL:
-                    item.setCheckState(Qt.CheckState.Checked)
-        self.blockSignals(False)
-
-    def open_in_explorer(self, selectedItem):
-        file_path = selectedItem.toolTip()
-        
-        if file_path:
-            file_directory, _ = os.path.split(file_path)
-            try:
-                if os.name == 'nt':
-                    os.startfile(file_directory)
-                elif os.name == 'posix':
-                    subprocess.Popen(['xdg-open', os.path.dirname(file_directory)])
-                else:
-                    subprocess.Popen(['open', os.path.dirname(file_directory)])
-            except Exception as e:
-                write_error(self.tr("Error opening file explorer: ") + str(e))
-
-    def add_to_blacklist(self, selected_items):
-        mods = [item.text() for item in selected_items if item.column() == self.MOD_COL]
-        self.blacklist.add_to_blacklist(mods)
-        self.create()
 
     def check_previously_esl_flagged(self, esl_flagged:list[str]=None, full_warning:bool = True):
         self.blockSignals(True)
@@ -429,81 +367,3 @@ class list_eslable(QTableWidget):
                 write_error(self.tr('Failed to get previously_esl_flagged.json'))
                 write_error(e, True)
         self.blockSignals(False)
-
-    def select_file_path(self, dialog: QFileDialog, title, filter, mode:int=0):
-        if mode == 0:
-            path, _ = dialog.getOpenFileName(self, title, filter=filter)
-        elif mode == 1:
-            path, _ = dialog.getSaveFileName(self, title, filter=filter)
-        if path:
-            return os.path.normpath(path)
-        else:
-            return None
-    
-    def create_confirmation(self, title:str, text:str, color:str = '', icon:QMessageBox.Icon = QMessageBox.Icon.Warning):
-        confirm = QMessageBox()
-        confirm.setIcon(icon)
-        confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
-        if color != '':
-            confirm.setStyleSheet("""
-                QMessageBox {
-                    background-color: """+color+""";
-                }""")
-        confirm.setWindowTitle(title)
-        confirm.setText(text)
-        confirm.addButton(QMessageBox.StandardButton.Ok).setText(self.tr("Ok"))
-        confirm.button(QMessageBox.StandardButton.Ok).setFocus()
-        confirm.setDefaultButton(QMessageBox.StandardButton.Ok)
-        return confirm
-
-    def import_check_state_from_file(self):
-        path = self.select_file_path(self.file_dialog, self.tr("Import ESLify List Selection"), '*.json')
-        if path is not None:
-            if os.path.exists(path):
-                previous_items = []
-                try:
-                    with open(path, 'r', encoding='utf-8') as f:
-                        previous_items = json.load(f)
-                except:
-                    return
-                if previous_items:
-                    self.uncheck_all()
-                    self.check_previously_esl_flagged(previous_items, False)
-                    self.message = self.create_confirmation(self.tr("Success"), 
-                                                        self.tr("Import successful. Any items both in the imported list and scanned list have been selected."),
-                                                        icon=QMessageBox.Icon.Information)
-                    self.message.show()
-                else:
-                    self.message = self.create_confirmation(self.tr("Failed"), 
-                                                        self.tr("Import Failed. File is empty or invalid."),
-                                                        'lightcoral',
-                                                        icon=QMessageBox.Icon.Warning)
-                    self.message.show()
-            else:
-                self.message = self.create_confirmation(self.tr("Error"), 
-                                                    self.tr("Selected file does not exist."),
-                                                    'lightcoral',
-                                                    icon=QMessageBox.Icon.Warning)
-                self.message.show()
-
-    def export_check_state_to_file(self):
-        checked = []
-        for row in range(self.rowCount()):
-            if self.item(row, self.MOD_COL).checkState() == Qt.CheckState.Checked and not self.item(row, self.HIDER_COL):
-                checked.append(self.item(row, self.MOD_COL).text())
-
-        file_path = self.select_file_path(self.file_dialog, self.tr("Export Check State File As..."), filter='*.json', mode=1)
-        if file_path:
-            try:
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    json.dump(checked, f, indent=2)
-                self.message = self.create_confirmation(self.tr("Success"), 
-                                                        self.tr("Export successful. Current check state saved to %0").replace("%0", file_path),
-                                                        icon=QMessageBox.Icon.Information)
-                self.message.show()
-            except Exception as e:
-                self.message = self.create_confirmation(self.tr("Error"), 
-                                                        self.tr("Error while exporting: ") + str(e),
-                                                        'lightcoral',
-                                                        icon=QMessageBox.Icon.Warning)
-                self.message.show()
