@@ -337,7 +337,7 @@ class list_eslable(list_parent_class):
                     write_to_file(text)
                     QMessageBox.warning(None, self.tr("Warning"), text, QMessageBox.StandardButton.Ok)
                 elif diff:
-                    text = self.tr("Could not select the following files either due to filters or the files not existing:") +"\n"
+                    text = self.tr("Could not select the following files either due to filters, the files not existing, or the file is already flagged ESL:") +"\n"
                     for mod in diff:
                         text += "- " + mod + "\n"
                     write_to_file(text)
