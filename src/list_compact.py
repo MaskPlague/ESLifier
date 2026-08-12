@@ -3,7 +3,9 @@ import subprocess
 import json
 import itertools
 from PyQt6.QtCore import Qt, QItemSelection
-from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QPushButton, QListWidget, QListWidgetItem, QMessageBox
+from PyQt6.QtWidgets import (QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QPushButton,
+                              QListWidget, QListWidgetItem, QMessageBox, QFileDialog)
+from PyQt6.QtGui import QIcon
 from blacklist import blacklist
 from log_stream import write_error, write_to_file
 from data_holder import _global
@@ -96,6 +98,10 @@ class list_compactable(QTableWidget):
         self.hidden_columns = ""
         self.blacklist = blacklist()
         self.previously_compacted_exists = False
+        self.file_dialog = QFileDialog()
+        self.file_dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+        self.save_file_dialog = QFileDialog()
+        self.save_file_dialog.setFileMode(QFileDialog.FileMode.AnyFile)
 
         self.setStyleSheet("""
             QTableWidget::item{
@@ -381,12 +387,15 @@ class list_compactable(QTableWidget):
 
         if selected_item:
             menu = QMenu(self)
+            #Tool tips don't work on actions in this menu
             select_all_action = menu.addAction(self.tr("Select All"))
             check_all_action = menu.addAction(self.tr("Check All"))
             uncheck_all_action = menu.addAction(self.tr("Uncheck All"))
             invert_selection_action = menu.addAction(self.tr("Invert Selection Checks"))
             if self.previously_compacted_exists:
                 check_previously_compacted_action = menu.addAction(self.tr("Check Previously Compacted"))
+            import_action = menu.addAction(self.tr("Import Check State From File"))
+            export_action = menu.addAction(self.tr("Export Check State To File"))
             open_explorer_action = menu.addAction(self.tr("Open in File Explorer"))
             add_to_blacklist_action = menu.addAction(self.tr("Add Highlighted Mod(s) to Blacklist"))
             action = menu.exec(self.viewport().mapToGlobal(position))
@@ -400,6 +409,10 @@ class list_compactable(QTableWidget):
                 self.select_all()
             if self.previously_compacted_exists and action == check_previously_compacted_action:
                 self.check_previously_compacted()
+            if action == import_action:
+                self.import_check_state_from_file()
+            if action == export_action:
+                self.export_check_state_to_file()
             if action == invert_selection_action:
                 selected_items = self.selectedItems()
                 self.invert_selection(selected_items)
@@ -431,22 +444,23 @@ class list_compactable(QTableWidget):
         selection_model.select(selection, selection_model.SelectionFlag.ClearAndSelect)
         self.blockSignals(False)
 
-    def check_previously_compacted(self):
+    def check_previously_compacted(self, previously_compacted:list[str]=None, calc_diff:bool=True):
         self.blockSignals(True)
-        if os.path.exists('ESLifier_Data/previously_compacted.json'):
+        if os.path.exists('ESLifier_Data/previously_compacted.json') or previously_compacted is not None:
             try:
                 selected = set()
-                with open('ESLifier_Data/previously_compacted.json', 'r', encoding='utf-8') as f:
-                    previously_compacted = json.load(f)
-                    f.close()
+                if previously_compacted is None:
+                    with open('ESLifier_Data/previously_compacted.json', 'r', encoding='utf-8') as f:
+                        previously_compacted = json.load(f)
+                        f.close()
+                compacted_set = set(previously_compacted)
                 for row in range(self.rowCount()):
-                    if not self.isRowHidden(row) and self.item(row, self.MOD_COL).checkState() == Qt.CheckState.Unchecked and self.item(row, self.MOD_COL).text() in previously_compacted:
+                    if not self.isRowHidden(row) and self.item(row, self.MOD_COL).checkState() == Qt.CheckState.Unchecked and self.item(row, self.MOD_COL).text() in compacted_set:
                         self.item(row, self.MOD_COL).setCheckState(Qt.CheckState.Checked)
                         selected.add(self.item(row, self.MOD_COL).text())
-                pcs = set(previously_compacted)
-                diff = pcs - selected
+                diff = compacted_set - selected
                 # Warn about files that couldn't be reselected.
-                if diff:
+                if diff and calc_diff:
                     missing_skyrim_as_master:dict = self.get_data_from_file("ESLifier_Data/missing_skyrim_as_master.json", dict)
                     compacted_and_patched:dict = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json", dict)
                     reversed_msam: dict[str, set] = {}
@@ -495,7 +509,13 @@ class list_compactable(QTableWidget):
                     text += "\n"
                     text += self.tr("Plugins that cannot be re-compacted can have adverse effects on ongoing saves. Please be careful.")
                     write_to_file(text)
-                    QMessageBox.warning(None, "Warning", text, QMessageBox.StandardButton.Ok)
+                    QMessageBox.warning(None, self.tr("Warning"), text, QMessageBox.StandardButton.Ok)
+                elif diff:
+                    text = self.tr("Could not select the following files either due to filters or the files not existing:") +"\n"
+                    for mod in diff:
+                        text += "- " + mod + "\n"
+                    write_to_file(text)
+                    QMessageBox.warning(None, self.tr("Warning"), text, QMessageBox.StandardButton.Ok)
             except Exception as e:
                 write_error(self.tr('Failed to get previously_compacted.json'))
                 write_error(e, True)
@@ -530,3 +550,87 @@ class list_compactable(QTableWidget):
         mods = [item.text() for item in selected_items if item.column() == 0]
         self.blacklist.add_to_blacklist(mods)
         self.create()
+
+    def select_file_path(self, dialog: QFileDialog, title, filter, mode:int=0):
+        if mode == 0:
+            path, _ = dialog.getOpenFileName(self, title, filter=filter)
+        elif mode == 1:
+            path, _ = dialog.getSaveFileName(self, title, filter=filter)
+        if path:
+            return os.path.normpath(path)
+        else:
+            return None
+
+    def create_confirmation(self, title:str, text:str, color:str = '', icon:QMessageBox.Icon = QMessageBox.Icon.Warning, yes_no:bool=False):
+        confirm = QMessageBox()
+        confirm.setIcon(icon)
+        confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
+        if color != '':
+            confirm.setStyleSheet("""
+                QMessageBox {
+                    background-color: """+color+""";
+                }""")
+        confirm.setWindowTitle(title)
+        confirm.setText(text)
+        if not yes_no:
+            confirm.addButton(QMessageBox.StandardButton.Ok).setText(self.tr("Ok"))
+            confirm.button(QMessageBox.StandardButton.Ok).setFocus()
+            confirm.setDefaultButton(QMessageBox.StandardButton.Ok)
+        else:
+            confirm.addButton(QMessageBox.StandardButton.Yes).setText(self.tr("Yes"))
+            confirm.addButton(QMessageBox.StandardButton.No).setText(self.tr("No"))
+            confirm.button(QMessageBox.StandardButton.No).setFocus()
+            confirm.setDefaultButton(QMessageBox.StandardButton.No)
+        return confirm
+
+    def import_check_state_from_file(self):
+        path = self.select_file_path(self.file_dialog, self.tr("Import Compacted List Selection"), '*.json')
+        if path is not None:
+            if os.path.exists(path):
+                previous_items = []
+                try:
+                    with open(path, 'r', encoding='utf-8') as f:
+                        previous_items = json.load(f)
+                except:
+                    return
+                if previous_items:
+                    self.uncheck_all()
+                    self.check_previously_compacted(previous_items, False)
+                    self.message = self.create_confirmation(self.tr("Success"), 
+                                                       self.tr("Import successful. Any items both in the imported list and scanned list have been selected."),
+                                                       icon=QMessageBox.Icon.Information)
+                    self.message.show()
+                else:
+                    self.message = self.create_confirmation(self.tr("Failed"), 
+                                                       self.tr("Import Failed. File is empty or invalid."),
+                                                       'lightcoral',
+                                                       icon=QMessageBox.Icon.Warning)
+                    self.message.show()
+            else:
+                self.message = self.create_confirmation(self.tr("Error"), 
+                                                   self.tr("Selected file does not exist."),
+                                                   'lightcoral',
+                                                   icon=QMessageBox.Icon.Warning)
+                self.message.show()
+
+    def export_check_state_to_file(self):
+        checked = []
+        for row in range(self.rowCount()):
+            if self.item(row, self.MOD_COL).checkState() == Qt.CheckState.Checked and not self.item(row, self.HIDER_COL):
+                checked.append(self.item(row, self.MOD_COL).text())
+
+        file_path = self.select_file_path(self.file_dialog, self.tr("Export Check State File As..."), filter='*.json', mode=1)
+        if file_path:
+            try:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump(checked, f, indent=2)
+                self.message = self.create_confirmation(self.tr("Success"), 
+                                                        self.tr("Export successful. Current check state saved to %0").replace("%0", file_path),
+                                                        icon=QMessageBox.Icon.Information)
+                self.message.show()
+            except Exception as e:
+                self.message = self.create_confirmation(self.tr("Error"), 
+                                                        self.tr("Error while exporting: ") + str(e),
+                                                        'lightcoral',
+                                                        icon=QMessageBox.Icon.Warning)
+                self.message.show()
