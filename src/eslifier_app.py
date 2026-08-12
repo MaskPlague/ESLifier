@@ -248,10 +248,10 @@ class main_window(QMainWindow):
         self.setFocus()
         self.rebuild_lists = False
         self.settings_widget = settings(COLOR_MODE)
-        self.settings_widget.settings_updated.connect(self.update_settings)
+        self.settings_widget.settings_updated_signal.connect(self.update_settings)
         def set_rebuild_lists():
             self.rebuild_lists = True
-        self.settings_widget.need_to_rebuild_lists.connect(set_rebuild_lists)
+        self.settings_widget.need_to_rebuild_lists_signal.connect(set_rebuild_lists)
         check_for_update = self.settings_widget.settings.get('check_for_updates', True)
         if check_for_update:
             self.github_thread = QThread()

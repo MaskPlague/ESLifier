@@ -14,8 +14,8 @@ from log_stream import write_error
 
 from QToggle import QtToggle
 class settings(QWidget):
-    settings_updated = pyqtSignal()
-    need_to_rebuild_lists = pyqtSignal()
+    settings_updated_signal = pyqtSignal()
+    need_to_rebuild_lists_signal = pyqtSignal()
     COMBO_BOX_STYLE= ""
 
     LINE_EDIT_STYLE = ""
@@ -404,7 +404,7 @@ class settings(QWidget):
         outer_color = QColorDialog.getColor(QColor(self.outer_color), self, self.tr("Select Outer Color"))
         if outer_color.isValid():
             self.outer_color = outer_color.name()
-        self.settings_updated.emit()
+        self.settings_updated_signal.emit()
 
     def button_maker(self, text, function, width):
         button = QPushButton()
@@ -986,7 +986,7 @@ class settings(QWidget):
         if key in ('show_esms', 'show_cells', 'enable_cell_changed_filter', 'enable_interior_cell_filter', 
                    'filter_worldspaces', 'filter_weathers', 'show_dlls', 'generate_cell_master', 'reset',
                    'left_hidden_columns', 'right_hidden_columns', 'filter_seq', 'filter_pex'):
-            self.need_to_rebuild_lists.emit()
+            self.need_to_rebuild_lists_signal.emit()
         
     def get_settings_from_file(self):
         try:
