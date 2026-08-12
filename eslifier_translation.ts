@@ -2036,7 +2036,7 @@ This button needs an output made from v0.12.0+.</source>
       <translation type="unfinished" />
     </message>
     <message>
-      <location filename="src\scanner_vortex.py" line="305" />
+      <location filename="src\scanner_vortex.py" line="302" />
       <location filename="src\scanner_mo2.py" line="62" />
       <source>Winning Files Processed: </source>
       <translation type="unfinished" />
