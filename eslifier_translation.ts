@@ -2044,7 +2044,7 @@ This button needs an output made from v0.12.0+.</source>
     <message>
       <location filename="src\scanner_vortex.py" line="163" />
       <location filename="src\scanner_none.py" line="20" />
-      <location filename="src\scanner_mo2.py" line="128" />
+      <location filename="src\scanner_mo2.py" line="126" />
       <source>Gathered: </source>
       <translation type="unfinished" />
     </message>
