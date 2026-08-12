@@ -252,6 +252,7 @@ class list_eslable(list_parent_class):
         self.itemChanged.connect(somethingChanged)
         self.resizeRowsToContents()
         self.setSortingEnabled(True)
+        self.list_created_signal.emit()
     
     def contextMenu(self, position):
         selected_item = self.item(self.rowAt(position.y()), 0)

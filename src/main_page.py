@@ -183,6 +183,7 @@ class main(QWidget):
         self.filter_eslify.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.filter_eslify.setClearButtonEnabled(True)
         self.filter_eslify.textChanged.connect(self.search_eslify)
+        self.list_eslify.list_created_signal.connect(self.search_eslify)
 
         self.filter_compact = QLineEdit()
         self.filter_compact.setPlaceholderText(self.tr("Filter "))
@@ -192,6 +193,7 @@ class main(QWidget):
         self.filter_compact.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.filter_compact.setClearButtonEnabled(True)
         self.filter_compact.textChanged.connect(self.search_compact)
+        self.list_compact.list_created_signal.connect(self.search_compact)
 
     def create_widget(self):
         self.create_top_lables()

@@ -9,6 +9,7 @@ from blacklist import blacklist
 from log_stream import write_error
 
 class list_parent_class(QTableWidget):
+    list_created_signal = pyqtSignal()
     MOD_COL = 0
     CELL_COL = 0
     WRLD_COL = 0

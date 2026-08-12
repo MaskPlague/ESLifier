@@ -361,6 +361,7 @@ class list_compactable(list_parent_class):
         self.itemChanged.connect(somethingChanged)
         self.resizeRowsToContents()
         self.setSortingEnabled(True)
+        self.list_created_signal.emit()
 
     def contextMenu(self, position):
         row = self.rowAt(position.y())
