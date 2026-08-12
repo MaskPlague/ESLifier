@@ -284,6 +284,7 @@ class main_window(QMainWindow):
         _global.init(self.settings_widget)
         self.update_settings()
         self.tabs = QTabWidget()
+        _global.setTabsDisabled = self.tabs.setDisabled
         if COLOR_MODE == 'Light':
             self.tabs.setStyleSheet("""
                 QTabWidget::pane { /* The tab widget frame */

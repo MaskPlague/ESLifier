@@ -1,8 +1,11 @@
-from settings_page import settings
 from log_stream import write_to_file
 import os
 
 from PyQt6.QtCore import QCoreApplication
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from settings_page import settings
 
 class _global():
     # Commonly Accessed Settings
@@ -58,6 +61,9 @@ class _global():
 
     def init(settings_widget: settings):
         _global._settings = settings_widget.settings
+
+    def setTabsDisabled(a0:bool=False):
+        pass
 
     def update_from_settings():     
         _global.output_folder_path =                _global._settings.get('output_folder_path', '')

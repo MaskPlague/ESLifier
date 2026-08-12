@@ -5,6 +5,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit
 from PyQt6.QtGui import QIcon
 
+from data_holder import _global
+
 class blacklist(QTableWidget):
     def __init__(self):
         super().__init__()
@@ -153,7 +155,10 @@ class blacklist_window(QMainWindow):
         super().__init__()
         self.setWindowIcon(QIcon(":/images/ESLifier.png"))
         self.setWindowTitle("Select Mods to Remove From the Blacklist")
-        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
+        flags = self.windowFlags()
+        flags &= ~Qt.WindowType.WindowMinimizeButtonHint
+        flags |= Qt.WindowType.WindowStaysOnTopHint
+        self.setWindowFlags(flags)
         self.setStyleSheet("""
             QLineEdit {
                 border: none;
@@ -220,3 +225,15 @@ class blacklist_window(QMainWindow):
         else:
             for i in range(self.blacklist.rowCount()):
                 self.blacklist.setRowHidden(i, False)
+
+    def show(self):
+        _global.setTabsDisabled(True)
+        return super().show()
+
+    def hide(self):
+        _global.setTabsDisabled(False)
+        return super().hide()
+
+    def closeEvent(self, a0):
+        _global.setTabsDisabled(False)
+        return super().closeEvent(a0)
