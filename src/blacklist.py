@@ -42,9 +42,9 @@ class blacklist(QTableWidget):
                 image:url(:/images/partially_checked.png);
             }
         """)
-        self.create()
+        self.create_blacklist()
 
-    def create(self):
+    def create_blacklist(self):
         self.clearContents()
         self.blacklist = self.get_data_from_file('ESLifier_Data/blacklist.json')
         self.setRowCount(len(self.blacklist))
@@ -126,7 +126,7 @@ class blacklist(QTableWidget):
             if mod not in self.blacklist:
                 self.blacklist.append(mod)
         self.dump_to_file('ESLifier_Data/blacklist.json')
-        self.create()
+        self.create_blacklist()
 
     def remove_from_blacklist(self):
         self.blacklist = self.get_data_from_file('ESLifier_Data/blacklist.json')
@@ -138,7 +138,7 @@ class blacklist(QTableWidget):
         for mod in mods_to_remove:
             self.blacklist.remove(mod)
         self.dump_to_file('ESLifier_Data/blacklist.json')
-        self.create()
+        self.create_blacklist()
 
     def dump_to_file(self, file):
         try:

@@ -876,7 +876,7 @@ class settings(QWidget):
         return widget, line_edit
 
     def edit_blacklist_button_clicked(self):
-        self.blacklist_window.blacklist.create()
+        self.blacklist_window.blacklist.create_blacklist()
         self.blacklist_window.show()
 
     def open_eslifier_data(self):

@@ -81,7 +81,7 @@ class main(QWidget):
         self.patch_and_flag_worker = None
         self.scanner_worker = None
         self.files_to_not_hash = set()
-        self.create()
+        self.create_widget()
 
     def create_top_lables(self):
         self.eslify_label = QLabel(self.tr("ESLify"))
@@ -193,7 +193,7 @@ class main(QWidget):
         self.filter_compact.setClearButtonEnabled(True)
         self.filter_compact.textChanged.connect(self.search_compact)
 
-    def create(self):
+    def create_widget(self):
         self.create_top_lables()
 
         self.patch_new = patch_new()
@@ -627,7 +627,7 @@ class main(QWidget):
             if len(checked_list) > 0:
                 for mod in checked_list:
                     self.list_compact.flag_dict.pop(mod)
-                self.list_compact.create()
+                self.list_compact.create_list()
             if not self.patch_new_running:
                 write_normal(self.tr("Total Elapsed Time: %1 Seconds").replace("%1", f"{timeit.default_timer() - self.start_time:.2f}"))
                 clear_and_close_log()
@@ -644,7 +644,7 @@ class main(QWidget):
             if len(checked_list) > 0:
                 for mod in checked_list:
                     self.list_eslify.flag_dict.pop(mod)
-                self.list_eslify.create()
+                self.list_eslify.create_list()
             if not self.redoing_output:
                 clear_and_close_log()
             elif self.redoing_output and os.path.exists(PREVIOUSLY_COMPACTED_JSON):
@@ -770,12 +770,12 @@ class main(QWidget):
         self.dependency_dictionary = dependency_dictionary
         write_normal(self.tr('Populating Tables'))
         try:
-            self.list_eslify.create()
+            self.list_eslify.create_list()
         except Exception as e:
             write_error(self.tr('Failed to create "ESLify" list'))
             write_error(e, True)
         try:
-            self.list_compact.create()
+            self.list_compact.create_list()
         except Exception as e:
             write_error(self.tr('Failed to create "Compact + ESLify" list'))
             write_error(e, True)
@@ -913,8 +913,8 @@ class main(QWidget):
             self.delete_output(self.output_folder_full, files_to_remove)
             self.list_compact.flag_dict = {}
             self.list_eslify.flag_dict = {}
-            self.list_compact.create()
-            self.list_eslify.create()
+            self.list_compact.create_list()
+            self.list_eslify.create_list()
             def previous_removal_confirmation():
                 def accepted3():
                     if os.path.exists(PREVIOUSLY_ESL_FLAGGED_JSON):
@@ -1065,8 +1065,8 @@ class main(QWidget):
                 delete_subdirectories_threaded('bsa_extracted/')
             self.list_compact.flag_dict = {}
             self.list_eslify.flag_dict = {}
-            self.list_compact.create()
-            self.list_eslify.create()
+            self.list_compact.create_list()
+            self.list_eslify.create_list()
         confirm.accepted.connect(accepted)
         confirm.show()
 

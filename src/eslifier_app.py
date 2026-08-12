@@ -336,8 +336,8 @@ class main_window(QMainWindow):
         self.update_settings()
         if self.rebuild_lists:
             self.rebuild_lists = False
-            self.main_widget.list_compact.create()
-            self.main_widget.list_eslify.create()
+            self.main_widget.list_compact.create_list()
+            self.main_widget.list_eslify.create_list()
         if index == self.HELP_TAB:
             self.tabs.setCurrentIndex(self.previous_tab)
             self.help_selected()

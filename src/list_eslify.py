@@ -104,9 +104,9 @@ class list_eslable(QTableWidget):
                 image:url(:/images/partially_checked.png);
             }
         """)
-        self.create()
+        self.create_list()
 
-    def create(self):
+    def create_list(self):
         self.setSortingEnabled(False)
         self.clearContents()
 

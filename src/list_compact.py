@@ -124,9 +124,9 @@ class list_compactable(QTableWidget):
             }
         """)
 
-        self.create()
+        self.create_list()
 
-    def create(self):
+    def create_list(self):
         self.setSortingEnabled(False)
         self.clearContents()
         self.previously_compacted_exists = os.path.exists("ESLifier_Data/previously_compacted.json")
