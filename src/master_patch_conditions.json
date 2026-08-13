@@ -1,5 +1,5 @@
 {
-    "version": 21,
+    "version": 22,
     "conditions": [
         {
             "extension": "json",
@@ -141,6 +141,11 @@
         {
             "extension": "json",
             "contains": "interface/CMSkills/",
+            "patcher": "json_generic_plugin_sep_formid"
+        },
+        {
+            "extension": "json",
+            "contains": "Viny Mods/NPC Visual/",
             "patcher": "json_generic_plugin_sep_formid"
         }
     ]
