@@ -1,5 +1,5 @@
 {
-    "version": 15,
+    "version": 16,
     "ignored_files": [
         "BFCO_FX_CheckPreAttackIsOK.pex",
         "BFCO_FX_PlayIdleListKeyE.pex",
@@ -20,7 +20,8 @@
         "PGPatcher/cfg/ignored_messages.json",
         "SKSE/Plugins/DynamicNPCs.ini",
         "FollowerLevelingSystemRedone/PerksAndSpells.json",
-        "interface/modex/user/userdata.json"
+        "interface/modex/user/userdata.json",
+        "Viny Mods/NPC Visual/FaceGenCache.json"
     ],
     "ignored_contains": [
         "SkyrimDiag_Incident_",
