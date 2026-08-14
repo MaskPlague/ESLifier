@@ -454,6 +454,25 @@ class settings(QWidget):
                 profiles.append(profile)
         return profiles
 
+    #def get_vortex_profiles(self):
+    #    #Leaving this here in case I need it in the future, Don't think I'm going to implement it though as 
+    #    # if the profile isn't active then the mods are not deployed and thus scanning the SSE dir makes no sense
+    #    from vortex_database_reader import VortexDBParser
+    #    ret = VortexDBParser.is_readable()
+    #    profiles = {"~": self.tr("Last Used Profile")}
+    #    if ret == 1:
+    #        section: dict[str, dict[str, str]] = VortexDBParser.get_section("persistent###profiles")
+    #        for id, data in section.items():
+    #            if data.get("gameId") != "skyrimse":
+    #                continue
+    #            profiles[id] = data.get("name", "")
+    #    else:
+    #        profiles["-"] = self.tr("Vortex is Open")
+    #        profile_dir = os.path.join(self.settings.get('vortex_data_path'), "skyrimse/profiles")
+    #        for profile in os.listdir(profile_dir):
+    #            profiles[profile] = profile
+    #    return profiles
+
     def populate_mo2_profiles(self):
         profiles = self.get_mo2_profiles()
         current = self.mo2_profile.currentText()
