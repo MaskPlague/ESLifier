@@ -177,8 +177,9 @@ class _global():
             if file_lower.startswith(_global.skyrim_folder_path_lower):
                 return file_norm[_global.skyrim_folder_path_len:].lstrip(os.sep)
 
-            if file_lower.startswith(_global.output_folder_joined_path_lower):
-                return file_norm[_global.output_folder_joined_path_len:].lstrip(os.sep)
+        # Files In Output (renamed facegeom)
+        if file_lower.startswith(_global.output_folder_joined_path_lower):
+            return file_norm[_global.output_folder_joined_path_len:].lstrip(os.sep)
 
 
         raise RuntimeError(
