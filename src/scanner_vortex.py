@@ -135,13 +135,26 @@ class Vortex():
         
     def get_winning_file_conflicts():
         profile_id = Vortex.get_last_used_skyrim_profile()
-        
+        if profile_id == None:
+            write_to_file("No last used skyrimse profile. Aborting.")
+            _global.vortex_error = 5
+            return [], [], [], '', ''
+
         plugins_list: list[str] = Vortex.get_plugins_list(profile_id)
 
         installed_mods: dict[str, dict] = VortexDBParser.get_section("persistent###mods###skyrimse###") or {}
         ordered_mod_ids, installed_mods = Vortex.get_load_order(profile_id, installed_mods)
-        mod_staging_folder:str = os.path.normpath(VortexDBParser.get_key_value("settings###mods###installPath###").removeprefix('"').removesuffix('"'))
-
+        mod_staging_folder = VortexDBParser.get_key_value("settings###mods###installPath###skyrimse###")
+        mod_staging_folder:str = os.path.normpath(mod_staging_folder.removeprefix('"').removesuffix('"'))
+        if mod_staging_folder == None or mod_staging_folder == '' or not os.path.exists(mod_staging_folder):
+            write_to_file("No skyrimse in installPath for Mod Staging Folder, assuming default at INSTANCE/skyrimse/mods/")
+            mod_staging_folder = os.path.normpath(os.path.join(_global.vortex_data_path,"skyrimse/mods/"))
+        
+        if not os.path.exists(mod_staging_folder):
+            write_to_file("Couldn't get an actual mod staging folder. Aborting.")
+            write_to_file(f"Non-existent MSF at: {mod_staging_folder}")
+            _global.vortex_error = 4
+            return [], [], [], '', ''
         gamedata = VortexDBParser.get_section("settings###gameMode###discovered###skyrimse")
         skyrim_folder_path = os.path.normpath(os.path.join(gamedata.get('path'), "Data"))
 
@@ -149,6 +162,9 @@ class Vortex():
         output_folder_drive = os.path.splitdrive(_global.output_folder_path)[0].lower()
         #Output and mod staging folder must be on same drive
         if mod_staging_folder_drive != output_folder_drive:
+            write_to_file("Mod Staging Folder and Output Folder are not on the same Drive")
+            write_to_file(f"MSF Drive: {mod_staging_folder}, OF Drive: {output_folder_drive}")
+            write_to_file(f"MSF: {mod_staging_folder}, OF: {_global.output_folder_path}")
             _global.vortex_error = 3
             return [], [], [], '', ''
         mod_files:dict[str, list[str]] = {}

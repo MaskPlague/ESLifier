@@ -27,10 +27,14 @@ class VortexDBParser:
     def get_key_value(start_string: str):
         if not start_string.endswith('###'):
             start_string += "###"
+        end_index = start_string.rindex("###", 0, len(start_string)-2)
+        key = start_string[end_index+3:-3].encode()
+        start_string = start_string[:end_index+3]
         start_bytes = start_string.encode()
         with plyvel.DB(_global.vortex_db_path) as db:
-            for _, value in db.iterator(prefix=start_bytes):
-                return value.decode()
+            prefixed = db.prefixed_db(start_bytes)
+            return prefixed.get(key, b'').decode()
+        return None
 
     def is_readable() -> (int|Exception):
         try:
