@@ -683,7 +683,7 @@ class main(QWidget):
         self.setEnabled(False)
         self.scan_thread = QThread()
         def run_scan():
-            write_to_file(f'Running Scan [Mode Manager Mode = {_global.mod_manager_mode}]')
+            write_to_file(f'Running Scan [Mod Manager Mode = {_global.mod_manager_mode}]')
             self.log_stream.show()
             self.scanner_worker = ScannerWorker()
             self.scanner_worker.moveToThread(self.scan_thread)
@@ -869,7 +869,7 @@ class main(QWidget):
                 "This action will delete %2 files and %3 MBs of data from the output."
             ).replace("%1", self.output_folder_name).replace("%2", str(file_count)).replace("%3", str(calculated_size)))
         def accepted():
-            write_to_file(f'Resetting Output [Mode Manager Mode = {_global.mod_manager_mode}]')
+            write_to_file(f'Resetting Output [Mod Manager Mode = {_global.mod_manager_mode}]')
             confirm.hide()
             if os.path.exists(COMPACTED_AND_PATCHED_JSON):
                 try:
@@ -966,7 +966,7 @@ class main(QWidget):
                 "and maybe move your output/game install to a non-protected folder."
             ).replace("%1", self.output_folder_name).replace("%2", str(file_count)).replace("%3", str(calculated_size)))
         def accepted():
-            write_to_file(f'Starting Output Rebuild [Mode Manager Mode = {_global.mod_manager_mode}]')
+            write_to_file(f'Starting Output Rebuild [Mod Manager Mode = {_global.mod_manager_mode}]')
             confirm.hide()
             previously_compacted = []
             previously_esl_flagged = []
@@ -1024,7 +1024,7 @@ class main(QWidget):
                 "and then click this button.")
         confirm.setText(confirm_text)
         def accepted():
-            write_to_file(f'Resetting BSA [Mode Manager Mode = {_global.mod_manager_mode}]')
+            write_to_file(f'Resetting BSA [Mod Manager Mode = {_global.mod_manager_mode}]')
             confirm.hide()
             if os.path.exists(EXTRACTED_BSA_JSON):
                 os.remove(EXTRACTED_BSA_JSON)
@@ -1442,7 +1442,7 @@ class main(QWidget):
         confirm = self.create_confirmation()
         confirm.setText(self.tr("Are you sure you want to scan and patch new/changed files?"))
         def accepted():
-            write_to_file(f'Starting Patch New Process [Mode Manager Mode = {_global.mod_manager_mode}]')
+            write_to_file(f'Starting Patch New Process [Mod Manager Mode = {_global.mod_manager_mode}]')
             confirm.hide()
             self.log_stream.show()
             self.patch_new.scan_and_find(self)
