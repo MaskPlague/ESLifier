@@ -713,6 +713,10 @@ class main(QWidget):
             confirm.setText(self.tr("ESLifier detected that a cyclic rule is set in Vortex, please correct it first."))
         elif _global.vortex_error == 3:
             confirm.setText(self.tr("Vortex's Mod Staging Folder and ESLifier's Output Folder must be on the same drive."))
+        elif _global.vortex_error == 4:
+            confirm.setText(self.tr("Failed to get the Vortex Mod Staging Folder."))
+        elif _global.vortex_error == 5:
+            confirm.setText(self.tr("No last used Skyrim SE profile detected."))
         elif isinstance(_global.vortex_error, Exception):
             confirm.setText(self.tr(f"ESLifier has come across an error while scanning Vortex data: %0").replace("%0", str(_global.vortex_error)))
         _global.vortex_error = -1
