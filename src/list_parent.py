@@ -110,8 +110,8 @@ class list_parent_class(QTableWidget):
                 self.flash_anim.start()
                 self.flash_timer_reminder.start()
             else:
+                self.flash_timer_reminder.stop()
                 if self.flash_anim.state() == QVariantAnimation.State.Running:
-                    self.flash_timer_reminder.stop()
                     self.flash_anim.stop()
                     self.flash_anim.finished.emit()
         else:
