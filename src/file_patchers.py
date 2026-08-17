@@ -1664,6 +1664,43 @@ class patchers():
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
 
+    def json_hunted_or_hunter_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str = 'utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            try:
+                data = json.load(f)
+            except:
+                f.seek(0)
+                string = f.read()
+                data: dict = patchers.use_json5(string)
+
+            def item_parser(item: dict):
+                if item.get('Mod','').lower() == basename:
+                    key = 'ID'
+                    fid: str = item.get(key, None)
+                    if not fid:
+                        return
+                    form_id_int = int(fid, 16)
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data:
+                        item[key] = to_id_data['hex_no_0']
+
+            def recursive_depth_parser(obj):
+                if isinstance(obj, list):
+                    for item in obj:
+                        recursive_depth_parser(item)
+                elif isinstance(obj, dict):
+                    if 'Mod' in obj:
+                        item_parser(obj)
+                    else:
+                        for key, value in obj.items():
+                            if isinstance(value, (dict, list)):
+                                recursive_depth_parser(value)
+
+            recursive_depth_parser(data)
+            f.seek(0)
+            f.truncate(0)
+            json.dump(data, f, ensure_ascii=False, indent=3)
+
     def dynamic_animation_replacer_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -2356,7 +2393,7 @@ class patchers():
 
 #if __name__ == '__main__':
 #    basename = "thing.esp".lower()
-#    form_id_map = {int('0x3004EB',16): {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'bytes': b'\x00\x0A\x0A', 'update_name': False}, 
+#    form_id_map = {int('3DE8D',16): {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'bytes': b'\x00\x0A\x0A', 'update_name': False}, 
 #                   int('0x12345',16): {'hex_no_0': 'B0B', 'hex': '000B0B', "int": 10101, 'bytes': b'\x00\x0B\x0B', 'update_name': True}}
 #    new_file = os.path.normpath(r)
-#    patchers.ini_formid_sep_plugin_patcher(basename, new_file, form_id_map, sep=" ~ ", encoding_method='utf-8')
+#    patchers.json_hunted_or_hunter_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
