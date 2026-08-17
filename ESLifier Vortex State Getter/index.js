@@ -4,14 +4,33 @@ const os = require('os');
 const http = require('http');
 
 function init(context) {
+
+    let isDeploying = false;
+    let isPurging = false
+
+    context.api.events.on('will-deploy', () => { isDeploying = true; });
+    context.api.events.on('did-deploy', () => { isDeploying = false; });
+
+    context.api.events.on('will-purge', () => { isPurging = true; });
+    context.api.events.on('did-purge', () => { isPurging = false; });
+
     const portFilePath = path.join(__dirname, 'port.txt');
     // Create local server to listen for ESLifier's request to export Vortex's Redux store state
     const server = http.createServer((req, res) => {
         if (req.method === 'GET' && req.url === '/export-state') {
             try {
-                const state = context.api.store.getState();
                 res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify(state));
+
+                if (isDeploying) {
+                    res.end(JSON.stringify({ deploying__eslifier_tag: true }));
+                }
+                else if (isPurging) {
+                    res.end(JSON.stringify({ purging__eslifier_tag: true }));
+                }
+                else {
+                    const state = context.api.store.getState();
+                    res.end(JSON.stringify(state));
+                }
             } catch (err) {
                 res.writeHead(500, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: err.message }));

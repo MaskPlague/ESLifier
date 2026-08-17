@@ -15,6 +15,8 @@ class ReadState(Enum):
     SUCCESS_STATE = 2
     ERROR_DB_LOCKED_EXTENSION_MISSING = 4
     ERROR_DB_LOCKED_EXTENSION_UNREACHABLE = 5
+    ERROR_DB_LOCKED_DEPLOYING = 6
+    ERROR_DB_LOCKED_PURGING = 7
 
 class VortexDBParser:
     state:dict = {}
@@ -111,6 +113,12 @@ class VortexDBParser:
                 if os.path.exists(port_file):
                     local_state:dict = VortexDBParser.get_live_vortex_state()
                     if local_state:
+                        if local_state.get("deploying__eslifier_tag", False):
+                            write_to_file("Vortex is deploying, cancelling action.")
+                            return ReadState.ERROR_DB_LOCKED_DEPLOYING
+                        if local_state.get("purging__eslfiier_tag", False):
+                            write_to_file("Vortex is purging, cancelling action.")
+                            return ReadState.ERROR_DB_LOCKED_PURGING
                         write_to_file("Successfully obtained Vortex state via the Vortex extension.")
                         VortexDBParser.state = local_state
                         VortexDBParser.get_section = VortexDBParser.get_section_from_state

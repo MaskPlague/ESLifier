@@ -670,6 +670,10 @@ class main(QWidget):
                                         "ESLifier cannot read Vortex's database unless Vortex is closed or the extension is installed."))
             elif return_val == ReadState.ERROR_DB_LOCKED_EXTENSION_UNREACHABLE:
                 confirm.setText(self.tr("Vortex is open but the Vortex extension is unresponsive. Please close or restart Vortex."))
+            elif return_val == ReadState.ERROR_DB_LOCKED_DEPLOYING:
+                confirm.setText(self.tr("Vortex is in the process of deploying your modlist, please wait for it to complete and try again."))
+            elif return_val == ReadState.ERROR_DB_LOCKED_PURGING:
+                confirm.setText(self.tr("ESLifier has detected you are currently purging your modlist. You will need to redeploy before running ESLifier."))
             elif isinstance(return_val, Exception):
                 confirm.setText(self.tr("ESLifier has come across an error while scanning Vortex data: %0").replace('%0', str(return_val)))
             
