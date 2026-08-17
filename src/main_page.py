@@ -664,12 +664,15 @@ class main(QWidget):
         return_val = VortexDBParser.is_readable()
         if return_val not in (ReadState.SUCCESS_DB, ReadState.SUCCESS_STATE):
             confirm = self.create_confirmation('lightcoral')
-            # 0 means locked by vortex
-            if return_val == 0:
-                confirm.setText(self.tr("Please close Vortex, ESLifier cannot accesss Vortex's database while it is open."))
-            elif isinstance(_global.vortex_error, Exception):
-                confirm.setText(self.tr(f"ESLifier has come across an error while scanning Vortex data: %0").replace('%0', str(return_val)))
             self.scanned = False
+            if return_val == ReadState.ERROR_DB_LOCKED_EXTENSION_MISSING:
+                confirm.setText(self.tr("Please close Vortex or install the Vortex extension from ESLifier's mod page. " \
+                                        "ESLifier cannot read Vortex's database unless Vortex is closed or the extension is installed."))
+            elif return_val == ReadState.ERROR_DB_LOCKED_EXTENSION_UNREACHABLE:
+                confirm.setText(self.tr("Vortex is open but the Vortex extension is unresponsive. Please close or restart Vortex."))
+            elif isinstance(return_val, Exception):
+                confirm.setText(self.tr("ESLifier has come across an error while scanning Vortex data: %0").replace('%0', str(return_val)))
+            
             def accept():
                 confirm.hide()
             confirm.setStandardButtons(QMessageBox.StandardButton.Ok)
@@ -709,9 +712,12 @@ class main(QWidget):
     def vortex_error(self):
         clear_and_close_log()
         confirm = self.create_confirmation('lightcoral')
-        if _global.vortex_error == 0:
-            confirm.setText(self.tr("Please close Vortex, ESLifier cannot accesss Vortex's database while it is open."))
-        elif _global.vortex_error == 2:
+        if _global.vortex_error == ReadState.ERROR_DB_LOCKED_EXTENSION_MISSING:
+            confirm.setText(self.tr("Please close Vortex or install the Vortex extension from ESLifier's mod page. " \
+                                    "ESLifier cannot read Vortex's database unless Vortex is closed or the extension is installed."))
+        elif _global.vortex_error == ReadState.ERROR_DB_LOCKED_EXTENSION_UNREACHABLE:
+            confirm.setText(self.tr("Vortex is open but the Vortex extension is unresponsive. Please close or restart Vortex."))
+        elif _global.vortex_error == VortexErrors.HAS_CYCLES:
             confirm.setText(self.tr("ESLifier detected that a cyclic rule is set in Vortex, please correct it first."))
         elif _global.vortex_error == VortexErrors.DIFFERENT_MSF_AND_OF_DRIVEs:
             confirm.setText(self.tr("Vortex's Mod Staging Folder and ESLifier's Output Folder must be on the same drive."))
