@@ -2,8 +2,11 @@
 from log_stream import write_error, write_normal, write_progress, write_remove, write_to_file, write_warning
 from PyQt6.QtCore import QCoreApplication
 import os
+import re
+import fnmatch
 from vortex_database_reader import VortexDBParser
-from collections import deque
+from vortex_database_reader import ReadState
+from collections import deque, defaultdict
 from data_holder import _global
 from typing import TYPE_CHECKING
 from enum import Enum
@@ -24,14 +27,15 @@ class Vortex():
         mod_state_data: dict[str, dict[str, bool|str]] = profiles.get(profile_id, {}).get("modState", {})
         
         enabled_mods: set[str] = set()
+        enabled_lfn: dict[str] = {}
         for mod_id, state in mod_state_data.items():
             if state.get("enabled", False):
                 enabled_mods.add(mod_id)
+                enabled_lfn[mod_id] = state.get("logicalFileName")
 
-        # Build Adjacency List (Graph) and In-Degree counts for Topological Sort
-        # An edge from A -> B means B must load AFTER A (B overwrites A / B wins)
-        adjacency_list = {mod: set() for mod in enabled_mods}
-        in_degree = {mod: 0 for mod in enabled_mods}
+        # pair_rules[frozenset({modA, modB})] = {(u, v): priority} 
+        # where for (u, v), 'u' loads before 'v'
+        pair_rules = defaultdict(lambda: defaultdict(int))
 
         for mod_id in enabled_mods:
             mod_data: dict[str, list[dict[str, dict]]] = installed_mods.get(mod_id, {})
@@ -39,24 +43,96 @@ class Vortex():
             
             for rule in rules:
                 ref = rule.get("reference", {})
-                ref_id = ref.get("id") or ref.get("fileExpression")
-                # Ignore rules referencing mods that aren't enabled/installed
-                if not ref_id or ref_id not in enabled_mods:
-                    continue
                 rule_type = rule.get("type")
+                
+                if rule_type not in ("before", "after"):
+                    continue
 
-                if rule_type == "before":
-                    # mod_id loads before ref_id
-                    if ref_id not in adjacency_list[mod_id]:
-                        adjacency_list[mod_id].add(ref_id)
-                        in_degree[ref_id] += 1
-                elif rule_type == "after":
-                    # mod_id loads after ref_id
-                    if mod_id not in adjacency_list[ref_id]:
-                        adjacency_list[ref_id].add(mod_id)
-                        in_degree[mod_id] += 1
+                ref_id = ref.get("id")
+                ref_fe = ref.get("fileExpression")
+                ref_lfn = ref.get("logicalFileName")
 
-        # Perform Topological Sort (Kahn's Algorithm)
+                rule_targets = {}
+                
+                # High priority, 2, exact match for id
+                if ref_id and ref_id in enabled_mods:
+                    rule_targets[ref_id] = 2
+
+                    
+                # Low priority, 1, match for logicalFileName/fileExpression
+                if ref_lfn or ref_fe:
+                    for target_id in enabled_mods:
+                        if target_id in rule_targets:
+                            continue # Skip if already captured by Priority 2 match
+                        
+                        matched = False
+                        target_lfn = enabled_lfn.get(target_id)
+                        
+                        # Match logicalFileName
+                        if ref_lfn and target_lfn and ref_lfn == target_lfn:
+                            matched = True
+                        # Match fileExpression (exact, wildcard glob, or regex)
+                        elif ref_fe:
+                            if ref_fe == target_id:
+                                matched = True
+                            elif '*' in ref_fe or '?' in ref_fe:
+                                if fnmatch.fnmatch(target_id.lower(), ref_fe.lower()):
+                                    matched = True
+                            else:
+                                try:
+                                    if re.search(ref_fe, target_id, re.IGNORECASE):
+                                        matched = True
+                                except re.error:
+                                    pass
+                                    
+                        if matched:
+                            rule_targets[target_id] = 1
+
+                for target_id, priority in rule_targets.items():
+                    if target_id == mod_id:
+                        continue
+                        
+                    if rule_type == "before":
+                        # mod_id loads before target_id
+                        direction = (mod_id, target_id)
+                    else:
+                        # mod_id loads after target_id
+                        direction = (target_id, mod_id)
+                        
+                    pair = frozenset({mod_id, target_id})
+                    # Only keep the highest priority observed for this specific direction
+                    pair_rules[pair][direction] = max(pair_rules[pair][direction], priority)
+
+        adjacency_list = {mod: set() for mod in enabled_mods}
+        in_degree = {mod: 0 for mod in enabled_mods}
+
+        for pair, directions in pair_rules.items():
+            if len(directions) == 1:
+                u, v = list(directions.keys())[0]
+                if v not in adjacency_list[u]:
+                    adjacency_list[u].add(v)
+                    in_degree[v] += 1
+            else: # A conflict between rules exists: A before B and B before A 
+                # Compare priorities
+                dirs = list(directions.keys())
+                dir1, dir2 = dirs[0], dirs[1]
+                p1, p2 = directions[dir1], directions[dir2]
+
+                winning_dirs = []
+                if p1 > p2:
+                    winning_dirs.append(dir1)
+                elif p2 > p1:
+                    winning_dirs.append(dir2)
+                else:
+                    # Same priority, leave both so Kahn's algo detects it as cycle.
+                    winning_dirs.extend([dir1, dir2])
+                    
+                for u, v in winning_dirs:
+                    if v not in adjacency_list[u]:
+                        adjacency_list[u].add(v)
+                        in_degree[v] += 1
+
+        # Perform Topological Sort, Kahn's Algorithm
         queue = deque([mod for mod in enabled_mods if in_degree[mod] == 0])
         load_order = []
 
@@ -69,14 +145,51 @@ class Vortex():
                 if in_degree[dependent_mod] == 0:
                     queue.append(dependent_mod)
 
-        # Handle cycles (fallback)
-        # If the lengths don't match, the user created a cyclic rule in Vortex (A -> B -> A)
+        # Handle cycles
         if len(load_order) != len(enabled_mods):
             unresolved = enabled_mods - set(load_order)
-            # append unresolved mods to the end to prevent data loss
             load_order.extend(list(unresolved))
-            _global.vortex_error = 2
+            write_to_file(f"Cyclic rules? {len(unresolved)} unresolved mods: {list(unresolved)}")
+            Vortex.find_exact_cycles(adjacency_list, unresolved)
+            _global.vortex_error = VortexErrors.HAS_CYCLES
+            
         return load_order, installed_mods
+
+    def find_exact_cycles(adj_list, unresolved_nodes):
+        visited = {node: 0 for node in unresolved_nodes}
+        path = []
+        cycles = []
+        
+        def dfs(node):
+            visited[node] = 1
+            path.append(node)
+            
+            for neighbor in adj_list[node]:
+                if neighbor in unresolved_nodes:
+                    if visited[neighbor] == 0:
+                        dfs(neighbor)
+                    elif visited[neighbor] == 1:
+                        cycle_start = path.index(neighbor)
+                        cycles.append(path[cycle_start:] + [neighbor])
+            
+            path.pop()
+            visited[node] = 2
+
+        for node in unresolved_nodes:
+            if visited[node] == 0:
+                dfs(node)
+
+        # De-duplicate permutations (A->B->C->A vs B->C->A->B)
+        unique_cycles = set()
+        for c in cycles:
+            c_base = c[:-1]
+            min_idx = c_base.index(min(c_base))
+            normalized = tuple(c_base[min_idx:] + c_base[:min_idx])
+            unique_cycles.add(normalized)
+            
+        for i, c in enumerate(unique_cycles, 1):
+            cycle_list = list(c) + [c[0]]
+            write_to_file(f"\n--- Cycle {i} ---" + "\n -> ".join(cycle_list) + "\n")
 
     def get_file_conflict_resolution(
         ordered_mod_ids: list[str], 
@@ -151,7 +264,8 @@ class Vortex():
         installed_mods: dict[str, dict] = VortexDBParser.get_section("persistent###mods###skyrimse###") or {}
         ordered_mod_ids, installed_mods = Vortex.get_load_order(profile_id, installed_mods)
         mod_staging_folder = VortexDBParser.get_key_value("settings###mods###installPath###skyrimse###")
-        mod_staging_folder:str = os.path.normpath(mod_staging_folder.removeprefix('"').removesuffix('"'))
+        if mod_staging_folder != None:
+            mod_staging_folder:str = os.path.normpath(mod_staging_folder.removeprefix('"').removesuffix('"'))
         if mod_staging_folder == None or mod_staging_folder == '' or not os.path.exists(mod_staging_folder):
             write_to_file("No skyrimse in installPath for Mod Staging Folder, assuming default at INSTANCE/skyrimse/mods/")
             mod_staging_folder = os.path.normpath(os.path.join(_global.vortex_data_path,"skyrimse/mods/"))
