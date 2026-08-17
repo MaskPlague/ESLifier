@@ -1274,16 +1274,21 @@ class patchers():
                             lines[i] = start_of_line + '0x' + to_id_data["hex_no_0"] + end_of_line
             f.seek(0)
             f.truncate(0)
-            f.write(''.join(lines))            
+            f.write(''.join(lines)) 
+
+    #IDK why I read it into a string for json5, probably was part of debugging way back when I first started, not going to touch it though.
+    def safe_load_json(file_handle) -> dict:
+        try:
+            data = json.load(file_handle)
+        except:
+            file_handle.seek(0)
+            string = file_handle.read()
+            data = json5.loads(string)
+        return data 
 
     def json_generic_plugin_sep_formid_patcher(basename: str, new_file: str, form_id_map: dict, sep: str = '|', encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_dict = patchers.extract_values_and_keys(data)
             ox = False
             print_replace = True
@@ -1318,12 +1323,7 @@ class patchers():
 
     def json_generic_formid_sep_plugin_patcher(basename: str, new_file: str, form_id_map: dict, int_type: bool = False, sep: str = '|', encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_dict = patchers.extract_values_and_keys(data)
             print_replace = True
             for path, value in json_dict:
@@ -1370,12 +1370,7 @@ class patchers():
     
     def json_generic_key_fid_sep_plugin_patcher(basename: str, new_file: str, form_id_map: dict, int_type: bool = False, sep: str = ":", encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_dict = patchers.extract_values_and_keys(data)
             patched_keys = []
             for path, value in json_dict:
@@ -1394,12 +1389,7 @@ class patchers():
 
     def json_generic_key_plugin_sep_fid_patcher(basename: str, new_file: str, form_id_map: dict, int_type: bool = False, sep: str = ":", encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_dict = patchers.extract_values_and_keys(data)
             patched_keys = []
             for path, value in json_dict:
@@ -1419,12 +1409,7 @@ class patchers():
     
     def json_open_animation_replacer_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_dict = patchers.extract_values_and_keys(data)
             plugin = False
             plugin_name_path = []
@@ -1456,12 +1441,7 @@ class patchers():
 
     def json_storage_util_data_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_dict = patchers.extract_values_and_keys(data)
             print_replace = True
             for path, value in json_dict:
@@ -1498,12 +1478,7 @@ class patchers():
     # No Cell Form IDs possible
     def json_obody_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_dict = patchers.extract_values_and_keys(data)
             for path, value in json_dict:
                 if len(path) > 2 and type(path[-3]) is str and basename == path[-3].lower():
@@ -1524,12 +1499,7 @@ class patchers():
 
     def json_skyrim_utility_mod_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_dict = patchers.extract_values_and_keys(data)
             print_replace = True
             for path, value in json_dict:
@@ -1566,12 +1536,7 @@ class patchers():
     # No CELL Form IDs possible
     def json_undaunted_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             skip_first = False
             for bounty in data:
                 for line in bounty:
@@ -1589,12 +1554,7 @@ class patchers():
 
     def json_achievement_injector_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data: dict = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             plugin = data.get("plugin", "").lower() == basename
             achievements:list[dict] = data.get("achievements", [])
             for achievement in achievements:
@@ -1624,12 +1584,7 @@ class patchers():
 
     def json_rim_combat_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str = 'utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data: dict = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
 
             def item_parser(item: dict):
                 if item.get('mod','').lower() == basename:
@@ -1666,12 +1621,7 @@ class patchers():
 
     def json_hunted_or_hunter_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str = 'utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data: dict = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
 
             def item_parser(item: dict):
                 if item.get('Mod','').lower() == basename:
@@ -1841,12 +1791,7 @@ class patchers():
 
     def json_smart_harvest_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_dict = patchers.extract_values_and_keys(data)
             plugin = False
             print_replace = True
@@ -1874,12 +1819,7 @@ class patchers():
 
     def json_dynamic_string_distributor_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_dict = patchers.extract_values_and_keys(data)
             print_replace = True
             for path, value in json_dict:
@@ -1909,12 +1849,7 @@ class patchers():
 
     def json_dynamic_key_activation_framework_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_dict = patchers.extract_values_and_keys(data)
             print_replace = True
             for path, value in json_dict:
@@ -1938,12 +1873,7 @@ class patchers():
 
     def json_dynamic_armor_variants_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_dict = patchers.extract_values_and_keys(data)
             print_replace = True
             for path, value in json_dict:
@@ -1985,12 +1915,7 @@ class patchers():
     # No Cell Form IDs possible
     def json_jcontainer_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_dict = patchers.extract_values_and_keys(data)
             for path, value in json_dict:
                 if (isinstance(value, str) and '__formdata' in value.lower()):
@@ -2024,12 +1949,7 @@ class patchers():
 
     def json_immersive_equipment_displays_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_dict = patchers.extract_values_and_keys(data)
             form_id_int = 0
             form_id_path = []
@@ -2053,12 +1973,7 @@ class patchers():
 
     def json_ostim_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_dict = patchers.extract_values_and_keys(data)
             plugin = False
             print_replace = True
@@ -2087,12 +2002,7 @@ class patchers():
     # No Cell Form IDs possible
     def json_dressuplovers_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_dict = patchers.extract_values_and_keys(data)
             patch_next_index = False
             for path, value in json_dict:
@@ -2110,12 +2020,7 @@ class patchers():
 
     def json_dismembering_framework_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_dict = patchers.extract_values_and_keys(data)
             patched_keys = set()
             for path, value in json_dict:
@@ -2140,12 +2045,7 @@ class patchers():
 
     def json_alternate_perspective(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                json_data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                json_data = patchers.use_json5(string)
+            json_data = patchers.safe_load_json(f)
 
             for dictionary in json_data:
                 mod = dictionary.get('mod')
@@ -2209,12 +2109,7 @@ class patchers():
 
     def json_fire_hurts_re_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_dict = patchers.extract_values_and_keys(data)
 
             for path, value in json_dict:
@@ -2225,9 +2120,6 @@ class patchers():
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
-
-    def use_json5(json_string: str):
-        return json5.loads(json_string)
 
     def extract_values_and_keys(json_data, path=[]):
         results = []
@@ -2344,12 +2236,7 @@ class patchers():
     #Cell Form IDs not present besides in the cell int but the master byte shouldn't be updated anyways
     def json_dyndolod_ligh_patcher(basename: str, new_file: str, form_id_map: dict, master_byte: bytes, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
-            try:
-                data: dict = json.load(f)
-            except:
-                f.seek(0)
-                string = f.read()
-                data: dict = patchers.use_json5(string)
+            data = patchers.safe_load_json(f)
             json_esp_keys = list(data)
             json_cell_values = list(data.values())
             cell_numbers_to_maybe_patch = []
