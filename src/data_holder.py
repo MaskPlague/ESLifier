@@ -54,8 +54,8 @@ class _global():
     mod_staging_folder = '' #set by vortex scanner after reading state.v2
     plugins = [] #plugins list
     mods_with_seq = {} #{mod: seq_file} mods that have seq files
-    vortex_error = -1 #storage for vortex error across classes
-    mo2_error = -1 #storage for mo2 error across classes
+    vortex_error = None #storage for vortex error across classes
+    mo2_error = None #storage for mo2 error across classes
     bsa_dict = {}   #{bsa_file: list[mod]} bsa and the mods they contain
     pex_with_getmodbyname: dict[str, set[str]] = {} #{mod: set(pex)} mods with pex with getmodbyname
 

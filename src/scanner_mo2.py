@@ -4,9 +4,14 @@ from data_holder import _global
 import os
 import configparser
 from typing import TYPE_CHECKING
+from enum import Enum
 
 if TYPE_CHECKING:
     from scanner import scanner 
+
+class MO2Errors(Enum):
+    DIFFERENT_MF_AND_OF_DRIVES = 0
+    DIFFERENT_OWF_AND_OF_DRIVES = 1
 
 class MO2():
     scanner: scanner = None
@@ -278,7 +283,7 @@ class MO2():
             output_folder_drive = os.path.splitdrive(_global.output_folder_path)[0].lower()
             #Output and mo2 mods folder must be on same drive
             if mods_folder_drive != output_folder_drive:
-                _global.mo2_error = 0
+                _global.mo2_error = MO2Errors.DIFFERENT_MF_AND_OF_DRIVES
                 return
 
             if ini.has_option('Settings', 'overwrite_directory'):
@@ -291,7 +296,7 @@ class MO2():
             overwrite_folder_drive = os.path.splitdrive(_global.mo2_overwrite_path)[0].lower()
             #Output and mo2 overwrite folder must be on same drive
             if overwrite_folder_drive != output_folder_drive:
-                _global.mo2_error = 1
+                _global.mo2_error = MO2Errors.DIFFERENT_OWF_AND_OF_DRIVES
                 return
 
             profile = os.path.join(_global.mo2_profiles_dir, _global.mo2_profile)

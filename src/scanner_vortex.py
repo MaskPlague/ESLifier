@@ -6,10 +6,16 @@ from vortex_database_reader import VortexDBParser
 from collections import deque
 from data_holder import _global
 from typing import TYPE_CHECKING
+from enum import Enum
 
 if TYPE_CHECKING:
     from scanner import scanner 
 
+class VortexErrors(Enum):
+    HAS_CYCLES = 0
+    INVALID_MSF = 1
+    DIFFERENT_MSF_AND_OF_DRIVEs = 2
+    NO_LAST_SSE_PROFILE = 3
 
 class Vortex():
     scanner: scanner = None
@@ -137,7 +143,7 @@ class Vortex():
         profile_id = Vortex.get_last_used_skyrim_profile()
         if profile_id == None:
             write_to_file("No last used skyrimse profile. Aborting.")
-            _global.vortex_error = 5
+            _global.vortex_error = VortexErrors.NO_LAST_SSE_PROFILE
             return [], [], [], '', ''
 
         plugins_list: list[str] = Vortex.get_plugins_list(profile_id)
@@ -153,7 +159,7 @@ class Vortex():
         if not os.path.exists(mod_staging_folder):
             write_to_file("Couldn't get an actual mod staging folder. Aborting.")
             write_to_file(f"Non-existent MSF at: {mod_staging_folder}")
-            _global.vortex_error = 4
+            _global.vortex_error = VortexErrors.INVALID_MSF
             return [], [], [], '', ''
         gamedata = VortexDBParser.get_section("settings###gameMode###discovered###skyrimse")
         skyrim_folder_path = os.path.normpath(os.path.join(gamedata.get('path'), "Data"))
@@ -165,7 +171,7 @@ class Vortex():
             write_to_file("Mod Staging Folder and Output Folder are not on the same Drive")
             write_to_file(f"MSF Drive: {mod_staging_folder}, OF Drive: {output_folder_drive}")
             write_to_file(f"MSF: {mod_staging_folder}, OF: {_global.output_folder_path}")
-            _global.vortex_error = 3
+            _global.vortex_error = VortexErrors.DIFFERENT_MSF_AND_OF_DRIVEs
             return [], [], [], '', ''
         mod_files:dict[str, list[str]] = {}
         cases: dict[str, str] = {}
@@ -372,8 +378,7 @@ class Vortex():
 
     def get_winning_files() -> tuple[list, list, list, str, str]:
         readibility_flag = VortexDBParser.is_readable()
-        # 1: ok, 0: locked, e: E
-        if readibility_flag == 1:
+        if readibility_flag in (ReadState.SUCCESS_DB, ReadState.SUCCESS_STATE):
             return Vortex.get_winning_file_conflicts()
         else:
             _global.vortex_error = readibility_flag

@@ -22,6 +22,9 @@ from data_holder import _global
 from vortex_database_reader import VortexDBParser
 from log_stream import log_stream, write_error, write_normal, write_patching, write_progress, write_remove, write_to_file, clear_and_close_log, clear_and_leave_log_open
 from file_defined_patcher_conditions import user_and_master_conditions_class
+from vortex_database_reader import ReadState
+from scanner_vortex import VortexErrors
+from scanner_mo2 import MO2Errors
 
 import platform
 import psutil
@@ -659,8 +662,7 @@ class main(QWidget):
 
     def check_if_vortex_db_is_readable_and_warn_if_it_is_not(self):
         return_val = VortexDBParser.is_readable()
-        #If not readable (1)
-        if return_val != 1:
+        if return_val not in (ReadState.SUCCESS_DB, ReadState.SUCCESS_STATE):
             confirm = self.create_confirmation('lightcoral')
             # 0 means locked by vortex
             if return_val == 0:
@@ -711,15 +713,15 @@ class main(QWidget):
             confirm.setText(self.tr("Please close Vortex, ESLifier cannot accesss Vortex's database while it is open."))
         elif _global.vortex_error == 2:
             confirm.setText(self.tr("ESLifier detected that a cyclic rule is set in Vortex, please correct it first."))
-        elif _global.vortex_error == 3:
+        elif _global.vortex_error == VortexErrors.DIFFERENT_MSF_AND_OF_DRIVEs:
             confirm.setText(self.tr("Vortex's Mod Staging Folder and ESLifier's Output Folder must be on the same drive."))
-        elif _global.vortex_error == 4:
+        elif _global.vortex_error == VortexErrors.INVALID_MSF:
             confirm.setText(self.tr("Failed to get the Vortex Mod Staging Folder."))
-        elif _global.vortex_error == 5:
+        elif _global.vortex_error == VortexErrors.NO_LAST_SSE_PROFILE:
             confirm.setText(self.tr("No last used Skyrim SE profile detected."))
         elif isinstance(_global.vortex_error, Exception):
             confirm.setText(self.tr(f"ESLifier has come across an error while scanning Vortex data: %0").replace("%0", str(_global.vortex_error)))
-        _global.vortex_error = -1
+        _global.vortex_error = None
         self.scanned = False
         def accept():
             confirm.hide()
@@ -731,13 +733,13 @@ class main(QWidget):
     def mo2_error(self):
         clear_and_close_log()
         confirm = self.create_confirmation('lightcoral')
-        if _global.mo2_error == 0:
+        if _global.mo2_error == MO2Errors.DIFFERENT_MF_AND_OF_DRIVES:
             confirm.setText(self.tr("The MO2 instance's Mods folder and the Output Folder Path must be on the same drive."))
-        elif _global.mo2_error == 1:
+        elif _global.mo2_error == MO2Errors.DIFFERENT_OWF_AND_OF_DRIVES:
             confirm.setText(self.tr("The MO2 instance's Overwrite folder and the Output Folder Path must be on the same drive."))
         elif isinstance(_global.mo2_error, Exception):
             confirm.setText(self.tr(f"ESLifier has come across an error while reading MO2's ini: %0").replace("%0", str(_global.mo2_error)))
-        _global.mo2_error = -1
+        _global.mo2_error = None
         self.scanned = False
         def accept():
             confirm.hide()
@@ -747,10 +749,10 @@ class main(QWidget):
         self.setEnabled(True)
     
     def completed_scan(self, eslifiy_flag_dict, compact_flag_dict, dependency_dictionary):
-        if _global.vortex_error != -1:
+        if _global.vortex_error != None:
             self.vortex_error()
             return
-        if _global.mo2_error != -1:
+        if _global.mo2_error != None:
             self.mo2_error()
             return
         self.list_eslify.flag_dict = eslifiy_flag_dict
@@ -1462,7 +1464,7 @@ class ScannerWorker(QObject):
     def scan_run(self):
         write_remove(-1, self.tr('Scanning All Files:'), True)
         flag_dict, dependency_dictionary = scanner.scan(True)
-        if _global.vortex_error != -1:
+        if _global.vortex_error != None:
             self.finished_signal.emit({}, {}, {})
             return
         write_normal(self.tr('Checking if New CELLs are Changed'))

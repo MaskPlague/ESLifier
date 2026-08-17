@@ -1,6 +1,13 @@
 import json
 import plyvel
 from data_holder import _global
+from log_stream import write_to_file
+
+class ReadState(Enum):
+    SUCCESS_DB = 1
+    SUCCESS_STATE = 2
+    ERROR_DB_LOCKED_EXTENSION_MISSING = 4
+    ERROR_DB_LOCKED_EXTENSION_UNREACHABLE = 5
 
 class VortexDBParser:
     def get_section(start_string: str) -> dict:

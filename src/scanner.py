@@ -112,7 +112,7 @@ class scanner():
         if scanner.mod_manager_mode == 2: # MO2
             MO2.scanner = scanner
             MO2.get_instance_paths()
-            if _global.mo2_error != -1:
+            if _global.mo2_error != None:
                 return {}, {}
             plugins_list = scanner.get_plugins_list(_global.plugins_txt_path)
             scanner.all_files, _global.plugins = MO2.get_winning_files(plugins_list)
@@ -124,7 +124,7 @@ class scanner():
             scanner.all_files, _global.plugins, plugins_list, _global.mod_staging_folder, _global.skyrim_folder_path = Vortex.get_winning_files()
             _global.update_mod_staging_folder_vars()
             scanner.file_count = len(scanner.all_files)
-            if _global.vortex_error != -1:
+            if _global.vortex_error != None:
                 return {}, {}
         else: #Manually modding?
             NoManager.scanner = scanner
