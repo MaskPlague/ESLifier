@@ -10,6 +10,11 @@ cd "dist"
 echo Zipping ESLifier EXE for Distribution
 %SEVEN_ZIP% a "ESLifier.zip" "bsarch" "ESLifier.exe"
 
+cd ..
+
+echo Zipping ESLifier Vortex State Getter Extension for Distribution
+%SEVEN_ZIP% a "ESLifier Vortex State Getter Extension.zip" "ESLifier Vortex State Getter"
+
 ::echo Zipping ESLifier One Dir for Distribution
 ::%SEVEN_ZIP% a "ESLifier_OneDir.zip" "bsarch"
 ::cd "ESLifier"

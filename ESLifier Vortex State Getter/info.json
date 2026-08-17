@@ -1,0 +1,6 @@
+{
+    "name": "ESLifier Vortex State Getter",
+    "author": "MaskPlague",
+    "version": "0.0.1",
+    "description": "An extension that allows ESLifier to grab Vortex's Redux store state while Vortex is still running."
+}
