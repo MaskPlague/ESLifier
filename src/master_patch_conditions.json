@@ -1,5 +1,5 @@
 {
-    "version": 22,
+    "version": 23,
     "conditions": [
         {
             "extension": "json",
@@ -147,6 +147,13 @@
             "extension": "json",
             "contains": "Viny Mods/NPC Visual/",
             "patcher": "json_generic_plugin_sep_formid"
+        },
+        {
+            "extension": "ini",
+            "contains": "plugins/GridInventory_",
+            "patcher": "ini_plugin_sep_formid",
+            "separator": "|",
+            "to_id_key": "hex"
         }
     ]
 }
