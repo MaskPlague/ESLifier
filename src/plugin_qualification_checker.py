@@ -4,7 +4,7 @@ import threading
 import zlib
 import struct
 import shutil
-from log_stream import write_error
+from log_stream import write_error, write_to_file
 from data_holder import _global
 from PyQt6.QtCore import QCoreApplication
 
@@ -106,12 +106,15 @@ class qualification_checker():
                 offset = offset_end
         return data_list      
 
-    def file_reader(file: str, update_header: bool, is_esm: bool) -> tuple[bool, bool, bool, bool, bool]:
+    def file_reader(file: str, update_header: bool, is_esm: bool) -> tuple[bool, bool, bool, bool, bool, bool, bool]:
         data_list = []
         basename = os.path.basename(file)
         try:
             with open(file, 'rb') as f:
                 data = f.read()
+            if data[:4] != b'TES4':
+                write_to_file(f"No TES4 header, fake plugin? Skipping: {file}")
+                return False, False, False, False, False, False, False
             data_list = qualification_checker.create_data_list(data)
         except Exception as e:
             write_error(QCoreApplication.translate("Global", 'Failed to read plugin: ') + file)
