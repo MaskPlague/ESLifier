@@ -265,13 +265,20 @@ class Vortex():
         ordered_mod_ids, installed_mods = Vortex.get_load_order(profile_id, installed_mods)
         mod_staging_folder = VortexDBParser.get_key_value("settings###mods###installPath###skyrimse###")
         if mod_staging_folder != None:
-            mod_staging_folder:str = os.path.normpath(mod_staging_folder.
-                                                      removeprefix('"').
-                                                      removesuffix('"').
-                                                      replace("{game}", "skyrimse").
-                                                      replace("{userdata}", _global.vortex_data_path))
-        if mod_staging_folder == None or mod_staging_folder == '' or not os.path.exists(mod_staging_folder):
-            write_to_file("No skyrimse in installPath for Mod Staging Folder, assuming default at INSTANCE/skyrimse/mods/")
+            msf_cleaned = mod_staging_folder.removeprefix('"').removesuffix('"')
+            replacements = {"{game}": "skyrimse",
+                            "{userdata}": _global.vortex_data_path}
+            for tag, new_val in replacements.items():
+                tag_len = len(tag)
+                while True:
+                    index = msf_cleaned.lower().find(tag)
+                    if index == -1:
+                        break
+                    msf_cleaned = msf_cleaned[:index] + new_val + msf_cleaned[index + tag_len:]
+            mod_staging_folder:str = os.path.normpath(msf_cleaned)
+        
+        if mod_staging_folder == None or mod_staging_folder == '':
+            write_to_file("No mod staging folder stored in Vortex, assuming default at INSTANCE/skyrimse/mods/")
             mod_staging_folder = os.path.normpath(os.path.join(_global.vortex_data_path,"skyrimse/mods/"))
         
         if not os.path.exists(mod_staging_folder):
