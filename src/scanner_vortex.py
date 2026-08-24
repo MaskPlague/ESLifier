@@ -283,7 +283,7 @@ class Vortex():
         #Output and mod staging folder must be on same drive
         if mod_staging_folder_drive != output_folder_drive:
             write_to_file("Mod Staging Folder and Output Folder are not on the same Drive")
-            write_to_file(f"MSF Drive: {mod_staging_folder}, OF Drive: {output_folder_drive}")
+            write_to_file(f"MSF Drive: {mod_staging_folder_drive}, OF Drive: {output_folder_drive}")
             write_to_file(f"MSF: {mod_staging_folder}, OF: {_global.output_folder_path}")
             _global.vortex_error = VortexErrors.DIFFERENT_MSF_AND_OF_DRIVEs
             return [], [], [], '', ''
