@@ -1,7 +1,6 @@
 import json
 import plyvel
 import urllib.request
-import json
 import os
 import time
 
