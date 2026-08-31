@@ -578,18 +578,34 @@ class CFIDs():
             flag_byte = data_list[i][10]
             compressed_flag = (flag_byte & 0x04) != 0
             if data_list[i][:4] != b'GRUP' and compressed_flag:
-                compressed = zlib.compress(data_list[i][24:], 6)
-                formatted = [0] * (sizes_list[i][0]- 28)
+                compressed = zlib.compress(data_list[i][24:], 6) #can set to 9 but not necessary.
+                #Header format 4 byte signature, 4 byte size little endian,  4 bytes flags, 4 byte form id, 8 byte various | 24 bytes total, Data
+                #Data Format: 4 bytes for uncompressed size, size - 4 bytes + compressed data
+                form = data_list[i][:24] + sizes_list[i][4] + compressed
+
+                diff = len(form) - sizes_list[i][0]
+                if diff != 0:
+                    sizes_list[i][1] = diff
+                    size = int.from_bytes(data_list[i][4:8], 'little')
+                    new_size = size + diff
+                    form = form[:4] + new_size.to_bytes(4, 'little') + form[8:]
+
+                data_list[i] = form
+                # Old method, works fine but changed to above
+                '''formatted = [0] * (sizes_list[i][0]- 28)                
+                #record header
                 formatted[:24] = data_list[i][:24]
+                #uncompressed data size (never changed)
                 formatted[24:28] = sizes_list[i][4]
-                formatted[28:len(compressed)] = compressed
+                #compressed
+                formatted[28:28+len(compressed)] = compressed
                 if len(formatted) != sizes_list[i][0]:
                     diff = len(formatted) - sizes_list[i][0]
                     sizes_list[i][1] = diff
                     size = int.from_bytes(data_list[i][4:8][::-1])
                     new_size = size + diff
-                    formatted[4:8] = [byte for byte in new_size.to_bytes(4, 'little')]
-                data_list[i] = bytes(formatted)
+                    formatted[4:8] = new_size.to_bytes(4, 'little')
+                data_list[i] = bytes(formatted)'''
         return data_list, sizes_list
     
     def update_grup_sizes(self, data_list: list, grup_struct: dict, sizes_list: list) -> list:
@@ -597,7 +613,7 @@ class CFIDs():
         for i, size_info in enumerate(sizes_list):
             if size_info and size_info[1] != 0:
                 for index in grup_struct[i]:
-                    current_size = int.from_bytes(byte_array_data_list[index][4:8][::-1])
+                    current_size = int.from_bytes(byte_array_data_list[index][4:8],'little')
                     new_size = current_size + size_info[1]
                     byte_array_data_list[index][4:8] = new_size.to_bytes(4, 'little')
         data_list = [bytes(form) for form in byte_array_data_list]
@@ -623,7 +639,6 @@ class CFIDs():
                 offset = offset_end
             index += 1
 
-        #NEW
         grup_struct = {}
         events = []
         for (indx, start, end) in grup_list:
@@ -650,28 +665,6 @@ class CFIDs():
             if i in indices:
                 indices.remove(i)
             grup_struct[i] = sorted(indices)
-        #ORIGINAL
-        '''
-        tree = IntervalTree()
-        for i, (index, start, end) in enumerate(grup_list):
-            tree[start:end] = index
-
-        old_grup_struct = {}
-        for i, data_offset in enumerate(data_list_offsets):
-            is_inside_of = [interval.data for interval in tree[data_offset]]
-            old_grup_struct[i] = sorted([index for index in is_inside_of if index != i])
-        same = True
-        for key, value in old_grup_struct.items():
-            if grup_struct[key] != value:
-                same = False
-                break
-        for key, value in grup_struct.items():
-            if old_grup_struct[key] != value:
-                same = False
-                break
-        write_to_file(f"are same: {old_grup_struct == grup_struct}")
-        write_to_file(f"are same deep: {same}")
-        '''
         return data_list, grup_struct
     
     #Compacts master file and returns the new mod folder
@@ -826,7 +819,7 @@ class CFIDs():
                 fidf.write(str(form_id.hex()) + '|' + str(new_id.hex()) + '\n')
 
         form_id_replacements_no_master_byte = {old_id[:3]: new_id[:3] if len(new_id) <= 4 else new_id[:4] for old_id, new_id in form_id_replacements}
-        
+
         data_list = form_processor.patch_form_data(data_list, saved_forms, form_id_replacements_no_master_byte, master_byte, 
                                                    all_form_ids_list, self.do_generate_cell_master, updated_master_index)
 
