@@ -283,8 +283,11 @@ class MO2():
             output_folder_drive = os.path.splitdrive(_global.output_folder_path)[0].lower()
             #Output and mo2 mods folder must be on same drive
             if mods_folder_drive != output_folder_drive:
+                write_to_file("Mods Folder and Output folder must be on the same drive.")
+                write_to_file(f"MFD: {mods_folder_drive}, OFD: {output_folder_drive}")
+                write_to_file(f"MF: {_global.mo2_mods_folder}, OF: {_global.output_folder_path}")
                 _global.mo2_error = MO2Errors.DIFFERENT_MF_AND_OF_DRIVES
-                return
+                return False
 
             if ini.has_option('Settings', 'overwrite_directory'):
                 _global.mo2_overwrite_path = os.path.normpath(ini.get('Settings', 'overwrite_directory'))
@@ -296,12 +299,18 @@ class MO2():
             overwrite_folder_drive = os.path.splitdrive(_global.mo2_overwrite_path)[0].lower()
             #Output and mo2 overwrite folder must be on same drive
             if overwrite_folder_drive != output_folder_drive:
+                write_to_file("Overwrite Folder and Output folder must be on the same drive.")
+                write_to_file(f"OVFD: {overwrite_folder_drive}, OFD: {output_folder_drive}")
+                write_to_file(f"OVF: {_global.mo2_overwrite_path}, OF: {_global.output_folder_path}")
                 _global.mo2_error = MO2Errors.DIFFERENT_OWF_AND_OF_DRIVES
-                return
+                return False
 
             profile = os.path.join(_global.mo2_profiles_dir, _global.mo2_profile)
             _global.plugins_txt_path = os.path.normpath(os.path.join(profile, 'plugins.txt'))
             _global.mo2_modlist_txt_path = os.path.normpath(os.path.join(profile, 'modlist.txt'))
+            _global.update_mo2_vars()
+            return True
         except Exception as e:
             _global.mo2_error = e
+            return False
 

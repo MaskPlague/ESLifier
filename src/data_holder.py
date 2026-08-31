@@ -48,6 +48,7 @@ class _global():
     bsa_extracted_temp_path_len = 0
 
     cwd = os.getcwd()
+    folders_grabbed = False
 
     # Non-Persistent Variables
     engine_fixes_v7_or_newer = False
@@ -59,8 +60,10 @@ class _global():
     bsa_dict = {}   #{bsa_file: list[mod]} bsa and the mods they contain
     pex_with_getmodbyname: dict[str, set[str]] = {} #{mod: set(pex)} mods with pex with getmodbyname
 
-    def init(settings_widget: settings):
+    def init(settings_widget: settings, vortex, mo2):
         _global._settings = settings_widget.settings
+        _global.Vortex = vortex
+        _global.MO2 = mo2
 
     def setTabsDisabled(a0:bool=False):
         pass
@@ -95,15 +98,17 @@ class _global():
         _global.bsa_extracted_path_len =            len(os.path.normpath(os.path.join(_global.cwd, 'bsa_extracted')))
         _global.bsa_extracted_temp_path_len =       len(os.path.normpath(os.path.join(_global.cwd, 'bsa_extracted_temp')))
 
+        _global.folders_grabbed = False
         if _global._settings.get('dump_global', False):
             _global.debug_dump_vars()
 
-    def update_mod_staging_folder_vars():
+    def update_vortex_vars():
         _global.mod_staging_folder_lower =          _global.mod_staging_folder.lower()
         _global.mod_staging_folder_len =            len(_global.mod_staging_folder)
 
         _global.skyrim_folder_path_lower =          _global.skyrim_folder_path.lower()
         _global.skyrim_folder_path_len =            len(_global.skyrim_folder_path)
+        _global.folders_grabbed = True
 
     def update_mo2_vars():
         _global.mo2_mods_folder_lower =             _global.mo2_mods_folder.lower()
@@ -111,6 +116,7 @@ class _global():
 
         _global.mo2_overwrite_path_lower =          _global.mo2_overwrite_path.lower()
         _global.mo2_overwrite_path_len =            len(_global.mo2_overwrite_path)
+        _global.folders_grabbed = True
 
     def debug_dump_vars():
         thing = dict(vars(_global))
@@ -134,7 +140,20 @@ class _global():
                     string += str(key) + ": " + str(value) + '\n'
         write_to_file(string)
 
+    def get_paths():
+        if not _global.folders_grabbed:
+            if _global.mod_manager_mode == 1:
+                return _global.Vortex.get_folders()
+            elif _global.mod_manager_mode == 2:
+                return _global.MO2.get_instance_paths()
+            else:
+                _global.folders_grabbed = True
+        return True
+
     def get_rel_path(file: str) -> str:
+        if not _global.folders_grabbed:
+            if not _global.get_paths():
+                RuntimeError(QCoreApplication.translate("Global", "Failed to get necessary paths, see ESLifier.log"))
         file_norm = file.replace('\\', os.sep).replace('/', os.sep)
 
         # ESLifier BSA Extracted
@@ -150,9 +169,11 @@ class _global():
         if _global.mod_manager_mode == 2:
             # Overwrite
             if file_lower.startswith(_global.mo2_overwrite_path_lower):
+                write_to_file(f"{_global.mo2_overwrite_path_lower = }")
                 return file_norm[_global.mo2_overwrite_path_len:].lstrip(os.sep)
             # Mods Folder
             elif file_lower.startswith(_global.mo2_mods_folder_lower):
+                write_to_file(f"{_global.mo2_mods_folder_lower = }")
                 remainder = file_norm[_global.mo2_mods_folder_len:].lstrip(os.sep)
                 idx = remainder.find(os.sep)
                 if idx != -1:

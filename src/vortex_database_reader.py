@@ -98,6 +98,7 @@ class VortexDBParser:
             VortexDBParser.get_key_value = VortexDBParser.get_key_value_from_db
             write_to_file("Vortex is closed and DB is readable, using Vortex DB.")
             ret_val = ReadState.SUCCESS_DB
+            _global.get_paths()
         except plyvel.IOError:
             ret_val = ReadState.ERROR_DB_LOCKED_EXTENSION_UNREACHABLE
         except Exception as e:
@@ -123,6 +124,7 @@ class VortexDBParser:
                         VortexDBParser.get_section = VortexDBParser.get_section_from_state
                         VortexDBParser.get_key_value = VortexDBParser.get_key_value_from_state
                         VortexDBParser.last_query = time.monotonic()
+                        _global.get_paths()
                         return ReadState.SUCCESS_STATE
                     elif isinstance(ret_val, Exception):
                         write_to_file("Error occurred during attempt to read Vortex's Database files:")

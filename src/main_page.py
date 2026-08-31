@@ -729,6 +729,8 @@ class main(QWidget):
             confirm.setText(self.tr("Failed to get the Vortex Mod Staging Folder."))
         elif _global.vortex_error == VortexErrors.NO_LAST_SSE_PROFILE:
             confirm.setText(self.tr("No last used Skyrim SE profile detected."))
+        elif _global.vortex_error == VortexErrors.NO_BASE_PATH:
+            confirm.setText(self.tr("Failed to get the Skyrim Game folder."))
         elif isinstance(_global.vortex_error, Exception):
             confirm.setText(self.tr(f"ESLifier has come across an error while scanning Vortex data: %0").replace("%0", str(_global.vortex_error)))
         _global.vortex_error = None

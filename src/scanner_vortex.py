@@ -19,6 +19,7 @@ class VortexErrors(Enum):
     INVALID_MSF = 1
     DIFFERENT_MSF_AND_OF_DRIVEs = 2
     NO_LAST_SSE_PROFILE = 3
+    NO_BASE_PATH = 4
 
 class Vortex():
     scanner: scanner = None
@@ -251,18 +252,8 @@ class Vortex():
 
     def get_plugins_list(profile_id) -> list[str]:
         return Vortex.scanner.get_plugins_list(os.path.join(_global.vortex_data_path, "skyrimse", "profiles", profile_id, "plugins.txt"))
-        
-    def get_winning_file_conflicts():
-        profile_id = Vortex.get_last_used_skyrim_profile()
-        if profile_id == None:
-            write_to_file("No last used skyrimse profile. Aborting.")
-            _global.vortex_error = VortexErrors.NO_LAST_SSE_PROFILE
-            return [], [], [], '', ''
 
-        plugins_list: list[str] = Vortex.get_plugins_list(profile_id)
-
-        installed_mods: dict[str, dict] = VortexDBParser.get_section("persistent###mods###skyrimse###") or {}
-        ordered_mod_ids, installed_mods = Vortex.get_load_order(profile_id, installed_mods)
+    def get_folders():
         mod_staging_folder = VortexDBParser.get_key_value("settings###mods###installPath###skyrimse###")
         if mod_staging_folder != None:
             msf_cleaned = mod_staging_folder.removeprefix('"').removesuffix('"')
@@ -285,11 +276,9 @@ class Vortex():
             write_to_file("Couldn't get an actual mod staging folder. Aborting.")
             write_to_file(f"Non-existent MSF at: {mod_staging_folder}")
             _global.vortex_error = VortexErrors.INVALID_MSF
-            return [], [], [], '', ''
-        gamedata = VortexDBParser.get_section("settings###gameMode###discovered###skyrimse")
-        skyrim_folder_path = os.path.normpath(os.path.join(gamedata.get('path'), "Data"))
-
+            return False
         mod_staging_folder_drive = os.path.splitdrive(mod_staging_folder)[0].lower()
+
         output_folder_drive = os.path.splitdrive(_global.output_folder_path)[0].lower()
         #Output and mod staging folder must be on same drive
         if mod_staging_folder_drive != output_folder_drive:
@@ -297,7 +286,39 @@ class Vortex():
             write_to_file(f"MSF Drive: {mod_staging_folder_drive}, OF Drive: {output_folder_drive}")
             write_to_file(f"MSF: {mod_staging_folder}, OF: {_global.output_folder_path}")
             _global.vortex_error = VortexErrors.DIFFERENT_MSF_AND_OF_DRIVEs
-            return [], [], [], '', ''
+            return False
+        _global.mod_staging_folder = mod_staging_folder
+
+        gamedata:dict = VortexDBParser.get_section("settings###gameMode###discovered###skyrimse")
+        skyrim_base_path = gamedata.get('path', None)
+        if not skyrim_base_path:
+            write_to_file("Failed to get skyrim's base path from settings > gameMode > discovered > skyrimse > path >")
+            _global.vortex_error = VortexErrors.NO_BASE_PATH
+            return False
+        skyrim_folder_path = os.path.normpath(os.path.join(skyrim_base_path, "Data"))
+        if not os.path.exists(skyrim_folder_path):
+            write_to_file(f"Skyrim Data folder path does not exist at {skyrim_folder_path}")
+            _global.vortex_error = VortexErrors.NO_BASE_PATH
+            return False
+        _global.skyrim_folder_path = skyrim_folder_path
+        _global.update_vortex_vars()
+        return True
+
+    def get_winning_file_conflicts():
+        profile_id = Vortex.get_last_used_skyrim_profile()
+        if profile_id == None:
+            write_to_file("No last used skyrimse profile. Aborting.")
+            _global.vortex_error = VortexErrors.NO_LAST_SSE_PROFILE
+            return [], [], []
+
+        plugins_list: list[str] = Vortex.get_plugins_list(profile_id)
+
+        installed_mods: dict[str, dict] = VortexDBParser.get_section("persistent###mods###skyrimse###") or {}
+        ordered_mod_ids, installed_mods = Vortex.get_load_order(profile_id, installed_mods)
+        
+        mod_staging_folder = _global.mod_staging_folder
+        skyrim_folder_path = _global.skyrim_folder_path
+
         mod_files:dict[str, list[str]] = {}
         cases: dict[str, str] = {}
         plugin_extensions = ('.esp', '.esl', '.esm')
@@ -499,14 +520,16 @@ class Vortex():
                 plugin = os.path.join(os.path.dirname(file), plugin_names[plugin_names_lowered.index(os.path.basename(file.lower()))])
                 plugins.append(plugin)
         return_list = [winning_file for winning_file, _ in winning_files]
-        return return_list, plugins, plugins_list, mod_staging_folder, skyrim_folder_path
+        return return_list, plugins, plugins_list
 
-    def get_winning_files() -> tuple[list, list, list, str, str]:
+    def get_winning_files() -> tuple[list, list, list]:
         readibility_flag = VortexDBParser.is_readable()
         if readibility_flag in (ReadState.SUCCESS_DB, ReadState.SUCCESS_STATE):
+            if _global.vortex_error != None:
+                return [], [], []
             return Vortex.get_winning_file_conflicts()
         else:
             _global.vortex_error = readibility_flag
-            return [], [], [], '', ''
+            return [], [], []
         
         

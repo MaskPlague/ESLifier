@@ -111,18 +111,16 @@ class scanner():
         
         if scanner.mod_manager_mode == 2: # MO2
             MO2.scanner = scanner
-            MO2.get_instance_paths()
+            _global.get_paths()
             if _global.mo2_error != None:
                 return {}, {}
             plugins_list = scanner.get_plugins_list(_global.plugins_txt_path)
             scanner.all_files, _global.plugins = MO2.get_winning_files(plugins_list)
-            _global.update_mo2_vars()
             scanner.file_count = len(scanner.all_files)
         elif scanner.mod_manager_mode == 1: # Vortex
             #likely do the get files from skyrim folder at the same time as scanning vortex mod staging folder, if not exists in mod staging then add to dict
             Vortex.scanner = scanner
-            scanner.all_files, _global.plugins, plugins_list, _global.mod_staging_folder, _global.skyrim_folder_path = Vortex.get_winning_files()
-            _global.update_mod_staging_folder_vars()
+            scanner.all_files, _global.plugins, plugins_list = Vortex.get_winning_files()
             scanner.file_count = len(scanner.all_files)
             if _global.vortex_error != None:
                 return {}, {}

@@ -15,6 +15,8 @@ from settings_page import settings
 from main_page import main
 from log_stream import log_stream, write_to_file
 from data_holder import _global
+from scanner_vortex import Vortex
+from scanner_mo2 import MO2
 
 CURRENT_VERSION = '0.16.13'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
@@ -281,7 +283,7 @@ class main_window(QMainWindow):
             self.setPalette(palette)
 
         self.main_widget = main(COLOR_MODE)
-        _global.init(self.settings_widget)
+        _global.init(self.settings_widget, Vortex, MO2)
         self.update_settings()
         self.tabs = QTabWidget()
         _global.setTabsDisabled = self.tabs.setDisabled
