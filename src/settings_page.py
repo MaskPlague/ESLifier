@@ -331,6 +331,17 @@ class settings(QWidget):
         )
         self.generate_cell_master_toggle.clicked.connect(self.cell_master_clicked)
 
+        self.skip_confirmations_widget, self.skip_confirmations_text_input = self.create_text_input_widget(
+            self.tr("Skip Confirmations"),
+            self.tr("Confirmations that can be automatically skipped\n"\
+                    "Specify the confirmations to skip, comma seperated.\n"\
+                    "Available: FLAG, COMPACT, RE-SCAN, OUTPUT-RESET, OUTPUT-REBUILD, BSA-RESET, TIMERS\n"\
+                    "TIMERS skips the confirmation countdowns but doesn't skip the confirmation boxes.\n"),
+            "FLAG,COMPACT,TIMERS",
+            "skip_confirmations",
+            ''
+        )
+
         self.set_init_widget_values()
         
         self.update_settings_from_app_state()
@@ -393,6 +404,7 @@ class settings(QWidget):
         column_2.addWidget(self.colors_select_widget)
         column_2.addWidget(self.reset_settings_widget)
         column_2.addWidget(self.check_for_updates_widget)
+        column_2.addWidget(self.skip_confirmations_widget)
         column_2.addWidget(self.hide_right_columns_widget)
 
         settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -984,6 +996,7 @@ class settings(QWidget):
         self.settings['enable_interior_cell_filter'] = self.enable_interior_cell_filter_toggle.isChecked()
         self.settings['filter_worldspaces'] = self.enable_worldspaces_filter_toggle.isChecked()
         self.settings['filter_weathers'] = self.enable_weather_filter_toggle.isChecked()
+        self.settings['skip_confirmations'] = self.skip_confirmations_text_input.text()
         self.settings['left_hidden_columns'] = self.hide_left_columns_text_input.text()
         self.settings['right_hidden_columns'] = self.hide_right_columns_text_input.text()
         self.settings['show_dlls'] = self.show_plugins_possibly_refd_by_dlls_toggle.isChecked()

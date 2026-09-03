@@ -84,6 +84,7 @@ class main(QWidget):
         self.patch_and_flag_worker = None
         self.scanner_worker = None
         self.files_to_not_hash = set()
+        self.skip_confirmations = set()
         self.create_widget()
 
     def create_top_lables(self):
@@ -310,6 +311,7 @@ class main(QWidget):
         self.output_folder_path =   _global.output_folder_path
         self.output_folder_name =   _global.output_folder_name
         self.generate_cell_master = _global.generate_cell_master
+        self.skip_confirmations = set([con.strip().upper() for con in _global._settings.get('skip_confirmations', '').split(',')])
 
         self.list_compact.filter_changed_cells =    _global._settings.get('enable_cell_changed_filter', True)
         self.list_compact.filter_interior_cells =   _global._settings.get('enable_interior_cell_filter', False)
@@ -358,11 +360,11 @@ class main(QWidget):
             self.confirm.setWindowTitle(self.tr("Getting estimated disk usage..."))
             self.confirm.setText(self.tr('Getting estimated disk usage...'))
             self.confirm.accepted.connect(lambda x = checked: self.compact_confirmed(x))
-            if not self.redoing_output:
-                self.confirm.show()
-            else:
+            if self.redoing_output or "COMPACT" in self.skip_confirmations:
                 self.confirm.accept()
                 return
+            else:
+                self.confirm.show()
             self.confirm.setEnabled(False)
             
             size = 0
@@ -452,11 +454,12 @@ class main(QWidget):
             self.confirm.setWindowTitle(self.tr("Getting estimated disk usage..."))
             self.confirm.setText(self.tr('Getting estimated disk usage...'))
             self.confirm.accepted.connect(lambda x = checked: self.eslify_confirmed(x))
-            if not self.redoing_output:
-                self.confirm.show()
-            else:
+            if self.redoing_output or "FLAG" in self.skip_confirmations:
                 self.confirm.accept()
                 return
+            else:
+                self.confirm.show()
+
             self.confirm.setEnabled(False)
 
             size = 0
@@ -700,7 +703,7 @@ class main(QWidget):
             self.scanner_worker.finished_signal.connect(self.completed_scan)
             self.scanner_worker.finished_signal.connect(self.scan_thread.quit)
             self.scan_thread.start()
-        if not self.scanned:
+        if not self.scanned or "RE-SCAN" in self.skip_confirmations:
             self.scanned = True
             run_scan()
         else:
@@ -867,15 +870,18 @@ class main(QWidget):
                 yes_button.setText(text)
             except:
                 pass
-        QTimer.singleShot(1000, lambda: update_text("2 " + self.tr("Yes")))
-        QTimer.singleShot(2000, lambda: update_text("1 " + self.tr("Yes")))
         def enable_and_set_text():
             try:
                 yes_button.setEnabled(True)
                 yes_button.setText(self.tr("Yes"))
             except:
                 pass
-        QTimer.singleShot(3000, enable_and_set_text)
+        if "TIMERS" in self.skip_confirmations:
+            enable_and_set_text()
+        else:
+            QTimer.singleShot(1000, lambda: update_text("2 " + self.tr("Yes")))
+            QTimer.singleShot(2000, lambda: update_text("1 " + self.tr("Yes")))
+            QTimer.singleShot(3000, enable_and_set_text)
         return confirm
     
     def reset_output_next(self, files_to_remove, size, file_count, changed_rel_paths_to_switch):
@@ -953,7 +959,10 @@ class main(QWidget):
 
         confirm.accepted.connect(accepted)
         confirm.rejected.connect(clear_and_close_log)
-        confirm.show()
+        if "OUTPUT-RESET" in self.skip_confirmations:
+            confirm.accept()
+        else:
+            confirm.show()
 
     def rebuild_output(self):
         self.output_folder_full = os.path.join(self.output_folder_path, self.output_folder_name)
@@ -1029,7 +1038,10 @@ class main(QWidget):
 
         confirm.accepted.connect(accepted)
         confirm.rejected.connect(clear_and_close_log)
-        confirm.show()
+        if "OUTPUT-REBUILD" in self.skip_confirmations:
+            confirm.accept()
+        else:
+            confirm.show()
 
     def reset_bsa(self):
         confirm = self.create_confirmation('lightcoral')
@@ -1070,7 +1082,11 @@ class main(QWidget):
             self.list_compact.create_list()
             self.list_eslify.create_list()
         confirm.accepted.connect(accepted)
-        confirm.show()
+        if "BSA-RESET" in self.skip_confirmations:
+            confirm.accept()
+        else:
+            confirm.show()
+        
 
     def open_output(self):
         output_folder = os.path.join(self.output_folder_path, self.output_folder_name)
@@ -1466,7 +1482,10 @@ class main(QWidget):
             self.patch_new.scan_and_find(self)
         confirm.accepted.connect(accepted)
         confirm.rejected.connect(lambda: self.setEnabled(True))
-        confirm.show()
+        if "PATCHNEW" in self.skip_confirmations:
+            confirm.accept()
+        else:
+            confirm.show()
 
 class ScannerWorker(QObject):
     finished_signal = pyqtSignal(dict, dict, dict)
