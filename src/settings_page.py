@@ -215,7 +215,7 @@ class settings(QWidget):
         self.hide_left_columns_widget, self.hide_left_columns_text_input = self.create_text_input_widget(
             self.tr("Hide left list columns visually"),
             self.tr("Hide specified columns visually. This does not affect what plugins are displayed.\n"\
-            "Specify the column names, comma seperated. Available: CELL, WRLD, SEQ, PEX, ESM\n"\
+            "Specify the column names, comma separated. Available: CELL, WRLD, SEQ, PEX, ESM\n"\
             "Example, hides the CELL and ESM flags: CELL,ESM"),
             "CELL,ESM",
             "left_hidden_columns",
@@ -224,7 +224,7 @@ class settings(QWidget):
         self.hide_right_columns_widget, self.hide_right_columns_text_input = self.create_text_input_widget(
             self.tr("Hide right list columns visually"),
             self.tr("Hide specified columns visually. This does not affect what plugins are displayed.\n"\
-            "Specify the column names, comma seperated. Available: CELL, WRLD, WTHR, SEQ, PEX, ESM, DEPENDENTS\n"\
+            "Specify the column names, comma separated. Available: CELL, WRLD, WTHR, SEQ, PEX, ESM, DEPENDENTS\n"\
             "Example, hides the ESM flag and the dependent plugins: ESM,DEPENDENT"),
             "ESM,DEPENDENTS",
             "right_hidden_columns",
@@ -334,7 +334,7 @@ class settings(QWidget):
         self.skip_confirmations_widget, self.skip_confirmations_text_input = self.create_text_input_widget(
             self.tr("Skip Confirmations"),
             self.tr("Confirmations that can be automatically skipped\n"\
-                    "Specify the confirmations to skip, comma seperated.\n"\
+                    "Specify the confirmations to skip, comma separated.\n"\
                     "Available: FLAG, COMPACT, RE-SCAN, OUTPUT-RESET, OUTPUT-REBUILD, BSA-RESET, TIMERS\n"\
                     "TIMERS skips the confirmation countdowns but doesn't skip the confirmation boxes.\n"),
             "FLAG,COMPACT,TIMERS",
