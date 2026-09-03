@@ -1,5 +1,5 @@
 {
-    "version": 16,
+    "version": 17,
     "ignored_files": [
         "BFCO_FX_CheckPreAttackIsOK.pex",
         "BFCO_FX_PlayIdleListKeyE.pex",
@@ -11,7 +11,8 @@
         "RewardModBlacklist.json",
         "DynamicStringDistributor.dll",
         "taglist.yaml",
-        "AddItemMenuSE.ini"
+        "AddItemMenuSE.ini",
+        "QuestTagging.PluginQuestCache.json"
     ],
     "ignored_endswith": [
         "_SkyrimDiagReport.txt",
