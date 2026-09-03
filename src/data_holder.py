@@ -47,7 +47,7 @@ class _global():
     bsa_extracted_path_len = 0
     bsa_extracted_temp_path_len = 0
 
-    cwd = os.getcwd()
+    cwd = ''
     folders_grabbed = False
 
     # Non-Persistent Variables
@@ -64,6 +64,7 @@ class _global():
         _global._settings = settings_widget.settings
         _global.Vortex = vortex
         _global.MO2 = mo2
+        _global.cwd = os.getcwd()
 
     def setTabsDisabled(a0:bool=False):
         pass
