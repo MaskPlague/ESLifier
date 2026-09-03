@@ -94,49 +94,49 @@
 </context><context>
     <name>CompactorWorker</name>
     <message>
-        <location filename="src\main_page.py" line="1527" />
+        <location filename="src\main_page.py" line="1546" />
         <source>Hashing any existing files for changes...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1530" />
+        <location filename="src\main_page.py" line="1549" />
         <source>%0% Patching: %1/%2</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1557" />
+        <location filename="src\main_page.py" line="1576" />
         <source>Creating/Updating ESLifier_Cell_Master.esm...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1559" />
+        <location filename="src\main_page.py" line="1578" />
         <source>Saving Data...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1562" />
+        <location filename="src\main_page.py" line="1581" />
         <source>Hashing output files for checking later changes...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1564" />
+        <location filename="src\main_page.py" line="1583" />
         <source>Patching Complete</source>
         <translation type="unfinished" />
     </message>
 </context><context>
     <name>FlagWorker</name>
     <message>
-        <location filename="src\main_page.py" line="1591" />
+        <location filename="src\main_page.py" line="1610" />
         <source>Hashing any existing files for changes...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1596" />
+        <location filename="src\main_page.py" line="1615" />
         <source>Hashing output files for checking later changes...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1610" />
+        <location filename="src\main_page.py" line="1629" />
         <source>Failed to dump data to </source>
         <translation type="unfinished" />
     </message>
@@ -168,12 +168,12 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\data_holder.py" line="156" />
+        <location filename="src\data_holder.py" line="157" />
         <source>Failed to get necessary paths, see ESLifier.log</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\data_holder.py" line="207" />
+        <location filename="src\data_holder.py" line="206" />
         <source>No relative file path method for file: %1, aborting program execution for safety. Report this to the GitHub with your settings.json.</source>
         <translation type="unfinished" />
     </message>
@@ -293,23 +293,23 @@ crash cause: %2</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanner.py" line="245" />
+        <location filename="src\scanner.py" line="244" />
         <source>Failed to dump data to: </source>
         <translation type="unfinished" />
     </message>
 </context><context>
     <name>HashWorker</name>
     <message>
-        <location filename="src\main_page.py" line="1678" />
-        <location filename="src\main_page.py" line="1661" />
+        <location filename="src\main_page.py" line="1697" />
+        <location filename="src\main_page.py" line="1680" />
         <location filename="src\compact_form_ids.py" line="149" />
         <location filename="src\compact_form_ids.py" line="134" />
         <source>Processed: %1%</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1679" />
-        <location filename="src\main_page.py" line="1662" />
+        <location filename="src\main_page.py" line="1698" />
+        <location filename="src\main_page.py" line="1681" />
         <location filename="src\compact_form_ids.py" line="150" />
         <location filename="src\compact_form_ids.py" line="135" />
         <source>Files: %2/%3</source>
@@ -423,12 +423,12 @@ Are you sure you want to continue?</source>
 </context><context>
     <name>ScannerWorker</name>
     <message>
-        <location filename="src\main_page.py" line="1477" />
+        <location filename="src\main_page.py" line="1496" />
         <source>Scanning All Files:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1482" />
+        <location filename="src\main_page.py" line="1501" />
         <source>Checking if New CELLs are Changed</source>
         <translation type="unfinished" />
     </message>
@@ -1110,44 +1110,44 @@ that needs replacing, the form ID change, and the pex/ini file that isn't patche
 </context><context>
     <name>main</name>
     <message>
-        <location filename="src\main_page.py" line="90" />
+        <location filename="src\main_page.py" line="91" />
         <source>ESLify</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="91" />
+        <location filename="src\main_page.py" line="92" />
         <source>List of plugins that meet ESL conditions.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="92" />
+        <location filename="src\main_page.py" line="93" />
         <source>Compact + ESLify</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="94" />
+        <location filename="src\main_page.py" line="95" />
         <source>List of plugins that can be compacted to fit ESL conditions.
 The 'Compact/ESLify Selected' button will also ESL the selected plugin(s).</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="98" />
+        <location filename="src\main_page.py" line="99" />
         <source>ESLify Selected</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="100" />
+        <location filename="src\main_page.py" line="101" />
         <source>This button will ESL flag all selected files. If the update plugin headers setting
 is on then it will also update the plugin headers to 1.71.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="105" />
+        <location filename="src\main_page.py" line="106" />
         <source>Compact/ESLify Selected</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="107" />
+        <location filename="src\main_page.py" line="108" />
         <source>This button will first compact a selected file, patch the plugins that have it as a
 master, then patch and rename loose files that are dependent on the compacted plugin.
 If the update plugin headers setting is enabled then it will also update the plugin
@@ -1155,25 +1155,25 @@ headers of the compacted and dependent plugins to 1.71.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="115" />
+        <location filename="src\main_page.py" line="116" />
         <source> Scan Mod Files </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="116" />
+        <location filename="src\main_page.py" line="117" />
         <source>This will scan the entire Skyrim Special Edition folder.
 Depending on the cell and header settings, what is displayed
 in the below lists will change.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="124" />
+        <location filename="src\main_page.py" line="125" />
         <source> Scan and Rebuild 
  ESLifier's Output </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="125" />
+        <location filename="src\main_page.py" line="126" />
         <source>This will delete the existing output folder's contents
 then scan and re-patch all curently ESLified mods
 that fit the current filters in the settings.
@@ -1183,13 +1183,13 @@ an option to keep or remove them.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="135" />
+        <location filename="src\main_page.py" line="136" />
         <source> Scan and Patch New 
  or Changed Files </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="136" />
+        <location filename="src\main_page.py" line="137" />
         <source>Scan for new plugins and files that were not
 present during intial compacting and patching
 and then patch those new plugins and files.
@@ -1203,12 +1203,12 @@ changed since ESLifier patched them.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="150" />
+        <location filename="src\main_page.py" line="151" />
         <source> Reset ESLifier's Output </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="151" />
+        <location filename="src\main_page.py" line="152" />
         <source>This will delete the existing output folder's contents and
 the data used to patch new files.
 It will also confirm if any files that are in the output
@@ -1217,13 +1217,13 @@ an option to keep or remove them.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="160" />
+        <location filename="src\main_page.py" line="161" />
         <source> Delete extracted BSA files  
  Rescan BSA on next Scan </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="161" />
+        <location filename="src\main_page.py" line="162" />
         <source>ESLifier only extracts seq and script files from a BSA once so as not to
 go through the tedious process of extracting the releveant files in BSAs
 each time it scans (others are extracted during patching). Use this button
@@ -1231,47 +1231,47 @@ if a BSA has new files or you have deleted a mod that had a BSA.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="169" />
+        <location filename="src\main_page.py" line="170" />
         <source> Open Output </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="170" />
+        <location filename="src\main_page.py" line="171" />
         <source>Opens the Output Folder</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="175" />
+        <location filename="src\main_page.py" line="176" />
         <source> Open Log </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="176" />
+        <location filename="src\main_page.py" line="177" />
         <source>Opens ESLifier.log</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="src\main_page.py" line="193" />
-        <location filename="src\main_page.py" line="182" />
-        <source>Filter </source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="src\main_page.py" line="194" />
         <location filename="src\main_page.py" line="183" />
+        <source>Filter </source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="src\main_page.py" line="195" />
+        <location filename="src\main_page.py" line="184" />
         <source>Search Bar</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="453" />
-        <location filename="src\main_page.py" line="452" />
-        <location filename="src\main_page.py" line="359" />
-        <location filename="src\main_page.py" line="358" />
+        <location filename="src\main_page.py" line="455" />
+        <location filename="src\main_page.py" line="454" />
+        <location filename="src\main_page.py" line="361" />
+        <location filename="src\main_page.py" line="360" />
         <source>Getting estimated disk usage...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="397" />
+        <location filename="src\main_page.py" line="399" />
         <source>This may generate up to %1 %2 of new files
 (this may be inaccurate due to unpacking compressed BSA)
 and you have %3 GBs of space left.
@@ -1279,244 +1279,244 @@ Are you sure you want to continue?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="404" />
+        <location filename="src\main_page.py" line="406" />
         <source>GBs</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="407" />
+        <location filename="src\main_page.py" line="409" />
         <source>MBs</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="410" />
+        <location filename="src\main_page.py" line="412" />
         <source>KBs</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="498" />
-        <location filename="src\main_page.py" line="412" />
+        <location filename="src\main_page.py" line="501" />
+        <location filename="src\main_page.py" line="414" />
         <source>Not enough space!
 Needed space: %1
 Space left: %2 GBs</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="414" />
+        <location filename="src\main_page.py" line="416" />
         <source>Confirmation: Patching %1 Mod(s)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="490" />
+        <location filename="src\main_page.py" line="493" />
         <source>This may generate up to %1 GBs of new files
 and you have %2 GBs of space left.
 Are you sure you want to continue?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="493" />
+        <location filename="src\main_page.py" line="496" />
         <source>This may generate up to %1 MBs of new files
 and you have %2 GBs of space left.
 Are you sure you want to continue?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="496" />
+        <location filename="src\main_page.py" line="499" />
         <source>This may generate up to %1 KBs of new files
 and you have %2 GBs of space left.
 Are you sure you want to continue?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="500" />
+        <location filename="src\main_page.py" line="503" />
         <source>Confirmation: ESL Flagging %1 Mod(s)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="541" />
+        <location filename="src\main_page.py" line="544" />
         <source>Failed to save esl_flagged.json</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="560" />
+        <location filename="src\main_page.py" line="563" />
         <source>File(s) ESL Flagged</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="582" />
+        <location filename="src\main_page.py" line="585" />
         <source>Finished</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="585" />
+        <location filename="src\main_page.py" line="588" />
         <source>ESLifier has finished. The altered files are in your ESLifier Output.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="587" />
+        <location filename="src\main_page.py" line="590" />
         <source>Make sure the ESLifier Output is installed as a mod and let it win any file conflicts by making the output go 'After All' conflicts. Make sure to re-deploy your mods. If you generate the output folder in your mod staging folder for the first time, then make sure to restart Vortex to install the output. Make sure that all of your plugins are still enabled.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="592" />
+        <location filename="src\main_page.py" line="595" />
         <source>Make sure the ESLifier Output is installed as a mod and let it win any file conflicts. If you generate the output folder in your mods folder for the first time, then make sure to hit refresh in MO2.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="605" />
-        <location filename="src\main_page.py" line="595" />
+        <location filename="src\main_page.py" line="608" />
+        <location filename="src\main_page.py" line="598" />
         <source>Ok</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="600" />
+        <location filename="src\main_page.py" line="603" />
         <source>Activate ESLifier_Cell_Master.esm and Sort Your Plugins</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="602" />
+        <location filename="src\main_page.py" line="605" />
         <source>Do not forget to activate ESLifier_Cell_Master.esm and re-sort
 your plugins to put the ESM above all of it's dependents. You
 likely can put it at the top of your plugins list.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="619" />
+        <location filename="src\main_page.py" line="622" />
         <source>Total Elapsed Time: %1 Seconds</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="src\main_page.py" line="720" />
-        <location filename="src\main_page.py" line="669" />
-        <source>Please close Vortex or install the Vortex extension from ESLifier's mod page. ESLifier cannot read Vortex's database unless Vortex is closed or the extension is installed.</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="src\main_page.py" line="723" />
         <location filename="src\main_page.py" line="672" />
+        <source>Please close Vortex or install the Vortex extension from ESLifier's mod page. ESLifier cannot read Vortex's database unless Vortex is closed or the extension is installed.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="src\main_page.py" line="726" />
+        <location filename="src\main_page.py" line="675" />
         <source>Vortex is open but the Vortex extension is unresponsive. Please close or restart Vortex.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="674" />
+        <location filename="src\main_page.py" line="677" />
         <source>Vortex is in the process of deploying your modlist, please wait for it to complete and try again.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="676" />
+        <location filename="src\main_page.py" line="679" />
         <source>ESLifier has detected you are currently purging your modlist. You will need to redeploy before running ESLifier.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="678" />
+        <location filename="src\main_page.py" line="681" />
         <source>ESLifier has come across an error while scanning Vortex data: %0</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="708" />
+        <location filename="src\main_page.py" line="711" />
         <source>You have already scanned this session.
 Would you like to scan again?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="725" />
+        <location filename="src\main_page.py" line="728" />
         <source>ESLifier detected that a cyclic rule is set in Vortex, please correct it first.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="727" />
+        <location filename="src\main_page.py" line="730" />
         <source>Vortex's Mod Staging Folder and ESLifier's Output Folder must be on the same drive.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="729" />
+        <location filename="src\main_page.py" line="732" />
         <source>Failed to get the Vortex Mod Staging Folder.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="731" />
+        <location filename="src\main_page.py" line="734" />
         <source>No last used Skyrim SE profile detected.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="733" />
+        <location filename="src\main_page.py" line="736" />
         <source>Failed to get the Skyrim Game folder.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="749" />
+        <location filename="src\main_page.py" line="752" />
         <source>The MO2 instance's Mods folder and the Output Folder Path must be on the same drive.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="751" />
+        <location filename="src\main_page.py" line="754" />
         <source>The MO2 instance's Overwrite folder and the Output Folder Path must be on the same drive.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="773" />
+        <location filename="src\main_page.py" line="776" />
         <source>Populating Tables</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="777" />
+        <location filename="src\main_page.py" line="780" />
         <source>Failed to create "ESLify" list</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="782" />
+        <location filename="src\main_page.py" line="785" />
         <source>Failed to create "Compact + ESLify" list</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="784" />
+        <location filename="src\main_page.py" line="787" />
         <source>Done Scanning</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="829" />
+        <location filename="src\main_page.py" line="832" />
         <source>Failed to open new_file_hashes.json</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="836" />
+        <location filename="src\main_page.py" line="839" />
         <source>Issue occured getting the output folder during output reset.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1117" />
-        <location filename="src\main_page.py" line="875" />
-        <location filename="src\main_page.py" line="871" />
-        <location filename="src\main_page.py" line="870" />
-        <location filename="src\main_page.py" line="852" />
+        <location filename="src\main_page.py" line="1133" />
+        <location filename="src\main_page.py" line="883" />
+        <location filename="src\main_page.py" line="882" />
+        <location filename="src\main_page.py" line="876" />
+        <location filename="src\main_page.py" line="855" />
         <source>Yes</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="855" />
+        <location filename="src\main_page.py" line="858" />
         <source>No</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="885" />
+        <location filename="src\main_page.py" line="891" />
         <source>Are you sure you want to delete the output folder %1's contents and all data used to patch new files?
 This action will delete %2 files and %3 MBs of data from the output.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="904" />
+        <location filename="src\main_page.py" line="910" />
         <source>Failed in Compacted and Patched deletion process.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="927" />
+        <location filename="src\main_page.py" line="933" />
         <source>Would you like to remove the ESLifier Data that stores
 info used to reselect your previously ESL flagged/compacted
 mods? Do this only if you are performing a full reset.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="939" />
+        <location filename="src\main_page.py" line="945" />
         <source>Would you like to remove the ESLifier Output hash info?
 This is how ESLifier can tell if a file in the output
 has been changed after ESLifier patched it.
@@ -1525,12 +1525,12 @@ changed files.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="962" />
+        <location filename="src\main_page.py" line="971" />
         <source>Issue occured getting the output folder during output rebuild.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="979" />
+        <location filename="src\main_page.py" line="988" />
         <source>Are you sure you want to recreate the output folder %1?
 This action will delete %2 files and %3 MBs of data from the output and
 re-scan, flag, compact, and patch all previously output files that fit the current filters.
@@ -1539,17 +1539,17 @@ and maybe move your output/game install to a non-protected folder.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1022" />
+        <location filename="src\main_page.py" line="1031" />
         <source>No Existing Output Data</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1022" />
+        <location filename="src\main_page.py" line="1031" />
         <source>There is no existing output data for ESLifier to use.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1036" />
+        <location filename="src\main_page.py" line="1048" />
         <source>Are you sure you want to reset the Extracted BSA List?
 This will cause the next scan to take significantly longer as the BSA files will
 need to be extracted again and irrelevant script files will need to be filtered.
@@ -1560,113 +1560,113 @@ and then click this button.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1086" />
+        <location filename="src\main_page.py" line="1102" />
         <source>Error opening folder: </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1099" />
+        <location filename="src\main_page.py" line="1115" />
         <source>Error opening file:: </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1116" />
+        <location filename="src\main_page.py" line="1132" />
         <source>Confirmation</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1118" />
+        <location filename="src\main_page.py" line="1134" />
         <source>Cancel</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1159" />
+        <location filename="src\main_page.py" line="1175" />
         <source>Hashing output for changes...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1197" />
+        <location filename="src\main_page.py" line="1213" />
         <source>Hashing for changes complete.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1198" />
+        <location filename="src\main_page.py" line="1214" />
         <source>Found %1 changed files.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1207" />
+        <location filename="src\main_page.py" line="1223" />
         <source>Select files to remove.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1217" />
+        <location filename="src\main_page.py" line="1233" />
         <source>Filter</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1218" />
+        <location filename="src\main_page.py" line="1234" />
         <source>Search bar</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1321" />
-        <location filename="src\main_page.py" line="1317" />
-        <location filename="src\main_page.py" line="1313" />
-        <location filename="src\main_page.py" line="1256" />
+        <location filename="src\main_page.py" line="1337" />
+        <location filename="src\main_page.py" line="1333" />
+        <location filename="src\main_page.py" line="1329" />
+        <location filename="src\main_page.py" line="1272" />
         <source>Delete Selected</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1256" />
+        <location filename="src\main_page.py" line="1272" />
         <source>Deletes only the selected files.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1323" />
-        <location filename="src\main_page.py" line="1318" />
-        <location filename="src\main_page.py" line="1314" />
-        <location filename="src\main_page.py" line="1263" />
+        <location filename="src\main_page.py" line="1339" />
+        <location filename="src\main_page.py" line="1334" />
+        <location filename="src\main_page.py" line="1330" />
+        <location filename="src\main_page.py" line="1279" />
         <source>Delete All</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1263" />
+        <location filename="src\main_page.py" line="1279" />
         <source>Deletes all files regardless of selection.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1270" />
+        <location filename="src\main_page.py" line="1286" />
         <source>Keep All</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1270" />
+        <location filename="src\main_page.py" line="1286" />
         <source>Keeps all files regardless of selection.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1295" />
+        <location filename="src\main_page.py" line="1311" />
         <source>The following plugins have had their hashes change since they were patched by ESLifier.
 This could be because you or another program changed them. Be VERY careful as deleting
 or not deleting these could have consequences.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1301" />
+        <location filename="src\main_page.py" line="1317" />
         <source>The following files have had their hashes change since they were patched by ESLifier.
 These files could be config or data storage files that you may want to keep.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1305" />
+        <location filename="src\main_page.py" line="1321" />
         <source>Select the files you would like to remove and select "Delete Selected",
 select "Delete All" to delete all files regardless of selection,
 or select "Keep All" to not delete any files.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1438" />
+        <location filename="src\main_page.py" line="1454" />
         <source>Output Stats:
   Size:
     &gt; %1
@@ -1675,7 +1675,7 @@ or select "Keep All" to not delete any files.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1446" />
+        <location filename="src\main_page.py" line="1462" />
         <source>Scanned Stats:
   Flaggable:
     &gt; %1
@@ -1684,7 +1684,7 @@ or select "Keep All" to not delete any files.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\main_page.py" line="1461" />
+        <location filename="src\main_page.py" line="1477" />
         <source>Are you sure you want to scan and patch new/changed files?</source>
         <translation type="unfinished" />
     </message>
@@ -1963,95 +1963,95 @@ This button needs an output made from v0.12.0+.</source>
 </context><context>
     <name>scanner</name>
     <message>
-        <location filename="src\scanner.py" line="138" />
+        <location filename="src\scanner.py" line="137" />
         <source>Gathered %0 total files.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanner.py" line="140" />
+        <location filename="src\scanner.py" line="139" />
         <source>Getting Dependencies</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanner.py" line="142" />
+        <location filename="src\scanner.py" line="141" />
         <source>Scanning Plugins</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanner.py" line="155" />
+        <location filename="src\scanner.py" line="154" />
         <source>Time taken: %1 seconds</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanner.py" line="174" />
+        <location filename="src\scanner.py" line="173" />
         <source>Extracting: </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanner.py" line="199" />
+        <location filename="src\scanner.py" line="198" />
         <source>Extracting %0/%1 BSA files (%2)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanner.py" line="639" />
-        <location filename="src\scanner.py" line="211" />
+        <location filename="src\scanner.py" line="638" />
+        <location filename="src\scanner.py" line="210" />
         <source>Error Reading BSA: </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanner.py" line="226" />
+        <location filename="src\scanner.py" line="225" />
         <source>Failed to get plugins list at: </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanner.py" line="276" />
+        <location filename="src\scanner.py" line="275" />
         <source>Getting masters of loose files...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanner.py" line="286" />
+        <location filename="src\scanner.py" line="285" />
         <source>Scanning .pex files</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanner.py" line="309" />
+        <location filename="src\scanner.py" line="308" />
         <source>Scanning .dll SKSE plugins</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanner.py" line="318" />
+        <location filename="src\scanner.py" line="317" />
         <source>Sorting .seq files</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanner.py" line="321" />
+        <location filename="src\scanner.py" line="320" />
         <source>Scanning .bsa files</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="src\scanner.py" line="361" />
+        <location filename="src\scanner.py" line="344" />
+        <source>Processed: %0 %</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="src\scanner.py" line="362" />
         <location filename="src\scanner.py" line="345" />
-        <source>Processed: %0 %</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="src\scanner.py" line="363" />
-        <location filename="src\scanner.py" line="346" />
         <source>Files: %1/%2</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanner.py" line="581" />
+        <location filename="src\scanner.py" line="580" />
         <source>Missing file scan type for </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanner.py" line="583" />
+        <location filename="src\scanner.py" line="582" />
         <source>Error reading file </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanner.py" line="585" />
+        <location filename="src\scanner.py" line="584" />
         <source>!pex file is likely corrupt.</source>
         <translation type="unfinished" />
     </message>
@@ -2076,7 +2076,7 @@ This button needs an output made from v0.12.0+.</source>
 </context><context>
     <name>settings</name>
     <message>
-        <location filename="src\settings_page.py" line="774" />
+        <location filename="src\settings_page.py" line="786" />
         <location filename="src\settings_page.py" line="76" />
         <source>Mod Manager: None</source>
         <translation type="unfinished" />
@@ -2108,7 +2108,7 @@ meant to be used with manual modding but should still work at least once.</sourc
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="775" />
+        <location filename="src\settings_page.py" line="787" />
         <location filename="src\settings_page.py" line="95" />
         <source>Set where you want the Output Folder to be generated.</source>
         <translation type="unfinished" />
@@ -2263,7 +2263,7 @@ a save without restarting the game.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="806" />
+        <location filename="src\settings_page.py" line="818" />
         <location filename="src\settings_page.py" line="191" />
         <source>Hide plugins with new worldspaces records as they can have the landscape disappear
 (no ground) when flagged as ESL.</source>
@@ -2308,7 +2308,7 @@ a save without restarting the game.</source>
     <message>
         <location filename="src\settings_page.py" line="217" />
         <source>Hide specified columns visually. This does not affect what plugins are displayed.
-Specify the column names, comma seperated. Available: CELL, WRLD, SEQ, PEX, ESM
+Specify the column names, comma separated. Available: CELL, WRLD, SEQ, PEX, ESM
 Example, hides the CELL and ESM flags: CELL,ESM</source>
         <translation type="unfinished" />
     </message>
@@ -2320,7 +2320,7 @@ Example, hides the CELL and ESM flags: CELL,ESM</source>
     <message>
         <location filename="src\settings_page.py" line="226" />
         <source>Hide specified columns visually. This does not affect what plugins are displayed.
-Specify the column names, comma seperated. Available: CELL, WRLD, WTHR, SEQ, PEX, ESM, DEPENDENTS
+Specify the column names, comma separated. Available: CELL, WRLD, WTHR, SEQ, PEX, ESM, DEPENDENTS
 Example, hides the ESM flag and the dependent plugins: ESM,DEPENDENT</source>
         <translation type="unfinished" />
     </message>
@@ -2485,159 +2485,173 @@ the new worldspace flag/filter.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="401" />
+        <location filename="src\settings_page.py" line="335" />
+        <source>Skip Confirmations</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="src\settings_page.py" line="336" />
+        <source>Confirmations that can be automatically skipped
+Specify the confirmations to skip, comma separated.
+Available: FLAG, COMPACT, RE-SCAN, OUTPUT-RESET, OUTPUT-REBUILD, BSA-RESET, TIMERS
+TIMERS skips the confirmation countdowns but doesn't skip the confirmation boxes.
+</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="src\settings_page.py" line="413" />
         <source>Select Inner Color</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="404" />
+        <location filename="src\settings_page.py" line="416" />
         <source>Select Outer Color</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="427" />
+        <location filename="src\settings_page.py" line="439" />
         <source>Select the Skyrim Special Edition Data folder</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="429" />
+        <location filename="src\settings_page.py" line="441" />
         <source>Select your MO2 mods folder</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="432" />
+        <location filename="src\settings_page.py" line="444" />
         <source>Select where you want the output folder</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="561" />
+        <location filename="src\settings_page.py" line="573" />
         <source>Select your MO2 instance folder</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="565" />
+        <location filename="src\settings_page.py" line="577" />
         <source>Select your vortex data folder</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="568" />
+        <location filename="src\settings_page.py" line="580" />
         <source>Select your plugins.txt</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="568" />
+        <location filename="src\settings_page.py" line="580" />
         <source>Load Order</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="668" />
-        <location filename="src\settings_page.py" line="596" />
+        <location filename="src\settings_page.py" line="680" />
+        <location filename="src\settings_page.py" line="608" />
         <source>Explore...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="733" />
+        <location filename="src\settings_page.py" line="745" />
         <source>Mod Manager: MO2</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="734" />
+        <location filename="src\settings_page.py" line="746" />
         <source>Set where you want the Output Folder to be generated. For example: MO2's 'mods' folder.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="735" />
+        <location filename="src\settings_page.py" line="747" />
         <source>'C:/Path/To/The/Output/Folder/' Suggestion: 'C:/MO2/mods/'</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="737" />
+        <location filename="src\settings_page.py" line="749" />
         <source>MO2 users should not launch this executible through MO2,
 Launching this program through MO2 drastically slows it down and may
 break certain functions.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="754" />
+        <location filename="src\settings_page.py" line="766" />
         <source>Mod Manager: Vortex</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="755" />
+        <location filename="src\settings_page.py" line="767" />
         <source>Set where you want the Output Folder to be generated. For example: Vortex's 'Mod Staging Folder'.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="756" />
+        <location filename="src\settings_page.py" line="768" />
         <source>'C:/Path/To/The/Output/Folder/' Suggestion: 'C:/Path/To/Mod Staging Folder/'</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="758" />
+        <location filename="src\settings_page.py" line="770" />
         <source>Vortex users can also set this to None to scan the way ESLiifer originally
 dealth with Vortex if you prefer/need that.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="776" />
+        <location filename="src\settings_page.py" line="788" />
         <source>'C:/Path/To/The/Output/Folder/'</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="778" />
+        <location filename="src\settings_page.py" line="790" />
         <source>Users without a mod manager should get a mod manager. ESLifier is not
 meant to be used with manual modding but should still work at least once.
 You can also use this mode for the original way Vortex was dealt with.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="799" />
-        <location filename="src\settings_page.py" line="796" />
+        <location filename="src\settings_page.py" line="811" />
+        <location filename="src\settings_page.py" line="808" />
         <source>Disabled by Generate Cell Master setting.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="803" />
+        <location filename="src\settings_page.py" line="815" />
         <source>Hide ESM plugins with new CELL records that have been changed by a dependent plugin.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="855" />
+        <location filename="src\settings_page.py" line="867" />
         <source>Invalid Output Name</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="855" />
+        <location filename="src\settings_page.py" line="867" />
         <source>'%1' is not a valid folder name.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="857" />
+        <location filename="src\settings_page.py" line="869" />
         <source>Output Name missing 'ESLifier'</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="857" />
+        <location filename="src\settings_page.py" line="869" />
         <source>The output name must have 'ESLifier' (case insenstive) in it for safety purposes.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="912" />
+        <location filename="src\settings_page.py" line="924" />
         <source>Error opening file explorer: </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="921" />
+        <location filename="src\settings_page.py" line="933" />
         <source>Are you sure you want to reset all settings?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="922" />
+        <location filename="src\settings_page.py" line="934" />
         <source>Confirmation</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="965" />
+        <location filename="src\settings_page.py" line="977" />
         <source>Failed to save settings.</source>
         <translation type="unfinished" />
     </message>
