@@ -111,8 +111,7 @@ class scanner():
         
         if scanner.mod_manager_mode == 2: # MO2
             MO2.scanner = scanner
-            _global.get_paths()
-            if _global.mo2_error != None:
+            if not _global.get_paths() or _global.mo2_error != None:
                 return {}, {}
             plugins_list = scanner.get_plugins_list(_global.plugins_txt_path)
             scanner.all_files, _global.plugins = MO2.get_winning_files(plugins_list)
