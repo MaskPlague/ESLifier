@@ -169,11 +169,9 @@ class _global():
         if _global.mod_manager_mode == 2:
             # Overwrite
             if file_lower.startswith(_global.mo2_overwrite_path_lower):
-                write_to_file(f"{_global.mo2_overwrite_path_lower = }")
                 return file_norm[_global.mo2_overwrite_path_len:].lstrip(os.sep)
             # Mods Folder
             elif file_lower.startswith(_global.mo2_mods_folder_lower):
-                write_to_file(f"{_global.mo2_mods_folder_lower = }")
                 remainder = file_norm[_global.mo2_mods_folder_len:].lstrip(os.sep)
                 idx = remainder.find(os.sep)
                 if idx != -1:
