@@ -692,23 +692,22 @@ class CFIDs():
 
         master_count: int
         master_count, has_skyrim_esm_master = self.get_master_count(data_list)
+        self.master_byte = master_count.to_bytes()
 
         data_list, sizes_list = self.decompress_data(data_list)
-        updated_master_index: int = -1
+        self.updated_master_index: int = -1
         if self.do_generate_cell_master:
             new_cell_form_ids = self.create_cell_master_class.add_cells(data_list, grup_struct, master_count, os.path.basename(file))
-            data_list, updated_master_index = self.add_cell_master_to_masters(data_list)
+            data_list, self.updated_master_index = self.add_cell_master_to_masters(data_list)
+        if self.updated_master_index != -1:
+            updated_master_index_bytes = self.updated_master_index.to_bytes()
+        self.master_byte_data[basename] = {'master_byte': self.master_byte.hex(), 'updated_master_index': self.updated_master_index}
 
         form_id_list: list[bytes, bytes] = []
         #Get all new form ids in plugin
         for form in data_list:
             if form[:4] not in (b'GRUP', b'TES4') and form[15] >= master_count and [form[12:16], form[:4]] not in form_id_list:
                 form_id_list.append([form[12:16], form[:4]])
-
-        master_byte = master_count.to_bytes()
-        self.master_byte = master_byte
-        self.updated_master_index = updated_master_index
-        self.master_byte_data[basename] = {'master_byte': master_byte.hex(), 'updated_master_index': updated_master_index}
 
         saved_forms = form_processor.save_all_form_data(data_list)
 
@@ -756,12 +755,13 @@ class CFIDs():
             free_non_existent = _global.free_non_existent
             for i in range(len(form_id_file_data)):
                 form_id_conversion = form_id_file_data[i].split('|')
-                from_id = bytes.fromhex(form_id_conversion[0])[:3] + master_byte
+                #initially was doing [:3] + master_byte, cannot remember why, anyways it broke form ids with HITME errors, so we're doing this instead.
+                from_id = bytes.fromhex(form_id_conversion[0])[:4]
                 if from_id in old_ids_of_new_cells:
-                    if updated_master_index == -1:
-                        to_id = bytes.fromhex(form_id_conversion[1])[:3] + master_byte + b'\xFF'
+                    if self.updated_master_index == -1:
+                        to_id = bytes.fromhex(form_id_conversion[1])[:3] + self.master_byte + b'\xFF'
                     else:
-                        to_id = bytes.fromhex(form_id_conversion[1])[:3] + updated_master_index.to_bytes() + b'\xFF'
+                        to_id = bytes.fromhex(form_id_conversion[1])[:3] + updated_master_index_bytes + b'\xFF'
                 else:
                     to_id = bytes.fromhex(form_id_conversion[1])[:4]
                 if from_id in all_form_ids_list:
@@ -801,17 +801,17 @@ class CFIDs():
                 for replacement in copy:
                     if old_id == replacement[0]:
                         form_id_replacements.remove(replacement)
-                        if updated_master_index == -1:
-                            form_id_replacements.append([old_id, new_id + master_byte + b'\xFF'])
+                        if self.updated_master_index == -1:
+                            form_id_replacements.append([old_id, new_id + self.master_byte + b'\xFF'])
                         else:
-                            form_id_replacements.append([old_id, new_id + updated_master_index.to_bytes() + b'\xFF'])
+                            form_id_replacements.append([old_id, new_id + updated_master_index_bytes + b'\xFF'])
                         added = True
                         break
                 if not added:
-                    if updated_master_index == -1:
-                        form_id_replacements.append([old_id, new_id + master_byte + b'\xFF'])
+                    if self.updated_master_index == -1:
+                        form_id_replacements.append([old_id, new_id + self.master_byte + b'\xFF'])
                     else:
-                        form_id_replacements.append([old_id, new_id + updated_master_index.to_bytes() + b'\xFF'])
+                        form_id_replacements.append([old_id, new_id + updated_master_index_bytes + b'\xFF'])
 
         form_id_replacements.sort(key= lambda x: struct.unpack('<I', x[0])[0])
         with open(form_id_file_name, 'w', encoding='utf-8') as fidf:
@@ -820,8 +820,8 @@ class CFIDs():
 
         form_id_replacements_no_master_byte = {old_id[:3]: new_id[:3] if len(new_id) <= 4 else new_id[:4] for old_id, new_id in form_id_replacements}
 
-        data_list = form_processor.patch_form_data(data_list, saved_forms, form_id_replacements_no_master_byte, master_byte, 
-                                                   all_form_ids_list, self.do_generate_cell_master, updated_master_index)
+        data_list = form_processor.patch_form_data(data_list, saved_forms, form_id_replacements_no_master_byte, self.master_byte, 
+                                                   all_form_ids_list, self.do_generate_cell_master, self.updated_master_index)
 
         data_list, sizes_list = self.recompress_data(data_list, sizes_list)
 
@@ -903,7 +903,8 @@ class CFIDs():
                 master_byte = master_byte_for_seq
                 #with self.lock:
                 data_list, updated_master_index = self.add_cell_master_to_masters(data_list)
-
+            if updated_master_index != -1:
+                updated_master_index_bytes = updated_master_index.to_bytes()
             saved_forms = form_processor.save_all_form_data(data_list)
 
             for from_id, id in form_id_replacements_base:
@@ -911,7 +912,7 @@ class CFIDs():
                     if updated_master_index == -1:
                         to_id = id[:3] + master_byte
                     else:
-                        to_id = id[:3] + updated_master_index.to_bytes()
+                        to_id = id[:3] + updated_master_index_bytes
                 else:
                     to_id = id[:3]
                 form_id_replacements.append([from_id, to_id])
