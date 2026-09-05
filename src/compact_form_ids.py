@@ -753,8 +753,16 @@ class CFIDs():
             else:
                 old_ids_of_new_cells = set()
             free_non_existent = _global.free_non_existent
-            for i in range(len(form_id_file_data)):
-                form_id_conversion = form_id_file_data[i].split('|')
+
+            # fix duplicate conversions in existing form_id_map files
+            clean_conversion_data = {}
+            for line in form_id_file_data:
+                form_id_conversion = line.split('|')
+                if form_id_conversion[0] not in clean_conversion_data:
+                    clean_conversion_data[form_id_conversion[0]] = form_id_conversion[1]
+            clean_form_id_conversions = [[key, value] for key, value in clean_conversion_data.items()]
+
+            for form_id_conversion in clean_form_id_conversions:
                 #initially was doing [:3] + master_byte, cannot remember why, anyways it broke form ids with HITME errors, so we're doing this instead.
                 from_id = bytes.fromhex(form_id_conversion[0])[:4]
                 if from_id in old_ids_of_new_cells:
