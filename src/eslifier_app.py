@@ -18,7 +18,7 @@ from data_holder import _global
 from scanner_vortex import Vortex
 from scanner_mo2 import MO2
 
-CURRENT_VERSION = '0.16.15'
+CURRENT_VERSION = '0.16.16'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
