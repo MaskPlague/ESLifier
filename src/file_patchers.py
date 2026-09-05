@@ -55,13 +55,21 @@ class patchers():
             else:
                 updated_master_byte = master_byte
 
-            seq_form_id_list = [data[i:i+4].lower() if data[i+3:i+4] <= master_byte
-                                else data[i:i+3].lower() + updated_master_byte
-                                    for i in range(0, len(data), 4) ]
-           
-            form_id_dict = {old_id.lower(): (new_id[:3] + updated_master_byte) for old_id, new_id in form_id_map.items() if isinstance(old_id, bytes)}
+            def format_seq_form_id(form_id):
+                if form_id[3:4] <= master_byte:
+                    return form_id.lower()
+                return form_id[:3].lower() + updated_master_byte
+            
+            seq_form_id_list = [format_seq_form_id(data[i:i+4]) for i in range(0, len(data), 4) ]
+            form_id_dict = {old_id[:3].lower(): (new_id[:3] + updated_master_byte) for old_id, new_id in form_id_map.items() if isinstance(old_id, bytes)}
 
-            new_seq_form_id_list = [form_id_dict.get(fid, fid if fid[3:4] < master_byte else fid[:3] + updated_master_byte) for fid in seq_form_id_list]
+            def update_form_id(form_id):
+                if form_id[3:4] >= master_byte:
+                    fid = form_id[:3]
+                    return form_id_dict.get(fid, fid + updated_master_byte)
+                return form_id
+            
+            new_seq_form_id_list = [update_form_id(fid) for fid in seq_form_id_list]
 
             f.seek(0)
             f.truncate(0)
@@ -75,9 +83,12 @@ class patchers():
             else:
                 updated_master_byte = master_index_byte
 
-            seq_form_id_list = [data[i:i+4].lower() if data[i+3:i+4] <= master_byte
-                                else data[i:i+3].lower() + updated_master_byte
-                                    for i in range(0, len(data), 4) ]
+            def format_seq_form_id(form_id):
+                if form_id[3:4] <= master_byte:
+                    return form_id.lower()
+                return form_id[:3].lower() + updated_master_byte
+            
+            seq_form_id_list = [format_seq_form_id(data[i:i+4]) for i in range(0, len(data), 4) ]
             form_id_dict = {old_id.lower()+master_index_byte: new_id + updated_master_byte for old_id, new_id in form_id_map}
 
             new_seq_form_id_list = [form_id_dict.get(fid, fid) for fid in seq_form_id_list]
@@ -86,8 +97,6 @@ class patchers():
             f.truncate(0)
             f.write(b''.join(new_seq_form_id_list))
     
-    #TODO: make a method to download certain pex files from github, save them to a folder as a cache (don't redownload if already downloaded)
-    # and copy the file to the output if the file has getmodbyname since the thing is unpatchable via my methods.
     def pex_patcher(basename: str, new_file: str, form_id_map: dict):
         with open(new_file,'rb+') as f:
             data = f.read()
