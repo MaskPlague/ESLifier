@@ -154,6 +154,12 @@
             "patcher": "ini_plugin_sep_formid",
             "separator": "|",
             "to_id_key": "hex"
+        },
+        {
+            "extension": "json",
+            "contains": "plugins/BobbingFramework/",
+            "patcher": "json_generic_formid_sep_plugin",
+            "separator": "~"
         }
     ]
 }
