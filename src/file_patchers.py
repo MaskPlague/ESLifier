@@ -1106,12 +1106,24 @@ class patchers():
                     to_id_data = form_id_map.get(form_id_int)
                     if to_id_data is not None:
                         lines[i] = 'form= 0x' + to_id_data["hex_no_0"] + '\n'
-                elif truncated_basename in line.lower():
+                if truncated_basename in line_lower: #for: beingfemale.esp -> beeingfemale:FormID
                     count = line_lower.count(truncated_basename)
                     start = 0
                     for _ in range(count):
                         line = lines[i]
                         index = line.lower().find(truncated_basename, start) + tb_len
+                        start = index + 2
+                        end_index = patchers.find_next_non_alphanumeric(line, index+1)
+                        form_id_int = int(line[index:end_index], 16)
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            lines[i] = line[:index] + to_id_data["hex_no_0"] + line[end_index:] 
+                if basename+':' in line_lower: #for: beingfemale.esp -> beeingfemale.esp:FormID
+                    count = line_lower.count(basename+':')
+                    start = 0
+                    for _ in range(count):
+                        line = lines[i]
+                        index = line.lower().find(basename+':', start) + len(basename+':')
                         start = index + 2
                         end_index = patchers.find_next_non_alphanumeric(line, index+1)
                         form_id_int = int(line[index:end_index], 16)
