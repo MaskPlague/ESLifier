@@ -1086,7 +1086,42 @@ class patchers():
                         lines[i] = line[:middle_index+1] + '00' + to_id_data["hex"] + end_of_line
             f.seek(0)
             f.truncate(0)
-            f.write(''.join(lines))            
+            f.write(''.join(lines))   
+
+    def ini_beeingfemale_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            lines = f.readlines()
+            patch = False
+            truncated_basename = basename[:-4] + ':'
+            tb_len = len(truncated_basename)
+            for i, line in enumerate(lines):
+                line_lower = line.lower()
+                if line_lower.startswith('modfile'):
+                    mod_name = line_lower.removeprefix('modfile').strip().removeprefix('=').strip()
+                    if mod_name == basename:
+                        patch = True
+                elif line_lower.startswith('form') and patch:
+                    form_id = line_lower.removeprefix('form').strip().removeprefix('=').strip()
+                    form_id_int = int(form_id, 16)
+                    to_id_data = form_id_map.get(form_id_int)
+                    if to_id_data is not None:
+                        lines[i] = 'form= 0x' + to_id_data["hex_no_0"] + '\n'
+                elif truncated_basename in line.lower():
+                    count = line_lower.count(truncated_basename)
+                    start = 0
+                    for _ in range(count):
+                        line = lines[i]
+                        index = line.lower().find(truncated_basename, start) + tb_len
+                        start = index + 2
+                        end_index = patchers.find_next_non_alphanumeric(line, index+1)
+                        form_id_int = int(line[index:end_index], 16)
+                        to_id_data = form_id_map.get(form_id_int)
+                        if to_id_data is not None:
+                            lines[i] = line[:index] + to_id_data["hex_no_0"] + line[end_index:] 
+
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))
 
     # No Cell Form IDs possible
     def toml_dynamic_animation_casting_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str = 'utf-8'):
@@ -2289,7 +2324,7 @@ class patchers():
 
 #if __name__ == '__main__':
 #    basename = "thing.esp".lower()
-#    form_id_map = {int('3DE8D',16): {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'bytes': b'\x00\x0A\x0A', 'update_name': False}, 
-#                   int('0x12345',16): {'hex_no_0': 'B0B', 'hex': '000B0B', "int": 10101, 'bytes': b'\x00\x0B\x0B', 'update_name': True}}
+#    form_id_map = {int('c008',16): {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'bytes': b'\x00\x0A\x0A', 'update_name': False}, 
+#                   int('c00c',16): {'hex_no_0': 'B0B', 'hex': '000B0B', "int": 10101, 'bytes': b'\x00\x0B\x0B', 'update_name': True}}
 #    new_file = os.path.normpath(r)
-#    patchers.json_hunted_or_hunter_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
+#    patchers.ini_beeingfemale_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
