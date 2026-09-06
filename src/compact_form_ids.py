@@ -7,6 +7,7 @@ import subprocess
 import struct
 import hashlib
 import json
+import time
 
 from file_patchers import patchers
 #from intervaltree import IntervalTree
@@ -383,6 +384,17 @@ class CFIDs():
         for thread in threads: 
             thread.join()
 
+    def try_replace_rename(self, new_file, renamed_file):
+        max_tries = 15
+        for attempt in range(max_tries):
+            try:
+                os.replace(new_file, renamed_file)
+                return
+            except (PermissionError, OSError):
+                if attempt == max_tries - 1:
+                    raise
+                time.sleep(0.05) 
+
     #Rename each file in the list of files from the old Form IDs to the new Form IDs
     def rename_files(self, master: str, files: list[str]) -> None:
         facegeom_meshes = []
@@ -411,8 +423,7 @@ class CFIDs():
                     with self.semaphore:
                         new_file, rel_path_new_file = self.copy_file_to_output(file)
                         renamed_file = new_file[:-10] + to_id.upper() + new_file[-4:]
-                        #with self.lock:
-                        os.replace(new_file, renamed_file)
+                        self.try_replace_rename(new_file, renamed_file)
                         rel_path_renamed_file = rel_path_new_file[:-10] + to_id.upper() + rel_path_new_file[-4:]
                         with self.lock:
                             self.compacted_and_patched[master_base_name].add(rel_path_new_file)
@@ -428,8 +439,7 @@ class CFIDs():
                         new_file, rel_path_new_file = self.copy_file_to_output(file)
                         index = new_file.rfind('_') - 6
                         renamed_file = new_file[:index] + to_id.upper() + new_file[index+6:]
-                        #with self.lock:
-                        os.replace(new_file, renamed_file)
+                        self.try_replace_rename(new_file, renamed_file)
                         index = rel_path_new_file.rfind('_') - 6
                         rel_path_renamed_file = rel_path_new_file[:index] + to_id.upper() + rel_path_new_file[index+6:]
                         with self.lock:
@@ -442,7 +452,7 @@ class CFIDs():
                     with self.semaphore:
                         new_file, rel_path_new_file = self.copy_file_to_output(file)
                         renamed_file = new_file[:-11] + to_id.upper() + new_file[-5:]
-                        os.replace(new_file, renamed_file)
+                        self.try_replace_rename(new_file, renamed_file)
                         rel_path_renamed_file = rel_path_new_file[:-11] + to_id.upper() + rel_path_new_file[-5:]
                         with self.lock:
                             self.compacted_and_patched[master_base_name].add(rel_path_new_file)
