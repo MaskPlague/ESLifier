@@ -544,10 +544,10 @@ class patchers():
             rpi = 0
             for i, line in enumerate(lines):
                 if line.startswith('requiredPerk'):
-                    required_perk = line.removeprefix('requiredPerk =').strip()
+                    required_perk = line.removeprefix('requiredPerk').strip().removeprefix('=').strip()
                     rpi = i
                 if line.startswith('modName'):
-                    mod_name = line.removeprefix('modName =').strip().lower()
+                    mod_name = line.removeprefix('modName').strip().lower().removeprefix('=').strip()
                     if mod_name == basename:
                         form_id_int = int(required_perk, 16)
                         to_id_data = form_id_map.get(form_id_int)
