@@ -4,90 +4,90 @@
   <context>
     <name>CFIDs</name>
     <message>
-        <location filename="src\compact_form_ids.py" line="102" />
+        <location filename="src\compact_form_ids.py" line="103" />
         <source>Getting files to hash...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\compact_form_ids.py" line="174" />
+        <location filename="src\compact_form_ids.py" line="175" />
         <source>Failed to hash file: </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\compact_form_ids.py" line="197" />
+        <location filename="src\compact_form_ids.py" line="198" />
         <source>Editing Plugin: %1...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\compact_form_ids.py" line="202" />
+        <location filename="src\compact_form_ids.py" line="203" />
         <source>Patching %1 Dependent Plugins...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\compact_form_ids.py" line="213" />
+        <location filename="src\compact_form_ids.py" line="214" />
         <source>Temporarily Extracting FaceGen/Voice files from BSA for patching...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\compact_form_ids.py" line="255" />
+        <location filename="src\compact_form_ids.py" line="256" />
         <source>Patching %1 Dependent Files...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\compact_form_ids.py" line="260" />
+        <location filename="src\compact_form_ids.py" line="261" />
         <source>Renaming/Patching %1 Dependent Files...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\compact_form_ids.py" line="265" />
+        <location filename="src\compact_form_ids.py" line="266" />
         <source>Deleting temporarily Extracted FaceGen/Voice Files...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\compact_form_ids.py" line="273" />
+        <location filename="src\compact_form_ids.py" line="274" />
         <source>Changing ESL flag in: </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\compact_form_ids.py" line="287" />
+        <location filename="src\compact_form_ids.py" line="288" />
         <source>Patching new plugins and files for %1...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\compact_form_ids.py" line="292" />
+        <location filename="src\compact_form_ids.py" line="293" />
         <source>Patching New Dependent Plugins...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\compact_form_ids.py" line="298" />
+        <location filename="src\compact_form_ids.py" line="299" />
         <source>Patching %1 New Dependent Files...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\compact_form_ids.py" line="303" />
+        <location filename="src\compact_form_ids.py" line="304" />
         <source>Renaming/Patching %1 New Dependent Files...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\compact_form_ids.py" line="513" />
-        <location filename="src\compact_form_ids.py" line="391" />
+        <location filename="src\compact_form_ids.py" line="523" />
+        <location filename="src\compact_form_ids.py" line="403" />
         <source>Percentage: %1%</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\compact_form_ids.py" line="514" />
-        <location filename="src\compact_form_ids.py" line="392" />
+        <location filename="src\compact_form_ids.py" line="524" />
+        <location filename="src\compact_form_ids.py" line="404" />
         <source>Files: %2/%3</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\compact_form_ids.py" line="567" />
+        <location filename="src\compact_form_ids.py" line="577" />
         <source>Error decompressing form: %1
  at Header: %2 at Index: %3</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\compact_form_ids.py" line="941" />
+        <location filename="src\compact_form_ids.py" line="960" />
         <source>Failed to patch dependent's SEQ file: </source>
         <translation type="unfinished" />
     </message>
@@ -150,20 +150,20 @@
     <message>
         <location filename="src\patch_new.py" line="538" />
         <location filename="src\dependency_getter.py" line="33" />
-        <location filename="src\compact_form_ids.py" line="85" />
-        <location filename="src\compact_form_ids.py" line="74" />
+        <location filename="src\compact_form_ids.py" line="86" />
+        <location filename="src\compact_form_ids.py" line="75" />
         <location filename="src\cell_changed_scanner.py" line="95" />
         <source>Failed to dump data to </source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="src\file_defined_patcher_conditions.py" line="122" />
-        <location filename="src\compact_form_ids.py" line="551" />
+        <location filename="src\compact_form_ids.py" line="561" />
         <source>Failed to patch file: </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\compact_form_ids.py" line="933" />
+        <location filename="src\compact_form_ids.py" line="952" />
         <source>Failed to patch dependent: </source>
         <translation type="unfinished" />
     </message>
@@ -302,16 +302,16 @@ crash cause: %2</source>
     <message>
         <location filename="src\main_page.py" line="1697" />
         <location filename="src\main_page.py" line="1680" />
-        <location filename="src\compact_form_ids.py" line="149" />
-        <location filename="src\compact_form_ids.py" line="134" />
+        <location filename="src\compact_form_ids.py" line="150" />
+        <location filename="src\compact_form_ids.py" line="135" />
         <source>Processed: %1%</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="src\main_page.py" line="1698" />
         <location filename="src\main_page.py" line="1681" />
-        <location filename="src\compact_form_ids.py" line="150" />
-        <location filename="src\compact_form_ids.py" line="135" />
+        <location filename="src\compact_form_ids.py" line="151" />
+        <location filename="src\compact_form_ids.py" line="136" />
         <source>Files: %2/%3</source>
         <translation type="unfinished" />
     </message>
@@ -1951,12 +1951,12 @@ This button needs an output made from v0.12.0+.</source>
 </context><context>
     <name>patcher_conditions</name>
     <message>
-        <location filename="src\patcher_conditions.py" line="222" />
-        <location filename="src\patcher_conditions.py" line="210" />
-        <location filename="src\patcher_conditions.py" line="195" />
-        <location filename="src\patcher_conditions.py" line="186" />
-        <location filename="src\patcher_conditions.py" line="167" />
-        <location filename="src\patcher_conditions.py" line="61" />
+        <location filename="src\patcher_conditions.py" line="224" />
+        <location filename="src\patcher_conditions.py" line="212" />
+        <location filename="src\patcher_conditions.py" line="197" />
+        <location filename="src\patcher_conditions.py" line="188" />
+        <location filename="src\patcher_conditions.py" line="169" />
+        <location filename="src\patcher_conditions.py" line="63" />
         <source>Possible missing patcher for: </source>
         <translation type="unfinished" />
     </message>
