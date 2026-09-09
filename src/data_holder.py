@@ -136,7 +136,7 @@ class _global():
         _global.vortex_data_path =                  _global._settings.get('vortex_data_path', '')
         _global.vortex_db_path =                    os.path.normpath(os.path.join(_global.vortex_data_path, "state.v2"))
         if _global.mod_manager_mode == 0:
-            _global.game_folder_path =              _global._settings.get('skyrim_folder_path', '')
+            _global.game_folder_path =              _global._settings.get('game_folder_path', '')
             _global.plugins_txt_path =              _global._settings.get('plugins_txt_path', '')
         _global.vortex_restore_backups =            _global._settings.get('vortex_restore_backups', True)
         _global.update_header =                     _global._settings.get('update_header', True)

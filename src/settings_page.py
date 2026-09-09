@@ -94,7 +94,7 @@ class settings(QWidget):
             self.tr(f"Set this to your {VERBOSE_GAME_NAME} Data folder that holds {GAME_ESM_NAME}."),
             self.tr(f'C:/Path/To/{VERBOSE_GAME_NAME}/Data'),
             self.game_folder_path_clicked,
-            'skyrim_folder_path'
+            'game_folder_path'
         )
         self.output_folder_path_widget, self.output_folder_path = self.create_path_widget(
             self.tr("Output Folder Path"),
@@ -442,9 +442,9 @@ class settings(QWidget):
     
     def game_folder_path_clicked(self):
         if not self.mod_manager_mode_toggle.isChecked():
-            self.select_file_path(self.file_dialog, self.tr(f"Select the {VERBOSE_GAME_NAME} Data folder"), 'skyrim_folder_path', self.game_folder_path, None)
+            self.select_file_path(self.file_dialog, self.tr(f"Select the {VERBOSE_GAME_NAME} Data folder"), 'game_folder_path', self.game_folder_path, None)
         else:
-            self.select_file_path(self.file_dialog, self.tr("Select your MO2 mods folder"), 'skyrim_folder_path', self.game_folder_path, None)
+            self.select_file_path(self.file_dialog, self.tr("Select your MO2 mods folder"), 'game_folder_path', self.game_folder_path, None)
 
     def output_folder_path_clicked(self):
         self.select_file_path(self.file_dialog, self.tr("Select where you want the output folder"), 'output_folder_path', self.output_folder_path, None)
@@ -991,7 +991,7 @@ class settings(QWidget):
             write_error(self.tr("Failed to save settings.") +" > "+ str(e))
 
     def update_settings_from_app_state(self, key = ''):
-        self.settings['skyrim_folder_path'] = os.path.normpath(self.game_folder_path.text()) if self.game_folder_path.text() != '' else ''
+        self.settings['game_folder_path'] = os.path.normpath(self.game_folder_path.text()) if self.game_folder_path.text() != '' else ''
         self.settings['output_folder_path'] = os.path.normpath(self.output_folder_path.text()) if self.output_folder_path.text() != '' else ''
         if self.output_folder_name_valid:
             self.settings['output_folder_name'] = self.output_folder_name.text()
@@ -1029,6 +1029,8 @@ class settings(QWidget):
                 settings: dict = json.load(f)
                 if 'mo2_mode' in settings:
                     settings['mod_manager_mode'] = 2 if settings.pop('mo2_mode') else 1
+                if 'skyrim_folder_path' in settings and GAME_MODE == "SSE":
+                    settings['game_folder_path'] = settings.pop('skyrim_folder_path')
                 return settings
         except:
             return {}

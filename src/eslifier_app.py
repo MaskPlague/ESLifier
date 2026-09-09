@@ -353,7 +353,7 @@ class main_window(QMainWindow):
         if (self.settings_widget.settings['output_folder_path'] == ''
             or (self.settings_widget.settings['mod_manager_mode'] == 0 
                 and (self.settings_widget.settings['plugins_txt_path'] == ''
-                     or self.settings_widget.settings['skyrim_folder_path'] == ''))
+                     or self.settings_widget.settings['game_folder_path'] == ''))
             or (self.settings_widget.settings['mod_manager_mode'] == 2 
                 and (self.settings_widget.settings['mo2_base_path'] == ''
                      or self.settings_widget.settings['mo2_profile'] == ''))
@@ -383,7 +383,7 @@ class main_window(QMainWindow):
             vortex_data_path:str = self.settings_widget.settings['vortex_data_path']
         elif mod_manager_mode == 0:
             plugins_txt:str = self.settings_widget.settings['plugins_txt_path']
-            data_path:str = self.settings_widget.settings['skyrim_folder_path']
+            data_path:str = self.settings_widget.settings['game_folder_path']
 
         error_message = ''
 
