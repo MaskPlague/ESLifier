@@ -141,11 +141,11 @@ class main(QWidget):
         )
 
         self.reset_game_archive_button = self.create_button(
-            self.tr(f' Delete extracted {GAME_ARCHIVE_TYPE} files  \n Rescan {GAME_ARCHIVE_TYPE} on next Scan '),
-            self.tr(f'ESLifier only extracts seq and script files from a {GAME_ARCHIVE_TYPE} once so as not to\n'\
-            f'go through the tedious process of extracting the releveant files in {GAME_ARCHIVE_TYPE}s\n'\
+            self.tr(' Delete extracted %0 files  \n Rescan %0 on next Scan ').replace("%0", GAME_ARCHIVE_TYPE),
+            self.tr('ESLifier only extracts seq and script files from a %0 once so as not to\n'\
+            'go through the tedious process of extracting the releveant files in %0s\n'\
             'each time it scans (others are extracted during patching). Use this button\n'\
-            f'if a {GAME_ARCHIVE_TYPE} has new files or you have deleted a mod that had a {GAME_ARCHIVE_TYPE}.'),
+            'if a %0 has new files or you have deleted a mod that had a %0.').replace("%0", GAME_ARCHIVE_TYPE),
             self.reset_game_archive
         )
 
@@ -1029,12 +1029,12 @@ class main(QWidget):
     def reset_game_archive(self):
         confirm = self.create_confirmation('lightcoral')
         confirm_text = self.tr(
-                f"Are you sure you want to reset the Extracted {GAME_ARCHIVE_TYPE} List?\n"\
-                f"This will cause the next scan to take significantly longer as the {GAME_ARCHIVE_TYPE} files will\n"\
+                f"Are you sure you want to reset the Extracted %0 List?\n"\
+                f"This will cause the next scan to take significantly longer as the %0 files will\n"\
                 "need to be extracted again and irrelevant script files will need to be filtered.\n\n"\
                 "This can take a short bit and may freeze the UI\n"\
-                "or you can manually delete the \"%0/\" folder\n"\
-                "and then click this button.").replace("%0", ARCHIVE_EXTRACTED_FOLDER)
+                "or you can manually delete the \"%1/\" folder\n"\
+                "and then click this button.").replace("%0", GAME_ARCHIVE_TYPE).replace("%1", ARCHIVE_EXTRACTED_FOLDER)
         confirm.setText(confirm_text)
         def accepted():
             write_to_file(f'Resetting {GAME_ARCHIVE_TYPE} [Mod Manager Mode = {_global.mod_manager_mode}]')
