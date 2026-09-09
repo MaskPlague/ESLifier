@@ -33,7 +33,7 @@ class settings(QWidget):
         self.output_folder_name_valid = True
         self.settings = self.get_settings_from_file()
         self.default_settings = {}
-
+        self.toggle_widgets = {}
         if COLOR_MODE == 'Light':
             self.LINE_EDIT_STYLE = """
                 QLineEdit[empty="true"]{
@@ -738,6 +738,7 @@ class settings(QWidget):
         layout.addSpacing(10)
         layout.addWidget(toggle)
         self.default_settings[setting_key] = {"type": "toggle", "default": default, "widget": toggle}
+        self.toggle_widgets[setting_key] = [toggle.isChecked if not tri_state else toggle.checkState, "call" if not tri_state else "value"]
         return widget, toggle
 
     def mod_mananger_mode_clicked(self):
@@ -985,28 +986,16 @@ class settings(QWidget):
         self.settings['mo2_profile'] = self.mo2_profile.currentText()
         self.settings['plugins_txt_path'] = os.path.normpath(self.plugins_txt_path.text()) if self.plugins_txt_path.text() != '' else ''
         self.settings['vortex_data_path'] = os.path.normpath(self.vortex_data_path.lineEdit().text()) if self.vortex_data_path.lineEdit().text() != '' else ''
-        self.settings['vortex_restore_backups'] = self.vortex_restore_backup_files.isChecked()
-        self.settings['mod_manager_mode'] = self.mod_manager_mode_toggle.checkState().value
-        self.settings['update_header'] = self.update_header_toggle.isChecked()
-        self.settings['show_esms'] = self.show_esms_toggle.isChecked()
-        self.settings['show_cells'] = self.show_plugins_with_cells_toggle.isChecked()
-        self.settings['filter_seq'] = self.enable_seq_filter_toggle.isChecked()
-        self.settings['filter_pex'] = self.enable_pex_filter_toggle.isChecked()
-        self.settings['enable_cell_changed_filter'] = self.enable_cell_changed_filter_toggle.isChecked()
-        self.settings['enable_interior_cell_filter'] = self.enable_interior_cell_filter_toggle.isChecked()
-        self.settings['filter_worldspaces'] = self.enable_worldspaces_filter_toggle.isChecked()
-        self.settings['filter_weathers'] = self.enable_weather_filter_toggle.isChecked()
         self.settings['skip_confirmations'] = self.skip_confirmations_text_input.text()
         self.settings['left_hidden_columns'] = self.hide_left_columns_text_input.text()
         self.settings['right_hidden_columns'] = self.hide_right_columns_text_input.text()
-        self.settings['show_dlls'] = self.show_plugins_possibly_refd_by_dlls_toggle.isChecked()
-        self.settings['generate_cell_master'] = self.generate_cell_master_toggle.isChecked()
-        self.settings['check_for_updates'] = self.check_for_updates_toggle.isChecked()
-        self.settings['persistent_ids'] = self.persistent_ids_toggle.isChecked()
-        self.settings['free_non_existent'] = self.free_non_existent_toggle.isChecked()
-        self.settings['enable_patch_new'] = self.enable_patch_new_toggle.isChecked()
-        self.settings['hash_output'] = self.hash_output_toggle.isChecked()
-        self.settings['hash_plugins_warn'] = self.hash_plugins_warn_toggle.isChecked()
+
+        for setting_key, (widget_func, method) in self.toggle_widgets.items():
+            if method == "call":
+                self.settings[setting_key] = widget_func()
+            elif method == "value":
+                self.settings[setting_key] = widget_func().value
+
         self.settings['inner_color'] = self.inner_color
         self.settings['outer_color'] = self.outer_color
 
