@@ -80,6 +80,7 @@ class list_parent_class(QTableWidget):
         """
         self.setStyleSheet(self.original_stylesheet)
         self.init_filter_flash()
+        self.blacklist = blacklist()
 
     def create_list():
         pass

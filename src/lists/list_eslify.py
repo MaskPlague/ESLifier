@@ -5,10 +5,14 @@ import itertools
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMessageBox, QFileDialog
 
-from blacklist import blacklist
 from log_stream import write_error, write_to_file
-from data_holder import _global
-from list_parent import list_parent_class
+from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ESM_NAME, MO2_GAME_NAME, SHORT_GAME_NAME,
+                         CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
+                         EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
+                         MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
+                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, DEPENDENCY_DICTIONARY_JSON,
+                         MAXED_MASTERS_JSON, BLACKLIST_JSON, CELL_CHANGED_JSON, DLL_DICT_JSON)
+from lists.list_parent import list_parent_class
 
 class list_eslable(list_parent_class):
     def __init__(self):
@@ -24,7 +28,6 @@ class list_eslable(list_parent_class):
         self.SPACER_COL = next(c)
         self.HIDER_COL = next(c)
         self.COL_COUNT = next(c)
-        self.blacklist = blacklist()
         self.file_dialog = QFileDialog()
         self.file_dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
         self.save_file_dialog = QFileDialog()
@@ -94,7 +97,7 @@ class list_eslable(list_parent_class):
         self.setSortingEnabled(False)
         self.clearContents()
 
-        self.previously_esl_flagged_exists = os.path.exists('ESLifier_Data/previously_esl_flagged.json')
+        self.previously_esl_flagged_exists = os.path.exists(PREVIOUSLY_ESL_FLAGGED_JSON)
         hidden_columns = [col.strip().upper() for col in self.hidden_columns.split(',')]
 
         if self.show_cells and not _global.engine_fixes_v7_or_newer and not 'CELL' in hidden_columns: self.showColumn(self.CELL_COL)
@@ -112,10 +115,10 @@ class list_eslable(list_parent_class):
         if self.show_esms and not 'ESM' in hidden_columns: self.showColumn(self.ESM_COL)
         else: self.hideColumn(self.ESM_COL)
 
-        self.compacted:dict = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json", dict)
-        self.flagged:set = set(self.get_data_from_file("ESLifier_Data/esl_flagged.json", list))
-        self.blacklist_list:set = set(self.get_data_from_file('ESLifier_Data/blacklist.json', list))
-        self.cell_changed:set = set(self.get_data_from_file("ESLifier_Data/cell_changed.json", list))
+        self.compacted:dict = self.get_data_from_file(COMPACTED_AND_PATCHED_JSON, dict)
+        self.flagged:set = set(self.get_data_from_file(ESL_FLAGGED_JSON, list))
+        self.blacklist_list:set = set(self.get_data_from_file(BLACKLIST_JSON, list))
+        self.cell_changed:set = set(self.get_data_from_file(CELL_CHANGED_JSON, list))
 
         if self.cell_master:
             self.blacklist_list.update(set(["ccafdsse001-dwesanctuary.esm",
@@ -272,11 +275,11 @@ class list_eslable(list_parent_class):
 
     def check_previously_esl_flagged(self, esl_flagged:list[str]=None, full_warning:bool = True):
         self.blockSignals(True)
-        if os.path.exists('ESLifier_Data/previously_esl_flagged.json') or esl_flagged is not None:
+        if os.path.exists(PREVIOUSLY_ESL_FLAGGED_JSON) or esl_flagged is not None:
             try:
                 selected = set()
                 if esl_flagged is None:
-                    with open('ESLifier_Data/previously_esl_flagged.json', 'r', encoding='utf-8') as f:
+                    with open(PREVIOUSLY_ESL_FLAGGED_JSON, 'r', encoding='utf-8') as f:
                         esl_flagged = json.load(f)
                         f.close()
                 esl_flagged_set = set(esl_flagged)
@@ -287,10 +290,10 @@ class list_eslable(list_parent_class):
                 diff = esl_flagged_set - selected
                 # Warn about files that couldn't be reselected.
                 if diff and full_warning:
-                    missing_skyrim_as_master:dict = self.get_data_from_file("ESLifier_Data/missing_skyrim_as_master.json", dict)
-                    compacted_and_patched:dict = self.get_data_from_file("ESLifier_Data/compacted_and_patched.json", dict)
+                    missing_game_esm_as_master:dict = self.get_data_from_file(MISSING_GAME_AS_MASTER_JSON, dict)
+                    compacted_and_patched:dict = self.get_data_from_file(COMPACTED_AND_PATCHED_JSON, dict)
                     reversed_msam: dict[str, set] = {}
-                    for k, v in missing_skyrim_as_master.items():
+                    for k, v in missing_game_esm_as_master.items():
                         if v not in reversed_msam:
                             reversed_msam[v] = set()
                         reversed_msam[v].add(os.path.basename(k))

@@ -11,8 +11,8 @@ from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushBut
                              QSplitter, QFrame, QTextEdit, QListWidget, QListWidgetItem, QDialog, QSpacerItem, QSizePolicy)
 from PyQt6.QtGui import QIcon, QCursor
 
-from list_eslify import list_eslable
-from list_compact import list_compactable
+from lists.list_eslify import list_eslable
+from lists.list_compact import list_compactable
 from scanners.scanner import scanner
 from compact_form_ids import CFIDs
 from scanners.cell_changed_scanner import cell_scanner
