@@ -8,13 +8,13 @@ from PyQt6.QtCore import pyqtSignal, QThread, QObject, QCoreApplication
 from PyQt6.QtWidgets import QMessageBox
 from PyQt6.QtGui import QIcon
 
-from scanner import scanner
-from dependency_getter import dependecy_getter
+from scanners.scanner import scanner
+from scanners.dependency_getter import dependecy_getter
 from compact_form_ids import CFIDs
-from cell_changed_scanner import cell_scanner
 from file_defined_patcher_conditions import user_and_master_conditions_class
 from data_holder import _global
-from vortex_database_reader import VortexDBParser
+from scanners.cell_changed_scanner import cell_scanner
+from scanners.vortex_database_reader import VortexDBParser
 from log_stream import clear_and_close_log, clear_and_leave_log_open, write_error, write_normal, write_patching
 
 class patch_new():

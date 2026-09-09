@@ -1,19 +1,24 @@
 import os
 import json
 from log_stream import write_error
-from data_holder import _global
+from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ESM_NAME, MO2_GAME_NAME, SHORT_GAME_NAME,
+                         CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
+                         EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
+                         MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
+                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, DEPENDENCY_DICTIONARY_JSON,
+                         MAXED_MASTERS_JSON)
 from PyQt6.QtCore import QCoreApplication
 
 class dependecy_getter():
     bsa_list = []
     def scan(_=None):
         dependecy_getter.dependency_dictionary: dict[str, set] = {}
-        dependecy_getter.missing_skyrim_as_master = {}
+        dependecy_getter.missing_game_esm_as_master = {}
         dependecy_getter.maxed_masters = []
         dependecy_getter.create_dependency_dictionary()
-        dependecy_getter.dump_to_file("ESLifier_Data/dependency_dictionary.json", dependecy_getter.dependency_dictionary)
-        dependecy_getter.dump_to_file("ESLifier_Data/missing_skyrim_as_master.json", dependecy_getter.missing_skyrim_as_master)
-        dependecy_getter.dump_to_file("ESLifier_Data/maxed_masters.json", dependecy_getter.maxed_masters)
+        dependecy_getter.dump_to_file(DEPENDENCY_DICTIONARY_JSON, dependecy_getter.dependency_dictionary)
+        dependecy_getter.dump_to_file(MISSING_GAME_AS_MASTER_JSON, dependecy_getter.missing_game_esm_as_master)
+        dependecy_getter.dump_to_file(MAXED_MASTERS_JSON, dependecy_getter.maxed_masters)
         return dependecy_getter.dependency_dictionary
 
     def dump_to_file(file: str, data: list | dict):
@@ -51,8 +56,8 @@ class dependecy_getter():
                     if master_lower not in dependecy_getter.dependency_dictionary:
                         dependecy_getter.dependency_dictionary[master_lower] = set()
                     dependecy_getter.dependency_dictionary[master_lower].add(plugin)
-                if masters[0] != 'Skyrim.esm' and has_records:
-                    dependecy_getter.missing_skyrim_as_master[plugin] = masters[0]
+                if masters[0] != GAME_ESM_NAME and has_records:
+                    dependecy_getter.missing_game_esm_as_master[plugin] = masters[0]
             if len(masters) >= 254 and 'ESLifier_Cell_Master.esm' not in masters:
                 dependecy_getter.maxed_masters.append(plugin)
 

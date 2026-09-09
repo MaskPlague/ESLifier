@@ -1,13 +1,13 @@
 from log_stream import write_error, write_normal, write_progress, write_remove, write_to_file, write_warning
 from PyQt6.QtCore import QCoreApplication
-from data_holder import _global
+from data_holder import _global, GAME_ARCHIVE_EXTENSION
 import os
 import configparser
 from typing import TYPE_CHECKING
 from enum import Enum
 
 if TYPE_CHECKING:
-    from scanner import scanner 
+    from scanners.scanner import scanner 
 
 class MO2Errors(Enum):
     DIFFERENT_MF_AND_OF_DRIVES = 0
@@ -121,9 +121,9 @@ class MO2():
             os.makedirs('bsa_extracted/')
         mod_files: dict[str, list[str]] = {}
         cases_of_files: dict[str, str] = {}
-        bsa_list = []
-        bsa_dict_temp: dict[str, list[str]] = {}
-        bsa_file_name_dict: dict[str, str] = {}
+        game_archive_list = []
+        game_archive_dict_temp: dict[str, list[str]] = {}
+        game_archive_file_name_dict: dict[str, str] = {}
         plugin_extensions = ('.esp', '.esl', '.esm')
         plugin_names = set()
         loop = 0
@@ -165,16 +165,16 @@ class MO2():
                         mod_files[relative_path].append(mod_folder)
                         if is_mod_root_level and file_lower.endswith(plugin_extensions):
                             plugin_names.add(file)
-                        elif is_mod_root_level and file_lower.endswith('.bsa') and file_lower not in MO2.scanner.bsa_blacklist:
-                            bsa_file = file[:-4]
-                            bsa_lower = bsa_file.lower()
-                            if ' - textures' in bsa_lower:
-                                index = bsa_lower.index(' - textures')
-                                bsa_lower = bsa_lower[:index]
-                            if not file_lower in bsa_dict_temp:
-                                bsa_dict_temp[file_lower] = []
-                                bsa_file_name_dict[file_lower] = bsa_lower
-                            bsa_dict_temp[file_lower].append(mod_folder)
+                        elif is_mod_root_level and file_lower.endswith(GAME_ARCHIVE_EXTENSION) and file_lower not in MO2.scanner.game_archive_blacklist:
+                            game_archive_file = file[:-4]
+                            game_archive_lower = game_archive_file.lower()
+                            if ' - textures' in game_archive_lower:
+                                index = game_archive_lower.index(' - textures')
+                                game_archive_lower = game_archive_lower[:index]
+                            if not file_lower in game_archive_dict_temp:
+                                game_archive_dict_temp[file_lower] = []
+                                game_archive_file_name_dict[file_lower] = game_archive_lower
+                            game_archive_dict_temp[file_lower].append(mod_folder)
 
         #Get files from MO2's overwrite folder
         if os.path.exists(overwrite_path):
@@ -204,38 +204,38 @@ class MO2():
                     if is_file_root_level and file_lower.endswith(plugin_extensions):
                         if file not in plugin_names:
                             plugin_names.add(file)
-                    elif is_file_root_level and file_lower.endswith('.bsa') and file_lower not in MO2.scanner.bsa_blacklist:
-                        bsa_file = file[:-4]
-                        bsa_lower = bsa_file.lower()
-                        if ' - textures' in bsa_lower:
-                            index = bsa_lower.index(' - textures')
-                            bsa_lower = bsa_lower[:index]
-                        if not file_lower in bsa_dict_temp:
-                            bsa_dict_temp[file_lower] = []
-                            bsa_file_name_dict[file_lower] = bsa_lower
-                        bsa_dict_temp[file_lower].append('overwrite_eslifier_scan')
+                    elif is_file_root_level and file_lower.endswith(GAME_ARCHIVE_EXTENSION) and file_lower not in MO2.scanner.game_archive_blacklist:
+                        game_archive_file = file[:-4]
+                        game_archive_lower = game_archive_file.lower()
+                        if ' - textures' in game_archive_lower:
+                            index = game_archive_lower.index(' - textures')
+                            game_archive_lower = game_archive_lower[:index]
+                        if not file_lower in game_archive_dict_temp:
+                            game_archive_dict_temp[file_lower] = []
+                            game_archive_file_name_dict[file_lower] = game_archive_lower
+                        game_archive_dict_temp[file_lower].append('overwrite_eslifier_scan')
         else:
             write_to_file('Overwrite folder not found.\n')
         #BSA list is expacted to be like: [[mod_name, full_path], [mod_name2, full_path2]] where mod_name is (mod_name).esp without ext 
         # for sorting by plugin during extraction. mod_name is obtained from (mod_name).bsa
-        bsa_list = []
-        for relative_path, mods in bsa_dict_temp.items():
+        game_archive_list = []
+        for relative_path, mods in game_archive_dict_temp.items():
             if len(mods) == 1:
                 mod = mods[0]
                 if mod == 'overwrite_eslifier_scan':
                     file_path = os.path.join(overwrite_path, relative_path)
                 else:
                     file_path = os.path.join(mods_folder, mod, relative_path)
-                bsa_list.append([bsa_file_name_dict[relative_path], file_path])
+                game_archive_list.append([game_archive_file_name_dict[relative_path], file_path])
             else:
                 mods_sorted = sorted(mods, key=lambda mod: load_order.index(mod))
                 if mods_sorted[-1] == 'overwrite_eslifier_scan':
                     file_path = os.path.join(overwrite_path, relative_path)
                 else:
                     file_path = os.path.join(mods_folder, mods_sorted[-1], relative_path)
-                bsa_list.append([bsa_file_name_dict[relative_path], file_path])
+                game_archive_list.append([game_archive_file_name_dict[relative_path], file_path])
         
-        MO2.scanner.extract_scripts_and_seq_from_bsa(bsa_list, plugins_list)
+        MO2.scanner.extract_scripts_and_seq_from_game_archive(game_archive_list, plugins_list)
 
         mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
         #Get files that were extracted from BSA

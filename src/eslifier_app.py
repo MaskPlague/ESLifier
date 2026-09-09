@@ -15,9 +15,9 @@ from settings_page import settings
 from main_page import main
 from log_stream import log_stream, write_to_file
 from data_holder import _global
-from scanner_vortex import Vortex
-from scanner_mo2 import MO2
 
+from scanners.scanner_vortex import Vortex
+from scanners.scanner_mo2 import MO2
 CURRENT_VERSION = '0.16.17'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)

@@ -5,27 +5,32 @@ import zlib
 import struct
 import shutil
 from log_stream import write_error, write_to_file
-from data_holder import _global
+from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ESM_NAME, MO2_GAME_NAME, SHORT_GAME_NAME,
+                         CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
+                         EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
+                         MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
+                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, DEPENDENCY_DICTIONARY_JSON,
+                         MAXED_MASTERS_JSON, BLACKLIST_JSON, CELL_CHANGED_JSON, DLL_DICT_JSON)
 from PyQt6.QtCore import QCoreApplication
 
 #TODO: Maybe ignore form 43 plugins? IDK if necessary, need to check what happened on mod page, I thought I handled 43 v 44 somewhere
 class qualification_checker():
     def scan(_=None) -> dict:
         qualification_checker.lock = threading.Lock()
-        qualification_checker.maxed_masters = qualification_checker.get_from_file("ESLifier_Data/maxed_masters.json")
+        qualification_checker.maxed_masters = qualification_checker.get_from_file(MAXED_MASTERS_JSON)
         plugins = [plugin for plugin in _global.plugins if not plugin.lower().endswith('.esl')]
-        qualification_checker.missing_skyrim_esm_as_master: dict[str, str] = qualification_checker.get_from_file("ESLifier_Data/missing_skyrim_as_master.json")
-        qualification_checker.dependent_dict: dict[str, list[str]] = qualification_checker.get_from_file("ESLifier_Data/dependency_dictionary.json")
+        qualification_checker.missing_game_esm_as_master: dict[str, str] = qualification_checker.get_from_file(MISSING_GAME_AS_MASTER_JSON)
+        qualification_checker.dependent_dict: dict[str, list[str]] = qualification_checker.get_from_file(DEPENDENCY_DICTIONARY_JSON)
         qualification_checker.flag_dict = {}
         qualification_checker.max_record_number = 4096
         #if os.path.exists('ESLifier_Data/EDIDs'):
         #    shutil.rmtree('ESLifier_Data/EDIDs')
         #if not os.path.exists("ESLifier_Data/EDIDs"):
         #    os.makedirs("ESLifier_Data/EDIDs")
-        if os.path.exists('ESLifier_Data/Cell_IDs'):
-            shutil.rmtree('ESLifier_Data/Cell_IDs')
-        if not os.path.exists('ESLifier_Data/Cell_IDs/'):
-            os.makedirs('ESLifier_Data/Cell_IDs/')
+        if os.path.exists(CELL_IDS_FOLDER):
+            shutil.rmtree(CELL_IDS_FOLDER)
+        if not os.path.exists(CELL_IDS_FOLDER):
+            os.makedirs(CELL_IDS_FOLDER)
         update_header = _global.update_header
         if update_header:
             qualification_checker.num_max_records = 4096
@@ -51,7 +56,7 @@ class qualification_checker():
             
         for thread in threads:
             thread.join()
-        with open('ESLifier_Data/flag_dictionary.json', 'w', encoding='utf-8') as f:
+        with open(FLAG_DICTIONARY_JSON, 'w', encoding='utf-8') as f:
             json.dump(qualification_checker.flag_dict, f, ensure_ascii=False, indent=4)
         return qualification_checker.flag_dict
 
@@ -121,19 +126,19 @@ class qualification_checker():
             write_error(e, True) 
             return False, False, False, False, False, False, True
 
-        master_count, has_skyrim_esm_master = qualification_checker.get_master_count(data_list)
+        master_count, has_game_esm_master = qualification_checker.get_master_count(data_list)
 
         if update_header:
             dependents = set(qualification_checker.dependent_dict[basename.lower()])
-            all_dependents_have_skyrim_esm_as_master = True
-            for plugin_without_skyrim_esm_as_master, master_0 in qualification_checker.missing_skyrim_esm_as_master.items():
-                if plugin_without_skyrim_esm_as_master in dependents and basename == master_0:
-                    all_dependents_have_skyrim_esm_as_master = False
+            all_dependents_have_game_esm_as_master = True
+            for plugin_without_game_esm_as_master, master_0 in qualification_checker.missing_game_esm_as_master.items():
+                if plugin_without_game_esm_as_master in dependents and basename == master_0:
+                    all_dependents_have_game_esm_as_master = False
                     break
         else:
-            all_dependents_have_skyrim_esm_as_master = True
+            all_dependents_have_game_esm_as_master = True
 
-        if master_count == 0 or not has_skyrim_esm_master or not all_dependents_have_skyrim_esm_as_master:
+        if master_count == 0 or not has_game_esm_master or not all_dependents_have_game_esm_as_master:
             num_max_records = 2048
         else:
             num_max_records = qualification_checker.num_max_records
@@ -150,7 +155,7 @@ class qualification_checker():
             if record_type not in (b'GRUP', b'TES4') and form[15] >= master_count:
                 count += 1
                 if count > num_max_records:
-                    return False, False, False, False, False, False, not all_dependents_have_skyrim_esm_as_master and update_header
+                    return False, False, False, False, False, False, not all_dependents_have_game_esm_as_master and update_header
                 if int.from_bytes(form[12:15][::-1]) > qualification_checker.max_record_number:
                     need_compacting = True
                 if record_type == b'CELL':
@@ -201,11 +206,11 @@ class qualification_checker():
         #            f.write(edid + '\n')
         cell_form_ids.sort()
         if cell_form_ids != [] and is_esm:
-            cell_form_id_file = 'ESLifier_Data/Cell_IDs/' + basename + '_CellFormIDs.txt'
+            cell_form_id_file = CELL_IDS_FOLDER + basename + '_CellFormIDs.txt'
             with open(cell_form_id_file, 'w', encoding='utf-8') as f:
                 for form_id in cell_form_ids:
                     f.write(form_id + '\n')
-        return True, need_compacting, new_cell, interior_cell_flag, new_wrld, new_wthr, not all_dependents_have_skyrim_esm_as_master and update_header
+        return True, need_compacting, new_cell, interior_cell_flag, new_wrld, new_wthr, not all_dependents_have_game_esm_as_master and update_header
 
     def already_esl(file: str) -> tuple[bool, bool]:
         with open(file, 'rb') as f:
@@ -236,15 +241,16 @@ class qualification_checker():
         offset = 24
         data_len = len(tes4)
         master_count = 0
-        has_skyrim_esm_master = False
+        has_game_esm_master = False
+        game_esm = GAME_ESM_NAME.encode()
         while offset < data_len:
             field = tes4[offset:offset+4]
             field_size = struct.unpack("<H", tes4[offset+4:offset+6])[0]
             if field == b'MAST':
                 master_count += 1
                 if field_size == 11:
-                    if tes4[offset+6:offset+16] == b'Skyrim.esm':
-                        has_skyrim_esm_master = True
+                    if tes4[offset+6:offset+16] == game_esm:
+                        has_game_esm_master = True
             offset += field_size + 6
 
-        return master_count, has_skyrim_esm_master
+        return master_count, has_game_esm_master

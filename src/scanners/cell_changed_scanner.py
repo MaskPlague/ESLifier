@@ -4,12 +4,13 @@ import threading
 import struct
 from log_stream import write_error
 from PyQt6.QtCore import QCoreApplication
+from data_holder import DEPENDENCY_DICTIONARY_JSON, CELL_CHANGED_JSON, CELL_IDS_FOLDER
 
 class cell_scanner():
     def scan(mods_with_new_cells: list[str]):
         cell_scanner.cell_changed_list = []
         cell_scanner.lock = threading.Lock()
-        cell_scanner.dependency_dict = cell_scanner.get_from_file('ESLifier_Data/dependency_dictionary.json')
+        cell_scanner.dependency_dict = cell_scanner.get_from_file(DEPENDENCY_DICTIONARY_JSON)
         threads = []
         for mod in mods_with_new_cells:
             thread = threading.Thread(target=cell_scanner.check_if_dependents_modify_new_cells, args=(mod,))
@@ -19,7 +20,7 @@ class cell_scanner():
         for thread in threads:
             thread.join()
 
-        cell_scanner.dump_to_file('ESLifier_Data/cell_changed.json')
+        cell_scanner.dump_to_file(CELL_CHANGED_JSON)
 
     def scan_new_dependents(mods: list[str], dependency_dict: dict):
         cell_scanner.dependency_dict = {}
@@ -30,10 +31,10 @@ class cell_scanner():
             if mod in cell_scanner.dependency_dict:
                 cell_scanner.check_if_dependents_modify_new_cells(mod)
 
-        cell_scanner.dump_to_file('ESLifier_Data/cell_changed.json')
+        cell_scanner.dump_to_file(CELL_CHANGED_JSON)
 
     def check_if_dependents_modify_new_cells(mod: str):
-        cell_form_id_file = 'ESLifier_Data/Cell_IDs/' + os.path.basename(mod) + '_CellFormIDs.txt'
+        cell_form_id_file = CELL_IDS_FOLDER + os.path.basename(mod) + '_CellFormIDs.txt'
         if not os.path.exists(cell_form_id_file) or not os.path.basename(mod).lower() in cell_scanner.dependency_dict:
             return
         with open(cell_form_id_file, 'r', encoding='utf-8') as f:

@@ -10,10 +10,15 @@ import struct
 import platform
 import pefile
 
-from data_holder import _global
-from scanner_mo2 import MO2
-from scanner_none import NoManager
-from scanner_vortex import Vortex
+from data_holder import (_global, GAME_MODE, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ESM_NAME, MO2_GAME_NAME, SHORT_GAME_NAME,
+                         CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
+                         EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
+                         MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
+                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, DEPENDENCY_DICTIONARY_JSON,
+                         MAXED_MASTERS_JSON, BLACKLIST_JSON, CELL_CHANGED_JSON, DLL_DICT_JSON, IGNORED_FILES_JSON, ESLIFIER_DATA_FOLDER)
+from scanners.scanner_mo2 import MO2
+from scanners.scanner_none import NoManager
+from scanners.scanner_vortex import Vortex
 
 if platform.system() == 'Windows':
     from win32 import win32file
@@ -22,17 +27,22 @@ if platform.system() == 'Windows':
 else:
     WINDOWS = False
 
-from plugin_qualification_checker import qualification_checker
-from dependency_getter import dependecy_getter
+from scanners.plugin_qualification_checker import qualification_checker
+from scanners.dependency_getter import dependecy_getter
 from log_stream import write_error, write_normal, write_progress, write_remove, write_to_file, write_warning
 
 from PyQt6.QtCore import QCoreApplication
 
 class scanner():    
     def scan(full_scan: bool) -> tuple[dict, dict] | None:
-        scanner.bsa_blacklist = set(['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
-                    'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
-                    'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa'])
+        if GAME_MODE == "SSE":
+            scanner.game_archive_blacklist = set(['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
+                        'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
+                        'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa'])
+        elif GAME_MODE == "FO4": #TODO: This
+            scanner.game_archive_blacklist = set(['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
+                                    'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
+                                    'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa'])
         start_time = timeit.default_timer()
         scanner.mod_manager_mode: int = _global.mod_manager_mode
         scanner.output_file_name = _global.output_folder_name
@@ -55,12 +65,12 @@ class scanner():
         scanner.pex_files: list[str] = []
         scanner.dll_files: list[str] = []
         scanner.lock = threading.Lock()
-        if not os.path.exists("ESLifier_Data/ignored_files.json"):
-            with open("ESLifier_data/ignored_files.json", "w+", encoding="utf-8") as f:
+        if not os.path.exists(IGNORED_FILES_JSON):
+            with open(IGNORED_FILES_JSON, "w+", encoding="utf-8") as f:
                 json.dump([], f, ensure_ascii=False, indent=3)
-        master_ignored_file_data = scanner.get_from_file("ESLifier_Data/master_ignored_files.json", dict)
+        master_ignored_file_data = scanner.get_from_file(ESLIFIER_DATA_FOLDER + "master_ignored_files.json", dict)
         master_ignored_files = [item.lower() for item in master_ignored_file_data.get("ignored_files", [])]
-        user_ignored_files = [item.lower() for item in scanner.get_from_file("ESLifier_Data/ignored_files.json", list)]
+        user_ignored_files = [item.lower() for item in scanner.get_from_file(IGNORED_FILES_JSON, list)]
         master_ignored_files.extend(user_ignored_files)
 
         scanner.ignored_files = set(master_ignored_files)
@@ -107,7 +117,7 @@ class scanner():
         thread_memory_usage = 2.5 * (1024**3)
         scanner.bsa_threads_by_ram = max(1, int(usable_ram / thread_memory_usage) * 7)
 
-        scanner.extracted: set[str] = set(scanner.get_from_file('ESLifier_Data/extracted_bsa.json', list))
+        scanner.extracted: set[str] = set(scanner.get_from_file(EXTRACTED_GAME_ARCHIVE_JSON, list))
         
         if scanner.mod_manager_mode == 2: # MO2
             MO2.scanner = scanner
@@ -126,13 +136,13 @@ class scanner():
         else: #Manually modding?
             NoManager.scanner = scanner
             plugins_list = scanner.get_plugins_list(_global.plugins_txt_path)
-            NoManager.get_files_from_skyrim_folder(_global.skyrim_folder_path, plugins_list)
+            NoManager.get_files_from_game_folder(_global.game_folder_path, plugins_list)
 
         scanner.plugin_basename_set: set[str] = set([os.path.basename(plugin).lower() for plugin in _global.plugins])
         scanner.max_plugin_len = max((len(p) for p in scanner.plugin_basename_set), default=0)
 
-        scanner.dump_to_file(file="ESLifier_Data/extracted_bsa.json", data=scanner.extracted)
-        scanner.dump_to_file(file="ESLifier_Data/winning_files_dict.json", data=scanner.winning_files_dict)
+        scanner.dump_to_file(file=EXTRACTED_GAME_ARCHIVE_JSON, data=scanner.extracted)
+        scanner.dump_to_file(file=WINNING_FILES_DICT_JSON, data=scanner.winning_files_dict)
 
         write_remove(1, "-  " + QCoreApplication.translate("scanner", "Gathered %0 total files.").replace("%0", str(len(scanner.all_files))), True)
         if full_scan:
@@ -143,11 +153,10 @@ class scanner():
 
         scanner.get_file_masters()
 
-        _global.bsa_dict = scanner.sort_bsa_files(scanner.bsa_dict, plugins_list)
+        _global.game_archive_dict = scanner.sort_bsa_files(scanner.bsa_dict, plugins_list)
 
-        scanner.dump_to_file(file="ESLifier_Data/file_masters.json", data=scanner.file_dict)
-        #scanner.dump_to_file(file="ESLifier_Data/bsa_dict.json", data=bsa_dict)
-        scanner.dump_to_file(file="ESLifier_Data/dll_dict.json", data=scanner.dll_dict)
+        scanner.dump_to_file(file=FILE_MASTERS_JSON, data=scanner.file_dict)
+        scanner.dump_to_file(file=DLL_DICT_JSON, data=scanner.dll_dict)
 
         end_time = timeit.default_timer()
         time_taken = end_time - start_time
@@ -186,7 +195,7 @@ class scanner():
                         last = timeit.default_timer()
                         write_remove(1, extracting_str + line)
 
-    def extract_scripts_and_seq_from_bsa(bsa_list, plugins_list):
+    def extract_scripts_and_seq_from_game_archive(bsa_list, plugins_list):
         order_map = {plugin: index for index, plugin in enumerate(plugins_list)}
         filtered_bsa_list = [item for item in bsa_list if item[0] in order_map]
         filtered_bsa_list.sort(key=lambda x: order_map.get(x[0], float('inf')))

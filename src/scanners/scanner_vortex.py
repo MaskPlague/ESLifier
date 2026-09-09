@@ -1,18 +1,17 @@
-
 from log_stream import write_error, write_normal, write_progress, write_remove, write_to_file, write_warning
 from PyQt6.QtCore import QCoreApplication
 import os
 import re
 import fnmatch
-from vortex_database_reader import VortexDBParser
-from vortex_database_reader import ReadState
+from scanners.vortex_database_reader import VortexDBParser
+from scanners.vortex_database_reader import ReadState
 from collections import deque, defaultdict
-from data_holder import _global
+from data_holder import _global, VORTEX_GAME_NAME, SHORT_GAME_NAME
 from typing import TYPE_CHECKING
 from enum import Enum
 
 if TYPE_CHECKING:
-    from scanner import scanner 
+    from scanners.scanner import scanner 
 
 class VortexErrors(Enum):
     HAS_CYCLES = 0
@@ -246,18 +245,18 @@ class Vortex():
 
         return file_resolution
 
-    def get_last_used_skyrim_profile():
+    def get_last_used_game_profile():
         profile_data = VortexDBParser.get_section("settings###profiles###")
-        return profile_data.get('lastActiveProfile',{}).get("skyrimse", None)
+        return profile_data.get('lastActiveProfile',{}).get(VORTEX_GAME_NAME, None)
 
     def get_plugins_list(profile_id) -> list[str]:
-        return Vortex.scanner.get_plugins_list(os.path.join(_global.vortex_data_path, "skyrimse", "profiles", profile_id, "plugins.txt"))
+        return Vortex.scanner.get_plugins_list(os.path.join(_global.vortex_data_path, VORTEX_GAME_NAME, "profiles", profile_id, "plugins.txt"))
 
     def get_folders():
-        mod_staging_folder = VortexDBParser.get_key_value("settings###mods###installPath###skyrimse###")
+        mod_staging_folder = VortexDBParser.get_key_value(f"settings###mods###installPath###{VORTEX_GAME_NAME}###")
         if mod_staging_folder != None and mod_staging_folder != '':
             msf_cleaned = mod_staging_folder.removeprefix('"').removesuffix('"')
-            replacements = {"{game}": "skyrimse",
+            replacements = {"{game}": VORTEX_GAME_NAME,
                             "{userdata}": _global.vortex_data_path}
             for tag, new_val in replacements.items():
                 tag_len = len(tag)
@@ -269,8 +268,8 @@ class Vortex():
             mod_staging_folder:str = os.path.normpath(msf_cleaned)
         
         if mod_staging_folder == None or mod_staging_folder == '' or mod_staging_folder == '.':
-            write_to_file(f"No mod staging folder stored in Vortex, assuming default at {_global.vortex_data_path}/skyrimse/mods/")
-            mod_staging_folder = os.path.normpath(os.path.join(_global.vortex_data_path,"skyrimse/mods/"))
+            write_to_file(f"No mod staging folder stored in Vortex, assuming default at {_global.vortex_data_path}/{VORTEX_GAME_NAME}/mods/")
+            mod_staging_folder = os.path.normpath(os.path.join(_global.vortex_data_path,VORTEX_GAME_NAME,"/mods/"))
         
         if not os.path.exists(mod_staging_folder):
             write_to_file("Couldn't get an actual mod staging folder. Aborting.")
@@ -289,35 +288,35 @@ class Vortex():
             return False
         _global.mod_staging_folder = mod_staging_folder
 
-        gamedata:dict = VortexDBParser.get_section("settings###gameMode###discovered###skyrimse")
-        skyrim_base_path = gamedata.get('path', None)
-        if not skyrim_base_path:
-            write_to_file("Failed to get skyrim's base path from settings > gameMode > discovered > skyrimse > path >")
+        gamedata:dict = VortexDBParser.get_section(f"settings###gameMode###discovered###{VORTEX_GAME_NAME}")
+        game_base_path = gamedata.get('path', None)
+        if not game_base_path:
+            write_to_file(f"Failed to get {SHORT_GAME_NAME}'s base path from settings > gameMode > discovered > {VORTEX_GAME_NAME} > path >")
             _global.vortex_error = VortexErrors.NO_BASE_PATH
             return False
-        skyrim_folder_path = os.path.normpath(os.path.join(skyrim_base_path, "Data"))
-        if not os.path.exists(skyrim_folder_path):
-            write_to_file(f"Skyrim Data folder path does not exist at {skyrim_folder_path}")
+        game_folder_path = os.path.normpath(os.path.join(game_base_path, "Data"))
+        if not os.path.exists(game_folder_path):
+            write_to_file(f"{SHORT_GAME_NAME} Data folder path does not exist at {game_folder_path}")
             _global.vortex_error = VortexErrors.NO_BASE_PATH
             return False
-        _global.skyrim_folder_path = skyrim_folder_path
+        _global.game_folder_path = game_folder_path
         _global.update_vortex_vars()
         return True
 
     def get_winning_file_conflicts():
-        profile_id = Vortex.get_last_used_skyrim_profile()
+        profile_id = Vortex.get_last_used_game_profile()
         if profile_id == None:
-            write_to_file("No last used skyrimse profile. Aborting.")
+            write_to_file(f"No last used {VORTEX_GAME_NAME} profile. Aborting.")
             _global.vortex_error = VortexErrors.NO_LAST_SSE_PROFILE
             return [], [], []
 
         plugins_list: list[str] = Vortex.get_plugins_list(profile_id)
 
-        installed_mods: dict[str, dict] = VortexDBParser.get_section("persistent###mods###skyrimse###") or {}
+        installed_mods: dict[str, dict] = VortexDBParser.get_section(f"persistent###mods###{VORTEX_GAME_NAME}###") or {}
         ordered_mod_ids, installed_mods = Vortex.get_load_order(profile_id, installed_mods)
         
         mod_staging_folder = _global.mod_staging_folder
-        skyrim_folder_path = _global.skyrim_folder_path
+        game_folder_path = _global.game_folder_path
 
         mod_files:dict[str, list[str]] = {}
         cases: dict[str, str] = {}
@@ -331,7 +330,7 @@ class Vortex():
         gathered_str = '-  ' + QCoreApplication.translate("scanner", "Gathered: ")
         write_normal(gathered_str, False)
         mod_folder_level = len(mod_staging_folder.split(os.sep)) + 1
-        skyrim_data_level = len(skyrim_folder_path.split(os.sep))
+        game_data_level = len(game_folder_path.split(os.sep))
         for mod_folder in os.listdir(mod_staging_folder):
             mod_path = os.path.join(mod_staging_folder, mod_folder)
             if os.path.isdir(mod_path) and mod_folder in ordered_mod_ids:
@@ -364,7 +363,7 @@ class Vortex():
                             mod_files[relative_path].append(mod_folder)
                             if is_mod_root_level and file_lower.endswith(plugin_extensions):
                                 plugin_names.add(file)
-                            elif is_mod_root_level and file_lower.endswith('.bsa') and file_lower not in Vortex.scanner.bsa_blacklist:
+                            elif is_mod_root_level and file_lower.endswith('.bsa') and file_lower not in Vortex.scanner.game_archive_blacklist:
                                 bsa_file = file[:-4]
                                 if ' - textures' in file_lower:
                                     index = bsa_file.lower().index(' - textures')
@@ -374,9 +373,9 @@ class Vortex():
                                     bsa_file_name_dict[file_lower] = bsa_file.lower()
                                 bsa_dict_temp[file_lower].append(mod_folder)
 
-        #Get files from Skyrim's Data folder
-        if os.path.exists(skyrim_folder_path):
-            for root, dirs, files in os.walk(skyrim_folder_path):
+        #Get files from game's Data folder
+        if os.path.exists(game_folder_path):
+            for root, dirs, files in os.walk(game_folder_path):
                 file_count += len(files)
                 root_level = len(root.split(os.sep))
                 if loop == 50: #prevent spamming stdout and slowing down the program
@@ -389,11 +388,11 @@ class Vortex():
                         file_lower = file.lower()
                         if file_lower in Vortex.scanner.ignored_files:
                             continue
-                        is_file_root_level = root_level == skyrim_data_level
+                        is_file_root_level = root_level == game_data_level
                         if is_file_root_level and (file_lower == "collection.json" or file_lower == "meta.ini"):
                             continue
                         full_path = os.path.join(root, file)
-                        cased = os.path.relpath(full_path, skyrim_folder_path)
+                        cased = os.path.relpath(full_path, game_folder_path)
                         relative_path = cased.lower()
                         if relative_path not in mod_files:
                             mod_files[relative_path] = []
@@ -402,7 +401,7 @@ class Vortex():
                         if is_file_root_level and file_lower.endswith(plugin_extensions):
                             if file not in plugin_names:
                                 plugin_names.add(file)
-                        elif is_file_root_level and file_lower.endswith('.bsa') and file_lower not in Vortex.scanner.bsa_blacklist:
+                        elif is_file_root_level and file_lower.endswith('.bsa') and file_lower not in Vortex.scanner.game_archive_blacklist:
                             bsa_file = file[:-4]
                             bsa_lower = bsa_file.lower()
                             if ' - textures' in bsa_lower:
@@ -424,19 +423,19 @@ class Vortex():
             if len(providing_mods) == 1:
                 mod = providing_mods[0]
                 if mod == 'data_folder_file_eslifier_scan':
-                    file_path = os.path.join(skyrim_folder_path, relative_path)
+                    file_path = os.path.join(game_folder_path, relative_path)
                 else:
                     file_path = os.path.join(mod_staging_folder, mod, relative_path)
                 bsa_list.append([bsa_file_name_dict[relative_path], file_path])
             else:
                 if providing_mods[-1] == 'data_folder_file_eslifier_scan':
-                    file_path = os.path.join(skyrim_folder_path, relative_path)
+                    file_path = os.path.join(game_folder_path, relative_path)
                 else:
                     file_path = os.path.join(mod_staging_folder, providing_mods[-1], relative_path)
                 bsa_list.append([bsa_file_name_dict[relative_path], file_path])
         #bsa_list = [[bsa_file, full_path] for bsa_file, full_path in bsa_dict_temp.values()]
 
-        Vortex.scanner.extract_scripts_and_seq_from_bsa(bsa_list, plugins_list)
+        Vortex.scanner.extract_scripts_and_seq_from_game_archive(bsa_list, plugins_list)
         cwd = os.getcwd()
         mod_folder = os.path.join(cwd, 'bsa_extracted/')
         #Get files that were extracted from BSA
@@ -482,7 +481,7 @@ class Vortex():
                 if mod == 'bsa_extracted_eslifier_scan':
                     file_path = os.path.join(cwd, 'bsa_extracted', cases[relative_path])
                 elif mod == 'data_folder_file_eslifier_scan':
-                    file_path = os.path.join(skyrim_folder_path, cases[relative_path])
+                    file_path = os.path.join(game_folder_path, cases[relative_path])
                     data_folder_file = True
                 else:
                     file_path = os.path.join(mod_staging_folder, mod, cases[relative_path])
@@ -495,7 +494,7 @@ class Vortex():
                 if providing_mods[-1] == 'bsa_extracted_eslifier_scan':
                     file_path = os.path.join(cwd, 'bsa_extracted', cases[relative_path])
                 elif providing_mods[-1] == 'data_folder_file_eslifier_scan':
-                    file_path = os.path.join(skyrim_folder_path, cases[relative_path])
+                    file_path = os.path.join(game_folder_path, cases[relative_path])
                     data_folder_file = True
                 else:
                     file_path = os.path.join(mod_staging_folder, providing_mods[-1], cases[relative_path])
@@ -513,7 +512,7 @@ class Vortex():
         for file, data_folder_file in winning_files:
             file_level = len(file.split(os.sep))
             if data_folder_file:
-                level = skyrim_data_level
+                level = game_data_level
             else:
                 level = mod_folder_level
             if file_level == level + 1 and file.lower().endswith(plugin_extensions) and not file.endswith("ESLifier_Cell_Master.esm"):

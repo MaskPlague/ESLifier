@@ -4,11 +4,11 @@ import os
 from typing import TYPE_CHECKING
 from data_holder import _global
 if TYPE_CHECKING:
-    from scanner import scanner 
+    from scanners.scanner import scanner 
 
 class NoManager():
     scanner: scanner = None
-    def get_files_from_skyrim_folder(path: str, plugins_list: list):
+    def get_files_from_game_folder(path: str, plugins_list: list):
         if not os.path.exists('bsa_extracted/'):
             os.makedirs('bsa_extracted/')
         path = os.path.normpath(path)
@@ -37,14 +37,14 @@ class NoManager():
                 temp_rel_paths.add(rel_path)
                 if path_level == root_level and file_lower.endswith(plugin_extensions):
                     _global.plugins.append(full_path)
-                elif path_level == root_level and file_lower.endswith('.bsa') and file_lower not in NoManager.scanner.bsa_blacklist:
+                elif path_level == root_level and file_lower.endswith('.bsa') and file_lower not in NoManager.scanner.game_archive_blacklist:
                     file = file[:-4]
                     if ' - textures' in file_lower:
                         index = file_lower.index(' - textures')
                         file = file[:index]
                     bsa_list.append([file.lower(), full_path])
 
-        NoManager.scanner.extract_scripts_and_seq_from_bsa(bsa_list, plugins_list)
+        NoManager.scanner.extract_scripts_and_seq_from_game_archive(bsa_list, plugins_list)
         
         cwd = os.getcwd()
         mod_folder = os.path.join(cwd, 'bsa_extracted/')

@@ -13,18 +13,19 @@ from PyQt6.QtGui import QIcon, QCursor
 
 from list_eslify import list_eslable
 from list_compact import list_compactable
-from scanner import scanner
+from scanners.scanner import scanner
 from compact_form_ids import CFIDs
-from cell_changed_scanner import cell_scanner
+from scanners.cell_changed_scanner import cell_scanner
 from create_cell_master import create_new_cell_plugin
 from patch_new import patch_new
 from data_holder import _global
 from vortex_database_reader import VortexDBParser
+from scanners.vortex_database_reader import VortexDBParser
 from log_stream import log_stream, write_error, write_normal, write_patching, write_progress, write_remove, write_to_file, clear_and_close_log, clear_and_leave_log_open
 from file_defined_patcher_conditions import user_and_master_conditions_class
-from vortex_database_reader import ReadState
-from scanner_vortex import VortexErrors
-from scanner_mo2 import MO2Errors
+from scanners.vortex_database_reader import ReadState
+from scanners.scanner_vortex import VortexErrors
+from scanners.scanner_mo2 import MO2Errors
 
 import platform
 import psutil
