@@ -1,5 +1,5 @@
 {
-    "version": 18,
+    "version": 19,
     "ignored_files": [
         "BFCO_FX_CheckPreAttackIsOK.pex",
         "BFCO_FX_PlayIdleListKeyE.pex",
@@ -32,6 +32,7 @@
         "Plugins/Tullius Ctd Logs/",
         "interface/Console_Cheatsheet/",
         "interface/PartySheet/Spells/",
-        "Plugins/LoadTimeProfiler/LTP_summary_"
+        "Plugins/LoadTimeProfiler/LTP_summary_",
+        "Plugins/MCMMemory/Profiles/"
     ]
 }
