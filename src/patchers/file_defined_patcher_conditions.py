@@ -7,7 +7,7 @@ if GAME_MODE == "SSE":
 elif GAME_MODE == "FO4":
     from patchers.fo4_file_patchers import patchers
 else:
-    raise ValueError(f"GAME_MODE: {GAME_MODE} has no patcher_conditions import set.")
+    raise ValueError(f"GAME_MODE: {GAME_MODE} has no patchers import set.")
 from log_stream import write_error
 from PyQt6.QtCore import QCoreApplication
 
