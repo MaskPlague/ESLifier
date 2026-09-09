@@ -15,7 +15,8 @@ from data_holder import (_global, GAME_MODE, VERBOSE_GAME_NAME, VORTEX_GAME_NAME
                          EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
                          MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
                          WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, DEPENDENCY_DICTIONARY_JSON,
-                         MAXED_MASTERS_JSON, BLACKLIST_JSON, CELL_CHANGED_JSON, DLL_DICT_JSON, IGNORED_FILES_JSON, ESLIFIER_DATA_FOLDER)
+                         MAXED_MASTERS_JSON, BLACKLIST_JSON, CELL_CHANGED_JSON, DLL_DICT_JSON, IGNORED_FILES_JSON, ESLIFIER_DATA_FOLDER,
+                         ARCHIVE_EXTRACTED_FOLDER, GAME_ARCHIVE_EXTENSION, GAME_ARCHIVE_TYPE)
 from scanners.scanner_mo2 import MO2
 from scanners.scanner_none import NoManager
 from scanners.scanner_vortex import Vortex
@@ -49,16 +50,16 @@ class scanner():
         scanner.all_patcher_experimental: bool = _global.all_patcher_experimental
         if scanner.all_patcher_experimental:
             write_to_file("Experimental all patcher mode enabled.")
-        if not os.path.exists('bsa_extracted'):
-            os.makedirs('bsa_extracted')
+        if not os.path.exists(ARCHIVE_EXTRACTED_FOLDER):
+            os.makedirs(ARCHIVE_EXTRACTED_FOLDER)
         scanner.file_count: int = 0
         scanner.all_files: list[str] = []
         _global.plugins.clear()
         _global.mods_with_seq.clear()
         scanner.file_dict: dict[str, set[str]] = {}
-        scanner.bsa_dict: dict[str, list[str]] = {}
+        scanner.archive_dict: dict[str, list[str]] = {}
         scanner.dll_dict: dict[str, list[str]] = {}
-        scanner.bsa_files: list[str] = []
+        scanner.archive_files: list[str] = []
         scanner.winning_files_dict: dict[str, list[str]] = {}
         scanner.threads: list[threading.Thread] = []
         scanner.seq_files: list[str] = []
@@ -115,7 +116,7 @@ class scanner():
 
         scanner.file_semaphore = threading.Semaphore(scanner.max_threads_by_ram)
         thread_memory_usage = 2.5 * (1024**3)
-        scanner.bsa_threads_by_ram = max(1, int(usable_ram / thread_memory_usage) * 7)
+        scanner.archive_threads_by_ram = max(1, int(usable_ram / thread_memory_usage) * 7)
 
         scanner.extracted: set[str] = set(scanner.get_from_file(EXTRACTED_GAME_ARCHIVE_JSON, list))
         
@@ -153,7 +154,7 @@ class scanner():
 
         scanner.get_file_masters()
 
-        _global.game_archive_dict = scanner.sort_bsa_files(scanner.bsa_dict, plugins_list)
+        _global.game_archive_dict = scanner.sort_archive_files(scanner.archive_dict, plugins_list)
 
         scanner.dump_to_file(file=FILE_MASTERS_JSON, data=scanner.file_dict)
         scanner.dump_to_file(file=DLL_DICT_JSON, data=scanner.dll_dict)
@@ -164,24 +165,24 @@ class scanner():
         if full_scan:
             return flag_dict, dependency_dictionary
     
-    def sort_bsa_files(bsa_dict: dict, plugins: list) -> dict:
-        def get_base_name(bsa_path: str) -> str:
-            bsa_name = bsa_path.rsplit('\\', 1)[-1].rsplit('/', 1)[-1]
-            bsa_name = bsa_name.lower().removesuffix('.bsa')
-            bsa_name = re.sub(r' - textures\d*$', '', bsa_name)
-            return bsa_name
+    def sort_archive_files(archive_dict: dict, plugins: list) -> dict:
+        def get_base_name(archive_path: str) -> str:
+            archive_name = archive_path.rsplit('\\', 1)[-1].rsplit('/', 1)[-1]
+            archive_name = archive_name.lower().removesuffix(GAME_ARCHIVE_EXTENSION)
+            archive_name = re.sub(r' - textures\d*$', '', archive_name)
+            return archive_name
         
         plugin_index = {plugin: idx for idx, plugin in enumerate(plugins)}
-        filtered_bsa_items = {k: v for k, v in bsa_dict.items() if get_base_name(k) in plugin_index}
-        sorted_bsa_items = sorted(filtered_bsa_items.items(),key=lambda item: plugin_index.get(get_base_name(item[0]), float('inf')))
+        filtered_archive_items = {k: v for k, v in archive_dict.items() if get_base_name(k) in plugin_index}
+        sorted_archive_items = sorted(filtered_archive_items.items(),key=lambda item: plugin_index.get(get_base_name(item[0]), float('inf')))
         
-        return dict(sorted_bsa_items)
+        return dict(sorted_archive_items)
 
-    def extract_bsa(file: str, startupinfo: subprocess.STARTUPINFO, update_time: float, filter: str):
+    def extract_archive(file: str, startupinfo: subprocess.STARTUPINFO, update_time: float, filter: str):
         last = 0
         extracting_str = "-  " + QCoreApplication.translate("scanner", "Extracting: ")
         with subprocess.Popen(
-            ["bsarch/bsarch.exe", "unpack", file, "bsa_extracted", filter],
+            ["bsarch/bsarch.exe", "unpack", file, ARCHIVE_EXTRACTED_FOLDER, filter],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             startupinfo=startupinfo,
@@ -195,28 +196,29 @@ class scanner():
                         last = timeit.default_timer()
                         write_remove(1, extracting_str + line)
 
-    def extract_scripts_and_seq_from_game_archive(bsa_list, plugins_list):
+    def extract_scripts_and_seq_from_game_archive(archive_list, plugins_list):
         order_map = {plugin: index for index, plugin in enumerate(plugins_list)}
-        filtered_bsa_list = [item for item in bsa_list if item[0] in order_map]
-        filtered_bsa_list.sort(key=lambda x: order_map.get(x[0], float('inf')))
-        scanner.bsa_files = [file for _, file in filtered_bsa_list]
-        bsa_length = len(filtered_bsa_list)
+        filtered_archive_list = [item for item in archive_list if item[0] in order_map]
+        filtered_archive_list.sort(key=lambda x: order_map.get(x[0], float('inf')))
+        scanner.archive_files = [file for _, file in filtered_archive_list]
+        archive_length = len(filtered_archive_list)
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         update_time = 0.1
-        extracting_str = QCoreApplication.translate("scanner", "Extracting %0/%1 BSA files (%2)").replace("%0", "{0}").replace("%1", "{1}").replace("%2", "{2}")
-        #Extract Files from BSA
-        for i, tup in enumerate(filtered_bsa_list):
+        extracting_str = (QCoreApplication.translate("scanner", "Extracting %0/%1 %2 files (%3)")
+                          .replace("%0", "{0}").replace("%1", "{1}").replace("%2", GAME_ARCHIVE_TYPE).replace("%3", "{2}"))
+        #Extract Files from archive
+        for i, tup in enumerate(filtered_archive_list):
             file = tup[1]
             if file not in scanner.extracted:
-                write_remove(1, extracting_str.format(i+1, bsa_length, os.path.basename(file)), True)
+                write_remove(1, extracting_str.format(i+1, archive_length, os.path.basename(file)), True)
                 write_normal("",False)
                 try:
-                    scanner.extract_bsa(file, startupinfo, update_time, ".pex")
-                    scanner.extract_bsa(file, startupinfo, update_time, ".seq")
+                    scanner.extract_archive(file, startupinfo, update_time, ".pex")
+                    scanner.extract_archive(file, startupinfo, update_time, ".seq")
                     scanner.extracted.add(file)
                 except Exception as e:
-                    write_error(QCoreApplication.translate("scanner", "Error Reading BSA: ") + file)
+                    write_error(QCoreApplication.translate("scanner", "Error Reading archive: ") + file)
                     write_error(e, True)
                 write_remove(2, "")
     
@@ -326,28 +328,32 @@ class scanner():
         write_normal("-  " + QCoreApplication.translate("scanner", "Sorting .seq files"))
         scanner.seq_plugin_extension_processor(scanner.seq_files)
 
-        write_normal("-  " + QCoreApplication.translate("scanner", "Scanning .bsa files"))
+        write_normal("-  " + QCoreApplication.translate("scanner", "Scanning %0 files").replace("%0", GAME_ARCHIVE_EXTENSION))
 
-        if len(scanner.bsa_files) > 100:
-            split = scanner.bsa_threads_by_ram
-        elif len(scanner.bsa_files) > 10:
+        if len(scanner.archive_files) > 100:
+            split = scanner.archive_threads_by_ram
+        elif len(scanner.archive_files) > 10:
             split = 10
         else:
             split = 1
-        chunk_size = len(scanner.bsa_files) // split
-        chunks = [scanner.bsa_files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
-        chunks.append(scanner.bsa_files[(split) * chunk_size:])
+        chunk_size = len(scanner.archive_files) // split
+        chunks = [scanner.archive_files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
+        chunks.append(scanner.archive_files[(split) * chunk_size:])
         for chunk in chunks:
-            thread = threading.Thread(target=scanner.bsa_processor, args=(chunk,))
+            thread = threading.Thread(target=scanner.archive_processor, args=(chunk,))
             scanner.threads.append(thread)
             thread.start()
         
         for thread in scanner.threads: thread.join()
         scanner.threads.clear()
         
-    def bsa_processor(files):
-        for file in files:
-            scanner.bsa_reader(file)
+    def archive_processor(files):
+        if GAME_MODE == "SSE":
+            for file in files:
+                scanner.bsa_reader(file)
+        elif GAME_MODE == "FO4":
+            for file in files:
+                scanner.ba2_reader(file)
 
     def pex_processor(pattern2, files):
         processed_string = ('-  ' + QCoreApplication.translate("scanner", "Processed: %0 %") +
@@ -412,7 +418,7 @@ class scanner():
             elif (scanner.all_patcher_experimental 
                   and not file_lower.endswith(
                       ('.psc', '.tri', '.nif', '.dds', '.osd', '.osp', '.hkx', '.pdb', '.dll', '.esp', '.esl', '.esm',
-                       '.swf', '.wav', '.ttf', '.bin', '.bsa', '.exe', '.modgroups', '.jpg', '.png', '.lua', '.refcache',
+                       '.swf', '.wav', '.ttf', '.bin', '.bsa', '.ba2', '.exe', '.modgroups', '.jpg', '.png', '.lua', '.refcache',
                        '.fla', '.bsl', '.html', '.bak', '.psd', '.log', '.cdf'))
                   and not (any(excl in file_lower for excl in ['dialogueviews', '\\calientetools\\bodyslide']))
                   and not (any(exclusion in file_lower for exclusion in scanner.exclude_contains) 
@@ -566,7 +572,7 @@ class scanner():
                     if gmbn:
                         scanner.check_if_modbyname_uses_plugin_names(data, plugins, file, offset, strings_lowered_bytes)
 
-                elif 'bsa_extracted\\' in file:
+                elif f'{ARCHIVE_EXTRACTED_FOLDER}\\' in file:
                     os.remove(file)
             elif reader_type == 'dll':
                 with scanner.file_semaphore:
@@ -642,7 +648,62 @@ class scanner():
 
             if plugins:
                 with scanner.lock:
-                    scanner.bsa_dict[bsa_file] = list(plugins)
+                    scanner.archive_dict[bsa_file] = list(plugins)
         except Exception as e:
             write_error(QCoreApplication.translate("scanner", "Error Reading BSA: ") + bsa_file)
+            write_error(e, True)
+
+    #TODO: redo this for ba2 format
+    def ba2_reader(ba2_file):
+        plugins = set()
+        pattern_1 = re.compile(rb'([^\\]+\.es[pml])')
+        try:
+            with scanner.file_semaphore:
+                with open(ba2_file, 'rb') as f:
+                    with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+                        if mm[:4] != b'BTDX': # Confirm .ba2 file is actually a ba2 and not something renamed
+                            mm.close()
+                            f.close()
+                            return
+                        folder_count = struct.unpack('<I', mm[16:20])[0]
+                        version = struct.unpack('<I', mm[4:8])[0]
+                        if version == 105:
+                            folder_record_size = 24
+                            file_record_offset = 16
+                        else:
+                            folder_record_size = 16
+                            file_record_offset = 12
+                        total_file_name_length = struct.unpack('<I', mm[28:32])[0]
+
+                        end_of_folder_records = (folder_count * folder_record_size) + 36
+                        offset = 36
+                        max_time = 5
+                        time = 0
+                        start_time = timeit.default_timer()
+                        if end_of_folder_records > len(mm) + 1:
+                            raise ValueError('Possibly Corrupt BA2')
+                        while offset < end_of_folder_records and time < max_time:
+                            location = int.from_bytes(mm[offset+file_record_offset:offset+file_record_offset+4][::-1]) - total_file_name_length
+                            folder_length = int.from_bytes(mm[location:location+1])
+                            folder_path = mm[location+1:location+folder_length].decode(errors='ignore')
+
+                            #TODO: consider splitting this if statement into multiple and using split('thing')[1].split(sep)[0]
+                            if ('facegeom\\' in folder_path or 'facetint\\' in folder_path or 'sound\\voice' in folder_path) and ('.esp' in folder_path or '.esl' in folder_path or '.esm' in folder_path):
+                                match = re.search(pattern_1, folder_path.encode())
+                                if match:
+                                    plugin = match.group(0).decode()
+                                    if plugin not in plugins:
+                                        plugins.add(plugin)
+                            time = timeit.default_timer() - start_time
+                            offset += folder_record_size
+                        if time > max_time:
+                            raise ValueError(f'Exceeded max processing time for {ba2_file}')
+                        mm.close()
+                    f.close()
+
+            if plugins:
+                with scanner.lock:
+                    scanner.archive_dict[ba2_file] = list(plugins)
+        except Exception as e:
+            write_error(QCoreApplication.translate("scanner", "Error Reading BA2: ") + ba2_file)
             write_error(e, True)

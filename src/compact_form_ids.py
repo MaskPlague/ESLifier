@@ -16,7 +16,8 @@ from data_holder import (_global, GAME_MODE, VERBOSE_GAME_NAME, VORTEX_GAME_NAME
                          CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
                          EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
                          MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
-                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON)
+                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, 
+                         ARCHIVE_EXTRACTED_FOLDER, ARCHIVE_EXTRACTED_TEMP_FOLDER, GAME_ARCHIVE_EXTENSION, GAME_ARCHIVE_TYPE)
 from log_stream import write_error, write_normal, write_progress, clear_and_leave_log_open, write_insert, write_to_file
 from PyQt6.QtCore import QCoreApplication
 if GAME_MODE == "SSE":
@@ -57,7 +58,7 @@ class CFIDs():
         self.bsa_masters = set(bsa_masters)
         self.bsa_dict = _global.game_archive_dict
         self.lock = threading.Lock()
-        #Semaphore prevents the Erno to many open files
+        #Semaphore prevents the Erno too many open files
         self.semaphore = threading.Semaphore(1000)
         self.additional_conditions = additional_file_patcher_conditions
         self.all_patcher_experimental: bool = _global.all_patcher_experimental
@@ -189,7 +190,7 @@ class CFIDs():
 
     def bsa_temp_extract(self, bsa_file: str, type: str, name:str, startupinfo: subprocess.STARTUPINFO):
         with subprocess.Popen(
-            ["bsarch/bsarch.exe", "unpack", bsa_file, "bsa_extracted_temp", type + name],
+            ["bsarch/bsarch.exe", "unpack", bsa_file, ARCHIVE_EXTRACTED_TEMP_FOLDER, type + name],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             startupinfo=startupinfo,
@@ -220,12 +221,14 @@ class CFIDs():
                 patch_or_rename = files_to_patch[os.path.basename(file_to_compact).lower()]
 
             if name in self.bsa_masters:
-                write_normal("-  "+ QCoreApplication.translate("CFIDs", "Temporarily Extracting FaceGen/Voice files from BSA for patching..."))
-                if not os.path.exists('bsa_extracted_temp/'):
-                    os.makedirs('bsa_extracted_temp/')
+                write_normal("-  "+ QCoreApplication.translate("CFIDs", 
+                                                               "Temporarily Extracting FaceGen/Voice files from %0 for patching...")
+                                                               .replace("%0", GAME_ARCHIVE_TYPE))
+                if not os.path.exists(f'{ARCHIVE_EXTRACTED_TEMP_FOLDER}/'):
+                    os.makedirs(f'{ARCHIVE_EXTRACTED_TEMP_FOLDER}/')
                 else:
-                    shutil.rmtree('bsa_extracted_temp/')
-                    os.makedirs('bsa_extracted_temp/')
+                    shutil.rmtree(f'{ARCHIVE_EXTRACTED_TEMP_FOLDER}/')
+                    os.makedirs(f'{ARCHIVE_EXTRACTED_TEMP_FOLDER}/')
 
                 startupinfo = subprocess.STARTUPINFO()
                 startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -251,11 +254,11 @@ class CFIDs():
                 for thread in temp_extraction_threads:
                     thread.join()
 
-                bsa_extracted_temp = os.path.normpath(os.path.join(_global.cwd, 'bsa_extracted_temp'))
-                for root, _, files in os.walk(bsa_extracted_temp):
+                archive_extracted_temp = os.path.normpath(os.path.join(_global.cwd, ARCHIVE_EXTRACTED_TEMP_FOLDER))
+                for root, _, files in os.walk(archive_extracted_temp):
                     for file in files:
                         full_path = os.path.normpath(os.path.join(root, file))
-                        rel_path = os.path.relpath(full_path, bsa_extracted_temp).lower()
+                        rel_path = os.path.relpath(full_path, archive_extracted_temp).lower()
                         if rel_path not in rel_paths and file.endswith(('.nif', '.dds', '.fuz', '.xwm', '.wav', '.lip')):
                             patch_or_rename.append(full_path)
                             rel_paths.add(rel_path)
@@ -271,9 +274,9 @@ class CFIDs():
                 if len(to_rename) > 20:
                     write_normal('',False)
                 self.rename_files_threader(file_to_compact, to_rename)
-        if os.path.exists('bsa_extracted_temp/'):
+        if os.path.exists(f'{ARCHIVE_EXTRACTED_TEMP_FOLDER}/'):
             write_normal("-  " + QCoreApplication.translate("CFIDs", "Deleting temporarily Extracted FaceGen/Voice Files..."))
-            shutil.rmtree('bsa_extracted_temp/')
+            shutil.rmtree(f'{ARCHIVE_EXTRACTED_TEMP_FOLDER}/')
         if dependent_thread is not None:
             dependent_thread.join()
         clear_and_leave_log_open()
@@ -333,7 +336,7 @@ class CFIDs():
                     shutil.copy(file, new_file)
         orig_file_data = self.original_files.get(end_path_lower)
         if ((orig_file_data is None or orig_file_data[0] != file) 
-            and 'bsa_extracted' not in file 
+            and ARCHIVE_EXTRACTED_FOLDER not in file 
             and self.output_folder_name not in file):
             try:
                 with open(file, 'rb') as f:
@@ -696,6 +699,7 @@ class CFIDs():
         new_file, _ = self.copy_file_to_output(file)
 
         #Set ESL flag, update to header 1.71 for new Form IDs, and get data from mod plugin
+        #TODO: Update for FO4, either not update the header at all or change header number to FO4 number
         data = b''
         with open(new_file, 'rb+') as f:
             f.seek(9)

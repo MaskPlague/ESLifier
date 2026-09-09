@@ -1,6 +1,6 @@
 from log_stream import write_error, write_normal, write_progress, write_remove, write_to_file, write_warning
 from PyQt6.QtCore import QCoreApplication
-from data_holder import _global, GAME_ARCHIVE_EXTENSION
+from data_holder import _global, GAME_ARCHIVE_EXTENSION, ARCHIVE_EXTRACTED_FOLDER
 import os
 import configparser
 from typing import TYPE_CHECKING
@@ -30,7 +30,7 @@ class MO2():
             if line.startswith(('+','*')) and not line.strip().endswith('_separator'):
                 enabled_mods.append(line[1:].strip())
         
-        enabled_mods.append('bsa_extracted_eslifier_scan')
+        enabled_mods.append('archive_extracted_eslifier_scan')
         enabled_mods.reverse()
         enabled_mods.append('overwrite_eslifier_scan')
 
@@ -44,7 +44,7 @@ class MO2():
             load_order.remove(mod)
         if load_order[0].startswith('# This file was'):
             load_order.pop(0)
-        load_order.append('bsa_extracted_eslifier_scan')
+        load_order.append('archive_extracted_eslifier_scan')
         load_order.reverse()
         load_order.append('overwrite_eslifier_scan')
         return load_order, set(enabled_mods)
@@ -76,8 +76,8 @@ class MO2():
             if len(mods) == 1:
                 overwrite = False
                 mod = mods[0]
-                if mod == 'bsa_extracted_eslifier_scan':
-                    file_path = os.path.join(cwd, 'bsa_extracted', cases[file])
+                if mod == 'archive_extracted_eslifier_scan':
+                    file_path = os.path.join(cwd, ARCHIVE_EXTRACTED_FOLDER, cases[file])
                 elif mod == 'overwrite_eslifier_scan':
                     file_path = os.path.join(overwrite_path, cases[file])
                     overwrite = True
@@ -89,8 +89,8 @@ class MO2():
             else:
                 mods_sorted = sorted(mods, key=lambda mod: load_order.index(mod))
                 overwrite = False
-                if mods_sorted[-1] == 'bsa_extracted_eslifier_scan':
-                    file_path = os.path.join(cwd, 'bsa_extracted', cases[file])
+                if mods_sorted[-1] == 'archive_extracted_eslifier_scan':
+                    file_path = os.path.join(cwd, ARCHIVE_EXTRACTED_FOLDER, cases[file])
                 elif mods_sorted[-1] == 'overwrite_eslifier_scan':
                     file_path = os.path.join(overwrite_path, cases[file])
                     overwrite = True
@@ -117,8 +117,8 @@ class MO2():
         return return_list, plugins
 
     def get_files_from_mods(mods_folder: str, enabled_mods: set, plugins_list: list, overwrite_path: str, load_order:list[str]) -> tuple[dict, list, dict]:
-        if not os.path.exists('bsa_extracted/'):
-            os.makedirs('bsa_extracted/')
+        if not os.path.exists(f'{ARCHIVE_EXTRACTED_FOLDER}/'):
+            os.makedirs(f'{ARCHIVE_EXTRACTED_FOLDER}/')
         mod_files: dict[str, list[str]] = {}
         cases_of_files: dict[str, str] = {}
         game_archive_list = []
@@ -237,9 +237,9 @@ class MO2():
         
         MO2.scanner.extract_scripts_and_seq_from_game_archive(game_archive_list, plugins_list)
 
-        mod_folder = os.path.join(os.getcwd(), 'bsa_extracted/')
+        mod_folder = os.path.join(os.getcwd(), f'{ARCHIVE_EXTRACTED_FOLDER}/')
         #Get files that were extracted from BSA
-        for root, dirs, files in os.walk('bsa_extracted/'):
+        for root, dirs, files in os.walk(f'{ARCHIVE_EXTRACTED_FOLDER}/'):
             file_count += len(files)
             if loop == 50: #prevent spamming stdout and slowing down the program
                 loop = 0
@@ -256,7 +256,7 @@ class MO2():
                 if relative_path not in mod_files:
                     mod_files[relative_path] = []
                     cases_of_files[relative_path] = relative_path
-                mod_files[relative_path].append('bsa_extracted_eslifier_scan')
+                mod_files[relative_path].append('archive_extracted_eslifier_scan')
 
         return mod_files, list(plugin_names), cases_of_files
 

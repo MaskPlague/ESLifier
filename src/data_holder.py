@@ -11,6 +11,7 @@ GAME_MODE = "SSE"
 def update_game_globals():
     global VERBOSE_GAME_NAME, SHORT_GAME_NAME, VORTEX_GAME_NAME, MO2_GAME_NAME, GAME_ESM_NAME, PROGRAM_NAME, EXE_NAME
     global GAME_ARCHIVE_TYPE, GAME_ARCHIVE_EXTENSION, NEXUS_FILES_TAB_URL, GITHUB_MASTER_JSONS_URL
+    global ARCHIVE_EXTRACTED_FOLDER, ARCHIVE_EXTRACTED_TEMP_FOLDER
     VERBOSE_GAME_NAME = "Skyrim Special Edition"        if GAME_MODE == "SSE" else "Fallout 4"
     SHORT_GAME_NAME = "Skyirm"                          if GAME_MODE == "SSE" else "Fallout"
     VORTEX_GAME_NAME = "skyrimse"                       if GAME_MODE == "SSE" else "fallout4"
@@ -21,6 +22,8 @@ def update_game_globals():
     EXE_NAME = PROGRAM_NAME + ".exe"
     GAME_ARCHIVE_TYPE = "BSA"                           if GAME_MODE == "SSE" else "BA2"
     GAME_ARCHIVE_EXTENSION = "." + GAME_ARCHIVE_TYPE.lower()
+    ARCHIVE_EXTRACTED_FOLDER = GAME_ARCHIVE_TYPE.lower() + "_extracted"
+    ARCHIVE_EXTRACTED_TEMP_FOLDER = GAME_ARCHIVE_TYPE.lower() + "_temp_extracted"
 
     NEXUS_FILES_TAB_URL = ("https://www.nexusmods.com/skyrimspecialedition/mods/145168?tab=files"
                                                         if GAME_MODE == "SSE" else
@@ -48,7 +51,7 @@ def update_game_globals():
     DEPENDENCY_DICTIONARY_JSON =                        ESLIFIER_DATA_FOLDER + "dependency_dictionary.json"
     DLL_DICT_JSON =                                     ESLIFIER_DATA_FOLDER + "dll_dict.json"
     ESL_FLAGGED_JSON =                                  ESLIFIER_DATA_FOLDER + "esl_flagged.json"
-    EXTRACTED_GAME_ARCHIVE_JSON =                       ESLIFIER_DATA_FOLDER + "extracted_bsa.json"
+    EXTRACTED_GAME_ARCHIVE_JSON =                       ESLIFIER_DATA_FOLDER + "extracted_"+GAME_ARCHIVE_TYPE.lower()+".json"
     FILE_MASTERS_JSON =                                 ESLIFIER_DATA_FOLDER + "file_masters.json"
     FLAG_DICTIONARY_JSON =                              ESLIFIER_DATA_FOLDER + "flag_dictionary.json"
     IGNORED_FILES_JSON =                                ESLIFIER_DATA_FOLDER + "ignored_files.json"
@@ -101,8 +104,8 @@ class _global():
     mod_staging_folder_len = 0
     output_folder_joined_path_lower = ''
     output_folder_joined_path_len = 0
-    bsa_extracted_path_len = 0
-    bsa_extracted_temp_path_len = 0
+    archive_extracted_path_len = 0
+    archive_extracted_temp_path_len = 0
 
     cwd = ''
     folders_grabbed = False
@@ -114,7 +117,7 @@ class _global():
     mods_with_seq = {} #{mod: seq_file} mods that have seq files
     vortex_error = None #storage for vortex error across classes
     mo2_error = None #storage for mo2 error across classes
-    game_archive_dict = {}   #{bsa_file: list[mod]} bsa and the mods they contain
+    game_archive_dict = {}   #{archive_file: list[mod]} archive and the mods they contain
     pex_with_getmodbyname: dict[str, set[str]] = {} #{mod: set(pex)} mods with pex with getmodbyname
 
     def init(settings_widget, vortex, mo2):
@@ -153,8 +156,8 @@ class _global():
         _global.game_folder_path_lower =          _global.game_folder_path.lower()
         _global.game_folder_path_len =            len(_global.game_folder_path)
 
-        _global.bsa_extracted_path_len =            len(os.path.normpath(os.path.join(_global.cwd, 'bsa_extracted')))
-        _global.bsa_extracted_temp_path_len =       len(os.path.normpath(os.path.join(_global.cwd, 'bsa_extracted_temp')))
+        _global.archive_extracted_path_len =            len(os.path.normpath(os.path.join(_global.cwd, ARCHIVE_EXTRACTED_FOLDER)))
+        _global.archive_extracted_temp_path_len =       len(os.path.normpath(os.path.join(_global.cwd, ARCHIVE_EXTRACTED_TEMP_FOLDER)))
 
         _global.folders_grabbed = False
         if _global._settings.get('dump_global', False):
@@ -214,12 +217,12 @@ class _global():
                 RuntimeError(QCoreApplication.translate("Global", "Failed to get necessary paths, see ESLifier.log"))
         file_norm = file.replace('\\', os.sep).replace('/', os.sep)
 
-        # ESLifier BSA Extracted
-        if 'bsa_extracted' in file_norm:
-            if 'bsa_extracted_temp' in file_norm:
-                return file_norm[_global.bsa_extracted_temp_path_len:].lstrip(os.sep)
+        # ESLifier archive Extracted
+        if ARCHIVE_EXTRACTED_FOLDER in file_norm:
+            if ARCHIVE_EXTRACTED_TEMP_FOLDER in file_norm:
+                return file_norm[_global.archive_extracted_temp_path_len:].lstrip(os.sep)
             else:
-                return file_norm[_global.bsa_extracted_path_len:].lstrip(os.sep)
+                return file_norm[_global.archive_extracted_path_len:].lstrip(os.sep)
 
         file_lower = file_norm.lower()
 

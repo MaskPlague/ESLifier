@@ -2,15 +2,15 @@ from log_stream import write_error, write_normal, write_progress, write_remove, 
 from PyQt6.QtCore import QCoreApplication
 import os
 from typing import TYPE_CHECKING
-from data_holder import _global
+from data_holder import _global, ARCHIVE_EXTRACTED_FOLDER
 if TYPE_CHECKING:
     from scanners.scanner import scanner 
 
 class NoManager():
     scanner: scanner = None
     def get_files_from_game_folder(path: str, plugins_list: list):
-        if not os.path.exists('bsa_extracted/'):
-            os.makedirs('bsa_extracted/')
+        if not os.path.exists(f'{ARCHIVE_EXTRACTED_FOLDER}/'):
+            os.makedirs(f'{ARCHIVE_EXTRACTED_FOLDER}/')
         path = os.path.normpath(path)
         path_level = len(path.split(os.sep))
         loop = 0
@@ -47,9 +47,9 @@ class NoManager():
         NoManager.scanner.extract_scripts_and_seq_from_game_archive(bsa_list, plugins_list)
         
         cwd = os.getcwd()
-        mod_folder = os.path.join(cwd, 'bsa_extracted/')
+        mod_folder = os.path.join(cwd, f'{ARCHIVE_EXTRACTED_FOLDER}/')
         loop = 0
-        for root, _, files in os.walk('bsa_extracted/'):
+        for root, _, files in os.walk(f'{ARCHIVE_EXTRACTED_FOLDER}/'):
             for file in files:
                 NoManager.scanner.file_count += 1
                 if loop == 75: #prevent spamming stdout and slowing down the program

@@ -22,7 +22,8 @@ from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ESM_
                          CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
                          EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
                          MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
-                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, GAME_ARCHIVE_TYPE)
+                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, GAME_ARCHIVE_TYPE, 
+                         ARCHIVE_EXTRACTED_FOLDER)
 from scanners.vortex_database_reader import VortexDBParser
 from log_stream import log_stream, write_error, write_normal, write_patching, write_progress, write_remove, write_to_file, clear_and_close_log, clear_and_leave_log_open
 from patchers.file_defined_patcher_conditions import user_and_master_conditions_class
@@ -1032,15 +1033,15 @@ class main(QWidget):
                 f"This will cause the next scan to take significantly longer as the {GAME_ARCHIVE_TYPE} files will\n"\
                 "need to be extracted again and irrelevant script files will need to be filtered.\n\n"\
                 "This can take a short bit and may freeze the UI\n"\
-                "or you can manually delete the \"bsa_extracted/\" folder\n"\
-                "and then click this button.")
+                "or you can manually delete the \"%0/\" folder\n"\
+                "and then click this button.").replace("%0", ARCHIVE_EXTRACTED_FOLDER)
         confirm.setText(confirm_text)
         def accepted():
             write_to_file(f'Resetting {GAME_ARCHIVE_TYPE} [Mod Manager Mode = {_global.mod_manager_mode}]')
             confirm.hide()
             if os.path.exists(EXTRACTED_GAME_ARCHIVE_JSON):
                 os.remove(EXTRACTED_GAME_ARCHIVE_JSON)
-            if os.path.exists('bsa_extracted/'):
+            if os.path.exists(f'{ARCHIVE_EXTRACTED_FOLDER}/'):
                 def delete_directory(dir_path):
                     try:
                         shutil.rmtree(dir_path)
@@ -1058,7 +1059,7 @@ class main(QWidget):
 
                     for thread in threads:
                         thread.join()
-                delete_subdirectories_threaded('bsa_extracted/')
+                delete_subdirectories_threaded(f'{ARCHIVE_EXTRACTED_FOLDER}/')
             self.list_compact.flag_dict = {}
             self.list_eslify.flag_dict = {}
             self.list_compact.create_list()

@@ -6,7 +6,7 @@ import fnmatch
 from scanners.vortex_database_reader import VortexDBParser
 from scanners.vortex_database_reader import ReadState
 from collections import deque, defaultdict
-from data_holder import _global, VORTEX_GAME_NAME, SHORT_GAME_NAME
+from data_holder import _global, VORTEX_GAME_NAME, SHORT_GAME_NAME, ARCHIVE_EXTRACTED_FOLDER
 from typing import TYPE_CHECKING
 from enum import Enum
 
@@ -207,7 +207,7 @@ class Vortex():
 
             yielded_files_per_mod[mod_id] = normalized_yields
             
-        ordered_mod_ids.insert(0, 'bsa_extracted_eslifier_scan')
+        ordered_mod_ids.insert(0, 'archive_extracted_eslifier_scan')
         ordered_mod_ids.insert(0, 'data_folder_file_eslifier_scan')
 
         load_order_index = {mod_id: i for i, mod_id in enumerate(ordered_mod_ids)}
@@ -220,7 +220,7 @@ class Vortex():
             def sort_key(mod_id: str):
                 is_actual_mod = 0 if mod_id in (
                     'data_folder_file_eslifier_scan', 
-                    'bsa_extracted_eslifier_scan'
+                    'archive_extracted_eslifier_scan'
                 ) else 1
                 yields_for_this_mod: set[str] = yielded_files_per_mod.get(mod_id, set())
                 
@@ -437,9 +437,9 @@ class Vortex():
 
         Vortex.scanner.extract_scripts_and_seq_from_game_archive(bsa_list, plugins_list)
         cwd = os.getcwd()
-        mod_folder = os.path.join(cwd, 'bsa_extracted/')
-        #Get files that were extracted from BSA
-        for root, dirs, files in os.walk('bsa_extracted/'):
+        mod_folder = os.path.join(cwd, f'{ARCHIVE_EXTRACTED_FOLDER}/')
+        #Get files that were extracted from archive
+        for root, dirs, files in os.walk(f'{ARCHIVE_EXTRACTED_FOLDER}/'):
             file_count += len(files)
             if loop == 50: #prevent spamming stdout and slowing down the program
                 loop = 0
@@ -456,7 +456,7 @@ class Vortex():
                 if relative_path not in mod_files:
                     mod_files[relative_path] = []
                     cases[relative_path] = relative_path
-                mod_files[relative_path].append('bsa_extracted_eslifier_scan')
+                mod_files[relative_path].append('archive_extracted_eslifier_scan')
 
         conflict_map: dict[str, list[str]] = Vortex.get_file_conflict_resolution(
             ordered_mod_ids,
@@ -478,8 +478,8 @@ class Vortex():
             if len(providing_mods) == 1:
                 data_folder_file = False
                 mod = providing_mods[0]
-                if mod == 'bsa_extracted_eslifier_scan':
-                    file_path = os.path.join(cwd, 'bsa_extracted', cases[relative_path])
+                if mod == 'archive_extracted_eslifier_scan':
+                    file_path = os.path.join(cwd, ARCHIVE_EXTRACTED_FOLDER, cases[relative_path])
                 elif mod == 'data_folder_file_eslifier_scan':
                     file_path = os.path.join(game_folder_path, cases[relative_path])
                     data_folder_file = True
@@ -491,8 +491,8 @@ class Vortex():
                     Vortex.scanner.winning_files_dict[cases[relative_path].lower()] = (mod, file_path)
             else:
                 data_folder_file = False
-                if providing_mods[-1] == 'bsa_extracted_eslifier_scan':
-                    file_path = os.path.join(cwd, 'bsa_extracted', cases[relative_path])
+                if providing_mods[-1] == 'archive_extracted_eslifier_scan':
+                    file_path = os.path.join(cwd, ARCHIVE_EXTRACTED_FOLDER, cases[relative_path])
                 elif providing_mods[-1] == 'data_folder_file_eslifier_scan':
                     file_path = os.path.join(game_folder_path, cases[relative_path])
                     data_folder_file = True
