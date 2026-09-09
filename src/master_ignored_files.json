@@ -1,5 +1,5 @@
 {
-    "version": 17,
+    "version": 18,
     "ignored_files": [
         "BFCO_FX_CheckPreAttackIsOK.pex",
         "BFCO_FX_PlayIdleListKeyE.pex",
@@ -22,7 +22,9 @@
         "SKSE/Plugins/DynamicNPCs.ini",
         "FollowerLevelingSystemRedone/PerksAndSpells.json",
         "interface/modex/user/userdata.json",
-        "Viny Mods/NPC Visual/FaceGenCache.json"
+        "Viny Mods/NPC Visual/FaceGenCache.json",
+        "Plugins/DTAC-PluginNames.txt",
+        "Plugins/DialogueTagsAndColors.json"
     ],
     "ignored_contains": [
         "SkyrimDiag_Incident_",
