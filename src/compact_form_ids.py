@@ -10,7 +10,7 @@ import json
 import time
 
 #from intervaltree import IntervalTree
-from full_form_processor import form_processor
+
 from create_cell_master import create_new_cell_plugin
 from data_holder import (_global, GAME_MODE, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ESM_NAME, MO2_GAME_NAME, SHORT_GAME_NAME,
                          CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
@@ -23,11 +23,12 @@ from PyQt6.QtCore import QCoreApplication
 if GAME_MODE == "SSE":
     from patchers.sse_file_patchers import patchers
     import patchers.sse_patcher_conditions as patcher_conditions
+    from full_form_processor_sse import form_processor
 elif GAME_MODE == "FO4":
     from patchers.fo4_file_patchers import patchers
     import patchers.fo4_patcher_conditions as patcher_conditions
 else:
-    raise ValueError(f"GAME_MODE: {GAME_MODE} has no patcher_conditions import set.")
+    raise ValueError(f"GAME_MODE: {GAME_MODE} has no patchers, conditions, or form_processor import set.")
 import platform
 import psutil
 if platform.system() == 'Windows':
