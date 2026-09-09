@@ -297,7 +297,10 @@ class list_compactable(list_parent_class):
                 item_pex_flag = QTableWidgetItem('PEX')
                 pex_tooltip = self.tr("This plugin has one or more PEX files that call 'GetModByName' on this plugin: ")
                 for pex in _global.pex_with_getmodbyname[basename_lower]:
-                    pex_tooltip += '\n- ' + os.path.basename(pex)
+                    if len(pex) > 70:
+                        pex_tooltip += '\n- ' + '...' +pex[-70:] 
+                    else:
+                        pex_tooltip += '\n- ' + pex
                 item_pex_flag.setToolTip(pex_tooltip)
                 if self.filter_pex:
                     hide_row = True
