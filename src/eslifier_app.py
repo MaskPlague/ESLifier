@@ -14,8 +14,8 @@ from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMessageBox, QTa
 from settings_page import settings
 from main_page import main
 from log_stream import log_stream, write_to_file
-from data_holder import _global
-
+from data_holder import (_global, NEXUS_FILES_TAB_URL, SHORT_GAME_NAME, VORTEX_GAME_NAME, GITHUB_MASTER_JSONS_URL, 
+                         EXE_NAME, PROGRAM_NAME, ESLIFIER_DATA_FOLDER, SETTINGS_JSON, ESLIFIER_LOG_FILE)
 from scanners.scanner_vortex import Vortex
 from scanners.scanner_mo2 import MO2
 CURRENT_VERSION = '0.16.17'
@@ -38,7 +38,7 @@ def verify_luhn_checksum(filename: str):
                              )
         raise RuntimeError(QCoreApplication.translate("Global", "The file is likely corrupt! Checksum mismatch. Redownload the file, if the issue persists then report this to the GitHub."))
     else:
-        settings_path = os.path.normpath('ESLifier_Data/settings.json')
+        settings_path = os.path.normpath(SETTINGS_JSON)
         if os.path.exists(settings_path):
             try:
                 with open(settings_path, 'r+', encoding='utf-8') as f:
@@ -50,7 +50,7 @@ def verify_luhn_checksum(filename: str):
             except:
                 QMessageBox.warning(None, 
                                     QCoreApplication.translate("Global", 'File Access Error'), 
-                                    QCoreApplication.translate("Global", 'Cannot access ESLifier_Data/settings.json')
+                                    QCoreApplication.translate("Global", f'Cannot access {SETTINGS_JSON}')
                                     )
         else:
             os.makedirs(os.path.dirname(settings_path))
@@ -61,7 +61,7 @@ def verify_luhn_checksum(filename: str):
             except:
                 QMessageBox.warning(None, 
                                     QCoreApplication.translate("Global", 'File Access Error'), 
-                                    QCoreApplication.translate("Global", 'Cannot access/create ESLifier_Data/settings.json')
+                                    QCoreApplication.translate("Global", f'Cannot access/create {SETTINGS_JSON}')
                                     )
 
 def luhn_checksum(data: bytes) -> int:
@@ -80,12 +80,12 @@ def connection_result(is_latest: bool, latest_version: str):
         message.setIcon(QMessageBox.Icon.Warning)
         message.setWindowTitle(QCoreApplication.translate("Global", "ESLifier Outdated"))
         message.setText(QCoreApplication.translate("Global", 
-                        "There exists a new version of ESLifier (v%1).\n"\
+                        "There exists a new version of %0 (v%1).\n"\
                         "It is recommended to update as it could contain critical changes,\n"\
-                        "bug fixes, or additional file patchers.").replace("%1", latest_version)
+                        "bug fixes, or additional file patchers.").replace("%0", PROGRAM_NAME).replace("%1", latest_version)
                         )
         def open_nexus():
-            webbrowser.open("https://www.nexusmods.com/skyrimspecialedition/mods/145168?tab=files")
+            webbrowser.open(f"{NEXUS_FILES_TAB_URL}")
             message.show()
         def open_github():
             webbrowser.open("https://github.com/MaskPlague/ESLifier/releases/latest")
@@ -144,12 +144,12 @@ class get_latest_patcher_conditions(QObject):
             
     def download_conditions(self) -> bool:
         try:
-            url = "https://raw.githubusercontent.com/MaskPlague/ESLifier/refs/heads/main/src/master_patch_conditions.json"
+            url = GITHUB_MASTER_JSONS_URL + "master_patch_conditions.json"
             response = requests.get(url, timeout=10)
             response.raise_for_status()
             conditions_data: dict[str] = json.loads(response.text)
             github_conditions_version = conditions_data.get("version", -1)
-            filename = os.path.normpath("ESLifier_Data/master_patch_conditions.json")
+            filename = os.path.normpath(ESLIFIER_DATA_FOLDER+"master_patch_conditions.json")
             if os.path.exists(filename):
                 try:
                     with open(filename, 'r', encoding='utf-8') as f:
@@ -175,12 +175,12 @@ class get_latest_patcher_conditions(QObject):
         
     def download_ignored_files(self) -> bool:
         try:
-            url = "https://raw.githubusercontent.com/MaskPlague/ESLifier/refs/heads/main/src/master_ignored_files.json"
+            url = GITHUB_MASTER_JSONS_URL + "master_ignored_files.json"
             response = requests.get(url, timeout=10)
             response.raise_for_status()
             conditions_data: dict[str] = json.loads(response.text)
             github_conditions_version = conditions_data.get("version", -1)
-            filename = os.path.normpath("ESLifier_Data/master_ignored_files.json")
+            filename = os.path.normpath(ESLIFIER_DATA_FOLDER+"master_ignored_files.json")
             if os.path.exists(filename):
                 try:
                     with open(filename, 'r', encoding='utf-8') as f:
@@ -223,7 +223,7 @@ class main_window(QMainWindow):
                 os.chdir(os.path.dirname(sys.executable))
             except Exception as e:
                 raise RuntimeError(f"ESLifier cannot change working directory: {e}")
-            settings_path = os.path.normpath('ESLifier_Data/settings.json')
+            settings_path = os.path.normpath(SETTINGS_JSON)
             if os.path.exists(settings_path):
                 with open(settings_path, 'r', encoding='utf-8') as f:
                     settings_data: dict[str, str|bool] = json.load(f)
@@ -231,7 +231,7 @@ class main_window(QMainWindow):
                 major, minor, patch = [int(x, 10) for x in version.split('.')] 
                 version_tuple = (major, minor, patch)
                 if VERSION_TUPLE > version_tuple:
-                    verify_luhn_checksum('ESLifier.exe')
+                    verify_luhn_checksum(EXE_NAME)
             elif not curdirIsWritable():
                 QMessageBox.critical(None, 
                                      self.tr("EXE is in a Protected Folder!"), 
@@ -239,13 +239,13 @@ class main_window(QMainWindow):
                                      )
                 return 
             else:
-                verify_luhn_checksum('ESLifier.exe')
+                verify_luhn_checksum(EXE_NAME)
         
-        self.setWindowTitle(self.tr("ESLifier v%0").replace("%0", CURRENT_VERSION))
+        self.setWindowTitle(self.tr(f"{PROGRAM_NAME} v%0").replace("%0", CURRENT_VERSION))
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.resize(1300, 500)
         self.move(100,50)
-        self.log_stream = log_stream(self, CURRENT_VERSION)
+        self.log_stream = log_stream(self, CURRENT_VERSION, ESLIFIER_DATA_FOLDER, ESLIFIER_LOG_FILE, PROGRAM_NAME)
         self.setWindowIcon(QIcon(":/images/ESLifier.png"))
         self.setFocus()
         self.rebuild_lists = False
@@ -318,7 +318,7 @@ class main_window(QMainWindow):
         self.HELP_TAB = 2
 
         self.tabs.addTab(self.main_widget, self.tr("  Main  "))
-        self.tabs.setTabToolTip(self.MAIN_TAB, self.tr("This is the Main Page, scan your skyrim folder and select plugins to flag or compress."))
+        self.tabs.setTabToolTip(self.MAIN_TAB, self.tr(f"This is the Main Page, scan your {SHORT_GAME_NAME} folder and select plugins to flag or compress."))
         self.tabs.addTab(self.settings_widget, self.tr("  Settings  "))
         self.tabs.setTabToolTip(self.SETTINGS_TAB, self.tr("This is the settings page. Certain settings will effect what plugins will display after scanning."))
         self.tabs.addTab(QWidget(), self.tr("  Help?  "))
@@ -407,7 +407,7 @@ class main_window(QMainWindow):
             if not os.path.exists(plugins_txt):
                 error_message += self.tr("Invalid plugins.txt, the file does not exist.") + "\n"
             if not os.path.exists(data_path):
-                error_message += self.tr("Invalid Skyrim Data Directory, it does not exist.") + "\n"
+                error_message += self.tr(f"Invalid {SHORT_GAME_NAME} Data Directory, it does not exist.") + "\n"
             else:
                 data_path_drive = os.path.splitdrive(data_path)[0].lower()
                 if output_path_exists and output_path_drive != data_path_drive:
@@ -419,8 +419,8 @@ class main_window(QMainWindow):
             else:
                 if not os.path.exists(os.path.join(vortex_data_path, "state.v2")):
                     error_message += self.tr("Invalid Vortex Data Directory, it exists but is invalid as the folder 'state.v2' does not exist in it.") + "\n"
-                if not os.path.exists(os.path.join(vortex_data_path, "skyrimse")):
-                    error_message += self.tr("Invalid Vortex Data Directory, it exists but is invalid as the folder 'skyrimse' does not exist in it.") + "\n"
+                if not os.path.exists(os.path.join(vortex_data_path, VORTEX_GAME_NAME)):
+                    error_message += self.tr(f"Invalid Vortex Data Directory, it exists but is invalid as the folder '{VORTEX_GAME_NAME}' does not exist in it.") + "\n"
                 
         if mod_manager_mode == 2:
             if not os.path.exists(mo2_base_path):
@@ -573,53 +573,55 @@ class main_window(QMainWindow):
         self.log_stream.center_on_parent()
         return super().moveEvent(a0)
 
-try:
-    app = QApplication(sys.argv)
-    app.setStyle('Fusion')
-    translator = QTranslator()
-    lang_file = os.path.normpath("ESLifier_Data/translation.qm")
-    if os.path.exists(lang_file):
-        if translator.load(lang_file):
-            app.installTranslator(translator)
-
-    palette = app.palette()
-    background_color = palette.color(QPalette.ColorRole.Window)
-
-    # Determine if the mode is dark or light based on brightness
-    if background_color.lightness() < 128:
-        COLOR_MODE = "Dark"
-    else:
-        COLOR_MODE = "Light"
-    w = main_window()
-    w.show()
-    app.exec()
-except Exception as e:
-    timestamp = datetime.now().isoformat(timespec='minutes').replace(':', '-')
-    crash_log = f'crash-{timestamp}.log'
+def start():
     try:
-        sys.stderr = sys.__stderr__
-        if not os.path.exists('ESLifier_Data'):
-            os.mkdir(os.path.normpath('ESLifier_Data'))
-        if os.path.exists('ESLifier_Data') and not os.path.exists('ESlifier_Data/Crash Logs'):
-            os.makedirs(os.path.normpath('ESLifier_Data/Crash Logs/'))
-        with open(os.path.normpath(os.path.join('ESLifier_Data/Crash Logs/', crash_log)), 'w+', encoding='utf-8') as f:
-            traceback.print_exc(file=f)
-        QMessageBox.critical(None, 
-                             QCoreApplication.translate("Global", 'ESLifier Error'), 
-                             QCoreApplication.translate("Global", 'Check latest crash log in ESLifier_Data/Crash Logs')
-                             )
-    except Exception as e1:
-        crash_log_file = os.path.normpath(os.path.join(os.getcwd(), crash_log))
+        global COLOR_MODE
+        app = QApplication(sys.argv)
+        app.setStyle('Fusion')
+        translator = QTranslator()
+        lang_file = os.path.normpath(ESLIFIER_DATA_FOLDER+"translation.qm")
+        if os.path.exists(lang_file):
+            if translator.load(lang_file):
+                app.installTranslator(translator)
+
+        palette = app.palette()
+        background_color = palette.color(QPalette.ColorRole.Window)
+
+        # Determine if the mode is dark or light based on brightness
+        if background_color.lightness() < 128:
+            COLOR_MODE = "Dark"
+        else:
+            COLOR_MODE = "Light"
+        w = main_window()
+        w.show()
+        app.exec()
+    except Exception as e:
+        timestamp = datetime.now().isoformat(timespec='minutes').replace(':', '-')
+        crash_log = f'crash-{timestamp}.log'
         try:
-            with open(crash_log_file, 'w+', encoding='utf-8') as f:
+            sys.stderr = sys.__stderr__
+            if not os.path.exists(ESLIFIER_DATA_FOLDER):
+                os.mkdir(os.path.normpath(ESLIFIER_DATA_FOLDER))
+            if os.path.exists(ESLIFIER_DATA_FOLDER) and not os.path.exists(ESLIFIER_DATA_FOLDER+'Crash Logs'):
+                os.makedirs(os.path.normpath(ESLIFIER_DATA_FOLDER+'Crash Logs/'))
+            with open(os.path.normpath(os.path.join(ESLIFIER_DATA_FOLDER+'Crash Logs/', crash_log)), 'w+', encoding='utf-8') as f:
                 traceback.print_exc(file=f)
-                f.write(f'Failed to open crash log directory: \n')
-                f.write(e1)
             QMessageBox.critical(None, 
-                                 QCoreApplication.translate("Global", 'ESLifier Error'), 
-                                 QCoreApplication.translate("Global", 'Failed to open crash log directory, creating crash log at: ') + crash_log_file
-                                 )
-        except Exception as e2:
-            QMessageBox.critical(None, 
-                                 QCoreApplication.translate("Global", 'ESLifier Error'), 
-                                 QCoreApplication.translate("Global", 'Failed to create crash log, error: %1\ncrash cause: %2').replace("%1", "{0}").replace("%2", "{1}").format(e2, e))
+                                QCoreApplication.translate("Global", 'ESLifier Error'), 
+                                QCoreApplication.translate("Global", f'Check latest crash log in {ESLIFIER_DATA_FOLDER}Crash Logs')
+                                )
+        except Exception as e1:
+            crash_log_file = os.path.normpath(os.path.join(os.getcwd(), crash_log))
+            try:
+                with open(crash_log_file, 'w+', encoding='utf-8') as f:
+                    traceback.print_exc(file=f)
+                    f.write(f'Failed to open crash log directory: \n')
+                    f.write(e1)
+                QMessageBox.critical(None, 
+                                    QCoreApplication.translate("Global", 'ESLifier Error'), 
+                                    QCoreApplication.translate("Global", 'Failed to open crash log directory, creating crash log at: ') + crash_log_file
+                                    )
+            except Exception as e2:
+                QMessageBox.critical(None, 
+                                    QCoreApplication.translate("Global", 'ESLifier Error'), 
+                                    QCoreApplication.translate("Global", 'Failed to create crash log, error: %1\ncrash cause: %2').replace("%1", "{0}").replace("%2", "{1}").format(e2, e))

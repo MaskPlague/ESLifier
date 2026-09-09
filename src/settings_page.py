@@ -11,6 +11,12 @@ from PyQt6.QtGui import QIcon, QColor
 
 from blacklist import blacklist_window
 from log_stream import write_error
+from data_holder import (GAME_MODE, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ESM_NAME, MO2_GAME_NAME, SHORT_GAME_NAME, GAME_ARCHIVE_TYPE,
+                         CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
+                         EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
+                         MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
+                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, DEPENDENCY_DICTIONARY_JSON,
+                         MAXED_MASTERS_JSON, BLACKLIST_JSON, CELL_CHANGED_JSON, DLL_DICT_JSON, SETTINGS_JSON, ESLIFIER_DATA_FOLDER)
 
 from QToggle import QtToggle
 class settings(QWidget):
@@ -83,11 +89,11 @@ class settings(QWidget):
         )
         self.mod_manager_mode_widget.layout().itemAt(2).widget().clicked.connect(self.mod_mananger_mode_clicked)
 
-        self.skyrim_folder_path_widget, self.skyrim_folder_path = self.create_path_widget(
+        self.game_folder_path_widget, self.game_folder_path = self.create_path_widget(
             self.tr("Data Folder Path"),
-            self.tr("Set this to your Skyrim Special Edition Data folder that holds Skyrim.esm."),
-            self.tr('C:/Path/To/Skyrim Special Edition/Data'),
-            self.skyrim_folder_path_clicked,
+            self.tr(f"Set this to your {VERBOSE_GAME_NAME} Data folder that holds {GAME_ESM_NAME}."),
+            self.tr(f'C:/Path/To/{VERBOSE_GAME_NAME}/Data'),
+            self.game_folder_path_clicked,
             'skyrim_folder_path'
         )
         self.output_folder_path_widget, self.output_folder_path = self.create_path_widget(
@@ -123,7 +129,7 @@ class settings(QWidget):
         self.mo2_base_path.lineEdit().editingFinished.connect(self.populate_mo2_profiles)
         self.vortex_data_path_widget, self.vortex_data_path = self.create_combo_box_path_widget(
             self.tr("Vortex Data Path"),
-            self.tr("Set this to Vortex's data folder (the folder that holds the \"state.v2\" and \"skyrimse\" folders)."),
+            self.tr(f"Set this to Vortex's data folder (the folder that holds the \"state.v2\" and \"{VORTEX_GAME_NAME}\" folders)."),
             self.tr('C:/Users/USER/AppData/Roaming/Vortex or C:/ProgramData/vortex'),
             self.vortex_data_path_clicked,
             self._is_valid_vortex_instance,
@@ -335,7 +341,7 @@ class settings(QWidget):
             self.tr("Skip Confirmations"),
             self.tr("Confirmations that can be automatically skipped\n"\
                     "Specify the confirmations to skip, comma separated.\n"\
-                    "Available: FLAG, COMPACT, RE-SCAN, OUTPUT-RESET, OUTPUT-REBUILD, BSA-RESET, TIMERS\n"\
+                    f"Available: FLAG, COMPACT, RE-SCAN, OUTPUT-RESET, OUTPUT-REBUILD, {GAME_ARCHIVE_TYPE}-RESET, TIMERS\n"\
                     "TIMERS skips the confirmation countdowns but doesn't skip the confirmation boxes.\n"),
             "FLAG,COMPACT,TIMERS",
             "skip_confirmations",
@@ -347,7 +353,7 @@ class settings(QWidget):
         self.update_settings_from_app_state()
         
         settings_layout.addWidget(self.mod_manager_mode_widget)
-        settings_layout.addWidget(self.skyrim_folder_path_widget)
+        settings_layout.addWidget(self.game_folder_path_widget)
         settings_layout.addWidget(self.vortex_data_path_widget)
         settings_layout.addWidget(self.mo2_base_path_widget)
         settings_layout.addWidget(self.mo2_profile_widget)
@@ -434,11 +440,11 @@ class settings(QWidget):
             line_edit.setText(os.path.normpath(path))
         self.update_settings_from_app_state()
     
-    def skyrim_folder_path_clicked(self):
+    def game_folder_path_clicked(self):
         if not self.mod_manager_mode_toggle.isChecked():
-            self.select_file_path(self.file_dialog, self.tr("Select the Skyrim Special Edition Data folder"), 'skyrim_folder_path', self.skyrim_folder_path, None)
+            self.select_file_path(self.file_dialog, self.tr(f"Select the {VERBOSE_GAME_NAME} Data folder"), 'skyrim_folder_path', self.game_folder_path, None)
         else:
-            self.select_file_path(self.file_dialog, self.tr("Select your MO2 mods folder"), 'skyrim_folder_path', self.skyrim_folder_path, None)
+            self.select_file_path(self.file_dialog, self.tr("Select your MO2 mods folder"), 'skyrim_folder_path', self.game_folder_path, None)
 
     def output_folder_path_clicked(self):
         self.select_file_path(self.file_dialog, self.tr("Select where you want the output folder"), 'output_folder_path', self.output_folder_path, None)
@@ -501,14 +507,14 @@ class settings(QWidget):
             try:
                 ini = configparser.ConfigParser(interpolation=None)
                 ini.read(ini_path, encoding='utf-8')
-                if ini.has_option('General', 'gameName') and ini.get('General', 'gameName') == "Skyrim Special Edition":
+                if ini.has_option('General', 'gameName') and ini.get('General', 'gameName') == MO2_GAME_NAME:
                     return True
             except:
                 pass
         return False
 
     def _is_valid_vortex_instance(self, instance_path):
-        return os.path.exists(os.path.join(instance_path, "state.v2")) and os.path.exists(os.path.join(instance_path, "skyrimse"))
+        return os.path.exists(os.path.join(instance_path, "state.v2")) and os.path.exists(os.path.join(instance_path, VORTEX_GAME_NAME))
     
     def get_mo2_instances(self):
         def _get_from_registry():
@@ -756,10 +762,10 @@ class settings(QWidget):
             self.mo2_profile_widget.show()
             self.vortex_data_path_widget.hide()
             self.vortex_restore_backup_files_widget.hide()
-            self.skyrim_folder_path_widget.hide()
+            self.game_folder_path_widget.hide()
             self.plugins_txt_path_widget.hide()
             
-            self.skyrim_folder_path.clear()
+            self.game_folder_path.clear()
             self.vortex_data_path.clear()
             self.plugins_txt_path.clear()
 
@@ -774,13 +780,13 @@ class settings(QWidget):
             
             self.vortex_data_path_widget.show()
             self.vortex_restore_backup_files_widget.show()
-            self.skyrim_folder_path_widget.hide()
+            self.game_folder_path_widget.hide()
             self.mo2_base_path_widget.hide()
             self.mo2_profile_widget.hide()
             self.plugins_txt_path_widget.hide()
 
             self.mo2_base_path.clear()
-            self.skyrim_folder_path.clear()
+            self.game_folder_path.clear()
             self.plugins_txt_path.clear()
 
         else:
@@ -792,7 +798,7 @@ class settings(QWidget):
                         "meant to be used with manual modding but should still work at least once.\n"\
                         "You can also use this mode for the original way Vortex was dealt with."))
             
-            self.skyrim_folder_path_widget.show()
+            self.game_folder_path_widget.show()
             self.plugins_txt_path_widget.show()
             self.vortex_data_path_widget.hide()
             self.vortex_restore_backup_files_widget.hide()
@@ -913,7 +919,7 @@ class settings(QWidget):
         self.blacklist_window.show()
 
     def open_eslifier_data(self):
-        directory = os.path.join(os.getcwd(), 'ESLifier_data')
+        directory = os.path.join(os.getcwd(), ESLIFIER_DATA_FOLDER)
         try:
             if os.name == 'nt':
                 os.startfile(directory)
@@ -939,8 +945,8 @@ class settings(QWidget):
         confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
         def acccepted():
             confirm.hide()
-            if os.path.exists('ESLifier_Data/settings.json'):
-                os.remove('ESLifier_Data/settings.json')
+            if os.path.exists(SETTINGS_JSON):
+                os.remove(SETTINGS_JSON)
             self.settings.clear()
             for settings_key, setting_data in self.default_settings.items():
                 setting_type = setting_data["type"]
@@ -956,29 +962,36 @@ class settings(QWidget):
                 elif setting_type == 'combo_box':
                     setting_data["widget"].clear()
 
-            self.inner_color = '#713585'
+            if GAME_MODE == "SSE":
+                self.inner_color = "#713585"
+            elif GAME_MODE == "FO4":
+                self.inner_color = "#6A8D25"
             self.outer_color = 'Gray'
-            self.update_settings_from_app_state()
+            #self.update_settings_from_app_state()
+            self.settings_updated_signal.emit()
         confirm.accepted.connect(acccepted)
         confirm.show()
         
     def set_init_widget_values(self):
-        self.inner_color = self.settings.get('inner_color', '#713585')
+        if GAME_MODE == "SSE":
+            self.inner_color = self.settings.get('inner_color', '#713585')
+        elif GAME_MODE == "FO4":
+            self.inner_color = self.settings.get('inner_color', "#6A8D25")
         self.outer_color = self.settings.get('outer_color', 'Gray')
         self.populate_mo2_profiles()
 
     def save_settings_to_file(self):
-        settings_file = os.path.normpath('ESLifier_Data/settings.json')
+        settings_file = os.path.normpath(SETTINGS_JSON)
         if not os.path.exists(os.path.dirname(settings_file)):
             os.makedirs(os.path.dirname(settings_file))
         try:
             with open(settings_file, 'w+', encoding='utf-8') as f:
                 json.dump(self.settings, f, ensure_ascii=False, indent=4)
-        except:
-            write_error(self.tr("Failed to save settings."))
+        except Exception as e:
+            write_error(self.tr("Failed to save settings.") +" > "+ str(e))
 
     def update_settings_from_app_state(self, key = ''):
-        self.settings['skyrim_folder_path'] = os.path.normpath(self.skyrim_folder_path.text()) if self.skyrim_folder_path.text() != '' else ''
+        self.settings['skyrim_folder_path'] = os.path.normpath(self.game_folder_path.text()) if self.game_folder_path.text() != '' else ''
         self.settings['output_folder_path'] = os.path.normpath(self.output_folder_path.text()) if self.output_folder_path.text() != '' else ''
         if self.output_folder_name_valid:
             self.settings['output_folder_name'] = self.output_folder_name.text()
@@ -1012,7 +1025,7 @@ class settings(QWidget):
         
     def get_settings_from_file(self):
         try:
-            with open('ESLifier_Data/settings.json', 'r', encoding='utf-8') as f:
+            with open(SETTINGS_JSON, 'r', encoding='utf-8') as f:
                 settings: dict = json.load(f)
                 if 'mo2_mode' in settings:
                     settings['mod_manager_mode'] = 2 if settings.pop('mo2_mode') else 1

@@ -18,8 +18,11 @@ from compact_form_ids import CFIDs
 from scanners.cell_changed_scanner import cell_scanner
 from create_cell_master import create_new_cell_plugin
 from patch_new import patch_new
-from data_holder import _global
-from vortex_database_reader import VortexDBParser
+from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ESM_NAME, MO2_GAME_NAME, SHORT_GAME_NAME,
+                         CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
+                         EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
+                         MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
+                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, GAME_ARCHIVE_TYPE)
 from scanners.vortex_database_reader import VortexDBParser
 from log_stream import log_stream, write_error, write_normal, write_patching, write_progress, write_remove, write_to_file, clear_and_close_log, clear_and_leave_log_open
 from patchers.file_defined_patcher_conditions import user_and_master_conditions_class
@@ -42,32 +45,10 @@ if max_threads > 8192:
 else:
     MAX_THREADS = max_threads
 
-ESLIFIER_DATA_FOLDER = "ESLifier_Data/"
-
-CELL_IDS_FOLDER =                   ESLIFIER_DATA_FOLDER + "Cell_IDs"
-
-ESLIFIER_LOG_FILE =                 ESLIFIER_DATA_FOLDER + "ESLifier.log"
-
-PREVIOUSLY_COMPACTED_JSON =         ESLIFIER_DATA_FOLDER + "previously_compacted.json" 
-ESL_FLAGGED_JSON =                  ESLIFIER_DATA_FOLDER + "esl_flagged.json"
-PREVIOUSLY_ESL_FLAGGED_JSON =       ESLIFIER_DATA_FOLDER + "previously_esl_flagged.json"
-ORIGINAL_FILES_JSON =               ESLIFIER_DATA_FOLDER + "original_files.json"
-FILE_MASTERS_JSON =                 ESLIFIER_DATA_FOLDER + "file_masters.json"
-NEW_FILE_HASHES_JSON =              ESLIFIER_DATA_FOLDER + "new_file_hashes.json"
-WINNING_FILE_HISTORY_DICT_JSON =    ESLIFIER_DATA_FOLDER + "winning_file_history_dict.json"
-WINNING_FILES_DICT_JSON =           ESLIFIER_DATA_FOLDER + "winning_files_dict.json"
-COMPACTED_AND_PATCHED_JSON =        ESLIFIER_DATA_FOLDER + "compacted_and_patched.json"
-MASTER_BYTE_DATA_JSON =             ESLIFIER_DATA_FOLDER + "master_byte_data.json"
-EXTRACTED_BSA_JSON =                ESLIFIER_DATA_FOLDER + "extracted_bsa.json"
-FORM_ID_MAPS_JSON =                 ESLIFIER_DATA_FOLDER + "Form_ID_Maps"
-CELL_MASTER_INFO_JSON =             ESLIFIER_DATA_FOLDER + "cell_master_info.json"
-FLAG_DICTIONARY_JSON =              ESLIFIER_DATA_FOLDER + "flag_dictionary.json"
-MISSING_SKYRIM_AS_MASTER_JSON =     ESLIFIER_DATA_FOLDER + "missing_skyrim_as_master.json"
-
 class main(QWidget):
     def __init__(self, COLOR_MODE):
         super().__init__()
-        self.skyrim_folder_path = ''
+        self.game_folder_path = ''
         self.output_folder_path = ''
         self.output_folder_name = ''
         self.scanned = False
@@ -115,7 +96,7 @@ class main(QWidget):
 
         self.button_scan = self.create_button(
             self.tr(" Scan Mod Files "),
-            self.tr("This will scan the entire Skyrim Special Edition folder.\n"\
+            self.tr(f"This will scan the entire {VERBOSE_GAME_NAME} folder.\n"\
             "Depending on the cell and header settings, what is displayed\n"\
             "in the below lists will change."),
             self.scan
@@ -142,7 +123,7 @@ class main(QWidget):
             "conflict changes but requires the output mod\n"\
             "in MO2/Vortex to match the exact same name as the\n"\
             "output folder in the settings.\n"\
-            "This cannot detect changes in BSA and will NOT\n"\
+            f"This cannot detect changes in {GAME_ARCHIVE_TYPE} and will NOT\n"\
             "check if the files in the output have been\n"\
             "changed since ESLifier patched them."),
             self.scan_and_patch_new
@@ -158,13 +139,13 @@ class main(QWidget):
             self.reset_output
         )
 
-        self.reset_bsa_button = self.create_button(
-            self.tr(' Delete extracted BSA files  \n Rescan BSA on next Scan '),
-            self.tr('ESLifier only extracts seq and script files from a BSA once so as not to\n'\
-            'go through the tedious process of extracting the releveant files in BSAs\n'\
+        self.reset_game_archive_button = self.create_button(
+            self.tr(f' Delete extracted {GAME_ARCHIVE_TYPE} files  \n Rescan {GAME_ARCHIVE_TYPE} on next Scan '),
+            self.tr(f'ESLifier only extracts seq and script files from a {GAME_ARCHIVE_TYPE} once so as not to\n'\
+            f'go through the tedious process of extracting the releveant files in {GAME_ARCHIVE_TYPE}s\n'\
             'each time it scans (others are extracted during patching). Use this button\n'\
-            'if a BSA has new files or you have deleted a mod that had a BSA.'),
-            self.reset_bsa
+            f'if a {GAME_ARCHIVE_TYPE} has new files or you have deleted a mod that had a {GAME_ARCHIVE_TYPE}.'),
+            self.reset_game_archive
         )
 
         self.open_output_button = self.create_button(
@@ -274,7 +255,7 @@ class main(QWidget):
         self.v_layout0.addSpacing(25)
         self.v_layout0.addWidget(self.reset_output_button)
         self.v_layout0.addSpacing(10)
-        self.v_layout0.addWidget(self.reset_bsa_button)
+        self.v_layout0.addWidget(self.reset_game_archive_button)
         self.v_layout0.addWidget(line2)
         self.v_layout0.addSpacing(25)
         self.v_layout0.addWidget(self.open_output_button)
@@ -308,7 +289,7 @@ class main(QWidget):
         splitter.setSizes([300,1200,1200])
 
     def update_data(self):
-        self.skyrim_folder_path =   _global.skyrim_folder_path
+        self.game_folder_path =   _global.game_folder_path
         self.output_folder_path =   _global.output_folder_path
         self.output_folder_name =   _global.output_folder_name
         self.generate_cell_master = _global.generate_cell_master
@@ -350,13 +331,13 @@ class main(QWidget):
                 checked.append(self.list_compact.item(row, self.list_compact.MOD_COL).toolTip())
         if checked != []:
             file_masters = self.get_from_file(FILE_MASTERS_JSON)
-            bsa_masters = {}
-            for key, items in _global.bsa_dict.items():
+            game_archive_masters = {}
+            for key, items in _global.game_archive_dict.items():
                 for item in items:
-                    if item in bsa_masters:
-                        bsa_masters[item].append(key)
+                    if item in game_archive_masters:
+                        game_archive_masters[item].append(key)
                     else:
-                        bsa_masters[item] = [key]
+                        game_archive_masters[item] = [key]
             self.confirm = self.create_confirmation(icon=QMessageBox.Icon.Information)
             self.confirm.setWindowTitle(self.tr("Getting estimated disk usage..."))
             self.confirm.setText(self.tr('Getting estimated disk usage...'))
@@ -389,8 +370,8 @@ class main(QWidget):
                         if file_lower not in counted and os.path.exists(file):
                             size += os.path.getsize(file)
                             counted.add(file_lower)
-                if mod_basename in bsa_masters:
-                    for file in bsa_masters[mod_basename]:
+                if mod_basename in game_archive_masters:
+                    for file in game_archive_masters[mod_basename]:
                         file_lower = file.lower()
                         if file_lower not in counted and os.path.exists(file):
                             size += os.path.getsize(file)
@@ -399,7 +380,7 @@ class main(QWidget):
             free_space = round(free / (1024**3), 3)
             free_space_continuation_message = self.tr(
                     "This may generate up to %1 %2 of new files\n"\
-                    "(this may be inaccurate due to unpacking compressed BSA)\n"\
+                    f"(this may be inaccurate due to unpacking compressed {GAME_ARCHIVE_TYPE})\n"\
                     "and you have %3 GBs of space left.\n"\
                     "Are you sure you want to continue?")
             if size > 1024 ** 3:
@@ -732,9 +713,9 @@ class main(QWidget):
         elif _global.vortex_error == VortexErrors.INVALID_MSF:
             confirm.setText(self.tr("Failed to get the Vortex Mod Staging Folder."))
         elif _global.vortex_error == VortexErrors.NO_LAST_SSE_PROFILE:
-            confirm.setText(self.tr("No last used Skyrim SE profile detected."))
+            confirm.setText(self.tr(f"No last used {VERBOSE_GAME_NAME} profile detected."))
         elif _global.vortex_error == VortexErrors.NO_BASE_PATH:
-            confirm.setText(self.tr("Failed to get the Skyrim Game folder."))
+            confirm.setText(self.tr(f"Failed to get the {VORTEX_GAME_NAME} Game folder."))
         elif isinstance(_global.vortex_error, Exception):
             confirm.setText(self.tr(f"ESLifier has come across an error while scanning Vortex data: %0").replace("%0", str(_global.vortex_error)))
         _global.vortex_error = None
@@ -835,7 +816,7 @@ class main(QWidget):
 
     def reset_output(self):
         self.output_folder_full = os.path.join(self.output_folder_path, self.output_folder_name)
-        if self.output_folder_full.lower() == self.skyrim_folder_path.lower() or self.output_folder_full.lower() == self.output_folder_path.lower():
+        if self.output_folder_full.lower() == self.game_folder_path.lower() or self.output_folder_full.lower() == self.output_folder_path.lower():
             self.log_stream.show()
             write_error(self.tr('Issue occured getting the output folder during output reset.'))
             return
@@ -967,7 +948,7 @@ class main(QWidget):
 
     def rebuild_output(self):
         self.output_folder_full = os.path.join(self.output_folder_path, self.output_folder_name)
-        if self.output_folder_full.lower() == self.skyrim_folder_path.lower() or self.output_folder_full.lower() == self.output_folder_path.lower():
+        if self.output_folder_full.lower() == self.game_folder_path.lower() or self.output_folder_full.lower() == self.output_folder_path.lower():
             self.log_stream.show()
             write_error(self.tr('Issue occured getting the output folder during output rebuild.'))
             return
@@ -1044,21 +1025,21 @@ class main(QWidget):
         else:
             confirm.show()
 
-    def reset_bsa(self):
+    def reset_game_archive(self):
         confirm = self.create_confirmation('lightcoral')
         confirm_text = self.tr(
-                "Are you sure you want to reset the Extracted BSA List?\n"\
-                "This will cause the next scan to take significantly longer as the BSA files will\n"\
+                f"Are you sure you want to reset the Extracted {GAME_ARCHIVE_TYPE} List?\n"\
+                f"This will cause the next scan to take significantly longer as the {GAME_ARCHIVE_TYPE} files will\n"\
                 "need to be extracted again and irrelevant script files will need to be filtered.\n\n"\
                 "This can take a short bit and may freeze the UI\n"\
                 "or you can manually delete the \"bsa_extracted/\" folder\n"\
                 "and then click this button.")
         confirm.setText(confirm_text)
         def accepted():
-            write_to_file(f'Resetting BSA [Mod Manager Mode = {_global.mod_manager_mode}]')
+            write_to_file(f'Resetting {GAME_ARCHIVE_TYPE} [Mod Manager Mode = {_global.mod_manager_mode}]')
             confirm.hide()
-            if os.path.exists(EXTRACTED_BSA_JSON):
-                os.remove(EXTRACTED_BSA_JSON)
+            if os.path.exists(EXTRACTED_GAME_ARCHIVE_JSON):
+                os.remove(EXTRACTED_GAME_ARCHIVE_JSON)
             if os.path.exists('bsa_extracted/'):
                 def delete_directory(dir_path):
                     try:
@@ -1083,7 +1064,7 @@ class main(QWidget):
             self.list_compact.create_list()
             self.list_eslify.create_list()
         confirm.accepted.connect(accepted)
-        if "BSA-RESET" in self.skip_confirmations:
+        if f"{GAME_ARCHIVE_TYPE}-RESET" in self.skip_confirmations:
             confirm.accept()
         else:
             confirm.show()
@@ -1400,7 +1381,7 @@ class main(QWidget):
     def delete_output(self, output_folder: str, files_to_remove: list[str], remove_maps=True):
         QApplication.setOverrideCursor(QCursor(Qt.CursorShape.WaitCursor))   
         if remove_maps:
-            shutil.rmtree(FORM_ID_MAPS_JSON, ignore_errors=True)
+            shutil.rmtree(FORM_ID_MAPS_FOLDER, ignore_errors=True)
         shutil.rmtree(CELL_IDS_FOLDER, ignore_errors=True)
         def silent_remove(file_path):
             try:
@@ -1415,12 +1396,12 @@ class main(QWidget):
         if os.path.exists(output_folder) and 'eslifier' in output_folder.lower():
             #if vortex then we need to restore any .vortex_backup
             if _global.mod_manager_mode == 1 and _global.vortex_restore_backups:
-                gamedata = VortexDBParser.get_section("settings###gameMode###discovered###skyrimse")
-                skyrim_folder_path = os.path.normpath(os.path.join(gamedata.get('path'), "Data"))
+                gamedata = VortexDBParser.get_section(f"settings###gameMode###discovered###{VORTEX_GAME_NAME}")
+                game_folder_path = os.path.normpath(os.path.join(gamedata.get('path'), "Data"))
 
                 for file in files_to_remove:
                     rel_path = os.path.relpath(file, output_folder)
-                    data_folder_file_path = os.path.join(skyrim_folder_path, rel_path)
+                    data_folder_file_path = os.path.join(game_folder_path, rel_path)
                     vortex_backup_path = data_folder_file_path + '.vortex_backup'
                     if os.path.exists(vortex_backup_path) and os.path.samefile(file, data_folder_file_path):
                         silent_remove(data_folder_file_path)
@@ -1523,10 +1504,10 @@ class CompactorWorker(QObject):
         count = 0
         if self.update_header:
             try:
-                with open(MISSING_SKYRIM_AS_MASTER_JSON, 'r', encoding='utf-8') as f:
-                    missing_skyrim_esm = json.load(f)
+                with open(MISSING_GAME_AS_MASTER_JSON, 'r', encoding='utf-8') as f:
+                    missing_game_esm = json.load(f)
             except:
-                missing_skyrim_esm = {}
+                missing_game_esm = {}
         with open(FLAG_DICTIONARY_JSON, 'r', encoding='utf-8') as f:
             flag_dict = json.load(f)
         if self.generate_cell_master:
@@ -1536,12 +1517,12 @@ class CompactorWorker(QObject):
         winning_files_dict: dict = self.get_from_file(WINNING_FILES_DICT_JSON)
         master_byte_data: dict = self.get_from_file(MASTER_BYTE_DATA_JSON)
         files_to_patch: dict = self.get_from_file(FILE_MASTERS_JSON)
-        bsa_masters = []
-        for value in _global.bsa_dict.values():
-            bsa_masters.extend(value)
+        game_archive_masters = []
+        for value in _global.game_archive_dict.values():
+            game_archive_masters.extend(value)
 
         additional_file_patcher_conditions = user_and_master_conditions_class()
-        cfids = CFIDs(self.create_new_cell_plugin, original_files, winning_files_dict, {}, {}, master_byte_data, bsa_masters,
+        cfids = CFIDs(self.create_new_cell_plugin, original_files, winning_files_dict, {}, {}, master_byte_data, game_archive_masters,
                        additional_file_patcher_conditions)
         if _global.hash_output:
             write_normal(self.tr("Hashing any existing files for changes..."))
@@ -1553,14 +1534,14 @@ class CompactorWorker(QObject):
             percent = round((count/total)*100,1)
             write_patching(round(percent), patching_str.format(percent, count, total))
             dependents = self.dependency_dictionary[os.path.basename(file).lower()]
-            all_dependents_have_skyrim_esm_as_master = True
+            all_dependents_have_game_esm_as_master = True
             if self.update_header:
-                for plugin_without_skyrim_as_master, master_0 in missing_skyrim_esm.items():
-                    if plugin_without_skyrim_as_master in dependents and os.path.basename(file) == master_0:
-                        all_dependents_have_skyrim_esm_as_master = False
+                for plugin_without_game_esm_as_master, master_0 in missing_game_esm.items():
+                    if plugin_without_game_esm_as_master in dependents and os.path.basename(file) == master_0:
+                        all_dependents_have_game_esm_as_master = False
                         break
             else:
-                all_dependents_have_skyrim_esm_as_master = True
+                all_dependents_have_game_esm_as_master = True
             if self.generate_cell_master:
                 flags = flag_dict[file]
                 generate_cell_master = False
@@ -1570,7 +1551,7 @@ class CompactorWorker(QObject):
             else:
                 generate_cell_master = False
             cfids.compact_and_patch(
-                            file, dependents, all_dependents_have_skyrim_esm_as_master, 
+                            file, dependents, all_dependents_have_game_esm_as_master, 
                             generate_cell_master, files_to_patch)
 
         if finalize:

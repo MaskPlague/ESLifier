@@ -84,12 +84,13 @@ class log_stream(QMainWindow):
             cls._instance = super(log_stream, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self, parent=None, version='0.0.0'):
+    def __init__(self, parent=None, version='0.0.0', ESLIFIER_DATA_FOLDER='', ESLIFIER_LOG_FILE='', PROGRAM_NAME=''):
         if self._init:
             return
         self._init = True
         super().__init__(parent)
         global _ls
+        self.ESLIFIER_DATA_FOLDER = ESLIFIER_DATA_FOLDER
         _ls = log_stream()
         self.setWindowTitle('Log Stream')
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowCloseButtonHint & ~Qt.WindowType.Dialog)
@@ -119,20 +120,20 @@ class log_stream(QMainWindow):
         self.error_start = self.tr("[Error] ")
         self.warning_start = self.tr("[Warning] ")
         
-        if not os.path.exists("ESLifier_Data/"):
-            os.makedirs("ESLifier_Data/")
+        if not os.path.exists(ESLIFIER_DATA_FOLDER):
+            os.makedirs(ESLIFIER_DATA_FOLDER)
 
         max_logs = 3
 
         for i in range(max_logs, -1, -1):
-            src = os.path.join("ESLifier_Data", f"ESLifier_{i-1}.log") if i > 0 else "ESLifier_Data/ESLifier.log"
-            dst = os.path.join("ESLifier_Data", f"ESLifier_{i}.log")
+            src = os.path.join(ESLIFIER_DATA_FOLDER, f"ESLifier_{i-1}.log") if i > 0 else ESLIFIER_LOG_FILE
+            dst = os.path.join(ESLIFIER_DATA_FOLDER, f"ESLifier_{i}.log")
             if os.path.exists(dst):
                 os.remove(dst)
             if os.path.exists(src):
                 shutil.copy(src, dst)
-        self.log_file = open("ESLifier_Data/ESLifier.log", 'w', encoding='utf-8')
-        write_to_file(f'ESLifier Version v{version}')
+        self.log_file = open(ESLIFIER_LOG_FILE, 'w', encoding='utf-8')
+        write_to_file(f'{PROGRAM_NAME} Version v{version}')
         write_to_file('Working directory is ' + os.getcwd())
         if DEBUG:
             self.write_to_file("Debug Mode Enabled for Printing")
@@ -331,7 +332,9 @@ class log_stream(QMainWindow):
         with self.display_queue.mutex:
             self.display_queue.queue.clear()
         self.text_edit.setStyleSheet("background-color: red;")
-        self.write_normal(self.tr("An exception has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data."))
+        self.write_normal(
+            self.tr("An exception has occured, please report this bug to the github and include the ESLifier.log file found in %0.")
+            .replace("%0", self.ESLIFIER_DATA_FOLDER))
         trace = traceback.format_tb(exc_traceback, 5)
         self.write_normal(''.join(trace), False)
         self.write_normal(f"Unhandled exception: {exc_value}", False)
@@ -351,7 +354,9 @@ class log_stream(QMainWindow):
         with self.display_queue.mutex:
             self.display_queue.queue.clear()
         self.text_edit.setStyleSheet("background-color: red;")
-        self.write_normal(self.tr("An exception has occured, please report this bug to the github and include the ESLifier.log file found in ESLifier_Data."))
+        self.write_normal(
+            self.tr("An exception has occured, please report this bug to the github and include the ESLifier.log file found in %0.")
+            .replace("%0", self.ESLIFIER_DATA_FOLDER))
         trace = traceback.format_tb(args.exc_traceback, 5)
         self.write_normal(''.join(trace), False)
         self.write_normal(f"Unhandled exception: {args.exc_value}", False)

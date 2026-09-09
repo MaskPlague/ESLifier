@@ -12,7 +12,11 @@ import time
 #from intervaltree import IntervalTree
 from full_form_processor import form_processor
 from create_cell_master import create_new_cell_plugin
-from data_holder import _global
+from data_holder import (_global, GAME_MODE, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ESM_NAME, MO2_GAME_NAME, SHORT_GAME_NAME,
+                         CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
+                         EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
+                         MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
+                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON)
 from log_stream import write_error, write_normal, write_progress, clear_and_leave_log_open, write_insert, write_to_file
 from PyQt6.QtCore import QCoreApplication
 if GAME_MODE == "SSE":
@@ -51,7 +55,7 @@ class CFIDs():
         self.compacted_and_patched: dict[str, set[str]] = compacted_and_patched
         self.master_byte_data = master_byte_data
         self.bsa_masters = set(bsa_masters)
-        self.bsa_dict = _global.bsa_dict
+        self.bsa_dict = _global.game_archive_dict
         self.lock = threading.Lock()
         #Semaphore prevents the Erno to many open files
         self.semaphore = threading.Semaphore(1000)
@@ -59,10 +63,10 @@ class CFIDs():
         self.all_patcher_experimental: bool = _global.all_patcher_experimental
 
     def save_data(self):
-        self.dump_compacted_and_patched('ESLifier_Data/compacted_and_patched.json', self.compacted_and_patched)
-        self.dump_dictionary('ESLifier_Data/original_files.json', self.original_files)
-        self.dump_dictionary('ESLifier_Data/winning_file_history_dict.json', self.winning_file_history_dict)
-        self.dump_dictionary('ESLifier_Data/master_byte_data.json', self.master_byte_data)
+        self.dump_compacted_and_patched(COMPACTED_AND_PATCHED_JSON, self.compacted_and_patched)
+        self.dump_dictionary(ORIGINAL_FILES_JSON, self.original_files)
+        self.dump_dictionary(WINNING_FILE_HISTORY_DICT_JSON, self.winning_file_history_dict)
+        self.dump_dictionary(MASTER_BYTE_DATA_JSON, self.master_byte_data)
 
     def dump_compacted_and_patched(self, file, dictionary: dict[str, set[str]]):
         data_with_list: dict[str, list[str]] = self.get_from_file(file)
@@ -101,9 +105,9 @@ class CFIDs():
 
     def hash_output_files(self, files_to_not_hash: set[str], before_patching:bool = False) -> dict:
         to_hash = {}
-        new_file_hashes: dict = self.get_from_file("ESLifier_Data/new_file_hashes.json")
-        local_compacted_and_patched = self.get_from_file("ESLifier_Data/compacted_and_patched.json")
-        local_esl_flagged: list[str] = self.get_from_file("ESLifier_Data/esl_flagged.json")
+        new_file_hashes: dict = self.get_from_file(NEW_FILE_HASHES_JSON)
+        local_compacted_and_patched = self.get_from_file(COMPACTED_AND_PATCHED_JSON)
+        local_esl_flagged: list[str] = self.get_from_file(ESL_FLAGGED_JSON)
         lowered_output = self.output_folder.lower()
         write_normal(QCoreApplication.translate("CFIDs", "Getting files to hash..."))
         for compacted, values in local_compacted_and_patched.items():
@@ -149,7 +153,7 @@ class CFIDs():
                 thread.join()
         
             write_progress(100, 1, processed_str.format(100.0, self.file_count, self.file_count))
-            self.dump_dictionary("ESLifier_Data/new_file_hashes.json", new_file_hashes)
+            self.dump_dictionary(NEW_FILE_HASHES_JSON, new_file_hashes)
     
     def hash_files(self, to_hash, files_to_not_hash: set, before_patching, new_file_hashes: dict):
         processed_str = ('-    ' + QCoreApplication.translate("HashWorker", "Processed: %1%") + 
@@ -195,13 +199,13 @@ class CFIDs():
                     if line.startswith('Unpacking error'):
                         raise Exception(f"During Temp Extraction, {line}")
 
-    def compact_and_patch(self, file_to_compact: str, dependents: list, all_dependents_have_skyrim_esm_as_master: bool,
+    def compact_and_patch(self, file_to_compact: str, dependents: list, all_dependents_have_game_esm_as_master: bool,
                            add_cell_to_master: bool, files_to_patch: dict):
         self.do_generate_cell_master = add_cell_to_master
         self.form_id_map = {}
         get_rel_path = _global.get_rel_path
         write_normal(QCoreApplication.translate("CFIDs", "Editing Plugin: %1...").replace("%1", os.path.basename(file_to_compact)))
-        self.compact_file(file_to_compact, all_dependents_have_skyrim_esm_as_master)
+        self.compact_file(file_to_compact, all_dependents_have_game_esm_as_master)
         self.get_form_id_map(file_to_compact)
         dependent_thread: threading.Thread = None
         if dependents:
@@ -477,7 +481,7 @@ class CFIDs():
     #original Form ID w/o leading 0s, original Form ID w/ leading 0s, new Form ID w/o 0s, new Form ID w/ 0s, 
     #the orginal Form ID in \x00\x00\x00\xMASTER order, and the new Form ID in the same order.
     def get_form_id_map(self, file: str):
-        form_id_file_name = "ESLifier_Data/Form_ID_Maps/" + os.path.basename(file).lower() + "_FormIdMap.txt"
+        form_id_file_name = FORM_ID_MAPS_FOLDER + os.path.basename(file).lower() + "_FormIdMap.txt"
         form_id_file_data = ''
         with open(form_id_file_name, 'r') as fidf:
             form_id_file_data = fidf.readlines()
@@ -683,9 +687,9 @@ class CFIDs():
         return data_list, grup_struct
     
     #Compacts master file and returns the new mod folder
-    def compact_file(self, file: str, all_dependents_have_skyrim_esm_as_master: bool):
+    def compact_file(self, file: str, all_dependents_have_game_esm_as_master: bool):
         basename = os.path.basename(file)
-        form_id_file_name = 'ESLifier_Data/Form_ID_Maps/' + basename.lower() + "_FormIdMap.txt"
+        form_id_file_name = FORM_ID_MAPS_FOLDER + basename.lower() + "_FormIdMap.txt"
         if not os.path.exists(os.path.dirname(form_id_file_name)):
             os.makedirs(os.path.dirname(form_id_file_name))
 
@@ -706,7 +710,7 @@ class CFIDs():
         data_list, grup_struct = self.create_data_list(data)
 
         master_count: int
-        master_count, has_skyrim_esm_master = self.get_master_count(data_list)
+        master_count, has_game_esm_master = self.get_master_count(data_list)
         self.master_byte = master_count.to_bytes()
 
         data_list, sizes_list = self.decompress_data(data_list)
@@ -730,7 +734,7 @@ class CFIDs():
 
         all_form_ids_list = set([form_id for form_id, record_type in form_id_list])
 
-        if self.update_header and master_count != 0 and has_skyrim_esm_master and all_dependents_have_skyrim_esm_as_master:
+        if self.update_header and master_count != 0 and has_game_esm_master and all_dependents_have_game_esm_as_master:
             new_id = binascii.unhexlify(master_count.to_bytes().hex() + '000000')
             new_range = 4096
         else:
@@ -857,7 +861,7 @@ class CFIDs():
         
     #replaced the old form ids with the new ones in all files that have the comapacted file as a master
     def patch_dependent_plugins(self, file: str, dependents: list, file_masters: dict):
-        form_id_file_name = "ESLifier_Data/Form_ID_Maps/" + os.path.basename(file).lower() + "_FormIdMap.txt"
+        form_id_file_name = FORM_ID_MAPS_FOLDER + os.path.basename(file).lower() + "_FormIdMap.txt"
         form_id_file_data = ''
         
         with open(form_id_file_name, 'r', encoding='utf-8') as form_id_file:
@@ -993,17 +997,18 @@ class CFIDs():
         offset = 24
         data_len = len(tes4)
         master_list_count = 0
-        has_skyrim_esm_master = False
+        has_game_esm_master = False
+        game_esm = f'{GAME_ESM_NAME}'.encode()
         while offset < data_len:
             field = tes4[offset:offset+4]
             field_size = struct.unpack("<H", tes4[offset+4:offset+6])[0]
             if field == b'MAST':
                 master_list_count  += 1
                 if field_size == 11:
-                    if tes4[offset+6:offset+16] == b'Skyrim.esm':
-                        has_skyrim_esm_master = True
+                    if tes4[offset+6:offset+16] == game_esm:
+                        has_game_esm_master = True
             offset += field_size + 6
-        return master_list_count, has_skyrim_esm_master
+        return master_list_count, has_game_esm_master
     
     def add_cell_master_to_masters(self, data_list: list[bytes]):
         tes4 = data_list[0]

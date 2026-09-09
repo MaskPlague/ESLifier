@@ -3,14 +3,71 @@ import os
 
 from PyQt6.QtCore import QCoreApplication
 
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from settings_page import settings
+#from typing import TYPE_CHECKING
+#if TYPE_CHECKING:
+#    from settings_page import settings
+GAME_MODE = "SSE"
+
+def update_game_globals():
+    global VERBOSE_GAME_NAME, SHORT_GAME_NAME, VORTEX_GAME_NAME, MO2_GAME_NAME, GAME_ESM_NAME, PROGRAM_NAME, EXE_NAME
+    global GAME_ARCHIVE_TYPE, GAME_ARCHIVE_EXTENSION, NEXUS_FILES_TAB_URL, GITHUB_MASTER_JSONS_URL
+    VERBOSE_GAME_NAME = "Skyrim Special Edition"        if GAME_MODE == "SSE" else "Fallout 4"
+    SHORT_GAME_NAME = "Skyirm"                          if GAME_MODE == "SSE" else "Fallout"
+    VORTEX_GAME_NAME = "skyrimse"                       if GAME_MODE == "SSE" else "fallout4"
+    MO2_GAME_NAME = "Skyrim Special Edition"            if GAME_MODE == "SSE" else "Fallout 4"
+    GAME_ESM_NAME = "Skyrim.esm"                        if GAME_MODE == "SSE" else "Fallout4.esm"
+
+    PROGRAM_NAME = "ESLifier"                           if GAME_MODE == "SSE" else "ESLifier-FO4"
+    EXE_NAME = PROGRAM_NAME + ".exe"
+    GAME_ARCHIVE_TYPE = "BSA"                           if GAME_MODE == "SSE" else "BA2"
+    GAME_ARCHIVE_EXTENSION = "." + GAME_ARCHIVE_TYPE.lower()
+
+    NEXUS_FILES_TAB_URL = ("https://www.nexusmods.com/skyrimspecialedition/mods/145168?tab=files"
+                                                        if GAME_MODE == "SSE" else
+                           "https://www.nexusmods.com/fallout4/mods/UNK?tab=files")
+    GITHUB_MASTER_JSONS_URL = ("https://raw.githubusercontent.com/MaskPlague/ESLifier/refs/heads/main/master_sse_jsons/"
+                                                        if GAME_MODE == "SSE" else
+                               "https://raw.githubusercontent.com/MaskPlague/ESLifier/refs/heads/main/master_fo4_jsons/")
+    
+    global ESLIFIER_DATA_FOLDER, CELL_IDS_FOLDER, FORM_ID_MAPS_FOLDER, ESLIFIER_LOG_FILE
+    global BLACKLIST_JSON, CELL_CHANGED_JSON, CELL_MASTER_INFO_JSON, COMPACTED_AND_PATCHED_JSON, DEPENDENCY_DICTIONARY_JSON
+    global DLL_DICT_JSON, ESL_FLAGGED_JSON, EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, IGNORED_FILES_JSON
+    global MASTER_BYTE_DATA_JSON, MAXED_MASTERS_JSON, MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON
+    global PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, SETTINGS_JSON, WINNING_FILES_DICT_JSON, WINNING_FILE_HISTORY_DICT_JSON
+
+    ESLIFIER_DATA_FOLDER = "ESLifier_Data/"             if GAME_MODE == "SSE" else "ESLifier_FO4_Data/"
+
+    CELL_IDS_FOLDER =                                   ESLIFIER_DATA_FOLDER + "Cell_IDs"
+    FORM_ID_MAPS_FOLDER =                               ESLIFIER_DATA_FOLDER + "Form_ID_Maps"
+    ESLIFIER_LOG_FILE =                                 ESLIFIER_DATA_FOLDER + "ESLifier.log"
+
+    BLACKLIST_JSON =                                    ESLIFIER_DATA_FOLDER + "blacklist.json"
+    CELL_CHANGED_JSON =                                 ESLIFIER_DATA_FOLDER + "cell_changed.json"
+    CELL_MASTER_INFO_JSON =                             ESLIFIER_DATA_FOLDER + "cell_master_info.json"
+    COMPACTED_AND_PATCHED_JSON =                        ESLIFIER_DATA_FOLDER + "compacted_and_patched.json"
+    DEPENDENCY_DICTIONARY_JSON =                        ESLIFIER_DATA_FOLDER + "dependency_dictionary.json"
+    DLL_DICT_JSON =                                     ESLIFIER_DATA_FOLDER + "dll_dict.json"
+    ESL_FLAGGED_JSON =                                  ESLIFIER_DATA_FOLDER + "esl_flagged.json"
+    EXTRACTED_GAME_ARCHIVE_JSON =                       ESLIFIER_DATA_FOLDER + "extracted_bsa.json"
+    FILE_MASTERS_JSON =                                 ESLIFIER_DATA_FOLDER + "file_masters.json"
+    FLAG_DICTIONARY_JSON =                              ESLIFIER_DATA_FOLDER + "flag_dictionary.json"
+    IGNORED_FILES_JSON =                                ESLIFIER_DATA_FOLDER + "ignored_files.json"
+    MASTER_BYTE_DATA_JSON =                             ESLIFIER_DATA_FOLDER + "master_byte_data.json"
+    MAXED_MASTERS_JSON =                                ESLIFIER_DATA_FOLDER + "maxed_masters.json"
+    MISSING_GAME_AS_MASTER_JSON =                       ESLIFIER_DATA_FOLDER + "missing_game_as_master.json"
+    NEW_FILE_HASHES_JSON =                              ESLIFIER_DATA_FOLDER + "new_file_hashes.json"
+    ORIGINAL_FILES_JSON =                               ESLIFIER_DATA_FOLDER + "original_files.json"
+    PREVIOUSLY_COMPACTED_JSON =                         ESLIFIER_DATA_FOLDER + "previously_compacted.json"
+    PREVIOUSLY_ESL_FLAGGED_JSON =                       ESLIFIER_DATA_FOLDER + "previously_esl_flagged.json"
+    SETTINGS_JSON =                                     ESLIFIER_DATA_FOLDER + "settings.json"
+    WINNING_FILES_DICT_JSON =                           ESLIFIER_DATA_FOLDER + "winning_files_dict.json"
+    WINNING_FILE_HISTORY_DICT_JSON =                    ESLIFIER_DATA_FOLDER + "winning_file_history_dict.json"
+update_game_globals()
 
 class _global():
     # Commonly Accessed Settings
     _settings: dict = {}
-    skyrim_folder_path:str = ''
+    game_folder_path:str = ''
     output_folder_path:str = ''
     output_folder_name:str = ''
     output_folder_joined_path:str = ''
@@ -36,8 +93,8 @@ class _global():
     # Vars for get_rel_path
     mo2_overwrite_path_lower = ''
     mo2_overwrite_path_len = 0
-    skyrim_folder_path_lower = ''
-    skyrim_folder_path_len = 0
+    game_folder_path_lower = ''
+    game_folder_path_len = 0
     mo2_mods_folder_lower = ''
     mo2_mods_folder_len = 0
     mod_staging_folder_lower = ''
@@ -57,10 +114,10 @@ class _global():
     mods_with_seq = {} #{mod: seq_file} mods that have seq files
     vortex_error = None #storage for vortex error across classes
     mo2_error = None #storage for mo2 error across classes
-    bsa_dict = {}   #{bsa_file: list[mod]} bsa and the mods they contain
+    game_archive_dict = {}   #{bsa_file: list[mod]} bsa and the mods they contain
     pex_with_getmodbyname: dict[str, set[str]] = {} #{mod: set(pex)} mods with pex with getmodbyname
 
-    def init(settings_widget: settings, vortex, mo2):
+    def init(settings_widget, vortex, mo2):
         _global._settings = settings_widget.settings
         _global.Vortex = vortex
         _global.MO2 = mo2
@@ -79,8 +136,8 @@ class _global():
         _global.vortex_data_path =                  _global._settings.get('vortex_data_path', '')
         _global.vortex_db_path =                    os.path.normpath(os.path.join(_global.vortex_data_path, "state.v2"))
         if _global.mod_manager_mode == 0:
-            _global.skyrim_folder_path =                _global._settings.get('skyrim_folder_path', '')
-            _global.plugins_txt_path =                  _global._settings.get('plugins_txt_path', '')
+            _global.game_folder_path =              _global._settings.get('skyrim_folder_path', '')
+            _global.plugins_txt_path =              _global._settings.get('plugins_txt_path', '')
         _global.vortex_restore_backups =            _global._settings.get('vortex_restore_backups', True)
         _global.update_header =                     _global._settings.get('update_header', True)
         _global.generate_cell_master =              _global._settings.get('generate_cell_master', True)
@@ -93,8 +150,8 @@ class _global():
         _global.output_folder_joined_path_lower =   _global.output_folder_joined_path.lower()
         _global.output_folder_joined_path_len =     len(_global.output_folder_joined_path)
 
-        _global.skyrim_folder_path_lower =          _global.skyrim_folder_path.lower()
-        _global.skyrim_folder_path_len =            len(_global.skyrim_folder_path)
+        _global.game_folder_path_lower =          _global.game_folder_path.lower()
+        _global.game_folder_path_len =            len(_global.game_folder_path)
 
         _global.bsa_extracted_path_len =            len(os.path.normpath(os.path.join(_global.cwd, 'bsa_extracted')))
         _global.bsa_extracted_temp_path_len =       len(os.path.normpath(os.path.join(_global.cwd, 'bsa_extracted_temp')))
@@ -107,8 +164,8 @@ class _global():
         _global.mod_staging_folder_lower =          _global.mod_staging_folder.lower()
         _global.mod_staging_folder_len =            len(_global.mod_staging_folder)
 
-        _global.skyrim_folder_path_lower =          _global.skyrim_folder_path.lower()
-        _global.skyrim_folder_path_len =            len(_global.skyrim_folder_path)
+        _global.game_folder_path_lower =          _global.game_folder_path.lower()
+        _global.game_folder_path_len =            len(_global.game_folder_path)
         _global.folders_grabbed = True
 
     def update_mo2_vars():
@@ -182,8 +239,8 @@ class _global():
         # Vortex Mode
         if _global.mod_manager_mode == 1:
             # SSE Data Folder Path
-            if _global.skyrim_folder_path and file_lower.startswith(_global.skyrim_folder_path_lower):
-                return file_norm[_global.skyrim_folder_path_len:].lstrip(os.sep)
+            if _global.game_folder_path and file_lower.startswith(_global.game_folder_path_lower):
+                return file_norm[_global.game_folder_path_len:].lstrip(os.sep)
             # Mod Staging Folder
             elif file_lower.startswith(_global.mod_staging_folder_lower):
                 remainder = file_norm[_global.mod_staging_folder_len:].lstrip(os.sep)
@@ -194,8 +251,8 @@ class _global():
 
         # Manual Mode
         if _global.mod_manager_mode == 0:
-            if file_lower.startswith(_global.skyrim_folder_path_lower):
-                return file_norm[_global.skyrim_folder_path_len:].lstrip(os.sep)
+            if file_lower.startswith(_global.game_folder_path_lower):
+                return file_norm[_global.game_folder_path_len:].lstrip(os.sep)
 
         # Files In Output (renamed facegeom)
         if file_lower.startswith(_global.output_folder_joined_path_lower):

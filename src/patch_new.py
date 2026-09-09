@@ -11,17 +11,22 @@ from PyQt6.QtGui import QIcon
 from scanners.scanner import scanner
 from scanners.dependency_getter import dependecy_getter
 from compact_form_ids import CFIDs
-from data_holder import _global
 from scanners.cell_changed_scanner import cell_scanner
 from patchers.file_defined_patcher_conditions import user_and_master_conditions_class
+from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ESM_NAME, MO2_GAME_NAME, SHORT_GAME_NAME,
+                         CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
+                         EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
+                         MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
+                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, DEPENDENCY_DICTIONARY_JSON,
+                         MAXED_MASTERS_JSON, BLACKLIST_JSON, CELL_CHANGED_JSON, DLL_DICT_JSON, ESLIFIER_DATA_FOLDER)
 from scanners.vortex_database_reader import VortexDBParser
 from log_stream import clear_and_close_log, clear_and_leave_log_open, write_error, write_normal, write_patching
 
 class patch_new():
     def scan_and_find(self, main_parent):
         self.main_parent = main_parent
-        if (not os.path.exists(os.path.normpath('ESLifier_Data/compacted_and_patched.json')) 
-            and not os.path.exists(os.path.normpath('ESLifier_Data/esl_flagged.json'))):
+        if (not os.path.exists(os.path.normpath(COMPACTED_AND_PATCHED_JSON)) 
+            and not os.path.exists(os.path.normpath(ESL_FLAGGED_JSON))):
             self.no_data_warning = QMessageBox()
             self.no_data_warning.setIcon(QMessageBox.Icon.Information)
             self.no_data_warning.setWindowTitle(QCoreApplication.translate("patch_new", "No Compacted/Patched Mods"))
@@ -37,15 +42,15 @@ class patch_new():
             self.main_parent.setEnabled(True)
             clear_and_close_log()
             return
-        if not os.path.exists(os.path.normpath('ESLifier_data/master_byte_data.json')):
+        if not os.path.exists(os.path.normpath(MASTER_BYTE_DATA_JSON)):
             self.output_not_new_warning = QMessageBox()
             self.output_not_new_warning.setIcon(QMessageBox.Icon.Information)
             self.output_not_new_warning.setWindowTitle(QCoreApplication.translate("patch_new", "Output is from outdated build."))
             self.output_not_new_warning.setText(QCoreApplication.translate("patch_new", 
                                                 "ESLifier cannot find the file master_byte_data.json\n"\
-                                                "in ESLifier_Data/, this is likely because the current\n"\
+                                                "in %0, this is likely because the current\n"\
                                                 "ESLifier output was made on a version older than v0.12.0.\n"\
-                                                "This button needs an output made from v0.12.0+."))
+                                                "This button needs an output made from v0.12.0+.").replace("%0", ESLIFIER_DATA_FOLDER))
             self.output_not_new_warning.setWindowIcon(QIcon(":/images/ESLifier.png"))
             self.output_not_new_warning.addButton(QMessageBox.StandardButton.Ok)
             self.output_not_new_warning.show()
@@ -181,40 +186,40 @@ class PatchNewScannerWorker(QObject):
         write_normal(self.tr('Getting Dependencies'))
         dependecy_getter.scan()
         try:
-            if os.path.exists('ESLifier_Data/compacted_and_patched.json'):
-                with open("ESLifier_Data/compacted_and_patched.json", 'r', encoding='utf-8') as f:
+            if os.path.exists(COMPACTED_AND_PATCHED_JSON):
+                with open(COMPACTED_AND_PATCHED_JSON, 'r', encoding='utf-8') as f:
                     compacted_and_patched: dict[str, list[str]] = json.load(f)
             else:
                 compacted_and_patched: dict[str, list[str]] = {}
-            if os.path.exists('ESLifier_Data/esl_flagged.json'):
-                with open("ESLifier_Data/esl_flagged.json", 'r', encoding='utf-8') as f:
+            if os.path.exists(ESL_FLAGGED_JSON):
+                with open(ESL_FLAGGED_JSON, 'r', encoding='utf-8') as f:
                     esl_flagged: list[str] = json.load(f)
             else:
                 esl_flagged: list[str] = {}
-            with open("ESLifier_Data/file_masters.json", 'r', encoding='utf-8') as f:
+            with open(FILE_MASTERS_JSON, 'r', encoding='utf-8') as f:
                 file_masters: dict[str, list[str]] = json.load(f)
-            with open("ESLifier_Data/dependency_dictionary.json", 'r', encoding='utf-8') as f: 
+            with open(DEPENDENCY_DICTIONARY_JSON, 'r', encoding='utf-8') as f: 
                 dependencies: dict[str, list[str]] = json.load(f)
-            if os.path.exists("ESLifier_Data/winning_file_history_dict.json"):
-                with open("ESLifier_Data/winning_file_history_dict.json", 'r', encoding='utf-8') as f:
+            if os.path.exists(WINNING_FILE_HISTORY_DICT_JSON):
+                with open(WINNING_FILE_HISTORY_DICT_JSON, 'r', encoding='utf-8') as f:
                     winning_file_history_dict: dict[str, list[str]] = json.load(f)
             else:
                 winning_file_history_dict: dict[str, list[str]] = {}
-            if os.path.exists("ESLifier_Data/winning_files_dict.json"):
-                with open("ESLifier_Data/winning_files_dict.json", 'r', encoding='utf-8') as f:
+            if os.path.exists(WINNING_FILES_DICT_JSON):
+                with open(WINNING_FILES_DICT_JSON, 'r', encoding='utf-8') as f:
                     winning_files_dict: dict[str, (str, list[str])] = json.load(f)
             else:
                 winning_files_dict: dict[str, (str, list[str])] = {}
         except Exception as e:
-            write_error(self.tr("Issue reading an ESLifier_Data file."))
+            write_error(self.tr("Issue reading an %0 file.").replace("%0", ESLIFIER_DATA_FOLDER))
             write_error(e, True)
             self.finished_signal.emit({},{},{},0,0,[])
 
         self.hash_mismatches.clear()
         write_normal(self.tr('Detecting Hash Changes...'))
-        if os.path.exists('ESLifier_Data/original_files.json'):
+        if os.path.exists(ORIGINAL_FILES_JSON):
             threads: list[threading.Thread] = []
-            with open('ESLifier_Data/original_files.json', 'r', encoding='utf-8') as f:
+            with open(ORIGINAL_FILES_JSON, 'r', encoding='utf-8') as f:
                 original_plugins_dict: dict = json.load(f)
                 original_plugins_hash_map = [values for key, values in original_plugins_dict.items()]
             for file, original_hash in original_plugins_hash_map:
@@ -254,7 +259,7 @@ class PatchNewScannerWorker(QObject):
                     if rel_path.lower() not in actual_cases_output_files:
                         actual_cases_output_files[rel_path.lower()] = os.path.join(self.output_path, rel_path)
         
-        with open('ESLifier_Data/previously_compacted.json', 'w', encoding='utf-8') as f:
+        with open(PREVIOUSLY_COMPACTED_JSON, 'w', encoding='utf-8') as f:
             previously_compacted = [key for key in compacted_and_patched.keys()]
             json.dump(previously_compacted, f, ensure_ascii=False, indent=4)
 
@@ -364,19 +369,19 @@ class PatchNewScannerWorker(QObject):
             self.delete_files(files_that_exist_to_delete, winning_file_history_dict, only_remove, compacted_and_patched)
 
     def delete_files(self, files_to_remove: list[str], winning_file_history_dict: dict[str, list[str]], only_remove: bool, compacted_and_patched: dict):
-        with open('ESLifier_Data/compacted_and_patched.json', 'w', encoding='utf-8') as f:
+        with open(COMPACTED_AND_PATCHED_JSON, 'w', encoding='utf-8') as f:
             json.dump(compacted_and_patched, f, ensure_ascii=False, indent=4)
-        with open("ESLifier_Data/original_files.json", 'r', encoding='utf-8') as f:
+        with open(ORIGINAL_FILES_JSON, 'r', encoding='utf-8') as f:
             original_files: dict[str, list[str]] = json.load(f)
         deleted_count = 0
         if _global.mod_manager_mode == 1 and _global.vortex_restore_backups:
-            gamedata = VortexDBParser.get_section("settings###gameMode###discovered###skyrimse")
-            skyrim_folder_path = os.path.normpath(os.path.join(gamedata.get('path'), "Data"))
+            gamedata = VortexDBParser.get_section(f"settings###gameMode###discovered###{VORTEX_GAME_NAME}")
+            game_folder_path = os.path.normpath(os.path.join(gamedata.get('path'), "Data"))
 
             for file in files_to_remove:
                 if os.path.exists(file):
                     rel_path = os.path.relpath(file, self.output_path)
-                    data_folder_file_path = os.path.join(skyrim_folder_path, rel_path)
+                    data_folder_file_path = os.path.join(game_folder_path, rel_path)
                     vortex_backup_path = data_folder_file_path + '.vortex_backup'
                     if os.path.exists(vortex_backup_path) and os.path.samefile(file, data_folder_file_path):
                         os.remove(data_folder_file_path)
@@ -401,9 +406,9 @@ class PatchNewScannerWorker(QObject):
                 if cased_rel_path.lower() in original_files:
                     original_files.pop(cased_rel_path.lower())
 
-        with open("ESLifier_Data/winning_file_history_dict.json", 'w', encoding='utf-8') as f:
+        with open(WINNING_FILE_HISTORY_DICT_JSON, 'w', encoding='utf-8') as f:
             json.dump(winning_file_history_dict, f, ensure_ascii=False, indent=4)
-        with open("ESLifier_Data/original_files.json", 'w', encoding='utf-8') as f:
+        with open(ORIGINAL_FILES_JSON, 'w', encoding='utf-8') as f:
             json.dump(original_files, f, ensure_ascii=False, indent=4)
         clear_and_leave_log_open()
         self.main_parent.redoing_output = True
@@ -412,19 +417,19 @@ class PatchNewScannerWorker(QObject):
         self.main_parent.scan()
 
     def detect_new_files(self):
-        if not os.path.exists("ESLifier_Data/compacted_and_patched.json"):
+        if not os.path.exists(COMPACTED_AND_PATCHED_JSON):
             self.finished_signal.emit({},{},{},0,0,[])
             return
         write_normal('')
         write_normal(self.tr('Getting New Dependencies and Files'))
         try:
-            with open("ESLifier_Data/compacted_and_patched.json", 'r', encoding='utf-8') as f:
+            with open(COMPACTED_AND_PATCHED_JSON, 'r', encoding='utf-8') as f:
                 compacted_and_patched: dict[str, list[str]] = json.load(f)
-            with open("ESLifier_Data/file_masters.json", 'r', encoding='utf-8') as f:
+            with open(FILE_MASTERS_JSON, 'r', encoding='utf-8') as f:
                 file_masters: dict[str, list[str]] = json.load(f)
-            with open("ESLifier_Data/dependency_dictionary.json", 'r', encoding='utf-8') as f: 
+            with open(DEPENDENCY_DICTIONARY_JSON, 'r', encoding='utf-8') as f: 
                 dependencies: dict[str, list[str]] = json.load(f)
-            with open("ESLifier_Data/dll_dict.json", 'r', encoding='utf-8') as f:
+            with open(DLL_DICT_JSON, 'r', encoding='utf-8') as f:
                 dll_dict: dict[str, list[str]] = json.load(f)
         except Exception as e:
             write_error(self.tr('Failed to find a required dictionary.'))
@@ -489,9 +494,9 @@ class PatchNewWorker(QObject):
         total = len(self.files)
         count = 0
         clear_and_leave_log_open()
-        original_files: dict = self.get_from_file('ESLifier_Data/original_files.json')
-        winning_files_dict: dict = self.get_from_file('ESLifier_Data/winning_files_dict.json')
-        master_byte_data: dict = self.get_from_file('ESLifier_Data/master_byte_data.json')
+        original_files: dict = self.get_from_file(ORIGINAL_FILES_JSON)
+        winning_files_dict: dict = self.get_from_file(WINNING_FILES_DICT_JSON)
+        master_byte_data: dict = self.get_from_file(MASTER_BYTE_DATA_JSON)
         winning_file_history_dict = {}
         compacted_and_patched = {}
         additional_file_patcher_conditions = user_and_master_conditions_class()

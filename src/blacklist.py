@@ -5,7 +5,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit
 from PyQt6.QtGui import QIcon
 
-from data_holder import _global
+from data_holder import _global, BLACKLIST_JSON
 
 class blacklist(QTableWidget):
     def __init__(self):
@@ -48,7 +48,7 @@ class blacklist(QTableWidget):
 
     def create_blacklist(self):
         self.clearContents()
-        self.blacklist = self.get_data_from_file('ESLifier_Data/blacklist.json')
+        self.blacklist = self.get_data_from_file(BLACKLIST_JSON)
         self.setRowCount(len(self.blacklist))
 
         for i in range(len(self.blacklist)):
@@ -123,15 +123,15 @@ class blacklist(QTableWidget):
         self.blockSignals(False)
 
     def add_to_blacklist(self, mods_to_add):
-        self.blacklist = self.get_data_from_file('ESLifier_Data/blacklist.json')
+        self.blacklist = self.get_data_from_file(BLACKLIST_JSON)
         for mod in mods_to_add:
             if mod not in self.blacklist:
                 self.blacklist.append(mod)
-        self.dump_to_file('ESLifier_Data/blacklist.json')
+        self.dump_to_file(BLACKLIST_JSON)
         self.create_blacklist()
 
     def remove_from_blacklist(self):
-        self.blacklist = self.get_data_from_file('ESLifier_Data/blacklist.json')
+        self.blacklist = self.get_data_from_file(BLACKLIST_JSON)
         mods_to_remove = []
         for i in range(self.rowCount()):
             if self.item(i,0).checkState() == Qt.CheckState.Checked:
@@ -139,7 +139,7 @@ class blacklist(QTableWidget):
 
         for mod in mods_to_remove:
             self.blacklist.remove(mod)
-        self.dump_to_file('ESLifier_Data/blacklist.json')
+        self.dump_to_file(BLACKLIST_JSON)
         self.create_blacklist()
 
     def dump_to_file(self, file):

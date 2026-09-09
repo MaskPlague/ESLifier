@@ -416,3 +416,5 @@ eslifier_translation.zip
 eslifier_mo2_integration_translation.zip
 /reader_tools
 *.zip
+/ESLifier_Data_old
+/ESLifier_FO4_Data

@@ -1,7 +1,7 @@
 import os
 import struct
 import json
-
+from data_holder import CELL_MASTER_INFO_JSON
 class create_new_cell_plugin():
     def generate(self, output_folder: str, update_header: bool = True):
         self.output_file = os.path.join(output_folder, 'ESLifier_Cell_Master.esm')
@@ -37,8 +37,8 @@ class create_new_cell_plugin():
         self.new_interior_cell_dict = {}
         self.wrld_dict = {}
         self.counter = 1
-        if os.path.exists(self.output_file) and os.path.exists('ESLifier_Data/cell_master_info.json'):
-            with open('ESLifier_Data/cell_master_info.json', 'r', encoding='utf-8')as f:
+        if os.path.exists(self.output_file) and os.path.exists(CELL_MASTER_INFO_JSON):
+            with open(CELL_MASTER_INFO_JSON, 'r', encoding='utf-8')as f:
                 str_dict: dict = json.load(f)
             # Convert strings back to 
             str_new_interior_cell_dict = str_dict["interior_cells_dict"]
@@ -407,7 +407,7 @@ class create_new_cell_plugin():
             "interior_cells_dict": str_new_interior_dict,
             "wrld_dict": str_wrld_dict
         }
-        with open('ESLifier_Data/cell_master_info.json', 'w', encoding='utf-8')as f:
+        with open(CELL_MASTER_INFO_JSON, 'w', encoding='utf-8')as f:
             json.dump(dump_dict, f , ensure_ascii=False, indent=4)
         with open(self.output_file, 'wb') as f:
             f.write(b''.join(self.new_data_list))
