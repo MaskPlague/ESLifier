@@ -1,0 +1,159 @@
+{
+    "version": 0,
+    "conditions": [
+        {
+            "extension": "json",
+            "contains": "Plugins/FSM/",
+            "patcher": "json_jcontainer"
+        },
+        {
+            "extension": "json",
+            "contains": "SKSE/XEMIUtil/",
+            "patcher": "json_generic_formid_sep_plugin",
+            "separator": ":"
+        },
+        {
+            "extension": "yaml",
+            "endswith": "_PLD.yaml",
+            "patcher": "ini_plugin_sep_formid",
+            "separator": "|"
+        },
+        {
+            "extension": "json",
+            "endswith": "NPC_Token.json",
+            "patcher": "json_generic_key_fid_sep_plugin"
+        },
+        {
+            "extension": "json",
+            "contains": "/Plugins/ContainerDistributionFramework/",
+            "patcher": "json_generic_formid_sep_plugin"
+        },
+        {
+            "extension": "json",
+            "contains": "/Plugins/FarmingDarkness/LetYourHairDown",
+            "patcher": "json_generic_formid_sep_plugin"
+        },
+        {
+            "extension": "json",
+            "endswith": "SetHome.json",
+            "patcher": "json_generic_formid_sep_plugin"
+        },
+        {
+            "extension": "json",
+            "contains": "/Plugins/FrostFallData/",
+            "patcher": "json_generic_key_fid_sep_plugin",
+            "int_type": true,
+            "separator": "___"
+        },
+        {
+            "extension": "json",
+            "contains": "/Plugins/MARAs/",
+            "patcher": "json_jcontainer"
+        },
+        {
+            "extension": "json",
+            "endswith": "/Plugins/ImmersiveInteractions/UserSettings.json",
+            "patcher": "json_generic_formid_sep_plugin"
+        },
+        {
+            "extension": "ini",
+            "endswith": "Plugins/Underwear.ini",
+            "patcher": "ini_formid_sep_plugin"
+        },
+        {
+            "extension": "ini",
+            "endswith": "_ANIO.ini",
+            "patcher": "ini_formid_sep_plugin"
+        },
+        {
+            "extension": "json",
+            "contains": "/Plugins/DIII/",
+            "patcher": "json_generic_plugin_sep_formid"
+        },
+        {
+            "extension": "json",
+            "contains": "/PrismaUI/views/SkillMenu/Skill Trees/",
+            "patcher": "json_generic_plugin_sep_formid"
+        },
+        {
+            "extension": "ini",
+            "contains": "Plugins/CraftingInventoryExtender/",
+            "patcher": "ini_plugin_sep_formid",
+            "separator": "|"
+        },
+        {
+            "extension": "yml",
+            "contains": "SKSE/Acheron/",
+            "patcher": "ini_formid_sep_plugin",
+            "separator": "|"
+        },
+        {
+            "extension": "yaml",
+            "contains": "SKSE/Acheron/",
+            "patcher": "ini_formid_sep_plugin",
+            "separator": "|"
+        },
+        {
+            "extension": "json",
+            "contains": "SKSE/Plugins/LazyFollowers/",
+            "patcher": "json_jcontainer"
+        },
+        {
+            "extension": "json",
+            "contains": "Plugins/SIF/",
+            "patcher": "json_generic_plugin_sep_formid",
+            "separator": "|"
+        },
+        {
+            "extension": "ini",
+            "endswith": "_CID.ini",
+            "patcher": "ini_formid_sep_plugin"
+        },
+        {
+            "extension": "json",
+            "contains": "/Plugins/StartGameSettings/",
+            "patcher": "json_generic_plugin_sep_formid"
+        },
+        {
+            "extension": "toml",
+            "contains": "Plugins/Recast/Patches/",
+            "fid_start": "0x00",
+            "to_id_key": "hex",
+            "patcher": "ini_formid_sep_plugin"
+        },
+        {
+            "extension": "ini",
+            "endswith": "_CRD.ini",
+            "separator": " ~ ",
+            "patcher": "ini_formid_sep_plugin"
+        },
+        {
+            "extension": "json",
+            "contains": "interface/CMStats/",
+            "patcher": "json_generic_plugin_sep_formid"
+        },
+        {
+            "extension": "json",
+            "contains": "interface/CMSkills/",
+            "patcher": "json_generic_plugin_sep_formid"
+        },
+        {
+            "extension": "json",
+            "contains": "Viny Mods/NPC Visual/",
+            "patcher": "json_generic_plugin_sep_formid"
+        },
+        {
+            "extension": "ini",
+            "contains": "plugins/GridInventory_",
+            "patcher": "ini_plugin_sep_formid",
+            "separator": "|",
+            "to_id_key": "hex"
+        },
+        {
+            "extension": "json",
+            "contains": "plugins/BobbingFramework/",
+            "patcher": "json_generic_formid_sep_plugin",
+            "separator": "~"
+        }
+    ]
+}

@@ -1,0 +1,35 @@
+{
+    "version": 0,
+    "ignored_files": [
+        "BFCO_FX_CheckPreAttackIsOK.pex",
+        "BFCO_FX_PlayIdleListKeyE.pex",
+        "BFCO_FX_PlayIdleListKeyINT.pex",
+        "BFCO_MCM.pex",
+        "NPCSpellVariance.ini",
+        "SmartTalk_QuestCache.json",
+        "MLO.ini",
+        "RewardModBlacklist.json",
+        "DynamicStringDistributor.dll",
+        "taglist.yaml",
+        "AddItemMenuSE.ini",
+        "QuestTagging.PluginQuestCache.json"
+    ],
+    "ignored_endswith": [
+        "_SkyrimDiagReport.txt",
+        "_SkyrimDiagSummary.json",
+        "Modex\\user\\blacklist.json",
+        "PGPatcher/cfg/ignored_messages.json",
+        "SKSE/Plugins/DynamicNPCs.ini",
+        "FollowerLevelingSystemRedone/PerksAndSpells.json",
+        "interface/modex/user/userdata.json",
+        "Viny Mods/NPC Visual/FaceGenCache.json"
+    ],
+    "ignored_contains": [
+        "SkyrimDiag_Incident_",
+        "SkyrimDiag_Crash_",
+        "Plugins/Tullius Ctd Logs/",
+        "interface/Console_Cheatsheet/",
+        "interface/PartySheet/Spells/",
+        "Plugins/LoadTimeProfiler/LTP_summary_"
+    ]
+}
