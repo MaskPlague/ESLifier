@@ -34,7 +34,7 @@ class cell_scanner():
         cell_scanner.dump_to_file(CELL_CHANGED_JSON)
 
     def check_if_dependents_modify_new_cells(mod: str):
-        cell_form_id_file = CELL_IDS_FOLDER + os.path.basename(mod) + '_CellFormIDs.txt'
+        cell_form_id_file = CELL_IDS_FOLDER + '/' + os.path.basename(mod) + '_CellFormIDs.txt'
         if not os.path.exists(cell_form_id_file) or not os.path.basename(mod).lower() in cell_scanner.dependency_dict:
             return
         with open(cell_form_id_file, 'r', encoding='utf-8') as f:

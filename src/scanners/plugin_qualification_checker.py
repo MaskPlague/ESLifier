@@ -206,7 +206,7 @@ class qualification_checker():
         #            f.write(edid + '\n')
         cell_form_ids.sort()
         if cell_form_ids != [] and is_esm:
-            cell_form_id_file = CELL_IDS_FOLDER + basename + '_CellFormIDs.txt'
+            cell_form_id_file = CELL_IDS_FOLDER + '/' + basename + '_CellFormIDs.txt'
             with open(cell_form_id_file, 'w', encoding='utf-8') as f:
                 for form_id in cell_form_ids:
                     f.write(form_id + '\n')
