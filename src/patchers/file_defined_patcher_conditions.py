@@ -1,14 +1,20 @@
 import json5 as json
 import os
 from typing import Callable, Any
-from file_patchers import patchers
+from data_holder import GAME_MODE, ESLIFIER_DATA_FOLDER
+if GAME_MODE == "SSE":
+    from patchers.sse_file_patchers import patchers
+elif GAME_MODE == "FO4":
+    from patchers.fo4_file_patchers import patchers
+else:
+    raise ValueError(f"GAME_MODE: {GAME_MODE} has no patcher_conditions import set.")
 from log_stream import write_error
 from PyQt6.QtCore import QCoreApplication
 
 class user_and_master_conditions_class():
     def __init__(self):
-        master_conditions = self.get_conditions("ESLifier_Data/master_patch_conditions.json")
-        user_conditions = self.get_conditions("ESLifier_Data/user_patch_conditions.json")
+        master_conditions = self.get_conditions(ESLIFIER_DATA_FOLDER+"master_patch_conditions.json")
+        user_conditions = self.get_conditions(ESLIFIER_DATA_FOLDER+"user_patch_conditions.json")
         self.user_and_master_conditions = master_conditions
         for extension, conditions in user_conditions.items():
             self.user_and_master_conditions[extension].extend(conditions)

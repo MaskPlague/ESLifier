@@ -9,15 +9,20 @@ import hashlib
 import json
 import time
 
-from file_patchers import patchers
 #from intervaltree import IntervalTree
 from full_form_processor import form_processor
 from create_cell_master import create_new_cell_plugin
 from data_holder import _global
 from log_stream import write_error, write_normal, write_progress, clear_and_leave_log_open, write_insert, write_to_file
 from PyQt6.QtCore import QCoreApplication
-import patcher_conditions
-
+if GAME_MODE == "SSE":
+    from patchers.sse_file_patchers import patchers
+    import patchers.sse_patcher_conditions as patcher_conditions
+elif GAME_MODE == "FO4":
+    from patchers.fo4_file_patchers import patchers
+    import patchers.fo4_patcher_conditions as patcher_conditions
+else:
+    raise ValueError(f"GAME_MODE: {GAME_MODE} has no patcher_conditions import set.")
 import platform
 import psutil
 if platform.system() == 'Windows':

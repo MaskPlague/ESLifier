@@ -1,6 +1,6 @@
 import os
-from file_patchers import patchers
-from file_defined_patcher_conditions import user_and_master_conditions_class
+from patchers.fo4_file_patchers import patchers
+from patchers.file_defined_patcher_conditions import user_and_master_conditions_class
 from log_stream import write_warning
 from PyQt6.QtCore import QCoreApplication
 

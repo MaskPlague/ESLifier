@@ -11,9 +11,9 @@ from PyQt6.QtGui import QIcon
 from scanners.scanner import scanner
 from scanners.dependency_getter import dependecy_getter
 from compact_form_ids import CFIDs
-from file_defined_patcher_conditions import user_and_master_conditions_class
 from data_holder import _global
 from scanners.cell_changed_scanner import cell_scanner
+from patchers.file_defined_patcher_conditions import user_and_master_conditions_class
 from scanners.vortex_database_reader import VortexDBParser
 from log_stream import clear_and_close_log, clear_and_leave_log_open, write_error, write_normal, write_patching
 
