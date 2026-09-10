@@ -1,0 +1,17 @@
+{
+    "SSE": {
+        "version": "0.16.18",
+        "url": "tag/v0.16.12.debug",
+        "changelog": [
+            "Test change log.",
+            "Multi line working?"
+        ]
+    },
+    "FO4": {
+        "version": "0.0.0",
+        "url": "test-url",
+        "changelog": [
+            "Test change log."
+        ]
+    }
+}
