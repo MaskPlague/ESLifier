@@ -8,10 +8,12 @@
         ]
     },
     "FO4": {
-        "version": "0.0.0",
-        "url": "test-url",
+        "version": "0.21.10",
+        "url": "tag/v0.16.17",
         "changelog": [
-            "Test change log."
+            "Test change log.",
+            "Fallout 4 version",
+            "We good?"
         ]
     }
 }
