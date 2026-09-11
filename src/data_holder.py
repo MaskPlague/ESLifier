@@ -7,7 +7,7 @@ from PyQt6.QtCore import QCoreApplication
 #if TYPE_CHECKING:
 #    from settings_page import settings
 GAME_MODE = "SSE"
-
+GITHUB_LATEST_VERSIONS_INFO_JSON_URL = "https://raw.githubusercontent.com/MaskPlague/ESLifier/refs/heads/main/latest_versions_info.json"
 def update_game_globals():
     global VERBOSE_GAME_NAME, SHORT_GAME_NAME, VORTEX_GAME_NAME, MO2_GAME_NAME, GAME_ESM_NAME, PROGRAM_NAME, EXE_NAME
     global GAME_ARCHIVE_TYPE, GAME_ARCHIVE_EXTENSION, NEXUS_FILES_TAB_URL, GITHUB_MASTER_JSONS_URL

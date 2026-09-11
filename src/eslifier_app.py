@@ -14,8 +14,9 @@ from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMessageBox, QTa
 from settings_page import settings
 from main_page import main
 from log_stream import log_stream, write_to_file
-from data_holder import (_global, NEXUS_FILES_TAB_URL, SHORT_GAME_NAME, VORTEX_GAME_NAME, GITHUB_MASTER_JSONS_URL, 
-                         EXE_NAME, PROGRAM_NAME, ESLIFIER_DATA_FOLDER, SETTINGS_JSON, ESLIFIER_LOG_FILE)
+from data_holder import (_global, GAME_MODE, NEXUS_FILES_TAB_URL, SHORT_GAME_NAME, VORTEX_GAME_NAME, GITHUB_MASTER_JSONS_URL, 
+                         EXE_NAME, PROGRAM_NAME, ESLIFIER_DATA_FOLDER, SETTINGS_JSON, ESLIFIER_LOG_FILE,
+                         GITHUB_LATEST_VERSIONS_INFO_JSON_URL)
 from scanners.scanner_vortex import Vortex
 from scanners.scanner_mo2 import MO2
 CURRENT_VERSION = '0.16.17'
@@ -74,21 +75,26 @@ def luhn_checksum(data: bytes) -> int:
         total += digit
     return (256 - (total % 256)) % 256
 
-def connection_result(is_latest: bool, latest_version: str):
+def connection_result(is_latest: bool, latest_version: str, release_url_end: str, changelog: str):
     if not is_latest:
         message = QMessageBox()
         message.setIcon(QMessageBox.Icon.Warning)
         message.setWindowTitle(QCoreApplication.translate("Global", "ESLifier Outdated"))
-        message.setText(QCoreApplication.translate("Global", 
+        text = QCoreApplication.translate("Global", 
                         "There exists a new version of %0 (v%1).\n"\
                         "It is recommended to update as it could contain critical changes,\n"\
                         "bug fixes, or additional file patchers.").replace("%0", PROGRAM_NAME).replace("%1", latest_version)
-                        )
+        if changelog:
+            text += "\n\n" + QCoreApplication.translate("Global", "Changelog:")
+            for line in changelog:
+                text += '\n' + line
+        message.setText(text)
         def open_nexus():
             webbrowser.open(f"{NEXUS_FILES_TAB_URL}")
             message.show()
         def open_github():
-            webbrowser.open("https://github.com/MaskPlague/ESLifier/releases/latest")
+            #webbrowser.open("https://github.com/MaskPlague/ESLifier/releases/latest")
+            webbrowser.open("https://github.com/MaskPlague/ESLifier/releases/" + release_url_end)
             message.show()
         message.addButton(QCoreApplication.translate("Global", "Open Nexus"), 
                           QMessageBox.ButtonRole.AcceptRole).clicked.connect(open_nexus)
@@ -98,27 +104,27 @@ def connection_result(is_latest: bool, latest_version: str):
         message.show()
         
 class github_connect(QObject):
-    finished_signal = pyqtSignal(bool, str)
+    finished_signal = pyqtSignal(bool, str, str, list)
     def check_version(self):
-        is_latest, latest_version = self.connect_to_github()
-        self.finished_signal.emit(is_latest, latest_version)
+        is_latest, latest_version, release_url_end, changelog = self.connect_to_github()
+        self.finished_signal.emit(is_latest, latest_version, release_url_end, changelog)
             
-    def connect_to_github(self) -> tuple[bool, str]:
+    def connect_to_github(self) -> tuple[bool, str, str, list[str]]:
         try:
-            api_url = f"https://api.github.com/repos/MaskPlague/ESLifier/releases/latest"
-            response = requests.get(api_url, timeout=10)
+            #api_url = f"https://api.github.com/repos/MaskPlague/ESLifier/releases/latest"
+            response = requests.get(GITHUB_LATEST_VERSIONS_INFO_JSON_URL, timeout=10)
             response.raise_for_status()
-            latest_release_info: dict[str, str] = response.json()
-            latest_version = latest_release_info["tag_name"]
-            latest_version = latest_version.removeprefix('v')
+            all_latest_release_info: dict[str, dict[str,str]] = response.json()
+            latest_release_info = all_latest_release_info[GAME_MODE]
+            latest_version = latest_release_info["version"]
             major, minor, patch = [int(x, 10) for x in latest_version.split('.')]
             latest_version_tuple = (major, minor, patch)
             if latest_version_tuple > VERSION_TUPLE:
-                return False, latest_version
+                return False, latest_version, latest_release_info["url"], latest_release_info.get("changelog", [])
             else:
-                return True, latest_version
+                return True, latest_version, '', []
         except:
-            return True, '0'
+            return True, '0', '', []
         
 def conditions_connection_result(conditions_success: bool , ignored_success: bool):
     if not conditions_success:
