@@ -27,6 +27,7 @@ if GAME_MODE == "SSE":
 elif GAME_MODE == "FO4":
     from patchers.fo4_file_patchers import patchers
     import patchers.fo4_patcher_conditions as patcher_conditions
+    from full_form_processor_fo4 import form_processor
 else:
     raise ValueError(f"GAME_MODE: {GAME_MODE} has no patchers, conditions, or form_processor import set.")
 import platform
