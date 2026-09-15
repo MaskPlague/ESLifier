@@ -632,12 +632,25 @@ class scanner():
                             folder_length = int.from_bytes(mm[location:location+1])
                             folder_path = mm[location+1:location+folder_length].decode(errors='ignore')
 
-                            #TODO: consider splitting this if statement into multiple and using split('thing')[1].split(sep)[0]
-                            if ('facegeom\\' in folder_path or 'facetint\\' in folder_path or 'sound\\voice' in folder_path) and ('.esp' in folder_path or '.esl' in folder_path or '.esm' in folder_path):
-                                match = re.search(pattern_1, folder_path.encode())
-                                if match:
-                                    plugin = match.group(0).decode()
-                                    if plugin not in plugins:
+                            #if ('facegeom\\' in folder_path or 'facetint\\' in folder_path or 'sound\\voice' in folder_path) and ('.esp' in folder_path or '.esl' in folder_path or '.esm' in folder_path):
+                            #    match = re.search(pattern_1, folder_path.encode())
+                            #    if match:
+                            #        plugin = match.group(0).decode()
+                            #        plugins.add(plugin)
+                            if '.es' in folder_path:
+                                if 'sound\\voice' in folder_path:
+                                    plugin = folder_path.split('sound\\voice\\', maxsplit=1)[1].split(os.sep)[0]
+                                    if plugin.endswith(('.esp', '.esl', '.esm')):
+                                        plugins.add(plugin)
+                                
+                                elif folder_path.endswith('.dds') and '\\facetint\\' in folder_path:
+                                    plugin = folder_path.split('\\facetint\\', maxsplit=1)[1].split(os.sep)[0]
+                                    if plugin.endswith(('.esp', '.esl', '.esm')):
+                                        plugins.add(plugin)
+            
+                                elif folder_path.endswith('.nif') and '\\facegeom\\' in folder_path:
+                                    plugin = folder_path.split('\\facegeom\\', maxsplit=1)[1].split(os.sep)[0]
+                                    if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
                             time = timeit.default_timer() - start_time
                             offset += folder_record_size
@@ -653,10 +666,9 @@ class scanner():
             write_error(QCoreApplication.translate("scanner", "Error Reading BSA: ") + bsa_file)
             write_error(e, True)
 
-    #TODO: redo this for ba2 format
+    #TODO: extensively test this
     def ba2_reader(ba2_file):
         plugins = set()
-        pattern_1 = re.compile(rb'([^\\]+\.es[pml])')
         try:
             with scanner.file_semaphore:
                 with open(ba2_file, 'rb') as f:
@@ -665,42 +677,41 @@ class scanner():
                             mm.close()
                             f.close()
                             return
-                        folder_count = struct.unpack('<I', mm[16:20])[0]
-                        version = struct.unpack('<I', mm[4:8])[0]
-                        if version == 105:
-                            folder_record_size = 24
-                            file_record_offset = 16
-                        else:
-                            folder_record_size = 16
-                            file_record_offset = 12
-                        total_file_name_length = struct.unpack('<I', mm[28:32])[0]
-
-                        end_of_folder_records = (folder_count * folder_record_size) + 36
-                        offset = 36
+                        #version = struct.unpack('<I', mm[4:8])[0]
+                        #ba2_type = mm[8:12]
+                        #file_count = struct.unpack('<I', mm[12:16])[0]
+                        name_table_offset = struct.unpack('<Q', mm[16:24])[0]
+                        
+                        offset = name_table_offset
                         max_time = 5
                         time = 0
                         start_time = timeit.default_timer()
-                        if end_of_folder_records > len(mm) + 1:
+                        if name_table_offset > len(mm) + 1:
                             raise ValueError('Possibly Corrupt BA2')
-                        while offset < end_of_folder_records and time < max_time:
-                            location = int.from_bytes(mm[offset+file_record_offset:offset+file_record_offset+4][::-1]) - total_file_name_length
-                            folder_length = int.from_bytes(mm[location:location+1])
-                            folder_path = mm[location+1:location+folder_length].decode(errors='ignore')
 
-                            #TODO: consider splitting this if statement into multiple and using split('thing')[1].split(sep)[0]
-                            if ('facegeom\\' in folder_path or 'facetint\\' in folder_path or 'sound\\voice' in folder_path) and ('.esp' in folder_path or '.esl' in folder_path or '.esm' in folder_path):
-                                match = re.search(pattern_1, folder_path.encode())
-                                if match:
-                                    plugin = match.group(0).decode()
-                                    if plugin not in plugins:
+                        while offset < len(mm) and time < max_time:
+                            name_length = struct.unpack('<H', mm[offset:offset+2])[0]
+                            name = mm[offset+2:offset+2+name_length].decode(errors='ignore').lower()
+                            if '.es' in name:
+                                if 'sound\\voice' in name:
+                                    plugin = name.split('sound\\voice\\', maxsplit=1)[1].split(os.sep)[0]
+                                    if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
+                                
+                                elif name.endswith('.dds') and '\\facecustomization\\' in name:
+                                    plugin = name.split('\\facecustomization\\', maxsplit=1)[1].split(os.sep)[0]
+                                    if plugin.endswith(('.esp', '.esl', '.esm')):
+                                        plugins.add(plugin)
+            
+                                elif name.endswith('.nif') and '\\facegeom\\' in name:
+                                    plugin = name.split('\\facegeom\\', maxsplit=1)[1].split(os.sep)[0]
+                                    if plugin.endswith(('.esp', '.esl', '.esm')):
+                                        plugins.add(plugin)
+
                             time = timeit.default_timer() - start_time
-                            offset += folder_record_size
+                            offset += name_length + 2
                         if time > max_time:
                             raise ValueError(f'Exceeded max processing time for {ba2_file}')
-                        mm.close()
-                    f.close()
-
             if plugins:
                 with scanner.lock:
                     scanner.archive_dict[ba2_file] = list(plugins)
