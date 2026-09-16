@@ -33,7 +33,9 @@ from scanners.dependency_getter import dependecy_getter
 from log_stream import write_error, write_normal, write_progress, write_remove, write_to_file, write_warning
 
 from PyQt6.QtCore import QCoreApplication
-
+#TODO: go through and make sure that pex and other file types need to be read the same.
+# update game_archive_blacklist for FO4
+# adapt the ba2_reader for FO4 instead of SSE's BSA
 class scanner():    
     def scan(full_scan: bool) -> tuple[dict, dict] | None:
         if GAME_MODE == "SSE":
@@ -181,8 +183,14 @@ class scanner():
     def extract_archive(file: str, startupinfo: subprocess.STARTUPINFO, update_time: float, filter: str):
         last = 0
         extracting_str = "-  " + QCoreApplication.translate("scanner", "Extracting: ")
+        #why is new version so slow?
+        #looks like "-mt:no" is necessary or some funky threading stuff happens that significantly slows down the new exe for this
+        #new
+        test = ["bsarch/bsarch.exe", "unpack", file, ARCHIVE_EXTRACTED_FOLDER, "-f:"+filter, "-mt:no"]
+        #old
+        #test = ["bsarch/bsarchold.exe", "unpack", file, ARCHIVE_EXTRACTED_FOLDER, filter]
         with subprocess.Popen(
-            ["bsarch/bsarch.exe", "unpack", file, ARCHIVE_EXTRACTED_FOLDER, filter],
+            test,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             startupinfo=startupinfo,
@@ -637,19 +645,20 @@ class scanner():
                             #        plugins.add(plugin)
                             if '.es' in folder_path:
                                 if 'sound\\voice' in folder_path:
-                                    plugin = folder_path.split('sound\\voice\\', maxsplit=1)[1].split(os.sep)[0]
+                                    plugin = folder_path.split('sound\\voice\\', 1)[1].split(os.sep)[0]
                                     if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
                                 
                                 elif folder_path.endswith('.dds') and '\\facetint\\' in folder_path:
-                                    plugin = folder_path.split('\\facetint\\', maxsplit=1)[1].split(os.sep)[0]
+                                    plugin = folder_path.split('\\facetint\\', 1)[1].split(os.sep)[0]
                                     if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
             
                                 elif folder_path.endswith('.nif') and '\\facegeom\\' in folder_path:
-                                    plugin = folder_path.split('\\facegeom\\', maxsplit=1)[1].split(os.sep)[0]
+                                    plugin = folder_path.split('\\facegeom\\', 1)[1].split(os.sep)[0]
                                     if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
+                                        
                             time = timeit.default_timer() - start_time
                             offset += folder_record_size
                         if time > max_time:
@@ -692,17 +701,17 @@ class scanner():
                             name = mm[offset+2:offset+2+name_length].decode(errors='ignore').lower()
                             if '.es' in name:
                                 if 'sound\\voice' in name:
-                                    plugin = name.split('sound\\voice\\', maxsplit=1)[1].split(os.sep)[0]
+                                    plugin = name.split('sound\\voice\\', 1)[1].split(os.sep)[0]
                                     if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
                                 
                                 elif name.endswith('.dds') and '\\facecustomization\\' in name:
-                                    plugin = name.split('\\facecustomization\\', maxsplit=1)[1].split(os.sep)[0]
+                                    plugin = name.split('\\facecustomization\\', 1)[1].split(os.sep)[0]
                                     if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
             
                                 elif name.endswith('.nif') and '\\facegeom\\' in name:
-                                    plugin = name.split('\\facegeom\\', maxsplit=1)[1].split(os.sep)[0]
+                                    plugin = name.split('\\facegeom\\', 1)[1].split(os.sep)[0]
                                     if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
 
