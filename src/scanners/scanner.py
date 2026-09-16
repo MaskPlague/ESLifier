@@ -373,6 +373,14 @@ class scanner():
         local_pex: list[str] = []
         local_dll: list[str] = []
         local_seq: list[str] = []
+
+        def get_plugin_from_file_path(file_path:str, path_splitter:str):
+            plugin = file_path.split(path_splitter,1)[1].split(os.sep)[0]
+            if plugin.endswith(('.esp', '.esl', '.esm')):
+                if plugin not in local_dict:
+                    local_dict[plugin] = set()
+                local_dict[plugin].add(file)
+
         processed_string = ('-  ' + QCoreApplication.translate("scanner", "Processed: %0 %") +
                             '\n-  ' + QCoreApplication.translate("scanner", "Files: %1/%2")).replace("%0", "{0}").replace("%1", "{1}").replace("%2", "{2}")
         for file in files:
@@ -398,23 +406,13 @@ class scanner():
                 plugin = os.path.splitext(os.path.basename(file))[0]
                 local_seq.append([plugin.lower(), file])
             elif file_lower.endswith('.nif') and '\\facegeom\\' in file_lower and '.es' in file_lower:
-                plugin = file_lower.split('\\facegeom\\')[1].split(os.sep)[0]
-                if plugin.endswith(('.esp', '.esl', '.esm')):
-                    if plugin not in local_dict:
-                        local_dict[plugin] = set()
-                    local_dict[plugin].add(file)
+                get_plugin_from_file_path(file_lower, '\\facegeom\\')
             elif file_lower.endswith('.dds') and '\\facetint\\' in file_lower and '.es' in file_lower:
-                plugin = file_lower.split('\\facetint\\')[1].split(os.sep)[0]
-                if plugin.endswith(('.esp', '.esl', '.esm')):
-                    if plugin not in local_dict:
-                        local_dict[plugin] = set()
-                    local_dict[plugin].add(file)
+                get_plugin_from_file_path(file_lower, '\\facetint\\')
+            elif file_lower.endswith('.dds') and '\\facecustomization\\' in file_lower and '.es' in file_lower:
+                get_plugin_from_file_path(file_lower, '\\facecustomization\\')
             elif '\\sound\\voice\\' in file_lower and '.es' in file_lower:
-                plugin = file_lower.split('\\sound\\voice\\')[1].split(os.sep)[0]
-                if plugin.endswith(('.esp', '.esl', '.esm')):
-                    if plugin not in local_dict:
-                        local_dict[plugin] = set()
-                    local_dict[plugin].add(file)
+                get_plugin_from_file_path(file_lower, '\\sound\\voice\\')
             elif (scanner.all_patcher_experimental 
                   and not file_lower.endswith(
                       ('.psc', '.tri', '.nif', '.dds', '.osd', '.osp', '.hkx', '.pdb', '.dll', '.esp', '.esl', '.esm',
