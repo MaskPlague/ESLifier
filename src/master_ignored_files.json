@@ -1,5 +1,5 @@
 {
-    "version": 19,
+    "version": 20,
     "ignored_files": [
         "BFCO_FX_CheckPreAttackIsOK.pex",
         "BFCO_FX_PlayIdleListKeyE.pex",
@@ -12,7 +12,8 @@
         "DynamicStringDistributor.dll",
         "taglist.yaml",
         "AddItemMenuSE.ini",
-        "QuestTagging.PluginQuestCache.json"
+        "QuestTagging.PluginQuestCache.json",
+        "DynamicLeveledLists.json"
     ],
     "ignored_endswith": [
         "_SkyrimDiagReport.txt",
