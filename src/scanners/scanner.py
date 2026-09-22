@@ -10,6 +10,8 @@ import struct
 import platform
 import pefile
 
+from collections import defaultdict
+
 from data_holder import (_global, GAME_MODE, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ESM_NAME, MO2_GAME_NAME, SHORT_GAME_NAME,
                          CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
                          EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
@@ -58,11 +60,11 @@ class scanner():
         scanner.all_files: list[str] = []
         _global.plugins.clear()
         _global.mods_with_seq.clear()
-        scanner.file_dict: dict[str, set[str]] = {}
-        scanner.archive_dict: dict[str, list[str]] = {}
-        scanner.dll_dict: dict[str, list[str]] = {}
+        scanner.file_dict: defaultdict[str, set] = defaultdict(set)
+        scanner.archive_dict: defaultdict[str, list[str]] = defaultdict(list)
+        scanner.dll_dict: defaultdict[str, set[str]] = defaultdict(set)
         scanner.archive_files: list[str] = []
-        scanner.winning_files_dict: dict[str, list[str]] = {}
+        scanner.winning_files_dict: defaultdict[str, list[str]] = defaultdict(list)
         scanner.threads: list[threading.Thread] = []
         scanner.seq_files: list[str] = []
         scanner.pex_files: list[str] = []
@@ -377,18 +379,11 @@ class scanner():
             scanner.file_reader(pattern2, file, 'pex')
 
     def file_processor(files: list[str]):
-        local_dict: dict[str, set[str]] = {}
+        local_dict: defaultdict[str, set[str]] = defaultdict(set)
         local_pex: list[str] = []
         local_dll: list[str] = []
         local_seq: list[str] = []
-
-        def get_plugin_from_file_path(file_path:str, path_splitter:str):
-            plugin = file_path.split(path_splitter,1)[1].split(os.sep)[0]
-            if plugin.endswith(('.esp', '.esl', '.esm')):
-                if plugin not in local_dict:
-                    local_dict[plugin] = set()
-                local_dict[plugin].add(file)
-
+        os_sep = os.sep
         processed_string = ('-  ' + QCoreApplication.translate("scanner", "Processed: %0 %") +
                             '\n-  ' + QCoreApplication.translate("scanner", "Files: %1/%2")).replace("%0", "{0}").replace("%1", "{1}").replace("%2", "{2}")
         for file in files:
@@ -414,13 +409,33 @@ class scanner():
                 plugin = os.path.splitext(os.path.basename(file))[0]
                 local_seq.append([plugin.lower(), file])
             elif file_lower.endswith('.nif') and '\\facegeom\\' in file_lower and '.es' in file_lower:
-                get_plugin_from_file_path(file_lower, '\\facegeom\\')
+                marker_index = file_lower.find('\\facegeom\\')
+                start_pos = marker_index + 10 #10 is len('\\facegeom\\'), len('\\') is 1
+                end_pos = file_lower.find(os_sep, start_pos)
+                if end_pos == -1:
+                    end_pos = len(file_lower)
+                plugin = file_lower[start_pos:end_pos]
+                if plugin.endswith(('.esp', '.esm', '.esl')):
+                    local_dict[plugin].add(file)
             elif file_lower.endswith('.dds') and '\\facetint\\' in file_lower and '.es' in file_lower:
-                get_plugin_from_file_path(file_lower, '\\facetint\\')
+                marker_index = file_lower.find('\\facetint\\')
+                start_pos = marker_index + 10 #10 is len('\\facetint\\'), len('\\') is 1
+                #index is safe here because we only are scanning files and never folders
+                plugin = file_lower[start_pos:file_lower.index(os_sep, start_pos)]
+                if plugin.endswith(('.esp', '.esm', '.esl')):
+                    local_dict[plugin].add(file)
             elif file_lower.endswith('.dds') and '\\facecustomization\\' in file_lower and '.es' in file_lower:
-                get_plugin_from_file_path(file_lower, '\\facecustomization\\')
+                marker_index = file_lower.find('\\facecustomization\\')
+                start_pos = marker_index + 19 #19 is len('\\facecustomization\\'), len('\\') is 1
+                plugin = file_lower[start_pos:file_lower.index(os_sep, start_pos)]
+                if plugin.endswith(('.esp', '.esm', '.esl')):
+                    local_dict[plugin].add(file)
             elif '\\sound\\voice\\' in file_lower and '.es' in file_lower:
-                get_plugin_from_file_path(file_lower, '\\sound\\voice\\')
+                marker_index = file_lower.find('\\sound\\voice\\')
+                start_pos = marker_index + 13 #13 is len('\\sound\\voice\\'), len('\\') is 1
+                plugin = file_lower[start_pos:file_lower.index(os_sep, start_pos)]
+                if plugin.endswith(('.esp', '.esm', '.esl')):
+                    local_dict[plugin].add(file)
             elif (scanner.all_patcher_experimental 
                   and not file_lower.endswith(
                       ('.psc', '.tri', '.nif', '.dds', '.osd', '.osp', '.hkx', '.pdb', '.dll', '.esp', '.esl', '.esm',
@@ -440,8 +455,6 @@ class scanner():
             scanner.dll_files.extend(local_dll)      
             for key, values_list in local_dict.items():
                 if key in scanner.plugin_basename_set:
-                    if key not in scanner.file_dict:
-                        scanner.file_dict.update({key: set()})
                     scanner.file_dict[key].update(values_list)
 
     def seq_plugin_extension_processor(files):
@@ -471,8 +484,6 @@ class scanner():
             if data[offset:offset+2] == getmodbyname_index and data[offset+10:offset+11] == b'\x02':
                 plugin_name = plugins_indexes.get(data[offset+11:offset+13])
                 if plugin_name:
-                    if plugin_name not in _global.pex_with_getmodbyname:
-                        _global.pex_with_getmodbyname[plugin_name] = set()
                     _global.pex_with_getmodbyname[plugin_name].add(file)
             offset += 1
 
@@ -504,8 +515,6 @@ class scanner():
                     with scanner.lock:
                         for plugin in plugins:
                             if plugin in scanner.plugin_basename_set:
-                                if plugin not in scanner.file_dict: 
-                                    scanner.file_dict.update({plugin: set()})
                                 scanner.file_dict[plugin].add(file)
                 else:
                     with scanner.file_semaphore:
@@ -538,11 +547,11 @@ class scanner():
                                 index += 3
                     file_lower = file.lower()
                     if file_lower.endswith('.json') and '\\luma\\' in file_lower:
-                        found_plugins.add(file.split(os.sep)[-2].lower())
+                        possible_plugin = file.split(os.sep)[-2].lower()
+                        if possible_plugin in plugin_basename_set:
+                            found_plugins.add(possible_plugin)
                     with scanner.lock:                  
                         for plugin in found_plugins:
-                            if plugin not in scanner.file_dict: 
-                                scanner.file_dict.update({plugin: set()})
                             scanner.file_dict[plugin].add(file)
 
             elif reader_type == 'pex':
@@ -570,8 +579,6 @@ class scanner():
                         if string.endswith(('.esp', '.esl', '.esm')) and string in scanner.plugin_basename_set:#not ':' in string and not '/' in string and not '\\' in string:
                             with scanner.lock:
                                 if gfff:
-                                    if string not in scanner.file_dict: 
-                                        scanner.file_dict[string] = set()
                                     scanner.file_dict[string].add(file)
                                 if gmbn:
                                     plugins.add(string)
@@ -595,8 +602,7 @@ class scanner():
                         for plugin in r:
                             plugin = plugin.decode('utf-8')
                             if plugin in scanner.plugin_basename_set:
-                                if plugin not in scanner.dll_dict: scanner.dll_dict.update({plugin: []})
-                                if file not in scanner.dll_dict[plugin]: scanner.dll_dict[plugin].append(file)
+                                scanner.dll_dict[plugin].add(file)
             else:
                 write_warning(QCoreApplication.translate("scanner", "Missing file scan type for ") + file)
         except Exception as e:
@@ -607,7 +613,6 @@ class scanner():
 
     def bsa_reader(bsa_file):
         plugins = set()
-        pattern_1 = re.compile(rb'([^\\]+\.es[pml])')
         try:
             with scanner.file_semaphore:
                 with open(bsa_file, 'rb') as f:
@@ -633,29 +638,46 @@ class scanner():
                         start_time = timeit.default_timer()
                         if end_of_folder_records > len(mm) + 1:
                             raise ValueError('Possibly Corrupt BSA')
+                        os_sep = os.sep
                         while offset < end_of_folder_records and time < max_time:
                             location = int.from_bytes(mm[offset+file_record_offset:offset+file_record_offset+4][::-1]) - total_file_name_length
                             folder_length = int.from_bytes(mm[location:location+1])
                             folder_path = mm[location+1:location+folder_length].decode(errors='ignore')
 
-                            #if ('facegeom\\' in folder_path or 'facetint\\' in folder_path or 'sound\\voice' in folder_path) and ('.esp' in folder_path or '.esl' in folder_path or '.esm' in folder_path):
-                            #    match = re.search(pattern_1, folder_path.encode())
-                            #    if match:
-                            #        plugin = match.group(0).decode()
-                            #        plugins.add(plugin)
                             if '.es' in folder_path:
-                                if 'sound\\voice' in folder_path:
-                                    plugin = folder_path.split('sound\\voice\\', 1)[1].split(os.sep)[0]
+                                if 'sound\\voice\\' in folder_path:
+                                    marker_index = folder_path.find('sound\\voice\\')
+                                    start_pos = marker_index + 12 #12 is len('sound\\voice\\'), len('\\') is 1
+                                    # I have to do it this way because there is a case where folder_path does not have a trailing separator
+                                    # which would cause .index(os_sep, start_pos) to fail and Raise ValueError
+                                    # seen in Val Serano-103669-2-5-4-1768884813\ax valserano.bsa
+                                    # and Skybound Underhang Camp-54993-7-1741494253\riverwoodbandits.bsa
+                                    # which I came across while testing with GTS. Idk why only these two BSA have this issue and idc.
+                                    # sadly this is a minor performance loss compared to slicing on str[start_pos:str.index(os_sep, start_pos)]
+                                    end_pos = folder_path.find(os_sep, start_pos)
+                                    if end_pos == -1:
+                                        end_pos = len(folder_path)
+                                    plugin = folder_path[start_pos:end_pos]
                                     if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
                                 
                                 elif folder_path.endswith('.dds') and '\\facetint\\' in folder_path:
-                                    plugin = folder_path.split('\\facetint\\', 1)[1].split(os.sep)[0]
+                                    marker_index = folder_path.find('\\facetint\\')
+                                    start_pos = marker_index + 10 #10 is len('\\facetint\\'), len('\\') is 1
+                                    end_pos = folder_path.find(os_sep, start_pos)
+                                    if end_pos == -1:
+                                        end_pos = len(folder_path)
+                                    plugin = folder_path[start_pos:end_pos]
                                     if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
             
                                 elif folder_path.endswith('.nif') and '\\facegeom\\' in folder_path:
-                                    plugin = folder_path.split('\\facegeom\\', 1)[1].split(os.sep)[0]
+                                    marker_index = folder_path.find('\\facegeom\\')
+                                    start_pos = marker_index + 10 #10 is len('\\facegeom\\'), len('\\') is 1
+                                    end_pos = folder_path.find(os_sep, start_pos)
+                                    if end_pos == -1:
+                                        end_pos = len(folder_path)
+                                    plugin = folder_path[start_pos:end_pos]
                                     if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
                                         
@@ -700,18 +722,33 @@ class scanner():
                             name_length = struct.unpack('<H', mm[offset:offset+2])[0]
                             name = mm[offset+2:offset+2+name_length].decode(errors='ignore').lower()
                             if '.es' in name:
-                                if 'sound\\voice' in name:
-                                    plugin = name.split('sound\\voice\\', 1)[1].split(os.sep)[0]
+                                if 'sound\\voice\\' in name:
+                                    marker_index = name.find('sound\\voice\\')
+                                    start_pos = marker_index + 12 #12 is len('sound\\voice\\'), len('\\') is 1
+                                    end_pos = name.find(os_sep, start_pos)
+                                    if end_pos == -1:
+                                        end_pos = len(name)
+                                    plugin = name[start_pos:end_pos]
                                     if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
                                 
                                 elif name.endswith('.dds') and '\\facecustomization\\' in name:
-                                    plugin = name.split('\\facecustomization\\', 1)[1].split(os.sep)[0]
+                                    marker_index = name.find('\\facecustomization\\')
+                                    start_pos = marker_index + 19 #19 is len('\\facecustomization\\'), len('\\') is 1
+                                    end_pos = name.find(os_sep, start_pos)
+                                    if end_pos == -1:
+                                        end_pos = len(name)
+                                    plugin = name[start_pos:end_pos]
                                     if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
             
                                 elif name.endswith('.nif') and '\\facegeom\\' in name:
-                                    plugin = name.split('\\facegeom\\', 1)[1].split(os.sep)[0]
+                                    marker_index = name.find('\\facegeom\\')
+                                    start_pos = marker_index + 10 #10 is len('\\facegeom\\'), len('\\') is 1
+                                    end_pos = name.find(os_sep, start_pos)
+                                    if end_pos == -1:
+                                        end_pos = len(name)
+                                    plugin = name[start_pos:end_pos]
                                     if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
 

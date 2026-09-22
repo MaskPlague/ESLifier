@@ -321,11 +321,14 @@ class Vortex():
         mod_files:dict[str, list[str]] = {}
         cases: dict[str, str] = {}
         plugin_extensions = ('.esp', '.esl', '.esm')
+        os_sep = os.sep
         loop = 0
         plugin_names = set()
         bsa_list = []
         bsa_dict_temp:dict[str, list[str]] = {}
         bsa_file_name_dict:dict[str, str] = {}
+        ignored_files: set[str] = Vortex.scanner.ignored_files
+        game_archive_blacklist: set[str] = Vortex.scanner.game_archive_blacklist
         file_count = 0
         gathered_str = '-  ' + QCoreApplication.translate("scanner", "Gathered: ")
         write_normal(gathered_str, False)
@@ -333,84 +336,120 @@ class Vortex():
         game_data_level = len(game_folder_path.split(os.sep))
         for mod_folder in os.listdir(mod_staging_folder):
             mod_path = os.path.join(mod_staging_folder, mod_folder)
-            if os.path.isdir(mod_path) and mod_folder in ordered_mod_ids:
+            if mod_folder in ordered_mod_ids and os.path.isdir(mod_path):
+                mod_path_len = len(mod_path)
                 for root, dirs, files in os.walk(mod_path):
+                    #string manipulation for relative paths instead of os.path.relpath per file
+                    rel_root = root[mod_path_len:].lstrip(os_sep)
+
                     file_count += len(files)
-                    root_level = len(root.split(os.sep))
                     if loop == 50: #prevent spamming stdout and slowing down the program
                         loop = 0
                         write_remove(1, gathered_str + str(file_count))
                     else:
                         loop += 1
-                    for file in files:
-                        if file != '__folder_managed_by_vortex':
-                            file_lower = file.lower()
-                            if file_lower in Vortex.scanner.ignored_files:
-                                continue
-                            is_mod_root_level = root_level == mod_folder_level
-                            if is_mod_root_level and (file_lower == "collection.json" or file_lower == "meta.ini"):
-                                continue
-                            # Get the relative file path
-                            full_path = os.path.join(root, file)
-                            relative_path = os.path.relpath(full_path, mod_staging_folder)
-                            part = relative_path.split(os.sep)
-                            cased = os.path.join(*part[1:])
-                            relative_path = cased.lower()
-                            # Track the file paths by mod
-                            if relative_path not in mod_files:
-                                mod_files[relative_path] = []
-                                cases[relative_path] = cased
-                            mod_files[relative_path].append(mod_folder)
-                            if is_mod_root_level and file_lower.endswith(plugin_extensions):
-                                plugin_names.add(file)
-                            elif is_mod_root_level and file_lower.endswith('.bsa') and file_lower not in Vortex.scanner.game_archive_blacklist:
-                                bsa_file = file[:-4]
-                                if ' - textures' in file_lower:
-                                    index = bsa_file.lower().index(' - textures')
-                                    bsa_file = bsa_file[:index]
-                                if not file_lower in bsa_dict_temp:
-                                    bsa_dict_temp[file_lower] = []
-                                    bsa_file_name_dict[file_lower] = bsa_file.lower()
-                                bsa_dict_temp[file_lower].append(mod_folder)
+                    if root == mod_path: #is root level
+                        for file in files:
+                            if file != '__folder_managed_by_vortex':
+                                file_lower = file.lower()
+                                if (file_lower in ignored_files or file_lower == "collection.json" or file_lower == "meta.ini"):
+                                    continue
+                                # Get the relative file path
+                                cased = os.path.join(rel_root, file)
+                                relative_path = cased.lower()
+                                # Track the file paths by mod
+                                existing_mod_files = mod_files.get(relative_path)
+                                if not existing_mod_files:
+                                    mod_files[relative_path] = [mod_folder]
+                                    cases[relative_path] = cased
+                                else:
+                                    existing_mod_files.append(mod_folder)
+                                if file_lower.endswith(plugin_extensions):
+                                    plugin_names.add(file)
+                                elif file_lower.endswith('.bsa') and file_lower not in game_archive_blacklist:
+                                    bsa_file = file[:-4]
+                                    if ' - textures' in file_lower:
+                                        index = bsa_file.lower().index(' - textures')
+                                        bsa_file = bsa_file[:index]
+                                    if not file_lower in bsa_dict_temp:
+                                        bsa_dict_temp[file_lower] = []
+                                        bsa_file_name_dict[file_lower] = bsa_file.lower()
+                                    bsa_dict_temp[file_lower].append(mod_folder)
+                    else: # not root level
+                        for file in files:
+                            if file != '__folder_managed_by_vortex':
+                                file_lower = file.lower()
+                                if file_lower in ignored_files:
+                                    continue
+                                # Get the relative file path
+                                cased = os.path.join(rel_root, file)
+                                relative_path = cased.lower()
+                                # Track the file paths by mod
+                                existing_mod_files = mod_files.get(relative_path)
+                                if not existing_mod_files:
+                                    mod_files[relative_path] = [mod_folder]
+                                    cases[relative_path] = cased
+                                else:
+                                    existing_mod_files.append(mod_folder) 
 
         #Get files from game's Data folder
         if os.path.exists(game_folder_path):
+            game_folder_path_len = len(game_folder_path)
             for root, dirs, files in os.walk(game_folder_path):
+                rel_root = root[game_folder_path_len:].lstrip(os_sep)
+
                 file_count += len(files)
-                root_level = len(root.split(os.sep))
                 if loop == 50: #prevent spamming stdout and slowing down the program
                     loop = 0
                     write_remove(1, gathered_str + str(file_count))
                 else:
                     loop += 1
-                for file in files:
-                    if file != '__folder_managed_by_vortex':
-                        file_lower = file.lower()
-                        if file_lower in Vortex.scanner.ignored_files:
-                            continue
-                        is_file_root_level = root_level == game_data_level
-                        if is_file_root_level and (file_lower == "collection.json" or file_lower == "meta.ini"):
-                            continue
-                        full_path = os.path.join(root, file)
-                        cased = os.path.relpath(full_path, game_folder_path)
-                        relative_path = cased.lower()
-                        if relative_path not in mod_files:
-                            mod_files[relative_path] = []
-                            cases[relative_path] = cased
-                        mod_files[relative_path].append('data_folder_file_eslifier_scan')
-                        if is_file_root_level and file_lower.endswith(plugin_extensions):
-                            if file not in plugin_names:
-                                plugin_names.add(file)
-                        elif is_file_root_level and file_lower.endswith('.bsa') and file_lower not in Vortex.scanner.game_archive_blacklist:
-                            bsa_file = file[:-4]
-                            bsa_lower = bsa_file.lower()
-                            if ' - textures' in bsa_lower:
-                                index = bsa_lower.lower().index(' - textures')
-                                bsa_lower = bsa_lower[:index]
-                            if not file_lower in bsa_dict_temp:
-                                bsa_dict_temp[file_lower] = []
-                                bsa_file_name_dict[file_lower] = bsa_lower
-                            bsa_dict_temp[file_lower].append('data_folder_file_eslifier_scan')
+                if root == game_folder_path:
+                    for file in files:
+                        if file != '__folder_managed_by_vortex':
+                            file_lower = file.lower()
+                            if file_lower in ignored_files or file_lower == "collection.json" or file_lower == "meta.ini":
+                                continue
+                            # Get the relative file path
+                            cased = os.path.join(rel_root, file)
+                            relative_path = cased.lower()
+                            # Track the file paths by mod
+                            existing_mod_files = mod_files.get(relative_path)
+                            if not existing_mod_files:
+                                mod_files[relative_path] = ['data_folder_file_eslifier_scan']
+                                cases[relative_path] = cased
+                            else:
+                                existing_mod_files.append('data_folder_file_eslifier_scan')
+                            if file_lower.endswith(plugin_extensions):
+                                if file not in plugin_names:
+                                    plugin_names.add(file)
+                            elif file_lower.endswith('.bsa') and file_lower not in game_archive_blacklist:
+                                bsa_file = file[:-4]
+                                bsa_lower = bsa_file.lower()
+                                if ' - textures' in bsa_lower:
+                                    index = bsa_lower.lower().index(' - textures')
+                                    bsa_lower = bsa_lower[:index]
+                                if not file_lower in bsa_dict_temp:
+                                    bsa_dict_temp[file_lower] = []
+                                    bsa_file_name_dict[file_lower] = bsa_lower
+                                bsa_dict_temp[file_lower].append('data_folder_file_eslifier_scan')
+                else:
+                    for file in files:
+                        if file != '__folder_managed_by_vortex':
+                            file_lower = file.lower()
+                            if file_lower in ignored_files or file_lower == "collection.json" or file_lower == "meta.ini":
+                                continue
+                            # Get the relative file path
+                            cased = os.path.join(rel_root, file)
+                            relative_path = cased.lower()
+                            # Track the file paths by mod
+                            existing_mod_files = mod_files.get(relative_path)
+                            if not existing_mod_files:
+                                mod_files[relative_path] = ['data_folder_file_eslifier_scan']
+                                cases[relative_path] = cased
+                            else:
+                                existing_mod_files.append('data_folder_file_eslifier_scan')
+
         bsa_conflict_map: dict[str, list[str]] = Vortex.get_file_conflict_resolution(
             ordered_mod_ids,
             bsa_dict_temp,
@@ -438,8 +477,10 @@ class Vortex():
         Vortex.scanner.extract_scripts_and_seq_from_game_archive(bsa_list, plugins_list)
         cwd = os.getcwd()
         mod_folder = os.path.join(cwd, f'{ARCHIVE_EXTRACTED_FOLDER}/')
-        #Get files that were extracted from archive
-        for root, dirs, files in os.walk(f'{ARCHIVE_EXTRACTED_FOLDER}/'):
+        #Get files that were extracted from archives
+        archive_extracted_folder_len = len(mod_folder)
+        for root, dirs, files in os.walk(mod_folder):
+            rel_root = root[archive_extracted_folder_len:].lstrip(os_sep)
             file_count += len(files)
             if loop == 50: #prevent spamming stdout and slowing down the program
                 loop = 0
@@ -447,16 +488,18 @@ class Vortex():
             else:
                 loop += 1
             for file in files:
-                if file.lower() in Vortex.scanner.ignored_files:
+                if file.lower() in ignored_files:
                     continue
                 # Get the relative file path
-                full_path = os.path.join(root, file)
-                relative_path = os.path.relpath(full_path, mod_folder)
+                cased = os.path.join(rel_root, file)
+                relative_path = cased.lower()
                 # Track the file paths by mod
-                if relative_path not in mod_files:
-                    mod_files[relative_path] = []
-                    cases[relative_path] = relative_path
-                mod_files[relative_path].append('archive_extracted_eslifier_scan')
+                existing_mod_files = mod_files.get(relative_path)
+                if not existing_mod_files:
+                    mod_files[relative_path] = ['archive_extracted_eslifier_scan']
+                    cases[relative_path] = cased
+                else:
+                    existing_mod_files.append('archive_extracted_eslifier_scan')
 
         conflict_map: dict[str, list[str]] = Vortex.get_file_conflict_resolution(
             ordered_mod_ids,

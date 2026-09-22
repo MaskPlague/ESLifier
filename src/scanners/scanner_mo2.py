@@ -50,12 +50,13 @@ class MO2():
         return load_order, set(enabled_mods)
 
     def get_winning_files(plugins_list: list) -> tuple[list, list]:
+        os_sep = os.sep
         load_order:list[str]
         load_order, enabled_mods = MO2.get_modlist()
         mods_folder = os.path.normpath(_global.mo2_mods_folder)
         overwrite_path = os.path.normpath(_global.mo2_overwrite_path)
-        mod_folder_level = len(mods_folder.split(os.sep))
-        overwrite_level = len(overwrite_path.split(os.sep)) - 1
+        mod_folder_level = len(mods_folder.split(os_sep))
+        overwrite_level = len(overwrite_path.split(os_sep)) - 1
         mod_files: dict[str, list[str]]
         plugin_names: list[str]
         cases: dict[str, str]
@@ -66,6 +67,7 @@ class MO2():
         cwd = os.getcwd()
         winning_files_processed_str = QCoreApplication.translate("scanner", "Winning Files Processed: ")
         write_remove(1, winning_files_processed_str)
+        output_file_name = MO2.scanner.output_file_name
         for file, mods in mod_files.items():
             file_count += 1
             if loop == 500:
@@ -84,7 +86,7 @@ class MO2():
                 else:
                     file_path = os.path.join(mods_folder, mod, cases[file])
                 winning_files.append([file_path, overwrite])
-                if mod != MO2.scanner.output_file_name:
+                if mod != output_file_name:
                     MO2.scanner.winning_files_dict[cases[file].lower()] = (mod, file_path)
             else:
                 mods_sorted = sorted(mods, key=lambda mod: load_order.index(mod))
@@ -97,7 +99,7 @@ class MO2():
                 else:
                     file_path = os.path.join(mods_folder, mods_sorted[-1], cases[file])
                 winning_files.append([file_path, overwrite])
-                if mods_sorted[-1] != MO2.scanner.output_file_name:
+                if mods_sorted[-1] != output_file_name:
                     MO2.scanner.winning_files_dict[cases[file].lower()] = (mods_sorted[-1], file_path)
                 else:
                     MO2.scanner.winning_files_dict[cases[file].lower()] = (mods_sorted[-2], os.path.join(mods_folder, mods_sorted[-2], cases[file]))
@@ -105,7 +107,7 @@ class MO2():
         plugins = []
         plugin_names_lowered = [plugin.lower() for plugin in plugin_names]
         for file, overwrite in winning_files:
-            file_level = len(file.split(os.sep))
+            file_level = len(file.split(os_sep))
             if overwrite:
                 level = overwrite_level
             else:
@@ -119,12 +121,15 @@ class MO2():
     def get_files_from_mods(mods_folder: str, enabled_mods: set, plugins_list: list, overwrite_path: str, load_order:list[str]) -> tuple[dict, list, dict]:
         if not os.path.exists(f'{ARCHIVE_EXTRACTED_FOLDER}/'):
             os.makedirs(f'{ARCHIVE_EXTRACTED_FOLDER}/')
+        os_sep = os.sep
         mod_files: dict[str, list[str]] = {}
-        cases_of_files: dict[str, str] = {}
+        cases: dict[str, str] = {}
         game_archive_list = []
         game_archive_dict_temp: dict[str, list[str]] = {}
         game_archive_file_name_dict: dict[str, str] = {}
         plugin_extensions = ('.esp', '.esl', '.esm')
+        game_archive_blacklist: set[str] = MO2.scanner.game_archive_blacklist
+        ignored_files: set[str] = MO2.scanner.ignored_files
         plugin_names = set()
         loop = 0
         file_count = 0
@@ -133,39 +138,96 @@ class MO2():
         #Get file from MO2's mods folder
         for mod_folder in os.listdir(mods_folder):
             mod_path = os.path.join(mods_folder, mod_folder)
-            mod_folder_level = len(mod_path.split(os.sep))
-            if os.path.isdir(mod_path) and mod_folder in enabled_mods:
+            if mod_folder in enabled_mods and os.path.isdir(mod_path):
+                mod_path_len = len(mod_path)
                 for root, dirs, files in os.walk(mod_path):
+                    #prune directories that are mod organizer hidden
+                    dirs[:] = [d for d in dirs if '.mohidden' not in d]
+
+                    #string manipulation for relative paths instead of os.path.relpath per file
+                    rel_root = root[mod_path_len:].lstrip(os_sep)
+                    
                     file_count += len(files)
-                    root_level = len(root.split(os.sep))
-                    if loop == 50: #prevent spamming stdout and slowing down the program
+                    if loop == 50: #prevent spamming logger and slowing down the program
                         loop = 0
                         write_remove(1, gathered_str + str(file_count))
                     else:
                         loop += 1
+                    # is root level
+                    if root == mod_path:
+                        for file in files:
+                            file_lower = file.lower()
+                            if file_lower in ignored_files or file_lower == 'meta.ini' or file_lower.endswith('.mohidden'):
+                                continue
+                            # Get the relative file path
+                            cased = os.path.join(rel_root, file)
+                            relative_path = cased.lower()
+                            # Track the file paths by mod
+                            existing_mod_files = mod_files.get(relative_path)
+                            if not existing_mod_files:
+                                mod_files[relative_path] = [mod_folder]
+                                cases[relative_path] = cased
+                            else:
+                                existing_mod_files.append(mod_folder)
+                            if file_lower.endswith(plugin_extensions):
+                                plugin_names.add(file)
+                            elif file_lower.endswith(GAME_ARCHIVE_EXTENSION) and file_lower not in game_archive_blacklist:
+                                game_archive_file = file[:-4]
+                                game_archive_lower = game_archive_file.lower().partition(' - textures')[0]
+                                if not file_lower in game_archive_dict_temp:
+                                    game_archive_dict_temp[file_lower] = []
+                                    game_archive_file_name_dict[file_lower] = game_archive_lower
+                                game_archive_dict_temp[file_lower].append(mod_folder)
+                    else: #not root level
+                        for file in files:
+                            file_lower = file.lower()
+                            if file_lower in ignored_files or file_lower.endswith('.mohidden'):
+                                continue
+                            # Get the relative file path
+                            cased = os.path.join(rel_root, file)
+                            relative_path = cased.lower()
+                            # Track the file paths by mod
+                            existing_mod_files = mod_files.get(relative_path)
+                            if not existing_mod_files:
+                                mod_files[relative_path] = [mod_folder]
+                                cases[relative_path] = cased
+                            else:
+                                existing_mod_files.append(mod_folder)
+
+        #Get files from MO2's overwrite folder
+        if os.path.exists(overwrite_path) and not overwrite_path == '.':
+            overwrite_path = os.path.normpath(overwrite_path)
+            overwrite_path_len = len(overwrite_path)
+            for root, dirs, files in os.walk(overwrite_path):
+                #prune directories that are mod organizer hidden
+                dirs[:] = [d for d in dirs if '.mohidden' not in d]
+
+                rel_root = root[overwrite_path_len:].lstrip(os_sep)
+
+                file_count += len(files)
+                if loop == 50: #prevent spamming stdout and slowing down the program
+                    loop = 0
+                    write_remove(1, gathered_str + str(file_count))
+                else:
+                    loop += 1
+                if root == overwrite_path:
                     for file in files:
                         file_lower = file.lower()
-                        if file_lower in MO2.scanner.ignored_files:
+                        if file_lower in ignored_files or file_lower.endswith('.mohidden'):
                             continue
-                        is_mod_root_level = root_level == mod_folder_level
-                        if is_mod_root_level and file_lower == "meta.ini":
-                            continue
-                        # Get the relative file path
-                        full_path = os.path.join(root, file)
-                        relative_path = os.path.relpath(full_path, mods_folder)
-                        part = relative_path.split(os.sep)
-                        cased = os.path.join(*part[1:])
+                        cased = os.path.join(rel_root, file)
                         relative_path = cased.lower()
-                        if '.mohidden' in relative_path: #if the file or containing folder is mod organizer hidden, skip it
-                            continue
                         # Track the file paths by mod
-                        if relative_path not in mod_files:
-                            mod_files[relative_path] = []
-                            cases_of_files[relative_path] = cased
-                        mod_files[relative_path].append(mod_folder)
-                        if is_mod_root_level and file_lower.endswith(plugin_extensions):
-                            plugin_names.add(file)
-                        elif is_mod_root_level and file_lower.endswith(GAME_ARCHIVE_EXTENSION) and file_lower not in MO2.scanner.game_archive_blacklist:
+                        existing_mod_files = mod_files.get(relative_path)
+                        if not existing_mod_files:
+                            mod_files[relative_path] = ['overwrite_eslifier_scan']
+                            cases[relative_path] = cased
+                        else:
+                            existing_mod_files.append('overwrite_eslifier_scan')
+                        if file_lower.endswith(plugin_extensions):
+                            if file not in plugin_names:
+                                plugin_names.add(file)
+                        elif file_lower.endswith(GAME_ARCHIVE_EXTENSION) and file_lower not in game_archive_blacklist:
                             game_archive_file = file[:-4]
                             game_archive_lower = game_archive_file.lower()
                             if ' - textures' in game_archive_lower:
@@ -174,46 +236,21 @@ class MO2():
                             if not file_lower in game_archive_dict_temp:
                                 game_archive_dict_temp[file_lower] = []
                                 game_archive_file_name_dict[file_lower] = game_archive_lower
-                            game_archive_dict_temp[file_lower].append(mod_folder)
-
-        #Get files from MO2's overwrite folder
-        if os.path.exists(overwrite_path):
-            overwrite_level = len(overwrite_path.split(os.sep))
-            for root, dirs, files in os.walk(overwrite_path):
-                file_count += len(files)
-                root_level = len(root.split(os.sep))
-                if loop == 50: #prevent spamming stdout and slowing down the program
-                    loop = 0
-                    write_remove(1, gathered_str + str(file_count))
+                            game_archive_dict_temp[file_lower].append('overwrite_eslifier_scan')
                 else:
-                    loop += 1
-                for file in files:
-                    file_lower = file.lower()
-                    if file_lower in MO2.scanner.ignored_files:
-                        continue
-                    is_file_root_level = root_level == overwrite_level
-                    full_path = os.path.join(root, file)
-                    cased = os.path.relpath(full_path, overwrite_path)
-                    relative_path = cased.lower()
-                    if '.mohidden' in relative_path:
-                        continue
-                    if relative_path not in mod_files:
-                        mod_files[relative_path] = []
-                        cases_of_files[relative_path] = cased
-                    mod_files[relative_path].append('overwrite_eslifier_scan')
-                    if is_file_root_level and file_lower.endswith(plugin_extensions):
-                        if file not in plugin_names:
-                            plugin_names.add(file)
-                    elif is_file_root_level and file_lower.endswith(GAME_ARCHIVE_EXTENSION) and file_lower not in MO2.scanner.game_archive_blacklist:
-                        game_archive_file = file[:-4]
-                        game_archive_lower = game_archive_file.lower()
-                        if ' - textures' in game_archive_lower:
-                            index = game_archive_lower.index(' - textures')
-                            game_archive_lower = game_archive_lower[:index]
-                        if not file_lower in game_archive_dict_temp:
-                            game_archive_dict_temp[file_lower] = []
-                            game_archive_file_name_dict[file_lower] = game_archive_lower
-                        game_archive_dict_temp[file_lower].append('overwrite_eslifier_scan')
+                    for file in files:
+                        file_lower = file.lower()
+                        if file_lower in ignored_files or file_lower.endswith('.mohidden'):
+                            continue
+                        cased = os.path.join(rel_root, file)
+                        relative_path = cased.lower()
+                        # Track the file paths by mod
+                        existing_mod_files = mod_files.get(relative_path)
+                        if not existing_mod_files:
+                            mod_files[relative_path] = ['overwrite_eslifier_scan']
+                            cases[relative_path] = cased
+                        else:
+                            existing_mod_files.append('overwrite_eslifier_scan')
         else:
             write_to_file('Overwrite folder not found.\n')
         #BSA list is expacted to be like: [[mod_name, full_path], [mod_name2, full_path2]] where mod_name is (mod_name).esp without ext 
@@ -238,8 +275,10 @@ class MO2():
         MO2.scanner.extract_scripts_and_seq_from_game_archive(game_archive_list, plugins_list)
 
         mod_folder = os.path.join(os.getcwd(), f'{ARCHIVE_EXTRACTED_FOLDER}/')
-        #Get files that were extracted from BSA
-        for root, dirs, files in os.walk(f'{ARCHIVE_EXTRACTED_FOLDER}/'):
+        #Get files that were extracted from archives
+        archive_extracted_folder_len = len(mod_folder)
+        for root, dirs, files in os.walk(mod_folder):
+            rel_root = root[archive_extracted_folder_len:].lstrip(os_sep)
             file_count += len(files)
             if loop == 50: #prevent spamming stdout and slowing down the program
                 loop = 0
@@ -247,18 +286,20 @@ class MO2():
             else:
                 loop += 1
             for file in files:
-                if file.lower() in MO2.scanner.ignored_files:
+                if file.lower() in ignored_files:
                     continue
                 # Get the relative file path
-                full_path = os.path.join(root, file)
-                relative_path = os.path.relpath(full_path, mod_folder)
+                cased = os.path.join(rel_root, file)
+                relative_path = cased.lower()
                 # Track the file paths by mod
-                if relative_path not in mod_files:
-                    mod_files[relative_path] = []
-                    cases_of_files[relative_path] = relative_path
-                mod_files[relative_path].append('archive_extracted_eslifier_scan')
+                existing_mod_files = mod_files.get(relative_path)
+                if not existing_mod_files:
+                    mod_files[relative_path] = ['archive_extracted_eslifier_scan']
+                    cases[relative_path] = cased
+                else:
+                    existing_mod_files.append('archive_extracted_eslifier_scan')
 
-        return mod_files, list(plugin_names), cases_of_files
+        return mod_files, list(plugin_names), cases
 
     def get_instance_paths():
         try:
