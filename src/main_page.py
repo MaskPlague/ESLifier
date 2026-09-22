@@ -512,16 +512,15 @@ class main(QWidget):
             self.create_flag_worker(checked)
         try:
             with open(ESL_FLAGGED_JSON, 'r', encoding='utf-8') as f:
-                esl_flagged_data = json.load(f)
+                esl_flagged_data = set(json.load(f))
         except:
-            esl_flagged_data = []
+            esl_flagged_data = set()
         for file in checked:
             basename = os.path.basename(file)
-            if basename not in esl_flagged_data:
-                esl_flagged_data.append(basename)
+            esl_flagged_data.add(basename)
         try:
             with open(ESL_FLAGGED_JSON, 'w', encoding='utf-8') as f:
-                json.dump(esl_flagged_data, f, ensure_ascii=False, indent=4)
+                json.dump(list(esl_flagged_data), f, ensure_ascii=False, indent=4)
                 f.close()
         except Exception as e:
             write_error(self.tr('Failed to save esl_flagged.json'))
