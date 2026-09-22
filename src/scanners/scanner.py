@@ -172,7 +172,7 @@ class scanner():
         def get_base_name(archive_path: str) -> str:
             archive_name = archive_path.rsplit('\\', 1)[-1].rsplit('/', 1)[-1]
             archive_name = archive_name.lower().removesuffix(GAME_ARCHIVE_EXTENSION)
-            archive_name = re.sub(r' - textures\d*$', '', archive_name)
+            archive_name = re.sub(r' - (textures\d*|main)$', '', archive_name)
             return archive_name
         
         plugin_index = {plugin: idx for idx, plugin in enumerate(plugins)}

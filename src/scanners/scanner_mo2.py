@@ -127,6 +127,7 @@ class MO2():
         game_archive_list = []
         game_archive_dict_temp: dict[str, list[str]] = {}
         game_archive_file_name_dict: dict[str, str] = {}
+        game_archive_extension = GAME_ARCHIVE_EXTENSION
         plugin_extensions = ('.esp', '.esl', '.esm')
         game_archive_blacklist: set[str] = MO2.scanner.game_archive_blacklist
         ignored_files: set[str] = MO2.scanner.ignored_files
@@ -171,9 +172,10 @@ class MO2():
                                 existing_mod_files.append(mod_folder)
                             if file_lower.endswith(plugin_extensions):
                                 plugin_names.add(file)
-                            elif file_lower.endswith(GAME_ARCHIVE_EXTENSION) and file_lower not in game_archive_blacklist:
+                            elif file_lower.endswith(game_archive_extension) and file_lower not in game_archive_blacklist:
                                 game_archive_file = file[:-4]
                                 game_archive_lower = game_archive_file.lower().partition(' - textures')[0]
+                                game_archive_lower = game_archive_lower.partition(' - main')[0]
                                 if not file_lower in game_archive_dict_temp:
                                     game_archive_dict_temp[file_lower] = []
                                     game_archive_file_name_dict[file_lower] = game_archive_lower
@@ -227,12 +229,10 @@ class MO2():
                         if file_lower.endswith(plugin_extensions):
                             if file not in plugin_names:
                                 plugin_names.add(file)
-                        elif file_lower.endswith(GAME_ARCHIVE_EXTENSION) and file_lower not in game_archive_blacklist:
+                        elif file_lower.endswith(game_archive_extension) and file_lower not in game_archive_blacklist:
                             game_archive_file = file[:-4]
-                            game_archive_lower = game_archive_file.lower()
-                            if ' - textures' in game_archive_lower:
-                                index = game_archive_lower.index(' - textures')
-                                game_archive_lower = game_archive_lower[:index]
+                            game_archive_lower = game_archive_file.lower().partition(' - textures')[0]
+                            game_archive_lower = game_archive_lower.partition(' - main')[0]
                             if not file_lower in game_archive_dict_temp:
                                 game_archive_dict_temp[file_lower] = []
                                 game_archive_file_name_dict[file_lower] = game_archive_lower

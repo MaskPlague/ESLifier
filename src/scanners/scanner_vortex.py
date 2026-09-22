@@ -6,7 +6,7 @@ import fnmatch
 from scanners.vortex_database_reader import VortexDBParser
 from scanners.vortex_database_reader import ReadState
 from collections import deque, defaultdict
-from data_holder import _global, VORTEX_GAME_NAME, SHORT_GAME_NAME, ARCHIVE_EXTRACTED_FOLDER
+from data_holder import _global, VORTEX_GAME_NAME, SHORT_GAME_NAME, ARCHIVE_EXTRACTED_FOLDER, GAME_ARCHIVE_EXTENSION
 from typing import TYPE_CHECKING
 from enum import Enum
 
@@ -325,8 +325,9 @@ class Vortex():
         loop = 0
         plugin_names = set()
         bsa_list = []
-        bsa_dict_temp:dict[str, list[str]] = {}
-        bsa_file_name_dict:dict[str, str] = {}
+        game_archive_dict_temp:dict[str, list[str]] = {}
+        game_archive_file_name_dict:dict[str, str] = {}
+        game_archive_extension = GAME_ARCHIVE_EXTENSION
         ignored_files: set[str] = Vortex.scanner.ignored_files
         game_archive_blacklist: set[str] = Vortex.scanner.game_archive_blacklist
         file_count = 0
@@ -366,15 +367,14 @@ class Vortex():
                                     existing_mod_files.append(mod_folder)
                                 if file_lower.endswith(plugin_extensions):
                                     plugin_names.add(file)
-                                elif file_lower.endswith('.bsa') and file_lower not in game_archive_blacklist:
-                                    bsa_file = file[:-4]
-                                    if ' - textures' in file_lower:
-                                        index = bsa_file.lower().index(' - textures')
-                                        bsa_file = bsa_file[:index]
-                                    if not file_lower in bsa_dict_temp:
-                                        bsa_dict_temp[file_lower] = []
-                                        bsa_file_name_dict[file_lower] = bsa_file.lower()
-                                    bsa_dict_temp[file_lower].append(mod_folder)
+                                elif file_lower.endswith(game_archive_extension) and file_lower not in game_archive_blacklist:
+                                    game_archive_file = file[:-4]
+                                    game_archive_lower = game_archive_file.lower().partition(' - textures')[0]
+                                    game_archive_lower = game_archive_lower.partition(' - main')[0]
+                                    if not file_lower in game_archive_dict_temp:
+                                        game_archive_dict_temp[file_lower] = []
+                                        game_archive_file_name_dict[file_lower] = game_archive_lower
+                                    game_archive_dict_temp[file_lower].append(mod_folder)
                     else: # not root level
                         for file in files:
                             if file != '__folder_managed_by_vortex':
@@ -423,16 +423,14 @@ class Vortex():
                             if file_lower.endswith(plugin_extensions):
                                 if file not in plugin_names:
                                     plugin_names.add(file)
-                            elif file_lower.endswith('.bsa') and file_lower not in game_archive_blacklist:
-                                bsa_file = file[:-4]
-                                bsa_lower = bsa_file.lower()
-                                if ' - textures' in bsa_lower:
-                                    index = bsa_lower.lower().index(' - textures')
-                                    bsa_lower = bsa_lower[:index]
-                                if not file_lower in bsa_dict_temp:
-                                    bsa_dict_temp[file_lower] = []
-                                    bsa_file_name_dict[file_lower] = bsa_lower
-                                bsa_dict_temp[file_lower].append('data_folder_file_eslifier_scan')
+                            elif file_lower.endswith(game_archive_extension) and file_lower not in game_archive_blacklist:
+                                game_archive_file = file[:-4]
+                                game_archive_lower = game_archive_file.lower().partition(' - textures')[0]
+                                game_archive_lower = game_archive_lower.partition(' - main')[0]
+                                if not file_lower in game_archive_dict_temp:
+                                    game_archive_dict_temp[file_lower] = []
+                                    game_archive_file_name_dict[file_lower] = game_archive_lower
+                                game_archive_dict_temp[file_lower].append('data_folder_file_eslifier_scan')
                 else:
                     for file in files:
                         if file != '__folder_managed_by_vortex':
@@ -452,7 +450,7 @@ class Vortex():
 
         bsa_conflict_map: dict[str, list[str]] = Vortex.get_file_conflict_resolution(
             ordered_mod_ids,
-            bsa_dict_temp,
+            game_archive_dict_temp,
             installed_mods
         )
         #BSA list is expacted to be like: [[mod_name, full_path], [mod_name2, full_path2]] where mod_name is (mod_name).esp without ext 
@@ -465,13 +463,13 @@ class Vortex():
                     file_path = os.path.join(game_folder_path, relative_path)
                 else:
                     file_path = os.path.join(mod_staging_folder, mod, relative_path)
-                bsa_list.append([bsa_file_name_dict[relative_path], file_path])
+                bsa_list.append([game_archive_file_name_dict[relative_path], file_path])
             else:
                 if providing_mods[-1] == 'data_folder_file_eslifier_scan':
                     file_path = os.path.join(game_folder_path, relative_path)
                 else:
                     file_path = os.path.join(mod_staging_folder, providing_mods[-1], relative_path)
-                bsa_list.append([bsa_file_name_dict[relative_path], file_path])
+                bsa_list.append([game_archive_file_name_dict[relative_path], file_path])
         #bsa_list = [[bsa_file, full_path] for bsa_file, full_path in bsa_dict_temp.values()]
 
         Vortex.scanner.extract_scripts_and_seq_from_game_archive(bsa_list, plugins_list)
