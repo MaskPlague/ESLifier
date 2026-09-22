@@ -2,6 +2,7 @@ from log_stream import write_to_file
 import os
 
 from PyQt6.QtCore import QCoreApplication
+from collections import defaultdict
 
 #from typing import TYPE_CHECKING
 #if TYPE_CHECKING:
@@ -40,8 +41,8 @@ def update_game_globals():
 
     ESLIFIER_DATA_FOLDER = "ESLifier_Data/"             if GAME_MODE == "SSE" else "ESLifier_FO4_Data/"
 
-    CELL_IDS_FOLDER =                                   ESLIFIER_DATA_FOLDER + "Cell_IDs"
-    FORM_ID_MAPS_FOLDER =                               ESLIFIER_DATA_FOLDER + "Form_ID_Maps"
+    CELL_IDS_FOLDER =                                   ESLIFIER_DATA_FOLDER + "Cell_IDs/"
+    FORM_ID_MAPS_FOLDER =                               ESLIFIER_DATA_FOLDER + "Form_ID_Maps/"
     ESLIFIER_LOG_FILE =                                 ESLIFIER_DATA_FOLDER + "ESLifier.log"
 
     BLACKLIST_JSON =                                    ESLIFIER_DATA_FOLDER + "blacklist.json"
@@ -118,7 +119,7 @@ class _global():
     vortex_error = None #storage for vortex error across classes
     mo2_error = None #storage for mo2 error across classes
     game_archive_dict = {}   #{archive_file: list[mod]} archive and the mods they contain
-    pex_with_getmodbyname: dict[str, set[str]] = {} #{mod: set(pex)} mods with pex with getmodbyname
+    pex_with_getmodbyname: defaultdict[str, set[str]] = defaultdict(set) #{mod: set(pex)} mods with pex with getmodbyname
 
     def init(settings_widget, vortex, mo2):
         _global._settings = settings_widget.settings
