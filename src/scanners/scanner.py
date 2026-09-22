@@ -318,7 +318,7 @@ class scanner():
         chunks = [scanner.pex_files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
         chunks.append(scanner.pex_files[(split) * chunk_size:])
         for chunk in chunks:
-            thread = threading.Thread(target=scanner.pex_processor, args=(dll_byte_pattern, chunk,))
+            thread = threading.Thread(target=scanner.pex_processor, args=(chunk,))
             scanner.threads.append(thread)
             thread.start()
 
@@ -364,9 +364,10 @@ class scanner():
             for file in files:
                 scanner.ba2_reader(file)
 
-    def pex_processor(pattern2, files):
+    def pex_processor(files: list[str]):
         processed_string = ('-  ' + QCoreApplication.translate("scanner", "Processed: %0 %") +
                             '\n-  ' + QCoreApplication.translate("scanner", "Files: %1/%2")).replace("%0", "{0}").replace("%1", "{1}").replace("%2", "{2}")
+        r_type = f"pex-{GAME_MODE}"
         for file in files:
             scanner.count += 1
             factor = round(scanner.file_count * 0.01)
@@ -375,7 +376,7 @@ class scanner():
             if (scanner.count % factor) >= (factor-1):
                 scanner.percentage = round((scanner.count / scanner.file_count) * 100, 1)
                 write_progress(round(scanner.percentage), 1, processed_string.format(scanner.percentage, scanner.count, scanner.file_count))
-            scanner.file_reader(pattern2, file, 'pex')
+            scanner.file_reader(None, file, r_type)
 
     def file_processor(files: list[str]):
         local_dict: defaultdict[str, set[str]] = defaultdict(set)
@@ -552,11 +553,11 @@ class scanner():
                     with scanner.lock:                  
                         for plugin in found_plugins:
                             scanner.file_dict[plugin].add(file)
-
-            elif reader_type == 'pex':
+            elif reader_type == 'pex-SSE':
                 with scanner.file_semaphore:
                     with open(file, 'rb') as f:
                         data = f.read()
+                # SSE uses big endian
                 offset = 18 + struct.unpack('>H', data[16:18])[0]
                 offset += 2 + struct.unpack('>H', data[offset:offset+2])[0]
                 offset += 2 + struct.unpack('>H', data[offset:offset+2])[0]
@@ -573,9 +574,46 @@ class scanner():
                 gfff = 'getformfromfile' in strings
                 gmbn = 'getmodbyname' in strings
                 if gfff or gmbn: #'getformfromfile' in strings: #or 'getmodbyname' in strings:
+                    plugin_basename_set = scanner.plugin_basename_set
                     plugins = set()
                     for string in strings:
-                        if string.endswith(('.esp', '.esl', '.esm')) and string in scanner.plugin_basename_set:#not ':' in string and not '/' in string and not '\\' in string:
+                        if string.endswith(('.esp', '.esl', '.esm')) and plugin_basename_set:#not ':' in string and not '/' in string and not '\\' in string:
+                            with scanner.lock:
+                                if gfff:
+                                    scanner.file_dict[string].add(file)
+                                if gmbn:
+                                    plugins.add(string)
+                    if gmbn:
+                        scanner.check_if_modbyname_uses_plugin_names(data, plugins, file, offset, strings_lowered_bytes)
+
+                elif f'{ARCHIVE_EXTRACTED_FOLDER}\\' in file:
+                    os.remove(file)
+
+            elif reader_type == 'pex-FO4':
+                with scanner.file_semaphore:
+                    with open(file, 'rb') as f:
+                        data = f.read()
+                # FO4 uses little endian
+                offset = 18 + struct.unpack('<H', data[16:18])[0]
+                offset += 2 + struct.unpack('<H', data[offset:offset+2])[0]
+                offset += 2 + struct.unpack('<H', data[offset:offset+2])[0]
+                string_count = struct.unpack('<H', data[offset:offset+2])[0]
+                offset += 2
+                strings = set()
+                strings_lowered_bytes = []
+                for _ in range(string_count):
+                    string_length = struct.unpack('<H', data[offset:offset+2])[0]
+                    string_lowered = data[offset+2:offset+2+string_length].lower()
+                    strings_lowered_bytes.append(string_lowered)
+                    strings.add(string_lowered.decode())
+                    offset += 2 + string_length
+                gfff = 'getformfromfile' in strings
+                gmbn = 'getmodbyname' in strings
+                if gfff or gmbn: #'getformfromfile' in strings: #or 'getmodbyname' in strings:
+                    plugin_basename_set = scanner.plugin_basename_set
+                    plugins = set()
+                    for string in strings:
+                        if string.endswith(('.esp', '.esl', '.esm')) and string in plugin_basename_set:#not ':' in string and not '/' in string and not '\\' in string:
                             with scanner.lock:
                                 if gfff:
                                     scanner.file_dict[string].add(file)
@@ -606,7 +644,7 @@ class scanner():
                 write_warning(QCoreApplication.translate("scanner", "Missing file scan type for ") + file)
         except Exception as e:
             write_error(QCoreApplication.translate("scanner", "Error reading file ") + file)
-            if reader_type == 'pex':
+            if reader_type == 'pex-SSE' or reader_type == 'pex-FO4':
                 write_error(QCoreApplication.translate("scanner",'!pex file is likely corrupt.'))
             write_error(e, True)
 
@@ -716,7 +754,7 @@ class scanner():
                         start_time = timeit.default_timer()
                         if name_table_offset > len(mm) + 1:
                             raise ValueError('Possibly Corrupt BA2')
-
+                        os_sep = os.sep
                         while offset < len(mm) and time < max_time:
                             name_length = struct.unpack('<H', mm[offset:offset+2])[0]
                             name = mm[offset+2:offset+2+name_length].decode(errors='ignore').lower()
