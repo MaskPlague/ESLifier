@@ -36,18 +36,17 @@ from log_stream import write_error, write_normal, write_progress, write_remove, 
 
 from PyQt6.QtCore import QCoreApplication
 #TODO: go through and make sure that pex and other file types need to be read the same.
-# update game_archive_blacklist for FO4
-# adapt the ba2_reader for FO4 instead of SSE's BSA
 class scanner():    
     def scan(full_scan: bool) -> tuple[dict, dict] | None:
         if GAME_MODE == "SSE":
             scanner.game_archive_blacklist = set(['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
-                        'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
-                        'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa'])
-        elif GAME_MODE == "FO4": #TODO: This
-            scanner.game_archive_blacklist = set(['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
-                                    'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
-                                    'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa'])
+                                                  'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
+                                                  'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa'])
+        elif GAME_MODE == "FO4":
+            scanner.game_archive_blacklist = set(['fallout4 - animations.ba2', 'fallout4 - interface.ba2', 'fallout4 - materials.ba2', 'fallout4 - meshes.ba2', 'fallout4 - meshesextra.ba2', 
+                                                  'fallout4 - misc.ba2', 'fallout4 - shaders.ba2', 'fallout4 - sounds.ba2', 'fallout4 - startup.ba2', 'fallout4 - textures1.ba2', 
+                                                  'fallout4 - textures2.ba2', 'fallout4 - textures3.ba2', 'fallout4 - textures4.ba2', 'fallout4 - textures5.ba2', 'fallout4 - textures6.ba2', 
+                                                  'fallout4 - textures7.ba2', 'fallout4 - textures8.ba2', 'fallout4 - textures9.ba2', 'fallout4 - voices.ba2'])
         start_time = timeit.default_timer()
         scanner.mod_manager_mode: int = _global.mod_manager_mode
         scanner.output_file_name = _global.output_folder_name
