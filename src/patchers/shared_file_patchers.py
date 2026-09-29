@@ -41,6 +41,19 @@ class shared_patchers():
                 print(f"Unknown variable type: {variableType}?")
             return offset, variableType, variableData
         
+        def patch_int(aOffset):
+            print(data[aOffset:aOffset+6].hex())
+            if endian == 'big':
+                to_id_data = form_id_map.get(int.from_bytes(data[aOffset+2:aOffset+5], endian))
+                if to_id_data:
+                    data[aOffset+2:aOffset+5] = to_id_data["bytes"][::-1][1:]
+            else:
+                to_id_data = form_id_map.get(int.from_bytes(data[aOffset+1:aOffset+4], endian))
+                if to_id_data:
+                    data[aOffset+1:aOffset+4] = to_id_data["bytes"][:-1]
+            print(data[aOffset:aOffset+6].hex())
+            print('--------------')
+
         def function_processor(data, offset):
             if DEBUG:
                 returnType = strings[int.from_bytes(data[offset:offset+2], endian)]
@@ -105,7 +118,7 @@ class shared_patchers():
                     if DEBUG:
                         print(f"Assigning value to: {assignedTo}")
                         print(f"Value Type: {vType}")
-                        print(f"Value being assigned: {vData}")
+                        print(f"Value being assigned: {vData} from loc {prevOffset}")
                     if bytes(vData) == arrayTempId:
                         arrays[bytes(assignedTo)] = { "integers": [(None, None) for _ in range(arraySize)],
                                                         "length": arraySize, 
@@ -175,18 +188,19 @@ class shared_patchers():
                             if bytes(arg2[2]) == basename_bytes:
                                 if DEBUG:
                                     print(f"should patch integer {arg1[2]} at {arg1[0]}" )
-                                to_id_data = form_id_map.get(arg1[2])
-                                if to_id_data:
-                                    aOffset = arg1[0]
-                                    if endian == 'big':
-                                        data[aOffset+2:aOffset+5] = to_id_data["bytes"][::-1][1:]
-                                    else: #TODO: perhaps remove? we'll see what I end up doing with the fid map for FO4
-                                        data[aOffset+1:aOffset+4] = to_id_data["bytes"][:-1]
+                                aOffset = arg1[0]
+                                patch_int(aOffset)
                         elif arg1[1] == 1 and arg2[1] == 2:
                             if bytes(arg2[2]) == basename_bytes:
-                                if DEBUG:
-                                    print(f"should patch integers in array: {tempVars[bytes(arg1[2])][2]}")
-                                arrays[tempVars[bytes(arg1[2])][2]]["patch"] = True
+                                aOffset, vType, varId = tempVars[bytes(arg1[2])]
+                                if varId in arrays:
+                                    if DEBUG:
+                                        print(f"should patch integers in array: {tempVars[bytes(arg1[2])][2]}")
+                                    arrays[varId]["patch"] = True
+                                else:
+                                    if DEBUG:
+                                        print(f"should patch integer {varId} at {aOffset}")
+                                    patch_int(aOffset)
 
                 elif opCode == b'\x18':
                     offset, vType, vData = var_data_reader(data, offset)
@@ -209,13 +223,7 @@ class shared_patchers():
                 print(f"{arrays = }")
             for array in arrays.values():
                 for aOffset, integer in array["integers"]:
-                    #int.from_bytes(data[aOffset+1:aOffset+5], endian)
-                    to_id_data = form_id_map.get(integer)
-                    if to_id_data:
-                        if endian == 'big':
-                            data[aOffset+2:aOffset+5] = to_id_data["bytes"][::-1][1:]
-                        else: #TODO: perhaps remove? we'll see what I end up doing with the fid map for FO4
-                            data[aOffset+1:aOffset+4] = to_id_data["bytes"][:-1]
+                    patch_int(aOffset)
             return offset
         
         def state_processor(data, offset):
@@ -442,6 +450,16 @@ class shared_patchers():
                 print(f"Unknown variable type: {variableType}?")
             return offset, variableType, variableData
         
+        def patch_int(aOffset):
+            if endian == 'big':
+                to_id_data = form_id_map.get(int.from_bytes(data[aOffset+2:aOffset+5], endian))
+                if to_id_data:
+                    data[aOffset+2:aOffset+5] = to_id_data["bytes"][::-1][1:]
+            else:
+                to_id_data = form_id_map.get(int.from_bytes(data[aOffset+1:aOffset+4], endian))
+                if to_id_data:
+                    data[aOffset+1:aOffset+4] = to_id_data["bytes"][:-1]
+
         def function_processor(data, offset):
             offset += 9
             offset += 2 + (4 * int.from_bytes(data[offset:offset+2], endian)) #Num Params
@@ -519,13 +537,14 @@ class shared_patchers():
                             to_id_data = form_id_map.get(arg1[2])
                             if to_id_data:
                                 aOffset = arg1[0]
-                                if endian == 'big':
-                                    data[aOffset+2:aOffset+5] = to_id_data["bytes"][::-1][1:]
-                                else: #TODO: perhaps remove? we'll see what I end up doing with the fid map for FO4
-                                    data[aOffset+1:aOffset+4] = to_id_data["bytes"][:-1]
+                                patch_int(aOffset)
                         elif arg1[1] == 1 and arg2[1] == 2:
                             if bytes(arg2[2]) == basename_bytes:
-                                arrays[tempVars[bytes(arg1[2])][2]]["patch"] = True
+                                aOffset, vType, varId = tempVars[bytes(arg1[2])]
+                                if varId in arrays:
+                                    arrays[varId]["patch"] = True
+                                else:
+                                    patch_int(aOffset)
 
                 elif opCode == b'\x18':
                     offset, vType, vData = var_data_reader(data, offset)
@@ -547,13 +566,7 @@ class shared_patchers():
 
             for array in arrays.values():
                 for aOffset, integer in array["integers"]:
-                    #int.from_bytes(data[aOffset+1:aOffset+5], endian)
-                    to_id_data = form_id_map.get(integer)
-                    if to_id_data:
-                        if endian == 'big':
-                            data[aOffset+2:aOffset+5] = to_id_data["bytes"][::-1][1:]
-                        else: #TODO: perhaps remove? we'll see what I end up doing with the fid map for FO4
-                            data[aOffset+1:aOffset+4] = to_id_data["bytes"][:-1]
+                    patch_int(aOffset)
             return offset
         
         def state_processor(data, offset):
