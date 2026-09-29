@@ -7,6 +7,648 @@ import io
 from log_stream import write_to_file, write_ineligible
 
 class shared_patchers():
+    def pex_patcher_for_debug(basename: str, new_file: str, form_id_map: dict, endian = 'big'):
+            DEBUG = True
+            def var_data_reader(data, offset):
+                variableType = data[offset]
+                offset += 1
+                if DEBUG:
+                    print(f"{variableType = }")
+                variableData = None
+                if variableType == 0: # Null
+                    return offset, 0, None
+                elif variableType == 1: # identifier (string)
+                    variableData = strings[int.from_bytes(data[offset:offset+2], endian)]
+                    offset += 2
+                    return offset, 1, variableData
+                elif variableType == 2: # string
+                    variableData = strings[int.from_bytes(data[offset:offset+2], endian)]
+                    offset += 2
+                    return offset, 2, variableData
+                elif variableType == 3: # integer
+                    variableData = int.from_bytes(data[offset:offset+4], endian)
+                    offset += 4
+                    return offset, 3, variableData
+                elif variableType == 4: # float
+                    variableData = data[offset:offset+4]
+                    offset += 4
+                    return offset, 4, variableData
+                elif variableType == 5: # bool
+                    variableData == bool(data[offset])
+                    offset += 1
+                    return offset, 1, variableData
+                else:
+                    print(f"Unknown variable type: {variableType}?")
+                return offset, variableType, variableData
+            
+            def function_processor(data, offset):
+                if DEBUG:
+                    returnType = strings[int.from_bytes(data[offset:offset+2], endian)]
+                    print(f"{returnType = }")
+                offset += 2
+                offset += 2
+                offset += 4
+                offset += 1
+                numParams = int.from_bytes(data[offset:offset+2], endian)
+                offset += 2
+                if DEBUG:
+                    print(f"{numParams = }")
+                for _ in range(numParams):
+                    if DEBUG:
+                        paramName = strings[int.from_bytes(data[offset:offset+2], endian)]
+                        print(f"{paramName = }")
+                    offset += 2
+                    if DEBUG:
+                        paramType = strings[int.from_bytes(data[offset:offset+2], endian)]
+                        print(f"{paramType = }")
+                    offset += 2
+                numLocals = int.from_bytes(data[offset:offset+2], endian)
+                offset += 2
+                if DEBUG:
+                    print(f"{numLocals = }")
+                for _ in range(numLocals):
+                    if DEBUG:
+                        localName = strings[int.from_bytes(data[offset:offset+2], endian)]
+                        print(f"{localName = }")
+                    offset += 2
+                    if DEBUG:
+                        localType = strings[int.from_bytes(data[offset:offset+2], endian)]
+                        print(f"{localType = }")
+                    offset += 2
+                numInstructions = int.from_bytes(data[offset:offset+2], endian)
+                offset += 2
+                arrays = {}
+                arrayTempId = None
+                arraySize = None
+                tempVars = {}
+                for _ in range(numInstructions):
+                    opCode = data[offset:offset+1]
+                    if DEBUG:
+                        print(f"{opCode.hex() = }")
+                    offset += 1
+                    #TODO: update additional FO4 op codes
+                    if opCode in (b'\x01', b'\x02', b'\x03', b'\x04', b'\x05', b'\x06', b'\x07', b'\x08', b'\x09', b'\x0F', b'\x10', b'\x11', b'\x12', b'\x13', b'\x1B', b'\x1C', b'\x1D'):
+                        offset, vType, vData = var_data_reader(data, offset)
+                        offset, vType, vData = var_data_reader(data, offset)
+                        offset, vType, vData = var_data_reader(data, offset)
+                    elif opCode == b'\x1E': # Create Array
+                        offset, vType, vData = var_data_reader(data, offset)
+                        arrayTempId = bytes(vData)
+                        offset, vType, arraySize = var_data_reader(data, offset)
+                        if DEBUG:
+                            print(f"\nCreating array: {arrayTempId}")
+                            print(f"Array length: {arraySize}")
+                    elif opCode == b'\x0D': # Store variable
+                        offset, vType, assignedTo = var_data_reader(data, offset)
+                        prevOffset = offset
+                        offset, vType, vData = var_data_reader(data, offset)
+                        if DEBUG:
+                            print(f"Assigning value to: {assignedTo}")
+                            print(f"Value Type: {vType}")
+                            print(f"Value being assigned: {vData}")
+                        if bytes(vData) == arrayTempId:
+                            arrays[bytes(assignedTo)] = { "integers": [(None, None) for _ in range(arraySize)],
+                                                            "length": arraySize, 
+                                                            "patch": False}
+                        else:
+                            if vType == 3:
+                                tempVars[bytes(assignedTo)] = (prevOffset, vType, vData)
+                            elif vType == 1:
+                                tmp = tempVars.get(bytes(vData))
+                                if tmp:
+                                    tempVars[bytes(assignedTo)] = tmp
+                    elif opCode == b'\x21': # Array set element
+                        offset, vType, arrayId = var_data_reader(data, offset)
+                        offset, vType, arrayIndex = var_data_reader(data, offset)
+                        offset, vType, assignedValue = var_data_reader(data, offset)
+                        if DEBUG:
+                            print(f"Assigning to Array: {arrayId}")
+                            print(f"Assigning to Index: {arrayIndex}")
+                            print(f"Assigning Value: {assignedValue}")
+                        tmp = tempVars.get(bytes(assignedValue))
+                        if tmp and tmp[1] == 3: #if tmp value is integer
+                            #set index for array to (offset, value)
+                            arrays[bytes(arrayId)]["integers"][arrayIndex] = (tmp[0], tmp[2])
+                    elif opCode == b'\x20': # get element from array to var
+                        offset, vType, assignToVar = var_data_reader(data, offset)
+                        offset, vType, arrayId = var_data_reader(data, offset)
+                        offset, vType, arrayIndex = var_data_reader(data, offset)
+                        if DEBUG:
+                            print(f"Putting element in var: {assignToVar}")
+                            print(f"Getting element from array: {arrayId}")
+                            print(f"Getting element from index: {arrayIndex}")
+                        tempVars[bytes(assignToVar)] = (0, -1, bytes(arrayId))
+                    elif opCode == b'\x1F': # get array size
+                        offset, vType, tmpVar = var_data_reader(data, offset)
+                        offset, vType, arrayId = var_data_reader(data, offset)
+                        tempVars[bytes(tmpVar)] = (0, 3, arrays.get(bytes(arrayId), {"length": 0})["length"], arrayId)
+                    elif opCode in (b'\x0A', b'\x0B', b'\x0C', b'\x0E', b'\x15', b'\x16'):
+                        offset, vType, vData = var_data_reader(data, offset)
+                        offset, vType, vData = var_data_reader(data, offset)
+                    elif opCode in (b'\x14', b'\x1A'):
+                        offset, vType, vData = var_data_reader(data, offset)
+                    elif opCode in (b'\x17',b'\x19'):
+                        offset, vType, methodName = var_data_reader(data, offset)
+                        
+                        offset, vType, s1 = var_data_reader(data, offset)
+                        
+                        offset, vType, vData = var_data_reader(data, offset)
+                        
+                        offset, vType, numArgs = var_data_reader(data, offset)
+                        if DEBUG:
+                            print(f"\nCalling method: {methodName}")
+                            print(f"Method S1: {s1}")
+                            print(f"Method S2: {vData}")
+                            print(f"{numArgs = }")
+                        args = []
+                        for i in range(numArgs):
+                            prevOffset = offset
+                            offset, vType, vData = var_data_reader(data, offset)
+                            args.append((prevOffset, vType, vData))
+                            if DEBUG:
+                                print(f"Method arg{i}: {vType}, {vData}")
+                        if bytes(s1) == b'getformfromfile':
+                            arg1 = args[0]
+                            arg2 = args[1]
+                            #if arg1 is int and arg2 is string
+                            if arg1[1] == 3 and arg2[1] == 2:
+                                if bytes(arg2[2]) == basename_bytes:
+                                    if DEBUG:
+                                        print(f"should patch integer {arg1[2]} at {arg1[0]}" )
+                                    to_id_data = form_id_map.get(arg1[2])
+                                    if to_id_data:
+                                        aOffset = arg1[0]
+                                        if endian == 'big':
+                                            data[aOffset+2:aOffset+5] = to_id_data["bytes"][::-1][1:]
+                                        else: #TODO: perhaps remove? we'll see what I end up doing with the fid map for FO4
+                                            data[aOffset+1:aOffset+4] = to_id_data["bytes"][:-1]
+                            elif arg1[1] == 1 and arg2[1] == 2:
+                                if bytes(arg2[2]) == basename_bytes:
+                                    if DEBUG:
+                                        print(f"should patch integers in array: {tempVars[bytes(arg1[2])][2]}")
+                                    arrays[tempVars[bytes(arg1[2])][2]]["patch"] = True
+    
+                    elif opCode == b'\x18':
+                        offset, vType, vData = var_data_reader(data, offset)
+                        offset, vType, vData = var_data_reader(data, offset)
+                        
+                        offset, vType, numArgs = var_data_reader(data, offset)
+                        for _ in range(numArgs):
+                            offset, vType, vData = var_data_reader(data, offset)
+    
+                    elif opCode in (b'\x22', b'\x23'):
+                        offset, vType, vData = var_data_reader(data, offset)
+                        offset, vType, vData = var_data_reader(data, offset)
+                        offset, vType, vData = var_data_reader(data, offset)
+                        offset, vType, vData = var_data_reader(data, offset)
+                    elif opCode == b'\x00':
+                        ...
+                    else:
+                        print("Missing opcode?")
+                if DEBUG:
+                    print(f"{arrays = }")
+                for array in arrays.values():
+                    for aOffset, integer in array["integers"]:
+                        #int.from_bytes(data[aOffset+1:aOffset+5], endian)
+                        to_id_data = form_id_map.get(integer)
+                        if to_id_data:
+                            if endian == 'big':
+                                data[aOffset+2:aOffset+5] = to_id_data["bytes"][::-1][1:]
+                            else: #TODO: perhaps remove? we'll see what I end up doing with the fid map for FO4
+                                data[aOffset+1:aOffset+4] = to_id_data["bytes"][:-1]
+                return offset
+            
+            def state_processor(data, offset):
+                if DEBUG:
+                    stateName = strings[int.from_bytes(data[offset:offset+2], endian)]
+                    print(f"{stateName = }")
+                offset += 2
+                numFunctions = int.from_bytes(data[offset:offset+2], endian)
+                if DEBUG:
+                    print(f"{numFunctions = }")
+                offset += 2
+                for _ in range(numFunctions):
+                    if DEBUG:
+                        functionName = strings[int.from_bytes(data[offset:offset+2], endian)]
+                        print(f"{functionName = }")
+                    offset += 2 
+                    offset = function_processor(data, offset)
+                return offset
+            
+            basename_bytes = basename.encode(encoding='utf-8')
+            with open(new_file,'rb+') as f:
+                data = f.read()
+                data = bytearray(data)
+                src_name_length = int.from_bytes(data[16:18], endian)
+                offset = 18 + src_name_length
+                username_length = int.from_bytes(data[offset:offset+2], endian)
+                offset += 2 + username_length
+                machine_name_length = int.from_bytes(data[offset:offset+2], endian)
+                offset += 2 + machine_name_length
+                string_count = int.from_bytes(data[offset:offset+2], endian)
+                offset += 2
+                strings = []
+                for _ in range(string_count):
+                    string_length = int.from_bytes(data[offset:offset+2], endian)
+                    strings.append(data[offset+2:offset+2+string_length].lower())
+                    offset += 2 + string_length
+                if DEBUG:
+                    print(f"{strings = }")
+                debug_info_exists = data[offset]
+                offset += 1
+                if DEBUG:
+                    print(f"{debug_info_exists = }")
+                if debug_info_exists == 1:
+                    offset += 8
+                    func_count = int.from_bytes(data[offset:offset+2], endian)
+                    if DEBUG:
+                        print(f"{func_count = }")
+                    offset += 2
+                    for _ in range(func_count):
+                        if DEBUG:
+                            objectName = strings[int.from_bytes(data[offset:offset+2])]
+                            print(f"debugInfo {objectName = }")
+                        #offset += 2
+                        #stateNameIndex = int.from_bytes(data[offset:offset+2])
+                        #stateName = strings[stateNameIndex]
+                        #print(f"{stateName = }")
+                        #offset += 2
+                        #functionNameIndex =	int.from_bytes(data[offset:offset+2])
+                        #functionName = strings[functionNameIndex]
+                        #print(f"{functionName = }")
+                        #offset += 2
+                        #functionType = data[offset]
+                        #print(f"{functionType = }")
+                        #offset += 1
+                        offset += 7
+                        instructionCount = int.from_bytes(data[offset:offset+2], endian)
+                        offset += 2
+                        offset += 2*instructionCount
+                    if endian == 'little': # not skyrim (i.e. FO4)
+                        groupCount = int.from_bytes(data[offset:offset+2], endian)
+                        if DEBUG:
+                            print(f"{groupCount = }")
+                        offset += 2
+                        for _ in range(groupCount):
+                            offset += 2 + 2 + 2 + 4
+                            nameCount = int.from_bytes(data[offset:offset+2], endian)
+                            offset += 2
+                            if DEBUG:
+                                print(f"{nameCount = }")
+                            offset += 2 * nameCount
+                        orderCount = int.from_bytes(data[offset:offset+2], endian)
+                        if DEBUG:
+                            print(f"{orderCount = }")
+                        offset += 2
+                        for _ in range(orderCount):
+                            offset += 2 + 2
+                            nameCount = int.from_bytes(data[offset:offset+2], endian)
+                            offset += 2
+                            if DEBUG:
+                                print(f"{nameCount = }")
+                            offset += 2 * nameCount
+                if DEBUG:
+                    print(f"offset after passing debug info: {offset}")
+                userFlagCount = int.from_bytes(data[offset:offset+2], endian)
+                if DEBUG:
+                    print(f"{userFlagCount = }")
+                offset += 2
+                offset += 3 * userFlagCount
+                objectCount = int.from_bytes(data[offset:offset+2], endian)
+                offset += 2
+                if DEBUG:
+                    print(f"{objectCount = }")
+                for _ in range(objectCount):
+                    #Object
+                    if DEBUG:
+                        objectName = strings[int.from_bytes(data[offset:offset+2], endian)]
+                        print(f"{objectName = }")
+                    offset += 2
+                    #objectSize = int.from_bytes(data[offset:offset+4]) - 4
+                    offset += 4
+                    #Object Data
+                    if DEBUG:
+                        parentClassName = strings[int.from_bytes(data[offset:offset+2], endian)]
+                        print(f"{parentClassName = }")
+                    offset += 2
+                    if DEBUG:
+                        docString = strings[int.from_bytes(data[offset:offset+2], endian)]
+                        print(f"{docString = }")
+                    offset += 2
+                    if endian == 'little':
+                        offset += 1
+                    if DEBUG:
+                        userFlags = data[offset:offset+4]
+                        print(f"{userFlags = }")
+                    offset += 4
+                    if DEBUG:
+                        autoStateName = strings[int.from_bytes(data[offset:offset+2], endian)]
+                        print(f"{autoStateName = }")
+                    offset += 2
+                    if endian == 'little':
+                        structCount = int.from_bytes(data[offset:offset+2], endian)
+                        if DEBUG:
+                            print(f"{structCount = }")
+                        offset += 2
+                        for _ in range(structCount):
+                            if DEBUG:
+                                structName = strings[int.from_bytes(data[offset:offset+2], endian)]
+                                print(f"{structName = }")
+                            offset += 2
+                            memberCount = int.from_bytes(data[offset:offset+2], endian)
+                            offset += 2
+                            for _ in range(memberCount):
+                                if DEBUG:
+                                    memberName = strings[int.from_bytes(data[offset:offset+2], endian)]
+                                    print(f"{memberName = }")
+                                offset += 2
+                                offset += 2 + 4
+                                offset, vType, vData = var_data_reader(data, offset)
+                                offset += 1 + 2
+    
+                    numVariables = int.from_bytes(data[offset:offset+2], endian)
+                    offset += 2
+                    if DEBUG:
+                        print(f"{numVariables = }")
+                    for _ in range(numVariables):
+                        #Variable
+                        offset += 8
+                        offset, vType, vData = var_data_reader(data, offset)
+                    numProperties = int.from_bytes(data[offset:offset+2], endian)
+                    offset += 2
+                    if DEBUG:
+                        print(f"{numProperties = }")
+                    for _ in range(numProperties):
+                        if DEBUG:
+                            propertyName = strings[int.from_bytes(data[offset:offset+2], endian)]
+                            print(f"{propertyName = }")
+                        offset += 10
+                        flags = data[offset]
+                        offset += 1
+                        if flags & 4 != 0:
+                            offset += 2
+                        if flags & 5 == 1:
+                            if DEBUG:
+                                print("readHandler")
+                            offset = function_processor(data, offset)
+                        if flags & 6 == 2:
+                            if DEBUG:
+                                print("writeHandler")
+                            offset = function_processor(data, offset)
+    
+                    numStates = int.from_bytes(data[offset:offset+2], endian)
+                    offset += 2
+                    if DEBUG:
+                        print(f"{numStates = }")
+                    for _ in range(numStates):
+                        offset = state_processor(data, offset)
+                if not DEBUG:
+                    data = bytes(data)
+                    f.seek(0)
+                    f.truncate(0)
+                    f.write(data)  
+                print(f"done processing {new_file}")
+                return   
+
+    #endian = 'big' for skyrim and 'little' for all others (i.e. FO4)
+    def pex_patcher(basename: str, new_file: str, form_id_map: dict, endian = 'big'):
+        def var_data_reader(data, offset):
+            variableType = data[offset]
+            offset += 1
+            variableData = None
+            if variableType == 0: # Null
+                return offset, 0, None
+            elif variableType == 1: # identifier (string)
+                variableData = strings[int.from_bytes(data[offset:offset+2], endian)]
+                offset += 2
+                return offset, 1, variableData
+            elif variableType == 2: # string
+                variableData = strings[int.from_bytes(data[offset:offset+2], endian)]
+                offset += 2
+                return offset, 2, variableData
+            elif variableType == 3: # integer
+                variableData = int.from_bytes(data[offset:offset+4], endian)
+                offset += 4
+                return offset, 3, variableData
+            elif variableType == 4: # float
+                variableData = data[offset:offset+4]
+                offset += 4
+                return offset, 4, variableData
+            elif variableType == 5: # bool
+                variableData == bool(data[offset])
+                offset += 1
+                return offset, 1, variableData
+            else:
+                print(f"Unknown variable type: {variableType}?")
+            return offset, variableType, variableData
+        
+        def function_processor(data, offset):
+            offset += 9
+            offset += 2 + (4 * int.from_bytes(data[offset:offset+2], endian)) #Num Params
+            offset += 2 + (4 *int.from_bytes(data[offset:offset+2], endian)) #Num Locals
+            numInstructions = int.from_bytes(data[offset:offset+2], endian)
+            offset += 2
+            arrays = {}
+            arrayTempId = None
+            arraySize = None
+            tempVars = {}
+            for _ in range(numInstructions):
+                opCode = data[offset:offset+1]
+                offset += 1
+                #TODO: update additional FO4 op codes
+                if opCode in (b'\x01', b'\x02', b'\x03', b'\x04', b'\x05', b'\x06', b'\x07', b'\x08', b'\x09', b'\x0F', b'\x10', b'\x11', b'\x12', b'\x13', b'\x1B', b'\x1C', b'\x1D'):
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
+                elif opCode == b'\x1E': # Create Array
+                    offset, vType, vData = var_data_reader(data, offset)
+                    arrayTempId = bytes(vData)
+                    offset, vType, arraySize = var_data_reader(data, offset)
+                elif opCode == b'\x0D': # Store variable
+                    offset, vType, assignedTo = var_data_reader(data, offset)
+                    prevOffset = offset
+                    offset, vType, vData = var_data_reader(data, offset)
+                    if bytes(vData) == arrayTempId:
+                        arrays[bytes(assignedTo)] = { "integers": [(None, None) for _ in range(arraySize)],
+                                                        "length": arraySize, 
+                                                        "patch": False}
+                    else:
+                        if vType == 3:
+                            tempVars[bytes(assignedTo)] = (prevOffset, vType, vData)
+                        elif vType == 1:
+                            tmp = tempVars.get(bytes(vData))
+                            if tmp:
+                                tempVars[bytes(assignedTo)] = tmp
+                elif opCode == b'\x21': # Array set element
+                    offset, vType, arrayId = var_data_reader(data, offset)
+                    offset, vType, arrayIndex = var_data_reader(data, offset)
+                    offset, vType, assignedValue = var_data_reader(data, offset)
+                    tmp = tempVars.get(bytes(assignedValue))
+                    if tmp and tmp[1] == 3: #if tmp value is integer
+                        #set index for array to (offset, value)
+                        arrays[bytes(arrayId)]["integers"][arrayIndex] = (tmp[0], tmp[2])
+                elif opCode == b'\x20': # get element from array to var
+                    offset, vType, assignToVar = var_data_reader(data, offset)
+                    offset, vType, arrayId = var_data_reader(data, offset)
+                    offset, vType, arrayIndex = var_data_reader(data, offset)
+                    tempVars[bytes(assignToVar)] = (0, -1, bytes(arrayId))
+                elif opCode == b'\x1F': # get array size
+                    offset, vType, tmpVar = var_data_reader(data, offset)
+                    offset, vType, arrayId = var_data_reader(data, offset)
+                    tempVars[bytes(tmpVar)] = (0, 3, arrays.get(bytes(arrayId), {"length": 0})["length"], arrayId)
+                elif opCode in (b'\x0A', b'\x0B', b'\x0C', b'\x0E', b'\x15', b'\x16'):
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
+                elif opCode in (b'\x14', b'\x1A'):
+                    offset, vType, vData = var_data_reader(data, offset)
+                elif opCode in (b'\x17',b'\x19'):
+                    offset, vType, methodName = var_data_reader(data, offset)
+                    offset, vType, s1 = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, numArgs = var_data_reader(data, offset)
+                    args = []
+                    for _ in range(numArgs):
+                        prevOffset = offset
+                        offset, vType, vData = var_data_reader(data, offset)
+                        args.append((prevOffset, vType, vData))
+                    if bytes(s1) == b'getformfromfile':
+                        arg1 = args[0]
+                        arg2 = args[1]
+                        #if arg1 is int and arg2 is string and arg2 is basename
+                        if arg1[1] == 3 and arg2[1] == 2 and bytes(arg2[2]) == basename_bytes:
+                            to_id_data = form_id_map.get(arg1[2])
+                            if to_id_data:
+                                aOffset = arg1[0]
+                                if endian == 'big':
+                                    data[aOffset+2:aOffset+5] = to_id_data["bytes"][::-1][1:]
+                                else: #TODO: perhaps remove? we'll see what I end up doing with the fid map for FO4
+                                    data[aOffset+1:aOffset+4] = to_id_data["bytes"][:-1]
+                        elif arg1[1] == 1 and arg2[1] == 2:
+                            if bytes(arg2[2]) == basename_bytes:
+                                arrays[tempVars[bytes(arg1[2])][2]]["patch"] = True
+
+                elif opCode == b'\x18':
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
+                    
+                    offset, vType, numArgs = var_data_reader(data, offset)
+                    for _ in range(numArgs):
+                        offset, vType, vData = var_data_reader(data, offset)
+
+                elif opCode in (b'\x22', b'\x23'):
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
+                elif opCode == b'\x00':
+                    ... #do nothing
+                else:
+                    print(f"Missing opcode? {opCode.hex()}")
+
+            for array in arrays.values():
+                for aOffset, integer in array["integers"]:
+                    #int.from_bytes(data[aOffset+1:aOffset+5], endian)
+                    to_id_data = form_id_map.get(integer)
+                    if to_id_data:
+                        if endian == 'big':
+                            data[aOffset+2:aOffset+5] = to_id_data["bytes"][::-1][1:]
+                        else: #TODO: perhaps remove? we'll see what I end up doing with the fid map for FO4
+                            data[aOffset+1:aOffset+4] = to_id_data["bytes"][:-1]
+            return offset
+        
+        def state_processor(data, offset):
+            offset += 2
+            numFunctions = int.from_bytes(data[offset:offset+2], endian)
+            offset += 2
+            for _ in range(numFunctions):
+                offset += 2 
+                offset = function_processor(data, offset)
+            return offset
+        
+        basename_bytes = basename.encode(encoding='utf-8')
+        with open(new_file,'rb+') as f:
+            data = f.read()
+            data = bytearray(data)
+            offset = 18 + int.from_bytes(data[16:18], endian)
+            offset += 2 + int.from_bytes(data[offset:offset+2], endian)
+            offset += 2 + int.from_bytes(data[offset:offset+2], endian)
+            string_count = int.from_bytes(data[offset:offset+2], endian)
+            offset += 2
+            strings = []
+            for _ in range(string_count):
+                string_length = int.from_bytes(data[offset:offset+2], endian)
+                strings.append(data[offset+2:offset+2+string_length].lower())
+                offset += 2 + string_length
+            debug_info_exists = data[offset]
+            offset += 1
+            if debug_info_exists == 1:
+                offset += 8
+                func_count = int.from_bytes(data[offset:offset+2], endian)
+                offset += 2
+                for _ in range(func_count):
+                    offset += 7
+                    offset += 2 + (2*int.from_bytes(data[offset:offset+2], endian))
+                if endian == 'little': # not skyrim (i.e. FO4)
+                    groupCount = int.from_bytes(data[offset:offset+2], endian)
+                    offset += 2
+                    for _ in range(groupCount):
+                        offset += 10
+                        offset += 2 + (2 * int.from_bytes(data[offset:offset+2], endian))
+                    orderCount = int.from_bytes(data[offset:offset+2], endian)
+                    offset += 2
+                    for _ in range(orderCount):
+                        offset += 4
+                        offset += 2 + (2 * int.from_bytes(data[offset:offset+2], endian))
+            offset += 2 + (3 * int.from_bytes(data[offset:offset+2], endian))
+            objectCount = int.from_bytes(data[offset:offset+2], endian)
+            offset += 2
+            #Objects
+            for _ in range(objectCount):
+                #Object + Object Data
+                offset += 16
+                if endian == 'little':
+                    offset += 1
+                if endian == 'little':
+                    structCount = int.from_bytes(data[offset:offset+2], endian)
+                    offset += 2
+                    for _ in range(structCount):
+                        offset += 2
+                        memberCount = int.from_bytes(data[offset:offset+2], endian)
+                        offset += 2
+                        for _ in range(memberCount):
+                            offset += 8
+                            offset, vType, vData = var_data_reader(data, offset)
+                            offset += 3
+
+                numVariables = int.from_bytes(data[offset:offset+2], endian)
+                offset += 2
+                for _ in range(numVariables):
+                    #Variable
+                    offset += 8
+                    offset, vType, vData = var_data_reader(data, offset)
+                numProperties = int.from_bytes(data[offset:offset+2], endian)
+                offset += 2
+                for _ in range(numProperties):
+                    offset += 10
+                    flags = data[offset]
+                    offset += 1
+                    if flags & 4 != 0:
+                        offset += 2
+                    if flags & 5 == 1:
+                        offset = function_processor(data, offset)
+                    if flags & 6 == 2:
+                        offset = function_processor(data, offset)
+
+                numStates = int.from_bytes(data[offset:offset+2], endian)
+                offset += 2
+                for _ in range(numStates):
+                    offset = state_processor(data, offset)
+            data = bytes(data)
+            f.seek(0)
+            f.truncate(0)
+            f.write(data)  
+
+
     def find_prev_non_alphanumeric(text: str, start_index: int, tokens: set[str] = {}):
             """Use this with care, do not use this to find the start of a plugin name as plugins are files and can contain non-alphanumeric characters"""
             for i in range(start_index, -1, -1): #this was range(start_index, 0, -1) I have changed it to -1 as 0 was not 0 inclusive, I hope I didn't just break a bunch of stuff...

@@ -168,7 +168,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
             if not patched:                                           
                 write_warning(QCoreApplication.translate("patcher_conditions", "Possible missing patcher for: ") + new_file)
     elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
-        patchers.pex_patcher(basename, new_file, form_id_map)
+        patchers.pex_patcher(basename, new_file, form_id_map, endian='little')
     elif new_file_lower.endswith('.toml'):
         if '\\_dynamicanimationcasting\\' in new_file_lower:                                # Dynamic Animation Casting (Original/NG)
             patchers.toml_dynamic_animation_casting_patcher(basename, new_file, form_id_map, encoding_method=encoding)

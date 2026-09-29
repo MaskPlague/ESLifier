@@ -85,7 +85,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             f.write(b''.join(new_seq_form_id_list))
     
-    def pex_patcher(basename: str, new_file: str, form_id_map: dict):
+    def old_pex_patcher(basename: str, new_file: str, form_id_map: dict):
         with open(new_file,'rb+') as f:
             data = f.read()
             data = bytearray(data)
