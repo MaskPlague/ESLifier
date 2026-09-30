@@ -741,8 +741,8 @@ class CFIDs():
         all_form_ids_list = set([form_id for form_id, record_type in form_id_list])
 
         if self.update_header and master_count != 0 and has_game_esm_master and all_dependents_have_game_esm_as_master:
-            new_id = binascii.unhexlify(master_count.to_bytes().hex() + '000000')
-            new_range = 4096
+            new_id = binascii.unhexlify(master_count.to_bytes().hex() + '000001') #breaking change, from 0 to 1
+            new_range = 4095
         else:
             new_id = binascii.unhexlify(master_count.to_bytes().hex() + '000800')
             new_range = 2048
@@ -784,7 +784,9 @@ class CFIDs():
             for line in form_id_file_data:
                 form_id_conversion = line.split('|')
                 if form_id_conversion[0] not in clean_conversion_data:
-                    clean_conversion_data[form_id_conversion[0]] = form_id_conversion[1]
+                    if form_id_conversion[1].strip()[:6] != '000000':
+                        clean_conversion_data[form_id_conversion[0]] = form_id_conversion[1].strip()
+                    
             clean_form_id_conversions = [[key, value] for key, value in clean_conversion_data.items()]
 
             for form_id_conversion in clean_form_id_conversions:
