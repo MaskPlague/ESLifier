@@ -4,7 +4,7 @@ import os
 
 import configparser
 import io
-from log_stream import write_to_file, write_ineligible
+from log_stream import write_to_file, write_ineligible, write_error
 
 class shared_patchers():
     def pex_patcher_for_debug(basename: str, new_file: str, form_id_map: dict, endian = 'big'):
@@ -99,8 +99,9 @@ class shared_patchers():
                 if DEBUG:
                     print(f"{opCode.hex() = }")
                 offset += 1
-                #TODO: update additional FO4 op codes
-                if opCode in (b'\x01', b'\x02', b'\x03', b'\x04', b'\x05', b'\x06', b'\x07', b'\x08', b'\x09', b'\x0F', b'\x10', b'\x11', b'\x12', b'\x13', b'\x1B', b'\x1C', b'\x1D'):
+                if opCode == b'\x00':
+                    pass #do nothing
+                elif opCode in (b'\x01', b'\x02', b'\x03', b'\x04', b'\x05', b'\x06', b'\x07', b'\x08', b'\x09', b'\x0F', b'\x10', b'\x11', b'\x12', b'\x13', b'\x1B', b'\x1C', b'\x1D'):
                     offset, vType, vData = var_data_reader(data, offset)
                     offset, vType, vData = var_data_reader(data, offset)
                     offset, vType, vData = var_data_reader(data, offset)
@@ -154,7 +155,7 @@ class shared_patchers():
                 elif opCode == b'\x1F': # get array size
                     offset, vType, tmpVar = var_data_reader(data, offset)
                     offset, vType, arrayId = var_data_reader(data, offset)
-                    tempVars[bytes(tmpVar)] = (0, 3, arrays.get(bytes(arrayId), {"length": 0})["length"], arrayId)
+                    tempVars[bytes(tmpVar)] = (0, 3, arrays.get(bytes(arrayId), {"length": 0})["length"])
                 elif opCode in (b'\x0A', b'\x0B', b'\x0C', b'\x0E', b'\x15', b'\x16'):
                     offset, vType, vData = var_data_reader(data, offset)
                     offset, vType, vData = var_data_reader(data, offset)
@@ -215,8 +216,22 @@ class shared_patchers():
                     offset, vType, vData = var_data_reader(data, offset)
                     offset, vType, vData = var_data_reader(data, offset)
                     offset, vType, vData = var_data_reader(data, offset)
-                elif opCode == b'\x00':
-                    ...
+                # FO4 Specific opCodes
+                elif opCode in (b'\x24', b'\x26', b'\x27', b'\x2A', b'\x2B', b'\x2D'): 
+                    # IS, STRUCT_GET, STRUCT_SET, ARRAY_ADD, ARRAY_INSERT, ARRAY_REMOVE
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
+                elif opCode in (b'\x25', b'\x2C', b'\x2E'): 
+                    # STRUCT_CREATE, ARRAY_REMOVELAST, ARRAY_CLEAR
+                    offset, vType, vData = var_data_reader(data, offset)
+                elif opCode in (b'\x28', b'\x29'): 
+                    # ARRAY_FINDSTRUCT, ARRAY_RFINDSTRUCT
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
                 else:
                     print("Missing opcode?")
             if DEBUG:
@@ -473,7 +488,8 @@ class shared_patchers():
             for _ in range(numInstructions):
                 opCode = data[offset:offset+1]
                 offset += 1
-                #TODO: update additional FO4 op codes
+                if opCode == b'\x00':
+                    pass #do nothing
                 if opCode in (b'\x01', b'\x02', b'\x03', b'\x04', b'\x05', b'\x06', b'\x07', b'\x08', b'\x09', b'\x0F', b'\x10', b'\x11', b'\x12', b'\x13', b'\x1B', b'\x1C', b'\x1D'):
                     offset, vType, vData = var_data_reader(data, offset)
                     offset, vType, vData = var_data_reader(data, offset)
@@ -513,7 +529,7 @@ class shared_patchers():
                 elif opCode == b'\x1F': # get array size
                     offset, vType, tmpVar = var_data_reader(data, offset)
                     offset, vType, arrayId = var_data_reader(data, offset)
-                    tempVars[bytes(tmpVar)] = (0, 3, arrays.get(bytes(arrayId), {"length": 0})["length"], arrayId)
+                    tempVars[bytes(tmpVar)] = (0, 3, arrays.get(bytes(arrayId), {"length": 0})["length"])
                 elif opCode in (b'\x0A', b'\x0B', b'\x0C', b'\x0E', b'\x15', b'\x16'):
                     offset, vType, vData = var_data_reader(data, offset)
                     offset, vType, vData = var_data_reader(data, offset)
@@ -559,10 +575,24 @@ class shared_patchers():
                     offset, vType, vData = var_data_reader(data, offset)
                     offset, vType, vData = var_data_reader(data, offset)
                     offset, vType, vData = var_data_reader(data, offset)
-                elif opCode == b'\x00':
-                    ... #do nothing
+                # FO4 Specific opCodes
+                elif opCode in (b'\x24', b'\x26', b'\x27', b'\x2A', b'\x2B', b'\x2D'): 
+                    # IS, STRUCT_GET, STRUCT_SET, ARRAY_ADD, ARRAY_INSERT, ARRAY_REMOVE
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
+                elif opCode in (b'\x25', b'\x2C', b'\x2E'): 
+                    # STRUCT_CREATE, ARRAY_REMOVELAST, ARRAY_CLEAR
+                    offset, vType, vData = var_data_reader(data, offset)
+                elif opCode in (b'\x28', b'\x29'): 
+                    # ARRAY_FINDSTRUCT, ARRAY_RFINDSTRUCT
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
+                    offset, vType, vData = var_data_reader(data, offset)
                 else:
-                    print(f"Missing opcode? {opCode.hex()}")
+                    write_error(f"Missing opcode in pex patcher? {opCode.hex()}, found in file {new_file}")
 
             for array in arrays.values():
                 for aOffset, integer in array["integers"]:
