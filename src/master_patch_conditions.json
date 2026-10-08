@@ -1,5 +1,5 @@
 {
-    "version": 23,
+    "version": 24,
     "conditions": [
         {
             "extension": "json",
@@ -154,6 +154,11 @@
             "contains": "plugins/BobbingFramework/",
             "patcher": "json_generic_formid_sep_plugin",
             "separator": "~"
+        },
+        {
+            "extension": "ini",
+            "endswith": "_VBOS.ini",
+            "patcher": "ini_formid_sep_plugin"
         }
     ]
 }
