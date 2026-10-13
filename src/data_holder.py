@@ -11,14 +11,14 @@ GAME_MODE = "SSE"
 GITHUB_LATEST_VERSIONS_INFO_JSON_URL = "https://raw.githubusercontent.com/MaskPlague/ESLifier/refs/heads/main/latest_versions_info.json"
 def update_game_globals():
     global VERBOSE_GAME_NAME, SHORT_GAME_NAME, VORTEX_GAME_NAME, MO2_GAME_NAME, GAME_ESM_NAME, PROGRAM_NAME, EXE_NAME
-    global GAME_ARCHIVE_TYPE, GAME_ARCHIVE_EXTENSION, NEXUS_FILES_TAB_URL, GITHUB_MASTER_JSONS_URL
+    global GAME_ARCHIVE_TYPE, GAME_ARCHIVE_EXTENSION, NEXUS_FILES_TAB_URL, GITHUB_MASTER_JSONS_URL, SCRIPT_EXTENDER
     global ARCHIVE_EXTRACTED_FOLDER, ARCHIVE_EXTRACTED_TEMP_FOLDER
     VERBOSE_GAME_NAME = "Skyrim Special Edition"        if GAME_MODE == "SSE" else "Fallout 4"
     SHORT_GAME_NAME = "Skyirm"                          if GAME_MODE == "SSE" else "Fallout"
     VORTEX_GAME_NAME = "skyrimse"                       if GAME_MODE == "SSE" else "fallout4"
     MO2_GAME_NAME = "Skyrim Special Edition"            if GAME_MODE == "SSE" else "Fallout 4"
     GAME_ESM_NAME = "Skyrim.esm"                        if GAME_MODE == "SSE" else "Fallout4.esm"
-
+    SCRIPT_EXTENDER = "skse"                            if GAME_MODE == "SSE" else "f4se"
     PROGRAM_NAME = "ESLifier"                           if GAME_MODE == "SSE" else "ESLifier-FO4"
     EXE_NAME = PROGRAM_NAME + ".exe"
     GAME_ARCHIVE_TYPE = "BSA"                           if GAME_MODE == "SSE" else "BA2"
