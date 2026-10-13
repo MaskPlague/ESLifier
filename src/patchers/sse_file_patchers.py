@@ -1402,38 +1402,6 @@ class patchers(shared_patchers):
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
 
-    def json_hunted_or_hunter_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str = 'utf-8'):
-        with open(new_file, 'r+', encoding=encoding_method) as f:
-            data = patchers.safe_load_json(f)
-
-            def item_parser(item: dict):
-                if item.get('Mod','').lower() == basename:
-                    key = 'ID'
-                    fid: str = item.get(key, None)
-                    if not fid:
-                        return
-                    form_id_int = int(fid, 16)
-                    to_id_data = form_id_map.get(form_id_int)
-                    if to_id_data:
-                        item[key] = to_id_data['hex_no_0']
-
-            def recursive_depth_parser(obj):
-                if isinstance(obj, list):
-                    for item in obj:
-                        recursive_depth_parser(item)
-                elif isinstance(obj, dict):
-                    if 'Mod' in obj:
-                        item_parser(obj)
-                    else:
-                        for key, value in obj.items():
-                            if isinstance(value, (dict, list)):
-                                recursive_depth_parser(value)
-
-            recursive_depth_parser(data)
-            f.seek(0)
-            f.truncate(0)
-            json.dump(data, f, ensure_ascii=False, indent=3)
-
     def dynamic_animation_replacer_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
