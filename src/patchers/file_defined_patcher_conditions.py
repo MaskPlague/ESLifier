@@ -62,6 +62,7 @@ class user_and_master_conditions_class():
             "json_generic_formid_sep_plugin": patchers.json_generic_formid_sep_plugin_patcher,
             "json_generic_key_fid_sep_plugin": patchers.json_generic_key_fid_sep_plugin_patcher,
             "json_generic_key_plugin_sep_fid": patchers.json_generic_key_plugin_sep_fid_patcher,
+            "json_generic_recursive": patchers.json_generic_recursive_depth_patcher,
             "json_storage_util_data": patchers.json_storage_util_data_patcher,
             "json_jcontainer": patchers.json_jcontainer_patcher,
             "toml_loki_and_tdm": patchers.toml_loki_and_tdm_patcher,
@@ -78,6 +79,8 @@ class user_and_master_conditions_class():
                     "int_type": conditions.get("int_type", False),
                     "tkns": set(conditions.get("tokens", {" "})),
                     "fid_start": conditions.get("fid_start"),
+                    "plugin_key": conditions.get("plugin_key"),
+                    "fid_key": conditions.get("fid_key"),
                     "to_id_key": conditions.get("to_id_key"),
                     "patcher": patcher_methods[conditions["patcher"]]})
             except Exception as e:
@@ -104,6 +107,8 @@ class user_and_master_conditions_class():
                 int_type = condition_set.get("int_type", False)
                 tkns = condition_set.get("tokens", {" "})
                 fid_start = condition_set.get("fid_start", "0x")
+                plugin_key = condition_set.get("plugin_key")
+                fid_key = condition_set.get("fid_key")
                 to_id_key = condition_set.get("to_id_key", "hex_no_0")
                 args = [basename, file, form_id_map]
                 kwargs = {"encoding_method": "utf-8"}
@@ -115,6 +120,10 @@ class user_and_master_conditions_class():
                     kwargs.update({"tkns": tkns})
                 if fid_start is not None:
                     kwargs.update({"fid_start": fid_start})
+                if plugin_key is not None:
+                    kwargs.update({"plugin_key": plugin_key})
+                if fid_key is not None:
+                    kwargs.update({"fid_key": fid_key})
                 if to_id_key is not None:
                     kwargs.update({"to_id_key": to_id_key})
                 try:
