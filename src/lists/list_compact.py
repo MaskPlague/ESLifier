@@ -95,20 +95,6 @@ class list_compactable(list_parent_class):
         self.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignLeft)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenu)
-        self.storedSelection = QItemSelection()
-        self.flag_dict = {}
-        self.show_cells = True
-        self.show_dlls = True
-        self.show_esms = True
-        self.filter_seq = False
-        self.filter_pex = False
-        self.filter_changed_cells = True
-        self.filter_interior_cells = False
-        self.filter_worldspaces = False
-        self.filter_weather = False
-        self.cell_master = False
-        self.hidden_columns = ""
-        self.previously_compacted_exists = False
 
         self.create_list()
 

@@ -22,6 +22,24 @@ class list_parent_class(QTableWidget):
     DEP_DISP_COL = 0
     HIDER_COL = 0
     COL_COUNT = 0
+
+    flag_dict = {}
+
+    show_cells = True
+    show_dlls = True
+    show_esms = True
+    filter_seq = False
+    filter_pex = False
+    filter_changed_cells = True
+    filter_interior_cells = False
+    filter_worldspaces = False
+    filter_weather = False
+    filter_previs = True
+    cell_master = False
+    hidden_columns = ""
+
+    previous_exists = False
+
     blacklist: blacklist = None
     file_dialog:QFileDialog = None
     save_file_dialog:QFileDialog = None

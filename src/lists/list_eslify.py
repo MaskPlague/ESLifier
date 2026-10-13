@@ -80,17 +80,7 @@ class list_eslable(list_parent_class):
         self.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignLeft)
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenu)
-        self.flag_dict = {}
-        self.show_cells = True
-        self.show_esms = True
-        self.filter_seq = False
-        self.filter_pex = False
-        self.filter_changed_cells = True
-        self.filter_interior_cells = False
-        self.filter_worldspaces = False
-        self.cell_master = False
-        self.hidden_columns = ""
-        self.previously_esl_flagged_exists = False
+        
         self.create_list()
 
     def create_list(self):
