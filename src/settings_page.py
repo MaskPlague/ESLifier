@@ -424,11 +424,8 @@ class settings(QWidget):
                           self.colors_select_widget, self.reset_settings_widget, self.check_for_updates_widget,
                           self.skip_confirmations_widget)
         
-        inactive_wigets = self.get_inactive_widgets()
-        for widget in inactive_wigets:
-            widget.setHidden(True)
-            widget.setVisible(False)
-            print(widget)
+        inactive_wigets = self.get_and_hide_inactive_widgets()
+
         active_widgets = [widget for widget in mobile_widgets if not widget in inactive_wigets]
         midpoint = len(active_widgets) // 2
         for widget in active_widgets[:midpoint]:
@@ -996,12 +993,16 @@ class settings(QWidget):
         except Exception as e:
             write_error(self.tr("Error opening file explorer: ") + str(e))
 
-    def get_inactive_widgets(self):
+    def get_and_hide_inactive_widgets(self):
         inactive_widgets = []
         for settings_key, settings_data in self.default_settings.items():
             game_modes = settings_data["game_modes"]
             if game_modes != None and GAME_MODE not in game_modes:
-                inactive_widgets.append(settings_data["full_widget"])
+                widget:QWidget = settings_data["full_widget"]
+                widget.setHidden(True)
+                widget.setVisible(False)
+                inactive_widgets.append(widget)
+
         return inactive_widgets
 
     def reset_settings_clicked(self):
