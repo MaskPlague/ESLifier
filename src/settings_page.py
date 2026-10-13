@@ -358,7 +358,8 @@ class settings(QWidget):
             "This disables the cell changed flag/filter for ESMs and\n"\
             "the new worldspace flag/filter."),
             "generate_cell_master",
-            default=False   
+            default=False,
+            game_modes=("SSE")
         )
         self.generate_cell_master_toggle.clicked.connect(self.cell_master_clicked)
 
