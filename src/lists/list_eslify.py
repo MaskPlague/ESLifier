@@ -87,7 +87,7 @@ class list_eslable(list_parent_class):
         self.setSortingEnabled(False)
         self.clearContents()
 
-        self.previously_esl_flagged_exists = os.path.exists(PREVIOUSLY_ESL_FLAGGED_JSON)
+        self.previous_exists = os.path.exists(PREVIOUSLY_ESL_FLAGGED_JSON)
         hidden_columns = [col.strip().upper() for col in self.hidden_columns.split(',')]
 
         if self.show_cells and not _global.engine_fixes_v7_or_newer and not 'CELL' in hidden_columns: self.showColumn(self.CELL_COL)
@@ -238,7 +238,7 @@ class list_eslable(list_parent_class):
             check_all_action = menu.addAction(self.tr("Check All"))
             uncheck_all_action = menu.addAction(self.tr("Uncheck All"))
             invert_selection_action = menu.addAction(self.tr("Invert Selection Checks"))
-            if self.previously_esl_flagged_exists:
+            if self.previous_exists:
                 check_previously_esl_flagged_action = menu.addAction(self.tr("Check Previously ESL Flagged"))
             import_action = menu.addAction(self.tr("Import Check State From File"))
             export_action = menu.addAction(self.tr("Export Check State To File"))
@@ -253,7 +253,7 @@ class list_eslable(list_parent_class):
                 self.uncheck_all()
             if action == select_all_action:
                 self.select_all()
-            if self.previously_esl_flagged_exists and action == check_previously_esl_flagged_action:
+            if self.previous_exists and action == check_previously_esl_flagged_action:
                 self.check_previously_esl_flagged()
             if action == import_action:
                 self.import_check_state_from_file()
