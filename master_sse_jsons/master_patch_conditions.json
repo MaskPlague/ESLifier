@@ -1,5 +1,5 @@
 {
-    "version": 24,
+    "version": 25,
     "conditions": [
         {
             "extension": "json",
@@ -159,6 +159,12 @@
             "extension": "ini",
             "endswith": "_VBOS.ini",
             "patcher": "ini_formid_sep_plugin"
+        },
+        {
+            "extension": "json",
+            "contains": "plugins/DynamicWind/",
+            "patcher": "json_generic_formid_sep_plugin",
+            "separator": "~"
         }
     ]
 }
