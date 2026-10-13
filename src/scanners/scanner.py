@@ -643,10 +643,20 @@ class scanner():
             else:
                 write_warning(QCoreApplication.translate("scanner", "Missing file scan type for ") + file)
         except Exception as e:
-            write_error(QCoreApplication.translate("scanner", "Error reading file ") + file)
             if reader_type == 'pex-SSE' or reader_type == 'pex-FO4':
+                write_error(QCoreApplication.translate("scanner", "Error reading file ") + file)
                 write_error(QCoreApplication.translate("scanner",'!pex file is likely corrupt.'))
-            write_error(e, True)
+                write_error(e, True)
+            elif len(file) >= 260 and isinstance(e, FileNotFoundError):
+                write_error(
+                    QCoreApplication.translate("scanner",
+                        'Path is %0 characters long which requires "Long Path Support" to be enabled in Windows (see Google for more info).\n'\
+                        'File: %1')
+                    .replace("%0", str(len(file)) ).replace("%1", file)
+                    )
+            else:
+                write_error(QCoreApplication.translate("scanner", "Error reading file ") + file)
+                write_error(e, True)
 
     def bsa_reader(bsa_file):
         plugins = set()
