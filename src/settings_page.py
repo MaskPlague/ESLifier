@@ -442,6 +442,8 @@ class settings(QWidget):
 
         settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+        self.set_game_mode_settings()
+
     def open_color_dialog(self):
         inner_color = QColorDialog.getColor(QColor(self.inner_color), self, self.tr("Select Inner Color"))
         if inner_color.isValid():
@@ -956,6 +958,12 @@ class settings(QWidget):
                 subprocess.Popen(['open', os.path.dirname(directory)])
         except Exception as e:
             write_error(self.tr("Error opening file explorer: ") + str(e))
+
+    def set_game_mode_settings(self):
+        for settings_key, settings_data in self.default_settings.items():
+            game_modes = settings_data["game_modes"]
+            if game_modes != None and GAME_MODE not in game_modes:
+                settings_data["full_widget"].setVisible(False)
 
     def reset_settings_clicked(self):
         confirm = QMessageBox()
