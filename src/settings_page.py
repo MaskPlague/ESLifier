@@ -413,7 +413,43 @@ class settings(QWidget):
         settings_layout.addSpacing(20)
         settings_layout.addWidget(column_wrapper_widget)
 
-        column_1.addWidget(self.update_header_widget)
+        mobile_widgets = (self.update_header_widget, self.show_esms_widget, self.show_plugins_with_cells_widget,
+                          self.enable_cell_changed_filter_widget, self.enable_interior_cell_filter_widget,
+                          self.enable_worldspaces_filter_widget, self.enable_weather_filter_widget, 
+                          self.enable_previs_precombine_filter_widget, self.enable_seq_filter_widget,
+                          self.enable_pex_filter_widget, self.show_plugins_possibly_refd_by_dlls_widget,
+                          self.generate_cell_master_widget, self.persistent_ids_widget, self.free_non_existent_widget,
+                          self.hash_output_widget, self.hash_plugins_warn_widget, self.enable_patch_new_widget, 
+                          self.edit_blacklist_widget, self.open_eslifier_data_widget, self.colors_select_widget,
+                          self.colors_select_widget, self.reset_settings_widget, self.check_for_updates_widget,
+                          self.skip_confirmations_widget)
+        
+        inactive_wigets = self.get_inactive_widgets()
+        for widget in inactive_wigets:
+            widget.setHidden(True)
+            widget.setVisible(False)
+            print(widget)
+        active_widgets = [widget for widget in mobile_widgets if not widget in inactive_wigets]
+        midpoint = len(active_widgets) // 2
+        for widget in active_widgets[:midpoint]:
+            column_1.addWidget(widget)
+
+        column_1.addWidget(self.hide_left_columns_widget)
+        
+        for widget in active_widgets[midpoint:]:
+            column_2.addWidget(widget)
+
+        column_2.addWidget(self.edit_blacklist_widget)
+        column_2.addWidget(self.open_eslifier_data_widget)
+        column_2.addWidget(self.colors_select_widget)
+        column_2.addWidget(self.reset_settings_widget)
+        column_2.addWidget(self.check_for_updates_widget)
+        column_2.addWidget(self.skip_confirmations_widget)
+        column_2.addWidget(self.hide_right_columns_widget)
+
+        settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        '''column_1.addWidget(self.update_header_widget)
         column_1.addWidget(self.show_esms_widget)
         column_1.addWidget(self.show_plugins_with_cells_widget)
 
@@ -425,7 +461,7 @@ class settings(QWidget):
         column_1.addWidget(self.enable_seq_filter_widget)
         column_1.addWidget(self.enable_pex_filter_widget)
         column_1.addWidget(self.show_plugins_possibly_refd_by_dlls_widget)
-        column_1.addWidget(self.generate_cell_master_widget)
+        column_1.addWidget(self.generate_cell_master_widget)            #SSE only, temporarily
         column_1.addWidget(self.hide_left_columns_widget)
         
         column_2.addWidget(self.persistent_ids_widget)
@@ -443,7 +479,7 @@ class settings(QWidget):
 
         settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.set_game_mode_settings()
+        self.set_game_mode_settings()'''
 
     def open_color_dialog(self):
         inner_color = QColorDialog.getColor(QColor(self.inner_color), self, self.tr("Select Inner Color"))
@@ -960,11 +996,13 @@ class settings(QWidget):
         except Exception as e:
             write_error(self.tr("Error opening file explorer: ") + str(e))
 
-    def set_game_mode_settings(self):
+    def get_inactive_widgets(self):
+        inactive_widgets = []
         for settings_key, settings_data in self.default_settings.items():
             game_modes = settings_data["game_modes"]
             if game_modes != None and GAME_MODE not in game_modes:
-                settings_data["full_widget"].setVisible(False)
+                inactive_widgets.append(settings_data["full_widget"])
+        return inactive_widgets
 
     def reset_settings_clicked(self):
         confirm = QMessageBox()
