@@ -1,7 +1,7 @@
 import os
 import json
 import itertools
-from PyQt6.QtCore import Qt, QItemSelection
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QPushButton,
                               QListWidget, QListWidgetItem, QMessageBox, QFileDialog)
 
