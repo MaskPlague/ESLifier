@@ -153,14 +153,25 @@ class settings(QWidget):
             self.plugins_txt_path_clicked,
             'plugins_txt_path'
         )
-        self.update_header_widget, self.update_header_toggle = self.create_toggle_widget(
-            self.tr("Allow Form IDs below 0x000800 + Update plugin headers to 1.71"),
-            self.tr("Allow scanning and patching to use the new 1.71 header.\n"\
-                    "Requires Backported Extended ESL Support on Skyrim versions below 1.6.1130.\n"\
-                    "Changing this settings requires a re-scan."),
-            "update_header",
-            default=True
-        )
+        if GAME_MODE == "SSE":
+            self.update_header_widget, self.update_header_toggle = self.create_toggle_widget(
+                self.tr("Allow Form IDs below 0x000800 + Update plugin headers to 1.71"),
+                self.tr("Allow scanning and patching to use the new 1.71 header.\n"\
+                        "Requires Backported Extended ESL Support on Skyrim versions below 1.6.1130.\n"\
+                        "Changing this setting requires a re-scan."),
+                "update_header",
+                default=True
+            )
+        elif GAME_MODE == "FO4":
+            #TODO: add correct info
+            self.update_header_widget, self.update_header_toggle = self.create_toggle_widget(
+                self.tr("Allow Form IDs below 0x000800 + Update plugin headers to 1.0"),
+                self.tr("Allow scanning and patching to use the new 1.0 header.\n"\
+                        "Requires your Fallout to be version X"\
+                        "Changing this setting requires a re-scan."),
+                "update_header",
+                default=False
+            )
         self.show_esms_widget, self.show_esms_toggle = self.create_toggle_widget(
             self.tr("Show ESM Plugins"),
             self.tr("Display ESM plugins (.esm/ESM flagged)."),
@@ -211,7 +222,14 @@ class settings(QWidget):
             game_modes=("SSE")
         )
 
+        self.enable_previs_precombine_filter_widget, self.enable_previs_precombine_filter_toggle = self.create_toggle_widget(
+            self.tr("Previs/Precombine Filter PLACEHOLDER"),
+            self.tr("PLACEHOLDER"),
+            "filter_previs_precombine",
+            default=True,
+            game_modes=("FO4")
         )
+
         self.enable_seq_filter_widget, self.enable_seq_filter_toggle = self.create_toggle_widget(
             self.tr("Hide plugins that have SEQ files"),
             self.tr("Hide plugins that have SEQ files as ESL flagging it may cause dialogue for it to not work until you save and reload in game."),
@@ -397,10 +415,12 @@ class settings(QWidget):
         column_1.addWidget(self.update_header_widget)
         column_1.addWidget(self.show_esms_widget)
         column_1.addWidget(self.show_plugins_with_cells_widget)
-        column_1.addWidget(self.enable_cell_changed_filter_widget)
-        column_1.addWidget(self.enable_interior_cell_filter_widget)
-        column_1.addWidget(self.enable_worldspaces_filter_widget)
-        column_1.addWidget(self.enable_weather_filter_widget)
+
+        column_1.addWidget(self.enable_cell_changed_filter_widget)      #SSE
+        column_1.addWidget(self.enable_interior_cell_filter_widget)     #SSE
+        column_1.addWidget(self.enable_worldspaces_filter_widget)       #SSE
+        column_1.addWidget(self.enable_weather_filter_widget)           #SSE
+        column_1.addWidget(self.enable_previs_precombine_filter_widget) #FO4
         column_1.addWidget(self.enable_seq_filter_widget)
         column_1.addWidget(self.enable_pex_filter_widget)
         column_1.addWidget(self.show_plugins_possibly_refd_by_dlls_widget)
