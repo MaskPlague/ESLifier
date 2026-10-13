@@ -91,8 +91,8 @@ class settings(QWidget):
 
         self.game_folder_path_widget, self.game_folder_path = self.create_path_widget(
             self.tr("Data Folder Path"),
-            self.tr(f"Set this to your {VERBOSE_GAME_NAME} Data folder that holds {GAME_ESM_NAME}."),
-            self.tr(f'C:/Path/To/{VERBOSE_GAME_NAME}/Data'),
+            self.tr("Set this to your %0 Data folder that holds %1.").replace("%0", VERBOSE_GAME_NAME).replace("%1", GAME_ESM_NAME),
+            self.tr('C:/Path/To/%0/Data').replace("%0", VERBOSE_GAME_NAME),
             self.game_folder_path_clicked,
             'game_folder_path'
         )
@@ -129,7 +129,7 @@ class settings(QWidget):
         self.mo2_base_path.lineEdit().editingFinished.connect(self.populate_mo2_profiles)
         self.vortex_data_path_widget, self.vortex_data_path = self.create_combo_box_path_widget(
             self.tr("Vortex Data Path"),
-            self.tr(f"Set this to Vortex's data folder (the folder that holds the \"state.v2\" and \"{VORTEX_GAME_NAME}\" folders)."),
+            self.tr("Set this to Vortex's data folder (the folder that holds the \"state.v2\" and \"%0\" folders).").replace("%0", VORTEX_GAME_NAME),
             self.tr('C:/Users/USER/AppData/Roaming/Vortex or C:/ProgramData/vortex'),
             self.vortex_data_path_clicked,
             self._is_valid_vortex_instance,
@@ -138,7 +138,7 @@ class settings(QWidget):
         )
         self.vortex_restore_backup_files_widget, self.vortex_restore_backup_files = self.create_toggle_widget(
             self.tr("Restore '.vortex_backup' Files"),
-            self.tr("If a file exists in your SSE Data folder and it conflicts with a new file in a Mod Staging Folder mod, "\
+            self.tr("If a file exists in your game's Data folder and it conflicts with a new file in a Mod Staging Folder mod, "\
                     "such as the ESLifier Output mod then Vortex creates a .vortex_backup file of the original Data Folder "\
                     "file. This setting allows ESLifier to restore the .vortex_backup file when the one in the output is deleted "\
                     "since the backup file is not restored unless you disable the output and redeploy in Vortex or completely "\
@@ -341,8 +341,8 @@ class settings(QWidget):
             self.tr("Skip Confirmations"),
             self.tr("Confirmations that can be automatically skipped\n"\
                     "Specify the confirmations to skip, comma separated.\n"\
-                    f"Available: FLAG, COMPACT, RE-SCAN, OUTPUT-RESET, OUTPUT-REBUILD, {GAME_ARCHIVE_TYPE}-RESET, TIMERS\n"\
-                    "TIMERS skips the confirmation countdowns but doesn't skip the confirmation boxes.\n"),
+                    "Available: FLAG, COMPACT, RE-SCAN, OUTPUT-RESET, OUTPUT-REBUILD, %0-RESET, TIMERS\n"\
+                    "TIMERS skips the confirmation countdowns but doesn't skip the confirmation boxes.\n").replace("%0", GAME_ARCHIVE_TYPE),
             "FLAG,COMPACT,TIMERS",
             "skip_confirmations",
             ''
@@ -442,7 +442,7 @@ class settings(QWidget):
     
     def game_folder_path_clicked(self):
         if not self.mod_manager_mode_toggle.isChecked():
-            self.select_file_path(self.file_dialog, self.tr(f"Select the {VERBOSE_GAME_NAME} Data folder"), 'game_folder_path', self.game_folder_path, None)
+            self.select_file_path(self.file_dialog, self.tr("Select the %0 Data folder").replace("%0",VERBOSE_GAME_NAME), 'game_folder_path', self.game_folder_path, None)
         else:
             self.select_file_path(self.file_dialog, self.tr("Select your MO2 mods folder"), 'game_folder_path', self.game_folder_path, None)
 
