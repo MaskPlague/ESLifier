@@ -173,7 +173,8 @@ class settings(QWidget):
                     "For users of SSE Engine Fixes v7+ ESLifier will ignore this setting and show them regardless.\n"\
                     "Display plugins with new CELL records."),
             "show_cells",
-            default=True
+            default=True,
+            game_modes=("SSE")
         )
         self.enable_cell_changed_filter_widget, self.enable_cell_changed_filter_toggle = self.create_toggle_widget(
             self.tr("Hide ESM plugins with new CELL records that are overwritten"),
@@ -181,7 +182,8 @@ class settings(QWidget):
                     "For users of SSE Engine Fixes v7+ ESLifier will ignore this setting and show them regardless.\n"\
                     "Hide ESM plugins with new CELL records that have been changed by a dependent plugin."),
             "enable_cell_changed_filter",
-            default=False
+            default=False,
+            game_modes=("SSE")
         )
         self.enable_interior_cell_filter_widget, self.enable_interior_cell_filter_toggle = self.create_toggle_widget(
             self.tr("Hide plugins with new interior CELL records"),
@@ -190,20 +192,25 @@ class settings(QWidget):
                     "Hide plugins with new interior CELL records as they can have issues when reloading\n"\
                     "a save without restarting the game."),
             "enable_interior_cell_filter",
-            default=False
+            default=False,
+            game_modes=("SSE")
         )
         self.enable_worldspaces_filter_widget, self.enable_worldspaces_filter_toggle = self.create_toggle_widget(
             self.tr("Hide plugins with new WRLD (worldspace) records"),
             self.tr("Hide plugins with new worldspaces records as they can have the landscape disappear\n"\
                     "(no ground) when flagged as ESL."),
             "filter_worldspaces",
-            default=True
+            default=True,
+            game_modes=("SSE")
         )
         self.enable_weather_filter_widget, self.enable_weather_filter_toggle = self.create_toggle_widget(
             self.tr("Hide plugins with new WTHR (weather) records"),
             self.tr("Hide plugins with new weather records as they can be referenced in ENB presets which are not patched."),
             "filter_weathers",
-            default=False
+            default=False,
+            game_modes=("SSE")
+        )
+
         )
         self.enable_seq_filter_widget, self.enable_seq_filter_toggle = self.create_toggle_widget(
             self.tr("Hide plugins that have SEQ files"),
@@ -603,7 +610,7 @@ class settings(QWidget):
 
         update_style()
 
-    def create_path_widget(self, label_text, tooltip, placeholder, click_function, settings_key):
+    def create_path_widget(self, label_text, tooltip, placeholder, click_function, settings_key, game_modes=None):
         layout = QHBoxLayout()
         widget = QWidget()
         widget.setToolTip(tooltip)
@@ -628,7 +635,7 @@ class settings(QWidget):
         line_edit.setPlaceholderText(placeholder)
         line_edit.setMinimumWidth(400)
         line_edit.setMaximumWidth(550)
-        self.default_settings[settings_key] = {"type": "path", "default": '', "widget": line_edit}
+        self.default_settings[settings_key] = {"type": "path", "default": '', "widget": line_edit, "full_widget": widget, "game_modes": game_modes}
         return widget, line_edit
 
     def populate_mod_manager_instances(self, combo_box:QComboBox=None):
@@ -663,7 +670,7 @@ class settings(QWidget):
                 _local_combo_box.setCurrentIndex(-1)
             _local_combo_box.lineEdit().blockSignals(False)
         
-    def create_combo_box_path_widget(self, label_text, tooltip, placeholder, click_function, valid_function, populate_function, settings_key):
+    def create_combo_box_path_widget(self, label_text, tooltip, placeholder, click_function, valid_function, populate_function, settings_key, game_modes=None):
         layout = QHBoxLayout()
         widget = QWidget()
         widget.setToolTip(tooltip)
@@ -695,10 +702,10 @@ class settings(QWidget):
         combo_box.setMinimumWidth(400)
         combo_box.setMaximumWidth(550)
         combo_box.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.default_settings[settings_key] = {"type": "combo_box", "default": '', "widget": combo_box}
+        self.default_settings[settings_key] = {"type": "combo_box", "default": '', "widget": combo_box, "full_widget": widget, "game_modes": game_modes}
         return widget, combo_box
 
-    def create_combo_box_widget(self, label_text, tooltip, placeholder, settings_key):
+    def create_combo_box_widget(self, label_text, tooltip, placeholder, settings_key, game_modes=None):
         layout = QHBoxLayout()
         widget = QWidget()
         widget.setToolTip(tooltip)
@@ -721,12 +728,12 @@ class settings(QWidget):
 
         combo_box.setMinimumWidth(666)
         combo_box.setMaximumWidth(1000)
-        self.default_settings[settings_key] = {"type": "combo_box", "default": '', "widget": combo_box}
+        self.default_settings[settings_key] = {"type": "combo_box", "default": '', "widget": combo_box, "full_widget": widget, "game_modes": game_modes}
         return widget, combo_box
     
     def create_toggle_widget(self, label_text, tooltip, setting_key, 
                              bg_color: str = 'Light Grey', circle_color: str = 'Grey',active_color: str = 'palegreen',partial_color: str = 'orange',
-                             tri_state=False, default=False):
+                             tri_state=False, default=False, game_modes=None):
         layout = QHBoxLayout()
         widget = QWidget()
         widget.setToolTip(tooltip)
@@ -743,7 +750,7 @@ class settings(QWidget):
         layout.addWidget(label)
         layout.addSpacing(10)
         layout.addWidget(toggle)
-        self.default_settings[setting_key] = {"type": "toggle", "default": default, "widget": toggle}
+        self.default_settings[setting_key] = {"type": "toggle", "default": default, "widget": toggle, "full_widget": widget, "game_modes": game_modes}
         self.toggle_widgets[setting_key] = [toggle.isChecked if not tri_state else toggle.checkState, "call" if not tri_state else "value"]
         return widget, toggle
 
@@ -890,10 +897,10 @@ class settings(QWidget):
         line_edit.setPlaceholderText(placeholder)
         line_edit.setMinimumWidth(400)
         line_edit.setMaximumWidth(550)
-        self.default_settings['output_folder_name'] = {"type": "text", "default": "ESLifier Output", "widget": line_edit}
+        self.default_settings['output_folder_name'] = {"type": "text", "default": "ESLifier Output", "widget": line_edit, "full_widget": widget, "game_modes": None}
         return widget, line_edit
     
-    def create_text_input_widget(self, label_text, tooltip, placeholder, setting_key, default=''):
+    def create_text_input_widget(self, label_text, tooltip, placeholder, setting_key, default='', game_modes=None):
         layout = QHBoxLayout()
         widget = QWidget()
         widget.setToolTip(tooltip)
@@ -910,7 +917,7 @@ class settings(QWidget):
 
         line_edit.setPlaceholderText(placeholder)
         line_edit.setMinimumWidth(200)
-        self.default_settings[setting_key] = {"type": "text", "default": default, "widget": line_edit}
+        self.default_settings[setting_key] = {"type": "text", "default": default, "widget": line_edit, "full_widget": widget, "game_modes": game_modes}
         return widget, line_edit
 
     def edit_blacklist_button_clicked(self):
