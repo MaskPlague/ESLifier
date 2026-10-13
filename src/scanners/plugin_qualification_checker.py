@@ -70,6 +70,8 @@ class qualification_checker():
                     flag_dict[plugin] = []
                     if need_compacting:
                         flag_dict[plugin].append('need_compacting')
+                    else:
+                        flag_dict[plugin].append('esl_flaggable')
                     if new_cell:
                         flag_dict[plugin].append('new_cell')
                         if interior_cell:
