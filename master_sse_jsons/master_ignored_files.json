@@ -1,5 +1,5 @@
 {
-    "version": 17,
+    "version": 21,
     "ignored_files": [
         "BFCO_FX_CheckPreAttackIsOK.pex",
         "BFCO_FX_PlayIdleListKeyE.pex",
@@ -12,7 +12,9 @@
         "DynamicStringDistributor.dll",
         "taglist.yaml",
         "AddItemMenuSE.ini",
-        "QuestTagging.PluginQuestCache.json"
+        "QuestTagging.PluginQuestCache.json",
+        "DynamicLeveledLists.json",
+        "ScrollScribeNG.ini"
     ],
     "ignored_endswith": [
         "_SkyrimDiagReport.txt",
@@ -22,7 +24,9 @@
         "SKSE/Plugins/DynamicNPCs.ini",
         "FollowerLevelingSystemRedone/PerksAndSpells.json",
         "interface/modex/user/userdata.json",
-        "Viny Mods/NPC Visual/FaceGenCache.json"
+        "Viny Mods/NPC Visual/FaceGenCache.json",
+        "Plugins/DTAC-PluginNames.txt",
+        "Plugins/DialogueTagsAndColors.json"
     ],
     "ignored_contains": [
         "SkyrimDiag_Incident_",
@@ -30,6 +34,7 @@
         "Plugins/Tullius Ctd Logs/",
         "interface/Console_Cheatsheet/",
         "interface/PartySheet/Spells/",
-        "Plugins/LoadTimeProfiler/LTP_summary_"
+        "Plugins/LoadTimeProfiler/LTP_summary_",
+        "Plugins/MCMMemory/Profiles/"
     ]
 }
