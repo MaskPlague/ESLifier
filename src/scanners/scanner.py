@@ -445,9 +445,9 @@ class scanner():
                   and not (any(exclusion in file_lower for exclusion in scanner.exclude_contains) 
                           or file_lower.endswith(scanner.exclude_endswith))
                  ):
-                thread = threading.Thread(target=scanner.file_reader,args=(None, file, 'r'))
-                scanner.threads.append(thread)
-                thread.start()
+                #thread = threading.Thread(target=scanner.file_reader,args=(None, file, 'r'))
+                #scanner.threads.append(thread)
+                #thread.start()
                 scanner.file_reader(None, file, 'r')
         with scanner.lock:     
             scanner.pex_files.extend(local_pex)
