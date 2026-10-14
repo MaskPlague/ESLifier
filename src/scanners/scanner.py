@@ -630,7 +630,7 @@ class scanner():
                         pe = pefile.PE(file)
                         if hasattr(pe, "VS_FIXEDFILEINFO"):
                             verinfo = pe.VS_FIXEDFILEINFO[0]
-                            _global.engine_fixes_v7_or_newer =  verinfo.FileVersionMS >> 16 >= 7,
+                            _global.engine_fixes_v7_or_newer =  verinfo.FileVersionMS >> 16 >= 7
                     with open(file, 'rb') as f:
                         r = re.findall(pattern,f.read().lower())
                         f.close()
