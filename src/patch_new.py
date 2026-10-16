@@ -213,7 +213,8 @@ class PatchNewScannerWorker(QObject):
         except Exception as e:
             write_error(self.tr("Issue reading an %0 file.").replace("%0", ESLIFIER_DATA_FOLDER))
             write_error(e, True)
-            self.finished_signal.emit({},{},{},0,0,[])
+            self.finished_signal.emit([],{},{},0,0,[])
+            return
 
         self.hash_mismatches.clear()
         write_normal(self.tr('Detecting Hash Changes...'))
@@ -418,7 +419,7 @@ class PatchNewScannerWorker(QObject):
 
     def detect_new_files(self):
         if not os.path.exists(COMPACTED_AND_PATCHED_JSON):
-            self.finished_signal.emit({},{},{},0,0,[])
+            self.finished_signal.emit([],{},{},0,0,[])
             return
         write_normal('')
         write_normal(self.tr('Getting New Dependencies and Files'))
