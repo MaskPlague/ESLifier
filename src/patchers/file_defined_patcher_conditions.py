@@ -17,6 +17,8 @@ class user_and_master_conditions_class():
         user_conditions = self.get_conditions(ESLIFIER_DATA_FOLDER+"user_patch_conditions.json")
         self.user_and_master_conditions = master_conditions
         for extension, conditions in user_conditions.items():
+            if not extension in self.user_and_master_conditions:
+                self.user_and_master_conditions[extension] = []
             self.user_and_master_conditions[extension].extend(conditions)
 
     def get_conditions(self, filename):
@@ -77,7 +79,7 @@ class user_and_master_conditions_class():
                     "endswith": os.path.normpath(conditions.get("endswith", "").lower()),
                     "separator": conditions.get("separator", "").lower(),
                     "int_type": conditions.get("int_type", False),
-                    "tkns": set(conditions.get("tokens", {" "})),
+                    "tkns": set(conditions.get("tkns", {" "})),
                     "fid_start": conditions.get("fid_start"),
                     "plugin_key": conditions.get("plugin_key"),
                     "fid_key": conditions.get("fid_key"),
@@ -105,7 +107,7 @@ class user_and_master_conditions_class():
                     return True
                 separator_symbol = condition_set.get("separator", "")
                 int_type = condition_set.get("int_type", False)
-                tkns = condition_set.get("tokens", {" "})
+                tkns = condition_set.get("tkns", {" "})
                 fid_start = condition_set.get("fid_start", "0x")
                 plugin_key = condition_set.get("plugin_key")
                 fid_key = condition_set.get("fid_key")
