@@ -51,6 +51,7 @@ class cell_scanner():
                 dependent_data = f.read()
         except:
             write_error(QCoreApplication.translate("Global", "Failed to read data of ") + dependent)
+            return
         data_list = cell_scanner.create_data_list(dependent_data)
         master_index = cell_scanner.get_master_index(mod, data_list)
         for form in data_list:
