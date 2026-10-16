@@ -112,11 +112,11 @@ class VortexDBParser:
                 VortexDBParser.state = {}
                 if os.path.exists(port_file):
                     local_state:dict = VortexDBParser.get_live_vortex_state()
-                    if local_state:
+                    if isinstance(local_state, dict):
                         if local_state.get("deploying__eslifier_tag", False):
                             write_to_file("Vortex is deploying, cancelling action.")
                             return ReadState.ERROR_DB_LOCKED_DEPLOYING
-                        if local_state.get("purging__eslfiier_tag", False):
+                        if local_state.get("purging__eslifier_tag", False):
                             write_to_file("Vortex is purging, cancelling action.")
                             return ReadState.ERROR_DB_LOCKED_PURGING
                         write_to_file("Successfully obtained Vortex state via the Vortex extension.")
@@ -131,6 +131,9 @@ class VortexDBParser:
                         write_to_file(ret_val)
                         write_to_file("Additionally, the Vortex extension failed to return Vortex's Redux store state info.")
                         return ReadState.ERROR_DB_LOCKED_EXTENSION_UNREACHABLE
+                    else:
+                        return ReadState.ERROR_DB_LOCKED_EXTENSION_UNREACHABLE
+
                 elif os.path.exists(extension):
                     return ReadState.ERROR_DB_LOCKED_EXTENSION_UNREACHABLE
                 else:
