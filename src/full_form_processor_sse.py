@@ -1955,6 +1955,9 @@ class form_processor():
             elif field in special_scol_fields:
                 if field == b'MODS':
                     scol_offsets.extend(form_processor.get_alt_texture_offsets(offset, form))
+            offset += field_size + 6
+            
+        return [i, bytearray(form), scol_offsets]
 
     def save_scrl_data(i, form): 
         scrl_fields = {b'MDOB', b'ETYP', b'YNAM', b'ZNAM', b'EFID'}
