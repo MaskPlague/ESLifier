@@ -268,8 +268,8 @@ class Vortex():
             mod_staging_folder:str = os.path.normpath(msf_cleaned)
         
         if mod_staging_folder == None or mod_staging_folder == '' or mod_staging_folder == '.':
-            write_to_file(f"No mod staging folder stored in Vortex, assuming default at {_global.vortex_data_path}/{VORTEX_GAME_NAME}/mods/")
-            mod_staging_folder = os.path.normpath(os.path.join(_global.vortex_data_path,VORTEX_GAME_NAME,"/mods/"))
+            mod_staging_folder = os.path.normpath(os.path.join(_global.vortex_data_path,VORTEX_GAME_NAME,"mods"))
+            write_to_file(f"No mod staging folder stored in Vortex, assuming default at {mod_staging_folder}")
         
         if not os.path.exists(mod_staging_folder):
             write_to_file("Couldn't get an actual mod staging folder. Aborting.")
