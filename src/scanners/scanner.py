@@ -18,7 +18,7 @@ from data_holder import (_global, GAME_MODE, VERBOSE_GAME_NAME, VORTEX_GAME_NAME
                          MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
                          WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, DEPENDENCY_DICTIONARY_JSON,
                          MAXED_MASTERS_JSON, BLACKLIST_JSON, CELL_CHANGED_JSON, DLL_DICT_JSON, IGNORED_FILES_JSON, ESLIFIER_DATA_FOLDER,
-                         ARCHIVE_EXTRACTED_FOLDER, GAME_ARCHIVE_EXTENSION, GAME_ARCHIVE_TYPE)
+                         ARCHIVE_EXTRACTED_FOLDER, GAME_ARCHIVE_EXTENSION, GAME_ARCHIVE_TYPE, SCRIPT_EXTENDER)
 from scanners.scanner_mo2 import MO2
 from scanners.scanner_none import NoManager
 from scanners.scanner_vortex import Vortex
@@ -325,7 +325,7 @@ class scanner():
         for thread in scanner.threads: thread.join()
         scanner.threads.clear()
 
-        write_remove(1, "-  " + QCoreApplication.translate("scanner", "Scanning .dll SKSE plugins"), True)
+        write_remove(1, "-  " + QCoreApplication.translate("scanner", "Scanning .dll %0 plugins").replace('%0', SCRIPT_EXTENDER.upper()), True)
         for file in scanner.dll_files:
             thread = threading.Thread(target=scanner.file_reader,args=(dll_byte_pattern, file, 'dll'))
             scanner.threads.append(thread)
@@ -384,6 +384,7 @@ class scanner():
         local_dll: list[str] = []
         local_seq: list[str] = []
         os_sep = os.sep
+        script_extender_path_segment = f'{SCRIPT_EXTENDER}\\plugins'
         processed_string = ('-  ' + QCoreApplication.translate("scanner", "Processed: %0 %") +
                             '\n-  ' + QCoreApplication.translate("scanner", "Files: %1/%2")).replace("%0", "{0}").replace("%1", "{1}").replace("%2", "{2}")
         for file in files:
@@ -403,7 +404,7 @@ class scanner():
                 scanner.file_reader(None, file, 'r')
             elif file_lower.endswith('.pex'):
                 local_pex.append(file)
-            elif file_lower.endswith('.dll') and '\\skse\\plugins' in file_lower:
+            elif file_lower.endswith('.dll') and script_extender_path_segment in file_lower:
                 local_dll.append(file)
             elif file_lower.endswith('.seq'):
                 plugin = os.path.splitext(os.path.basename(file))[0]
