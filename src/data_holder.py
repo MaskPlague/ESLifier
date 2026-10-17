@@ -24,7 +24,7 @@ def update_game_globals():
     GAME_ARCHIVE_TYPE = "BSA"                           if GAME_MODE == "SSE" else "BA2"
     GAME_ARCHIVE_EXTENSION = "." + GAME_ARCHIVE_TYPE.lower()
     ARCHIVE_EXTRACTED_FOLDER = GAME_ARCHIVE_TYPE.lower() + "_extracted"
-    ARCHIVE_EXTRACTED_TEMP_FOLDER = GAME_ARCHIVE_TYPE.lower() + "_temp_extracted"
+    ARCHIVE_EXTRACTED_TEMP_FOLDER = GAME_ARCHIVE_TYPE.lower() + "_extracted_temp"
 
     NEXUS_FILES_TAB_URL = ("https://www.nexusmods.com/skyrimspecialedition/mods/145168?tab=files"
                                                         if GAME_MODE == "SSE" else
