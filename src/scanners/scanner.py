@@ -626,7 +626,7 @@ class scanner():
                     os.remove(file)
             elif reader_type == 'dll':
                 with scanner.file_semaphore:
-                    if file.endswith('EngineFixes.dll'):
+                    if file.endswith('EngineFixes.dll') and GAME_MODE == "SSE":
                         pe = pefile.PE(file)
                         if hasattr(pe, "VS_FIXEDFILEINFO"):
                             verinfo = pe.VS_FIXEDFILEINFO[0]
