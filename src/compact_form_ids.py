@@ -58,7 +58,7 @@ class CFIDs():
         self.compacted_and_patched: dict[str, set[str]] = compacted_and_patched
         self.master_byte_data = master_byte_data
         self.bsa_masters = set(bsa_masters)
-        self.bsa_dict = _global.game_archive_dict
+        self.archive_dict = _global.game_archive_dict
         self.lock = threading.Lock()
         #Semaphore prevents the Erno too many open files
         self.semaphore = threading.Semaphore(1000)
@@ -237,6 +237,7 @@ class CFIDs():
                 temp_extraction_threads: list[threading.Thread] = []
                 path_parts = ("\\voice\\", "\\facetint\\", "\\facegeom\\")
                 for bsa_file, values in self.bsa_dict.items():
+                for archive_file, values in self.archive_dict.items():
                     if name in values:
                         if ' - textures' in os.path.basename(bsa_file).lower():
                             thread = threading.Thread(target=self.bsa_temp_extract, args=(bsa_file, "\\facetint\\", name, startupinfo,))
