@@ -693,38 +693,37 @@ class scanner():
 
                             if '.es' in folder_path:
                                 if 'sound\\voice\\' in folder_path:
-                                    marker_index = folder_path.find('sound\\voice\\')
-                                    start_pos = marker_index + 12 #12 is len('sound\\voice\\'), len('\\') is 1
+                                    # Reminder if I ever get the urge to optimize this again:
                                     # I have to do it this way because there is a case where folder_path does not have a trailing separator
-                                    # which would cause .index(os_sep, start_pos) to fail and Raise ValueError
+                                    # which would cause .index(os_sep, start_pos(aka 12)) to fail and Raise ValueError
                                     # seen in Val Serano-103669-2-5-4-1768884813\ax valserano.bsa
                                     # and Skybound Underhang Camp-54993-7-1741494253\riverwoodbandits.bsa
                                     # which I came across while testing with GTS. Idk why only these two BSA have this issue and idc.
                                     # sadly this is a minor performance loss compared to slicing on str[start_pos:str.index(os_sep, start_pos)]
-                                    end_pos = folder_path.find(os_sep, start_pos)
+                                    
+                                    #12 == len('sound\\voice\\'), len('\\') is 1
+                                    end_pos = folder_path.find(os_sep, 12)
                                     if end_pos == -1:
                                         end_pos = len(folder_path)
-                                    plugin = folder_path[start_pos:end_pos]
+                                    plugin = folder_path[12:end_pos]
                                     if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
                                 
-                                elif folder_path.endswith('.dds') and '\\facetint\\' in folder_path:
-                                    marker_index = folder_path.find('\\facetint\\')
-                                    start_pos = marker_index + 10 #10 is len('\\facetint\\'), len('\\') is 1
-                                    end_pos = folder_path.find(os_sep, start_pos)
+                                elif '\\facetint\\' in folder_path:
+                                    # 47 == len('textures\\actors\\character\\facegendata\\facetint\\')
+                                    end_pos = folder_path.find(os_sep, 47)
                                     if end_pos == -1:
                                         end_pos = len(folder_path)
-                                    plugin = folder_path[start_pos:end_pos]
+                                    plugin = folder_path[47:end_pos]
                                     if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
             
-                                elif folder_path.endswith('.nif') and '\\facegeom\\' in folder_path:
-                                    marker_index = folder_path.find('\\facegeom\\')
-                                    start_pos = marker_index + 10 #10 is len('\\facegeom\\'), len('\\') is 1
-                                    end_pos = folder_path.find(os_sep, start_pos)
+                                elif '\\facegeom\\' in folder_path:
+                                    #45 == len('meshes\\Actors\\Character\\FaceGenData\\FaceGeom\\')
+                                    end_pos = folder_path.find(os_sep, 45)
                                     if end_pos == -1:
                                         end_pos = len(folder_path)
-                                    plugin = folder_path[start_pos:end_pos]
+                                    plugin = folder_path[45:end_pos]
                                     if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
                                         
@@ -767,35 +766,50 @@ class scanner():
                         os_sep = os.sep
                         while offset < len(mm) and time < max_time:
                             name_length = struct.unpack('<H', mm[offset:offset+2])[0]
-                            name = mm[offset+2:offset+2+name_length].decode(errors='ignore').lower()
+                            name = mm[offset+2:offset+2+name_length].decode(errors='ignore').lower() #need to .lower() since BA2 can contain capitalization
                             if '.es' in name:
                                 if 'sound\\voice\\' in name:
-                                    marker_index = name.find('sound\\voice\\')
-                                    start_pos = marker_index + 12 #12 is len('sound\\voice\\'), len('\\') is 1
-                                    end_pos = name.find(os_sep, start_pos)
+                                    # 12 == len('sound\\voice\\'), len('\\') is 1
+                                    end_pos = name.find(os_sep, 12)
                                     if end_pos == -1:
                                         end_pos = len(name)
-                                    plugin = name[start_pos:end_pos]
+                                    plugin = name[12:end_pos]
                                     if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
                                 
-                                elif name.endswith('.dds') and '\\facecustomization\\' in name:
-                                    marker_index = name.find('\\facecustomization\\')
-                                    start_pos = marker_index + 19 #19 is len('\\facecustomization\\'), len('\\') is 1
-                                    end_pos = name.find(os_sep, start_pos)
+                                elif '\\facecustomization\\' in name:
+                                    # 44 == len('textures\\actors\\character\\facecustomization\\')
+                                    end_pos = name.find(os_sep, 44)
                                     if end_pos == -1:
                                         end_pos = len(name)
-                                    plugin = name[start_pos:end_pos]
+                                    plugin = name[44:end_pos]
                                     if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
             
-                                elif name.endswith('.nif') and '\\facegeom\\' in name:
-                                    marker_index = name.find('\\facegeom\\')
-                                    start_pos = marker_index + 10 #10 is len('\\facegeom\\'), len('\\') is 1
-                                    end_pos = name.find(os_sep, start_pos)
+                                elif 'facegendata\\facegeom\\' in name:
+                                    #45 == len('meshes\\Actors\\Character\\FaceGenData\\FaceGeom\\')
+                                    end_pos = name.find(os_sep, 45)
                                     if end_pos == -1:
                                         end_pos = len(name)
-                                    plugin = name[start_pos:end_pos]
+                                    plugin = name[45:end_pos]
+                                    if plugin.endswith(('.esp', '.esl', '.esm')):
+                                        plugins.add(plugin)
+
+                                elif 'meshes\\precombined\\' in name:
+                                    #19 == len('meshes\\precombined\\')
+                                    end_pos = name.find(os_sep, 19)
+                                    if end_pos == -1:
+                                        end_pos = len(name)
+                                    plugin = name[19:end_pos]
+                                    if plugin.endswith(('.esp', '.esl', '.esm')):
+                                        plugins.add(plugin)
+
+                                elif name.endswith('.uvd') and 'vis\\' in name:
+                                    #4 == len('vis\\')
+                                    end_pos = name.find(os_sep, 4)
+                                    if end_pos == -1:
+                                        end_pos = len(name)
+                                    plugin = name[4:end_pos]
                                     if plugin.endswith(('.esp', '.esl', '.esm')):
                                         plugins.add(plugin)
 
