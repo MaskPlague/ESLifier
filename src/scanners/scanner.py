@@ -577,7 +577,7 @@ class scanner():
                     plugin_basename_set = scanner.plugin_basename_set
                     plugins = set()
                     for string in strings:
-                        if string.endswith(('.esp', '.esl', '.esm')) and plugin_basename_set:#not ':' in string and not '/' in string and not '\\' in string:
+                        if string.endswith(('.esp', '.esl', '.esm')) and string in plugin_basename_set:#not ':' in string and not '/' in string and not '\\' in string:
                             with scanner.lock:
                                 if gfff:
                                     scanner.file_dict[string].add(file)
