@@ -10,14 +10,14 @@ from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ESM_
                          EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
                          MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
                          WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, DEPENDENCY_DICTIONARY_JSON,
-                         MAXED_MASTERS_JSON, BLACKLIST_JSON, CELL_CHANGED_JSON, DLL_DICT_JSON)
+                         MAXED_MASTERS_JSON, BLACKLIST_JSON, CELL_CHANGED_JSON, DLL_DICT_JSON, GAME_MODE)
 from PyQt6.QtCore import QCoreApplication
 
 #TODO: Maybe ignore form 43 plugins? IDK if necessary, need to check what happened on mod page, I thought I handled 43 v 44 somewhere
 class qualification_checker():
     def scan(_=None) -> dict:
         qualification_checker.lock = threading.Lock()
-        qualification_checker.maxed_masters = qualification_checker.get_from_file(MAXED_MASTERS_JSON)
+        qualification_checker.maxed_masters = set(qualification_checker.get_from_file(MAXED_MASTERS_JSON))
         plugins = [plugin for plugin in _global.plugins if not plugin.lower().endswith('.esl')]
         qualification_checker.missing_game_esm_as_master: dict[str, str] = qualification_checker.get_from_file(MISSING_GAME_AS_MASTER_JSON)
         qualification_checker.dependent_dict: dict[str, list[str]] = qualification_checker.get_from_file(DEPENDENCY_DICTIONARY_JSON)
@@ -62,11 +62,15 @@ class qualification_checker():
 
     def plugin_scanner(plugins: list, update_header: bool):
         flag_dict: dict[str, list[str]] = {}
-        for plugin in plugins:
-            alread_esl, is_esm = qualification_checker.already_esl(plugin)
-            if not alread_esl:
-                esl_allowed, need_compacting, new_cell, interior_cell, new_wrld, new_wthr, adhseam = qualification_checker.file_reader(plugin, update_header, is_esm)
+        if GAME_MODE == "SSE":
+            for plugin in plugins:
+                alread_esl, is_esm = qualification_checker.already_esl(plugin)
+                if alread_esl:
+                    continue
+                ret_val: tuple = qualification_checker.file_reader(plugin, update_header, is_esm)
+                esl_allowed = ret_val[0]
                 if esl_allowed:
+                    need_compacting, new_cell, interior_cell, new_wrld, new_wthr = ret_val[1:]
                     flag_dict[plugin] = []
                     if need_compacting:
                         flag_dict[plugin].append('need_compacting')
@@ -91,8 +95,39 @@ class qualification_checker():
                         flag_dict[plugin].append('new_wthr')
                     if is_esm:
                         flag_dict[plugin].append('is_esm')
-                elif adhseam:
-                    flag_dict[plugin] = ['adhseam_problem']
+                else:
+                    flag_dict[plugin] = [ret_val[-1]]
+
+        elif GAME_MODE == "FO4":
+            for plugin in plugins:
+                alread_esl, is_esm = qualification_checker.already_esl(plugin)
+                if alread_esl:
+                    continue
+                ret_val: tuple = qualification_checker.file_reader(plugin, update_header, is_esm)
+                esl_allowed = ret_val[0]
+                if esl_allowed:
+                    need_compacting, new_cell, has_precombines = ret_val[1:]
+                    flag_dict[plugin] = []
+                    if need_compacting:
+                        flag_dict[plugin].append('need_compacting')
+                    else:
+                        flag_dict[plugin].append('esl_flaggable')
+                    if new_cell:
+                        flag_dict[plugin].append('new_cell')
+
+                        basename = os.path.basename(plugin).lower()
+                        if plugin in qualification_checker.maxed_masters:
+                            flag_dict[plugin].append('maxed_masters')
+                        else:
+                            for dependent in qualification_checker.dependent_dict.get(basename, []):
+                                if dependent in qualification_checker.maxed_masters:
+                                    flag_dict[plugin].append('maxed_masters')
+                                    break
+                    if has_precombines:
+                        flag_dict[plugin].append('has_precombines')
+                else:
+                    flag_dict[plugin] = [ret_val[-1]]
+                ret_val = qualification_checker.file_reader(plugin, update_header, is_esm)
                         
         with qualification_checker.lock:
             for key, value in flag_dict.items():
@@ -121,12 +156,12 @@ class qualification_checker():
                 data = f.read()
             if data[:4] != b'TES4':
                 write_to_file(f"No TES4 header, fake plugin? Skipping: {file}")
-                return False, False, False, False, False, False, False
+                return (False, 'not plugin')
             data_list = qualification_checker.create_data_list(data)
         except Exception as e:
             write_error(QCoreApplication.translate("Global", 'Failed to read plugin: ') + file)
             write_error(e, True) 
-            return False, False, False, False, False, False, True
+            return (False, 'read fail')
 
         master_count, has_game_esm_master = qualification_checker.get_master_count(data_list)
 
@@ -150,19 +185,23 @@ class qualification_checker():
         need_compacting = False
         new_wrld = False
         new_wthr = False
+        precombines = False
         #edids = []
         cell_form_ids = []
+        is_sse_mode = GAME_MODE == "SSE"
+        is_fo4_mode = GAME_MODE == "FO4"
         for form in data_list:
             record_type = form[:4]
             if record_type not in (b'GRUP', b'TES4') and form[15] >= master_count:
                 count += 1
                 if count > num_max_records:
-                    return False, False, False, False, False, False, not all_dependents_have_game_esm_as_master and update_header
+                    return (False, 'possible_adhseam_problem' if not all_dependents_have_game_esm_as_master and update_header else 'max record count exceeded')
                 if int.from_bytes(form[12:15][::-1]) > qualification_checker.max_record_number:
                     need_compacting = True
                 if record_type == b'CELL':
                     new_cell = True
-                    if not interior_cell_flag:
+                    if ((not interior_cell_flag and is_sse_mode)
+                         or (not precombines and is_fo4_mode)):
                         flag_byte = form[10]
                         compressed_flag = (flag_byte & 0x04) != 0
                         offset = 24
@@ -174,9 +213,11 @@ class qualification_checker():
                         while offset < form_size:
                             field = form_to_check[offset:offset+4]
                             field_size = struct.unpack("<H", form_to_check[offset+4:offset+6])[0]
-                            if field == b'DATA':
+                            if field == b'DATA' and is_sse_mode:
                                 flags = form_to_check[offset+6]
                                 interior_cell_flag = (flags & 0x01) != 0
+                            elif field == b'XCRI' and is_fo4_mode:
+                                precombines = True
                             offset += field_size + 6
 
                 if record_type == b'WRLD':
@@ -212,7 +253,12 @@ class qualification_checker():
             with open(cell_form_id_file, 'w', encoding='utf-8') as f:
                 for form_id in cell_form_ids:
                     f.write(form_id + '\n')
-        return True, need_compacting, new_cell, interior_cell_flag, new_wrld, new_wthr, not all_dependents_have_game_esm_as_master and update_header
+        if is_sse_mode:
+            return (True, need_compacting, new_cell, interior_cell_flag, new_wrld, new_wthr)
+        elif is_fo4_mode:
+            return (True, need_compacting, new_cell, precombines)
+        else:
+            raise ValueError(f"Invalid GAME_MODE: {GAME_MODE}")
 
     def already_esl(file: str) -> tuple[bool, bool]:
         with open(file, 'rb') as f:
