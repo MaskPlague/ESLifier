@@ -10,3 +10,4 @@ pefile
 plyvel
 psutil
 json5
+pytest
