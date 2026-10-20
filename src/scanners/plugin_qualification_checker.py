@@ -127,7 +127,6 @@ class qualification_checker():
                         flag_dict[plugin].append('has_precombines')
                 else:
                     flag_dict[plugin] = [ret_val[-1]]
-                ret_val = qualification_checker.file_reader(plugin, update_header, is_esm)
                         
         with qualification_checker.lock:
             for key, value in flag_dict.items():
