@@ -10,8 +10,8 @@ import types
 
 import pytest
 
-import patcher_conditions as pc
-from file_patchers import patchers
+import patchers.sse_patcher_conditions as pc
+from patchers.sse_file_patchers import patchers
 
 MASTER_BYTE = b"\x01"
 

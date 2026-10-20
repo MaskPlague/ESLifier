@@ -268,9 +268,6 @@ def test_missing_compacted_data_ends_early(env):
     assert w.finished_signal.calls[0][1:] == ({}, {}, 0, 0, [])
 
 
-@pytest.mark.xfail(reason="detect_new_files/detect_changes emit {} for the first argument of "
-                          "finished_signal = pyqtSignal(list, dict, dict, int, int, list); PyQt will reject a dict "
-                          "where a list is declared (the other early exit correctly emits [])", strict=False)
 def test_missing_compacted_data_emits_a_list_for_the_mod_list(env):
     w = make_worker(env)
     w.detect_new_files()
@@ -408,10 +405,6 @@ def test_a_modified_plugin_and_its_modified_patched_file_are_both_removed(change
     assert set(files) == {out(env, "ModA.esp"), out(env, "meshes", "a_patched.nif")}
 
 
-@pytest.mark.xfail(reason="when a compacted plugin is handled before its own patched file, the last fallback in "
-                          "detect_changes appends the patched file again without a duplicate check, so the "
-                          "'delete N files' count in the confirmation is inflated (cosmetic; order dependent)",
-                   strict=False)
 def test_each_file_is_only_queued_for_deletion_once(changes):
     env, captured = changes
     original(env, **{"ModA.esp": (out(env, "ModA.esp"), "stale-hash"),
@@ -481,9 +474,6 @@ def test_changed_winner_of_a_patched_file_forces_repatching(changes, monkeypatch
     assert history == {rp("meshes/a.nif"): "OldMod"}
 
 
-@pytest.mark.xfail(reason="detect_changes reports a failure to read an ESLifier_Data file by emitting finished_signal but "
-                          "then carries on (no return): it emits a second time from detect_new_files and, depending on "
-                          "which file failed, can hit variables that were never read", strict=False)
 def test_unreadable_data_file_stops_the_scan_cleanly(env, log):
     data(env, "dependency_dictionary.json", {})                      # file_masters.json is missing
     w = make_worker(env)

@@ -11,9 +11,9 @@ import types
 
 import pytest
 
-import list_compact
-import list_eslify
-import list_parent
+from lists import list_compact
+from lists import list_eslify
+from lists import list_parent
 from data_holder import _global
 
 

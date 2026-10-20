@@ -9,9 +9,9 @@ import time
 
 import pytest
 
-import vortex_database_reader as vdr
+import scanners.vortex_database_reader as vdr
 from data_holder import _global
-from vortex_database_reader import ReadState, VortexDBParser
+from scanners.vortex_database_reader import ReadState, VortexDBParser
 
 
 # ------------------------------------------------------------------------------------------ fakes
@@ -216,8 +216,6 @@ def test_vortex_deploying_cancels_the_action(parser, fake_db, workdir, monkeypat
     assert any("deploying" in line for line in log.file_lines)
 
 
-@pytest.mark.xfail(reason="is_readable looks for 'purging__eslfiier_tag' (typo) but the Vortex extension sends "
-                          "'purging__eslifier_tag', so a purge in progress is never detected", strict=False)
 def test_vortex_purging_cancels_the_action(parser, fake_db, workdir, monkeypatch):
     FakeDB.open_error = FakeIOError("locked")
     make_extension(workdir)
@@ -236,9 +234,6 @@ def test_locked_database_with_extension_that_has_not_started(parser, fake_db, wo
     assert VortexDBParser.is_readable() == ReadState.ERROR_DB_LOCKED_EXTENSION_UNREACHABLE
 
 
-@pytest.mark.xfail(reason="get_live_vortex_state returns a ReadState enum on failure, which is truthy, so is_readable "
-                          "calls .get() on it and raises AttributeError instead of reporting the extension as unreachable",
-                   strict=False)
 def test_locked_database_and_unreachable_extension_is_reported(parser, fake_db, workdir, monkeypatch):
     FakeDB.open_error = FakeIOError("locked")
     make_extension(workdir)

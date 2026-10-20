@@ -607,13 +607,8 @@ def reported(rec):
     return [bytes(form[o:o + 4]) for o in offsets]
 
 
-BROKEN = {b"SCOL": "save_scol_data never advances `offset` (and has no return), so any SCOL record with a "
-                   "sub-record loops forever and an empty one returns None"}
-
-
 def params(cases):
-    return [pytest.param(c, id=c.decode(), marks=[pytest.mark.xfail(reason=BROKEN[c], strict=False, run=True)]
-                         if c in BROKEN else []) for c in cases]
+    return [pytest.param(c, id=c.decode()) for c in cases]
 
 
 CASES = sorted(SPEC)

@@ -16,7 +16,7 @@ import struct
 
 import pytest
 
-from file_patchers import patchers
+from patchers.sse_file_patchers import patchers
 from plugin_builder import fid, map_entry, write
 
 BASENAME = "mod.esp"
@@ -527,14 +527,10 @@ class TestPex:
         out = patch(tmp_path, patchers.pex_patcher, build_pex(0x0A2C90), binary=True)
         assert out == build_pex(0x000A0C)
 
-    @pytest.mark.xfail(strict=False, reason="REGRESSION vs v0.16.17: the structural pex_patcher's patch_int() never calls "
-                       "write_ineligible, so the 'needs ESLifier_Cell_Master.esm' warning is no longer produced for .pex files")
     def test_cell_master_rename_is_reported_as_ineligible(self, tmp_path, log):
         patch(tmp_path, patchers.pex_patcher, build_pex(0x0A2C90), binary=True)
         assert log.ineligible and "ESLifier_Cell_Master.esm" in log.ineligible[0]
 
-    @pytest.mark.xfail(strict=False, raises=TypeError, reason="REGRESSION vs v0.16.17: ASSIGN of a null/None operand reaches "
-                       "bytes(vData) in function_processor and raises TypeError, so the script is not patched")
     def test_script_that_assigns_none_before_the_call_is_still_patched(self, tmp_path):
         out = patch(tmp_path, patchers.pex_patcher, build_pex(0x0A2C8E, store_null_first=True), binary=True)
         assert out == build_pex(0x000A0A, store_null_first=True)

@@ -5,7 +5,7 @@ import os
 import pytest
 
 from plugin_builder import (cell_record, fid, grup, plugin, record, simple_records, write, tes4)
-from plugin_qualification_checker import qualification_checker as qc
+from scanners.plugin_qualification_checker import qualification_checker as qc
 
 SKYRIM = "Skyrim.esm"
 

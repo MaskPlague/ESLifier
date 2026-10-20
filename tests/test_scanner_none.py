@@ -7,7 +7,7 @@ import pytest
 
 from data_holder import _global
 from scanner_fakes import FakeScanner, touch
-from scanner_none import NoManager
+from scanners.scanner_none import NoManager
 
 
 @pytest.fixture

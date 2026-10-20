@@ -2,7 +2,7 @@
 import json
 import os
 
-from dependency_getter import dependecy_getter as dg
+from scanners.dependency_getter import dependecy_getter as dg
 from plugin_builder import plugin, simple_records, write
 
 SKYRIM = "Skyrim.esm"

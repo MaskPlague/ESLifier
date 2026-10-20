@@ -12,7 +12,7 @@ import json
 
 import pytest
 
-from file_patchers import patchers
+from patchers.sse_file_patchers import patchers
 from plugin_builder import map_entry
 
 BASENAME = "mod.esp"
@@ -78,8 +78,6 @@ class TestOBody:
         data = {"npc": {"Other.esp": {"0A2C8E": ["x"]}, "Mod.esp": {"00FFFF": ["y"]}}}
         assert self.run(tmp_path, data) == data
 
-    @pytest.mark.xfail(reason="change_json_key renames the key everywhere in the file, so the same form id listed "
-                              "under a different plugin is rewritten too", strict=False)
     def test_same_form_id_under_another_plugin_is_left_alone(self, tmp_path):
         out = self.run(tmp_path, {"npc": {"Other.esp": {"0A2C8E": ["x"]}, "Mod.esp": {"0A2C8E": ["y"]}}})
         assert out == {"npc": {"Other.esp": {"0A2C8E": ["x"]}, "Mod.esp": {"000A0A": ["y"]}}}

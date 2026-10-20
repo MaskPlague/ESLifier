@@ -166,8 +166,6 @@ class TestSetFlag:
         assert os.path.exists(src) and open(src, "rb").read() == bytes(data)
         assert originals is cf.original_files and history is cf.winning_file_history_dict
 
-    @pytest.mark.xfail(reason="the error handler calls QCoreApplication.translate with a single argument "
-                              "(context is missing), so a failed write raises TypeError instead of logging", strict=False)
     def test_failure_to_write_is_logged(self, env, monkeypatch, log):
         cf = make_cfids(env)
         monkeypatch.setattr(cf, "copy_file_to_output", lambda f: (str(env.out / "missing" / "x.esp"), "x.esp"))

@@ -7,8 +7,8 @@ import os
 
 import pytest
 
-from file_defined_patcher_conditions import user_and_master_conditions_class as Conditions
-from file_patchers import patchers
+from patchers.file_defined_patcher_conditions import user_and_master_conditions_class as Conditions
+from patchers.sse_file_patchers import patchers
 
 
 @pytest.fixture
@@ -221,8 +221,6 @@ def test_extension_picks_the_right_list_and_unknown_extensions_use_other(blank, 
     assert check(blank, "c:\\nothing\\a.weird", conds) is False
 
 
-@pytest.mark.xfail(reason="check_conditions reads condition_set['tokens'] but get_conditions stores the value "
-                          "under 'tkns', so user-defined tokens never reach the patcher", strict=False)
 def test_user_defined_tokens_reach_the_patcher(blank, recorder):
     cs = condition_set(patchers.ini_formid_sep_plugin_patcher)
     cs["tkns"] = {"a", "b"}
@@ -251,9 +249,6 @@ def test_other_patcher_errors_are_logged_and_file_still_counts_as_handled(blank,
     assert any("kaboom" in e for e in log.errors)
 
 
-@pytest.mark.xfail(reason="__init__ extends master_conditions[extension] without checking it exists, so a user "
-                          "condition for an extension the (missing/empty) master file lacks raises KeyError",
-                   strict=False)
 def test_init_user_conditions_work_when_master_file_has_none(workdir, cond_file):
     cond_file([{"extension": "ini", "patcher": "ini_formid_sep_plugin", "contains": "user"}],
               name="user_patch_conditions.json")

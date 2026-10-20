@@ -2,7 +2,7 @@
 Shared pytest setup for the ESLifier regression suite.
 
 ESLifier's core logic lives in ``src/`` and is imported as top-level modules
-(``from file_patchers import patchers``). Several modules import PyQt6 or the
+(``from patchers.sse_file_patchers import patchers``). Several modules import PyQt6 or the
 Qt-based ``log_stream`` at import time, and ``compact_form_ids`` imports
 pywin32 on Windows. None of that matters for the logic under test, so this
 conftest:
@@ -182,42 +182,19 @@ _install_fake_log_stream()
 _install_fake_plyvel()
 
 
-def _install_layout_compat():
+def _select_sse_mode():
     """
-    Newer ESLifier layouts split ``src/`` into packages (scanners/, patchers/, lists/), rename a few modules and
-    take their game from ``data_holder.GAME_MODE`` (run_sse_mode.py sets it to "SSE" before anything else is imported).
-    The tests refer to the original flat module names, so for the newer layout set SSE mode and alias the old names
-    to the new modules. Nothing changes for the original layout.
+    ESLifier takes its game from ``data_holder.GAME_MODE`` (run_sse_mode.py sets it to "SSE" before anything else is
+    imported). Do the same here, before any test module imports ESLifier code, so game-dependent imports resolve to
+    the SSE modules. The tests import ESLifier modules by their real names (e.g. ``patchers.sse_file_patchers``),
+    so renames made with an IDE carry through to the tests.
     """
-    if not os.path.isdir(os.path.join(SRC_DIR, "scanners")):
-        return
-    import importlib
-
     import data_holder
     data_holder.GAME_MODE = "SSE"
     data_holder.update_game_globals()
-    aliases = {
-        "file_patchers": "patchers.sse_file_patchers",
-        "patcher_conditions": "patchers.sse_patcher_conditions",
-        "file_defined_patcher_conditions": "patchers.file_defined_patcher_conditions",
-        "full_form_processor": "full_form_processor_sse",
-        "scanner": "scanners.scanner",
-        "scanner_mo2": "scanners.scanner_mo2",
-        "scanner_none": "scanners.scanner_none",
-        "scanner_vortex": "scanners.scanner_vortex",
-        "vortex_database_reader": "scanners.vortex_database_reader",
-        "cell_changed_scanner": "scanners.cell_changed_scanner",
-        "dependency_getter": "scanners.dependency_getter",
-        "plugin_qualification_checker": "scanners.plugin_qualification_checker",
-        "list_parent": "lists.list_parent",
-        "list_compact": "lists.list_compact",
-        "list_eslify": "lists.list_eslify",
-    }
-    for old, new in aliases.items():
-        sys.modules[old] = importlib.import_module(new)
 
 
-_install_layout_compat()
+_select_sse_mode()
 
 
 # --------------------------------------------------------------------------- #

@@ -1,7 +1,7 @@
 """full_form_processor: knows where Form IDs live inside each record type, and rewrites them."""
 import struct
 
-from full_form_processor import form_processor as fp
+from full_form_processor_sse import form_processor as fp
 from plugin_builder import fid, record, sub, grup
 
 

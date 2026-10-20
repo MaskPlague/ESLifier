@@ -1,10 +1,10 @@
 """
-file_patchers.patchers: Completionist INI patchers (current and old format).
+patchers.ini_completionist_patcher (Completionist INI files).
 Mapping: 0x0A2C8E -> 0x000A0A, 0x0A2C8F -> 0x000A0B, 0x0A2C90 -> 0x000A0C (moves to ESLifier_Cell_Master.esm).
 """
 import pytest
 
-from file_patchers import patchers
+from patchers.sse_file_patchers import patchers
 from plugin_builder import map_entry
 
 BASENAME = "mod.esp"
@@ -25,10 +25,6 @@ def run(tmp_path, fn, text):
 
 def patch_new(tmp_path, text):
     return run(tmp_path, patchers.ini_completionist_patcher, text)
-
-
-def patch_old(tmp_path, text):
-    return run(tmp_path, patchers.old_ini_completionist_patcher, text)
 
 
 # ============================================================================================ current format
@@ -67,11 +63,10 @@ class TestCurrentFormat:
         assert lines[5] == "END"
         assert lines[6] == "Other = 0x0A2C8E"                      # outside the block, not an id list
 
-    @pytest.mark.xfail(reason="_comp_form_id_processor strips the line when it starts with ';', dropping its newline, so a "
-                              "commented-out line inside a FormIDs block is glued to the next line", strict=False)
-    def test_commented_line_in_a_block_keeps_its_own_line(self, tmp_path):
+    def test_commented_line_in_a_block_is_left_untouched_on_its_own_line(self, tmp_path):
+        # Commented-out lines are skipped by the patcher (not renumbered) and must keep their own line.
         text = "PluginFileName = Mod.esp\nFormIDs = <<< END\n; 0x0A2C8F, commented out\n0x0A2C8E, x\nEND\n"
-        assert patch_new(tmp_path, text).splitlines()[2:4] == ["; 0x000A0B, commented out", "0x000A0A, x"]
+        assert patch_new(tmp_path, text).splitlines()[2:4] == ["; 0x0A2C8F, commented out", "0x000A0A, x"]
 
     def test_explicit_plugin_after_a_star_is_honoured(self, tmp_path):
         text = "PluginFileName = Other.esp\nFormIDs = 0x0A2C8E*Mod.esp, 0x0A2C8E*Third.esp, 0x0A2C8E\n"
@@ -128,43 +123,3 @@ class TestCurrentFormat:
     def test_comments_and_unrelated_lines_survive(self, tmp_path):
         text = "; comment 0x0A2C8E\n\nPluginFileName = Mod.esp\nName = Hello\n"
         assert patch_new(tmp_path, text) == text
-
-
-# ============================================================================================ old format
-class TestOldFormat:
-    def test_formids_single_line(self, tmp_path):
-        out = patch_old(tmp_path, "PluginFileName = Mod.esp\nFormIDs = 0x0A2C8E, 0x0A2C8F\n")
-        assert "FormIDs = 0x000A0A, 0x000A0B" in out
-
-    def test_other_plugin_untouched(self, tmp_path):
-        text = "PluginFileName = Other.esp\nFormIDs = 0x0A2C8E\n"
-        assert patch_old(tmp_path, text) == text
-
-    def test_cell_master_suffix(self, tmp_path):
-        out = patch_old(tmp_path, "PluginFileName = Mod.esp\nFormIDs = 0x0A2C90\n")
-        assert f"0x000A0C*{CELL_MASTER}" in out
-
-    def test_block_with_end_tag_and_comments(self, tmp_path):
-        text = "PluginFileName = Mod.esp\nFormIDs <<< END\n0x0A2C8E, a\n0x0A2C8F, b\nEND\n"
-        lines = patch_old(tmp_path, text).splitlines()
-        assert lines[2] == "0x000A0A, a"
-        assert lines[3] == "0x000A0B, b"
-
-    @pytest.mark.xfail(reason="same newline loss as the current format: a ';' line inside a FormIDs block is glued "
-                              "to the next line", strict=False)
-    def test_commented_line_in_a_block_keeps_its_own_line(self, tmp_path):
-        text = "PluginFileName = Mod.esp\nFormIDs <<< END\n; 0x0A2C8F, b\n0x0A2C8E, a\nEND\n"
-        assert patch_old(tmp_path, text).splitlines()[2:4] == ["; 0x000A0B, b", "0x000A0A, a"]
-
-    def test_explicit_plugin_star(self, tmp_path):
-        out = patch_old(tmp_path, "PluginFileName = Other.esp\nFormIDs = 0x0A2C8E*Mod.esp, 0x0A2C8E*Third.esp\n")
-        assert "0x000A0A*Mod.esp, 0x0A2C8E*Third.esp" in out
-
-    def test_variable_lines(self, tmp_path):
-        out = patch_old(tmp_path, "PluginFileName = Mod.esp\n0x0A2C8E_Name = 0x0A2C8F\n")
-        assert out.splitlines()[1].startswith("0x000A0A_Name")
-        assert "0x000A0B" in out.splitlines()[1]
-
-    def test_variable_lines_with_explicit_plugin(self, tmp_path):
-        out = patch_old(tmp_path, "PluginFileName = Other.esp\n0x0A2C90*Mod.esp = 0x0A2C8E\n")
-        assert out.splitlines()[1].startswith(f"0x000A0C*{CELL_MASTER}")

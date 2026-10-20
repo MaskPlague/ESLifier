@@ -10,7 +10,7 @@ import pytest
 
 from data_holder import _global
 from scanner_fakes import FakeScanner, touch
-from scanner_mo2 import MO2, MO2Errors
+from scanners.scanner_mo2 import MO2, MO2Errors
 
 BSA_MOD = "archive_extracted_eslifier_scan"
 OVERWRITE_MOD = "overwrite_eslifier_scan"
@@ -74,8 +74,6 @@ def test_get_modlist_header_comment_does_not_become_a_mod_that_outranks_real_one
     assert not any(m.startswith(("#", "This file was")) for m in enabled)
 
 
-@pytest.mark.xfail(reason="get_modlist logs the failure to read modlist.txt but then indexes load_order[0] on the "
-                          "empty list and raises IndexError", strict=False)
 def test_missing_modlist_is_reported_and_gives_only_the_sentinels(mo2, log):
     _global.mo2_modlist_txt_path = "does/not/exist.txt"
     load_order, enabled = MO2.get_modlist()

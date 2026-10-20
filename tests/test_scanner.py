@@ -17,7 +17,7 @@ import types
 
 import pytest
 
-import scanner as scanner_module
+import scanners.scanner as scanner_module
 from data_holder import _global
 from plugin_builder import write as write_bytes
 from scanner_fakes import touch
@@ -471,8 +471,6 @@ def test_engine_fixes_dll_version_7_is_detected(sc, tmp_path, monkeypatch):
     assert _global.engine_fixes_v7_or_newer
 
 
-@pytest.mark.xfail(reason="engine_fixes_v7_or_newer is assigned with a trailing comma, so it becomes the tuple "
-                          "(False,), which is truthy: older Engine Fixes versions are treated as v7+", strict=False)
 def test_engine_fixes_dll_older_than_version_7_is_not_v7(sc, tmp_path, monkeypatch):
     f = write_bytes(tmp_path / "EngineFixes.dll", b"MZ")
     _fake_pe(monkeypatch, 6 << 16)

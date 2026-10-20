@@ -9,8 +9,8 @@ import types
 
 import pytest
 
-import cell_changed_scanner
-from cell_changed_scanner import cell_scanner
+from scanners import cell_changed_scanner
+from scanners.cell_changed_scanner import cell_scanner
 from plugin_builder import cell_record, fid, grup, plugin, record, tes4, write
 
 
@@ -204,8 +204,6 @@ def test_scan_new_dependents_lowercases_keys_and_skips_unknown_mods(scanner):
     assert read_result(scanner) == set(["mod.esp"])
 
 
-@pytest.mark.xfail(reason="scan_new_dependents lower-cases the dependency dict keys but looks mods up as given, "
-                          "so a mixed-case mod name is silently skipped", strict=False)
 def test_scan_new_dependents_finds_mixed_case_mod_names(scanner):
     dep = write(scanner / "dep.esp", dependent_plugin(["Mod.esp"], 0x800, master_index=0))
     write_cell_ids(scanner, "Mod.esp", [0x800])
@@ -245,8 +243,6 @@ def test_dump_to_file_reports_error_instead_of_raising(tmp_path, log):
     assert any("Failed to dump data to" in e for e in log.errors)
 
 
-@pytest.mark.xfail(reason="scan_dependent logs the read failure but carries on with empty data and crashes "
-                          "with IndexError in get_master_index (fixed by returning after the error)", strict=False)
 def test_unreadable_dependent_is_reported_and_skipped(scanner, log):
     cell_scanner.scan_dependent("Mod.esp", str(scanner / "does_not_exist.esp"), [stored_hex(0x800)])
     assert any("Failed to read data of" in e for e in log.errors)

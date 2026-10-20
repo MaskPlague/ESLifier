@@ -5,7 +5,7 @@ DynDOLOD LIGH json (batch 2a). Same mapping as the other file patcher tests:
 """
 import json
 
-from file_patchers import patchers
+from patchers.sse_file_patchers import patchers
 from plugin_builder import map_entry
 
 BASENAME = "mod.esp"

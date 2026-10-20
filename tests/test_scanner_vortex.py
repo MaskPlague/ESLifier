@@ -10,8 +10,8 @@ import pytest
 
 from data_holder import _global
 from scanner_fakes import FakeScanner, touch
-from scanner_vortex import Vortex, VortexErrors
-from vortex_database_reader import ReadState, VortexDBParser
+from scanners.scanner_vortex import Vortex, VortexErrors
+from scanners.vortex_database_reader import ReadState, VortexDBParser
 
 DATA_SENTINEL = "data_folder_file_eslifier_scan"
 BSA_SENTINEL = "archive_extracted_eslifier_scan"
@@ -194,9 +194,6 @@ def test_any_real_mod_beats_the_data_folder_and_extracted_files(db):
     assert result["f.nif"][-1] == "A"
 
 
-@pytest.mark.xfail(reason="get_file_conflict_resolution puts the Data folder *below* BSA-extracted files, so an "
-                          "extracted script/SEQ would win over a loose Data file of the same name (MO2's scanner ranks "
-                          "BSA contents lowest). Confirm whether that ordering is intentional.", strict=False)
 def test_loose_data_file_beats_a_file_extracted_from_a_bsa(db):
     result = resolve([], {"f.pex": [BSA_SENTINEL, DATA_SENTINEL]})
     assert result["f.pex"][-1] == DATA_SENTINEL
