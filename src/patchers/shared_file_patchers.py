@@ -14,9 +14,9 @@ class shared_patchers():
             offset += 1
             if DEBUG:
                 print(f"{variableType = }")
-            variableData = None
+            variableData = b''
             if variableType == 0: # Null
-                return offset, 0, None
+                return offset, 0, b''
             elif variableType == 1: # identifier (string)
                 variableData = strings[int.from_bytes(data[offset:offset+2], endian)]
                 offset += 2
@@ -438,9 +438,9 @@ class shared_patchers():
         def var_data_reader(data, offset):
             variableType = data[offset]
             offset += 1
-            variableData = None
+            variableData = b''
             if variableType == 0: # Null
-                return offset, 0, None
+                return offset, 0, b''
             elif variableType == 1: # identifier (string)
                 variableData = strings[int.from_bytes(data[offset:offset+2], endian)]
                 offset += 2
