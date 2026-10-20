@@ -684,7 +684,9 @@ class patchers(shared_patchers):
 
             for i, line in enumerate(lines):
                 line_s = line.strip()
-                
+                if not line_s or line_s.startswith(';'):
+                    continue
+
                 if line_s.startswith('[') and line_s.endswith(']'):
                     current_sec = line_s
                     sec_data = section_metadata.get(current_sec, {})
