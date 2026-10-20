@@ -236,7 +236,6 @@ class CFIDs():
                 startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
                 temp_extraction_threads: list[threading.Thread] = []
                 path_parts = ("\\voice\\", "\\facetint\\", "\\facegeom\\")
-                for bsa_file, values in self.bsa_dict.items():
                 for archive_file, values in self.archive_dict.items():
                     if name in values:
                         if ' - textures' in os.path.basename(bsa_file).lower():
