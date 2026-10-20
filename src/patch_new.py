@@ -188,9 +188,9 @@ class PatchNewScannerWorker(QObject):
         try:
             if os.path.exists(COMPACTED_AND_PATCHED_JSON):
                 with open(COMPACTED_AND_PATCHED_JSON, 'r', encoding='utf-8') as f:
-                    compacted_and_patched: dict[str, list[str]] = json.load(f)
+                    compacted_and_patched: dict[str, list[str]] = {k: set(v) for k, v in json.load(f).items()}
             else:
-                compacted_and_patched: dict[str, list[str]] = {}
+                compacted_and_patched: dict[str, set[str]] = {}
             if os.path.exists(ESL_FLAGGED_JSON):
                 with open(ESL_FLAGGED_JSON, 'r', encoding='utf-8') as f:
                     esl_flagged: list[str] = json.load(f)
@@ -264,8 +264,8 @@ class PatchNewScannerWorker(QObject):
             previously_compacted = [key for key in compacted_and_patched.keys()]
             json.dump(previously_compacted, f, ensure_ascii=False, indent=4)
 
-        files_to_remove = []
-        temp_list = self.conflict_changes.copy()
+        files_to_remove = set()
+        temp_list: list[tuple[str, str, str]] = self.conflict_changes.copy()
         if len(self.hash_mismatches) > 0:
             temp_rel_paths = [rel_path for rel_path, x, y in self.conflict_changes]
             for rel_path, full_path in self.hash_mismatches:
@@ -280,35 +280,35 @@ class PatchNewScannerWorker(QObject):
                     if rel_path == compacted.lower():
                         output_cased = actual_cases_output_files.get(rel_path, None)
                         if output_cased != None and output_cased not in files_to_remove:
-                            files_to_remove.append(output_cased)
+                            files_to_remove.add(output_cased)
                             added_to_list = True
                             if source == 'h':
                                 only_remove = False
                             for patched_rel_path in patched:
                                 patched_output_cased = actual_cases_output_files.get(patched_rel_path, None)
                                 if patched_output_cased != None and patched_output_cased not in files_to_remove:
-                                    files_to_remove.append(patched_output_cased)
+                                    files_to_remove.add(patched_output_cased)
                                     only_remove = False
                         elif output_cased == None and full_path not in files_to_remove and full_path.startswith(self.output_path):
-                            files_to_remove.append(full_path)
+                            files_to_remove.add(full_path)
                             added_to_list = True
                             if source == 'h':
                                 only_remove = False
                             for patched_rel_path in patched:
                                 patched_output_cased = actual_cases_output_files.get(patched_rel_path, None)
                                 if patched_output_cased != None and patched_output_cased not in files_to_remove:
-                                    files_to_remove.append(patched_output_cased)
+                                    files_to_remove.add(patched_output_cased)
                                     only_remove = False
                         compacted_and_patched.pop(compacted)
 
                     if rel_path in patched:
                         output_cased = actual_cases_output_files.get(rel_path, None)
                         if output_cased != None and output_cased not in files_to_remove:
-                            files_to_remove.append(output_cased)
+                            files_to_remove.add(output_cased)
                             only_remove = False
                             added_to_list = True
                         elif output_cased == None and full_path not in files_to_remove and full_path.startswith(self.output_path):
-                            files_to_remove.append(full_path)
+                            files_to_remove.add(full_path)
                             added_to_list = True
                         compacted_and_patched[compacted].remove(rel_path)
                 
@@ -316,11 +316,11 @@ class PatchNewScannerWorker(QObject):
                     if rel_path == flagged.lower():
                         output_cased = actual_cases_output_files.get(rel_path, None)
                         if output_cased != None and output_cased not in files_to_remove:
-                            files_to_remove.append(output_cased)
+                            files_to_remove.add(output_cased)
                             added_to_list = True
                 
                 if not added_to_list and full_path.startswith(self.output_path):
-                    files_to_remove.append(full_path)
+                    files_to_remove.add(full_path)
         if len(files_to_remove) > 0:
             clear_and_leave_log_open()
             self.delete_and_patch_changed(files_to_remove, only_remove, winning_file_history_dict, compacted_and_patched)
@@ -328,7 +328,7 @@ class PatchNewScannerWorker(QObject):
             self.detect_new_files()
     
     def delete_and_patch_changed(self, files_to_remove: list[str], only_remove: bool,
-                                  winning_file_history_dict: dict[str, list[str]], compacted_and_patched: dict):
+                                  winning_file_history_dict: dict[str, list[str]], compacted_and_patched: dict[str,set[str]]):
         write_normal(self.tr("Confirming files that need deleting..."))
         output_folder_name_lowered = self.output_folder_name.lower()
         counter = 0
@@ -369,9 +369,10 @@ class PatchNewScannerWorker(QObject):
         else:
             self.delete_files(files_that_exist_to_delete, winning_file_history_dict, only_remove, compacted_and_patched)
 
-    def delete_files(self, files_to_remove: list[str], winning_file_history_dict: dict[str, list[str]], only_remove: bool, compacted_and_patched: dict):
+    def delete_files(self, files_to_remove: list[str], winning_file_history_dict: dict[str, list[str]], only_remove: bool, compacted_and_patched: dict[str,set[str]]):
         with open(COMPACTED_AND_PATCHED_JSON, 'w', encoding='utf-8') as f:
-            json.dump(compacted_and_patched, f, ensure_ascii=False, indent=4)
+            dumpable_compacted_and_patched = {k:list(v) for k, v in compacted_and_patched.items()}
+            json.dump(dumpable_compacted_and_patched, f, ensure_ascii=False, indent=4)
         with open(ORIGINAL_FILES_JSON, 'r', encoding='utf-8') as f:
             original_files: dict[str, list[str]] = json.load(f)
         deleted_count = 0

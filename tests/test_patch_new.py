@@ -362,9 +362,9 @@ def test_modified_compacted_plugin_removes_it_and_everything_patched_for_it(chan
     w = make_worker(env)
     w.detect_changes()
     (files, only_remove, history, cap), = captured
-    assert files == [out(env, "ModA.esp"), out(env, "meshes", "a_patched.nif")]
+    assert files == set([out(env, "ModA.esp"), out(env, "meshes", "a_patched.nif")])
     assert only_remove is False                                     # plugin must be rebuilt, not just deleted
-    assert cap == {"ModB.esp": []}                                  # ModA is no longer considered compacted
+    assert cap == {"ModB.esp": set()}                                  # ModA is no longer considered compacted
 
 
 def test_modified_patched_file_is_removed_and_forgotten(changes):
@@ -373,9 +373,9 @@ def test_modified_patched_file_is_removed_and_forgotten(changes):
     w = make_worker(env)
     w.detect_changes()
     (files, only_remove, history, cap), = captured
-    assert files == [out(env, "meshes", "a_patched.nif")]
+    assert files == set([out(env, "meshes", "a_patched.nif")])
     assert only_remove is False
-    assert cap == {"ModA.esp": [], "ModB.esp": []}
+    assert cap == {"ModA.esp": set(), "ModB.esp": set()}
 
 
 def test_modified_output_file_nobody_tracks_is_just_deleted(changes):
@@ -384,7 +384,7 @@ def test_modified_output_file_nobody_tracks_is_just_deleted(changes):
     w = make_worker(env)
     w.detect_changes()
     (files, only_remove, history, cap), = captured
-    assert files == [out(env, "textures", "x.dds")]
+    assert files == set([out(env, "textures", "x.dds")])
     assert only_remove is True                                      # nothing to re-patch, only remove
 
 
@@ -395,7 +395,7 @@ def test_modified_esl_flagged_plugin_is_removed(changes):
     w = make_worker(env)
     w.detect_changes()
     (files, only_remove, history, cap), = captured
-    assert files == [out(env, "ModF.esp")]
+    assert files == set([out(env, "ModF.esp")])
 
 
 def test_a_modified_plugin_and_its_modified_patched_file_are_both_removed(changes):
@@ -463,7 +463,7 @@ def test_changed_conflict_winners_are_detected(changes, monkeypatch):
         (rp("meshes/gone.nif"), os.path.join(w.output_path, rp("meshes/gone.nif")), "c"),   # no mod provides it any more
     ])
     # only the output copy of the vanished file is removable; the new winner lives outside the output folder
-    assert captured[0][0] == [os.path.join(w.output_path, rp("meshes/gone.nif"))]
+    assert captured[0][0] == set([os.path.join(w.output_path, rp("meshes/gone.nif"))])
 
 
 def test_changed_winner_of_a_patched_file_forces_repatching(changes, monkeypatch):
@@ -475,9 +475,9 @@ def test_changed_winner_of_a_patched_file_forces_repatching(changes, monkeypatch
     w = make_worker(env)
     w.detect_changes()
     (files, only_remove, history, cap), = captured
-    assert files == [out(env, "meshes", "a.nif")]
+    assert files == set([out(env, "meshes", "a.nif")])
     assert only_remove is False
-    assert cap == {"ModA.esp": []}
+    assert cap == {"ModA.esp": set()}
     assert history == {rp("meshes/a.nif"): "OldMod"}
 
 
