@@ -4,7 +4,7 @@ sub-records. Each test builds a real sub-record layout with unique marker ids an
 """
 import struct
 
-from full_form_processor import form_processor as fp
+from full_form_processor_sse import form_processor as fp
 from plugin_builder import fid, record, sub, call_with_timeout
 
 OWN = fid(1, 0x800)
