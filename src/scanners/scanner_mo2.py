@@ -24,26 +24,21 @@ class MO2():
         except Exception as e:
             write_error(QCoreApplication.translate("scanner", "Failed to get modlist at ") + _global.mo2_modlist_txt_path)
             write_error(e, True)
+            load_order = []
 
-        enabled_mods = []
-        for line in load_order:
-            if line.startswith(('+','*')) and not line.strip().endswith('_separator'):
-                enabled_mods.append(line[1:].strip())
+        load_order[:] = [mod.strip() for mod in load_order if not mod.strip().endswith('_separator')]
+
+        enabled_mods = [mod[1:] for mod in load_order if mod.startswith(('+', '*'))]
         
         enabled_mods.append('archive_extracted_eslifier_scan')
         enabled_mods.reverse()
         enabled_mods.append('overwrite_eslifier_scan')
 
-        to_remove = []
-        for i in range(len(load_order)):
-            load_order[i] = load_order[i][1:].strip()
-            if load_order[i].endswith('_separator'):
-                to_remove.append(load_order[i])
-        
-        for mod in to_remove:
-            load_order.remove(mod)
-        if load_order[0].startswith('# This file was'):
+        if load_order and load_order[0].startswith('# This file was'):
             load_order.pop(0)
+
+        load_order[:] = [mod[1:] for mod in load_order]
+
         load_order.append('archive_extracted_eslifier_scan')
         load_order.reverse()
         load_order.append('overwrite_eslifier_scan')
