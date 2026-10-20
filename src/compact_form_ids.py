@@ -238,13 +238,13 @@ class CFIDs():
                 path_parts = ("\\voice\\", "\\facetint\\", "\\facegeom\\")
                 for archive_file, values in self.archive_dict.items():
                     if name in values:
-                        if ' - textures' in os.path.basename(bsa_file).lower():
-                            thread = threading.Thread(target=self.bsa_temp_extract, args=(bsa_file, "\\facetint\\", name, startupinfo,))
+                        if ' - textures' in os.path.basename(archive_file).lower():
+                            thread = threading.Thread(target=self.bsa_temp_extract, args=(archive_file, "\\facetint\\", name, startupinfo,))
                             temp_extraction_threads.append(thread)
                             thread.start()
                         else:
                             for part in path_parts:
-                                thread = threading.Thread(target=self.bsa_temp_extract, args=(bsa_file, part, name, startupinfo,))
+                                thread = threading.Thread(target=self.bsa_temp_extract, args=(archive_file, part, name, startupinfo,))
                                 temp_extraction_threads.append(thread)
                                 thread.start()
 
