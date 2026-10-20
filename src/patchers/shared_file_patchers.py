@@ -4,7 +4,16 @@ import os
 
 import configparser
 import io
-from log_stream import write_to_file, write_ineligible, write_error
+try:
+    from log_stream import write_to_file, write_ineligible, write_error
+except:
+    def write_to_file(txt):
+        print(str(f"write_to_file: {str(txt)}"))
+    def write_ineligible(txt):
+        print(str(f"write_ineligible: {str(txt)}"))
+    def write_error(txt, _):
+        print(str(f"write_error: {str(txt)}"))
+
 
 class shared_patchers():
     def pex_patcher_for_debug(basename: str, new_file: str, form_id_map: dict, endian = 'big'):
@@ -886,6 +895,8 @@ class shared_patchers():
         return data
 
     def change_json_key(data, old_key, new_key):
+        """Anything that uses this must have the plugin name (or some other specific identifier)
+          or it will replace ALL instances of the key ANYWHERE."""
         if isinstance(data, dict):
             if old_key in data:
                 data[new_key] = data.pop(old_key)

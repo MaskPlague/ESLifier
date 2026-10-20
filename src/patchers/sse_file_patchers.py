@@ -1,11 +1,17 @@
 import json
-import json5
 import os
 
 import configparser
 import io
-from patchers.shared_file_patchers import shared_patchers
-from log_stream import write_to_file, write_ineligible
+try:
+    from patchers.shared_file_patchers import shared_patchers
+    from log_stream import write_to_file, write_ineligible
+except:
+    from shared_file_patchers import shared_patchers
+    def write_to_file(txt):
+            print(str(f"write_to_file: {str(txt)}"))
+    def write_ineligible(txt):
+        print(str(f"write_ineligible: {str(txt)}"))
 
 class patchers(shared_patchers):        
     def facegeom_mesh_patcher(basename: str, new_file: str, form_id_map: dict):
@@ -1277,7 +1283,13 @@ class patchers(shared_patchers):
                     form_id_int = int(form_id, 16)
                     to_id_data = form_id_map.get(form_id_int)
                     if to_id_data is not None:
-                        data = patchers.change_json_key(data, fid_start + form_id, fid_start + to_id_data["hex"])
+                        temp = data
+                        for part in path[:-2]: #move to key to holder of key to replace
+                            temp = temp[part]
+                        item = temp.pop(path[-2])
+                        temp[fid_start + to_id_data["hex"]] = item
+                        #can't use this as change_json_key needs the key to be unique to the plugin
+                        #data = patchers.change_json_key(data, fid_start + form_id, fid_start + to_id_data["hex"])
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
