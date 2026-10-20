@@ -469,10 +469,14 @@ class shared_patchers():
             if endian == 'big':
                 to_id_data = form_id_map.get(int.from_bytes(data[aOffset+2:aOffset+5], endian))
                 if to_id_data:
+                    if to_id_data["update_name"]:
+                        write_ineligible(f'{basename} -> ESLifier_Cell_Master.esm | 0x{hex(int.from_bytes(data[aOffset+2:aOffset+5], endian))} -> 0x{to_id_data["hex_no_0"]} | {new_file}')
                     data[aOffset+2:aOffset+5] = to_id_data["bytes"][::-1][1:]
             else:
                 to_id_data = form_id_map.get(int.from_bytes(data[aOffset+1:aOffset+4], endian))
                 if to_id_data:
+                    if to_id_data["update_name"]:
+                        write_ineligible(f'{basename} -> ESLifier_Cell_Master.esm | 0x{hex(int.from_bytes(data[aOffset+2:aOffset+5], endian))} -> 0x{to_id_data["hex_no_0"]} | {new_file}')
                     data[aOffset+1:aOffset+4] = to_id_data["bytes"][:-1]
 
         def function_processor(data, offset):
