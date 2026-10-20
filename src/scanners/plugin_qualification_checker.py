@@ -147,6 +147,18 @@ class qualification_checker():
                 offset = offset_end
         return data_list      
 
+    def get_field_and_size(offset, form)-> tuple[bytes, int, int]:
+        field = form[offset:offset+4]
+        if field != b'XXXX':
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
+            return field, field_size, offset
+        else:
+            offset += 6
+            field_size = struct.unpack("<I", form[offset:offset+4])[0]
+            offset += 4
+            field = form[offset:offset+4]
+            return field, field_size, offset
+
     def file_reader(file: str, update_header: bool, is_esm: bool) -> tuple[bool, bool, bool, bool, bool, bool, bool]:
         data_list = []
         basename = os.path.basename(file)
@@ -210,8 +222,7 @@ class qualification_checker():
                             offset = 0
                         form_size = len(form_to_check)
                         while offset < form_size:
-                            field = form_to_check[offset:offset+4]
-                            field_size = struct.unpack("<H", form_to_check[offset+4:offset+6])[0]
+                            field, field_size, offset = qualification_checker.get_field_and_size(offset, form_to_check)
                             if field == b'DATA' and is_sse_mode:
                                 flags = form_to_check[offset+6]
                                 interior_cell_flag = (flags & 0x01) != 0
