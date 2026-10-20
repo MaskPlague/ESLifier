@@ -2,13 +2,14 @@ import os
 import json
 import threading
 import struct
+import zlib
+
 from log_stream import write_error
 from PyQt6.QtCore import QCoreApplication
-from data_holder import DEPENDENCY_DICTIONARY_JSON, CELL_CHANGED_JSON, CELL_IDS_FOLDER
-
+from data_holder import DEPENDENCY_DICTIONARY_JSON, CELL_CHANGED_JSON, CELL_IDS_FOLDER, GAME_MODE
 class cell_scanner():
     def scan(mods_with_new_cells: list[str]):
-        cell_scanner.cell_changed_list = []
+        cell_scanner.result_set = set()
         cell_scanner.lock = threading.Lock()
         cell_scanner.dependency_dict = cell_scanner.get_from_file(DEPENDENCY_DICTIONARY_JSON)
         threads = []
@@ -24,7 +25,7 @@ class cell_scanner():
 
     def scan_new_dependents(mods: list[str], dependency_dict: dict):
         cell_scanner.dependency_dict = {}
-        cell_scanner.cell_changed_list = []
+        cell_scanner.result_set = set()
         for key, value in dependency_dict.items():
             cell_scanner.dependency_dict[key.lower()] = value
         for mod in mods:
@@ -54,12 +55,13 @@ class cell_scanner():
             return
         data_list = cell_scanner.create_data_list(dependent_data)
         master_index = cell_scanner.get_master_index(mod, data_list)
+        is_sse_mode = GAME_MODE == "SSE"
         for form in data_list:
             if form[:4] == b'CELL' and form[15] == master_index and str(form[12:15].hex()) in cell_form_ids:
-                if os.path.basename(mod) not in cell_scanner.cell_changed_list:
+                if is_sse_mode and os.path.basename(mod) not in cell_scanner.result_set:
                     with cell_scanner.lock:
-                        cell_scanner.cell_changed_list.append(os.path.basename(mod))
-                return
+                        cell_scanner.result_set.add(os.path.basename(mod))
+                    return
                     
     def get_master_index(file: str, data_list: list) -> int:
         tes4 = data_list[0]
@@ -81,6 +83,19 @@ class cell_scanner():
             else:
                 master_index += 1
 
+    def get_field_and_size(offset, form)-> tuple[bytes, int, int]:
+        field = form[offset:offset+4]
+        if field != b'XXXX':
+            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
+            return field, field_size, offset
+        else:
+            offset += 6
+            field_size = struct.unpack("<I", form[offset:offset+4])[0]
+            offset += 4
+            field = form[offset:offset+4]
+            return field, field_size, offset
+            
+
     def get_from_file(file: str) -> dict:
         try:
             with open(file, 'r', encoding='utf-8') as f:
@@ -92,7 +107,7 @@ class cell_scanner():
     def dump_to_file(file: str):
         try:
             with open(file, 'w', encoding='utf-8') as f:
-                json.dump(cell_scanner.cell_changed_list, f, ensure_ascii=False, indent=4)
+                json.dump(list(cell_scanner.result_set), f, ensure_ascii=False, indent=4)
         except Exception as e:
             write_error(QCoreApplication.translate("Global", "Failed to dump data to ") + file)
             write_error(e, True)
