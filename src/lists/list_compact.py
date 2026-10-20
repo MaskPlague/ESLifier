@@ -289,6 +289,13 @@ class list_compactable(list_parent_class):
                 if self.filter_weather:
                     hide_row = True
                 self.setItem(i, self.WTHR_COL, item_wthr_flag)
+            if 'has_precombines' in flags:
+                item_precombine_flag = QTableWidget(self.tr("Precombine"))
+                item_precombine_flag.setToolTip(self.tr('This mod has a new cell and either itself or another mod uses the\n'\
+                                                        'precombine system with it, which will break if this mod is ESL flagged.'))
+                if self.filter_precombines:
+                    hide_row = True
+                self.setItem(i, self.PRECOM_COL, item_precombine_flag)
             if basename_lower in self.dll_dict:
                 item_dll = QTableWidgetItem(self.tr('!!SKSE DLL!!'))
                 tooltip = self.tr("This mod's plugin name is present in the following SKSE dlls and\nmay break their FormLookup() function calls if a hard-coded form id is present:")
