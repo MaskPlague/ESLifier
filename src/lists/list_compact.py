@@ -11,7 +11,7 @@ from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ESM_
                          EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
                          MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
                          WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, DEPENDENCY_DICTIONARY_JSON,
-                         MAXED_MASTERS_JSON, BLACKLIST_JSON, CELL_CHANGED_JSON, DLL_DICT_JSON)
+                         MAXED_MASTERS_JSON, BLACKLIST_JSON, CELL_CHANGED_JSON, DLL_DICT_JSON, SCRIPT_EXTENDER, GAME_MODE)
 from lists.list_parent import list_parent_class
 
 class list_compactable(list_parent_class):
@@ -20,9 +20,12 @@ class list_compactable(list_parent_class):
         c = itertools.count()
         # Items that need to be set in list_base
         self.MOD_COL = next(c)
-        self.CELL_COL = next(c)
-        self.WRLD_COL = next(c)
-        self.WTHR_COL = next(c)
+        if GAME_MODE == "SSE":
+            self.CELL_COL = next(c)
+            self.WRLD_COL = next(c)
+            self.WTHR_COL = next(c)
+        if GAME_MODE == "FO4":
+            self.PRECOM_COL = next(c)
         self.SKSE_COL = next(c)
         self.SEQ_COL = next(c)
         self.PEX_COL = next(c)
@@ -39,10 +42,17 @@ class list_compactable(list_parent_class):
         self.check_previous_text = self.tr("Import Compacted List Selection")
 
         self.setColumnCount(self.COL_COUNT)
-        self.setHorizontalHeaderLabels([self.tr('*   Mod'), self.tr('CELL Records'), self.tr('WRLD Records'), 
-                                        self.tr('WTHR Records'), 'SKSE DLL', 'SEQ', 'PEX', 'ESM', self.tr('Dependencies'), '', 'Hider'])
+        if GAME_MODE == "SSE":
+            self.setHorizontalHeaderLabels([self.tr('*   Mod'), self.tr('CELL Records'), self.tr('WRLD Records'), 
+                                        self.tr('WTHR Records'), f'{SCRIPT_EXTENDER.upper()} DLL', 'SEQ', 
+                                        'PEX', 'ESM', self.tr('Dependencies'), '', 'Hider'])
+        elif GAME_MODE == "FO4":
+            self.setHorizontalHeaderLabels([self.tr('*   Mod'), self.tr('PreVis/Precombine'), f'{SCRIPT_EXTENDER.upper()} DLL', 'SEQ', 
+                                                    'PEX', 'ESM', self.tr('Dependencies'), '', 'Hider'])
         self.horizontalHeaderItem(self.MOD_COL).setToolTip(self.tr('This is the plugin name. Select which plugins you wish to compact.'))
-        self.horizontalHeaderItem(self.CELL_COL).setToolTip(self.tr(
+
+        if GAME_MODE == "SSE":
+            self.horizontalHeaderItem(self.CELL_COL).setToolTip(self.tr(
                                                             'This is the CELL Record Flag. It can be completely ignored for users\n'\
                                                             'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'\
                                                             'Otherwise, if an ESM+ESL plugin creates a new CELL and another mod\n'\
@@ -56,18 +66,28 @@ class list_compactable(list_parent_class):
                                                             '"!!Maxed Masters!!" indicates that a plugin or its dependent plugins\n'\
                                                             'have the maximum amount of masters (254) and cannot add ESLifier_Cell_Master.esm\n'\
                                                             'as a master for the ESL+ESM cell bug and ESL worldspace bug workarounds.'))
-        self.horizontalHeaderItem(self.WRLD_COL).setToolTip(self.tr(
+
+            self.horizontalHeaderItem(self.WRLD_COL).setToolTip(self.tr(
                                                             'This is the WRLD Record Flag. It can be completely ignored for users\n'\
                                                             'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'\
                                                             'Otherwise, if an plugin is flagged ESL\n'\
                                                             'then the new worldspace may have landscape issues (no ground).'))
-        self.horizontalHeaderItem(self.WTHR_COL).setToolTip(self.tr(
+            self.horizontalHeaderItem(self.WTHR_COL).setToolTip(self.tr(
                                                             'This is the WTHR Record Flag. This is an indicator if a mod has a new weather record\n'\
                                                             'Some mods weathers are referenced in ENB Presets which cannot be patched by ESLifier\n'\
                                                             'It is at the user\'s discretion if a plugin with new weather should be compacted.'))
+        if GAME_MODE == "FO4":
+            self.horizontalHeaderItem(self.PRECOM_COL).setToolTip(self.tr(
+                                                            'This is the new CELL + Precombined/PreVis flag. Cells originating in\n'\
+                                                            'an ESL plugin cannot use the PreVis/Precombine system. Mods with this flag\n'\
+                                                            'have both a new CELL and there exists a mod in your modlist that references\n'\
+                                                            'the new CELL and uses the Precombined/PreVis system on that CELL.\n'
+                                                            'I will probably see if enabling and adapting Cell Master Generation\n'\
+                                                            'for FO4 can circumvent this issue. For now it will be disabled.'))
         self.horizontalHeaderItem(self.SKSE_COL).setToolTip(self.tr(
-                                                            'This is the skse DLL flag. If a dll has the plugin name in it then it may\n'\
-                                                            'have a LookUpForm() call that may break after compacting a flagged plugin.'))
+                                                            'This is the %0 DLL flag. If a dll has the plugin name in it then it may\n'\
+                                                            'have a LookUpForm() call that may break after compacting a flagged plugin.')
+                                                            .replace("%0", SCRIPT_EXTENDER))
         self.horizontalHeaderItem(self.SEQ_COL).setToolTip(self.tr(
                                                             'Mods with SEQ files can be subject to the quest bug that prevents dialogue from\n'\
                                                             'working, all that needs to be done in game is save and reload and the bug will\n'\
@@ -104,8 +124,19 @@ class list_compactable(list_parent_class):
         self.previous_exists = os.path.exists(PREVIOUSLY_COMPACTED_JSON)
         hidden_columns = [col.strip().upper() for col in self.hidden_columns.split(',')]
 
-        if self.show_cells and not _global.engine_fixes_v7_or_newer and not "CELL" in hidden_columns: self.showColumn(self.CELL_COL)
-        else: self.hideColumn(self.CELL_COL)
+        if GAME_MODE == "SSE":
+            if self.show_cells and not _global.engine_fixes_v7_or_newer and not "CELL" in hidden_columns: self.showColumn(self.CELL_COL)
+            else: self.hideColumn(self.CELL_COL)
+
+            if self.filter_worldspaces or self.cell_master or 'WRLD' in hidden_columns: self.hideColumn(self.WRLD_COL) 
+            else: self.showColumn(self.WRLD_COL)
+
+            if self.filter_weather or "WTHR" in hidden_columns: self.hideColumn(self.WTHR_COL)
+            else: self.showColumn(self.WTHR_COL)
+
+        if GAME_MODE == "FO4":
+            if self.filter_precombines or self.cell_master or 'PREVIS' in hidden_columns: self.hideColumn(self.PRECOM_COL)
+            else: self.showColumn(self.PRECOM_COL)
 
         if not self.show_dlls: self.hideColumn(self.SKSE_COL)
         else: self.showColumn(self.SKSE_COL)
@@ -115,12 +146,6 @@ class list_compactable(list_parent_class):
 
         if not self.filter_pex and not 'PEX' in hidden_columns: self.showColumn(self.PEX_COL)
         else: self.hideColumn(self.PEX_COL)
-
-        if self.filter_worldspaces or self.cell_master or 'WRLD' in hidden_columns: self.hideColumn(self.WRLD_COL) 
-        else: self.showColumn(self.WRLD_COL)
-
-        if self.filter_weather or "WTHR" in hidden_columns: self.hideColumn(self.WTHR_COL)
-        else: self.showColumn(self.WTHR_COL)
 
         if self.show_esms and not "ESM" in hidden_columns: self.showColumn(self.ESM_COL)
         else: self.hideColumn(self.ESM_COL)
@@ -135,7 +160,7 @@ class list_compactable(list_parent_class):
         self.blacklist_list: set[str] = set(self.get_data_from_file(BLACKLIST_JSON, list))
         self.cell_changed: set[str] = set(self.get_data_from_file(CELL_CHANGED_JSON, list))
 
-        if self.cell_master:
+        if GAME_MODE == "SSE" and self.cell_master:
             self.blacklist_list.update(set(["ccafdsse001-dwesanctuary.esm",
                                         "ccbgssse025-advdsgs.esm",
                                         "ccbgssse031-advcyrus.esm",
@@ -426,7 +451,7 @@ class list_compactable(list_parent_class):
                                 missing_text += "- " + mod + "\n"
                                 for dep in missing:
                                     missing_text += "   | " + dep + "\n"
-                            elif mod.lower() not in compacted_and_patched:
+                            elif mod not in compacted_and_patched:
                                 any_not_valid = True
                                 not_valid_text += "- " + mod + "\n"
                         else:

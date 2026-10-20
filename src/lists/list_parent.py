@@ -14,6 +14,7 @@ class list_parent_class(QTableWidget):
     CELL_COL = 0
     WRLD_COL = 0
     WTHR_COL = 0
+    PRECOM_COL = 0
     SKSE_COL = 0
     SEQ_COL = 0
     PEX_COL = 0
@@ -34,7 +35,7 @@ class list_parent_class(QTableWidget):
     filter_interior_cells = False
     filter_worldspaces = False
     filter_weather = False
-    filter_previs = True
+    filter_precombines = True
     cell_master = False
     hidden_columns = ""
 
