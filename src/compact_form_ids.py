@@ -292,7 +292,7 @@ class CFIDs():
                 f.seek(9)
                 f.write(b'\x02')
         except Exception as e:
-            write_error(QCoreApplication.translate("Failed to set ESL flag in ") + file)
+            write_error(QCoreApplication.translate("CFIDs", "Failed to set ESL flag in ") + file)
             write_error(e, True)           
         return self.original_files, self.winning_file_history_dict
 
