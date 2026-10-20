@@ -29,7 +29,7 @@ class cell_scanner():
         for key, value in dependency_dict.items():
             cell_scanner.dependency_dict[key.lower()] = value
         for mod in mods:
-            if mod in cell_scanner.dependency_dict:
+            if mod.lower() in cell_scanner.dependency_dict:
                 cell_scanner.check_if_dependents_modify_new_cells(mod)
 
         cell_scanner.dump_to_file(CELL_CHANGED_JSON)
