@@ -206,9 +206,11 @@ class Vortex():
             normalized_yields = set(p.lower().replace("\\", "/") for p in raw_overrides)
 
             yielded_files_per_mod[mod_id] = normalized_yields
-            
-        ordered_mod_ids.insert(0, 'archive_extracted_eslifier_scan')
+        
+        # Greater number wins conflict, insert DATA first so it is pushed to higher priority than ARCHIVE after ARCHIVE is inserted to 0
+        # so ARCHIVE is index 0 and DATA is index 1, all other mods follow and have higher priority, maybe move DATA all the way to end?
         ordered_mod_ids.insert(0, 'data_folder_file_eslifier_scan')
+        ordered_mod_ids.insert(0, 'archive_extracted_eslifier_scan')
 
         load_order_index = {mod_id: i for i, mod_id in enumerate(ordered_mod_ids)}
 

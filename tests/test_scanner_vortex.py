@@ -227,7 +227,7 @@ def test_files_without_providers_are_omitted(db):
 def test_the_callers_load_order_list_is_extended_with_the_sentinels(db):
     ids = ["A", "B"]
     Vortex.get_file_conflict_resolution(ids, {}, {})
-    assert ids == [DATA_SENTINEL, BSA_SENTINEL, "A", "B"]
+    assert ids == [BSA_SENTINEL, DATA_SENTINEL, "A", "B"]
 
 
 # ------------------------------------------------------------------------------------------ small lookups
