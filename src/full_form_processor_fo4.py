@@ -2688,11 +2688,11 @@ class form_processor():
         offsets_list = []
         script_name_size = struct.unpack("<H", form[offset:offset+2])[0]
         #script_name = form[offset+2:offset+script_name_size+2]
-        offset += script_name_size + 2
-        property_count = struct.unpack("<H", form[offset+1:offset+3])[0]
-        offset += 3
+        offset += script_name_size + 3 # 3 = 2 + 2; where 2 is script name size holder and 1 is flag byte and
+        property_count = struct.unpack("<H", form[offset:offset+2])[0]
+        offset += 2
         for _ in range(property_count):
-            property_offsets_list, offset =form_processor.property_reader(form, offset, obj_format)
+            property_offsets_list, offset = form_processor.property_reader(form, offset, obj_format)
             offsets_list.extend(property_offsets_list)
 
         return offsets_list, offset
@@ -2714,8 +2714,15 @@ class form_processor():
                 fragment_count = struct.unpack("<H", form[offset:offset+2])[0]
                 offset += 2
                 script_file_name_size = struct.unpack("<H", form[offset:offset+2])[0]
-                #script_file_name = form[offset+2:offset+script_file_name_size+2]
+                script_file_name = form[offset+2:offset+script_file_name_size+2]
                 offset += 2 + script_file_name_size
+                if script_file_name != b'': #Idk about this, I'm just going to assume it is fine or always true
+                    offset += 1
+                    property_count = struct.unpack("<H", form[offset:offset+2])[0]
+                    offset += 2
+                    for _ in range(property_count):
+                        property_offsets_list, offset = form_processor.property_reader(form, offset, obj_format)
+                        offsets_list.extend(property_offsets_list)
 
                 #Iterate through fragments
                 for _ in range(fragment_count):
@@ -2740,9 +2747,16 @@ class form_processor():
                         alias_script_offsets, offset = form_processor.script_reader(form, offset, obj_format)
                         offsets_list.extend(alias_script_offsets)
             else:
-                offset += 1
+                offset += 1 # skip bind extra data (1 byte)
+                if form[:4] == b'PERK': #only PERK doesn't have the flags byte
+                    offset += 1 # skip flags (1 byte)
                 script_offsets, offset = form_processor.script_reader(form, offset, obj_format)
                 offsets_list.extend(script_offsets)
+                # Skip reading Script Fragments and script Phase Fragments
+                # they contain no Form IDs and we don't need to move the offset
+                # as no Form IDs come after the fragments section in the VMAD.
+                # For future reference, if for some unholy reason renaming the fragment scripts becomes
+                # neccessary, each form can only have one fragment or one phase fragment.
 
         return offsets_list
     
