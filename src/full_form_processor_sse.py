@@ -2456,5 +2456,8 @@ class form_processor():
                     for _ in range(alias_script_count):
                         alias_script_offsets, offset = form_processor.script_reader(form, offset, obj_format)
                         offsets_list.extend(alias_script_offsets)
+                # Skip reading Script Fragments and script Phase Fragments
+                # they contain no Form IDs and we don't need to move the offset
+                # as no Form IDs come after the fragments section in the VMAD.
         
         return offsets_list
