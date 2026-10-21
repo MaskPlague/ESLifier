@@ -35,33 +35,52 @@ class cell_scanner():
         cell_scanner.dump_to_file(CELL_CHANGED_JSON)
 
     def check_if_dependents_modify_new_cells(mod: str):
-        cell_form_id_file = CELL_IDS_FOLDER + os.path.basename(mod) + '_CellFormIDs.txt'
-        if not os.path.exists(cell_form_id_file) or not os.path.basename(mod).lower() in cell_scanner.dependency_dict:
+        basename = os.path.basename(mod)
+        cell_form_id_file = CELL_IDS_FOLDER + basename + '_CellFormIDs.txt'
+        if not os.path.exists(cell_form_id_file) or not basename.lower() in cell_scanner.dependency_dict:
             return
         with open(cell_form_id_file, 'r', encoding='utf-8') as f:
             cell_form_ids = [line.strip() for line in f.readlines()]
         if cell_form_ids:
-            dependents = cell_scanner.dependency_dict[os.path.basename(mod).lower()]
+            dependents = cell_scanner.dependency_dict[basename.lower()]
             for dependent in dependents:
-                cell_scanner.scan_dependent(mod, dependent, cell_form_ids)
+                if cell_scanner.is_dependent_modifying(mod, dependent, cell_form_ids):
+                    cell_scanner.result_set.add(basename)
+                    return
 
-    def scan_dependent(mod: str, dependent: str, cell_form_ids: list[str]) -> None:
+    def is_dependent_modifying(mod: str, dependent: str, cell_form_ids: list[str]) -> None:
         dependent_data = b''
         try:
             with open(dependent, 'rb') as f:
                 dependent_data = f.read()
         except:
             write_error(QCoreApplication.translate("Global", "Failed to read data of ") + dependent)
-            return
+            return False
         data_list = cell_scanner.create_data_list(dependent_data)
         master_index = cell_scanner.get_master_index(mod, data_list)
         is_sse_mode = GAME_MODE == "SSE"
+        is_fo4_mode = GAME_MODE == "FO4"
         for form in data_list:
             if form[:4] == b'CELL' and form[15] == master_index and str(form[12:15].hex()) in cell_form_ids:
-                if is_sse_mode and os.path.basename(mod) not in cell_scanner.result_set:
-                    with cell_scanner.lock:
-                        cell_scanner.result_set.add(os.path.basename(mod))
-                    return
+                if is_sse_mode:
+                    return True
+                if is_fo4_mode:
+                    flag_byte = form[10]
+                    compressed_flag = (flag_byte & 0x04) != 0
+                    offset = 24
+                    form_to_check = form
+                    if compressed_flag:
+                        form_to_check = zlib.decompress(form[28:])
+                        offset = 0
+                    form_size = len(form_to_check)
+                    while offset < form_size:
+                        field, field_size, offset = cell_scanner.get_field_and_size(offset, form_to_check)
+                        if field == b'XCRI':
+                            return True
+                        elif field == b'XPRI' and is_fo4_mode:
+                            return True
+                        offset += field_size + 6
+        return False
                     
     def get_master_index(file: str, data_list: list) -> int:
         tes4 = data_list[0]
