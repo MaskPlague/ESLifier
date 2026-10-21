@@ -1,5 +1,11 @@
 import struct
-from log_stream import write_error
+try:
+    from log_stream import write_error, write_to_file
+except:
+    def write_to_file(txt):
+        print(str(f"write_to_file: {str(txt)}"))
+    def write_error(txt):
+        print(str(f"write_error: {str(txt)}"))
 
 class form_processor():
     
