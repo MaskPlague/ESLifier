@@ -1066,7 +1066,7 @@ class form_processor():
     
     def save_grup_data(i, form): 
         grup_type = struct.unpack("<I", form[12:16])[0]
-        if grup_type in (1, 6, 7, 8, 9):
+        if grup_type in (1, 6, 7, 8, 9, 10):
             offsets_list = [8]
         else:
             offsets_list = []
