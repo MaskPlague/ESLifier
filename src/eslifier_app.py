@@ -255,7 +255,7 @@ class main_window(QMainWindow):
         write_to_file(f"Game Mode is {GAME_MODE}")
         self.setWindowIcon(QIcon(":/images/ESLifier.png"))
         self.setFocus()
-        self.rebuild_lists = False
+        self.rebuild_lists = True
         self.settings_widget = settings(COLOR_MODE)
         self.settings_widget.settings_updated_signal.connect(self.update_settings)
         def set_rebuild_lists():
