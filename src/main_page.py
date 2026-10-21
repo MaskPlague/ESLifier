@@ -18,7 +18,7 @@ from compact_form_ids import CFIDs
 from scanners.cell_changed_scanner import cell_scanner
 from create_cell_master import create_new_cell_plugin
 from patch_new import patch_new
-from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ESM_NAME, MO2_GAME_NAME, SHORT_GAME_NAME,
+from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_MODE, GAME_ESM_NAME, MO2_GAME_NAME, SHORT_GAME_NAME,
                          CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
                          EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
                          MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
@@ -317,6 +317,10 @@ class main(QWidget):
         self.list_eslify.filter_worldspaces =       _global._settings.get('filter_worldspaces', True)
         self.list_eslify.cell_master =              _global.generate_cell_master
         self.list_eslify.hidden_columns =           _global._settings.get('left_hidden_columns', '')
+
+        #FO4
+        self.list_compact.filter_precombines =      _global._settings.get('filter_previs_precombine', True)
+        self.list_eslify.filter_precombines =       _global._settings.get('filter_previs_precombine', True)
 
     def set_false_redoing_output(self):
         self.redoing_output = False
@@ -1481,7 +1485,10 @@ class ScannerWorker(QObject):
             self.finished_signal.emit({}, {}, {})
             return
         flag_dict = {p: set(f) for p, f in flag_dict.items()}
-        write_normal(self.tr('Checking if New CELLs are Changed'))
+        if GAME_MODE == "SSE":
+            write_normal(self.tr('Checking if New CELLs are Changed'))
+        elif GAME_MODE == "FO4":
+            write_normal(self.tr('Checking if New CELLs have PreVis/PreCombined'))
         plugins_with_cells = [plugin for plugin, flags in flag_dict.items() if 'new_cell' in flags]
         cell_scanner.scan(plugins_with_cells)
         eslify_flag_dict = {p: f for p, f in flag_dict.items() if 'esl_flaggable' in f}
