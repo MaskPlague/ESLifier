@@ -427,8 +427,8 @@ class TestCompactList:
         assert t.item(0, t.ESM_COL).text() == "ESM"
         assert t.item(0, t.SEQ_COL).text() == "SEQ"
         assert t.item(0, t.PEX_COL).text() == "PEX" and "s.pex" in t.item(0, t.PEX_COL).toolTip()
-        assert t.item(0, t.SKSE_COL).text() == "!!SKSE DLL!!"
-        assert "x.dll" in t.item(0, t.SKSE_COL).toolTip() and "y.dll" in t.item(0, t.SKSE_COL).toolTip()
+        assert t.item(0, t.DLL_COL).text() == "!!SKSE DLL!!"
+        assert "x.dll" in t.item(0, t.DLL_COL).toolTip() and "y.dll" in t.item(0, t.DLL_COL).toolTip()
         assert t.item(0, t.HIDER_COL) is None and not t.isRowHidden(0)
 
     def test_plugin_without_flags_has_no_flag_items(self, lists, workdir):
@@ -502,7 +502,7 @@ class TestCompactList:
     def test_column_visibility_follows_the_settings(self, lists, workdir):
         self.data(workdir, [])
         t = compact(lists, {}, show_dlls=False, filter_seq=True, show_esms=False, hidden_columns="pex, dependents")
-        assert t.isColumnHidden(t.SKSE_COL) and t.isColumnHidden(t.SEQ_COL) and t.isColumnHidden(t.ESM_COL)
+        assert t.isColumnHidden(t.DLL_COL) and t.isColumnHidden(t.SEQ_COL) and t.isColumnHidden(t.ESM_COL)
         assert t.isColumnHidden(t.PEX_COL) and t.isColumnHidden(t.DEP_COL) and t.isColumnHidden(t.DEP_DISP_COL)
         assert not t.isColumnHidden(t.WTHR_COL)
         t = compact(lists, {}, filter_weather=True, filter_worldspaces=True)
