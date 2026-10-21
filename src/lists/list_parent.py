@@ -3,10 +3,11 @@ import subprocess
 import json
 
 from PyQt6.QtCore import Qt, QItemSelection, pyqtSignal, QVariantAnimation, QTimer
-from PyQt6.QtWidgets import (QTableWidget, QTableWidgetItem, QMessageBox, QFileDialog, QLineEdit)
+from PyQt6.QtWidgets import (QAbstractItemView, QTableWidget, QTableWidgetItem, QMessageBox, QFileDialog, QLineEdit)
 from PyQt6.QtGui import QIcon, QColor, QPalette
 from blacklist import blacklist
 from log_stream import write_error
+from data_holder import GAME_MODE
 
 class list_parent_class(QTableWidget):
     list_created_signal = pyqtSignal()
@@ -15,7 +16,7 @@ class list_parent_class(QTableWidget):
     WRLD_COL = 0
     WTHR_COL = 0
     PRECOM_COL = 0
-    SKSE_COL = 0
+    DLL_COL = 0
     SEQ_COL = 0
     PEX_COL = 0
     ESM_COL = 0
@@ -23,6 +24,9 @@ class list_parent_class(QTableWidget):
     DEP_DISP_COL = 0
     HIDER_COL = 0
     COL_COUNT = 0
+
+    is_sse_mode = GAME_MODE == "SSE"
+    is_fo4_mode = GAME_MODE == "FO4"
 
     flag_dict = {}
 
@@ -100,6 +104,18 @@ class list_parent_class(QTableWidget):
         self.setStyleSheet(self.original_stylesheet)
         self.init_filter_flash()
         self.blacklist = blacklist()
+
+    def finish_init(self):
+        self.setColumnHidden(self.HIDER_COL, True)
+        self.horizontalHeader().sortIndicatorChanged.connect(self.hide_rows)
+        self.verticalHeader().setHidden(True)
+        self.setShowGrid(False)
+        self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.setAutoScroll(False)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.horizontalHeader().setStretchLastSection(True)
+        self.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignLeft)
 
     def create_list():
         pass

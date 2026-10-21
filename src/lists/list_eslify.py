@@ -18,12 +18,12 @@ class list_eslable(list_parent_class):
     def __init__(self):
         super().__init__()
         c = itertools.count()
-        # Items that need to be set in list_base
+        # Items that need to be set in list_parent
         self.MOD_COL = next(c)
-        if GAME_MODE == "SSE":
+        if self.is_sse_mode:
             self.CELL_COL = next(c)
             self.WRLD_COL = next(c)
-        if GAME_MODE == "FO4":
+        if self.is_fo4_mode:
             self.PRECOM_COL = next(c)
         self.SEQ_COL = next(c)
         self.PEX_COL = next(c)
@@ -39,13 +39,13 @@ class list_eslable(list_parent_class):
         self.check_previous_text = self.tr("Import ESLify List Selection")
 
         self.setColumnCount(self.COL_COUNT)
-        if GAME_MODE == "SSE":
+        if self.is_sse_mode:
             self.setHorizontalHeaderLabels([self.tr('*   Mod'), self.tr('CELL Records'), self.tr('WRLD Records'), 'SEQ', 'PEX', 'ESM', '', 'Hider'])
-        elif GAME_MODE == "FO4":
+        elif self.is_fo4_mode:
             self.setHorizontalHeaderLabels([self.tr('*   Mod'), self.tr('PreVis/PreCombine'), 'SEQ', 'PEX', 'ESM', '', 'Hider'])
 
         self.horizontalHeaderItem(self.MOD_COL).setToolTip(self.tr('This is the plugin name. Select which plugins you wish to flag as light.'))
-        if GAME_MODE == "SSE":
+        if self.is_sse_mode:
             self.horizontalHeaderItem(self.CELL_COL).setToolTip(self.tr(
                                                             'This is the CELL Record Flag. It can be completely ignored for users\n'\
                                                             'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'\
@@ -65,12 +65,12 @@ class list_eslable(list_parent_class):
                                                             'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'\
                                                             'Otherwise, if an plugin is flagged ESL\n'\
                                                             'then the new worldspace may have landscape issues (no ground).'))
-        if GAME_MODE == "FO4":
+        if self.is_fo4_mode:
             self.horizontalHeaderItem(self.PRECOM_COL).setToolTip(self.tr(
-                                                            'This is the new CELL + Precombined/PreVis flag. Cells originating in\n'\
+                                                            'This is the new CELL + PreVis/PreCombined flag. Cells originating in\n'\
                                                             'an ESL plugin cannot use the PreVis/Precombine system. Mods with this flag\n'\
                                                             'have both a new CELL and there exists a mod in your modlist that references\n'\
-                                                            'the new CELL and uses the Precombined/PreVis system on that CELL.\n'
+                                                            'the new CELL and uses the PreVis/PreCombine system on that CELL.\n'
                                                             'I will probably see if enabling and adapting Cell Master Generation\n'\
                                                             'for FO4 can circumvent this issue. For now it will be disabled.'))
         self.horizontalHeaderItem(self.SEQ_COL).setToolTip(self.tr(
@@ -84,16 +84,8 @@ class list_eslable(list_parent_class):
                                                             'as said function only works for non-ESL plugins. This flag indicates that the plugin\n'\
                                                             'has one or more PEX files that call the function on the relevant plugin (see flag tooltip).'))
         self.horizontalHeaderItem(self.ESM_COL).setToolTip(self.tr('This is the ESM flag.'))
-        self.setColumnHidden(self.HIDER_COL, True)
-        self.horizontalHeader().sortIndicatorChanged.connect(self.hide_rows)
-        self.verticalHeader().setHidden(True)
-        self.setShowGrid(False)
-        self.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.setAutoScroll(False)
-        self.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-        self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-        self.horizontalHeader().setStretchLastSection(True)
-        self.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignLeft)
+
+        self.finish_init()
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.contextMenu)
         
@@ -106,14 +98,14 @@ class list_eslable(list_parent_class):
         self.previous_exists = os.path.exists(PREVIOUSLY_ESL_FLAGGED_JSON)
         hidden_columns = [col.strip().upper() for col in self.hidden_columns.split(',')]
 
-        if GAME_MODE == "SSE":
+        if self.is_sse_mode:
             if self.show_cells and not _global.engine_fixes_v7_or_newer and not 'CELL' in hidden_columns: self.showColumn(self.CELL_COL)
             else: self.hideColumn(self.CELL_COL)
 
             if self.filter_worldspaces or self.cell_master or 'WRLD' in hidden_columns: self.hideColumn(self.WRLD_COL)
             else: self.showColumn(self.WRLD_COL)
 
-        if GAME_MODE == "FO4":
+        if self.is_fo4_mode:
             if self.filter_precombines or self.cell_master or 'PREVIS' in hidden_columns: self.hideColumn(self.PRECOM_COL)
             else: self.showColumn(self.PRECOM_COL)
 
@@ -131,7 +123,7 @@ class list_eslable(list_parent_class):
         self.blacklist_list:set = set(self.get_data_from_file(BLACKLIST_JSON, list))
         self.cell_changed:set = set(self.get_data_from_file(CELL_CHANGED_JSON, list))
 
-        if self.cell_master:
+        if self.is_sse_mode and self.cell_master:
             self.blacklist_list.update(set(["ccafdsse001-dwesanctuary.esm",
                                         "ccbgssse025-advdsgs.esm",
                                         "ccbgssse031-advcyrus.esm",
@@ -159,50 +151,58 @@ class list_eslable(list_parent_class):
             self.setItem(i, self.MOD_COL, item)
             self.setRowHidden(i, False)
             hide_row = False
-            if 'new_cell' in flags and not _global.engine_fixes_v7_or_newer:
-                item_cell_flag = QTableWidgetItem(self.tr('New CELL'))
-                if not self.cell_master:
-                    item_cell_flag.setToolTip(self.tr(
-                                            'This mod has a new CELL record and no mods currently modify it.\n'\
-                                            'It is currently safe to ESL flag it.'))
-                else:
-                    item_cell_flag.setToolTip(self.tr('This mod has a new CELL record. It is currently safe to ESL flag it'))
-                if not self.show_cells:
-                    hide_row = True
-                if basename in self.cell_changed and not self.cell_master:
-                    item_cell_flag.setText(self.tr('!!New CELL Changed!!'))
-                    item_cell_flag.setToolTip(self.tr(
-                                                'This mod is an ESM with a new CELL record that is modified by\n'\
-                                                'a dependent plugin. It is NOT recommended to ESL flag it as doing so\n'\
-                                                'will break temporary references in the new CELL.'))
-                    if self.filter_changed_cells:
+            if self.is_sse_mode:
+                if 'new_cell' in flags and not _global.engine_fixes_v7_or_newer:
+                    item_cell_flag = QTableWidgetItem(self.tr('New CELL'))
+                    if not self.cell_master:
+                        item_cell_flag.setToolTip(self.tr(
+                                                'This mod has a new CELL record and no mods currently modify it.\n'\
+                                                'It is currently safe to ESL flag it.'))
+                    else:
+                        item_cell_flag.setToolTip(self.tr('This mod has a new CELL record. It is currently safe to ESL flag it'))
+                    if not self.show_cells:
                         hide_row = True
-                elif self.cell_master and 'maxed_masters' in flags and basename in self.cell_changed:
-                    item_cell_flag.setText(self.tr('!!Maxed Masters!!'))
-                    item_cell_flag.setToolTip(self.tr(
-                                                'This mod is an ESM with a new CELL record that is modified by\n'\
-                                                'a dependent plugin. It or one of its dependents has the max of\n'\
-                                                '254 masters and cannot have the ESLifier_Cell_Master.esm plugin\n'\
-                                                'added as a master and thus the ESM + ESL cell bug workaround cannot\n'\
-                                                'be applied. It is NOT recommended to ESL flag it as doing so may\n'\
-                                                'break temporary references in its new CELL(s).'))
-                    self.showColumn(self.CELL_COL)
-                elif 'new_interior_cell' in flags:
-                    item_cell_flag.setText(self.tr('!New Interior CELL!'))
-                    item_cell_flag.setToolTip(self.tr(
-                                                'This mod has at least one new CELL record that is an interior cell.\n'\
-                                                'ESL interior cells do not reload gameplay changed references properly\n'\
-                                                'on a save game load unless the game itself has restarted.'))
-                    if self.filter_interior_cells:
+                    if basename in self.cell_changed and not self.cell_master:
+                        item_cell_flag.setText(self.tr('!!New CELL Changed!!'))
+                        item_cell_flag.setToolTip(self.tr(
+                                                    'This mod is an ESM with a new CELL record that is modified by\n'\
+                                                    'a dependent plugin. It is NOT recommended to ESL flag it as doing so\n'\
+                                                    'will break temporary references in the new CELL.'))
+                        if self.filter_changed_cells:
+                            hide_row = True
+                    elif self.cell_master and 'maxed_masters' in flags and basename in self.cell_changed:
+                        item_cell_flag.setText(self.tr('!!Maxed Masters!!'))
+                        item_cell_flag.setToolTip(self.tr(
+                                                    'This mod is an ESM with a new CELL record that is modified by\n'\
+                                                    'a dependent plugin. It or one of its dependents has the max of\n'\
+                                                    '254 masters and cannot have the ESLifier_Cell_Master.esm plugin\n'\
+                                                    'added as a master and thus the ESM + ESL cell bug workaround cannot\n'\
+                                                    'be applied. It is NOT recommended to ESL flag it as doing so may\n'\
+                                                    'break temporary references in its new CELL(s).'))
+                        self.showColumn(self.CELL_COL)
+                    elif 'new_interior_cell' in flags:
+                        item_cell_flag.setText(self.tr('!New Interior CELL!'))
+                        item_cell_flag.setToolTip(self.tr(
+                                                    'This mod has at least one new CELL record that is an interior cell.\n'\
+                                                    'ESL interior cells do not reload gameplay changed references properly\n'\
+                                                    'on a save game load unless the game itself has restarted.'))
+                        if self.filter_interior_cells:
+                            hide_row = True
+                    item_cell_flag.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                    self.setItem(i, self.CELL_COL, item_cell_flag)
+                if 'new_wrld' in flags and not self.cell_master:
+                    item_wrld_flag = QTableWidgetItem(self.tr('!!New WRLD!!'))
+                    item_wrld_flag.setToolTip(self.tr('This mod has a new WRLD (worldspace) record which may lose landscape (the ground) when ESL flagged.'))
+                    if self.filter_worldspaces:
                         hide_row = True
-                item_cell_flag.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                self.setItem(i, self.CELL_COL, item_cell_flag)
-            if 'new_wrld' in flags and not self.cell_master:
-                item_wrld_flag = QTableWidgetItem(self.tr('!!New WRLD!!'))
-                item_wrld_flag.setToolTip(self.tr('This mod has a new WRLD (worldspace) record which may lose landscape (the ground) when ESL flagged.'))
-                if self.filter_worldspaces:
+                    self.setItem(i, self.WRLD_COL, item_wrld_flag)
+            if self.is_fo4_mode and ('has_previs_precombines' in flags or basename in self.cell_changed):
+                item_precombine_flag = QTableWidgetItem(self.tr("PreVis/PreCombine"))
+                item_precombine_flag.setToolTip(self.tr('This mod has a new cell and either itself or another mod uses the\n'\
+                                                        'precombine system with it, which will break if this mod is ESL flagged.'))
+                if self.filter_precombines:
                     hide_row = True
-                self.setItem(i, self.WRLD_COL, item_wrld_flag)
+                self.setItem(i, self.PRECOM_COL, item_precombine_flag)
             if basename_lower in _global.mods_with_seq:
                 item_seq_flag = QTableWidgetItem('SEQ')
                 item_seq_flag.setToolTip(self.tr('This mod has an SEQ file which may cause dialogue for it to not work until you save and reload in game.'))
