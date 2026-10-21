@@ -2795,24 +2795,4 @@ class form_processor():
             offset += 12
         return offsets_list
 
-if __name__ == "__main__":
-    def create_data_list(data: bytes) -> list:
-        data_list = []
-        offset = 0
-        while offset < len(data):
-            if data[offset:offset+4] == b'GRUP':
-                data_list.append(data[offset:offset+24])
-                offset += 24
-            else:
-                form_length = struct.unpack("<I", data[offset+4:offset+8])[0]
-                offset_end = offset + 24 + form_length
-                data_list.append(data[offset:offset_end])
-                offset = offset_end
-        return data_list   
-    import os
-    file = os.path.normpath(r"C:\Users\s34ke\AppData\Local\ModOrganizer\Fallout 4\overwrite\browse.esl")
-    with open(file, 'rb') as f:
-        data = f.read()
 
-    data_list = create_data_list(data)
-    form_processor.save_all_form_data(data_list)
