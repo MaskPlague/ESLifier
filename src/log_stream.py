@@ -91,6 +91,7 @@ class log_stream(QMainWindow):
         super().__init__(parent)
         global _ls
         self.ESLIFIER_DATA_FOLDER = ESLIFIER_DATA_FOLDER
+        self.ESLIFIER_LOG_FILE = ESLIFIER_LOG_FILE
         _ls = log_stream()
         self.setWindowTitle('Log Stream')
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowCloseButtonHint & ~Qt.WindowType.Dialog)
@@ -324,6 +325,19 @@ class log_stream(QMainWindow):
         eligibility_warning.show()
         self.ineligible.clear()
 
+    def open_log(self):
+        log_file = os.path.join(os.getcwd(), self.ESLIFIER_LOG_FILE)
+        if os.path.exists(log_file):
+            try:
+                if os.name == 'nt':
+                    os.startfile(log_file)
+                elif os.name == 'posix':
+                    subprocess.Popen(['xdg-open', log_file])
+                else:
+                    subprocess.Popen(['open', log_file])
+            except Exception as e:
+                write_error(self.tr("Error opening file:: ") + str(e))
+
     def exception_hook(self, exc_type, exc_value, exc_traceback):
         self.crash = True
         self.running = False
@@ -339,10 +353,11 @@ class log_stream(QMainWindow):
         self.write_normal(''.join(trace), False)
         self.write_normal(f"Unhandled exception: {exc_value}", False)
         self.write_normal('',False)
+        trace_extended = traceback.format_tb(exc_traceback, 10)
+        self.write_to_file('exception_hook -> Extended Traceback for debugging:\n' + ''.join(trace_extended))
+        self.write_to_file(f"Unhandled exception: {exc_value}")
         try:
-            trace_extended = traceback.format_tb(exc_traceback, 10)
-            self.write_to_file('exception_hook -> Extended Traceback for debugging:\n' + ''.join(trace_extended))
-            self.write_to_file(f"Unhandled exception: {exc_value}")
+            self.open_log()
         except:
             pass
 
@@ -361,10 +376,11 @@ class log_stream(QMainWindow):
         self.write_normal(''.join(trace), False)
         self.write_normal(f"Unhandled exception: {args.exc_value}", False)
         self.write_normal('', False)
+        trace_extended = traceback.format_tb(args.exc_traceback, 10)
+        self.write_to_file('threading_exception_hook -> Extended Traceback for debugging:\n' + ''.join(trace_extended))
+        self.write_to_file(f"Unhandled exception: {args.exc_value}")
         try:
-            trace_extended = traceback.format_tb(args.exc_traceback, 10)
-            self.write_to_file('threading_exception_hook -> Extended Traceback for debugging:\n' + ''.join(trace_extended))
-            self.write_to_file(f"Unhandled exception: {args.exc_value}")
+            self.open_log()
         except:
             pass
 
