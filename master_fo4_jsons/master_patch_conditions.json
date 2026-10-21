@@ -3,11 +3,6 @@
     "conditions": [
         {
             "extension": "json",
-            "contains": "Plugins/FSM/",
-            "patcher": "json_jcontainer"
-        },
-        {
-            "extension": "json",
             "contains": "SKSE/XEMIUtil/",
             "patcher": "json_generic_formid_sep_plugin",
             "separator": ":"
@@ -44,11 +39,6 @@
             "patcher": "json_generic_key_fid_sep_plugin",
             "int_type": true,
             "separator": "___"
-        },
-        {
-            "extension": "json",
-            "contains": "/Plugins/MARAs/",
-            "patcher": "json_jcontainer"
         },
         {
             "extension": "json",
@@ -92,11 +82,6 @@
             "contains": "SKSE/Acheron/",
             "patcher": "ini_formid_sep_plugin",
             "separator": "|"
-        },
-        {
-            "extension": "json",
-            "contains": "SKSE/Plugins/LazyFollowers/",
-            "patcher": "json_jcontainer"
         },
         {
             "extension": "json",
