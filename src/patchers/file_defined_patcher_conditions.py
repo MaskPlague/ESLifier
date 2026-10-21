@@ -58,18 +58,21 @@ class user_and_master_conditions_class():
             "ini_formid_sep_plugin": patchers.ini_formid_sep_plugin_patcher,
             "ini_plugin_sep_formid": patchers.ini_plugin_sep_formid_patcher,
             "ini_eq_plugin_sep_formid": patchers.ini_eq_plugin_sep_formid_patcher,
-            "ini_experience_and_knotwork": patchers.ini_experience_and_knotwork_patcher,
-            "ini_payload_interpreter_and_dtrys_key_utils": patchers.ini_payload_interpreter_and_dtrys_key_utils_patcher,
             "json_generic_plugin_sep_formid": patchers.json_generic_plugin_sep_formid_patcher,
             "json_generic_formid_sep_plugin": patchers.json_generic_formid_sep_plugin_patcher,
             "json_generic_key_fid_sep_plugin": patchers.json_generic_key_fid_sep_plugin_patcher,
             "json_generic_key_plugin_sep_fid": patchers.json_generic_key_plugin_sep_fid_patcher,
             "json_generic_recursive": patchers.json_generic_recursive_depth_patcher,
-            "json_storage_util_data": patchers.json_storage_util_data_patcher,
-            "json_jcontainer": patchers.json_jcontainer_patcher,
-            "toml_loki_and_tdm": patchers.toml_loki_and_tdm_patcher,
             -1: None, # No patching needed, ignore file
         }
+        if GAME_MODE == "SSE":
+            patcher_methods.update({
+                "ini_experience_and_knotwork": patchers.ini_experience_and_knotwork_patcher,
+                "ini_payload_interpreter_and_dtrys_key_utils": patchers.ini_payload_interpreter_and_dtrys_key_utils_patcher,
+                "json_storage_util_data": patchers.json_storage_util_data_patcher,
+                "json_jcontainer": patchers.json_jcontainer_patcher,
+                "toml_loki_and_tdm": patchers.toml_loki_and_tdm_patcher
+            })
 
         for conditions in conditions_data:
             try:
