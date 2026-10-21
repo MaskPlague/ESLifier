@@ -41,7 +41,7 @@ class form_processor():
             field = form[offset:offset+4]
             return field, field_size, offset
         
-    def patch_form_data(data_list, forms, form_id_replacements, master_byte, form_ids, update_masters, updated_master_index):
+    def patch_form_data(data_list, forms, form_id_replacements:dict, master_byte, form_ids, update_masters, updated_master_index):
         if not update_masters:
             for i, form, offsets_list in forms:
                 for offset in offsets_list:
