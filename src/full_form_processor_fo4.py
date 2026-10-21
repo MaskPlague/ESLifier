@@ -2754,7 +2754,7 @@ class form_processor():
                         offsets_list.extend(alias_script_offsets)
             else:
                 offset += 1 # skip bind extra data (1 byte)
-                if form[:4] == b'PERK': #only PERK doesn't have the flags byte
+                if form[:4] != b'PERK': #only PERK doesn't have the flags byte
                     offset += 1 # skip flags (1 byte)
                 script_offsets, offset = form_processor.script_reader(form, offset, obj_format)
                 offsets_list.extend(script_offsets)
