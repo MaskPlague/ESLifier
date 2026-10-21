@@ -106,7 +106,7 @@ class qualification_checker():
                 ret_val: tuple = qualification_checker.file_reader(plugin, update_header, is_esm)
                 esl_allowed = ret_val[0]
                 if esl_allowed:
-                    need_compacting, new_cell, has_precombines = ret_val[1:]
+                    need_compacting, new_cell, has_previs_precombines = ret_val[1:]
                     flag_dict[plugin] = []
                     if need_compacting:
                         flag_dict[plugin].append('need_compacting')
@@ -123,8 +123,8 @@ class qualification_checker():
                                 if dependent in qualification_checker.maxed_masters:
                                     flag_dict[plugin].append('maxed_masters')
                                     break
-                    if has_precombines:
-                        flag_dict[plugin].append('has_precombines')
+                    if has_previs_precombines:
+                        flag_dict[plugin].append('has_previs_precombines')
                 else:
                     flag_dict[plugin] = [ret_val[-1]]
                         
@@ -196,7 +196,7 @@ class qualification_checker():
         need_compacting = False
         new_wrld = False
         new_wthr = False
-        precombines = False
+        previs_precombines = False
         #edids = []
         cell_form_ids = []
         is_sse_mode = GAME_MODE == "SSE"
@@ -212,7 +212,7 @@ class qualification_checker():
                 if record_type == b'CELL':
                     new_cell = True
                     if ((not interior_cell_flag and is_sse_mode)
-                         or (not precombines and is_fo4_mode)):
+                         or (not previs_precombines and is_fo4_mode)):
                         flag_byte = form[10]
                         compressed_flag = (flag_byte & 0x04) != 0
                         offset = 24
@@ -227,7 +227,9 @@ class qualification_checker():
                                 flags = form_to_check[offset+6]
                                 interior_cell_flag = (flags & 0x01) != 0
                             elif field == b'XCRI' and is_fo4_mode:
-                                precombines = True
+                                previs_precombines = True
+                            elif field == b'XPRI' and is_fo4_mode:
+                                previs_precombines = True
                             offset += field_size + 6
 
                 if record_type == b'WRLD':
@@ -258,7 +260,7 @@ class qualification_checker():
         #        for edid in edids:
         #            f.write(edid + '\n')
         cell_form_ids.sort()
-        if cell_form_ids != [] and is_esm:
+        if cell_form_ids != [] and ((is_sse_mode and is_esm) or is_fo4_mode):
             cell_form_id_file = CELL_IDS_FOLDER + basename + '_CellFormIDs.txt'
             with open(cell_form_id_file, 'w', encoding='utf-8') as f:
                 for form_id in cell_form_ids:
@@ -266,7 +268,7 @@ class qualification_checker():
         if is_sse_mode:
             return (True, need_compacting, new_cell, interior_cell_flag, new_wrld, new_wthr)
         elif is_fo4_mode:
-            return (True, need_compacting, new_cell, precombines)
+            return (True, need_compacting, new_cell, previs_precombines)
         else:
             raise ValueError(f"Invalid GAME_MODE: {GAME_MODE}")
 
