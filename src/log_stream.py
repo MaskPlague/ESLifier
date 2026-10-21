@@ -164,6 +164,7 @@ class log_stream(QMainWindow):
         self.raise_()
         #self.hide()
         self.percentage = 0
+        self.timer_clear.stop()
         return super().show()
     
     def hide(self):
