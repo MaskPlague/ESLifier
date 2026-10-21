@@ -2612,11 +2612,20 @@ class form_processor():
         if form[offset:offset+4] == b'\x02\x00\x00\x00':    # Run On: Reference
             offsets_list.append(offset+ 4)                  # Reference FID
         return offsets_list
+
+    def property_struct_reader(form, offset, obj_format):
+        offsets_list = []
+        member_count = struct.unpack("<I", form[offset:offset+4])[0]
+        offset += 4
+        for _ in range(member_count):
+            inner_offset_list, offset = form_processor.property_reader(form, offset, obj_format)
+            offsets_list.extend(inner_offset_list)
+        return offsets_list, offset
     
     def property_reader(form, offset, obj_format):
         offsets_list = []
         property_name_size = struct.unpack("<H", form[offset:offset+2])[0]
-        #property_name = form[offset+2: offset +property_name_size + 2]
+        #property_name = form[offset+2:offset+property_name_size+2]
         offset += property_name_size + 2
         property_type = int.from_bytes(form[offset:offset+1][::-1])
         offset += 2
@@ -2635,10 +2644,10 @@ class form_processor():
             offset += 4
         elif property_type == 5:
             offset += 1
-        elif property_type == 6:
+        elif property_type == 6: #Null, intentionally left blank
             ...
-        elif property_type == 7:
-            inner_offset_list, offset = form_processor.script_reader(form, offset, obj_format)
+        elif property_type == 7: #struct
+            inner_offset_list, offset = form_processor.property_struct_reader(form, offset, obj_format)
             offsets_list.extend(inner_offset_list)
         elif property_type == 11:
             item_count = struct.unpack("<I", form[offset:offset+4])[0]
@@ -2672,15 +2681,12 @@ class form_processor():
         elif property_type == 16:
             #Called array of variable but only holds a single element count int32
             offset += 4
-        elif property_type == 17:
+        elif property_type == 17: #array of struct
             struct_count = struct.unpack("<I", form[offset:offset+4])[0]
             offset += 4
             for _ in range(struct_count):
-                item_count = struct.unpack("<I", form[offset:offset+4])[0]
-                offset += 4
-                for __ in range(item_count):
-                    inner_offset_list, offset = form_processor.property_reader(form, offset, obj_format)
-                    offsets_list.extend(inner_offset_list)
+                inner_offset_list, offset = form_processor.property_struct_reader(form, offset, obj_format)
+                offsets_list.extend(inner_offset_list)
 
         return offsets_list, offset
 
