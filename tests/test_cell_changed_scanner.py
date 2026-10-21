@@ -83,44 +83,39 @@ def test_get_master_index_with_no_masters():
     assert cell_scanner.get_master_index("A.esm", data_list) is None
 
 
-# ------------------------------------------------------------------------------ scan_dependent
-def test_scan_dependent_flags_mod_when_dependent_overrides_one_of_its_new_cells(scanner):
+# ------------------------------------------------------------------------------ is_dependent_modifying
+# It only answers the question for one dependent; check_if_dependents_modify_new_cells records the mod.
+def test_dependent_overriding_one_of_the_new_cells_is_modifying(scanner):
     dep = write(scanner / "dep.esp", dependent_plugin(["Mod.esp"], 0x800, master_index=0))
-    cell_scanner.is_dependent_modifying("C:\\mods\\Mod\\Mod.esp", dep, [stored_hex(0x800)])
-    assert cell_scanner.result_set == set(["Mod.esp"])
+    assert cell_scanner.is_dependent_modifying("C:\\mods\\Mod\\Mod.esp", dep, [stored_hex(0x800)]) is True
+    assert cell_scanner.result_set == set()          # recording the result is the caller's job
 
 
-def test_scan_dependent_ignores_cells_not_in_the_new_cell_list(scanner):
+def test_dependent_ignores_cells_not_in_the_new_cell_list(scanner):
     dep = write(scanner / "dep.esp", dependent_plugin(["Mod.esp"], 0x801, master_index=0))
-    cell_scanner.is_dependent_modifying("Mod.esp", dep, [stored_hex(0x800)])
-    assert cell_scanner.result_set == set()
+    assert cell_scanner.is_dependent_modifying("Mod.esp", dep, [stored_hex(0x800)]) is False
 
 
-def test_scan_dependent_ignores_cells_owned_by_a_different_master(scanner):
+def test_dependent_ignores_cells_owned_by_a_different_master(scanner):
     # Same object id, but it belongs to master #1 (Other.esp), not Mod.esp (master #0).
     dep = write(scanner / "dep.esp", dependent_plugin(["Mod.esp", "Other.esp"], 0x800, master_index=1))
-    cell_scanner.is_dependent_modifying("Mod.esp", dep, [stored_hex(0x800)])
-    assert cell_scanner.result_set == set()
+    assert cell_scanner.is_dependent_modifying("Mod.esp", dep, [stored_hex(0x800)]) is False
 
 
-def test_scan_dependent_uses_the_masters_actual_index(scanner):
+def test_dependent_uses_the_masters_actual_index(scanner):
     dep = write(scanner / "dep.esp", dependent_plugin(["Base.esm", "Mod.esp"], 0x800, master_index=1))
-    cell_scanner.is_dependent_modifying("Mod.esp", dep, [stored_hex(0x800)])
-    assert cell_scanner.result_set == set(["Mod.esp"])
+    assert cell_scanner.is_dependent_modifying("Mod.esp", dep, [stored_hex(0x800)]) is True
 
 
-def test_scan_dependent_does_not_add_the_same_mod_twice(scanner):
-    dep = write(scanner / "dep.esp", dependent_plugin(["Mod.esp"], 0x800, master_index=0))
-    cell_scanner.is_dependent_modifying("Mod.esp", dep, [stored_hex(0x800)])
-    cell_scanner.is_dependent_modifying("Mod.esp", dep, [stored_hex(0x800)])
-    assert cell_scanner.result_set == set(["Mod.esp"])
-
-
-def test_scan_dependent_non_cell_records_are_ignored(scanner):
+def test_dependent_non_cell_records_are_ignored(scanner):
     body = grup(b"KYWD", record(b"KYWD", fid(0, 0x800)))
     dep = write(scanner / "dep.esp", plugin(["Mod.esp"], body))
-    cell_scanner.is_dependent_modifying("Mod.esp", dep, [stored_hex(0x800)])
-    assert cell_scanner.result_set == set()
+    assert cell_scanner.is_dependent_modifying("Mod.esp", dep, [stored_hex(0x800)]) is False
+
+
+def test_dependent_that_does_not_list_the_mod_as_a_master_is_not_modifying(scanner):
+    dep = write(scanner / "dep.esp", dependent_plugin(["Other.esp"], 0x800, master_index=0))
+    assert cell_scanner.is_dependent_modifying("Mod.esp", dep, [stored_hex(0x800)]) is False
 
 
 # ------------------------------------------------------------------------------ check_if_dependents_modify_new_cells
@@ -244,6 +239,5 @@ def test_dump_to_file_reports_error_instead_of_raising(tmp_path, log):
 
 
 def test_unreadable_dependent_is_reported_and_skipped(scanner, log):
-    cell_scanner.is_dependent_modifying("Mod.esp", str(scanner / "does_not_exist.esp"), [stored_hex(0x800)])
+    assert cell_scanner.is_dependent_modifying("Mod.esp", str(scanner / "does_not_exist.esp"), [stored_hex(0x800)]) is False
     assert any("Failed to read data of" in e for e in log.errors)
-    assert cell_scanner.result_set == set()
