@@ -8,7 +8,7 @@ import struct
 import hashlib
 import json
 import time
-
+import charset_normalizer
 #from intervaltree import IntervalTree
 
 from create_cell_master import create_new_cell_plugin
@@ -552,31 +552,45 @@ class CFIDs():
         for thread in threads:
             thread.join()
 
+    def get_encodings(self, new_file):
+        yield 'utf-8'
+        yield 'cp1252'
+        write_to_file(f"Attempting to detect file encoding for {new_file}")
+        with open(new_file, 'rb') as f:
+            raw_data = f.read()
+        match = charset_normalizer.from_bytes(raw_data).best()
+        if match:
+            write_to_file(f"Patching using detected encoding {match.encoding}, for {new_file}")
+            yield match.encoding
+        else:
+            write_to_file(f"Failed to detect encoding for {new_file}")
+
     #Patches each file type in a different way as each has Form IDs present in a different format
     def patch_files(self, master: str, files: list[str]):
         basename_cased = os.path.basename(master)
         basename = basename_cased.lower()
-        local_compacted_and_patched_list = set()
+        local_compacted_and_patched_set = set()
         for file in files:
             new_file, rel_path = self.copy_file_to_output(file)
             new_file_lower = new_file.lower()
             with self.semaphore:
                 try:
-                    patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, self.form_id_map, 
-                                                                self.master_byte, self.updated_master_index, self.do_generate_cell_master,
-                                                                self.additional_conditions, 'utf-8')
-                except Exception as e:
-                    exception_type = type(e)
-                    if exception_type == UnicodeDecodeError:
-                        patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, self.form_id_map, 
+                    for encoding in self.get_encodings(new_file):
+                        try:
+                            patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, self.form_id_map, 
                                                                     self.master_byte, self.updated_master_index, self.do_generate_cell_master,
-                                                                    self.additional_conditions, 'ansi')
+                                                                    self.additional_conditions, encoding)
+                            break
+                        except UnicodeDecodeError:
+                            write_to_file(f"Unicode Decode Error using {encoding.upper()}, for {new_file}")
                     else:
-                        write_error(QCoreApplication.translate("Global", "Failed to patch file: ") + new_file)
-                        write_error(e, True)
-                local_compacted_and_patched_list.add(rel_path)            
+                        raise UnicodeDecodeError("All Encoding", b"", 0, 1, "Failed all encoding attempts.")
+                except Exception as e:
+                    write_error(QCoreApplication.translate("Global", "Failed to patch file: ") + new_file)
+                    write_error(e, True)
+                local_compacted_and_patched_set.add(rel_path)            
         with self.lock:
-            self.compacted_and_patched[basename_cased].update(local_compacted_and_patched_list)
+            self.compacted_and_patched[basename_cased].update(local_compacted_and_patched_set)
 
     def decompress_data(self, data_list: list) -> tuple[list, list]:
         sizes_list = [[] for _ in range(len(data_list))]
