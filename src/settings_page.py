@@ -16,7 +16,8 @@ from data_holder import (GAME_MODE, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ES
                          EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
                          MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
                          WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, DEPENDENCY_DICTIONARY_JSON,
-                         MAXED_MASTERS_JSON, BLACKLIST_JSON, CELL_CHANGED_JSON, DLL_DICT_JSON, SETTINGS_JSON, ESLIFIER_DATA_FOLDER)
+                         MAXED_MASTERS_JSON, BLACKLIST_JSON, CELL_CHANGED_JSON, DLL_DICT_JSON, SETTINGS_JSON, ESLIFIER_DATA_FOLDER, 
+                         SCRIPT_EXTENDER)
 
 from QToggle import QtToggle
 class settings(QWidget):
@@ -262,8 +263,8 @@ class settings(QWidget):
             ''
         )
         self.show_plugins_possibly_refd_by_dlls_widget, self.show_plugins_possibly_refd_by_dlls_toggle = self.create_toggle_widget(
-            self.tr("Show plugins that are in SKSE dlls"),
-            self.tr("Show or hide plugins that may have Form IDs hard-coded in SKSE dlls."),
+            self.tr("Show plugins that are in %0 dlls").replace("%0", SCRIPT_EXTENDER.upper()),
+            self.tr("Show or hide plugins that may have Form IDs hard-coded in %0 dlls.").replace("%0", SCRIPT_EXTENDER.upper()),
             "show_dlls",
             default=False
         )
@@ -1095,7 +1096,8 @@ class settings(QWidget):
 
         if key in ('show_esms', 'show_cells', 'enable_cell_changed_filter', 'enable_interior_cell_filter', 
                    'filter_worldspaces', 'filter_weathers', 'show_dlls', 'generate_cell_master', 'reset',
-                   'left_hidden_columns', 'right_hidden_columns', 'filter_seq', 'filter_pex'):
+                   'left_hidden_columns', 'right_hidden_columns', 'filter_seq', 'filter_pex', 
+                   'filter_previs_precombine'):
             self.need_to_rebuild_lists_signal.emit()
         
     def get_settings_from_file(self):
