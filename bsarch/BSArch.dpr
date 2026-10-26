@@ -307,23 +307,21 @@ begin
     ]));
 
     // pex or seq extraction then we only need the scripts or seq folders
-    if (Length(filter) = 4) and (filter[1] = '.') then begin
-      if (filter = '.pex') then
-          dirFilter := 'scripts'
-      else if (filter = '.seq') then
-          dirFilter := 'seq'
-    // otherwise the filter must be in the directory since I never filter
-    // for a specific file
-    end else begin
+    // otherwise we only need the directory that fits the filter
+    // I never need to filter by file name or any other extensions
+    if (filter = '.pex') then
+      dirFilter := 'scripts'
+    else if (filter = '.seq') then
+      dirFilter := 'seq'
+    else
       dirFilter := filter;
-    end;
 
-    // if not set to True in loop below, skip extraction loops
     anyValidDir := False;
     // create folders
     for var f in bsa do begin
       var dir := folder + ExtractFilePath(f.Name);
-      if (dirFilter = '') or dir.Contains(dirFilter) then begin
+      var dirLowerFormatted := dir.ToLower().Replace('/', '\');
+      if (dirFilter = '') or dirLowerFormatted.Contains(dirFilter) then begin
         anyValidDir := True;
         if not DirectoryExists(dir) then
           if not ForceDirectories(dir) then
@@ -337,7 +335,8 @@ begin
           procedure(i: Integer; LoopState: TParallel.TLoopState)
           begin
             try
-              if (filter = '') or bsa[i].Name.Contains(filter) then
+              var nameFormatted := bsa[i].Name.ToLower().Replace('/', '\');
+              if (filter = '') or nameFormatted.Contains(filter) then
                 bsa.Unpack(bsa[i].Name, folder + bsa[i].Name);
               ShowProgress(bsa.Count);
             except
@@ -350,7 +349,8 @@ begin
         )
       else
         for var i := 0 to Pred(bsa.Count) do try
-          if (filter = '') or bsa[i].Name.Contains(filter) then
+          var nameFormatted := bsa[i].Name.ToLower().Replace('/', '\');
+          if (filter = '') or nameFormatted.Contains(filter) then
             bsa.Unpack(bsa[i].Name, folder + bsa[i].Name);
           ShowProgress(bsa.Count);
         except
@@ -359,14 +359,14 @@ begin
             Break;
           end;
         end;
+      sw.Stop;
+      WriteLn;
+      if ProcessedError <> '' then begin
+        WriteLn(ProcessedError);
+        System.ExitCode := 1;
+      end else
+        WriteLn('Done in ', sw.Elapsed.ToString, '.');
     end;
-    sw.Stop;
-    WriteLn;
-    if ProcessedError <> '' then begin
-      WriteLn(ProcessedError);
-      System.ExitCode := 1;
-    end else
-      WriteLn('Done in ', sw.Elapsed.ToString, '.');
   finally
     bsa.Free;
   end;
@@ -443,7 +443,7 @@ begin
                  When not set unpack into the folder where archive is located
     -mt:yes|no   Use available CPU cores for faster multithreaded processing
                  "no" to disable multithreading, default: yes
-    -f:filters   Pack files only matching provided mask
+    -f:filters   Unpack files only matching provided string
 
   ARCHIVE INFO
     BSArch.exe <archive> [parameters]
