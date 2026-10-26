@@ -19,23 +19,35 @@ program BSArch;
 {$APPTYPE CONSOLE}
 
 uses
+  MSHeap,
   {$IFDEF EXCEPTION_LOGGING_ENABLED}
   nxExceptionHook,
-  {$ENDIF}
-  Classes,
-  Types,
-  SysUtils,
-  IOUtils,
-  Threading,
-  Diagnostics,
+  {$ENDIF }
+  System.Diagnostics,
+  System.Math,
+  System.SyncObjs,
+  System.SysUtils,
+  System.Threading,
+
   wbBSArchive in 'Core\wbBSArchive.pas',
   wbCommandLine in 'Core\wbCommandLine.pas',
+  wbCompression in 'Core\wbCompression.pas',
+  wbDDS in 'Core\wbDDS.pas',
+  wbHash in 'Core\wbHash.pas',
   wbStreams in 'Core\wbStreams.pas';
 
 const
   IMAGE_FILE_LARGE_ADDRESS_AWARE = $0020;
 
 {$SetPEFlags IMAGE_FILE_LARGE_ADDRESS_AWARE}
+
+type
+  EInvalidArguments = class(Exception);
+
+var
+  Sync: TLightweightMREW;
+  Processed: Integer = 0;
+  ProcessedError: string;
 
 //======================================================================
 function HexToInt(s: string): Cardinal;
@@ -52,315 +64,186 @@ begin
 end;
 
 //======================================================================
-// Info
-
-var
-  bExtendedDump: Boolean;
-
-function IterShowFileInfo(bsa: TwbBSArchive; const aFileName: string;
-  aFileRecord: Pointer; aFolderRecord: Pointer; aData: Pointer): Boolean;
-var
-  FileTES3: PwbBSFileTES3;
-  FileTES4: PwbBSFileTES4;
-  FileFO4: PwbBSFileFO4;
-  s, z: string;
-  i: integer;
+procedure ShowProgress(Count: Integer);
 begin
-  Result := False;
+  var step := Count div 100;
+  if step < 10 then step := 10;
 
-  WriteLn(aFileName);
-
-  if not bExtendedDump then
-    Exit;
-
-  case bsa.ArchiveType of
-
-    baTES3: begin
-      FileTES3 := aFileRecord;
-      s := Format('  Hash1: %s  Hash2: %s  Size: %d', [
-        IntToHex(FileTES3.Hash and $FFFFFFFF, 8),
-        IntToHex(FileTES3.Hash shr 32, 8),
-        FileTES3.Size
-      ]);
-      WriteLn(s);
-    end;
-
-    baTES4, baFO3, baSSE: begin
-      FileTES4 := aFileRecord;
-      if FileTES4.Compressed(bsa) then
-        z := 'Packed' else z := '';
-      s := Format('  DirHash: %s  NameHash: %s  %sSize: %d', [
-        IntToHex(PwbBSFolderTES4(aFolderRecord).Hash, 8),
-        IntToHex(FileTES4.Hash, 16),
-        z,
-        FileTES4.RawSize
-      ]);
-      if bsa.ArchiveType = baSSE then
-        s := s + Format(#13#10'  DirUnknown: 0x%s', [IntToHex(PwbBSFolderTES4(aFolderRecord).Unk32, 8)]);
-      WriteLn(s);
-    end;
-
-    baFO4, baFO4dds: begin
-      FileFO4 := aFileRecord;
-      s := Format('  DirHash: %s  NameHash: %s  Ext: %s', [
-        IntToHex(FileFO4.DirHash, 8),
-        IntToHex(FileFO4.NameHash, 8),
-        string(FileFO4.Ext)
-      ]);
-      if bsa.ArchiveType = baFO4 then
-        s := s + Format('  Unknown: 0x%s'#13#10'  Size: %d  PackedSize: %d', [
-          IntToHex(FileFO4.Unknown, 8),
-          FileFO4.Size,
-          FileFO4.PackedSize
-        ])
-      else if bsa.ArchiveType = baFO4dds then begin
-        s := s + Format(#13#10'  Width: %04d  Height: %04d  CubeMap: %s  Format: %s', [
-          FileFO4.Width,
-          FileFO4.Height,
-          IfThen(FileFO4.CubeMaps and 1 <> 0, 'Yes', 'No'),
-          FileFO4.DXGIFormatName
-        ]);
-        for i := Low(FileFO4.TexChunks) to High(FileFO4.TexChunks) do
-          s := s + Format(#13#10'    MipMaps %.2d-%.2d  Size: %8d  PackedSize: %8d', [
-            FileFO4.TexChunks[i].StartMip,
-            FileFO4.TexChunks[i].EndMip,
-            FileFO4.TexChunks[i].Size,
-            FileFO4.TexChunks[i].PackedSize
-          ]);
-      end;
-      WriteLn(s);
-    end;
-
-    baSF, baSFdds: begin
-      FileFO4 := aFileRecord;
-      s := Format('  DirHash: %s  NameHash: %s  Ext: %s', [
-        IntToHex(FileFO4.DirHash, 8),
-        IntToHex(FileFO4.NameHash, 8),
-        string(FileFO4.Ext)
-      ]);
-      if bsa.ArchiveType = baSF then
-        s := s + Format('  Unknown: 0x%s'#13#10'  Size: %d  PackedSize: %d', [
-          IntToHex(FileFO4.Unknown, 8),
-          FileFO4.Size,
-          FileFO4.PackedSize
-        ])
-      else if bsa.ArchiveType = baSFdds then begin
-        s := s + Format(#13#10'  Width: %04d  Height: %04d  CubeMap: %s  Format: %s', [
-          FileFO4.Width,
-          FileFO4.Height,
-          IfThen(FileFO4.CubeMaps and 1 <> 0, 'Yes', 'No'),
-          FileFO4.DXGIFormatName
-        ]);
-        for i := Low(FileFO4.TexChunks) to High(FileFO4.TexChunks) do
-          s := s + Format(#13#10'    MipMaps %.2d-%.2d  Size: %8d  PackedSize: %8d', [
-            FileFO4.TexChunks[i].StartMip,
-            FileFO4.TexChunks[i].EndMip,
-            FileFO4.TexChunks[i].Size,
-            FileFO4.TexChunks[i].PackedSize
-          ]);
-      end;
-      WriteLn(s);
-    end;
-  end;
-
-  WriteLn;
-end;
-
-procedure DoShowArchiveInfo(bsa: TwbBSArchive); overload;
-var
-  i: integer;
-  s, s2: string;
-begin
-  // header
-  WriteLn(Format('%014s: %s', ['Archive Name', bsa.FileName]));
-  WriteLn(Format('%014s: %s', ['Format', bsa.FormatName]));
-  if bsa.ArchiveType <> baTES3 then
-    WriteLn(Format('%014s: 0x%s', ['Version', IntToHex(bsa.Version, 2)]));
-  WriteLn(Format('%014s: %d', ['Files', bsa.FileCount]));
-  // flags
-  if bsa.ArchiveType in [baTES4, baFO3, baSSE] then begin
-    WriteLn(Format('%014s: 0x%s%020s: 0x%s', [
-      'Archive Flags', IntToHex(bsa.ArchiveFlags, 8),
-      'File Flags', IntToHex(bsa.FileFlags, 8)
-    ]));
-    for i := 0 to 10 do begin
-      if (bsa.ArchiveFlags shr i) and 1 = 1 then s := '*' else s := ' ';
-      if cArchiveFlagNames[i] <> '' then
-        s := s + cArchiveFlagNames[i]
-      else
-        s := s + 'Bit ' + IntToStr(i);
-      s := Format('%16s%s', [' ', s]);
-
-      if (bsa.FileFlags shr i) and 1 = 1 then s2 := '*' else s2 := ' ';
-      if cFileFlagNames[i] <> '' then
-        s2 := s2 + cFileFlagNames[i]
-      else
-        s2 := s2 + 'Bit ' + IntToStr(i);
-      WriteLn(Format('%s%s%s', [s, StringOfChar(' ', 48 - Length(s)), s2]));
-    end;
-  end;
-  // optional list or dump
-  if FindCmdLineSwitch('list') or FindCmdLineSwitch('dump') then begin
-    bExtendedDump := FindCmdLineSwitch('dump');
-    WriteLn;
-    bsa.IterateFiles(@IterShowFileInfo);
+  Sync.BeginWrite;
+  try
+    Inc(Processed);
+    if (Processed mod step = 0) or (Processed = Pred(Count)) then
+      Write(#13 + Round(Succ(Processed)/Count*100).ToString + '%');
+  finally
+    Sync.EndWrite;
   end;
 end;
 
 //======================================================================
-procedure DoShowArchiveInfo(const aArchiveName: string); overload;
+procedure SetError(const aText: string);
+begin
+  Sync.BeginWrite;
+  try
+    if ProcessedError = '' then
+      ProcessedError := aText;
+  finally
+    Sync.EndWrite;
+  end;
+end;
+
+//======================================================================
+procedure DoInfo;
 var
   bsa: TwbBSArchive;
 begin
   bsa := TwbBSArchive.Create;
   try
-    try
-      bsa.LoadFromFile(aArchiveName);
-    except
-      on E: Exception do begin
-        WriteLn('Error: ' + E.Message);
-        Exit;
+  try
+    bsa.LoadFromFile(ParamStr(1));
+    WriteLn(bsa.Info);
+    for var w in bsa.Warnings do
+      WriteLn(#9'Warning: ', w);
+
+    if not (FindCmdLineSwitch('list') or FindCmdLineSwitch('dump')) then
+      Exit;
+
+    WriteLn;
+    var bDump := FindCmdLineSwitch('dump');
+    for var f in bsa do begin
+      WriteLn(f.Name);
+      if bDump then begin
+        WriteLn(f.Info);
+        WriteLn;
       end;
     end;
-    DoShowArchiveInfo(bsa);
+  except
+    on E: Exception do
+      WriteLn('Error: ' + E.Message);
+  end;
   finally
     bsa.Free;
   end;
 end;
 
 //======================================================================
-// Packing
-
+procedure DoPack;
+const
+  GB = 1024 * 1024 * 1024;
 var
-  DDSRoot: string;
-
-procedure GetDDSFileInfo(aArchive: TwbBSArchive; const aFileName: string;
-  var aInfo: TDDSInfo);
-var
-  DDSHeader: TDDSHeader;
+  bsa: TwbMultiSourcePacker;
+  atype: TwbBSArchiveType;
+  s: string;
 begin
-  with TFileStream.Create(DDSRoot + aFileName, fmOpenRead + fmShareDenyNone) do try
-    if (Read(DDSHeader, SizeOf(DDSHeader)) <> SizeOf(DDSHeader)) or (DDSHeader.Magic <> 'DDS ') then
-      raise Exception.Create('Not a valid DDS file: ' + DDSRoot + aFileName);
+  s := ParamStr(2);
+  if (s = '') or CharInSet(s[1], SwitchChars) then
+    raise EInvalidArguments.Create('No source files/folders/archives provided for packing');
 
-    aInfo.Width := DDSHeader.dwWidth;
-    aInfo.Height := DDSHeader.dwHeight;
-    aInfo.MipMaps := DDSHeader.dwMipMapCount;
-  finally
-    Free;
-  end;
-end;
+  s := ParamStr(3);
+  if (s = '') or CharInSet(s[1], SwitchChars) then
+    raise EInvalidArguments.Create('No archive name provided for packing');
 
-procedure DoPack(const aFolderName, aArchiveName: string);
-var
-  root, archname, s, ext, mask: string;
-  i: integer;
-  atype: TBSArchiveType;
-  sl: TStringList;
-  bsa: TwbBSArchive;
-  Completed: Integer;
-  sw: TStopwatch;
-begin
-  sw := TStopwatch.StartNew;
-  root := IncludeTrailingPathDelimiter(aFolderName);
-  archname := aArchiveName;
-  if TPath.IsRelativePath(archname) then
-    archname := root + archname;
-
-  if FindCmdLineSwitch('tes3') then atype := baTES3 else
-  if FindCmdLineSwitch('tes4') then atype := baTES4 else
-  if FindCmdLineSwitch('fo3')  then atype := baFO3 else
-  if FindCmdLineSwitch('fnv')  then atype := baFO3 else
-  if FindCmdLineSwitch('tes5') then atype := baFO3 else
-  if FindCmdLineSwitch('sse')  then atype := baSSE else
-  if FindCmdLineSwitch('fo4')  then atype := baFO4 else
+  if FindCmdLineSwitch('tes3')   then atype := baTES3 else
+  if FindCmdLineSwitch('tes4')   then atype := baTES4 else
+  if FindCmdLineSwitch('fo3')    then atype := baFO3 else
+  if FindCmdLineSwitch('fnv')    then atype := baFO3 else
+  if FindCmdLineSwitch('tes5')   then atype := baFO3 else
+  if FindCmdLineSwitch('sse')    then atype := baSSE else
+  if FindCmdLineSwitch('fo4')    then atype := baFO4 else
   if FindCmdLineSwitch('fo4dds') then atype := baFO4dds else
-  if FindCmdLineSwitch('sf1')  then atype := baSF else
-  if FindCmdLineSwitch('sf1dds') then atype := baSFdds
-  else
-    raise Exception.Create('Archive type is not provided for packing!');
+  if FindCmdLineSwitch('sf1')    then atype := baSF else
+  if FindCmdLineSwitch('sf1dds') then atype := baSFdds else
+    raise EInvalidArguments.Create('No archive type (game) provided for packing');
 
-  sl := TStringList.Create;
-  bsa := TwbBSArchive.Create;
+  bsa := TwbMultiSourcePacker.Create;
   try
-    bsa.Compress := FindCmdLineSwitch('z', s);
-    bsa.ShareData := FindCmdLineSwitch('share', s);
-    bsa.Multithreaded := FindCmdLineSwitch('mt');
+    if (atype <> baTES3) and wbFindCmdLineParam('z', s) then begin
+      if s <> '' then begin
+        var ct := TwbCompression.TypeByName(s);
+        if ct = ctNone then
+          raise EInvalidArguments.Create('Unknown compression type ' + s);
+        if not bsa.SupportsCompression(atype, ct) then
+          raise EInvalidArguments.Create(bsa.FormatName(atype) + ' archives don''t support ' + s + ' compression');
+        bsa.CompressionType := ct;
+      end else
+        bsa.CompressionType := bsa.DefaultCompression(atype);
 
-    if atype in [baFO4dds, baSFdds] then begin
-      mask := '*.dds';
-      bsa.DDSInfoProc := GetDDSFileInfo;
-      DDSRoot := root;
+      bsa.Compress := True;
+    end;
+
+    if wbFindCmdLineParam('split', s) and (s <> '') then begin
+      var split := StrToIntDef(s, 0);
+      if split > 8 then split := 8;
+      bsa.SplitSize := Int64(split) * GB;
     end else
-      mask := '*.*';
+      if atype < baFO4 then bsa.SplitSize := bsa.BSA_MAX_OFFSET;
 
-    WriteLn('Packing directory: ' + root + mask);
+    if wbFindCmdLineParam('f', s) and (s <> '') then
+      bsa.Filters := s.Split([',']);
 
-    for s in TDirectory.GetFiles(root, mask, TSearchOption.soAllDirectories) do begin
-      // skip files in the root folder
-      if SameText(root, ExtractFilePath(s)) then
-        Continue;
+    bsa.ShareData := not (wbFindCmdLineParam('share', s) and SameText(s, 'no'));
+    bsa.MultiThreaded := not (wbFindCmdLineParam('mt', s) and SameText(s, 'no'));
 
-      // always skipped files
-      ext := LowerCase(ExtractFileExt(s));
-      if (ext = '') or (ext = '.exe') or (ext = '.bsa') or (ext = '.ba2') or (ext = '.db') then
-        Continue;
-
-      sl.Add(Copy(s, Succ(Length(root)), Length(s)));
-    end;
-
-    if sl.Count = 0 then
-      raise Exception.Create('No valid files found for packing');
-
-    try
-      bsa.CreateArchive(archname, atype, sl);
-    except
-      on E: Exception do
-        raise Exception.Create('Archive creation error: ' + E.Message);
-    end;
-
-    // custom archive flags
     if wbFindCmdLineParam('af', s) and (s <> '') then
       bsa.ArchiveFlags := HexToInt(s);
-
-    // custom file flags
     if wbFindCmdLineParam('ff', s) and (s <> '') then
       bsa.FileFlags := HexToInt(s);
 
-    WriteLn;
-    DoShowArchiveInfo(bsa);
-    WriteLn;
+    WriteLn(Format('Packing %s archive: Split: %s,  Compress: %s,  Share: %s', [
+      bsa.FormatName(atype),
+      IfThen(bsa.SplitSize <> 0, FormatSize(bsa.SplitSize), 'No'),
+      IfThen(bsa.Compress, TwbCompression.cCompressionTypeName[bsa.CompressionType], 'No'),
+      IfThen(bsa.ShareData, 'Yes', 'No')
+    ]));
 
-    Completed := 0;
-    if bsa.Multithreaded then
-      TParallel.&For(0, Pred(sl.Count), procedure(i:Integer) begin
-        try
-          bsa.AddFile(root, root + sl[i]);
-        except
-          on E: Exception do
-            raise Exception.Create('File packing error "' + root + sl[i] + '": ' + E.Message);
-        end;
-        bsa.SyncBeginWrite;
-        try
-          Inc(Completed);
-          if (Completed mod 10 = 0) or (Completed = Pred(sl.Count)) then
-            Write(#13'[' + IntToStr(Round((Completed+1)/sl.Count*100)) + '%]');
-        finally
-          bsa.SyncEndWrite;
-        end;
-      end)
+    for var f in ParamStr(2).Split(['+'], '"') do begin
+      Write('Adding source: ' + f);
+      var i := bsa.AddSource(f);
+      WriteLn('  ' + i.ToString + ' file(s)');
+    end;
+
+    if bsa.SourceFilesCount = 0 then
+      raise EInvalidArguments.Create('No valid source file(s) found.');
+
+    bsa.CreateArchive(ParamStr(3), atype);
+
+    WriteLn(Format('%sthreaded packing: %s file(s)...', [
+      IfThen(bsa.MultiThreaded, 'Multi', 'Single'),
+      bsa.SourceFilesCount.ToString
+    ]));
+
+    var sw := TStopwatch.StartNew;
+    if bsa.MultiThreaded then
+      TParallel.&For(0, Pred(bsa.ProcessCount),
+        procedure(i: Integer; LoopState: TParallel.TLoopState)
+        begin
+          try
+            bsa.Process;
+            ShowProgress(bsa.ProcessCount);
+          except
+            on E: Exception do begin
+              SetError(E.Message);
+              LoopState.Stop;
+            end;
+          end;
+        end
+      )
     else
-      for i := 0 to Pred(sl.Count) do begin
-        try
-          bsa.AddFile(root, root + sl[i]);
-        except
-          on E: Exception do
-            raise Exception.Create('File packing error "' + root + sl[i] + '": ' + E.Message);
+      for var i := 0 to Pred(bsa.ProcessCount) do try
+        bsa.Process;
+        ShowProgress(bsa.ProcessCount);
+      except
+        on E: Exception do begin
+          SetError(E.Message);
+          Break;
         end;
-        Inc(Completed);
-        if (Completed mod 10 = 0) or (Completed = Pred(sl.Count)) then
-          Write(#13'[' + IntToStr(Round((Completed+1)/sl.Count*100)) + '%]');
       end;
+
+    if ProcessedError <> '' then begin
+      WriteLn;
+      WriteLn(ProcessedError);
+      System.ExitCode := 1;
+      Exit;
+    end;
 
     try
       bsa.Save;
@@ -368,105 +251,122 @@ begin
       on E: Exception do
         raise Exception.Create('Archive saving error: ' + E.Message);
     end;
-
     sw.Stop;
 
     WriteLn;
     WriteLn('Done in ', sw.Elapsed.ToString, '.');
+    WriteLn;
+    WriteLn('Created archives:');
+    for var b in bsa.Archives do begin
+      Write(Format('%s   %s  %d files', [b.FileName, FormatSize(b.ArchiveSize), b.Count]));
+      if b.ArchiveSharedFiles <> 0 then
+        Write(Format('  %d shared saving %s', [b.ArchiveSharedFiles, FormatSize(b.ArchiveSharedSize)]));
+      WriteLn;
+      for var w in b.Warnings do
+        WriteLn(#9'Warning: ', w);
+    end;
+
+    WriteLn;
   finally
     bsa.Free;
-    sl.Free;
   end;
 end;
 
 //======================================================================
-// Unpacking
-
-var
-  UnpackDir: string; // store root folder for unpacking
-
-var
-  Completed: Cardinal;
-  bQuiet : Boolean = False;
-
-function IterUnpackFile(bsa: TwbBSArchive; const aFileName: string;
-  aFileRecord: Pointer; aFolderRecord: Pointer; aData: Pointer): Boolean;
-var
-  dir, fname, filter: string;
-  FileData: TBytes;
-begin
-  // fo4 archives can contain backslashes
-  fname := StringReplace(aFileName, '/', '\', [rfReplaceAll]);
-  if ParamCount >= 4 then
-    filter := ParamStr(4)
-  else
-    filter := 'no_filter';
-
-  if fname.Contains(filter) or (filter = 'no_filter') then begin
-    dir := UnpackDir + ExtractFilePath(fname);
-    if not DirectoryExists(dir) then begin
-      bsa.SyncBeginWrite;
-      try
-        if not ForceDirectories(dir) then
-          if not DirectoryExists(dir) then
-            raise Exception.Create('Can not create destination folder: ' + dir);
-      finally
-        bsa.SyncEndWrite;
-      end;
-    end;
-
-    try
-      FileData := bsa.ExtractFileData(aFileRecord);
-    except
-      on E: Exception do
-        raise Exception.Create('Unpacking error "' + fname + '": ' + E.Message);
-    end;
-
-    with TFileStream.Create(UnpackDir + fname, fmCreate) do try
-      Write(FileData[0], Length(FileData));
-    finally
-      Free;
-    end;
-
-    bsa.SyncBeginWrite;
-    try
-      if bQuiet then begin
-        Inc(Completed);
-        if (Completed mod 10 = 0) or (Completed = Pred(bsa.FileCount)) then
-          Write(#13'[' + IntToStr(Round((Completed+1)/bsa.FileCount*100)) + '%]');
-      end else
-        WriteLn(fname);
-    finally
-      bsa.SyncEndWrite;
-    end;
-  end;
-  Result := False;
-end;
-
-procedure DoUnpack(const aArchiveName, aFolderName: string);
+procedure DoUnpack;
 var
   bsa: TwbBSArchive;
-  sw: TStopwatch;
+  s, bsaname, folder, filter, dirfilter: string;
+  anyValidDir: boolean;
 begin
-  if FindCmdLineSwitch('quiet') or FindCmdLineSwitch('q') then
-    bQuiet := True;
+  s := ParamStr(2);
+  if (s = '') or CharInSet(s[1], SwitchChars) then
+    raise EInvalidArguments.Create('No archive file provided for unpacking')
+  else
+    bsaname := s;
 
-  UnpackDir := IncludeTrailingPathDelimiter(aFolderName);
-  if not DirectoryExists(UnpackDir) then
-    raise Exception.Create('Folder does not exist: ' + UnpackDir);
-
-  WriteLn('Unpacking archive: "' + aArchiveName + '" into "' + UnpackDir + '"');
-  WriteLn;
-
-  sw := TStopwatch.StartNew;
+  s := ParamStr(3);
+  if (s = '') or CharInSet(s[1], SwitchChars) then
+    folder := ExtractFilePath(bsaname)
+  else begin
+    folder := IncludeTrailingPathDelimiter(s);
+    if not DirectoryExists(folder) then
+      raise EInvalidArguments.Create('Folder does not exist: ' + folder);
+  end;
+  if wbFindCmdLineParam('f', s) and (s <> '') then
+      filter := s;
   bsa := TwbBSArchive.Create;
   try
-    bsa.LoadFromFile(aArchiveName);
-    bsa.MultiThreaded := FindCmdLineSwitch('mt');
-    bsa.IterateFiles(@IterUnpackFile);
+    bsa.LoadFromFile(bsaname);
+    bsa.MultiThreaded := not (wbFindCmdLineParam('mt', s) and SameText(s, 'no'));
+    var sw := TStopwatch.StartNew;
+    WriteLn(Format('Unpacking archive "%s" into "%s"', [bsaname, folder]));
+    WriteLn(Format('%sthreaded unpacking: %s file(s)...', [
+      IfThen(bsa.MultiThreaded, 'Multi', 'Single'),
+      bsa.Count.ToString
+    ]));
+
+    // pex or seq extraction then we only need the scripts or seq folders
+    if (Length(filter) = 4) and (filter[1] = '.') then begin
+      if (filter = '.pex') then
+          dirFilter := 'scripts'
+      else if (filter = '.seq') then
+          dirFilter := 'seq'
+    // otherwise the filter must be in the directory since I never filter
+    // for a specific file
+    end else begin
+      dirFilter := filter;
+    end;
+
+    // if not set to True in loop below, skip extraction loops
+    anyValidDir := False;
+    // create folders
+    for var f in bsa do begin
+      var dir := folder + ExtractFilePath(f.Name);
+      if (dirFilter = '') or dir.Contains(dirFilter) then begin
+        anyValidDir := True;
+        if not DirectoryExists(dir) then
+          if not ForceDirectories(dir) then
+            raise Exception.Create('Can''t create destination folder: ' + dir);
+      end;
+    end;
+    // if no valid dirs then no need to waste time in extraction loops
+    if anyValidDir then begin
+      if bsa.MultiThreaded then
+        TParallel.For(0, Pred(bsa.Count),
+          procedure(i: Integer; LoopState: TParallel.TLoopState)
+          begin
+            try
+              if (filter = '') or bsa[i].Name.Contains(filter) then
+                bsa.Unpack(bsa[i].Name, folder + bsa[i].Name);
+              ShowProgress(bsa.Count);
+            except
+              on E: Exception do begin
+                SetError(Format('Error processing "%s": %s', [bsa[i].Name, E.Message]));
+                LoopState.Stop;
+              end;
+            end;
+          end
+        )
+      else
+        for var i := 0 to Pred(bsa.Count) do try
+          if (filter = '') or bsa[i].Name.Contains(filter) then
+            bsa.Unpack(bsa[i].Name, folder + bsa[i].Name);
+          ShowProgress(bsa.Count);
+        except
+          on E: Exception do begin
+            SetError(Format('Error processing "%s": %s', [bsa[i].Name, E.Message]));
+            Break;
+          end;
+        end;
+    end;
     sw.Stop;
     WriteLn;
-    WriteLn('Done in ', sw.Elapsed.ToString, '.');
+    if ProcessedError <> '' then begin
+      WriteLn(ProcessedError);
+      System.ExitCode := 1;
+    end else
+      WriteLn('Done in ', sw.Elapsed.ToString, '.');
   finally
     bsa.Free;
   end;
@@ -474,210 +374,193 @@ end;
 
 //======================================================================
 procedure Main;
-var s: string;
 begin
-  WriteLn('');
   {$IFDEF EXCEPTION_LOGGING_ENABLED}
-  nxEHAppVersion := 'BSArch v' + csBSAVersion;
+  nxEHAppVersion := 'BSArch v' + cBSArchVersion;
   {$ENDIF}
-  s := csBSAVersion;
-  {$IFDEF WIN64}
-  s := s + ' x64';
-  {$ENDIF WIN64}
-  WriteLn('BSArch v' + s + ' by zilav, ElminsterAU, Sheson');
-  WriteLn('Packer and unpacker for Bethesda Game Studios archive files');
-  WriteLn;
-  WriteLn('The Source Code Form is subject to the terms of the Mozilla Public License,');
-  WriteLn('v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain');
-  WriteLn('one at https://mozilla.org/MPL/2.0/.');
-  WriteLn;
-  WriteLn('The Source Code Form is available at https://github.com/TES5Edit/TES5Edit');
-  WriteLn;
+  WriteLn('');
+  WriteLn('BSArch v' + cBSArchVersion{$IFDEF WIN64} + ' x64'{$ENDIF WIN64} + ' by zilav, ElminsterAU, Sheson');
+  WriteLn('''
+  Packer and unpacker for Bethesda Game Studios archive files
 
-  if (ParamCount >= 3) and SameText(ParamStr(1), 'pack') then
-    DoPack(ParamStr(2), ParamStr(3))
+  The Source Code Form is subject to the terms of the Mozilla Public License, v2.0.
+  If a copy of the MPL was not distributed with this file, You can obtain one at
+  https://mozilla.org/MPL/2.0/
+  The Source Code Form is available at https://github.com/TES5Edit/TES5Edit
 
-  else if (ParamCount >= 2) and SameText(ParamStr(1), 'unpack') then begin
-    if ParamCount >= 3 then
-      DoUnpack(ParamStr(2), ParamStr(3))
-    else
-      DoUnpack(ParamStr(2), ExtractFilePath(ParamStr(2)));
-  end
+  ''');
 
-  else if (ParamCount >= 1) and not CharInSet(ParamStr(1)[1], SwitchChars) then
-    DoShowArchiveInfo(ParamStr(1))
+  // at least one parameter and it's not a switch
+  if (ParamCount >= 1) and not CharInSet(ParamStr(1)[1], SwitchChars) then begin
+    if SameText(ParamStr(1), 'pack') then DoPack else
+    if SameText(ParamStr(1), 'unpack') then DoUnpack else
+    if FileExists(ParamStr(1)) then DoInfo else
+      raise EInvalidArguments.Create('The first parameter must be "pack", "unpack" or existing archive file');
 
-  else begin
-    WriteLn('ARCHIVE INFO');
-    WriteLn('  BSArch.exe <archive> [parameters]');
-    WriteLn('  <archive> - archive file name to view');
-    WriteLn('  additional parametes: -list to show files list or -dump for extended dump');
-    WriteLn('');
-    WriteLn('UNPACKING ARCHIVES');
-    WriteLn('  BSArch.exe unpack <archive> <folder> <filter>');
-    WriteLn('  <archive> - archive file name to unpack');
-    WriteLn('  <folder>  - path to the existing destination folder to unpack into');
-    WriteLn('              When not set unpack into the folder where archive is located');
-    WriteLn('  <filter>  - string that the file name must contain');
-    WriteLn('  Parameters:');
-    WriteLn('  -q[uiet]    Don''t list extracted files');
-    WriteLn('  -mt         Run multi-threaded');
-    WriteLn('');
-    WriteLn('CREATING ARCHIVES');
-    WriteLn('  BSArch.exe pack <folder> <archive> [parameters]');
-    WriteLn('  <folder>  - path to the source folder with files to pack');
-    WriteLn('  <archive> - archive file name to create');
-    WriteLn('  Parameters:');
-    WriteLn('  -tes3       Morrowind archive format');
-    WriteLn('  -tes4       Oblivion archive format');
-    WriteLn('  -fo3        Fallout 3 archive format');
-    WriteLn('  -fnv        Fallout: New Vegas archive format');
-    WriteLn('  -tes5       Skyrim LE archive format (fo3/fnv/tes5 are technically the same)');
-    WriteLn('  -sse        Skyrim Special Edition archive format');
-    WriteLn('  -fo4        Fallout 4 General archive format');
-    WriteLn('  -fo4dds     Fallout 4 DDS archive format (streamed DDS textures mipmaps)');
-    WriteLn('  -sf1        Starfield General archive format');
-    WriteLn('  -sf1dds     Starfield DDS archive format (streamed DDS textures mipmaps)');
-    WriteLn('  -af:value   Override archive flags with a hex value');
-    WriteLn('              Oblivion, Fallout 3/NV and Skyrim archives only');
-    WriteLn('  -ff:value   Override files flags with a hex value');
-    WriteLn('              Oblivion, Fallout 3/NV and Skyrim archives only');
-    WriteLn('  -z          Compress archive. This will also force "Compressed" flag');
-    WriteLn('              in archive flags even if they are overridden with -af');
-    WriteLn('              parameter custom value. Keep in mind that sounds and voices');
-    WriteLn('              don''t work in compressed archives in all Bethesda games!');
-    WriteLn('              Even if your archive contains a single sound/voice file');
-    WriteLn('              out of thousands, it must be uncompressed.');
-    WriteLn('  -share      Binary identical files will share the same data');
-    WriteLn('              in archive to preserve space.');
-    WriteLn('  -mt         Run multi-threaded');
-    WriteLn('');
-    WriteLn('EXAMPLES');
-    WriteLn('    If <folder> or <archive> include spaces then embed them in quotes');
-    WriteLn('');
-    WriteLn('  * Show archive info including hex flags values to be used with -af and -ff');
-    WriteLn('      BSArch d:\somepath\somefile.bsa');
-    WriteLn('  * Dump extended files information from archive');
-    WriteLn('      BSArch "d:\game\mod - main.bsa" -dump');
-    WriteLn('  * Unpack archive into the same folder where archive is located');
-    WriteLn('      BSArch unpack d:\mymod\new.bsa');
-    WriteLn('  * Unpack archive into the specified folder');
-    WriteLn('      BSArch unpack d:\mymod\new.bsa "d:\unpacked archive\data"');
-    WriteLn('  * Create Skyrim Special Edition compressed archive');
-    WriteLn('      BSArch pack "d:\my mod\data" "d:\my mod\data\new.bsa" -sse -z');
-    WriteLn('  * Create Fallout New Vegas uncompressed archive with custom flags');
-    WriteLn('      BSArch pack "d:\my mod\data" "d:\my mod\new.bsa" -fnv -af:0x83 -ff:0x113');
-    WriteLn('  * Create Fallout 4 uncompressed textures archive');
-    WriteLn('      BSArch pack "d:\my mod\data" "d:\my mod\new.ba2" -fo4dds -share');
-
+    Exit;
   end;
+
+  WriteLn('''
+  PACK ARCHIVE
+    BSArch.exe pack <source1+source2+...> <archive> [parameters]
+    <sources>    Path to the source folder, file or archive with file(s) to pack
+                 Multiple sources can be provided using + without spaces
+                 Files from later source win on matched file names
+    <archive>    Archive file name to create
+    -tes3        Morrowind archive format
+    -tes4        Oblivion archive format
+    -fo3         Fallout 3 archive format
+    -fnv         Fallout: New Vegas archive format
+    -tes5        Skyrim LE archive format (fo3/fnv/tes5 are the same)
+    -sse         Skyrim SE/AE archive format
+    -fo4         Fallout 4 General archive format
+    -fo4dds      Fallout 4 DDS archive format (streamed DDS textures mipmaps)
+                 Always compress using -z parameter, game crashes otherwise
+    -sf1         Starfield General archive format
+    -sf1dds      Starfield DDS archive format (streamed DDS textures mipmaps)
+    -split:N     Split archives by N GB, 0 disables splitting
+                 Don't use values larger than available free memory
+                 When not set BSA archives are split by 2 GB, BA2 aren't split
+                 Games before Fallout 4 have hardcoded 2 GB limit!
+    -z:type      Compress files in archive using provided compression type:
+                 zlib, lz4 or lz4f
+                 When type is omitted use default compression for the game
+                 Strings and audio files (except .fuz) are not compressed
+    -f:filters   Pack files only matching provided mask(s) separated by comma
+    -share:yes|no Identical files will share the same data in archive to preserve space
+                 "no" to disable sharing, default: yes
+    -mt:yes|no   Use available CPU cores for faster multithreaded processing
+                 "no" to disable multithreading, default: yes
+    -af:value    Override archive flags with a hex value
+                 Oblivion, Fallout 3/NV and Skyrim archives only
+    -ff:value    Override file flags with a hex value
+                 Oblivion, Fallout 3/NV and Skyrim archives only
+
+  UNPACK ARCHIVE
+    BSArch.exe unpack <archive> [folder] [parameters]
+    <archive>    Archive file name to unpack
+    [folder]     Path to the existing destination folder to unpack into
+                 When not set unpack into the folder where archive is located
+    -mt:yes|no   Use available CPU cores for faster multithreaded processing
+                 "no" to disable multithreading, default: yes
+    -f:filters   Pack files only matching provided mask
+
+  ARCHIVE INFO
+    BSArch.exe <archive> [parameters]
+    <archive>    Archive file name
+    -list        Show files list
+    -dump        Extended dump
+
+  EXAMPLES
+    If <folder> or <archive> include spaces then embed them in quotes
+
+    * Create Skyrim SE/AE compressed archive with meshes only, split by 2 GB
+        BSArch pack "d:\Skyrim AE\data" "d:\Skyrim AE\data\new.bsa" -sse -z -f:*.nif,*.hkx
+    * Create Fallout NV uncompressed archive from multiple folders using custom flags, split by 2 GB
+        BSArch pack "c:\FNV files\meshes"+d:\new\textures "d:\somewhere\mod.bsa" -fnv -af:0x83 -ff:0x113
+    * Merge archives and overwrite with files from folder, compress with lz4, split by 4 GB
+        BSArch pack "d:\mod\main.ba2"+"d:\mod\update.ba2"+"d:\mod\data" "d:\mod\new.ba2" -sf1 -z:lz4 -split:4
+    * Decompress archive (repack without compression)
+        BSArch pack "e:\Oblivion\Data\Textures - Compressed.bsa" "e:\Oblivion\Data\Textures.bsa" -tes4
+    * Unpack archive into the same folder where archive is located
+        BSArch unpack d:\mymod\new.bsa
+    * Unpack archive into the specified folder
+        BSArch unpack d:\mymod\new.bsa "d:\unpacked archive\data"
+    * Show archive info including hex flags values to be used with -af and -ff
+        BSArch d:\somepath\somefile.bsa
+    * Dump extended files information from archive
+        BSArch "d:\game\mod - main.bsa" -dump
+  ''');
+
 end;
 
 {
-function IterFilesTES3(bsa: TwbBSArchive; const aFileName: string;
-  aFileRecord: Pointer; aFolderRecord: Pointer; aData: Pointer): Boolean;
-var
-  filerec: PwbBSFileTES3;
-begin
-  filerec := aFileRecord;
-  //sl.AddObject(filerec.Name, TObject(filerec.Offset));
-  Result := False;
-end;
-
-function IterFilesTES4(bsa: TwbBSArchive; const aFileName: string;
-  aFileRecord: Pointer; aFolderRecord: Pointer; aData: Pointer): Boolean;
-var
-  filerec: PwbBSFileTES4;
-  h: UInt64;
-begin
-  filerec := aFileRecord;
-  h := CreateHashTES4(filerec.Name);
-  if h <> filerec.Hash then
-    WriteLn( IntToHex(filerec.Hash, 16), #9, IntToHex(h, 16), #9, filerec.Name);
-
-  Result := False;
-end;
-
-function IterFilesFO4(bsa: TwbBSArchive; const aFileName: string;
-  aFileRecord: Pointer; aFolderRecord: Pointer; aData: Pointer): Boolean;
-var
-  filerec: PwbBSFileFO4;
-  d, fname, f, e: string;
-  h: Cardinal;
-begin
-  filerec := aFileRecord;
-  SplitDirName(filerec.Name, d, fname);
-  SplitNameExt(fname, f, e);
-
-  h := CreateHashFO4(d);
-  if h <> filerec.DirHash then
-    WriteLn( IntToHex(filerec.DirHash, 8), #9, IntToHex(h, 8), #9, d);
-
-  h := CreateHashFO4(f);
-  if h <> filerec.NameHash then
-    WriteLn( IntToHex(filerec.NameHash, 8), #9, IntToHex(h, 8), #9, f);
-
-  Result := False;
-end;
-
-function IterDumpFileFO4(bsa: TwbBSArchive; const aFileName: string;
-  aFileRecord: Pointer; aFolderRecord: Pointer; aData: Pointer): Boolean;
-var
-  filerec: PwbBSFileFO4;
-begin
-  filerec := aFileRecord;
-  WriteLn(filerec.Name);
-  WriteLn(Format('Width: %d, Height: %d, DXGI: %d', [filerec.Width, filerec.Height, filerec.DXGIFormat]));
-  WriteLn;
-  Result := False;
-end;
-
-
 procedure test_hashes;
 var
   bsa: TwbBSArchive;
 begin
   bsa := TwbBSArchive.Create;
-  bsa.LoadFromFile('d:\games\Morrowind\Data Files\Tribunal.bsa');
-  //bsa.IterateFiles(@IterFilesTES3);
-
-  //bsa.LoadFromFile(ExtractFilePath(ParamStr(0)) + '0x69_ASCII.bsa');
+  //bsa.LoadFromFile('d:\games\Morrowind\Data Files\Tribunal.bsa');
   //bsa.LoadFromFile('d:\games\oblivion\data\Oblivion - Sounds.bsa');
-  //bsa.IterateFiles(@IterFilesTES4);
+  //bsa.LoadFromFile('d:\Projects\TES5Edit\Tools\BSArchive\Knights.bsa');
+  //bsa.LoadFromFile('d:\1\nord.bsa');
+  //bsa.LoadFromFile('d:\1\test.ba2');
+  //bsa.LoadFromFile('d:\Games\steamapps\common\Skyrim Special Edition\Data\Skyrim - Voices_en0.bsa');
+  bsa.LoadFromFile('d:\Games\steamapps\common\Fallout 4\Data\Fallout4 - Voices.ba2');
+  //bsa.LoadFromFile('d:\Games\steamapps\common\Fallout 4\Data\DLCRobot - Textures.ba2');
+  //bsa.LoadFromFile('d:\Projects\TES5Edit\Tools\BSArchive\0x68_ASCII.bsa');
+  //bsa.LoadFromFile('d:\Projects\TES5Edit\Tools\BSArchive\0x69_ASCII.bsa');
+  //bsa.LoadFromFile('d:\Projects\TES5Edit\Tools\BSArchive\GNRL_ASCII.ba2');
 
-  //bsa.LoadFromFile(ExtractFilePath(ParamStr(0)) + 'GNRL_ASCII.ba2');
-  //bsa.LoadFromFile('d:\games\fallout4\data\DLCNukaWorld - Main.ba2');
-  //bsa.IterateFiles(@IterFilesFO4);
+  for var f in bsa do
+    case bsa.ArchiveType of
 
-  //bsa.LoadFromFile('d:\games\fallout4\data\HuntingShotgun - Textures.ba2');
-  //bsa.IterateFiles(@IterDumpFileFO4);
+      baTES3: begin
+        var hash := TwbHash.TES3(f.Name);
+        if hash <> f.NameHash64 then begin
+          WriteLn(f.Name);
+          WriteLn(f.NameHash64.ToHexString);
+          WriteLn(hash.ToHexString);
+          //Exit;
+        end;
+      end;
+
+      baTES4: begin
+        var dirhash := TwbHash.TES4(ExcludeTrailingPathDelimiter(ExtractFilePath(f.Name)));
+        var namehash := TwbHash.TES4(ExtractFileName(f.Name), True);
+        if (dirhash <> f.DirHash64) or (namehash <> f.NameHash64) then begin
+          WriteLn(f.Name);
+          WriteLn(f.DirHash64.ToHexString, ' ', f.NameHash64.ToHexString);
+          WriteLn(dirhash.ToHexString, ' ', namehash.ToHexString);
+          //Exit;
+        end;
+      end;
+
+      baFO3, baSSE: begin
+        var dirhash := TwbHash.TES5(ExcludeTrailingPathDelimiter(ExtractFilePath(f.Name)));
+        var namehash := TwbHash.TES5(ExtractFileName(f.Name), True);
+        if (dirhash <> f.DirHash64) or (namehash <> f.NameHash64) then begin
+          WriteLn(f.Name);
+          WriteLn(f.DirHash64.ToHexString, ' ', f.NameHash64.ToHexString);
+          WriteLn(dirhash.ToHexString, ' ', namehash.ToHexString);
+          //Exit;
+        end;
+      end;
+
+      baFO4, baFO4dds, baSF, baSFdds: begin
+        var dirhash := TwbHash.FO4(ExcludeTrailingPathDelimiter(ExtractFilePath(f.Name)));
+        var namehash := TwbHash.FO4(ChangeFileExt(ExtractFileName(f.Name), ''));
+        if (dirhash <> f.DirHash32) or (namehash <> f.NameHash32) then begin
+          WriteLn(f.Name);
+          WriteLn(f.DirHash32.ToHexString, ' ', f.NameHash32.ToHexString);
+          WriteLn(dirhash.ToHexString, ' ', namehash.ToHexString);
+          Exit;
+        end;
+      end;
+
+    end;
 
   bsa.Free;
-  //WriteLn('Done.');
+  WriteLn('Done.');
 end;
-
+}
+{
 procedure test_reading;
 var
-  ba: TwbBSArchive;
-  //fname: string;
+  bsa: TwbBSArchive;
 begin
-  ba := TwbBSArchive.Create;
-  //ba.LoadFromFile('d:\games\skyrim\data\skyrim - textures.bsa');
-  //fname := 'textures\clutter\food\grilledleek01.dds';
+  bsa := TwbBSArchive.Create;
+  //bsa.LoadFromFile('d:\downloads\ccgcafo4007-factionws07hrflames - textures.ba2');
+  //bsa.LoadFromFile('d:\Projects\TES5Edit\Tools\BSArchive\Knights.bsa');
+  bsa.LoadFromFile('d:\Games\steamapps\common\Skyrim Special Edition\Data\Skyrim - Textures0.bsa');
+  bsa.Unpack('textures\actors\alduin\alduin.dds', 'd:\1\alduin.dds');
 
-  //ba.LoadFromFile('e:\games\Steam\steamapps\common\Skyrim Special Edition\Data\ccqdrsse001-survivalmode.bsa');
-  //ba.LoadFromFile('d:\games\oblivion\data\Alluring Wine Bottles.bsa');
-  //ba.LoadFromFile('d:\games\oblivion\data\Alluring Wine Bottles.bsa');
-
-  // textures\weapons\huntingshotgun\sight_d.dds
-  //ba.LoadFromFile('d:\games\fallout4\data\Fallout4 - Meshes.ba2');
-
-  ba.LoadFromFile('d:\games\Morrowind\Data Files\Tribunal.bsa');
-
-  //ba.ExtractFile(fname, ExtractFilePath(ParamStr(0)) + ExtractFileName(fname));
-  ba.Free;
+  //for var f in bsa do
+  //  WriteLn(f.Name);
+  bsa.Free;
 end;
-
+}
+{
 procedure test_creating;
 var
   ba: TwbBSArchive;
@@ -687,26 +570,71 @@ var
 begin
   sl := TStringList.Create;
   ba := TwbBSArchive.Create;
-  //ba.Compress := True;
-
-  root := 'e:\3';
+  ba.ShareData := True;
+  root := 'd:\1\data';
   root := IncludeTrailingPathDelimiter(root);
-  for s in TDirectory.GetFiles(root, '*.*', TSearchOption.soAllDirectories) do
-    // skip files in the root folder
+  for s in TDirectory.GetFiles(root, '*.dds', TSearchOption.soAllDirectories) do
     if not SameText(root, ExtractFilePath(s)) then
       sl.Add(Copy(s, Succ(Length(root)), Length(s)));
-
-  //ba.CreateArchive('e:\1\a.bsa', baFO3, sl);
-  ba.CreateArchive('e:\3\a.bsa', baTES3, sl);
-  //ba.ArchiveFlags := 0;
-
+  ba.CreateArchive('d:\2\a.bsa', baFO4dds, sl, [True, True, True]);
   for i := 0 to sl.Count - 1 do
-    ba.AddFile(root, root + sl[i]);
+    ba.Pack(sl[i], TFile.ReadAllBytes(root + sl[i]));
 
-  ba.Save;
+  try
+    ba.Save;
+    WriteLn('Done.');
+  finally
+    ba.Free;
+    sl.Free;
+  end;
+end;
+}
+{
+procedure test_packer;
+var
+  bsa: TwbMultiSourcePacker;
+  i: Integer;
+begin
+  bsa := TwbMultiSourcePacker.Create;
+  bsa.SplitSize := 600 * 1024;
+  //bsa.Compress := True;
+  bsa.ShareData := True;
+  bsa.MultiThreaded := True;
+  bsa.AddSourceFolder('d:\1\data\textures');
 
-  ba.Free;
-  sl.Free;
+  bsa.CreateArchive('d:\1\a.bsa', baFO4dds);
+
+  try
+    var sw := TStopwatch.StartNew;
+
+    if bsa.Multithreaded then
+      TParallel.&For(0, Pred(bsa.ProcessCount),
+        procedure(i: Integer)
+        begin
+          bsa.Process;
+        end
+      )
+    else
+      for i := 0 to Pred(bsa.ProcessCount) do
+        bsa.Process;
+
+    bsa.Save;
+    WriteLn('Created archives:');
+    for var b in bsa.Archives do begin
+      Write(Format('%s   %s  %d files', [b.FileName, FormatSize(b.ArchiveSize), b.Count]));
+      if b.ArchiveSharedFiles <> 0 then
+        Write(Format('  %d shared saving %s', [b.ArchiveSharedFiles, FormatSize(b.ArchiveSharedSize)]));
+      WriteLn;
+      for var w in b.Warnings do
+        WriteLn(#9'Warning: ', w);
+    end;
+
+    sw.Stop;
+    WriteLn('Done in ', sw.Elapsed.ToString, '.');
+
+  finally
+    bsa.Free;
+  end;
 end;
 }
 
@@ -717,13 +645,13 @@ begin
     //test_reading;
     //test_creating;
     //test_hashes;
+    //test_packer;
     Main;
   except
     on E: Exception do begin
-      Writeln(E.ClassName, ': ', E.Message);
+      Writeln(E.ClassName, ': ', E.ToString);
       System.ExitCode := 1;
     end;
   end;
-  if DebugHook <> 0 then
-    ReadLn;
+  if DebugHook <> 0 then ReadLn;
 end.
