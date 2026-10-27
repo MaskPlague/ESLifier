@@ -315,12 +315,13 @@ begin
       dirFilter := 'seq'
     else
       dirFilter := filter;
-
+    //WriteLN(Format('dirFilter: "%s", l: %s, Filter: "%s"',[dirFilter, Length(dirFilter).ToString(), filter]));
     anyValidDir := False;
     // create folders
     for var f in bsa do begin
       var dir := folder + ExtractFilePath(f.Name);
       var dirLowerFormatted := dir.ToLower().Replace('/', '\');
+      //WriteLN(Format('dirLF: "%s", filt: "%s", cont: %s',[dirLowerFormatted, dirFilter, BoolToStr(dirLowerFormatted.Contains(dirFilter), True)]));
       if (dirFilter = '') or dirLowerFormatted.Contains(dirFilter) then begin
         anyValidDir := True;
         if not DirectoryExists(dir) then
@@ -336,6 +337,7 @@ begin
           begin
             try
               var nameFormatted := bsa[i].Name.ToLower().Replace('/', '\');
+              //WriteLN(Format('nameFormatted: "%s", filt: %s, cont: %s',[nameFormatted, filter, BoolToStr(nameFormatted.Contains(filter), True)]));
               if (filter = '') or nameFormatted.Contains(filter) then
                 bsa.Unpack(bsa[i].Name, folder + bsa[i].Name);
               ShowProgress(bsa.Count);
