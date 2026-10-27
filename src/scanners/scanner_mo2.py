@@ -169,7 +169,7 @@ class MO2():
                             if file_lower.endswith(plugin_extensions):
                                 plugin_names.add(file)
                             elif file_lower.endswith(game_archive_extension) and file_lower not in game_archive_blacklist:
-                                # remove " - Main.bsa", " - Textures#.bsa", ".bsa" + lower()
+                                # remove " - Main.ext", " - Textures#.ext", ".ext" + lower()
                                 game_archive_lower = re.sub(r' - (main\.|textures\d*\.).*$', '', file_lower).removesuffix(game_archive_extension)
                                 if not file_lower in game_archive_dict_temp:
                                     game_archive_dict_temp[file_lower] = []
