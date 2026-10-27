@@ -164,11 +164,10 @@ class settings(QWidget):
                 default=True
             )
         elif GAME_MODE == "FO4":
-            #TODO: add correct info
             self.update_header_widget, self.update_header_toggle = self.create_toggle_widget(
                 self.tr("Allow Form IDs below 0x000800 + Update plugin headers to 1.0"),
                 self.tr("Allow scanning and patching to use the new 1.0 header.\n"\
-                        "Requires your Fallout to be version X"\
+                        "Requires your Fallout to be at least version 1.10.162+"\
                         "Changing this setting requires a re-scan."),
                 "update_header",
                 default=False
