@@ -369,7 +369,10 @@ class CFIDs():
 
             if (valid_ext or is_customskillframework) and not file_is_luma:
                 files_to_patch.append(file)
-            elif master_basename_lower in file_lower and ('facegeom' in file_lower or 'voice' in file_lower or 'facetint' in file_lower or file_is_luma):
+            elif (master_basename_lower in file_lower and 
+                  ('facegeom' in file_lower or 'voice' in file_lower
+                    or 'facetint' in file_lower or 'facecustomization' in file_lower
+                    or file_is_luma)):
                 files_to_rename.append(file)
             elif file_is_luma:
                 files_to_patch.append(file)
