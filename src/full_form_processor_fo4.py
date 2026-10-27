@@ -1021,7 +1021,7 @@ class form_processor():
         return [i, bytearray(form), offsets_list]
 
     def save_furn_data(i, form):
-        form_fields = {b'PTRN', b'MODS', b'DMDS', b'CNTO', b'COED' b'NAM1'}
+        form_fields = {b'PTRN', b'MODS', b'DMDS', b'CNTO', b'COED', b'NAM1'}
         special_form_fields = {b'VMAD', b'DAMC', b'DSTD', b'CTDA', b'SNAM', b'APPR', b'OBTS', b'NVNM'}
 
         offsets_list = [12]
@@ -1144,7 +1144,7 @@ class form_processor():
         return [i, bytearray(form), offsets_list]
 
     def save_info_data(i, form):
-        form_fields = {b'TPIC', b'PNAM', b'DNAM', b'GNAM', b'SNAM', b'LNAM', b'SRAF' b'ANAM', b'TSCE', b'ONAM', b'MODQ'}
+        form_fields = {b'TPIC', b'PNAM', b'DNAM', b'GNAM', b'SNAM', b'LNAM', b'SRAF', b'ANAM', b'TSCE', b'ONAM', b'MODQ'}
         special_form_fields = {b'VMAD', b'TRDA', b'CTDA'}
 
         offsets_list = [12]
