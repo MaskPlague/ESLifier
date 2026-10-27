@@ -192,7 +192,7 @@ class CFIDs():
 
     def bsa_temp_extract(self, bsa_file: str, type: str, name:str, startupinfo: subprocess.STARTUPINFO):
         with subprocess.Popen(
-            ["bsarch/bsarch.exe", "unpack", bsa_file, ARCHIVE_EXTRACTED_TEMP_FOLDER, "-f:"+'"'+type + name+'"'],
+            ["bsarch/bsarch.exe", "unpack", bsa_file, ARCHIVE_EXTRACTED_TEMP_FOLDER, f"-f:{type + name}"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             startupinfo=startupinfo,
@@ -235,17 +235,12 @@ class CFIDs():
                 startupinfo = subprocess.STARTUPINFO()
                 startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
                 temp_extraction_threads: list[threading.Thread] = []
-                if GAME_MODE == "SSE":
-                    face_texture_path = "facetint\\"
-                elif GAME_MODE == "FO4":
-                    face_texture_path = "facecustomization\\"
-                path_parts = ("voice\\", face_texture_path, "facegeom\\")
+
                 for archive_file, values in self.archive_dict.items():
                     if name in values:
-                        for part in path_parts:
-                            thread = threading.Thread(target=self.bsa_temp_extract, args=(archive_file, part, name, startupinfo,))
-                            temp_extraction_threads.append(thread)
-                            thread.start()
+                        thread = threading.Thread(target=self.bsa_temp_extract, args=(archive_file, f"temp{GAME_MODE}|", name, startupinfo))
+                        temp_extraction_threads.append(thread)
+                        thread.start()
 
                 rel_paths = set()
                 for file in patch_or_rename:
