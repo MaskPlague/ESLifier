@@ -453,9 +453,9 @@ class CFIDs():
                         renamed_file = new_file[:rindex] + to_id.upper() + new_file[rindex+6:]
                         self.try_replace_rename(new_file, renamed_file)
                         rel_path_renamed_file = rel_path_new_file[:rindex] + to_id.upper() + rel_path_new_file[rindex+6:]
-                        #with self.lock:
-                        self.compacted_and_patched[master_base_name].add(rel_path_new_file)
-                        self.compacted_and_patched[master_base_name].add(rel_path_renamed_file)
+                        with self.lock:
+                            self.compacted_and_patched[master_base_name].add(rel_path_new_file)
+                            self.compacted_and_patched[master_base_name].add(rel_path_renamed_file)
             elif file[-6] == "_" or file[-7] == "_": # Voice
                 index = file.rfind('_') - 6
                 from_id = file[index:index+6]
