@@ -341,8 +341,10 @@ begin
     anyValidDir := False;
     if filter <> '' then
     begin
-      if filter = 'scan' then
+      if filter = 'scanSSE' then
         subStrings := ['seq', 'scripts']
+      else if filter = 'scanFO4' then
+        subStrings := ['scripts']
       else if filter.StartsWith('tempSSE') then
       begin
         var plugin := GetLastPartAfterDelimiter(filter, '|');
@@ -378,8 +380,10 @@ begin
       end;
     end;
 
-    if filter = 'scan' then
-      subStrings := ['.pex', '.seq'];
+    if filter = 'scanSE' then
+      subStrings := ['.pex', '.seq']
+    else if filter = 'scanFO4' then
+      subStrings := ['.pex'];
 
     // if no valid dirs then no need to waste time in extraction loops
     if anyValidDir then begin
