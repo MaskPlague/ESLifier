@@ -28,6 +28,7 @@ uses
   System.SyncObjs,
   System.SysUtils,
   System.Threading,
+  System.StrUtils,
 
   wbBSArchive in 'Core\wbBSArchive.pas',
   wbCommandLine in 'Core\wbCommandLine.pas',
@@ -272,12 +273,38 @@ begin
   end;
 end;
 
+// Functions for ESLifier filtering =====================================
+function HasAnySubstring(const AText: string; const ASubstrings: array of string): Boolean;
+var
+  Sub: string;
+begin
+  Result := False;
+  for Sub in ASubstrings do
+  if AText.Contains(Sub) then
+  begin
+    Exit(True);
+  end;
+end;
+
+function GetLastPartAfterDelimiter(const AText, ADelimiter: string): string;
+var
+  Idx: Integer;
+begin
+  Idx := LastDelimiter(ADelimiter, AText);
+  if Idx > 0 then
+    Result := Copy(AText, Idx + Length(ADelimiter), MaxInt)
+  else
+    Result := AText;
+end;
+
+
 //======================================================================
 procedure DoUnpack;
 var
   bsa: TwbBSArchive;
-  s, bsaname, folder, filter, dirfilter: string;
+  s, bsaname, folder, filter: string;
   anyValidDir: boolean;
+  subStrings: TArray<string>;
 begin
   s := ParamStr(2);
   if (s = '') or CharInSet(s[1], SwitchChars) then
@@ -306,29 +333,54 @@ begin
       bsa.Count.ToString
     ]));
 
-    // pex or seq extraction then we only need the scripts or seq folders
-    // otherwise we only need the directory that fits the filter
-    // I never need to filter by file name or any other extensions
-    if (filter = '.pex') then
-      dirFilter := 'scripts'
-    else if (filter = '.seq') then
-      dirFilter := 'seq'
-    else
-      dirFilter := filter;
-    //WriteLN(Format('dirFilter: "%s", l: %s, Filter: "%s"',[dirFilter, Length(dirFilter).ToString(), filter]));
+    // if filter is "scan" then do pex/seq
+    // if filter is "tempSSE|PLUGINNAME" then do voice/facetint/facegeom
+    // if filter is "tempFO4|PLUGINNAME" then do vocie/facecustomization/facegeom
+
+    // This is ugly but works
     anyValidDir := False;
-    // create folders
-    for var f in bsa do begin
-      var dir := folder + ExtractFilePath(f.Name);
-      var dirLowerFormatted := dir.ToLower().Replace('/', '\');
-      //WriteLN(Format('dirLF: "%s", filt: "%s", cont: %s',[dirLowerFormatted, dirFilter, BoolToStr(dirLowerFormatted.Contains(dirFilter), True)]));
-      if (dirFilter = '') or dirLowerFormatted.Contains(dirFilter) then begin
-        anyValidDir := True;
+    if filter <> '' then
+    begin
+      if filter = 'scan' then
+        subStrings := ['seq', 'scripts']
+      else if filter.StartsWith('tempSSE') then
+      begin
+        var plugin := GetLastPartAfterDelimiter(filter, '|');
+        subStrings := ['sound\voice\' + plugin, 'facetint\' + plugin, 'facegeom\'+plugin];
+      end
+      else if filter.StartsWith('tempFO4') then
+      begin
+        var plugin := GetLastPartAfterDelimiter(filter, '|');
+        subStrings := ['sound\voice\'+plugin, 'facecustomization\'+plugin, 'facegeom\'+plugin];
+      end;
+
+      for var f in bsa do begin
+        var dir := folder + ExtractFilePath(f.Name);
+        var dirLowerFormatted := dir.ToLower();
+        //WriteLN(Format('dirLF: "%s", filt: "%s", cont: %s',[dirLowerFormatted, dirFilter, BoolToStr(dirLowerFormatted.Contains(dirFilter), True)]));
+        if HasAnySubstring(dirLowerFormatted, subStrings) then begin
+          anyValidDir := True;
+          if not DirectoryExists(dir) then
+            if not ForceDirectories(dir) then
+              raise Exception.Create('Can''t create destination folder: ' + dir);
+        end;
+      end;
+    end
+    else
+    begin
+      // create folders
+      anyValidDir := True;
+      for var f in bsa do begin
+        var dir := folder + ExtractFilePath(f.Name);
         if not DirectoryExists(dir) then
           if not ForceDirectories(dir) then
             raise Exception.Create('Can''t create destination folder: ' + dir);
       end;
     end;
+
+    if filter = 'scan' then
+      subStrings := ['.pex', '.seq'];
+
     // if no valid dirs then no need to waste time in extraction loops
     if anyValidDir then begin
       if bsa.MultiThreaded then
@@ -336,9 +388,9 @@ begin
           procedure(i: Integer; LoopState: TParallel.TLoopState)
           begin
             try
-              var nameFormatted := bsa[i].Name.ToLower().Replace('/', '\');
+              var nameFormatted := bsa[i].Name.ToLower();
               //WriteLN(Format('nameFormatted: "%s", filt: %s, cont: %s',[nameFormatted, filter, BoolToStr(nameFormatted.Contains(filter), True)]));
-              if (filter = '') or nameFormatted.Contains(filter) then
+              if (filter = '') or HasAnySubstring(nameFormatted, subStrings) then
                 bsa.Unpack(bsa[i].Name, folder + bsa[i].Name);
               ShowProgress(bsa.Count);
             except
@@ -351,8 +403,8 @@ begin
         )
       else
         for var i := 0 to Pred(bsa.Count) do try
-          var nameFormatted := bsa[i].Name.ToLower().Replace('/', '\');
-          if (filter = '') or nameFormatted.Contains(filter) then
+          var nameFormatted := bsa[i].Name.ToLower();
+          if (filter = '') or HasAnySubstring(nameFormatted, subStrings) then
             bsa.Unpack(bsa[i].Name, folder + bsa[i].Name);
           ShowProgress(bsa.Count);
         except
