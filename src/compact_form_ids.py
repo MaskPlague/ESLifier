@@ -707,6 +707,8 @@ class CFIDs():
     
     #Compacts master file and returns the new mod folder
     def compact_file(self, file: str, all_dependents_have_game_esm_as_master: bool):
+        is_sse_mode = GAME_MODE == "SSE"
+        is_fo4_mode = GAME_MODE == "FO4"
         basename = os.path.basename(file)
         form_id_file_name = FORM_ID_MAPS_FOLDER + basename.lower() + "_FormIdMap.txt"
         if not os.path.exists(os.path.dirname(form_id_file_name)):
@@ -717,13 +719,23 @@ class CFIDs():
         #Set ESL flag, update to header 1.71 for new Form IDs, and get data from mod plugin
         #TODO: Update for FO4, either not update the header at all or change header number to FO4 number
         data = b''
+        upgradable_header_version = is_sse_mode
         with open(new_file, 'rb+') as f:
             f.seek(9)
             f.write(b'\x02')
             if self.update_header:
-                f.seek(0)
-                f.seek(30)
-                f.write(b'\x48\xE1\xDA\x3F')
+                f.seek(30, 0)
+                if GAME_MODE == "SSE":
+                    f.write(b'\x48\xE1\xDA\x3F')
+                elif GAME_MODE == "FO4":
+                    version = f.read(4)
+                    version_float = round(struct.unpack("<f", version)[0], 2)
+                    is_1_0 = version_float == 1.0
+                    upgradable = version_float == 0.95
+                    if (is_1_0 or upgradable):
+                        upgradable_header_version = True
+                        f.seek(30, 0)
+                        f.write(b'\x00\x00\x80\x3F')
             f.seek(0)
             data = f.read()
 
@@ -754,7 +766,8 @@ class CFIDs():
 
         all_form_ids_list = set([form_id for form_id, record_type in form_id_list])
 
-        if self.update_header and master_count != 0 and has_game_esm_master and all_dependents_have_game_esm_as_master:
+        valid_for_expanded_range = master_count != 0 and has_game_esm_master and all_dependents_have_game_esm_as_master and upgradable_header_version
+        if (self.update_header and valid_for_expanded_range):
             new_id = binascii.unhexlify(master_count.to_bytes().hex() + '000001') #breaking change, from 0 to 1
             new_range = 4095
         else:
@@ -927,7 +940,10 @@ class CFIDs():
                 if self.update_header:
                     dependent_file.seek(0)
                     dependent_file.seek(30)
-                    dependent_file.write(b'\x48\xE1\xDA\x3F')
+                    if GAME_MODE == "SSE":
+                        dependent_file.write(b'\x48\xE1\xDA\x3F')
+                    elif GAME_MODE == "FO4":
+                        dependent_file.write(b'\x00\x00\x80\x3F')
                     dependent_file.seek(0)
 
                 dependent_data = dependent_file.read()
