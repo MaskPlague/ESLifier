@@ -358,9 +358,7 @@ begin
 
       for var f in bsa do begin
         var dir := folder + ExtractFilePath(f.Name);
-        var dirLowerFormatted := dir.ToLower();
-        //WriteLN(Format('dirLF: "%s", filt: "%s", cont: %s',[dirLowerFormatted, dirFilter, BoolToStr(dirLowerFormatted.Contains(dirFilter), True)]));
-        if HasAnySubstring(dirLowerFormatted, subStrings) then begin
+        if HasAnySubstring(dir.ToLower(), subStrings) then begin
           anyValidDir := True;
           if not DirectoryExists(dir) then
             if not ForceDirectories(dir) then
@@ -380,7 +378,7 @@ begin
       end;
     end;
 
-    if filter = 'scanSE' then
+    if filter = 'scanSSE' then
       subStrings := ['.pex', '.seq']
     else if filter = 'scanFO4' then
       subStrings := ['.pex'];
@@ -392,9 +390,7 @@ begin
           procedure(i: Integer; LoopState: TParallel.TLoopState)
           begin
             try
-              var nameFormatted := bsa[i].Name.ToLower();
-              //WriteLN(Format('nameFormatted: "%s", filt: %s, cont: %s',[nameFormatted, filter, BoolToStr(nameFormatted.Contains(filter), True)]));
-              if (filter = '') or HasAnySubstring(nameFormatted, subStrings) then
+              if (filter = '') or HasAnySubstring(bsa[i].Name.ToLower(), subStrings) then
                 bsa.Unpack(bsa[i].Name, folder + bsa[i].Name);
               ShowProgress(bsa.Count);
             except
@@ -407,8 +403,7 @@ begin
         )
       else
         for var i := 0 to Pred(bsa.Count) do try
-          var nameFormatted := bsa[i].Name.ToLower();
-          if (filter = '') or HasAnySubstring(nameFormatted, subStrings) then
+          if (filter = '') or HasAnySubstring(bsa[i].Name.ToLower(), subStrings) then
             bsa.Unpack(bsa[i].Name, folder + bsa[i].Name);
           ShowProgress(bsa.Count);
         except
