@@ -421,6 +421,7 @@ class CFIDs():
                         "\n-    "+ QCoreApplication.translate("CFIDs", "Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
 
         get_rel_path = _global.get_rel_path
+        is_fo4_mode = GAME_MODE == "FO4"
         for file in files:
             if self.file_count > 20:
                 self.count += 1
@@ -433,7 +434,7 @@ class CFIDs():
             
             rel_path = get_rel_path(file)
             file_lower = file.lower()
-            if 'facegendata' in file_lower: # Meshes
+            if 'facegendata' in file_lower: # Meshes/textures
                 from_id = file[-10:-4]
                 to_id = self.form_id_map.get(from_id.lower(), None)
                 if to_id is not None:
@@ -447,6 +448,20 @@ class CFIDs():
                             self.compacted_and_patched[master_base_name].add(rel_path_renamed_file)
                         if 'facegeom' in new_file.lower() and master_base_name.lower() in new_file.lower():
                             facegeom_meshes.append(renamed_file)
+            elif is_fo4_mode and 'facecustomization' in file_lower:
+                index = file.rfind('_',-8)
+                if index != -1:
+                    rindex = index - len(file) - 6
+                    from_id = file[rindex:rindex+6]
+                    to_id = self.form_id_map.get(from_id.lower(), None)
+                    if to_id is not None:
+                        new_file, rel_path_new_file = self.copy_file_to_output(file)
+                        renamed_file = new_file[:rindex] + to_id.upper() + new_file[rindex+6:]
+                        self.try_replace_rename(new_file, renamed_file)
+                        rel_path_renamed_file = rel_path_new_file[:rindex] + to_id.upper() + rel_path_new_file[rindex+6:]
+                        #with self.lock:
+                        self.compacted_and_patched[master_base_name].add(rel_path_new_file)
+                        self.compacted_and_patched[master_base_name].add(rel_path_renamed_file)
             elif file[-6] == "_" or file[-7] == "_": # Voice
                 index = file.rfind('_') - 6
                 from_id = file[index:index+6]
