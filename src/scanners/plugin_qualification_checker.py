@@ -32,10 +32,11 @@ class qualification_checker():
         if not os.path.exists(CELL_IDS_FOLDER):
             os.makedirs(CELL_IDS_FOLDER)
         update_header = _global.update_header
-        if update_header:
-            qualification_checker.num_max_records = 4096
-        else:
-            qualification_checker.num_max_records = 2048
+        write_to_file(f"{update_header = }")
+        #if update_header:
+        #    qualification_checker.num_max_records = 4096
+        #else:
+        #    qualification_checker.num_max_records = 2048
 
         if len(plugins) > 1000:
             split = 5
@@ -161,6 +162,8 @@ class qualification_checker():
 
     def file_reader(file: str, update_header: bool, is_esm: bool) -> tuple[bool, bool, bool, bool, bool, bool, bool]:
         data_list = []
+        is_sse_mode = GAME_MODE == "SSE"
+        is_fo4_mode = GAME_MODE == "FO4"
         basename = os.path.basename(file)
         try:
             with open(file, 'rb') as f:
@@ -174,22 +177,53 @@ class qualification_checker():
             write_error(e, True) 
             return (False, 'read fail')
 
-        master_count, has_game_esm_master = qualification_checker.get_master_count(data_list)
-
+        master_count, has_game_esm_master = qualification_checker.get_master_count(data_list, is_sse_mode, is_fo4_mode)
         if update_header:
             dependents = set(qualification_checker.dependent_dict[basename.lower()])
             all_dependents_have_game_esm_as_master = True
             for plugin_without_game_esm_as_master, master_0 in qualification_checker.missing_game_esm_as_master.items():
-                if plugin_without_game_esm_as_master in dependents and basename == master_0:
+                # unfortunately I don't remember the logic for checking if basename == master_0
+                # best guess is if master[0] is this mod and we ESL the mod without the game esm,
+                # then the dependent looks in the game esm for the wrong record instead of this mod
+                # seems like an engine bug
+               if plugin_without_game_esm_as_master in dependents and basename == master_0:
                     all_dependents_have_game_esm_as_master = False
                     break
         else:
             all_dependents_have_game_esm_as_master = True
+        possible_max = 2048
+        possible_max_reason = 'header update disabled, so the expanded range (<0x800) is not available'
+        if is_fo4_mode:
+            version = data_list[0][30:34]
+            version_float = round(struct.unpack("<f", version)[0], 2)
+            is_1_0 = version_float == 1.0                   # Able to use 0x000-0x7FF
+            upgradable = version_float == 0.95              # Not able to use <0x800 but can upgrade to 1.0 which can
+            if (is_1_0 or upgradable) and update_header:    # if is 1.0 or upgradable and using <0x800 is allowed
+                possible_max = 4096 
+                possible_max_reason = (f'FO4 header version {version_float} '
+                                       f'({"1.0, supports <0x800" if is_1_0 else "0.95, upgradable to 1.0"})')
+            elif update_header:
+                possible_max_reason = (f'FO4 header version {version_float} is neither 1.0 nor 0.95, '
+                                       'so the expanded range cannot be used')
+        elif is_sse_mode and update_header:
+            possible_max = 4096
+            possible_max_reason = 'SSE with header update enabled (expanded range supported)'
 
-        if master_count == 0 or not has_game_esm_master or not all_dependents_have_game_esm_as_master:
+        #not_valid_for_expanded_range = master_count == 0 or not has_game_esm_master or not all_dependents_have_game_esm_as_master
+        limiters = []
+        if master_count == 0:
+            limiters.append('plugin has no masters')
+        if not has_game_esm_master:
+            limiters.append('plugin does not have the game esm as a master')
+        if not all_dependents_have_game_esm_as_master:
+            limiters.append('not all dependent plugins have the game esm as a master')
+
+        if limiters:
+            limit_reason = '2048 limit because ' + '; '.join(limiters)
             num_max_records = 2048
         else:
-            num_max_records = qualification_checker.num_max_records
+            num_max_records = possible_max #qualification_checker.num_max_records
+            limit_reason = f'{possible_max} limit: {possible_max_reason}'
         count = 0
         new_cell = False
         interior_cell_flag = False
@@ -199,14 +233,14 @@ class qualification_checker():
         previs_precombines = False
         #edids = []
         cell_form_ids = []
-        is_sse_mode = GAME_MODE == "SSE"
-        is_fo4_mode = GAME_MODE == "FO4"
         for form in data_list:
             record_type = form[:4]
             if record_type not in (b'GRUP', b'TES4') and form[15] >= master_count:
                 count += 1
                 if count > num_max_records:
-                    return (False, 'possible_adhseam_problem' if not all_dependents_have_game_esm_as_master and update_header else 'max record count exceeded')
+                    return (False, 
+                            f'max record count of {num_max_records} exceeded '
+                            f'({limit_reason})')
                 if int.from_bytes(form[12:15][::-1]) > qualification_checker.max_record_number:
                     need_compacting = True
                 if record_type == b'CELL':
@@ -296,7 +330,7 @@ class qualification_checker():
             data = []
         return data
     
-    def get_master_count(data_list: list) -> tuple[int, bool]:
+    def get_master_count(data_list: list, is_sse_mode:bool, is_fo4_mode:bool) -> tuple[int, bool]:
         tes4 = data_list[0]
         offset = 24
         data_len = len(tes4)
@@ -308,8 +342,11 @@ class qualification_checker():
             field_size = struct.unpack("<H", tes4[offset+4:offset+6])[0]
             if field == b'MAST':
                 master_count += 1
-                if field_size == 11:
+                if is_sse_mode and field_size == 11:
                     if tes4[offset+6:offset+16] == game_esm:
+                        has_game_esm_master = True
+                elif is_fo4_mode and field_size == 13:
+                    if tes4[offset+6:offset+18] == game_esm:
                         has_game_esm_master = True
             offset += field_size + 6
 
