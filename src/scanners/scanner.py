@@ -198,9 +198,9 @@ class scanner():
             text=True
             ) as p:
                 for line in p.stdout:
-                    if line.startswith('Unpacking error'):
+                    if line.startswith('Error'):
                         write_remove(1, line, True)
-                        raise Exception("Occured during unpacking via modified BSArch.exe")
+                        raise Exception(f"For file {file}, and error occured during unpacking via modified BSArch.exe")
                     if timeit.default_timer() - last > update_time:
                         last = timeit.default_timer()
                         write_remove(1, extracting_str + line)
