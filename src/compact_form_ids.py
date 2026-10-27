@@ -1020,14 +1020,19 @@ class CFIDs():
         data_len = len(tes4)
         master_list_count = 0
         has_game_esm_master = False
-        game_esm = f'{GAME_ESM_NAME}'.encode()
+        game_esm = GAME_ESM_NAME.encode()
+        is_sse_mode = GAME_MODE == "SSE"
+        is_fo4_mode = GAME_MODE == "FO4"
         while offset < data_len:
             field = tes4[offset:offset+4]
             field_size = struct.unpack("<H", tes4[offset+4:offset+6])[0]
             if field == b'MAST':
                 master_list_count  += 1
-                if field_size == 11:
+                if is_sse_mode and field_size == 11:
                     if tes4[offset+6:offset+16] == game_esm:
+                        has_game_esm_master = True
+                elif is_fo4_mode and field_size == 13:
+                    if tes4[offset+6:offset+18] == game_esm:
                         has_game_esm_master = True
             offset += field_size + 6
         return master_list_count, has_game_esm_master
