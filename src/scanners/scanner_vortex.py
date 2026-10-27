@@ -346,7 +346,7 @@ class Vortex():
                     rel_root = root[mod_path_len:].lstrip(os_sep)
 
                     file_count += len(files)
-                    if loop == 50: #prevent spamming stdout and slowing down the program
+                    if loop == 50: #prevent spamming logger and slowing down the program
                         loop = 0
                         write_remove(1, gathered_str + str(file_count))
                     else:
