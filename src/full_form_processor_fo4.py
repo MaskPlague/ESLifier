@@ -666,7 +666,7 @@ class form_processor():
         return [i, bytearray(form), offsets_list]
 
     def save_cont_data(i, form):
-        form_fields = {b'PTRN', b'MODS', b'CNTO', b'COED', b'DMDS', b'FTYP', b'NTRM',b'SNAM', b'QNAM', b'TNAM', b'ONAM'}
+        form_fields = {b'PTRN', b'MODS', b'CNTO', b'COED', b'DMDS', b'FTYP', b'NTRM', b'SNAM', b'QNAM', b'TNAM', b'ONAM'}
         special_form_fields = {b'VMAD', b'DAMC', b'DSTD', b'KWDA', b'PRPS'}
 
         offsets_list = [12]
@@ -1928,7 +1928,7 @@ class form_processor():
 
     def save_proj_data(i, form):
         form_fields = {b'MODS',  b'DMDS'}
-        special_form_fields = {b'DAMC',b'DSTD', b'DNAM'}
+        special_form_fields = {b'DAMC', b'DSTD', b'DNAM'}
 
         offsets_list = [12]
         offset = 24
