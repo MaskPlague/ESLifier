@@ -184,14 +184,10 @@ class scanner():
     def extract_archive(file: str, startupinfo: subprocess.STARTUPINFO, update_time: float, filter: str):
         last = 0
         extracting_str = "-  " + QCoreApplication.translate("scanner", "Extracting: ")
-        #why is new version so slow?
         #looks like "-mt:no" is necessary or some funky threading stuff happens that significantly slows down the new exe for this
-        #new
-        test = ["bsarch/bsarch.exe", "unpack", file, ARCHIVE_EXTRACTED_FOLDER, "-f:"+filter, "-mt:no"]
-        #old
-        #test = ["bsarch/bsarchold.exe", "unpack", file, ARCHIVE_EXTRACTED_FOLDER, filter]
+        #disabling it for now though since I have imposed a limit in the EXE
         with subprocess.Popen(
-            test,
+            ["bsarch/bsarch.exe", "unpack", file, ARCHIVE_EXTRACTED_FOLDER, f"-f:{filter}"],#, "-mt:no"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             startupinfo=startupinfo,
