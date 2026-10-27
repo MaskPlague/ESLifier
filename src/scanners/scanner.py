@@ -204,7 +204,7 @@ class scanner():
                     if timeit.default_timer() - last > update_time:
                         last = timeit.default_timer()
                         write_remove(1, extracting_str + line)
-
+    @staticmethod
     def extract_scripts_and_seq_from_game_archive(archive_list, plugins_list):
         order_map = {plugin: index for index, plugin in enumerate(plugins_list)}
         filtered_archive_list = [item for item in archive_list if item[0] in order_map]
