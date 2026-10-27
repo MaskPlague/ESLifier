@@ -511,10 +511,10 @@ class CFIDs():
         for form_id_history in form_id_file_data:
             form_id_conversion = form_id_history.split('|')
 
-            from_id_hex = bytes.fromhex(form_id_conversion[0])[:3][::-1].hex().upper()
+            from_id_hex = bytes.fromhex(form_id_conversion[0])[:3][::-1].hex()
             from_id_int = int.from_bytes(bytes.fromhex(form_id_conversion[0])[:3], byteorder='little')
             from_id_bytes = bytes.fromhex(form_id_conversion[0])
-            from_id_hex_bytes_lower = from_id_hex.lower().encode() 
+            from_id_hex_bytes_lower = from_id_hex.encode() 
 
             to_id_hex = bytes.fromhex(form_id_conversion[1])[:3][::-1].hex().upper()
             to_id_int = int.from_bytes(bytes.fromhex(form_id_conversion[1])[:3], byteorder='little')
@@ -538,7 +538,7 @@ class CFIDs():
                                                 }
             
             self.form_id_map[from_id_bytes] = to_id_bytes
-            self.form_id_map[from_id_hex.lower()] = to_id_hex.lower()
+            self.form_id_map[from_id_hex] = to_id_hex.lower()
             self.form_id_map[from_id_hex_bytes_lower] = to_id_hex_bytes_upper
 
     def patch_files_threader(self, master: str, files: list[str]):
