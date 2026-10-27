@@ -1718,7 +1718,7 @@ class form_processor():
                        b'ATKW', b'ATKS', b'SPOR', b'OCOR', b'GWOR', b'ECOR', b'FCPL', b'RCLR', b'PRKR', b'FTYP', b'NTRM', b'CNTO', b'COED', b'PKID', 
                        b'CNAM', b'PNAM', b'HCLF', b'BCLF', b'ZNAM', b'GNAM', b'CS2K', b'CS2D', b'CSCR', b'PFRN', b'DOFT', b'SOFT', b'DPLT', b'CRIF', 
                        b'FTST'}
-        special_form_fields = {b'VMAD', b'DAMC', b'DSTD', b'ATKD', b'PRPS', b'KWDA', b'APPR', b'OBTS'}       
+        special_form_fields = {b'VMAD', b'TPTA', b'DAMC', b'DSTD', b'ATKD', b'PRPS', b'KWDA', b'APPR', b'OBTS'}       
 
         offsets_list = [12]
         offset = 24
@@ -1735,7 +1735,7 @@ class form_processor():
                     offsets_list.extend(form_processor.get_dstd_offsets(offset))
                 elif field == b'ATKD':
                     offsets_list.append(offset + 14)    # Attack Spell 6 + 4 + 4
-                elif field in (b'KWDA', b'APPR'):
+                elif field in (b'KWDA', b'APPR', b'TPTA'):
                     offsets_list.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'OBTS':
                     offsets_list.extend(form_processor.obts_reader(form, offset))
