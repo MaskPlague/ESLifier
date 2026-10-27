@@ -704,6 +704,7 @@ class scanner():
                             folder_path = mm[location+1:location+folder_length].decode(errors='ignore')
 
                             if '.es' in folder_path:
+                                folder_path = folder_path.replace('/', '\\')
                                 if 'sound\\voice\\' in folder_path:
                                     # Reminder if I ever get the urge to optimize this again:
                                     # I have to do it this way because there is a case where folder_path does not have a trailing separator
@@ -780,6 +781,7 @@ class scanner():
                             name_length = struct.unpack('<H', mm[offset:offset+2])[0]
                             name = mm[offset+2:offset+2+name_length].decode(errors='ignore').lower() #need to .lower() since BA2 can contain capitalization
                             if '.es' in name:
+                                name = name.replace('/', '\\')
                                 if 'sound\\voice\\' in name:
                                     # 12 == len('sound\\voice\\'), len('\\') is 1
                                     end_pos = name.find(os_sep, 12)
