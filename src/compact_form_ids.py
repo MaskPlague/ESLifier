@@ -728,8 +728,7 @@ class CFIDs():
 
         new_file, _ = self.copy_file_to_output(file)
 
-        #Set ESL flag, update to header 1.71 for new Form IDs, and get data from mod plugin
-        #TODO: Update for FO4, either not update the header at all or change header number to FO4 number
+        #Set ESL flag, update header version (1.71 for SSE and 1.0 for FO4) for new Form IDs, and get data from mod plugin
         data = b''
         upgradable_header_version = is_sse_mode
         with open(new_file, 'rb+') as f:
