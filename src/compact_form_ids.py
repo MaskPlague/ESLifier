@@ -261,10 +261,10 @@ class CFIDs():
                     for file in files:
                         full_path = os.path.normpath(os.path.join(root, file))
                         rel_path = os.path.relpath(full_path, archive_extracted_temp).lower()
-                        if rel_path not in rel_paths and file.endswith(('.nif', '.dds', '.fuz', '.xwm', '.wav', '.lip')):
+                        if rel_path not in rel_paths and rel_path.endswith(('.nif', '.dds', '.fuz', '.xwm', '.wav', '.lip')):
                             patch_or_rename.append(full_path)
                             rel_paths.add(rel_path)
-            
+
             to_patch, to_rename = self.sort_files_to_patch_or_rename(file_to_compact, patch_or_rename) #function to get files that need to be edited in some way to function correctly.
             if len(to_patch) > 0:
                 write_normal("-  " + QCoreApplication.translate("CFIDs", "Patching %1 Dependent Files...").replace("%1", str(len(to_patch))))
