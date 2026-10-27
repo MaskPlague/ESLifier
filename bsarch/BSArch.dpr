@@ -29,6 +29,7 @@ uses
   System.SysUtils,
   System.Threading,
   System.StrUtils,
+  System.Generics.Collections,
 
   wbBSArchive in 'Core\wbBSArchive.pas',
   wbCommandLine in 'Core\wbCommandLine.pas',
@@ -302,9 +303,10 @@ end;
 procedure DoUnpack;
 var
   bsa: TwbBSArchive;
-  s, bsaname, folder, filter: string;
-  anyValidDir: boolean;
-  subStrings: TArray<string>;
+  s, bsaname, folder, filter, lastDir: string;
+  i: integer;
+  subStrings, exts: TArray<string>;
+  matches: TList<Integer>;
 begin
   s := ParamStr(2);
   if (s = '') or CharInSet(s[1], SwitchChars) then
@@ -323,6 +325,7 @@ begin
   if wbFindCmdLineParam('f', s) and (s <> '') then
       filter := s;
   bsa := TwbBSArchive.Create;
+  matches := TList<Integer>.Create;
   try
     bsa.LoadFromFile(bsaname);
     bsa.MultiThreaded := not (wbFindCmdLineParam('mt', s) and SameText(s, 'no'));
@@ -338,13 +341,18 @@ begin
     // if filter is "tempFO4|PLUGINNAME" then do vocie/facecustomization/facegeom
 
     // This is ugly but works
-    anyValidDir := False;
     if filter <> '' then
     begin
       if filter = 'scanSSE' then
-        subStrings := ['seq', 'scripts']
+      begin
+        subStrings := ['seq\', 'scripts\'];
+        exts := ['.seq', '.pex']
+      end
       else if filter = 'scanFO4' then
-        subStrings := ['scripts']
+      begin
+        subStrings := ['scripts\'];
+        exts := ['.pex']
+      end
       else if filter.StartsWith('tempSSE') then
       begin
         var plugin := GetLastPartAfterDelimiter(filter, '|');
@@ -356,20 +364,35 @@ begin
         subStrings := ['sound\voice\'+plugin, 'facecustomization\'+plugin, 'facegeom\'+plugin];
       end;
 
-      for var f in bsa do begin
-        var dir := folder + ExtractFilePath(f.Name);
-        if HasAnySubstring(dir.ToLower(), subStrings) then begin
-          anyValidDir := True;
-          if not DirectoryExists(dir) then
+      // pre-pass
+      for i := 0 to Pred(bsa.Count) do
+      begin
+        var nameLower := LowerCase(bsa[i].Name);
+        if HasAnySubstring(nameLower, subStrings)
+          and ((Length(exts) = 0) or HasAnySubstring(nameLower, exts)) then
+          matches.Add(i);
+      end;
+
+      // if no valid matches/directories then we don't need to continue
+      if matches.Count = 0 then Exit;
+
+      lastDir := '';
+      for i in matches do   //create only directories that passed
+      begin
+        var dir := folder + ExtractFilePath(bsa[i].Name);
+        if HasAnySubstring(dir.ToLower(), subStrings) then
+          if ((dir <> lastDir)) then begin
+            lastDir := dir;
             if not ForceDirectories(dir) then
               raise Exception.Create('Can''t create destination folder: ' + dir);
-        end;
+          end;
       end;
     end
     else
     begin
+      for i := 0 to Pred(bsa.Count) do
+        matches.add(i);
       // create folders
-      anyValidDir := True;
       for var f in bsa do begin
         var dir := folder + ExtractFilePath(f.Name);
         if not DirectoryExists(dir) then
@@ -382,46 +405,47 @@ begin
       subStrings := ['.pex', '.seq']
     else if filter = 'scanFO4' then
       subStrings := ['.pex'];
-
-    // if no valid dirs then no need to waste time in extraction loops
-    if anyValidDir then begin
-      if bsa.MultiThreaded then
-        TParallel.For(0, Pred(bsa.Count),
-          procedure(i: Integer; LoopState: TParallel.TLoopState)
-          begin
-            try
-              if (filter = '') or HasAnySubstring(bsa[i].Name.ToLower(), subStrings) then
-                bsa.Unpack(bsa[i].Name, folder + bsa[i].Name);
-              ShowProgress(bsa.Count);
-            except
-              on E: Exception do begin
-                SetError(Format('Error processing "%s": %s', [bsa[i].Name, E.Message]));
-                LoopState.Stop;
-              end;
+    WriteLN(Format('%s/%s', [matches.Count.ToString, bsa.Count.ToString]));
+    // Limitting this to max of 512 as counts over 1k cause multithreading to slow extraction
+    // 512 is arbitraryish
+    if bsa.MultiThreaded and (matches.Count < 512) then begin
+      TParallel.For(0, Pred(matches.Count),
+        procedure(i: Integer; LoopState: TParallel.TLoopState)
+        begin
+          try
+            bsa.Unpack(bsa[matches[i]].Name, folder + bsa[matches[i]].Name);
+            ShowProgress(matches.Count);
+          except
+            on E: Exception do begin
+              SetError(Format('Error processing "%s": %s', [bsa[matches[i]].Name, E.Message]));
+              LoopState.Stop;
             end;
-          end
-        )
-      else
-        for var i := 0 to Pred(bsa.Count) do try
-          if (filter = '') or HasAnySubstring(bsa[i].Name.ToLower(), subStrings) then
-            bsa.Unpack(bsa[i].Name, folder + bsa[i].Name);
-          ShowProgress(bsa.Count);
-        except
-          on E: Exception do begin
-            SetError(Format('Error processing "%s": %s', [bsa[i].Name, E.Message]));
-            Break;
           end;
+        end
+      )
+    end
+    else
+    begin
+      for i := 0 to Pred(matches.Count) do try
+        bsa.Unpack(bsa[matches[i]].Name, folder + bsa[matches[i]].Name);
+        ShowProgress(matches.Count);
+      except
+        on E: Exception do begin
+          SetError(Format('Error processing "%s": %s', [bsa[matches[i]].Name, E.Message]));
+          Break;
         end;
-      sw.Stop;
-      WriteLn;
-      if ProcessedError <> '' then begin
-        WriteLn(ProcessedError);
-        System.ExitCode := 1;
-      end else
-        WriteLn('Done in ', sw.Elapsed.ToString, '.');
+      end;
     end;
+    sw.Stop;
+    WriteLn;
+    if ProcessedError <> '' then begin
+      WriteLn(ProcessedError);
+      System.ExitCode := 1;
+    end else
+      WriteLn('Done in ', sw.Elapsed.ToString, '.');
   finally
     bsa.Free;
+    matches.Free;
   end;
 end;
 
