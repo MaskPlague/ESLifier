@@ -403,7 +403,7 @@ class TestPatchFiles:
         self.patcher(monkeypatch, cf, fail={"utf-8": UnicodeDecodeError("utf-8", b"\xff", 0, 1, "bad")})
         src = put(env.data / "a.ini", b"\xff")
         cf.patch_files("Mod.esp", [src])
-        assert [c[3] for c in cf.calls] == ["utf-8", "ansi"]
+        assert [c[3] for c in cf.calls] == ["utf-8", "cp1252"]
         assert "a.ini" in cf.compacted_and_patched["Mod.esp"]
 
     def test_failures_are_logged_and_the_file_is_still_registered(self, env, cf, monkeypatch, log):
@@ -502,20 +502,16 @@ class TestCompactAndPatch:
         extracted = []
 
         def fake_extract(bsa, part, name, startupinfo):
-            extracted.append((os.path.basename(bsa), part, name))
-            if part == "\\facetint\\":
-                put(temp / "textures/actors/character/facegendata/facetint/master.esp/00012345.dds")
-            elif part == "\\voice\\":
-                put(temp / "sound/voice/master.esp/npc/x_00012345_1.fuz")
-                put(temp / "sound/voice/master.esp/npc/notes.txt")        # not a game asset: ignored
+            extracted.append((os.path.basename(bsa), part, name))      # one bsarch call per archive; it applies the facetint/facegeom/voice filters itself
+            put(temp / "textures/actors/character/facegendata/facetint/master.esp/00012345.dds")
+            put(temp / "sound/voice/master.esp/npc/x_00012345_1.fuz")
+            put(temp / "sound/voice/master.esp/npc/notes.txt")        # not a game asset: ignored
 
         cf.bsa_temp_extract = fake_extract
         existing = put(env.data / "scripts" / "a.pex")
         cf.compact_and_patch(master, [], True, False, {"master.esp": [existing]})
-        assert sorted(extracted) == sorted([
-            ("Master - Textures.bsa", "\\facetint\\", "master.esp"),
-            ("Master.bsa", "\\voice\\", "master.esp"), ("Master.bsa", "\\facetint\\", "master.esp"),
-            ("Master.bsa", "\\facegeom\\", "master.esp")])
+        assert sorted(extracted) == [("Master - Textures.bsa", "tempSSE|", "master.esp"),
+                                      ("Master.bsa", "tempSSE|", "master.esp")]
         assert cf.routed["patch"] == [existing]
         names = sorted(os.path.basename(f) for f in cf.routed["rename"])
         assert names == ["00012345.dds", "x_00012345_1.fuz"]

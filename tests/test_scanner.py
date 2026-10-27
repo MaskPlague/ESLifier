@@ -210,7 +210,7 @@ def test_extract_archive_runs_bsarch_with_the_filter(sc, monkeypatch):
 
 
 def test_extract_archive_raises_when_bsarch_reports_an_unpacking_error(sc, monkeypatch):
-    monkeypatch.setattr(scanner_module.subprocess, "Popen", lambda cmd, **k: FakePopen(["Unpacking error: boom\n"]))
+    monkeypatch.setattr(scanner_module.subprocess, "Popen", lambda cmd, **k: FakePopen(["Error: boom\n"]))
     with pytest.raises(Exception, match="BSArch"):
         S.extract_archive("C:\\x.bsa", None, 0.1, ".pex")
 
@@ -232,8 +232,7 @@ def test_extraction_only_for_active_plugins_in_load_order_and_pex_then_seq(sc, e
     bsa_list = [["beta", "C:\\beta.bsa"], ["inactive", "C:\\inactive.bsa"], ["alpha", "C:\\alpha.bsa"]]
     S.extract_scripts_and_seq_from_game_archive(bsa_list, ["alpha", "beta"])
     assert sc.archive_files == ["C:\\alpha.bsa", "C:\\beta.bsa"]
-    assert extraction == [("C:\\alpha.bsa", ".pex"), ("C:\\alpha.bsa", ".seq"),
-                          ("C:\\beta.bsa", ".pex"), ("C:\\beta.bsa", ".seq")]
+    assert extraction == [("C:\\alpha.bsa", "scanSSE"), ("C:\\beta.bsa", "scanSSE")]
     assert sc.extracted == {"C:\\alpha.bsa", "C:\\beta.bsa"}
 
 

@@ -50,19 +50,19 @@ class TestParsing:
 
     def test_get_master_count(self):
         data = plugin((SKYRIM, "Update.esm", "Mod.esp"))
-        assert qc.get_master_count(qc.create_data_list(data)) == (3, True)
+        assert qc.get_master_count(qc.create_data_list(data), True, False) == (3, True)
 
     def test_get_master_count_without_skyrim(self):
         data = plugin(("Other.esp",))
-        assert qc.get_master_count(qc.create_data_list(data)) == (1, False)
+        assert qc.get_master_count(qc.create_data_list(data), True, False) == (1, False)
 
     def test_get_master_count_no_masters(self):
         data = plugin(())
-        assert qc.get_master_count(qc.create_data_list(data)) == (0, False)
+        assert qc.get_master_count(qc.create_data_list(data), True, False) == (0, False)
 
     def test_skyrim_master_detection_is_case_sensitive_on_exact_bytes(self):
         data = plugin(("skyrim.esm",))
-        assert qc.get_master_count(qc.create_data_list(data)) == (1, False)
+        assert qc.get_master_count(qc.create_data_list(data), True, False) == (1, False)
 
     def test_get_from_file_missing_returns_empty_list(self, tmp_path):
         assert qc.get_from_file(str(tmp_path / "nope.json")) == []
@@ -109,14 +109,16 @@ class TestFileReader:
     def test_too_many_new_records_rejected(self, reader_env):
         body = simple_records(1, range(0x800, 0x800 + 4097))
         f = make_plugin(reader_env, "big.esp", body=body)
-        assert self.read(f) == (False, "max record count exceeded")
+        ok, why = self.read(f)
+        assert ok is False and why.startswith("max record count of 2048 exceeded")
 
     def test_rejection_caused_by_a_dependent_without_game_master_is_reported_as_adhseam(self, reader_env):
         body = simple_records(1, range(0x800, 0x800 + 2049))
         f = make_plugin(reader_env, "base.esp", body=body)
         qc.dependent_dict = {"base.esp": ["child.esp"]}
         qc.missing_game_esm_as_master = {"child.esp": "base.esp"}
-        assert self.read(f, update_header=True) == (False, "possible_adhseam_problem")
+        ok, why = self.read(f, update_header=True)
+        assert ok is False and "not all dependent plugins have the game esm as a master" in why
 
     def test_exactly_4096_new_records_with_header_update_qualifies(self, reader_env):
         body = simple_records(1, range(0x800, 0x800 + 4096))
@@ -230,7 +232,7 @@ class TestScan:
         assert result[small] == ["esl_flaggable"]    # new in current main: plugins that already qualify are flagged
         assert result[compact] == ["need_compacting"]
         assert set(result[cell]) == {"esl_flaggable", "new_cell", "new_interior_cell"}
-        assert result[big] == ["max record count exceeded"]     # rejected plugins are now listed with their reason
+        assert len(result[big]) == 1 and result[big][0].startswith("max record count of 4096 exceeded")     # rejected plugins are now listed with their reason
         assert already not in result   # already ESL flagged
         assert esl_ext not in result   # .esl files are skipped entirely
         on_disk = json.loads((workdir / "ESLifier_Data" / "flag_dictionary.json").read_text())
@@ -270,12 +272,14 @@ class TestScan:
         self.setup_scan(workdir, g, [p],
                         dependents={"base.esp": ["child.esp"]},
                         missing_skyrim={"child.esp": "base.esp"})
-        assert qc.scan()[p] == ["possible_adhseam_problem"]
+        [why] = qc.scan()[p]
+        assert why.startswith("max record count of 2048 exceeded") and "not all dependent plugins have the game esm as a master" in why
 
     def test_scan_without_header_update_uses_2048_limit(self, workdir, g):
         p = make_plugin(workdir, "mid.esp", body=simple_records(1, range(0x800, 0x800 + 2049)))
         self.setup_scan(workdir, g, [p], update_header=False)
-        assert qc.scan()[p] == ["max record count exceeded"]
+        [why] = qc.scan()[p]
+        assert why.startswith("max record count of 2048 exceeded") and "header update disabled" in why
 
     def test_scan_lists_unreadable_and_fake_plugins_with_their_reason(self, workdir, g):
         fake = write(workdir / "fake.esp", b"NOPE" + b"\x00" * 40)
