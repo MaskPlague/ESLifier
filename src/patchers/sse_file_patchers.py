@@ -14,7 +14,56 @@ except:
         print(str(f"write_ineligible: {str(txt)}"))
 
 class patchers(shared_patchers):        
-        
+    def seq_patcher(new_file: str, form_id_map: dict, updated_master_index:int, master_byte: bytes, update_byte: bool):
+            with open(new_file, 'rb+') as f:
+                data = f.read()
+                if update_byte and updated_master_index == -1:
+                    updated_master_byte = (int.from_bytes(master_byte) + 1).to_bytes()
+                else:
+                    updated_master_byte = master_byte
+    
+                def format_seq_form_id(form_id):
+                    if form_id[3:4] <= master_byte:
+                        return form_id.lower()
+                    return form_id[:3].lower() + updated_master_byte
+                
+                seq_form_id_list = [format_seq_form_id(data[i:i+4]) for i in range(0, len(data), 4) ]
+                form_id_dict = {old_id[:3].lower(): (new_id[:3] + updated_master_byte) for old_id, new_id in form_id_map.items() if isinstance(old_id, bytes)}
+    
+                def update_form_id(form_id):
+                    if form_id[3:4] >= master_byte:
+                        fid = form_id[:3]
+                        return form_id_dict.get(fid, fid + updated_master_byte)
+                    return form_id
+                
+                new_seq_form_id_list = [update_form_id(fid) for fid in seq_form_id_list]
+    
+                f.seek(0)
+                f.truncate(0)
+                f.write(b''.join(new_seq_form_id_list))
+    
+    def dependent_seq_patcher(new_file: str, form_id_map: dict, updated_master_index:int, master_byte: bytes, master_index_byte:bytes, update_byte: bool):
+        with open(new_file, 'rb+') as f:
+            data = f.read()
+            if update_byte and updated_master_index == -1:
+                updated_master_byte = (int.from_bytes(master_index_byte) + 1).to_bytes()
+            else:
+                updated_master_byte = master_index_byte
+
+            def format_seq_form_id(form_id):
+                if form_id[3:4] <= master_byte:
+                    return form_id.lower()
+                return form_id[:3].lower() + updated_master_byte
+            
+            seq_form_id_list = [format_seq_form_id(data[i:i+4]) for i in range(0, len(data), 4) ]
+            form_id_dict = {old_id.lower()+master_index_byte: new_id + updated_master_byte for old_id, new_id in form_id_map}
+
+            new_seq_form_id_list = [form_id_dict.get(fid, fid) for fid in seq_form_id_list]
+
+            f.seek(0)
+            f.truncate(0)
+            f.write(b''.join(new_seq_form_id_list))
+
     def old_pex_patcher(basename: str, new_file: str, form_id_map: dict):
         with open(new_file,'rb+') as f:
             data = f.read()
