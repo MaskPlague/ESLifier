@@ -223,8 +223,9 @@ class scanner():
                 write_remove(1, extracting_str.format(i+1, archive_length, os.path.basename(file)), True)
                 write_normal("",False)
                 try:
-                    scanner.extract_archive(file, startupinfo, update_time, ".pex")
-                    scanner.extract_archive(file, startupinfo, update_time, ".seq")
+                    #scanner.extract_archive(file, startupinfo, update_time, ".pex")
+                    #scanner.extract_archive(file, startupinfo, update_time, ".seq")
+                    scanner.extract_archive(file, startupinfo, update_time, f"scan{GAME_MODE}")
                     scanner.extracted.add(file)
                 except Exception as e:
                     write_error(QCoreApplication.translate("scanner", "Error Reading archive: ") + file)
