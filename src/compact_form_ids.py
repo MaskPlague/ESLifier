@@ -192,14 +192,14 @@ class CFIDs():
 
     def bsa_temp_extract(self, bsa_file: str, type: str, name:str, startupinfo: subprocess.STARTUPINFO):
         with subprocess.Popen(
-            ["bsarch/bsarch.exe", "unpack", bsa_file, ARCHIVE_EXTRACTED_TEMP_FOLDER, type + name],
+            ["bsarch/bsarch.exe", "unpack", bsa_file, ARCHIVE_EXTRACTED_TEMP_FOLDER, "-f:"+'"'+type + name+'"'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             startupinfo=startupinfo,
             text=True
             ) as p:
                 for line in p.stdout:
-                    if line.startswith('Unpacking error'):
+                    if line.startswith('Error'):
                         raise Exception(f"During Temp Extraction, {line}")
 
     def compact_and_patch(self, file_to_compact: str, dependents: list, all_dependents_have_game_esm_as_master: bool,
@@ -235,18 +235,17 @@ class CFIDs():
                 startupinfo = subprocess.STARTUPINFO()
                 startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
                 temp_extraction_threads: list[threading.Thread] = []
-                path_parts = ("\\voice\\", "\\facetint\\", "\\facegeom\\")
+                if GAME_MODE == "SSE":
+                    face_texture_path = "facetint\\"
+                elif GAME_MODE == "FO4":
+                    face_texture_path = "facecustomization\\"
+                path_parts = ("voice\\", face_texture_path, "facegeom\\")
                 for archive_file, values in self.archive_dict.items():
                     if name in values:
-                        if ' - textures' in os.path.basename(archive_file).lower():
-                            thread = threading.Thread(target=self.bsa_temp_extract, args=(archive_file, "\\facetint\\", name, startupinfo,))
+                        for part in path_parts:
+                            thread = threading.Thread(target=self.bsa_temp_extract, args=(archive_file, part, name, startupinfo,))
                             temp_extraction_threads.append(thread)
                             thread.start()
-                        else:
-                            for part in path_parts:
-                                thread = threading.Thread(target=self.bsa_temp_extract, args=(archive_file, part, name, startupinfo,))
-                                temp_extraction_threads.append(thread)
-                                thread.start()
 
                 rel_paths = set()
                 for file in patch_or_rename:
