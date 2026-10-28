@@ -576,11 +576,11 @@ class scanner():
                     offset += 2 + string_length
                 gfff = 'getformfromfile' in strings
                 gmbn = 'getmodbyname' in strings
-                if gfff or gmbn: #'getformfromfile' in strings: #or 'getmodbyname' in strings:
+                if gfff or gmbn:
                     plugin_basename_set = scanner.plugin_basename_set
                     plugins = set()
                     for string in strings:
-                        if string.endswith(('.esp', '.esl', '.esm')) and string in plugin_basename_set:#not ':' in string and not '/' in string and not '\\' in string:
+                        if string.endswith(('.esp', '.esl', '.esm')) and string in plugin_basename_set:
                             with scanner.lock:
                                 if gfff:
                                     scanner.file_dict[string].add(file)
@@ -610,23 +610,17 @@ class scanner():
                     strings_lowered_bytes.append(string_lowered)
                     strings.add(string_lowered.decode())
                     offset += 2 + string_length
-                gfff = 'getformfromfile' in strings
-                gmbn = 'getmodbyname' in strings
-                if gfff or gmbn: #'getformfromfile' in strings: #or 'getmodbyname' in strings:
+                if 'getformfromfile' in strings: #fallout 4 does not have 'getmodbyname' :
                     plugin_basename_set = scanner.plugin_basename_set
                     plugins = set()
                     for string in strings:
-                        if string.endswith(('.esp', '.esl', '.esm')) and string in plugin_basename_set:#not ':' in string and not '/' in string and not '\\' in string:
+                        if string.endswith(('.esp', '.esl', '.esm')) and string in plugin_basename_set:
                             with scanner.lock:
-                                if gfff:
-                                    scanner.file_dict[string].add(file)
-                                if gmbn:
-                                    plugins.add(string)
-                    if gmbn:
-                        scanner.check_if_modbyname_uses_plugin_names(data, plugins, file, offset, strings_lowered_bytes)
+                                scanner.file_dict[string].add(file)
 
                 elif f'{ARCHIVE_EXTRACTED_FOLDER}\\' in file:
                     os.remove(file)
+
             elif reader_type == 'dll':
                 with scanner.file_semaphore:
                     if file.endswith('EngineFixes.dll') and GAME_MODE == "SSE":
