@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (QAbstractItemView, QTableWidget, QTableWidgetItem, 
 from PyQt6.QtGui import QIcon, QColor, QPalette
 from blacklist import blacklist
 from log_stream import write_error
-from data_holder import GAME_MODE
+from data_holder import GAME_MODE, IMAGES_PATH, ESLIFIER_PNG_ICON_PATH
 
 class list_parent_class(QTableWidget):
     list_created_signal = pyqtSignal()
@@ -92,13 +92,13 @@ class list_parent_class(QTableWidget):
                 background-color: rgb(200,200,200);
             }
             QTableWidget::indicator:checked{
-                image: url(:/images/checked.png);
+                image: url("""+IMAGES_PATH+"""checked.png);
             }
             QTableWidget::indicator:unchecked{
-                image: url(:/images/unchecked.png);
+                image: url("""+IMAGES_PATH+"""unchecked.png);
             }
             QTableWidget::indicator:indeterminate{
-                image:url(:/images/partially_checked.png);
+                image: url("""+IMAGES_PATH+"""partially_checked.png);
             }
         """
         self.setStyleSheet(self.original_stylesheet)
@@ -223,7 +223,7 @@ class list_parent_class(QTableWidget):
     def create_confirmation(self, title:str, text:str, color:str = '', icon:QMessageBox.Icon = QMessageBox.Icon.Warning, yes_no:bool=False):
         confirm = QMessageBox()
         confirm.setIcon(icon)
-        confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
+        confirm.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
         if color != '':
             confirm.setStyleSheet("""
                 QMessageBox {

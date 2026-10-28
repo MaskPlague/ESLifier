@@ -84,7 +84,7 @@ class log_stream(QMainWindow):
             cls._instance = super(log_stream, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self, parent=None, version='0.0.0', ESLIFIER_DATA_FOLDER='', ESLIFIER_LOG_FILE='', PROGRAM_NAME=''):
+    def __init__(self, parent=None, version='0.0.0', ESLIFIER_DATA_FOLDER='', ESLIFIER_LOG_FILE='', PROGRAM_NAME='', IMAGES_PATH=''):
         if self._init:
             return
         self._init = True
@@ -92,6 +92,7 @@ class log_stream(QMainWindow):
         global _ls
         self.ESLIFIER_DATA_FOLDER = ESLIFIER_DATA_FOLDER
         self.ESLIFIER_LOG_FILE = ESLIFIER_LOG_FILE
+        self.IMAGES_PATH = IMAGES_PATH
         _ls = log_stream()
         self.setWindowTitle('Log Stream')
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowCloseButtonHint & ~Qt.WindowType.Dialog)
@@ -229,7 +230,7 @@ class log_stream(QMainWindow):
         patcher_message = QMessageBox()
         patcher_message.setWindowTitle(self.tr("Possible Missing Patcher"))
         patcher_message.setIcon(QMessageBox.Icon.Warning)
-        patcher_message.setWindowIcon(QIcon(":/images/ESLifier.png"))
+        patcher_message.setWindowIcon(QIcon(self.IMAGES_PATH+"ESLifier.png"))
         patcher_message.setStyleSheet("""
             QMessageBox {
                 background-color: lightblue;
@@ -262,7 +263,7 @@ class log_stream(QMainWindow):
         error_message = QMessageBox()
         error_message.setWindowTitle(self.tr("Errors Encountered"))
         error_message.setIcon(QMessageBox.Icon.Warning)
-        error_message.setWindowIcon(QIcon(":/images/ESLifier.png"))
+        error_message.setWindowIcon(QIcon(self.IMAGES_PATH+"ESLifier.png"))
         error_message.setStyleSheet("""
             QMessageBox {
                 background-color: lightcoral;

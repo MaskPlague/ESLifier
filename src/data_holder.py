@@ -1,8 +1,16 @@
 from log_stream import write_to_file
 import os
-
+import sys
 from PyQt6.QtCore import QCoreApplication
 from collections import defaultdict
+
+def resource_path(relative_path):
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.join(os.getcwd(), "src")
+    return os.path.normpath(os.path.join(base_path, relative_path))
 
 #from typing import TYPE_CHECKING
 #if TYPE_CHECKING:
@@ -12,14 +20,16 @@ GITHUB_LATEST_VERSIONS_INFO_JSON_URL = "https://raw.githubusercontent.com/MaskPl
 def update_game_globals():
     global VERBOSE_GAME_NAME, SHORT_GAME_NAME, VORTEX_GAME_NAME, MO2_GAME_NAME, GAME_ESM_NAME, PROGRAM_NAME, EXE_NAME
     global GAME_ARCHIVE_TYPE, GAME_ARCHIVE_EXTENSION, NEXUS_FILES_TAB_URL, GITHUB_MASTER_JSONS_URL, SCRIPT_EXTENDER
-    global ARCHIVE_EXTRACTED_FOLDER, ARCHIVE_EXTRACTED_TEMP_FOLDER
+    global ARCHIVE_EXTRACTED_FOLDER, ARCHIVE_EXTRACTED_TEMP_FOLDER, IMAGES_PATH, ESLIFIER_PNG_ICON_PATH
+    IMAGES_PATH = resource_path(f"images/{GAME_MODE}/").replace('\\','/') + '/' #QSS url() requires forward slashes
+    ESLIFIER_PNG_ICON_PATH = IMAGES_PATH + "ESLifier.png"
     VERBOSE_GAME_NAME = "Skyrim Special Edition"        if GAME_MODE == "SSE" else "Fallout 4"
     SHORT_GAME_NAME = "Skyirm"                          if GAME_MODE == "SSE" else "Fallout"
     VORTEX_GAME_NAME = "skyrimse"                       if GAME_MODE == "SSE" else "fallout4"
     MO2_GAME_NAME = "Skyrim Special Edition"            if GAME_MODE == "SSE" else "Fallout 4"
     GAME_ESM_NAME = "Skyrim.esm"                        if GAME_MODE == "SSE" else "Fallout4.esm"
     SCRIPT_EXTENDER = "skse"                            if GAME_MODE == "SSE" else "f4se"
-    PROGRAM_NAME = "ESLifier"                           if GAME_MODE == "SSE" else "ESLifier-FO4"
+    PROGRAM_NAME = f"ESLifier-{GAME_MODE}"              #if GAME_MODE == "SSE" else "ESLifier-FO4"
     EXE_NAME = PROGRAM_NAME + ".exe"
     GAME_ARCHIVE_TYPE = "BSA"                           if GAME_MODE == "SSE" else "BA2"
     GAME_ARCHIVE_EXTENSION = "." + GAME_ARCHIVE_TYPE.lower()

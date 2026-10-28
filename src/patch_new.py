@@ -34,7 +34,7 @@ class patch_new():
                                         "Compact a mod on the Main page first. This button is for\n"\
                                         "when you install a new mod and don't feel like rebuilding\n"\
                                         "the entire output."))
-            self.no_data_warning.setWindowIcon(QIcon(":/images/ESLifier.png"))
+            self.no_data_warning.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
             self.no_data_warning.addButton(QMessageBox.StandardButton.Ok)
             self.no_data_warning.show()
             self.main_parent.setEnabled(True)
@@ -49,7 +49,7 @@ class patch_new():
                                                 "in %0, this is likely because the current\n"\
                                                 "ESLifier output was made on a version older than v0.12.0.\n"\
                                                 "This button needs an output made from v0.12.0+.").replace("%0", ESLIFIER_DATA_FOLDER))
-            self.output_not_new_warning.setWindowIcon(QIcon(":/images/ESLifier.png"))
+            self.output_not_new_warning.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
             self.output_not_new_warning.addButton(QMessageBox.StandardButton.Ok)
             self.output_not_new_warning.show()
             self.main_parent.setEnabled(True)
@@ -139,7 +139,7 @@ class patch_new():
         self.patch_new_complete_message = QMessageBox()
         self.patch_new_complete_message.setWindowTitle(QCoreApplication.translate("patch_new", "Patch New Done"))
         self.patch_new_complete_message.setIcon(QMessageBox.Icon.Information)
-        self.patch_new_complete_message.setWindowIcon(QIcon(":/images/ESLifier.png"))
+        self.patch_new_complete_message.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
         if new_file_num > 0:
             text = QCoreApplication.translate("patch_new", "%1 new files that needed patching have been patched.").replace("%1", str(new_file_num))
         else:

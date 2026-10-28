@@ -18,12 +18,12 @@ from compact_form_ids import CFIDs
 from scanners.cell_changed_scanner import cell_scanner
 from create_cell_master import create_new_cell_plugin
 from patch_new import patch_new
-from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_MODE, GAME_ESM_NAME, MO2_GAME_NAME, SHORT_GAME_NAME,
+from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_MODE, ARCHIVE_EXTRACTED_FOLDER, ESLIFIER_PNG_ICON_PATH,
                          CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
                          EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
                          MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
-                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, GAME_ARCHIVE_TYPE, 
-                         ARCHIVE_EXTRACTED_FOLDER)
+                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, GAME_ARCHIVE_TYPE)
+
 from scanners.vortex_database_reader import VortexDBParser
 from log_stream import log_stream, write_error, write_normal, write_patching, write_progress, write_remove, write_to_file, clear_and_close_log, clear_and_leave_log_open
 from patchers.file_defined_patcher_conditions import user_and_master_conditions_class
@@ -569,7 +569,7 @@ class main(QWidget):
         if not self.redoing_output:
             message = QMessageBox()
             message.setWindowTitle(self.tr("Finished"))
-            message.setWindowIcon(QIcon(":/images/ESLifier.png"))
+            message.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
             if _global.mod_manager_mode == 0: #Manutal?
                 message.setText(self.tr("ESLifier has finished. The altered files are in your ESLifier Output."))
             elif _global.mod_manager_mode == 1: #Vortex
@@ -587,7 +587,7 @@ class main(QWidget):
                 if self.generate_cell_master and not self.cell_master_warned:
                     cell_master_message = QMessageBox()
                     cell_master_message.setWindowTitle(self.tr("Activate ESLifier_Cell_Master.esm and Sort Your Plugins"))
-                    cell_master_message.setWindowIcon(QIcon(":/images/ESLifier.png"))
+                    cell_master_message.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
                     cell_master_message.setText(self.tr("Do not forget to activate ESLifier_Cell_Master.esm and re-sort\n"\
                                                 "your plugins to put the ESM above all of it's dependents. You\n"\
                                                 "likely can put it at the top of your plugins list."))
@@ -1109,7 +1109,7 @@ class main(QWidget):
     def create_confirmation(self, color:str = '', icon:QMessageBox.Icon = QMessageBox.Icon.Warning):
         confirm = QMessageBox()
         confirm.setIcon(icon)
-        confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
+        confirm.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
         if color != '':
             confirm.setStyleSheet("""
                 QMessageBox {
@@ -1205,7 +1205,7 @@ class main(QWidget):
                 json.dump(self.new_file_hashes, f, ensure_ascii=False, indent=4)
                 f.close()
             dialog = QDialog()
-            dialog.setWindowIcon(QIcon(":/images/ESLifier.png"))
+            dialog.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
             dialog.setWindowTitle(self.tr("Select files to remove."))
             dialog.setStyleSheet("QDialog {background-color: tomato;}")
             dialog.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)

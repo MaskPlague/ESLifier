@@ -15,8 +15,9 @@ from settings_page import settings
 from main_page import main
 from log_stream import log_stream, write_to_file
 from data_holder import (_global, GAME_MODE, NEXUS_FILES_TAB_URL, SHORT_GAME_NAME, VORTEX_GAME_NAME, GITHUB_MASTER_JSONS_URL, 
-                         EXE_NAME, PROGRAM_NAME, ESLIFIER_DATA_FOLDER, SETTINGS_JSON, ESLIFIER_LOG_FILE,
-                         GITHUB_LATEST_VERSIONS_INFO_JSON_URL)
+                         EXE_NAME, PROGRAM_NAME, ESLIFIER_DATA_FOLDER, SETTINGS_JSON, ESLIFIER_LOG_FILE, ESLIFIER_PNG_ICON_PATH,
+                         GITHUB_LATEST_VERSIONS_INFO_JSON_URL, IMAGES_PATH)
+
 from scanners.scanner_vortex import Vortex
 from scanners.scanner_mo2 import MO2
 if GAME_MODE == "SSE":
@@ -82,6 +83,7 @@ def connection_result(is_latest: bool, latest_version: str, release_url_end: str
     if not is_latest:
         message = QMessageBox()
         message.setIcon(QMessageBox.Icon.Warning)
+        message.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
         message.setWindowTitle(QCoreApplication.translate("Global", "ESLifier Outdated"))
         text = QCoreApplication.translate("Global", 
                         "There exists a new version of %0 (v%1).\n"\
@@ -254,9 +256,9 @@ class main_window(QMainWindow):
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.resize(1300, 500)
         self.move(100,50)
-        self.log_stream = log_stream(self, CURRENT_VERSION, ESLIFIER_DATA_FOLDER, ESLIFIER_LOG_FILE, PROGRAM_NAME)
+        self.log_stream = log_stream(self, CURRENT_VERSION, ESLIFIER_DATA_FOLDER, ESLIFIER_LOG_FILE, PROGRAM_NAME, IMAGES_PATH)
         write_to_file(f"Game Mode is {GAME_MODE}")
-        self.setWindowIcon(QIcon(":/images/ESLifier.png"))
+        self.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
         self.setFocus()
         self.rebuild_lists = True
         self.settings_widget = settings(COLOR_MODE)
@@ -453,7 +455,7 @@ class main_window(QMainWindow):
             message = QMessageBox()
             message.setWindowTitle(self.tr("Path Validation Error"))
             message.setIcon(QMessageBox.Icon.Warning)
-            message.setWindowIcon(QIcon(":/images/ESLifier.png"))
+            message.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
             message.setStyleSheet("""
                 QMessageBox {
                     background-color: lightcoral;
@@ -470,7 +472,7 @@ class main_window(QMainWindow):
         help = QMessageBox()
         help.setIcon(QMessageBox.Icon.Information)
         help.setWindowTitle(self.tr("Help"))
-        help.setWindowIcon(QIcon(":/images/ESLifier.png"))
+        help.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
         help_text = self.tr(
                         "Almost every element in the program has a tool tip that explains it.\n"\
                         "Tool tips can be seen by hovering over elements with the mouse.\n"\
@@ -486,7 +488,7 @@ class main_window(QMainWindow):
         message = QMessageBox()
         message.setWindowTitle(self.tr("Missing Paths Error"))
         message.setIcon(QMessageBox.Icon.Warning)
-        message.setWindowIcon(QIcon(":/images/ESLifier.png"))
+        message.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
         message.setStyleSheet("""
             QMessageBox {
                 background-color: lightcoral;

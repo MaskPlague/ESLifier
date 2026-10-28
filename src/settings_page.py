@@ -1009,7 +1009,7 @@ class settings(QWidget):
             }""")
         confirm.setText(self.tr("Are you sure you want to reset all settings?"))
         confirm.setWindowTitle(self.tr("Confirmation"))
-        confirm.setWindowIcon(QIcon(":/images/ESLifier.png"))
+        confirm.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
         confirm.addButton(QMessageBox.StandardButton.Yes)
         confirm.addButton(QMessageBox.StandardButton.Cancel)
         confirm.button(QMessageBox.StandardButton.Cancel).setFocus()
