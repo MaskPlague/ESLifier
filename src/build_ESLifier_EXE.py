@@ -42,6 +42,12 @@ def compile_exe(game_mode: str):
     print(f'Done Building {game_mode} EXE')
 
 if __name__ == "__main__":
+    if not os.environ.get("CONDA_DEFAULT_ENV") == "eslifier_env":
+        import subprocess
+        subprocess.run("clip", input="conda activate eslifier_env", text=True, check=True)
+        print("Run: conda activate eslifier_env (It's copied to clipboard, just paste and run)")
+        print("Canceling...")
+        exit()
     choice = input("Enter a build mode (SSE|S, FO4|F, Both|B): ").strip()
     if choice.lower() in ("sse", "s"):
         game_modes = ["SSE"]
@@ -55,9 +61,10 @@ if __name__ == "__main__":
 
     for game_mode in game_modes:
         compile_exe(game_mode)
-        print('Calculating Checksum (exe)')
+        print('Calculating Checksum')
         append_luhn_checksum(f"dist\\ESLifier-{game_mode}.exe")
         print('')
         print(f"Standalone {game_mode} EXE done\n")
-        formatted_datetime = datetime.now().isoformat(timespec='milliseconds')
-        print("Last Ran: " + formatted_datetime)
+    formatted_datetime = datetime.now().isoformat(timespec='milliseconds')
+    print("Last Ran: " + formatted_datetime)
+    print("Built: " + ', '.join(game_modes) + " EXE(s)")
