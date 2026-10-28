@@ -19,7 +19,10 @@ from data_holder import (_global, GAME_MODE, NEXUS_FILES_TAB_URL, SHORT_GAME_NAM
                          GITHUB_LATEST_VERSIONS_INFO_JSON_URL)
 from scanners.scanner_vortex import Vortex
 from scanners.scanner_mo2 import MO2
-CURRENT_VERSION = '0.17.0'
+if GAME_MODE == "SSE":
+    CURRENT_VERSION = '0.16.17'
+elif GAME_MODE == "FO4":
+    CURRENT_VERSION = '0.0.1'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
 VERSION_TUPLE = (MAJOR, MINOR, PATCH)
 
