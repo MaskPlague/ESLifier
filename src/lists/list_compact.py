@@ -48,63 +48,59 @@ class list_compactable(list_parent_class):
             self.setHorizontalHeaderLabels(
                 [self.tr('*   Mod'), self.tr('CELL Records'), self.tr('WRLD Records'), self.tr('WTHR Records'), 
                  f'{SCRIPT_EXTENDER.upper()} DLL', 'SEQ', 'PEX', 'ESM', self.tr('Dependencies'), '', 'Hider'])
+            self.horizontalHeaderItem(self.CELL_COL).setToolTip(self.tr(
+                    'This is the CELL Record Flag. It can be completely ignored for users\n'\
+                    'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'\
+                    'Otherwise, if an ESM+ESL plugin creates a new CELL and another mod\n'\
+                    'changes that CELL then it may not work due to an engine bug. If an\n'\
+                    'ESL plugin creates a new interior CELL then that cell may experience\n'\
+                    'issues when reloading a save without restarting the game.\n'\
+                    '"New  CELL" indicates the presence of a new CELL record.\n'\
+                    '"!New Interior CELL!" indicates that a new CELL is an interior.\n'\
+                    '"!!New CELL Changed!!" indicates that a new CELL record from an ESM is changed\n'\
+                    'by a dependent plugin.\n'\
+                    '"!!Maxed Masters!!" indicates that a plugin or its dependent plugins\n'\
+                    'have the maximum amount of masters (254) and cannot add ESLifier_Cell_Master.esm\n'\
+                    'as a master for the ESL+ESM cell bug and ESL worldspace bug workarounds.'))
+            self.horizontalHeaderItem(self.WRLD_COL).setToolTip(self.tr(
+                    'This is the WRLD Record Flag. It can be completely ignored for users\n'\
+                    'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'\
+                    'Otherwise, if an plugin is flagged ESL\n'\
+                    'then the new worldspace may have landscape issues (no ground).'))
+            self.horizontalHeaderItem(self.WTHR_COL).setToolTip(self.tr(
+                    'This is the WTHR Record Flag. This is an indicator if a mod has a new weather record\n'\
+                    'Some mods weathers are referenced in ENB Presets which cannot be patched by ESLifier\n'\
+                    'It is at the user\'s discretion if a plugin with new weather should be compacted.'))
+            self.horizontalHeaderItem(self.SEQ_COL).setToolTip(self.tr(
+                    'Mods with SEQ files can be subject to the quest bug that prevents dialogue from\n'\
+                    'working, all that needs to be done in game is save and reload and the bug will\n'\
+                    'be fixed. This flag exists so users who don\'t want to deal with this bug can\n'\
+                    'avoid ESLifiying mods with SEQ files.'))
+            self.horizontalHeaderItem(self.PEX_COL).setToolTip(self.tr(
+                    'Mods with PEX files that call the papyrus function "GetModByName" and use it to\n'\
+                    'determine if a plugin is installed may partially break if the plugin is flagged ESL\n'\
+                    'as said function only works for non-ESL plugins. This flag indicates that the plugin\n'\
+                    'has one or more PEX files that call the function on the relevant plugin (see flag tooltip).'))
         elif self.is_fo4_mode:
             self.setHorizontalHeaderLabels(
-                [self.tr('*   Mod'), self.tr('PreVis/Precombine'), f'{SCRIPT_EXTENDER.upper()} DLL', 'SEQ',
-                  'ESM', self.tr('Dependencies'), '', 'Hider'])
-
-        self.horizontalHeaderItem(self.MOD_COL).setToolTip(self.tr('This is the plugin name. Select which plugins you wish to compact.'))
-
-        if self.is_sse_mode:
-            self.horizontalHeaderItem(self.CELL_COL).setToolTip(self.tr(
-                                                            'This is the CELL Record Flag. It can be completely ignored for users\n'\
-                                                            'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'\
-                                                            'Otherwise, if an ESM+ESL plugin creates a new CELL and another mod\n'\
-                                                            'changes that CELL then it may not work due to an engine bug. If an\n'\
-                                                            'ESL plugin creates a new interior CELL then that cell may experience\n'\
-                                                            'issues when reloading a save without restarting the game.\n'\
-                                                            '"New  CELL" indicates the presence of a new CELL record.\n'\
-                                                            '"!New Interior CELL!" indicates that a new CELL is an interior.\n'\
-                                                            '"!!New CELL Changed!!" indicates that a new CELL record from an ESM is changed\n'\
-                                                            'by a dependent plugin.\n'\
-                                                            '"!!Maxed Masters!!" indicates that a plugin or its dependent plugins\n'\
-                                                            'have the maximum amount of masters (254) and cannot add ESLifier_Cell_Master.esm\n'\
-                                                            'as a master for the ESL+ESM cell bug and ESL worldspace bug workarounds.'))
-
-            self.horizontalHeaderItem(self.WRLD_COL).setToolTip(self.tr(
-                                                            'This is the WRLD Record Flag. It can be completely ignored for users\n'\
-                                                            'with SSE Engine Fixes v7+ on Skyrim 1.6.1170+.\n'\
-                                                            'Otherwise, if an plugin is flagged ESL\n'\
-                                                            'then the new worldspace may have landscape issues (no ground).'))
-            self.horizontalHeaderItem(self.WTHR_COL).setToolTip(self.tr(
-                                                            'This is the WTHR Record Flag. This is an indicator if a mod has a new weather record\n'\
-                                                            'Some mods weathers are referenced in ENB Presets which cannot be patched by ESLifier\n'\
-                                                            'It is at the user\'s discretion if a plugin with new weather should be compacted.'))
-
-        if self.is_fo4_mode:
+                [self.tr('*   Mod'), self.tr('PreVis/Precombine'), f'{SCRIPT_EXTENDER.upper()} DLL', 'ESM', self.tr('Dependencies'), '', 'Hider'])
             self.horizontalHeaderItem(self.PRECOM_COL).setToolTip(self.tr(
-                                                            'This is the new CELL + PreVis/PreCombined flag. Cells originating in\n'\
-                                                            'an ESL plugin cannot use the PreVis/PreCombine system. Mods with this flag\n'\
-                                                            'have both a new CELL and there exists a mod in your modlist that references\n'\
-                                                            'the new CELL and uses the PreVis/PreCombine system on that CELL.\n'
-                                                            'I will probably see if enabling and adapting Cell Master Generation\n'\
-                                                            'for FO4 can circumvent this issue. For now it will be disabled.'))
+                    'This is the new CELL + PreVis/PreCombined flag. Cells originating in\n'\
+                    'an ESL plugin cannot use the PreVis/PreCombine system. Mods with this flag\n'\
+                    'have both a new CELL and there exists a mod in your modlist that references\n'\
+                    'the new CELL and uses the PreVis/PreCombine system on that CELL.\n'
+                    'I will probably see if enabling and adapting Cell Master Generation\n'\
+                    'for FO4 can circumvent this issue. For now it will be disabled.'))
+            
+        self.horizontalHeaderItem(self.MOD_COL).setToolTip(self.tr('This is the plugin name. Select which plugins you wish to compact.'))
+        
         self.horizontalHeaderItem(self.DLL_COL).setToolTip(self.tr(
                                                             'This is the %0 DLL flag. If a dll has the plugin name in it then it may\n'\
                                                             'have a LookUpForm() call that may break after compacting a flagged plugin.')
                                                             .replace("%0", SCRIPT_EXTENDER))
-        self.horizontalHeaderItem(self.SEQ_COL).setToolTip(self.tr(
-                                                            'Mods with SEQ files can be subject to the quest bug that prevents dialogue from\n'\
-                                                            'working, all that needs to be done in game is save and reload and the bug will\n'\
-                                                            'be fixed. This flag exists so users who don\'t want to deal with this bug can\n'\
-                                                            'avoid ESLifiying mods with SEQ files.'))
-        if self.is_sse_mode:
-            self.horizontalHeaderItem(self.PEX_COL).setToolTip(self.tr(
-                                                            'Mods with PEX files that call the papyrus function "GetModByName" and use it to\n'\
-                                                            'determine if a plugin is installed may partially break if the plugin is flagged ESL\n'\
-                                                            'as said function only works for non-ESL plugins. This flag indicates that the plugin\n'\
-                                                            'has one or more PEX files that call the function on the relevant plugin (see flag tooltip).'))
+        
         self.horizontalHeaderItem(self.ESM_COL).setToolTip(self.tr('This is the ESM flag. If a plugin is an ESM then it will be flagged here.'))
+        
         self.horizontalHeaderItem(self.DEP_COL).setToolTip(self.tr(
                                                             'If a plugin has other plugins with it as a master, they will appear when\n'\
                                                             'the button is clicked. These will also have their Form IDs automatically\n'\
@@ -135,15 +131,15 @@ class list_compactable(list_parent_class):
             if not self.filter_pex and not 'PEX' in hidden_columns: self.showColumn(self.PEX_COL)
             else: self.hideColumn(self.PEX_COL)
 
+            if not self.filter_seq and not 'SEQ' in hidden_columns: self.showColumn(self.SEQ_COL)
+            else: self.hideColumn(self.SEQ_COL)
+
         if self.is_fo4_mode:
             if self.filter_precombines or self.cell_master or 'PREVIS' in hidden_columns: self.hideColumn(self.PRECOM_COL)
             else: self.showColumn(self.PRECOM_COL)
 
         if not self.show_dlls: self.hideColumn(self.DLL_COL)
         else: self.showColumn(self.DLL_COL)
-
-        if not self.filter_seq and not 'SEQ' in hidden_columns: self.showColumn(self.SEQ_COL)
-        else: self.hideColumn(self.SEQ_COL)
 
         if self.show_esms and not "ESM" in hidden_columns: self.showColumn(self.ESM_COL)
         else: self.hideColumn(self.ESM_COL)
