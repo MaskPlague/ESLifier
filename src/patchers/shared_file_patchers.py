@@ -3,6 +3,10 @@ import json5
 try:
     from log_stream import write_to_file, write_ineligible, write_error
 except:
+    file = open("test.log", 'w', encoding='utf-8')
+    def printer(txt):
+        file.write(str(txt)+"\n")
+    print = printer
     def write_to_file(txt):
         print(str(f"write_to_file: {str(txt)}"))
     def write_ineligible(txt):
