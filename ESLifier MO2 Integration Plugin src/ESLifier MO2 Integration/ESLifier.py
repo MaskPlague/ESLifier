@@ -13,9 +13,16 @@ try:
     from PyQt6.QtWidgets import (QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton,
                                   QToolBar, QCheckBox, QLabel, QGridLayout, QApplication)
 except ImportError:
-    from PyQt5.QtCore import QCoreApplication, QObject, pyqtSignal, QThread, QTimer
-    from PyQt5.QtGui import QIcon, QColor
-    from PyQt5.QtWidgets import (QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton,
+    from PyQt5.QtCore import QCoreApplication, QObject, pyqtSignal, QThread, QTimer #type: ignore
+    from PyQt5.QtGui import QIcon, QColor   #type: ignore
+    from PyQt5.QtWidgets import (QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton,  #type: ignore
+                                  QToolBar, QCheckBox, QLabel, QGridLayout, QApplication)
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from PyQt6.QtCore import QCoreApplication, QObject, pyqtSignal, QThread, QTimer
+    from PyQt6.QtGui import QIcon, QColor
+    from PyQt6.QtWidgets import (QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton,
                                   QToolBar, QCheckBox, QLabel, QGridLayout, QApplication)
             
 class QueueScan():
@@ -92,15 +99,8 @@ class ESLifier(mobase.IPluginTool):
 
     def init(self, organiser = mobase.IOrganizer):
         self._organizer = organiser
-        icon_path = os.path.join(os.path.dirname(self._organizer.getPluginDataPath()), 'ESLifier MO2 Integration', 'icons')
-
         self._init_state()
-        self._create_icons(icon_path)
-        self._create_throbber(icon_path)
-
-        self._create_eslifier_button()
-        
-        self._hook_up_callbacks(icon_path)
+        self._hook_up_callbacks()
 
         QApplication.instance().aboutToQuit.connect(self._stop_worker_if_running)
 
@@ -124,18 +124,18 @@ class ESLifier(mobase.IPluginTool):
         self.scan_queue = QueueScan()
         self.scan_queue.callback = self.scan_files
     
-    def _create_icons(self, icon_path):
-        self.eslifier_icon_default = QIcon(icon_path + '\\ESLifier.ico')
+    def _create_icons(self):
+        self.eslifier_icon_default = QIcon(self.icon_path + '\\ESLifier.ico')
         self.eslifier_icon = self.eslifier_icon_default
         self.main_dialog.setWindowIcon(self.eslifier_icon)
-        self.eslifier_icon_notif = QIcon(icon_path + '\\ESLifier_with_notif_badge.ico')
-        self.eslifier_icon_greyed_out = QIcon(icon_path + '\\ESLifier_greyed_out.ico')
+        self.eslifier_icon_notif = QIcon(self.icon_path + '\\ESLifier_with_notif_badge.ico')
+        self.eslifier_icon_greyed_out = QIcon(self.icon_path + '\\ESLifier_greyed_out.ico')
     
-    def _create_throbber(self, icon_path):
-        throbber_top_icon = QIcon(icon_path + '\\ESLifier_throbber_top.ico')
-        throbber_right_icon = QIcon(icon_path + '\\ESLifier_throbber_right.ico')
-        throbber_bottom_icon = QIcon(icon_path + '\\ESLifier_throbber_bottom.ico')
-        throbber_left_icon = QIcon(icon_path + '\\ESLifier_throbber_left.ico')
+    def _create_throbber(self):
+        throbber_top_icon = QIcon(self.icon_path + '\\ESLifier_throbber_top.ico')
+        throbber_right_icon = QIcon(self.icon_path + '\\ESLifier_throbber_right.ico')
+        throbber_bottom_icon = QIcon(self.icon_path + '\\ESLifier_throbber_bottom.ico')
+        throbber_left_icon = QIcon(self.icon_path + '\\ESLifier_throbber_left.ico')
         self.eslifier_thobber = [throbber_top_icon, throbber_right_icon, throbber_bottom_icon, throbber_left_icon]
         self.throbber_timer = QTimer()
         self.throbber_timer.setInterval(250)
@@ -147,19 +147,20 @@ class ESLifier(mobase.IPluginTool):
         self.eslifier_button.setIcon(self.eslifier_icon_greyed_out)
         self.eslifier_button.clicked.connect(self.display)
 
-    def _hook_up_callbacks(self, icon_path):
+    def _hook_up_callbacks(self):
         self._organizer.onUserInterfaceInitialized(self.create)
-        self._organizer.onUserInterfaceInitialized(lambda *args: self._init_other_windows(icon_path))
-        self._organizer.onUserInterfaceInitialized(lambda *args: self._create_settings_dialog(icon_path))
+        self._organizer.onUserInterfaceInitialized(self._init_other_windows)
+        self._organizer.onUserInterfaceInitialized(self._create_settings_dialog)
         self._organizer.pluginList().onRefreshed(self.scan_files)
         self._organizer.pluginList().onPluginStateChanged(self.scan_if_cell_master_state_changed)
         self._organizer.onAboutToRun(self._stop_worker_if_running)
         self._organizer.modList().onModInstalled(self._stop_worker_if_running)
+        self._organizer.modList().onModRemoved(self._stop_worker_if_running)
 
-    def _init_other_windows(self, icon_path):
-        self.notifcation_display = notification_display_dialog(icon_path)
-        self.blacklist_add = blacklist_window(False, self.scan_files, icon_path)
-        self.blacklist_remove = blacklist_window(True, self.scan_files, icon_path)
+    def _init_other_windows(self, *args):
+        self.notifcation_display = notification_display_dialog(self.icon_path)
+        self.blacklist_add = blacklist_window(False, self.scan_files, self.icon_path)
+        self.blacklist_remove = blacklist_window(True, self.scan_files, self.icon_path)
     
     def _throbber_iterate(self):
         if self.throbber_iterator > 3:
@@ -271,11 +272,11 @@ class ESLifier(mobase.IPluginTool):
         layout.addWidget(check_box, row, 1)
         return check_box
     
-    def _create_settings_dialog(self, icon_path):
+    def _create_settings_dialog(self, *args):
         self.settings_dialog = QDialog()
         layout = QGridLayout()
         self.settings_dialog.setLayout(layout)
-        self.settings_dialog.setWindowIcon(QIcon(icon_path + '\\ESLifier.ico'))
+        self.settings_dialog.setWindowIcon(QIcon(self.icon_path + '\\ESLifier.ico'))
         self.settings_dialog.setWindowTitle(self.tr("ESLifier Integration Settings"))
 
         self.notifications_check_box = self._create_label_check_box_setting_pair(layout, self.tr("Enable Notifications"), "Enable Notifications", 0)
@@ -291,10 +292,10 @@ class ESLifier(mobase.IPluginTool):
         else:
             self.folder_path = QLabel(folder)
 
-        self.folder_path.setToolTip(self.tr("Set this to the folder that holds ESLifier.exe"))
+        self.folder_path.setToolTip(self.tr(f"Set this to the folder that holds ESLifier-%0.exe").replace("%0", self.GAME_MODE))
         layout.addWidget(self.folder_path, 6, 0)
         path_button = self._button_maker(self.tr("Explore"), self.set_eslifier_path)
-        path_button.setToolTip(self.tr("Set this to the folder that holds ESLifier.exe"))
+        path_button.setToolTip(self.tr(f"Set this to the folder that holds ESLifier-%0.exe").replace("%0", self.GAME_MODE))
         layout.addWidget(path_button, 6, 1)
 
         done_button = QPushButton(self.tr("Done"))
@@ -306,7 +307,7 @@ class ESLifier(mobase.IPluginTool):
     
     def start_eslifier(self):
         eslifier_folder = self._organizer.pluginSetting(self.name(), "ESLifier Folder")
-        eslifier_exe = os.path.join(eslifier_folder, 'ESLifier.exe')
+        eslifier_exe = os.path.join(eslifier_folder, f'ESLifier-{self.GAME_MODE}.exe')
         if os.path.exists(eslifier_exe):
             try:
                 if os.name == 'nt':
@@ -370,9 +371,16 @@ class ESLifier(mobase.IPluginTool):
 
     def create(self, *args):
         game = self._organizer.managedGame()
-        if not game.gameName() in ("Skyrim Special Edition", "Skyrim VR"):
+        print(f"Game name: {game.gameName()}")
+        if not game.gameName() in ("Skyrim Special Edition", "Skyrim VR", "Fallout 4"):
             self.validGame = False
             return
+        self.GAME_MODE = "SSE" if game.gameName() == "Skyrim Special Edition" else "FO4"
+        self.icon_path = os.path.join(os.path.dirname(self._organizer.getPluginDataPath()), 'ESLifier MO2 Integration', 'icons', self.GAME_MODE)
+        self._create_icons()
+        self._create_throbber()
+        
+        self._create_eslifier_button()
         v_layout = QVBoxLayout()
         self.main_dialog.setLayout(v_layout)
         self.main_dialog.setWindowTitle(self.tr('ESLifier MO2 Integration'))
