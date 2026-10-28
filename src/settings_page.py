@@ -236,7 +236,8 @@ class settings(QWidget):
             self.tr("Hide plugins that have PEX files that call the papyrus function 'GetModByName' on\n'\
                     'them as that function only works properly on non-ESL plugins."),
             "filter_pex",
-            default=True
+            default=True,
+            game_modes=("SSE") #GetModByName doesn't exist for FO4
         )
         self.hide_left_columns_widget, self.hide_left_columns_text_input = self.create_text_input_widget(
             self.tr("Hide left list columns visually"),

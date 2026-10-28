@@ -28,7 +28,8 @@ class list_compactable(list_parent_class):
             self.PRECOM_COL = next(c)
         self.DLL_COL = next(c)
         self.SEQ_COL = next(c)
-        self.PEX_COL = next(c)
+        if self.is_sse_mode:
+            self.PEX_COL = next(c)
         self.ESM_COL = next(c)
         self.DEP_COL = next(c)
         self.DEP_DISP_COL = next(c)
@@ -49,8 +50,8 @@ class list_compactable(list_parent_class):
                  f'{SCRIPT_EXTENDER.upper()} DLL', 'SEQ', 'PEX', 'ESM', self.tr('Dependencies'), '', 'Hider'])
         elif self.is_fo4_mode:
             self.setHorizontalHeaderLabels(
-                [self.tr('*   Mod'), self.tr('PreVis/Precombine'), f'{SCRIPT_EXTENDER.upper()} DLL', 'SEQ', 
-                 'PEX', 'ESM', self.tr('Dependencies'), '', 'Hider'])
+                [self.tr('*   Mod'), self.tr('PreVis/Precombine'), f'{SCRIPT_EXTENDER.upper()} DLL', 'SEQ',
+                  'ESM', self.tr('Dependencies'), '', 'Hider'])
 
         self.horizontalHeaderItem(self.MOD_COL).setToolTip(self.tr('This is the plugin name. Select which plugins you wish to compact.'))
 
@@ -97,7 +98,8 @@ class list_compactable(list_parent_class):
                                                             'working, all that needs to be done in game is save and reload and the bug will\n'\
                                                             'be fixed. This flag exists so users who don\'t want to deal with this bug can\n'\
                                                             'avoid ESLifiying mods with SEQ files.'))
-        self.horizontalHeaderItem(self.PEX_COL).setToolTip(self.tr(
+        if self.is_sse_mode:
+            self.horizontalHeaderItem(self.PEX_COL).setToolTip(self.tr(
                                                             'Mods with PEX files that call the papyrus function "GetModByName" and use it to\n'\
                                                             'determine if a plugin is installed may partially break if the plugin is flagged ESL\n'\
                                                             'as said function only works for non-ESL plugins. This flag indicates that the plugin\n'\
@@ -130,6 +132,9 @@ class list_compactable(list_parent_class):
             if self.filter_weather or "WTHR" in hidden_columns: self.hideColumn(self.WTHR_COL)
             else: self.showColumn(self.WTHR_COL)
 
+            if not self.filter_pex and not 'PEX' in hidden_columns: self.showColumn(self.PEX_COL)
+            else: self.hideColumn(self.PEX_COL)
+
         if self.is_fo4_mode:
             if self.filter_precombines or self.cell_master or 'PREVIS' in hidden_columns: self.hideColumn(self.PRECOM_COL)
             else: self.showColumn(self.PRECOM_COL)
@@ -139,9 +144,6 @@ class list_compactable(list_parent_class):
 
         if not self.filter_seq and not 'SEQ' in hidden_columns: self.showColumn(self.SEQ_COL)
         else: self.hideColumn(self.SEQ_COL)
-
-        if not self.filter_pex and not 'PEX' in hidden_columns: self.showColumn(self.PEX_COL)
-        else: self.hideColumn(self.PEX_COL)
 
         if self.show_esms and not "ESM" in hidden_columns: self.showColumn(self.ESM_COL)
         else: self.hideColumn(self.ESM_COL)
@@ -286,6 +288,18 @@ class list_compactable(list_parent_class):
                     if self.filter_weather:
                         hide_row = True
                     self.setItem(i, self.WTHR_COL, item_wthr_flag)
+                if basename_lower in _global.pex_with_getmodbyname:
+                    item_pex_flag = QTableWidgetItem('PEX')
+                    pex_tooltip = self.tr("This plugin has one or more PEX files that call 'GetModByName' on this plugin: ")
+                    for pex in _global.pex_with_getmodbyname[basename_lower]:
+                        if len(pex) > 70:
+                            pex_tooltip += '\n- ' + '...' +pex[-70:] 
+                        else:
+                            pex_tooltip += '\n- ' + pex
+                    item_pex_flag.setToolTip(pex_tooltip)
+                    if self.filter_pex:
+                        hide_row = True
+                    self.setItem(i, self.PEX_COL, item_pex_flag)
             if self.is_fo4_mode and ('has_previs_precombines' in flags or basename in self.cell_changed):
                 item_precombine_flag = QTableWidgetItem(self.tr("PreVis/PreCombine"))
                 item_precombine_flag.setToolTip(self.tr('This mod has a new cell and either itself or another mod uses the\n'\
@@ -309,18 +323,6 @@ class list_compactable(list_parent_class):
                 if self.filter_seq:
                     hide_row = True
                 self.setItem(i, self.SEQ_COL, item_seq_flag)
-            if basename_lower in _global.pex_with_getmodbyname:
-                item_pex_flag = QTableWidgetItem('PEX')
-                pex_tooltip = self.tr("This plugin has one or more PEX files that call 'GetModByName' on this plugin: ")
-                for pex in _global.pex_with_getmodbyname[basename_lower]:
-                    if len(pex) > 70:
-                        pex_tooltip += '\n- ' + '...' +pex[-70:] 
-                    else:
-                        pex_tooltip += '\n- ' + pex
-                item_pex_flag.setToolTip(pex_tooltip)
-                if self.filter_pex:
-                    hide_row = True
-                self.setItem(i, self.PEX_COL, item_pex_flag)
             if 'is_esm' in flags:
                 item_esm_flag = QTableWidgetItem('ESM')
                 item_esm_flag.setToolTip(self.tr('This mod is an ESM.'))
