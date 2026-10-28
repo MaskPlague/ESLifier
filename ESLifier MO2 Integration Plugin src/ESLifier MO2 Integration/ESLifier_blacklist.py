@@ -7,10 +7,10 @@ try:
                                  QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit)
     from PyQt6.QtGui import QIcon
 except ImportError:
-    from PyQt5.QtCore import Qt, QCoreApplication
-    from PyQt5.QtWidgets import (QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMainWindow,
+    from PyQt5.QtCore import Qt, QCoreApplication #type: ignore
+    from PyQt5.QtWidgets import (QAbstractItemView, QMenu, QTableWidget, QTableWidgetItem, QMainWindow, #type: ignore
                                  QWidget, QHBoxLayout, QVBoxLayout, QPushButton, QLineEdit)
-    from PyQt5.QtGui import QIcon
+    from PyQt5.QtGui import QIcon #type: ignore
 
 class ESLifier_blacklist(QTableWidget):
     def tr(self, text):
@@ -166,8 +166,12 @@ class ESLifier_blacklist(QTableWidget):
 
     def dump_to_file(self, blacklist, file):
         try:
-            with open(file, 'w', encoding='utf-8') as f:
-                json.dump(blacklist, f, ensure_ascii=False, indent=4)
+            if os.path.exists(file):
+                with open(file, 'w', encoding='utf-8') as f:
+                    json.dump(blacklist, f, ensure_ascii=False, indent=4)
+            else:
+                with open(file, 'x', encoding='utf-8') as f:
+                    json.dump(blacklist, f, ensure_ascii=False, indent=4)
         except Exception as e:
             print(f'Error: Failed to dump blacklist data to {file}')
             print(e)
