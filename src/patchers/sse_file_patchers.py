@@ -8,7 +8,7 @@ try:
 except:
     from shared_file_patchers import shared_patchers
     def write_to_file(txt):
-            print(str(f"write_to_file: {str(txt)}"))
+        print(str(f"write_to_file: {str(txt)}"))
     def write_ineligible(txt):
         print(str(f"write_ineligible: {str(txt)}"))
 
