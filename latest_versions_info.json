@@ -1,7 +1,7 @@
 {
     "SSE": {
-        "version": "0.17.0",
-        "url": "tag/v0.17.0",
+        "version": "1.0.0",
+        "url": "tag/v1.0.0",
         "changelog": [
             "",
             "Breaking Change: Start Form ID count from 1 instead of 0.",
@@ -33,14 +33,15 @@
         ]
     },
     "FO4": {
-        "version": "0.1.0",
-        "url": "tag/v0.1.0",
+        "version": "0.0.1",
+        "url": "tag/v0.0.1",
         "changelog": [
             "Intial Conversion from SSE to FO4",
             "- BA2 scanning/Extraction",
             "- Refactor Settings",
             "- Refactor Lists, Scanners, and Patchers",
-            "- Refactor hardcoded paths to globals"
+            "- Refactor hardcoded paths to globals",
+            "- Lots of other stuff"
         ]
     }
 }
