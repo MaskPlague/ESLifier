@@ -1,6 +1,5 @@
 import json
 import json5
-
 try:
     from log_stream import write_to_file, write_ineligible, write_error
 except:
@@ -48,17 +47,29 @@ class shared_patchers():
             return offset, variableType, variableData
         
         def patch_int(aOffset):
-            print(data[aOffset:aOffset+6].hex())
+            if DEBUG:
+                print(data[aOffset:aOffset+6].hex())
             if endian == 'big':
                 to_id_data = form_id_map.get(int.from_bytes(data[aOffset+2:aOffset+5], endian))
                 if to_id_data:
+                    if DEBUG:
+                        write_to_file(f"patching: {data[aOffset:aOffset+6].hex()}")
                     data[aOffset+2:aOffset+5] = to_id_data["bytes"][::-1][1:]
+                    if DEBUG:
+                        write_to_file(f"new: {data[aOffset:aOffset+6].hex()}")
+                elif DEBUG:
+                    write_to_file(f"no patching: {data[aOffset:aOffset+6].hex()}")
             else:
                 to_id_data = form_id_map.get(int.from_bytes(data[aOffset+1:aOffset+4], endian))
                 if to_id_data:
+                    write_to_file(f"patching: {data[aOffset:aOffset+6].hex()}")
                     data[aOffset+1:aOffset+4] = to_id_data["bytes"][:-1]
-            print(data[aOffset:aOffset+6].hex())
-            print('--------------')
+                    write_to_file(f"new: {data[aOffset:aOffset+6].hex()}")
+                elif DEBUG:
+                    write_to_file(f"no patching: {data[aOffset:aOffset+6].hex()}")
+            if DEBUG:
+                print(data[aOffset:aOffset+6].hex())
+                print('--------------')
 
         def function_processor(data, offset):
             if DEBUG:
@@ -148,7 +159,12 @@ class shared_patchers():
                     tmp = tempVars.get(bytes(assignedValue))
                     if tmp and tmp[1] == 3: #if tmp value is integer
                         #set index for array to (offset, value)
-                        arrays[bytes(arrayId)]["integers"][arrayIndex] = (tmp[0], tmp[2])
+                        if DEBUG:
+                            print(arrays)
+                        if isinstance(arrayIndex, int):
+                            arr = arrays.get(bytes(arrayId))
+                            if arr:
+                                arr["integers"][arrayIndex] = (tmp[0], tmp[2])
                 elif opCode == b'\x20': # get element from array to var
                     offset, vType, assignToVar = var_data_reader(data, offset)
                     offset, vType, arrayId = var_data_reader(data, offset)
@@ -243,8 +259,10 @@ class shared_patchers():
             if DEBUG:
                 print(f"{arrays = }")
             for array in arrays.values():
-                for aOffset, integer in array["integers"]:
-                    patch_int(aOffset)
+                if array["patch"]:
+                    for aOffset, integer in array["integers"]:
+                        if aOffset:
+                            patch_int(aOffset)
             return offset
         
         def state_processor(data, offset):
@@ -530,7 +548,12 @@ class shared_patchers():
                     tmp = tempVars.get(bytes(assignedValue))
                     if tmp and tmp[1] == 3: #if tmp value is integer
                         #set index for array to (offset, value)
-                        arrays[bytes(arrayId)]["integers"][arrayIndex] = (tmp[0], tmp[2])
+                        #Scripts may not have created a array since the array can be a property or perhaps arg
+                        #arrays[bytes(arrayId)]["integers"][arrayIndex] = (tmp[0], tmp[2])
+                        if isinstance(arrayIndex, int):
+                            arr = arrays.get(bytes(arrayId))
+                            if arr:
+                                arr["integers"][arrayIndex] = (tmp[0], tmp[2])
                 elif opCode == b'\x20': # get element from array to var
                     offset, vType, assignToVar = var_data_reader(data, offset)
                     offset, vType, arrayId = var_data_reader(data, offset)
@@ -605,8 +628,10 @@ class shared_patchers():
                     write_error(f"Missing opcode in pex patcher? {opCode.hex()}, found in file {new_file}")
 
             for array in arrays.values():
-                for aOffset, integer in array["integers"]:
-                    patch_int(aOffset)
+                if array["patch"]:
+                    for aOffset, integer in array["integers"]:
+                        if aOffset:
+                            patch_int(aOffset)
             return offset
         
         def state_processor(data, offset):
