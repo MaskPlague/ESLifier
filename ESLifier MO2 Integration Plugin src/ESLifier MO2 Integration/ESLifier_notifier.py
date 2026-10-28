@@ -6,12 +6,14 @@ import hashlib
 try:
     from PyQt6.QtCore import QCoreApplication
 except ImportError:
-    from PyQt5.QtCore import QCoreApplication 
+    from PyQt5.QtCore import QCoreApplication #type: ignore
 
 from .ESLifier_qualification_checker import qualification_checker as light_check
+from .ESLifier_cell_changed_scanner import cell_scanner
 
 class check_files():    
-    def scan_files(self, scan_esms, eslifier_folder, new_header, compare_hashes, detect_conflict_changes, only_plugins, plugin_files_list, organizer):
+    def scan_files(self, scan_esms, eslifier_data_folder, new_header, compare_hashes, detect_conflict_changes,
+                   only_plugins, plugin_files_list, organizer, game_mode="SSE", all_plugin_files=None):
         self.flag_dict = {}
         self.hash_mismatches = []
         self.lost_to_overwrite = []
@@ -25,6 +27,8 @@ class check_files():
         self.any_esl = False
         self._organizer = organizer
         self.running = True
+        self.game_mode = game_mode
+        light_check.configure(game_mode, plugin_files_list if all_plugin_files is None else all_plugin_files)
 
         if len(plugin_files_list) > 1000:
             split = 5
@@ -47,7 +51,7 @@ class check_files():
 
         original_plugins_hash_map = []
         if compare_hashes and self.running:
-            original_plugins_path = os.path.join(eslifier_folder, 'ESLifier_Data/original_files.json')
+            original_plugins_path = os.path.join(eslifier_data_folder, 'original_files.json')
             if os.path.exists(original_plugins_path):
                 with self.semaphore:
                     try:
@@ -62,7 +66,7 @@ class check_files():
 
         self.conflict_changes = []
         if detect_conflict_changes and self.running:
-            winning_file_history_dict_path = os.path.join(eslifier_folder, "ESLifier_Data/winning_file_history_dict.json")
+            winning_file_history_dict_path = os.path.join(eslifier_data_folder, "winning_file_history_dict.json")
             mod_list: list[str] = self._organizer.modList().allModsByProfilePriority()
             mod_list.append('overwrite_eslifier_scan')
             if os.path.exists(winning_file_history_dict_path):
@@ -89,6 +93,9 @@ class check_files():
         for thread in threads:
             thread.join()
 
+        if self.running:
+            self.flag_new_cells_changed_by_dependents()
+
         needs_flag_dict = {p: f for p, f in self.flag_dict.items() if 'need_compacting' not in f}
         needs_compacting_flag_dict = {p: f for p, f in self.flag_dict.items() if 'need_compacting' in f}
         if self.running:
@@ -96,6 +103,14 @@ class check_files():
                 needs_flag_dict, needs_compacting_flag_dict, self.hash_mismatches, self.conflict_changes, self.lost_to_overwrite)
         else:
             return False, {}, {}, [], [], []
+
+    def flag_new_cells_changed_by_dependents(self):
+        plugins_with_cells = [plugin for plugin, flags in self.flag_dict.items() if 'new_cell' in flags]
+        changed = cell_scanner.scan(plugins_with_cells, light_check.new_cell_ids, light_check.dependent_dict,
+                                    self.game_mode, lambda: self.running)
+        for plugin in changed:
+            if plugin in self.flag_dict:
+                self.flag_dict[plugin].append('cell_changed')
 
     def stop(self):
         self.running = False
@@ -133,29 +148,42 @@ class check_files():
 
     def plugin_scanner(self, plugins, new_header, scan_esms):
         flag_dict = {}
+        is_sse_mode = self.game_mode == "SSE"
         for plugin in plugins:
-            esl_allowed, need_compacting, new_cell, interior_cell, new_wrld, new_wthr = self.qualification_check(plugin, new_header, scan_esms)
-            if esl_allowed == True:
+            ret_val = self.qualification_check(plugin, new_header, scan_esms)
+            if ret_val[0] == True:
                 self.any_esl = True
+                need_compacting, new_cell = ret_val[1], ret_val[2]
                 basename = os.path.basename(plugin)
                 with self.lock:
-                    if esl_allowed:
-                        flag_dict[basename] = []
-                        if need_compacting:
-                            flag_dict[basename].append('need_compacting')
-                        if new_cell:
-                            flag_dict[basename].append('new_cell')
-                            if interior_cell:
-                                flag_dict[basename].append('new_interior_cell')
-                        if new_wrld:
+                    flag_dict[basename] = []
+                    if need_compacting:
+                        flag_dict[basename].append('need_compacting')
+                    if new_cell:
+                        flag_dict[basename].append('new_cell')
+                        if is_sse_mode and ret_val[3]:
+                            flag_dict[basename].append('new_interior_cell')
+                        if self.is_maxed_masters(plugin, basename):
+                            flag_dict[basename].append('maxed_masters')
+                    if is_sse_mode:
+                        if ret_val[4]:
                             flag_dict[basename].append('new_wrld')
-                        if new_wthr:
+                        if ret_val[5]:
                             flag_dict[basename].append('new_wthr')
+                    elif ret_val[3]:
+                        flag_dict[basename].append('has_previs_precombines')
         with self.lock:
             for key, value in flag_dict.items():
                 if key not in self.flag_dict:
                     self.flag_dict[key] = value
     
+    @staticmethod
+    def is_maxed_masters(plugin, basename) -> bool:
+        maxed = light_check.maxed_masters
+        if plugin in maxed:
+            return True
+        return any(dependent in maxed for dependent in light_check.dependent_dict.get(basename.lower(), ()))
+
     @staticmethod
     def qualification_check(plugin, new_header, scan_esms):
         return light_check().qualification_check(plugin, new_header, scan_esms)
