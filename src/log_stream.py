@@ -65,6 +65,7 @@ if DEBUG:
             if DEBUG:
                 sys.__stdout__.write(f"LOG: {args}\n")
                 sys.__stdout__.flush()
+                #write_to_file(str(args))
             elif 'original' in kwargs:
                 kwargs.pop('original')
                 self.original_print_func(*args, **kwargs)
