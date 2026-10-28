@@ -628,9 +628,9 @@ def test_patch_new_files_patches_each_mod_with_its_dependents(patch_worker):
     w.patch_new_files()
     cfids, = FakeCFIDs.instances
     assert cfids.patched == [("ModA.esp", ["dep1.esp", "dep2.esp"], files), ("ModB.esp", [], files)]
-    _, original_files, winning, history, compacted, master_bytes, bsa_masters, conditions = cfids.args
+    _, original_files, winning, history, compacted, master_bytes, game_archive_masters, conditions = cfids.args
     assert (original_files, winning, master_bytes) == ({"o": 1}, {"w": 2}, {"m": 3})
-    assert history == {} and compacted == {} and bsa_masters == [] and conditions == "conditions"
+    assert history == {} and compacted == {} and game_archive_masters == [] and conditions == "conditions"
     assert cfids.saved == 1
     assert w.finished_signal.calls == [(4,)]                         # dep1, dep2, a.nif, b.nif: unique files only
 

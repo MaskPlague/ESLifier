@@ -496,9 +496,9 @@ class TestCompactAndPatch:
         temp = env.root / "bsa_extracted_temp"
         env.g.archive_extracted_temp_path_len = len(str(temp))
         master = write(env.data / "master.esp", build_source_plugin())
-        cf.bsa_masters = {"master.esp"}
-        cf.archive_dict = cf.bsa_dict = {"/bsa/Master - Textures.bsa": ["master.esp"], "/bsa/Master.bsa": ["master.esp"],
-                                         "/bsa/Other.bsa": ["other.esp"]}   # attribute was renamed bsa_dict -> archive_dict
+        cf.game_archive_masters = {"master.esp"}
+        cf.archive_dict = {"/bsa/Master - Textures.bsa": ["master.esp"], "/bsa/Master.bsa": ["master.esp"],
+                                         "/bsa/Other.bsa": ["other.esp"]}
         extracted = []
 
         def fake_extract(bsa, part, name, startupinfo):
@@ -507,7 +507,7 @@ class TestCompactAndPatch:
             put(temp / "sound/voice/master.esp/npc/x_00012345_1.fuz")
             put(temp / "sound/voice/master.esp/npc/notes.txt")        # not a game asset: ignored
 
-        cf.bsa_temp_extract = fake_extract
+        cf.archive_temp_extract = fake_extract
         existing = put(env.data / "scripts" / "a.pex")
         cf.compact_and_patch(master, [], True, False, {"master.esp": [existing]})
         assert sorted(extracted) == [("Master - Textures.bsa", "tempSSE|", "master.esp"),
@@ -524,8 +524,8 @@ class TestCompactAndPatch:
         stale = put(env.root / "bsa_extracted_temp" / "textures" / "old.dds")
         env.g.archive_extracted_temp_path_len = len(str(env.root / "bsa_extracted_temp"))
         master = write(env.data / "master.esp", build_source_plugin())
-        cf.bsa_masters = {"master.esp"}
-        cf.bsa_dict = {}
+        cf.game_archive_masters = {"master.esp"}
+        cf.archive_dict = {}
         cf.compact_and_patch(master, [], True, False, {})
         assert cf.routed == {"patch": [], "rename": []}
         assert not os.path.exists(stale)
