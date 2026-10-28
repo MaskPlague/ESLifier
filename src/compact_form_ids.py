@@ -44,7 +44,7 @@ else:
 
 class CFIDs():
     def __init__(self, create_cell_master_class: create_new_cell_plugin, original_files: dict, winning_files_dict: dict, winning_file_history_dict: dict,
-                  compacted_and_patched: dict[str, set[str]], master_byte_data:dict, bsa_masters: list, additional_file_patcher_conditions):
+                  compacted_and_patched: dict[str, set[str]], master_byte_data:dict, game_archive_masters: list, additional_file_patcher_conditions):
         self.output_folder_name: str = os.path.normpath(_global.output_folder_name)
         self.output_folder: str = _global.output_folder_joined_path
         self.update_header: bool = _global.update_header
@@ -54,7 +54,7 @@ class CFIDs():
         self.winning_file_history_dict = winning_file_history_dict
         self.compacted_and_patched: dict[str, set[str]] = compacted_and_patched
         self.master_byte_data = master_byte_data
-        self.bsa_masters = set(bsa_masters)
+        self.game_archive_masters = set(game_archive_masters)
         self.archive_dict = _global.game_archive_dict
         self.lock = threading.Lock()
         #Semaphore prevents the Erno too many open files
@@ -187,9 +187,9 @@ class CFIDs():
             for key, item in local_new_file_hashes.items():
                 new_file_hashes[key] = item
 
-    def bsa_temp_extract(self, bsa_file: str, type: str, name:str, startupinfo: subprocess.STARTUPINFO):
+    def archive_temp_extract(self, archive_file: str, type: str, name:str, startupinfo: subprocess.STARTUPINFO):
         with subprocess.Popen(
-            ["bsarch/bsarch.exe", "unpack", bsa_file, ARCHIVE_EXTRACTED_TEMP_FOLDER, f"-f:{type + name}"],
+            ["bsarch/bsarch.exe", "unpack", archive_file, ARCHIVE_EXTRACTED_TEMP_FOLDER, f"-f:{type + name}"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             startupinfo=startupinfo,
@@ -214,12 +214,12 @@ class CFIDs():
             dependent_thread.start()
 
         name = os.path.basename(file_to_compact).lower()
-        if name in files_to_patch or name in self.bsa_masters:
+        if name in files_to_patch or name in self.game_archive_masters:
             patch_or_rename = []
             if name in files_to_patch:
                 patch_or_rename = files_to_patch[os.path.basename(file_to_compact).lower()]
 
-            if name in self.bsa_masters:
+            if name in self.game_archive_masters:
                 write_normal("-  "+ QCoreApplication.translate("CFIDs", 
                                                                "Temporarily Extracting FaceGen/Voice files from %0 for patching...")
                                                                .replace("%0", GAME_ARCHIVE_TYPE))
@@ -235,7 +235,7 @@ class CFIDs():
 
                 for archive_file, values in self.archive_dict.items():
                     if name in values:
-                        thread = threading.Thread(target=self.bsa_temp_extract, args=(archive_file, f"temp{GAME_MODE}|", name, startupinfo))
+                        thread = threading.Thread(target=self.archive_temp_extract, args=(archive_file, f"temp{GAME_MODE}|", name, startupinfo))
                         temp_extraction_threads.append(thread)
                         thread.start()
 
