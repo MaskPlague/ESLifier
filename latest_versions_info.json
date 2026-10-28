@@ -3,8 +3,10 @@
         "version": "0.17.0",
         "url": "tag/v0.17.0",
         "changelog": [
+            "",
             "Breaking Change: Start Form ID count from 1 instead of 0.",
-            "  This is most likely NOT save game safe.",
+            "This is most likely NOT save game safe.",
+            "",
             "Fix:",
             "- SSE Engine Fixes Version check returning true for all versions.",
             "- Missing iterator for SCOL records which could cause a program freeze.",
@@ -26,6 +28,7 @@
             "- Refactor hardcoded paths to globals",
             "Add:",
             "- Warning during scan if a path is too long and Windows Long Path Support is not enabled.",
+            "- Changelog for the update warning/popup.",
             "- Recursive JSON patcher, for various mods that have a mod and Form ID keys at the same level (such as Unique Region Names)."
         ]
     },
