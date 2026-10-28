@@ -179,9 +179,8 @@ class scanner():
         last = 0
         extracting_str = "-  " + QCoreApplication.translate("scanner", "Extracting: ")
         #looks like "-mt:no" is necessary or some funky threading stuff happens that significantly slows down the new exe for this
-        #disabling it for now though since I have imposed a limit in the EXE
         with subprocess.Popen(
-            ["bsarch/bsarch.exe", "unpack", file, ARCHIVE_EXTRACTED_FOLDER, f"-f:{filter}"],#, "-mt:no"],
+            ["bsarch/bsarch.exe", "unpack", file, ARCHIVE_EXTRACTED_FOLDER, f"-f:{filter}", "-mt:no"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             startupinfo=startupinfo,
