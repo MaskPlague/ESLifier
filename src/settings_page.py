@@ -216,15 +216,13 @@ class settings(QWidget):
             default=False,
             game_modes=("SSE")
         )
-
         self.enable_previs_precombine_filter_widget, self.enable_previs_precombine_filter_toggle = self.create_toggle_widget(
-            self.tr("Previs/Precombine Filter PLACEHOLDER"),
-            self.tr("PLACEHOLDER"),
+            self.tr("Hide plugins with PreVis/PreCombine"),
+            self.tr("Hide plugins with new cells that have PreVis/PreCombine as that system breaks for them."),
             "filter_previs_precombine",
             default=True,
             game_modes=("FO4")
         )
-
         self.enable_seq_filter_widget, self.enable_seq_filter_toggle = self.create_toggle_widget(
             self.tr("Hide plugins that have SEQ files"),
             self.tr("Hide plugins that have SEQ files as ESL flagging it may cause dialogue for it to not work until you save and reload in game."),
@@ -239,20 +237,34 @@ class settings(QWidget):
             default=True,
             game_modes=("SSE") #GetModByName doesn't exist for FO4
         )
+        hide_left_columns_tooltip = ''
+        if GAME_MODE == "SSE":
+            hide_left_columns_tooltip = self.tr("Hide specified columns visually. This does not affect what plugins are displayed.\n"\
+                                                "Specify the column names, comma separated. Available: CELL, WRLD, SEQ, PEX, ESM\n"\
+                                                "Example, hides the CELL and ESM flags: CELL,ESM")
+        elif GAME_MODE == "FO4":
+            hide_left_columns_tooltip = self.tr("Hide specified columns visually. This does not affect what plugins are displayed.\n"\
+                                                "Specify the column names, comma separated. Available: PREVIS, ESM\n"\
+                                                "Example, hides the PREVIS and ESM flags: PREVIS,ESM")
         self.hide_left_columns_widget, self.hide_left_columns_text_input = self.create_text_input_widget(
             self.tr("Hide left list columns visually"),
-            self.tr("Hide specified columns visually. This does not affect what plugins are displayed.\n"\
-            "Specify the column names, comma separated. Available: CELL, WRLD, SEQ, PEX, ESM\n"\
-            "Example, hides the CELL and ESM flags: CELL,ESM"),
+            hide_left_columns_tooltip,
             "CELL,ESM",
             "left_hidden_columns",
             ''
         )
+        hide_right_columns_tooltip = ''
+        if GAME_MODE == "SSE":
+            hide_right_columns_tooltip = self.tr("Hide specified columns visually. This does not affect what plugins are displayed.\n"\
+                                                 "Specify the column names, comma separated. Available: CELL, WRLD, WTHR, SEQ, PEX, ESM, DEPENDENTS\n"\
+                                                 "Example, hides the ESM flag and the dependent plugins: ESM,DEPENDENT")
+        elif GAME_MODE == "FO4":
+            hide_right_columns_tooltip = self.tr("Hide specified columns visually. This does not affect what plugins are displayed.\n"\
+                                                 "Specify the column names, comma separated. Available: PREVIS, ESM, DEPENDENTS\n"\
+                                                 "Example, hides the ESM flag and the dependent plugins: ESM,DEPENDENT")                      
         self.hide_right_columns_widget, self.hide_right_columns_text_input = self.create_text_input_widget(
             self.tr("Hide right list columns visually"),
-            self.tr("Hide specified columns visually. This does not affect what plugins are displayed.\n"\
-            "Specify the column names, comma separated. Available: CELL, WRLD, WTHR, SEQ, PEX, ESM, DEPENDENTS\n"\
-            "Example, hides the ESM flag and the dependent plugins: ESM,DEPENDENT"),
+            hide_right_columns_tooltip,
             "ESM,DEPENDENTS",
             "right_hidden_columns",
             ''
@@ -441,38 +453,6 @@ class settings(QWidget):
         column_2.addWidget(self.hide_right_columns_widget)
 
         settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        '''column_1.addWidget(self.update_header_widget)
-        column_1.addWidget(self.show_esms_widget)
-        column_1.addWidget(self.show_plugins_with_cells_widget)
-
-        column_1.addWidget(self.enable_cell_changed_filter_widget)      #SSE
-        column_1.addWidget(self.enable_interior_cell_filter_widget)     #SSE
-        column_1.addWidget(self.enable_worldspaces_filter_widget)       #SSE
-        column_1.addWidget(self.enable_weather_filter_widget)           #SSE
-        column_1.addWidget(self.enable_previs_precombine_filter_widget) #FO4
-        column_1.addWidget(self.enable_seq_filter_widget)
-        column_1.addWidget(self.enable_pex_filter_widget)
-        column_1.addWidget(self.show_plugins_possibly_refd_by_dlls_widget)
-        column_1.addWidget(self.generate_cell_master_widget)            #SSE only, temporarily
-        column_1.addWidget(self.hide_left_columns_widget)
-        
-        column_2.addWidget(self.persistent_ids_widget)
-        column_2.addWidget(self.free_non_existent_widget)
-        column_2.addWidget(self.hash_output_widget)
-        column_2.addWidget(self.hash_plugins_warn_widget)
-        column_2.addWidget(self.enable_patch_new_widget)
-        column_2.addWidget(self.edit_blacklist_widget)
-        column_2.addWidget(self.open_eslifier_data_widget)
-        column_2.addWidget(self.colors_select_widget)
-        column_2.addWidget(self.reset_settings_widget)
-        column_2.addWidget(self.check_for_updates_widget)
-        column_2.addWidget(self.skip_confirmations_widget)
-        column_2.addWidget(self.hide_right_columns_widget)
-
-        settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.set_game_mode_settings()'''
 
     def open_color_dialog(self):
         inner_color = QColorDialog.getColor(QColor(self.inner_color), self, self.tr("Select Inner Color"))
