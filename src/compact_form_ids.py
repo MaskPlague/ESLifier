@@ -9,6 +9,7 @@ import hashlib
 import json
 import time
 import charset_normalizer
+import traceback
 #from intervaltree import IntervalTree
 
 from create_cell_master import create_new_cell_plugin
@@ -597,6 +598,7 @@ class CFIDs():
                 except Exception as e:
                     write_error(QCoreApplication.translate("Global", "Failed to patch file: ") + new_file)
                     write_error(e, True)
+                    write_to_file(traceback.format_exc())
                 local_compacted_and_patched_set.add(rel_path)            
         with self.lock:
             self.compacted_and_patched[basename_cased].update(local_compacted_and_patched_set)
