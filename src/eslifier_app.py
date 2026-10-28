@@ -1,6 +1,5 @@
 import sys
 import os
-import images_qr #do not remove, used for icons, it is a PyQt6 resource file
 import json
 import requests
 import traceback
