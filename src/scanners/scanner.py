@@ -9,16 +9,12 @@ import psutil
 import struct
 import platform
 import pefile
-
+from PyQt6.QtCore import QCoreApplication
 from collections import defaultdict
 
-from data_holder import (_global, GAME_MODE, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ESM_NAME, MO2_GAME_NAME, SHORT_GAME_NAME,
-                         CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
-                         EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
-                         MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
-                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, DEPENDENCY_DICTIONARY_JSON,
-                         MAXED_MASTERS_JSON, BLACKLIST_JSON, CELL_CHANGED_JSON, DLL_DICT_JSON, IGNORED_FILES_JSON, ESLIFIER_DATA_FOLDER,
-                         ARCHIVE_EXTRACTED_FOLDER, GAME_ARCHIVE_EXTENSION, GAME_ARCHIVE_TYPE, SCRIPT_EXTENDER)
+from data_holder import (_global, GAME_MODE, EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, WINNING_FILES_DICT_JSON,
+                         DLL_DICT_JSON, IGNORED_FILES_JSON, ESLIFIER_DATA_FOLDER, ARCHIVE_EXTRACTED_FOLDER,
+                         GAME_ARCHIVE_EXTENSION, GAME_ARCHIVE_TYPE, SCRIPT_EXTENDER)
 from scanners.scanner_mo2 import MO2
 from scanners.scanner_none import NoManager
 from scanners.scanner_vortex import Vortex
@@ -34,8 +30,6 @@ from scanners.plugin_qualification_checker import qualification_checker
 from scanners.dependency_getter import dependecy_getter
 from log_stream import write_error, write_normal, write_progress, write_remove, write_to_file, write_warning
 
-from PyQt6.QtCore import QCoreApplication
-#TODO: go through and make sure that pex and other file types need to be read the same.
 class scanner():    
     def scan(full_scan: bool) -> tuple[dict, dict] | None:
         if GAME_MODE == "SSE":
@@ -751,7 +745,6 @@ class scanner():
             write_error(QCoreApplication.translate("scanner", "Error Reading BSA: ") + bsa_file)
             write_error(e, True)
 
-    #TODO: extensively test this
     def ba2_reader(ba2_file):
         plugins = set()
         try:

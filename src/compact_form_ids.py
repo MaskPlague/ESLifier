@@ -12,12 +12,9 @@ import charset_normalizer
 #from intervaltree import IntervalTree
 
 from create_cell_master import create_new_cell_plugin
-from data_holder import (_global, GAME_MODE, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ESM_NAME, MO2_GAME_NAME, SHORT_GAME_NAME,
-                         CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
-                         EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
-                         MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
-                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, 
-                         ARCHIVE_EXTRACTED_FOLDER, ARCHIVE_EXTRACTED_TEMP_FOLDER, GAME_ARCHIVE_EXTENSION, GAME_ARCHIVE_TYPE)
+from data_holder import (_global, GAME_MODE, GAME_ESM_NAME, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, FORM_ID_MAPS_FOLDER, 
+                         MASTER_BYTE_DATA_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
+                         ARCHIVE_EXTRACTED_FOLDER, ARCHIVE_EXTRACTED_TEMP_FOLDER, GAME_ARCHIVE_TYPE)
 from log_stream import write_error, write_normal, write_progress, clear_and_leave_log_open, write_insert, write_to_file
 from PyQt6.QtCore import QCoreApplication
 if GAME_MODE == "SSE":

@@ -1,9 +1,6 @@
 import json
 import json5
-import os
 
-import configparser
-import io
 try:
     from log_stream import write_to_file, write_ineligible, write_error
 except:
