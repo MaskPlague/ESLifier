@@ -24,12 +24,13 @@ def append_luhn_checksum(filename):
 
     print(f"Checksum {checksum} appended to {filename}")
 
-def compile_exe(one_dir:bool):
+def compile_exe(game_mode: str):
     working_directory = os.getcwd()
-    one_file_args = ["pyinstaller", "src/eslifier_app.py", "--onefile", "-n", "ESLifier", "--noconsole", "--icon", "src/images/ESLifier.ico"]
-    one_dir_args = ["pyinstaller", "src/eslifier_app.py", "--onedir", "-y", "-n", "ESLifier", "--noconsole", "--icon", "src/images/ESLifier.ico"]
+    one_file_args = ["pyinstaller", f"src/run_{game_mode.lower()}_mode.py", "--onefile",
+                    "-n", f"ESLifier-{game_mode}", "--noconsole", "--icon", f"src/images/{game_mode}/ESLifier.ico",
+                    "--add-data", f"src/images/{game_mode}/;images/{game_mode}"]
     with subprocess.Popen(
-        one_dir_args if one_dir else one_file_args,
+        one_file_args,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -38,17 +39,25 @@ def compile_exe(one_dir:bool):
     ) as p:
         for line in p.stderr:
             print(line, end="")
-    print('Done Building EXE')
+    print(f'Done Building {game_mode} EXE')
 
-compile_exe(one_dir=False)
-print('Calculating Checksum (exe)')
-append_luhn_checksum("dist\\ESLifier.exe")
-print('')
-print("Standalone EXE done\n")
-#compile_exe(one_dir=True)
-#print('')
-#print('Calculating Checksum (one dir)')
-#append_luhn_checksum("dist\\ESLifier\\ESLifier.exe")
-#print("One Dir done\n")
-formatted_datetime = datetime.now().isoformat(timespec='milliseconds')
-print("Last Ran: " + formatted_datetime)
+if __name__ == "__main__":
+    choice = input("Enter a build mode (SSE|S, FO4|F, Both|B): ").strip()
+    if choice.lower() in ("sse", "s"):
+        game_modes = ["SSE"]
+    elif choice.lower() in ("fo4", "f"):
+        game_modes = ["FO4"]
+    elif choice.lower() in ("both", "b"):
+        game_modes = ["SSE", "FO4"]
+    else:
+        print(f"Invalid input: '{choice}', cancelling")
+        exit()
+
+    for game_mode in game_modes:
+        compile_exe(game_mode)
+        print('Calculating Checksum (exe)')
+        append_luhn_checksum(f"dist\\ESLifier-{game_mode}.exe")
+        print('')
+        print(f"Standalone {game_mode} EXE done\n")
+        formatted_datetime = datetime.now().isoformat(timespec='milliseconds')
+        print("Last Ran: " + formatted_datetime)
