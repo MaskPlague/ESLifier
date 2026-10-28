@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from PyQt6.QtGui import QIcon, QColor
     from PyQt6.QtWidgets import (QDialog, QMessageBox, QPushButton, QVBoxLayout, QFileDialog, QToolButton,
                                   QToolBar, QCheckBox, QLabel, QGridLayout, QApplication)
-            
+SUPPORTED_GAMES = {"Skyrim Special Edition", "Skyrim VR", "Fallout 4"}
 class QueueScan():
     def __init__(self):
         self.lock = False
@@ -61,10 +61,7 @@ class ESLifier(mobase.IPluginTool):
         return mobase.VersionInfo(1, 6, 0, mobase.ReleaseType.FINAL)
     
     def requirements(self):
-        return [mobase.PluginRequirementFactory.gameDependency({
-                "Skyrim Special Edition",
-                "Skyrim VR"
-            })]
+        return [mobase.PluginRequirementFactory.gameDependency(SUPPORTED_GAMES)]
     
     def settings(self):
         return [
@@ -372,7 +369,7 @@ class ESLifier(mobase.IPluginTool):
     def create(self, *args):
         game = self._organizer.managedGame()
         print(f"Game name: {game.gameName()}")
-        if not game.gameName() in ("Skyrim Special Edition", "Skyrim VR", "Fallout 4"):
+        if not game.gameName() in SUPPORTED_GAMES:
             self.validGame = False
             return
         self.GAME_MODE = "SSE" if game.gameName() == "Skyrim Special Edition" else "FO4"
