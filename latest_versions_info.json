@@ -1,12 +1,43 @@
 {
     "SSE": {
-        "version": "0.16.17",
-        "url": "tag/v0.16.17",
-        "changelog": []
+        "version": "0.17.0",
+        "url": "tag/v0.17.0",
+        "changelog": [
+            "Breaking Change: Start Form ID count from 1 instead of 0.",
+            "  This is most likely NOT save game safe.",
+            "Fix:",
+            "- SSE Engine Fixes Version check returning true for all versions.",
+            "- Missing iterator for SCOL records which could cause a program freeze.",
+            "- OBody JSON patcher incorrectly converting other plugin's Form IDs.",
+            "- Vortex Scanner incorrectly determining conflicts between files only in archives and the data folder.",
+            "- Files that are not UTF-8 encoded will re-try with cp1252 and if that fails too it will attempt to determine the encoding.",
+            "- Missing error log for files with non-UTF-8 encoding.",
+            "- Assumption that archives with suffix '- Textures' were always texture only.",
+            "- Various minor UI bugs.",
+            "Change:",
+            "- Add PEX path to GetModByName() tooltip",
+            "- More Optimizations",
+            "- Rewrote PEX patcher",
+            "- Errors that are not handled will automatically open the Log file.",
+            "- Updated to the latest version of BSArch.exe",
+            "- Moved filtering logic into BSArch.exe",
+            "- Refactor Settings",
+            "- Refactor Lists, Scanners, and Patchers",
+            "- Refactor hardcoded paths to globals",
+            "Add:",
+            "- Warning during scan if a path is too long and Windows Long Path Support is not enabled.",
+            "- Recursive JSON patcher, for various mods that have a mod and Form ID keys at the same level (such as Unique Region Names)."
+        ]
     },
     "FO4": {
-        "version": "0.16.17",
-        "url": "tag/v0.16.17",
-        "changelog": []
+        "version": "0.1.0",
+        "url": "tag/v0.1.0",
+        "changelog": [
+            "Intial Conversion from SSE to FO4",
+            "- BA2 scanning/Extraction",
+            "- Refactor Settings",
+            "- Refactor Lists, Scanners, and Patchers",
+            "- Refactor hardcoded paths to globals"
+        ]
     }
 }
