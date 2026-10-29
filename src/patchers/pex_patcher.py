@@ -111,7 +111,8 @@ def _collect_offsets(records):
 
 
 def pex_patcher_for_debug(basename: str, new_file: str, form_id_map: dict,
-                          endian: str = 'big', debug: bool = True, log=None, print=print) -> int:
+                          endian: str = 'big', debug: bool = True, log=None,
+                          print=print, ineligible=None) -> int:
     """
     Remap FormIDs passed to Game.GetFormFromFile(id, basename) in a compiled script.
 
@@ -120,6 +121,7 @@ def pex_patcher_for_debug(basename: str, new_file: str, form_id_map: dict,
     `log` defaults to a module-level write_to_file() if one exists, else print.
     """
     log = log or globals().get('write_to_file') or print
+    ineligible = ineligible or globals().get('write_ineligible') or print
     records = []
     strings = []
     data = bytearray()
@@ -164,10 +166,15 @@ def pex_patcher_for_debug(basename: str, new_file: str, form_id_map: dict,
             return False
         lo, hi = (a + 2, a + 5) if endian == 'big' else (a + 1, a + 4)
         before = data[a:a + 6].hex()
-        entry = form_id_map.get(int.from_bytes(data[lo:hi], endian))
+        old_id = int.from_bytes(data[lo:hi], endian)
+        entry = form_id_map.get(old_id)
         if not entry:
             dlog(f"no patching: {before}")
             return False
+        if entry.get("update_name"):
+            # the record moved to ESLifier_Cell_Master.esm, so basename can no longer reference it
+            ineligible(f'{basename} -> ESLifier_Cell_Master.esm | 0x{old_id:X} -> '
+                        f'0x{entry["hex_no_0"]} | {new_file}')
         data[lo:hi] = entry["bytes"][::-1][1:] if endian == 'big' else entry["bytes"][:-1]
         dlog(f"patching: {before}")
         dlog(f"new: {data[a:a + 6].hex()}")
@@ -410,6 +417,6 @@ def pex_patcher_for_debug(basename: str, new_file: str, form_id_map: dict,
     return patched
 
 
-def pex_patcher(basename: str, new_file: str, form_id_map: dict, endian: str = 'big') -> int:
+def pex_patcher(basename: str, new_file: str, form_id_map: dict, endian: str = 'big', ineligible=None) -> int:
     """Same as pex_patcher_for_debug but writes the result."""
-    return pex_patcher_for_debug(basename, new_file, form_id_map, endian, debug=False)
+    return pex_patcher_for_debug(basename, new_file, form_id_map, endian, debug=False, ineligible=ineligible)

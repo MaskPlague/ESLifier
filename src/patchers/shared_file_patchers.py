@@ -20,10 +20,11 @@ except:
 
 class shared_patchers():
     def pex_patcher_for_debug(basename: str, new_file: str, form_id_map: dict, endian = 'big'):
-        pex_patcher.pex_patcher_for_debug(basename, new_file, form_id_map, endian = endian, log=write_to_file, print=print)
+        pex_patcher.pex_patcher_for_debug(basename, new_file, form_id_map, endian = endian,
+                                           log=write_to_file, print=print, ineligible=write_ineligible)
 
     def pex_patcher(basename: str, new_file: str, form_id_map: dict, endian = 'big'):
-        pex_patcher.pex_patcher(basename, new_file, form_id_map, endian = endian)
+        pex_patcher.pex_patcher(basename, new_file, form_id_map, endian = endian, ineligible=write_ineligible)
 
     def facegeom_mesh_patcher(basename: str, new_file: str, form_id_map: dict):
         bytes_basename = bytes(basename, 'utf-8')
