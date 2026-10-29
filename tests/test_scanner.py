@@ -206,7 +206,7 @@ def test_extract_archive_runs_bsarch_with_the_filter(sc, monkeypatch):
 
     monkeypatch.setattr(scanner_module.subprocess, "Popen", popen)
     S.extract_archive("C:\\x.bsa", None, 0.1, ".pex")
-    assert seen["cmd"] == ["bsarch/bsarch.exe", "unpack", "C:\\x.bsa", "bsa_extracted", "-f:.pex"]
+    assert seen["cmd"] == ["bsarch/bsarch.exe", "unpack", "C:\\x.bsa", "bsa_extracted", "-f:.pex", "-mt:no"]
 
 
 def test_extract_archive_raises_when_bsarch_reports_an_unpacking_error(sc, monkeypatch):
