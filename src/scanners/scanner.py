@@ -497,8 +497,6 @@ class scanner():
                     with scanner.file_semaphore:
                         with open(file, 'r', encoding='utf-8', errors='ignore') as f:
                             read_string = f.read()
-                            #while read_string[-1] != '}':
-                            #    read_string = read_string.removesuffix(read_string[-1])
                             index = read_string.rfind('}')
                             if index != -1: 
                                 read_string = read_string[:index+1]
