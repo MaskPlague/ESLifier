@@ -251,7 +251,7 @@ class main_window(QMainWindow):
             else:
                 verify_luhn_checksum(EXE_NAME)
         
-        self.setWindowTitle(self.tr(f"{PROGRAM_NAME} v%0").replace("%0", CURRENT_VERSION))
+        self.setWindowTitle(self.tr(f"%0 v%1").replace("%0", PROGRAM_NAME).replace("%1", CURRENT_VERSION))
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.resize(1300, 500)
         self.move(100,50)
@@ -506,6 +506,21 @@ class main_window(QMainWindow):
         _global.update_from_settings()
         self.set_colors()
         self.main_widget.update_data()
+        if _global.mod_manager_mode == 0:
+            title = (self.tr("%0 v%1 (Mode: No Manager)")
+                     .replace("%0", PROGRAM_NAME)
+                     .replace("%1", CURRENT_VERSION))
+        elif _global.mod_manager_mode == 1:
+            title = (self.tr("%0 v%1 (Mode: Vortex)")
+                     .replace("%0", PROGRAM_NAME)
+                     .replace("%1", CURRENT_VERSION))
+        elif _global.mod_manager_mode == 2:
+            title = (self.tr("%0 v%1 (Mode: MO2 | Instance: %2 | Profile: %3)")
+                     .replace("%0", PROGRAM_NAME)
+                     .replace("%1", CURRENT_VERSION)
+                     .replace("%2", os.path.basename(_global.mo2_base_path) if _global.mo2_base_path not in ('', '.') else "?")
+                     .replace("%3", os.path.basename(_global.mo2_profile) if _global.mo2_profile not in ('', '.') else "?"))
+        self.setWindowTitle(title)
 
         if self.settings_widget.settings.get('enable_patch_new', False):
             self.main_widget.scan_and_patch_new_button_spacer.changeSize(10, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
