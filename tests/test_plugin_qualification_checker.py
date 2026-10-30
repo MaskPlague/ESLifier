@@ -82,7 +82,7 @@ class TestParsing:
 @pytest.fixture
 def reader_env(workdir):
     """file_reader reads class-level state that scan() normally sets up."""
-    qc.max_record_number = 4096
+    qc.max_record_id = 4096
     qc.num_max_records = 4096
     qc.dependent_dict = {}
     qc.missing_game_esm_as_master = {}
