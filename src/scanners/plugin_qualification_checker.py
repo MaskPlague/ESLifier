@@ -22,21 +22,12 @@ class qualification_checker():
         qualification_checker.missing_game_esm_as_master: dict[str, str] = qualification_checker.get_from_file(MISSING_GAME_AS_MASTER_JSON)
         qualification_checker.dependent_dict: dict[str, list[str]] = qualification_checker.get_from_file(DEPENDENCY_DICTIONARY_JSON)
         qualification_checker.flag_dict = {}
-        qualification_checker.max_record_number = 4096
-        #if os.path.exists('ESLifier_Data/EDIDs'):
-        #    shutil.rmtree('ESLifier_Data/EDIDs')
-        #if not os.path.exists("ESLifier_Data/EDIDs"):
-        #    os.makedirs("ESLifier_Data/EDIDs")
+        qualification_checker.max_record_id = 0xFFF
         if os.path.exists(CELL_IDS_FOLDER):
             shutil.rmtree(CELL_IDS_FOLDER)
         if not os.path.exists(CELL_IDS_FOLDER):
             os.makedirs(CELL_IDS_FOLDER)
         update_header = _global.update_header
-        write_to_file(f"{update_header = }")
-        #if update_header:
-        #    qualification_checker.num_max_records = 4096
-        #else:
-        #    qualification_checker.num_max_records = 2048
 
         if len(plugins) > 1000:
             split = 5
@@ -199,7 +190,7 @@ class qualification_checker():
             is_1_0 = version_float == 1.0                   # Able to use 0x000-0x7FF
             upgradable = version_float == 0.95              # Not able to use <0x800 but can upgrade to 1.0 which can
             if (is_1_0 or upgradable) and update_header:    # if is 1.0 or upgradable and using <0x800 is allowed
-                possible_max = 4096 
+                possible_max = 4096
                 possible_max_reason = (f'FO4 header version {version_float} '
                                        f'({"1.0, supports <0x800" if is_1_0 else "0.95, upgradable to 1.0"})')
             elif update_header:
@@ -241,7 +232,7 @@ class qualification_checker():
                     return (False, 
                             f'max record count of {num_max_records} exceeded '
                             f'({limit_reason})')
-                if int.from_bytes(form[12:15][::-1]) > qualification_checker.max_record_number:
+                if int.from_bytes(form[12:15], "little") > qualification_checker.max_record_id:
                     need_compacting = True
                 if record_type == b'CELL':
                     new_cell = True
@@ -307,20 +298,14 @@ class qualification_checker():
             raise ValueError(f"Invalid GAME_MODE: {GAME_MODE}")
 
     def already_esl(file: str) -> tuple[bool, bool]:
-        with open(file, 'rb') as f:
-            if file.lower().endswith('.esm'):
-                esm = True
-            else:
-                esm = False
-            f.seek(8)
-            esm_flag = f.read(1)
-            if esm_flag in (b'\x81', b'\x01'):
-                esm = True
-            esl_flag = f.read(1)
-            if esl_flag == b'\x02':
-                return True, esm
-            else:
-                return False, esm #not esl, so it does qualify for processing
+        try:
+            with open(file, 'rb') as f:
+                f.seek(8)
+                flags = struct.unpack("<I", f.read(4))[0]
+        except Exception:
+            return True, False
+        esm = file.lower().endswith('.esm') or bool(flags & 0x1)
+        return bool(flags & 0x200), esm
             
     def get_from_file(file: str) -> list | dict:
         try:

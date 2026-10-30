@@ -7,7 +7,7 @@ GAME_ESM_NAMES = {"SSE": "Skyrim.esm", "FO4": "Fallout4.esm"}
 class qualification_checker():
     game_mode = "SSE"
     game_esm = GAME_ESM_NAMES["SSE"]
-    max_record_number = 4096
+    max_record_id = 0xFFF
     dependent_dict: dict = {}
     missing_game_esm_as_master: dict = {}
     maxed_masters: set = set()
@@ -54,7 +54,7 @@ class qualification_checker():
         offset = 24
         while offset < tes4_size:
             field = tes4_record[offset:offset+4]
-            field_size = int.from_bytes(tes4_record[offset+4:offset+6][::-1])
+            field_size = struct.unpack("<H", tes4_record[offset+4:offset+6])[0]
             if field == b'MAST':
                 master_list.append(tes4_record[offset+6:offset+field_size+5].decode('utf-8', errors='replace'))
             offset += field_size + 6
@@ -69,15 +69,12 @@ class qualification_checker():
     def already_esl(file: str) -> tuple[bool, bool]:
         try:
             with open(file, 'rb') as f:
-                esm = file.lower().endswith('.esm')
                 f.seek(8)
-                esm_flag = f.read(1)
-                if esm_flag in (b'\x81', b'\x01'):
-                    esm = True
-                esl_flag = f.read(1)
-                return esl_flag == b'\x02', esm
+                flags = struct.unpack("<I", f.read(4))[0]
         except Exception:
             return True, False
+        esm = file.lower().endswith('.esm') or bool(flags & 0x1)
+        return bool(flags & 0x200), esm
 
     def create_data_list(data: bytes) -> list:
         data_list = []
@@ -176,7 +173,7 @@ class qualification_checker():
                 count += 1
                 if count > num_max_records:
                     return (False, f'max record count of {num_max_records} exceeded')
-                if int.from_bytes(form[12:15][::-1], "big") > qualification_checker.max_record_number:
+                if int.from_bytes(form[12:15], "little") > qualification_checker.max_record_id:
                     need_compacting = True
                 if record_type == b'CELL':
                     new_cell = True
