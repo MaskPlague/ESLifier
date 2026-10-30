@@ -23,9 +23,12 @@ class cell_scanner():
             for dependent in dependents:
                 if not is_running():
                     return
-                if cell_scanner.is_dependent_modifying(mod, dependent, ids, game_mode):
-                    result.add(basename)
-                    return
+                try:
+                    if cell_scanner.is_dependent_modifying(mod, dependent, ids, game_mode):
+                        result.add(basename)
+                        return
+                except:
+                    pass
 
         with ThreadPoolExecutor(max_workers=8) as pool:
             list(pool.map(check, plugins_with_new_cells))

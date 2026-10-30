@@ -67,7 +67,7 @@ class ESLifier_blacklist(QTableWidget):
                 if 'new_cell' in flags:
                     item_cell = QTableWidgetItem(self.tr('New Cell'))
                     self.setItem(i, 2, item_cell)
-                if 'interior_cell' in flags:
+                if 'new_interior_cell' in flags:
                     item_interior = QTableWidgetItem(self.tr('Interior Cell'))
                     self.setItem(i, 3, item_interior)
                 if 'new_wrld' in flags:
@@ -92,7 +92,7 @@ class ESLifier_blacklist(QTableWidget):
 
     def get_data_from_file(self, file):
         try:
-            with open(file, 'r') as f:
+            with open(file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
         except:
             data = []
@@ -189,7 +189,7 @@ class blacklist_window(QMainWindow):
 
         self.check_problems = check_problems
 
-        self.setWindowIcon(QIcon(icon_path + '\\ESLifier.ico'))
+        self.setWindowIcon(QIcon(os.path.join(icon_path, 'ESLifier.ico')))
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
         self.blacklist = ESLifier_blacklist(remove_mode)
         self.setMinimumSize(800, 400)

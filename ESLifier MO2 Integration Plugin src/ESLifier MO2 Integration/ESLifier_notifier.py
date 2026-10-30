@@ -13,7 +13,7 @@ from .ESLifier_cell_changed_scanner import cell_scanner
 
 class check_files():    
     def scan_files(self, scan_esms, eslifier_data_folder, new_header, compare_hashes, detect_conflict_changes,
-                   only_plugins, plugin_files_list, organizer, game_mode="SSE", all_plugin_files=None):
+                   only_plugins, non_esl_ext_plugin_files_list, organizer, game_mode, all_plugin_files):
         self.flag_dict = {}
         self.hash_mismatches = []
         self.lost_to_overwrite = []
@@ -28,19 +28,18 @@ class check_files():
         self._organizer = organizer
         self.running = True
         self.game_mode = game_mode
-        light_check.configure(game_mode, plugin_files_list if all_plugin_files is None else all_plugin_files)
+        light_check.configure(game_mode, all_plugin_files)
 
-        if len(plugin_files_list) > 1000:
+        if len(non_esl_ext_plugin_files_list) > 1000:
             split = 5
-        elif len(plugin_files_list) > 500:
+        elif len(non_esl_ext_plugin_files_list) > 500:
             split = 2
         else:
             split = 1
 
-        chunk_size = len(plugin_files_list) // split
-        chunks = [plugin_files_list[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
-        chunks.append(plugin_files_list[(split) * chunk_size:])
-
+        chunk_size = len(non_esl_ext_plugin_files_list) // split
+        chunks = [non_esl_ext_plugin_files_list[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
+        chunks.append(non_esl_ext_plugin_files_list[(split) * chunk_size:])
         threads: list[threading.Thread] = []
         for chunk in chunks:
             if not self.running:
@@ -69,6 +68,7 @@ class check_files():
             winning_file_history_dict_path = os.path.join(eslifier_data_folder, "winning_file_history_dict.json")
             mod_list: list[str] = self._organizer.modList().allModsByProfilePriority()
             mod_list.append('overwrite_eslifier_scan')
+            self.mod_priorities = {mod: i for i, mod in enumerate(mod_list)}
             if os.path.exists(winning_file_history_dict_path):
                 with self.semaphore:
                     try:
@@ -79,7 +79,7 @@ class check_files():
                 for file, old_winner in winning_file_history_dict.items():
                     if self.running:
                         if not 'bsa_extracted_eslifier_scan' == old_winner:
-                            self.detect_conflict_change(old_winner, file, mod_list)
+                            self.detect_conflict_change(old_winner, file)
                     else:
                         break
 
@@ -126,7 +126,7 @@ class check_files():
         else:
             self.hash_mismatches.append(QCoreApplication.translate("ESLifier", "Missing: ") + file)
     
-    def detect_conflict_change(self, old_winner, file, mod_list: list):
+    def detect_conflict_change(self, old_winner, file):
         try:
             origins_unformated: list = self._organizer.getFileOrigins(file)
         except:
@@ -136,42 +136,49 @@ class check_files():
             if old_winner != origins[0]:
                 self.conflict_changes.append(file)
         elif len(origins) > 0:
-            sorted_origins = sorted(origins, key=lambda x: mod_list.index(x))
-            if 'eslifier' in sorted_origins[-1].lower():
-                if sorted_origins[-1] == 'overwrite_eslifier_scan':
-                    self.lost_to_overwrite.append(file)
-                elif sorted_origins[-2] != old_winner:
-                    self.conflict_changes.append(file)
-            else:
-                if sorted_origins[-1] != old_winner:
-                    self.conflict_changes.append(file)
+            try:
+                sorted_origins = sorted(origins, key=lambda x: self.mod_priorities.get(x, -1))
+                if 'eslifier' in sorted_origins[-1].lower():
+                    if sorted_origins[-1] == 'overwrite_eslifier_scan':
+                        self.lost_to_overwrite.append(file)
+                    elif sorted_origins[-2] != old_winner:
+                        self.conflict_changes.append(file)
+                else:
+                    if sorted_origins[-1] != old_winner:
+                        self.conflict_changes.append(file)
+            except:
+                pass
 
     def plugin_scanner(self, plugins, new_header, scan_esms):
         flag_dict = {}
         is_sse_mode = self.game_mode == "SSE"
         for plugin in plugins:
-            ret_val = self.qualification_check(plugin, new_header, scan_esms)
-            if ret_val[0] == True:
-                self.any_esl = True
-                need_compacting, new_cell = ret_val[1], ret_val[2]
-                basename = os.path.basename(plugin)
-                with self.lock:
-                    flag_dict[basename] = []
-                    if need_compacting:
-                        flag_dict[basename].append('need_compacting')
-                    if new_cell:
-                        flag_dict[basename].append('new_cell')
-                        if is_sse_mode and ret_val[3]:
-                            flag_dict[basename].append('new_interior_cell')
-                        if self.is_maxed_masters(plugin, basename):
-                            flag_dict[basename].append('maxed_masters')
-                    if is_sse_mode:
-                        if ret_val[4]:
-                            flag_dict[basename].append('new_wrld')
-                        if ret_val[5]:
-                            flag_dict[basename].append('new_wthr')
-                    elif ret_val[3]:
-                        flag_dict[basename].append('has_previs_precombines')
+            try:
+                ret_val = self.qualification_check(plugin, new_header, scan_esms)
+                if ret_val[0] == True:
+                    self.any_esl = True
+                    need_compacting, new_cell = ret_val[1], ret_val[2]
+                    basename = os.path.basename(plugin)
+                    with self.lock:
+                        flag_dict[basename] = []
+                        if need_compacting:
+                            flag_dict[basename].append('need_compacting')
+                        if new_cell:
+                            flag_dict[basename].append('new_cell')
+                            if is_sse_mode and ret_val[3]:
+                                flag_dict[basename].append('new_interior_cell')
+                            if self.is_maxed_masters(plugin, basename):
+                                flag_dict[basename].append('maxed_masters')
+                        if is_sse_mode:
+                            if ret_val[4]:
+                                flag_dict[basename].append('new_wrld')
+                            if ret_val[5]:
+                                flag_dict[basename].append('new_wthr')
+                        elif ret_val[3]:
+                            flag_dict[basename].append('has_previs_precombines')
+            except:
+                pass
+
         with self.lock:
             for key, value in flag_dict.items():
                 if key not in self.flag_dict:

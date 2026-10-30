@@ -68,7 +68,7 @@ class ESLifier(mobase.IPluginTool):
             mobase.PluginSetting("Enable Notifications", self.tr("Enable ESLifier's notifications"), True),
             mobase.PluginSetting("Scan ESMs", self.tr("Scan plugins that are flagged as ESM."), False),
             mobase.PluginSetting("Use New Header Range", self.tr("Use the new (FO4 1.0/ SSE 1.71) Header range when scanning for plugins that can be light."), True),
-            mobase.PluginSetting("ESLifier Folder", self.tr("Set this to the folder that holds ESLifier.exe."), ""),
+            mobase.PluginSetting("ESLifier Folder", self.tr("Set this to the folder that holds ESLifier_GAME.exe."), ""),
             mobase.PluginSetting("Compare File Hashes", self.tr("Compare current file hashes to last ESLifier run."), True),
             mobase.PluginSetting("Compare Only Game Plugins", self.tr("If 'Compare File Hashes' and this are enabled:\nonly check game plugins (faster),\nelse compare all file hashes (slower)."), False),
             mobase.PluginSetting("Detect Conflict Changes", self.tr("Detect if a file conflict change has occured since ESLifier last ran."), True)
@@ -99,15 +99,20 @@ class ESLifier(mobase.IPluginTool):
         self._init_state()
         self._hook_up_callbacks()
 
-        QApplication.instance().aboutToQuit.connect(self._stop_worker_if_running)
-
+        QApplication.instance().aboutToQuit.connect(self._aboutToQuit)
         return True
+
+    def _aboutToQuit(self):
+        self._stop_worker_if_running()
+        for thread in self.threads:
+            thread.wait(2000)
     
     def _init_state(self):
-        self.validGame = True
+        self.validGame = False
         self.main_dialog = QDialog()
         self.settings_dialog = QDialog()
         self.thread = QThread()
+        self.threads: set[QThread] = set()
         self.needs_flag_dict = {}
         self.needs_compacting_flag_dict = {}
         self.hash_mismatches = []
@@ -122,17 +127,17 @@ class ESLifier(mobase.IPluginTool):
         self.scan_queue.callback = self.scan_files
     
     def _create_icons(self):
-        self.eslifier_icon_default = QIcon(self.icon_path + '\\ESLifier.ico')
+        self.eslifier_icon_default = QIcon(os.path.join(self.icon_path, 'ESLifier.ico'))
         self.eslifier_icon = self.eslifier_icon_default
         self.main_dialog.setWindowIcon(self.eslifier_icon)
-        self.eslifier_icon_notif = QIcon(self.icon_path + '\\ESLifier_with_notif_badge.ico')
-        self.eslifier_icon_greyed_out = QIcon(self.icon_path + '\\ESLifier_greyed_out.ico')
+        self.eslifier_icon_notif = QIcon(os.path.join(self.icon_path, 'ESLifier_with_notif_badge.ico'))
+        self.eslifier_icon_greyed_out = QIcon(os.path.join(self.icon_path, 'ESLifier_greyed_out.ico'))
     
     def _create_throbber(self):
-        throbber_top_icon = QIcon(self.icon_path + '\\ESLifier_throbber_top.ico')
-        throbber_right_icon = QIcon(self.icon_path + '\\ESLifier_throbber_right.ico')
-        throbber_bottom_icon = QIcon(self.icon_path + '\\ESLifier_throbber_bottom.ico')
-        throbber_left_icon = QIcon(self.icon_path + '\\ESLifier_throbber_left.ico')
+        throbber_top_icon = QIcon(os.path.join(self.icon_path, 'ESLifier_throbber_top.ico'))
+        throbber_right_icon = QIcon(os.path.join(self.icon_path, 'ESLifier_throbber_right.ico'))
+        throbber_bottom_icon = QIcon(os.path.join(self.icon_path, 'ESLifier_throbber_bottom.ico'))
+        throbber_left_icon = QIcon(os.path.join(self.icon_path, 'ESLifier_throbber_left.ico'))
         self.eslifier_thobber = [throbber_top_icon, throbber_right_icon, throbber_bottom_icon, throbber_left_icon]
         self.throbber_timer = QTimer()
         self.throbber_timer.setInterval(250)
@@ -176,19 +181,19 @@ class ESLifier(mobase.IPluginTool):
     def _stop_worker_if_running(self, *args):
         if hasattr(self, 'worker') and self.worker and self.worker.running:
             self.worker.stop()
-        if hasattr(self, 'thread') and self.thread and self.thread.isRunning():
-            self.thread.quit()
+        for thread in self.threads:
+            thread.quit()
         return True
         
     def scan_files(self):
         if not self.validGame:
+            self.scanning = False
             return
         notifications_enabled = self._organizer.pluginSetting(self.name(), "Enable Notifications")
         self._stop_worker_if_running()
         if self.scanning:
             self.scan_queue.queue()
             return
-        
         if notifications_enabled:
             self.scanning = True
             self.throbber_timer.start()
@@ -212,28 +217,36 @@ class ESLifier(mobase.IPluginTool):
             else:
                 ignore_list = ["ESLifier_Cell_Master.esm"]
 
-            if scan_esms:
-                filter = "*.es[pm]"
-            else:
-                filter = "*.esp"
-
+            thread = QThread()
+            self.thread = thread
+            self.threads.add(thread)
+            thread.finished.connect(lambda t= thread: self.threads.discard(t))
             self.worker = CheckWorker(self._organizer, scan_esms, eslifier_data_folder, new_header, compare_hashes, 
-                                      detect_conflict_changes, only_plugins, ignore_list, filter, self.GAME_MODE)
-            self.worker.moveToThread(self.thread)
-            self.thread.started.connect(self.worker.check_files)
+                                      detect_conflict_changes, only_plugins, ignore_list, self.GAME_MODE)
+            self.worker.moveToThread(thread)
+            thread.started.connect(self.worker.check_files)
             self.worker.finished_signal.connect(self.update_icon)
-            self.worker.finished_signal.connect(self.thread.quit)
+            self.worker.finished_signal.connect(thread.quit)
             self.worker.finished_signal.connect(self.worker.deleteLater)
-            self.thread.start()
+            thread.start()
         else:
             self._grey_out_icon()
         return
 
-    def update_icon(self, any_eslable_or_issue, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches, conflict_changes, lost_to_overwrite, master_enabled, early_exit):
-        if not early_exit:
+    def update_icon(self, any_eslable_or_issue, needs_flag_dict, needs_compacting_flag_dict, 
+                    hash_mismatches, conflict_changes, lost_to_overwrite, master_enabled, return_status):
+        if return_status == 0: # success
             self.throbber_timer.stop()
-        else:
+        elif return_status == 1: # early exit, retry
             self.scan_files()
+            self.scanning = False
+            return
+        elif return_status == -1: # error, stop
+            self.scanning = False
+            self._stop_worker_if_running()
+            self.throbber_timer.stop()
+            return
+        
         if any_eslable_or_issue:
             self.eslifier_button.setIcon(self.eslifier_icon_notif)
             self.eslifier_icon = self.eslifier_icon_notif
@@ -276,7 +289,7 @@ class ESLifier(mobase.IPluginTool):
         self.settings_dialog = QDialog()
         layout = QGridLayout()
         self.settings_dialog.setLayout(layout)
-        self.settings_dialog.setWindowIcon(QIcon(self.icon_path + '\\ESLifier.ico'))
+        self.settings_dialog.setWindowIcon(QIcon(os.path.join(self.icon_path,'ESLifier.ico')))
         self.settings_dialog.setWindowTitle(self.tr("ESLifier Integration Settings"))
 
         self.notifications_check_box = self._create_label_check_box_setting_pair(layout, self.tr("Enable Notifications"), "Enable Notifications", 0)
@@ -357,7 +370,7 @@ class ESLifier(mobase.IPluginTool):
     def set_eslifier_path(self):
         dialog = QFileDialog()
         dialog.setFileMode(QFileDialog.FileMode.Directory)
-        path = dialog.getExistingDirectory(None, self.tr("Select the folder that holds ESLifier.exe."), 
+        path = dialog.getExistingDirectory(None, self.tr("Select the folder that holds ESLifier-%0.exe.").replace("%0", self.GAME_MODE), 
                                            self._organizer.pluginSetting("ESLifier", "ESLifier Folder"))
         if path:
             self._organizer.setPluginSetting(self.name(), "ESLifier Folder", path)
@@ -372,10 +385,10 @@ class ESLifier(mobase.IPluginTool):
 
     def create(self, *args):
         game = self._organizer.managedGame()
-        print(f"Game name: {game.gameName()}")
         if not game.gameName() in SUPPORTED_GAMES:
             self.validGame = False
             return
+        self.validGame = True
         self.GAME_MODE = "SSE" if game.gameName() == "Skyrim Special Edition" else "FO4"
         self.icon_path = os.path.join(os.path.dirname(self._organizer.getPluginDataPath()), 'ESLifier MO2 Integration', 'icons', self.GAME_MODE)
         self._create_icons()
@@ -443,7 +456,7 @@ class ESLifier(mobase.IPluginTool):
         else:
             self.folder_path.setText(path)
 
-        if os.path.exists(path) and os.path.exists(os.path.join(path, "eslifier.exe")):
+        if os.path.exists(path) and os.path.exists(os.path.join(path, f"ESLifier-{self.GAME_MODE}.exe")):
             self.folder_path.setStyleSheet("")
         else:
             self.folder_path.setStyleSheet("QLabel{color:red}")
@@ -463,9 +476,9 @@ class ESLifier(mobase.IPluginTool):
 
 
 class CheckWorker(QObject):
-    finished_signal = pyqtSignal(bool, dict, dict, list, list, list, bool, bool)
+    finished_signal = pyqtSignal(bool, dict, dict, list, list, list, bool, int)
     def __init__(self, organizer: mobase.IOrganizer, scan_esms, eslifier_data_folder, new_header, 
-                 compare_hashes, detect_conflict_changes, only_plugins, ignore_list, filter, game_mode="SSE"):
+                 compare_hashes, detect_conflict_changes, only_plugins, ignore_list, game_mode):
         super().__init__()
         self.game_mode = game_mode
         self._organizer = organizer
@@ -477,22 +490,28 @@ class CheckWorker(QObject):
         self.detect_conflict_changes = detect_conflict_changes
         self.only_plugins = only_plugins
         self.ignore_list = ignore_list
-        self.filter = filter
+        if scan_esms:
+            self.filter = "*.es[pm]"
+        else:
+            self.filter = "*.esp"
         self.running = True
 
     def check_files(self):
-        mods_path = os.path.normpath(self._organizer.modsPath())
-        master_not_enabled = True if self._organizer.pluginList().state("ESLifier_Cell_Master.esm") == 1 else False
+        master_not_enabled = self._organizer.pluginList().state("ESLifier_Cell_Master.esm") != mobase.PluginState.ACTIVE
         try:
-            plugin_files_list = [plugin for plugin in self._organizer.findFiles('', self.filter) if os.path.basename(plugin) not in self.ignore_list and os.path.normpath(plugin).startswith(mods_path)]
-            all_plugin_files = self.get_all_plugin_files(mods_path)
+            plugin_files_list = [plugin for plugin in self._organizer.findFiles('', self.filter) 
+                                 if os.path.basename(plugin) not in self.ignore_list]
+            all_plugin_files = self.get_all_plugin_files()
         except Exception as e:
-            self.finished_signal.emit(False, {}, {}, [], [], [], False, True)
+            self.finished_signal.emit(False, {}, {}, [], [], [], False, -1)
             return
-        
-        ret_val = self.file_checker.scan_files( self.scan_esms, self.eslifier_data_folder, self.new_header, self.compare_hashes, 
+        try:
+            ret_val = self.file_checker.scan_files(self.scan_esms, self.eslifier_data_folder, self.new_header, self.compare_hashes, 
                                     self.detect_conflict_changes, self.only_plugins, plugin_files_list, self._organizer,
                                       self.game_mode, all_plugin_files)
+        except:
+            self.finished_signal.emit(False, {}, {}, [], [], [], False, -1)
+            return
         
         flag, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches, conflict_changes, lost_to_overwrite = ret_val
 
@@ -500,19 +519,12 @@ class CheckWorker(QObject):
             flag = True
         if self.running:
             self.finished_signal.emit(flag, needs_flag_dict, needs_compacting_flag_dict, hash_mismatches, conflict_changes,
-                                       lost_to_overwrite, master_not_enabled, False)
+                                       lost_to_overwrite, master_not_enabled, 0)
         else:
-            self.finished_signal.emit(False, {}, {}, [], [], [], False, True)
+            self.finished_signal.emit(False, {}, {}, [], [], [], False, 1)
 
-    def get_all_plugin_files(self, mods_path: str) -> list[str]:
-        names = {os.path.basename(plugin) for plugin in self._organizer.findFiles('', '*.es[plm]')}
-        names.discard('ESLifier_Cell_Master.esm')
-        plugins = []
-        for name in sorted(names):
-            path = self._organizer.resolvePath(name)
-            if path and os.path.normpath(path).startswith(mods_path):
-                plugins.append(path)
-        return plugins
+    def get_all_plugin_files(self) -> list[str]:
+        return [plugin for plugin in self._organizer.findFiles('', '*.es[plm]') if not plugin.endswith("ESLifier_Cell_Master.esm")]
 
     def stop(self):
         self.file_checker.stop()
