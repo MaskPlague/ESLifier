@@ -1,5 +1,5 @@
 {
-    "version": 25,
+    "version": 26,
     "conditions": [
         {
             "extension": "json",
@@ -165,6 +165,16 @@
             "contains": "plugins/DynamicWind/",
             "patcher": "json_generic_formid_sep_plugin",
             "separator": "~"
+        },
+        {
+            "extension": "json",
+            "contains": "SKSE/Plugins/OSSO/",
+            "patcher": "json_jcontainer"
+        },
+        {
+            "extension": "json",
+            "contains": "Plugins/Fuz-Ro-Yay/",
+            "patcher": "json_generic_plugin_sep_formid"
         }
     ]
 }

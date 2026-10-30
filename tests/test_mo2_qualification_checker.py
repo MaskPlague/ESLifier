@@ -29,7 +29,7 @@ def make(tmp_path, name, masters=(SKYRIM,), body=b"", **kw):
 @pytest.fixture
 def sse(tmp_path):
     mo2.configure("SSE", [])
-    exe_qc.max_record_number = 4096
+    exe_qc.max_record_id = 4096
     exe_qc.dependent_dict, exe_qc.missing_game_esm_as_master, exe_qc.maxed_masters = {"p.esp": []}, {}, []   # exe indexes dependent_dict directly
     return tmp_path
 
