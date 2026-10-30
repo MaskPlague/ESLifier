@@ -1,5 +1,5 @@
 {
-    "version": 21,
+    "version": 22,
     "ignored_files": [
         "BFCO_FX_CheckPreAttackIsOK.pex",
         "BFCO_FX_PlayIdleListKeyE.pex",
@@ -35,6 +35,7 @@
         "interface/Console_Cheatsheet/",
         "interface/PartySheet/Spells/",
         "Plugins/LoadTimeProfiler/LTP_summary_",
-        "Plugins/MCMMemory/Profiles/"
+        "Plugins/MCMMemory/Profiles/",
+        "/RuntimeFileResolver/"
     ]
 }
