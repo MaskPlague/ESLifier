@@ -621,10 +621,10 @@ class scanner():
             elif reader_type == 'dll':
                 with scanner.file_semaphore:
                     if file.endswith('EngineFixes.dll') and GAME_MODE == "SSE":
-                        pe = pefile.PE(file)
-                        if hasattr(pe, "VS_FIXEDFILEINFO"):
-                            verinfo = pe.VS_FIXEDFILEINFO[0]
-                            _global.engine_fixes_v7_or_newer =  verinfo.FileVersionMS >> 16 >= 7
+                        with pefile.PE(file) as pe:
+                            if hasattr(pe, "VS_FIXEDFILEINFO"):
+                                verinfo = pe.VS_FIXEDFILEINFO[0]
+                                _global.engine_fixes_v7_or_newer =  verinfo.FileVersionMS >> 16 >= 7
                     with open(file, 'rb') as f:
                         r = re.findall(pattern,f.read().lower())
                         f.close()
