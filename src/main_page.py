@@ -82,7 +82,7 @@ class main(QWidget):
         self.button_eslify = QPushButton(self.tr("ESLify Selected"))
         self.button_eslify.setToolTip(
             self.tr("This button will ESL flag all selected files. If the update plugin headers setting\n"\
-            "is on then it will also update the plugin headers to 1.71."))
+            "is on then it will also update the plugin headers to %0.").replace("%0", "1.71" if GAME_MODE == "SSE" else "1.0"))
         self.button_eslify.clicked.connect(self.set_false_redoing_output)
         self.button_eslify.clicked.connect(self.eslify_selected_clicked)
 
@@ -91,7 +91,7 @@ class main(QWidget):
             self.tr("This button will first compact a selected file, patch the plugins that have it as a\n"\
             "master, then patch and rename loose files that are dependent on the compacted plugin.\n"\
             "If the update plugin headers setting is enabled then it will also update the plugin\n"\
-            "headers of the compacted and dependent plugins to 1.71."))
+            "headers of the compacted and dependent plugins to %0").replace("%0", "1.71" if GAME_MODE == "SSE" else "1.0"))
         self.button_compact.clicked.connect(self.set_false_redoing_output)
         self.button_compact.clicked.connect(self.compact_selected_clicked)
 
