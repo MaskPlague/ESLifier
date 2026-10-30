@@ -89,7 +89,7 @@ class VortexDBParser:
             write_to_file(str(e))
             return ReadState.ERROR_DB_LOCKED_EXTENSION_UNREACHABLE
 
-    def is_readable() -> (int|Exception):
+    def is_readable() -> ReadState:
         ret_val = None
         try:
             with plyvel.DB(_global.vortex_db_path) as db:
