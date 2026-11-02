@@ -261,12 +261,12 @@ class scanner():
             write_error(QCoreApplication.translate("Global", "Failed to dump data to: ") + file)
             write_error(e, True)
     
-    def get_from_file(file: str, type: dict | list) -> list[str] | dict[str]:
+    def get_from_file(file: str, atype: dict | list) -> list[str] | dict[str]:
         try:
             with open(file, 'r', encoding='utf-8') as f:
                 data: list[str] | dict[str] = json.load(f)
         except:
-            data: list[str] | dict[str] = type()
+            data: list[str] | dict[str] = atype()
         return data
 
     def get_file_masters():
