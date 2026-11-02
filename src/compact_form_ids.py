@@ -748,9 +748,9 @@ class CFIDs():
             f.write(bytes([new_flags]))
             if self.update_header:
                 f.seek(30, 0)
-                if GAME_MODE == "SSE":
+                if is_sse_mode:
                     f.write(b'\x48\xE1\xDA\x3F')
-                elif GAME_MODE == "FO4":
+                elif is_fo4_mode:
                     version = f.read(4)
                     version_float = round(struct.unpack("<f", version)[0], 2)
                     is_1_0 = version_float == 1.0
