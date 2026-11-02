@@ -56,7 +56,7 @@ class MO2():
         mod_files: dict[str, list[str]]
         plugin_names: list[str]
         cases: dict[str, str]
-        mod_files, plugin_names, cases = MO2.get_files_from_mods(mods_folder, enabled_mods, plugins_list, overwrite_path, load_order)
+        mod_files, plugin_names, cases, load_order_indexes = MO2.get_files_from_mods(mods_folder, enabled_mods, plugins_list, overwrite_path, load_order)
         winning_files: list[list[str, str]] = []
         file_count = 0
         loop = 0
@@ -85,7 +85,7 @@ class MO2():
                 if mod != output_file_name:
                     MO2.scanner.winning_files_dict[cases[file].lower()] = (mod, file_path)
             else:
-                mods_sorted = sorted(mods, key=lambda mod: load_order.index(mod))
+                mods_sorted = sorted(mods, key=lambda mod: load_order_indexes[mod])
                 overwrite = False
                 if mods_sorted[-1] == 'archive_extracted_eslifier_scan':
                     file_path = os.path.join(cwd, ARCHIVE_EXTRACTED_FOLDER, cases[file])
@@ -250,6 +250,7 @@ class MO2():
         #BSA list is expacted to be like: [[mod_name, full_path], [mod_name2, full_path2]] where mod_name is (mod_name).esp without ext 
         # for sorting by plugin during extraction. mod_name is obtained from (mod_name).bsa
         game_archive_list = []
+        load_order_indexes = {mod: i for i, mod in enumerate(load_order)}
         for relative_path, mods in game_archive_dict_temp.items():
             if len(mods) == 1:
                 mod = mods[0]
@@ -259,7 +260,7 @@ class MO2():
                     file_path = os.path.join(mods_folder, mod, relative_path)
                 game_archive_list.append([game_archive_file_name_dict[relative_path], file_path])
             else:
-                mods_sorted = sorted(mods, key=lambda mod: load_order.index(mod))
+                mods_sorted = sorted(mods, key=lambda mod: load_order_indexes[mod])
                 if mods_sorted[-1] == 'overwrite_eslifier_scan':
                     file_path = os.path.join(overwrite_path, relative_path)
                 else:
@@ -293,7 +294,7 @@ class MO2():
                 else:
                     existing_mod_files.append('archive_extracted_eslifier_scan')
 
-        return mod_files, list(plugin_names), cases
+        return mod_files, list(plugin_names), cases, load_order_indexes
 
     def get_instance_paths():
         try:
