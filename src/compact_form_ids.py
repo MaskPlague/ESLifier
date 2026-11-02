@@ -288,7 +288,10 @@ class CFIDs():
         try:
             with open(new_file, 'rb+') as f:
                 f.seek(9)
-                f.write(b'\x02')
+                flags = f.read(1)
+                new_flags = flags[0] | 0x02
+                f.seek(9)
+                f.write(bytes([new_flags]))
         except Exception as e:
             write_error(QCoreApplication.translate("CFIDs", "Failed to set ESL flag in ") + file)
             write_error(e, True)           
@@ -739,7 +742,10 @@ class CFIDs():
         upgradable_header_version = is_sse_mode
         with open(new_file, 'rb+') as f:
             f.seek(9)
-            f.write(b'\x02')
+            flags = f.read(1)
+            new_flags = flags[0] | 0x02
+            f.seek(9)
+            f.write(bytes([new_flags]))
             if self.update_header:
                 f.seek(30, 0)
                 if GAME_MODE == "SSE":
