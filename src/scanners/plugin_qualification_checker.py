@@ -36,9 +36,7 @@ class qualification_checker():
         else:
             split = 1
 
-        chunk_size = len(plugins) // split
-        chunks = [plugins[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
-        chunks.append(plugins[(split) * chunk_size:])
+        chunks = _global.chunk_items(plugins, split)
 
         threads: list[threading.Thread] = []
         for chunk in chunks:
@@ -48,6 +46,7 @@ class qualification_checker():
             
         for thread in threads:
             thread.join()
+            
         with open(FLAG_DICTIONARY_JSON, 'w', encoding='utf-8') as f:
             json.dump(qualification_checker.flag_dict, f, ensure_ascii=False, indent=4)
         return qualification_checker.flag_dict

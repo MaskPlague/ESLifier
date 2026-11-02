@@ -1,6 +1,7 @@
 from log_stream import write_to_file
 import os
 import sys
+import threading
 from PyQt6.QtCore import QCoreApplication
 from collections import defaultdict
 
@@ -279,3 +280,29 @@ class _global():
                 "No relative file path method for file: %1, aborting program execution for safety. Report this to the GitHub with your settings.json."
                 ).replace("%1", file)
             )
+
+    def chunk_items(items:list[str], split:int):
+        chunk_size = len(items) // split
+        chunks = [items[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
+        end_chunk = items[(split) * chunk_size:]
+        if end_chunk:
+            chunks.append(end_chunk)
+        return chunks
+
+    def process_chunks(atarget:object, chunks:list[list[str]], threads_list:list[threading.Thread]):
+        for chunk in chunks:
+            thread = threading.Thread(target=atarget, args=(chunk,))
+            threads_list.append(thread)
+            thread.start()
+
+    def process_chunks_and_join(atarget:object, chunks:list[list[str]]):
+        threads_list:list[threading.Thread] = []
+        _global.process_chunks(atarget,chunks, threads_list)
+        for thread in threads_list:
+            thread.join()
+
+        threads_list.clear()
+
+    def process_items_in_chunks_and_join(atarget: object, items:list[str], split:int):
+        chunks = _global.chunk_items(items, split)
+        _global.process_chunks_and_join(atarget, chunks)

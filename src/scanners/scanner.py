@@ -283,20 +283,11 @@ class scanner():
             split = 50
         else:
             split = 5
-        scanner.file_semaphore = threading.Semaphore(1000)
-        chunk_size = len(scanner.all_files) // split
-        chunks = [scanner.all_files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
-        chunks.append(scanner.all_files[(split) * chunk_size:])
 
         write_normal(QCoreApplication.translate("scanner", 'Getting masters of loose files...'))
         write_normal("", False)
-        for chunk in chunks:
-            thread = threading.Thread(target=scanner.file_processor, args=(chunk,))
-            scanner.threads.append(thread)
-            thread.start()
 
-        for thread in scanner.threads: thread.join()
-        scanner.threads.clear()
+        _global.process_items_in_chunks_and_join(scanner.file_processor, scanner.all_files, split)
 
         write_remove(1, "-  " + QCoreApplication.translate("scanner", "Scanning .pex files"), True)
         write_normal("", False)
@@ -310,16 +301,8 @@ class scanner():
             split = 50
         else:
             split = 1
-        chunk_size = len(scanner.pex_files) // split
-        chunks = [scanner.pex_files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
-        chunks.append(scanner.pex_files[(split) * chunk_size:])
-        for chunk in chunks:
-            thread = threading.Thread(target=scanner.pex_processor, args=(chunk,))
-            scanner.threads.append(thread)
-            thread.start()
 
-        for thread in scanner.threads: thread.join()
-        scanner.threads.clear()
+        _global.process_items_in_chunks_and_join(scanner.pex_processor, scanner.pex_files, split)
 
         write_remove(1, "-  " + QCoreApplication.translate("scanner", "Scanning .dll %0 plugins").replace('%0', SCRIPT_EXTENDER.upper()), True)
         for file in scanner.dll_files:
@@ -341,16 +324,8 @@ class scanner():
             split = 10
         else:
             split = 1
-        chunk_size = len(scanner.archive_files) // split
-        chunks = [scanner.archive_files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
-        chunks.append(scanner.archive_files[(split) * chunk_size:])
-        for chunk in chunks:
-            thread = threading.Thread(target=scanner.archive_processor, args=(chunk,))
-            scanner.threads.append(thread)
-            thread.start()
-        
-        for thread in scanner.threads: thread.join()
-        scanner.threads.clear()
+
+        _global.process_items_in_chunks_and_join(scanner.archive_processor, scanner.archive_files, split)
         
     def archive_processor(files):
         if GAME_MODE == "SSE":
