@@ -111,7 +111,8 @@ class scanner():
         else:
             scanner.max_threads_by_ram = max_threads
 
-        scanner.file_semaphore = threading.Semaphore(scanner.max_threads_by_ram)
+        #scanner.file_semaphore = threading.Semaphore(scanner.max_threads_by_ram)
+        scanner.file_semaphore = threading.Semaphore(1000)
         thread_memory_usage = 2.5 * (1024**3)
         scanner.archive_threads_by_ram = max(1, int(usable_ram / thread_memory_usage) * 7)
 
