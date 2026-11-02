@@ -58,6 +58,12 @@ class Vortex():
                 if ref_id and ref_id in enabled_mods:
                     rule_targets[ref_id] = 2
 
+                if ref_fe:
+                    try:
+                        ref_fe_pattern = re.compile(ref_fe, re.IGNORECASE)
+                    except:
+                        ref_fe_pattern = ref_fe
+                        pass
                     
                 # Low priority, 1, match for logicalFileName/fileExpression
                 if ref_lfn or ref_fe:
@@ -80,7 +86,7 @@ class Vortex():
                                     matched = True
                             else:
                                 try:
-                                    if re.search(ref_fe, target_id, re.IGNORECASE):
+                                    if re.search(ref_fe_pattern, target_id):
                                         matched = True
                                 except re.error:
                                     pass
