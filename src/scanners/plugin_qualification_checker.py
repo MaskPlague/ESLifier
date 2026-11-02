@@ -4,6 +4,7 @@ import threading
 import zlib
 import struct
 import shutil
+import traceback
 from log_stream import write_error, write_to_file
 from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ESM_NAME, MO2_GAME_NAME, SHORT_GAME_NAME,
                          CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
@@ -222,60 +223,68 @@ class qualification_checker():
         new_wthr = False
         previs_precombines = False
         #edids = []
-        cell_form_ids = []
-        for form in data_list:
-            record_type = form[:4]
-            if record_type not in (b'GRUP', b'TES4') and form[15] >= master_count:
-                count += 1
-                if count > num_max_records:
-                    return (False, 
-                            f'max record count of {num_max_records} exceeded '
-                            f'({limit_reason})')
-                if int.from_bytes(form[12:15], "little") > qualification_checker.max_record_id:
-                    need_compacting = True
-                if record_type == b'CELL':
-                    new_cell = True
-                    if ((not interior_cell_flag and is_sse_mode)
-                         or (not previs_precombines and is_fo4_mode)):
-                        flag_byte = form[10]
-                        compressed_flag = (flag_byte & 0x04) != 0
-                        offset = 24
-                        form_to_check = form
-                        if compressed_flag:
-                            form_to_check = zlib.decompress(form[28:])
-                            offset = 0
-                        form_size = len(form_to_check)
-                        while offset < form_size:
-                            field, field_size, offset = qualification_checker.get_field_and_size(offset, form_to_check)
-                            if field == b'DATA' and is_sse_mode:
-                                flags = form_to_check[offset+6]
-                                interior_cell_flag = (flags & 0x01) != 0
-                            elif field == b'XCRI' and is_fo4_mode:
-                                previs_precombines = True
-                            elif field == b'XPRI' and is_fo4_mode:
-                                previs_precombines = True
-                            offset += field_size + 6
+        cell_form_ids = set()
+        try:
+            for form in data_list:
+                record_type = form[:4]
+                if record_type not in (b'GRUP', b'TES4') and form[15] >= master_count:
+                    count += 1
+                    if count > num_max_records:
+                        return (False, 
+                                f'max record count of {num_max_records} exceeded '
+                                f'({limit_reason})')
+                    if int.from_bytes(form[12:15], "little") > qualification_checker.max_record_id:
+                        need_compacting = True
+                    if record_type == b'CELL':
+                        new_cell = True
+                        if ((not interior_cell_flag and is_sse_mode)
+                            or (not previs_precombines and is_fo4_mode)):
+                            flag_byte = form[10]
+                            compressed_flag = (flag_byte & 0x04) != 0
+                            offset = 24
+                            form_to_check = form
+                            if compressed_flag:
+                                try:
+                                    form_to_check = zlib.decompress(form[28:])
+                                except:
+                                    return (False, 'zlib decompression error, bad plugin?')
+                                offset = 0
+                            form_size = len(form_to_check)
+                            while offset < form_size:
+                                field, field_size, offset = qualification_checker.get_field_and_size(offset, form_to_check)
+                                if field == b'DATA' and is_sse_mode:
+                                    flags = form_to_check[offset+6]
+                                    interior_cell_flag = (flags & 0x01) != 0
+                                elif field == b'XCRI' and is_fo4_mode:
+                                    previs_precombines = True
+                                elif field == b'XPRI' and is_fo4_mode:
+                                    previs_precombines = True
+                                offset += field_size + 6
 
-                if record_type == b'WRLD':
-                    new_wrld = True
+                    if record_type == b'WRLD':
+                        new_wrld = True
 
-                if record_type == b'WTHR':
-                    new_wthr = True
+                    if record_type == b'WTHR':
+                        new_wthr = True
 
-                #if record_type in (b'CELL', b'CLMT', b'IMGS', b'LGTM', b'VOLI', b'WTHR'): # Get EDIDs for KreatE and whatever else may use them in the future
-                #    flag_byte = form[10]
-                #    compressed_flag = (flag_byte & 0x04) != 0
-                #    form_to_check = form
-                #    if compressed_flag:
-                #        form_to_check = form[:24] + zlib.decompress(form[28:])
-                #    if form_to_check[24:28] == b'EDID':
-                #        offset = 28
-                #        edid_len = struct.unpack("<H", form_to_check[offset:offset+2])[0]
-                #        offset += 2
-                #        edids.append(form_to_check[offset:offset+edid_len-1].decode())
+                    #if record_type in (b'CELL', b'CLMT', b'IMGS', b'LGTM', b'VOLI', b'WTHR'): # Get EDIDs for KreatE and whatever else may use them in the future
+                    #    flag_byte = form[10]
+                    #    compressed_flag = (flag_byte & 0x04) != 0
+                    #    form_to_check = form
+                    #    if compressed_flag:
+                    #        form_to_check = form[:24] + zlib.decompress(form[28:])
+                    #    if form_to_check[24:28] == b'EDID':
+                    #        offset = 28
+                    #        edid_len = struct.unpack("<H", form_to_check[offset:offset+2])[0]
+                    #        offset += 2
+                    #        edids.append(form_to_check[offset:offset+edid_len-1].decode())
 
-            if record_type == b'CELL' and form[15] >= master_count and str(form[12:15].hex()) not in cell_form_ids:
-                cell_form_ids.append(str(form[12:15].hex()))
+                if record_type == b'CELL' and form[15] >= master_count:
+                    cell_form_ids.add(str(form[12:15].hex()))
+        except Exception as e:
+            write_to_file(f"Failed to parse plugin, maybe bad/corrupt?: {file}")
+            write_to_file(traceback.format_exc())
+            return (False, "Error in file format, bad plugin?")
         
         #edids.sort()
         #if edids != []:
@@ -283,6 +292,7 @@ class qualification_checker():
         #    with open(edid_file, 'w', encoding='utf-8') as f:
         #        for edid in edids:
         #            f.write(edid + '\n')
+        cell_form_ids = list(cell_form_ids)
         cell_form_ids.sort()
         if cell_form_ids != [] and ((is_sse_mode and is_esm) or is_fo4_mode):
             cell_form_id_file = CELL_IDS_FOLDER + basename + '_CellFormIDs.txt'
