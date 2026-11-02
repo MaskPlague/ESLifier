@@ -389,9 +389,7 @@ class CFIDs():
         if split > MAX_THREADS:
             split = MAX_THREADS
 
-        chunk_size = len(files) // split
-        chunks = [files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
-        chunks.append(files[(split) * chunk_size:])
+        chunks = _global.chunk_items(files, split)
         self.count = 0
         self.file_count = len(files)
         for chunk in chunks:
@@ -548,9 +546,7 @@ class CFIDs():
         if split > MAX_THREADS:
             split = MAX_THREADS
 
-        chunk_size = len(files) // split
-        chunks = [files[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
-        chunks.append(files[(split) * chunk_size:])
+        chunks = _global.chunk_items(files, split)
         self.count = 0
         self.file_count = len(files)
         percentage_str = ("-  " + QCoreApplication.translate("CFIDs", "Percentage: %1%") + 
