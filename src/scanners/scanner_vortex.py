@@ -22,7 +22,7 @@ class VortexErrors(Enum):
 
 class Vortex():
     scanner: scanner = None
-    def get_load_order(profile_id: str, installed_mods: dict[str, dict]) -> list[str]:
+    def get_load_order(profile_id: str, installed_mods: dict[str, dict]) -> tuple[list[str],dict[str|str]]:
         profiles: dict[str, dict] = VortexDBParser.get_section("persistent###profiles###") or {}
         mod_state_data: dict[str, dict[str, bool|str]] = profiles.get(profile_id, {}).get("modState", {})
         
