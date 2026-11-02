@@ -199,6 +199,12 @@ class CFIDs():
                 for line in p.stdout:
                     if line.startswith('Error'):
                         raise Exception(f"During Temp Extraction, {line}")
+                err = False
+                for line in p.stderr:
+                    write_to_file(f"BSArch.exe: {line}")
+                    err = True
+                if err:
+                    raise Exception(f"BSArch.exe error (see log for details) with file {archive_file}.")
 
     def compact_and_patch(self, file_to_compact: str, dependents: list, all_dependents_have_game_esm_as_master: bool,
                            add_cell_to_master: bool, files_to_patch: dict):

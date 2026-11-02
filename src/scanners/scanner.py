@@ -193,6 +193,12 @@ class scanner():
                     if timeit.default_timer() - last > update_time:
                         last = timeit.default_timer()
                         write_remove(1, extracting_str + line)
+                err = False
+                for line in p.stderr:
+                    write_to_file(f"BSArch.exe: {line}")
+                    err = True
+                if err:
+                    raise Exception(f"BSArch.exe error (see log for details) with file {file}.")
     @staticmethod
     def extract_scripts_and_seq_from_game_archive(archive_list, plugins_list):
         order_map = {plugin: index for index, plugin in enumerate(plugins_list)}
