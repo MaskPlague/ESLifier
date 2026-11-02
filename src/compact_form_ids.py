@@ -344,7 +344,7 @@ class CFIDs():
 
                 self.original_files[end_path_lower] = [file, sha256_hash]
             except Exception as e:
-                write_error(QCoreApplication.translate("Failed to hash ") + file)
+                write_error(QCoreApplication.translate("CFIDs", "Failed to hash ") + file)
                 write_error(e, True)
         return new_file, end_path
     
@@ -554,7 +554,7 @@ class CFIDs():
                         "\n-  "+ QCoreApplication.translate("CFIDs", "Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
         for chunk in chunks:
             if self.file_count > 20:
-                self.count += 1
+                self.count += len(chunk)
                 factor = round(self.file_count * 0.001)
                 if factor == 0:
                     factor = 1
@@ -621,6 +621,7 @@ class CFIDs():
                 except Exception as e:
                     write_error(QCoreApplication.translate("CFIDs", "Error decompressing form: %1\n at Header: %2 at Index: %3"
                                                            ).replace("%1", str(e)).replace("%2", str(data_list[i][:24])).replace("%3", str(i)))
+                    raise
 
                 uncompressed_size_from_form = data_list[i][24:28]
                 sizes_list[i] = [len(data_list[i]), 0, i, len(data_list[i][28:]), uncompressed_size_from_form]
