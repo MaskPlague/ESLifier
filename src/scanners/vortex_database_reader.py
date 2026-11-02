@@ -81,7 +81,7 @@ class VortexDBParser:
         
         try:
             req = urllib.request.Request(url)
-            with urllib.request.urlopen(req) as response:
+            with urllib.request.urlopen(req, timeout=10) as response:
                 return json.loads(response.read().decode('utf-8'))
                 
         except Exception as e:
