@@ -247,10 +247,13 @@ class Vortex():
                 # Yielded mods 0 come before Non-yielded mods 1, within these groups sort by normal load order
                 return (is_actual_mod, is_not_yielded, order_idx)
 
-            sorted_mods = sorted(providing_mods, key=sort_key)
-            
-            if sorted_mods:
-                file_resolution[file_path] = sorted_mods
+            if len(providing_mods) != 1:
+                sorted_mods = sorted(providing_mods, key=sort_key)
+                
+                if sorted_mods:
+                    file_resolution[file_path] = sorted_mods
+            else:
+                file_resolution[file_path] = providing_mods
 
         return file_resolution
 
