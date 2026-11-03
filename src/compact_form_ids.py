@@ -637,30 +637,13 @@ class CFIDs():
                 #Header format 4 byte signature, 4 byte size little endian,  4 bytes flags, 4 byte form id, 8 byte various | 24 bytes total, Data
                 #Data Format: 4 bytes for uncompressed size, size - 4 bytes + compressed data
                 form = data_list[i][:24] + sizes_list[i][4] + compressed
-
                 diff = len(form) - sizes_list[i][0]
                 if diff != 0:
                     sizes_list[i][1] = diff
                     size = int.from_bytes(data_list[i][4:8], 'little')
                     new_size = size + diff
                     form = form[:4] + new_size.to_bytes(4, 'little') + form[8:]
-
                 data_list[i] = form
-                # Old method, works fine but changed to above
-                '''formatted = [0] * (sizes_list[i][0]- 28)                
-                #record header
-                formatted[:24] = data_list[i][:24]
-                #uncompressed data size (never changed)
-                formatted[24:28] = sizes_list[i][4]
-                #compressed
-                formatted[28:28+len(compressed)] = compressed
-                if len(formatted) != sizes_list[i][0]:
-                    diff = len(formatted) - sizes_list[i][0]
-                    sizes_list[i][1] = diff
-                    size = int.from_bytes(data_list[i][4:8][::-1])
-                    new_size = size + diff
-                    formatted[4:8] = new_size.to_bytes(4, 'little')
-                data_list[i] = bytes(formatted)'''
         return data_list, sizes_list
     
     def update_grup_sizes(self, data_list: list, grup_struct: dict, sizes_list: list) -> list:
