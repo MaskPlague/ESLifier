@@ -93,7 +93,7 @@ class user_and_master_conditions_class():
                 write_error(e, True)
         return conditions_dict
 
-    def check_conditions(self, basename, file, file_lower, form_id_map):
+    def check_conditions(self, basename, file, file_lower, form_id_map, encoding_method='utf-8'):
         conditions_list = self.user_and_master_conditions.get(os.path.splitext(file_lower)[1].removeprefix('.'), self.user_and_master_conditions.get("other", []))
         for condition_set in conditions_list:
             contains = condition_set["contains"]
@@ -116,7 +116,7 @@ class user_and_master_conditions_class():
                 fid_key = condition_set.get("fid_key")
                 to_id_key = condition_set.get("to_id_key", "hex_no_0")
                 args = [basename, file, form_id_map]
-                kwargs = {"encoding_method": "utf-8"}
+                kwargs = {"encoding_method": encoding_method}
                 if separator_symbol != "":
                     kwargs.update({"sep": separator_symbol})
                 if int_type:
@@ -131,17 +131,9 @@ class user_and_master_conditions_class():
                     kwargs.update({"fid_key": fid_key})
                 if to_id_key is not None:
                     kwargs.update({"to_id_key": to_id_key})
-                try:
-                    patcher_method(*args, **kwargs)
-                except Exception as e:
-                    exception_type = type(e)
-                    if exception_type == UnicodeDecodeError:
-                        kwargs.update({"encoding_method": "ansi"})
-                        patcher_method(*args, **kwargs)
-                    else:
-                        write_error(QCoreApplication.translate("Global", "Failed to patch file: ") + file)
-                        write_error(e, True)    
-                return True
+
+                patcher_method(*args, **kwargs)
+
         return False
 
 #if __name__ == "__main__":
