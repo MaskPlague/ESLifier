@@ -259,13 +259,13 @@ class shared_patchers():
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = shared_patchers.safe_load_json(f)
             json_dict = shared_patchers.extract_values_and_keys(data)
-            ox = False
             print_replace = True
             for path, value in json_dict:
                 if isinstance(value, str) and sep in value:
                     index = value.index(sep)
                     plugin = value[:index]
                     if plugin.lower() == basename:
+                        ox = False
                         form_id = value[index+len(sep):]
                         form_id_int = int(form_id, 16)
                         if not ox and '0x' in form_id.lower():
@@ -297,11 +297,11 @@ class shared_patchers():
             print_replace = True
             for path, value in json_dict:
                 if isinstance(value, str) and sep in value:
-                    ox = False
-                    int_type_actual = int_type
                     index = value.index(sep)
                     plugin = value[index+len(sep):]
                     if plugin.lower() == basename:
+                        ox = False
+                        int_type_actual = int_type
                         form_id = value[:index]
                         if '0x' in form_id.lower():
                             ox = True
