@@ -10,7 +10,7 @@ import json
 import time
 import charset_normalizer
 import traceback
-#from intervaltree import IntervalTree
+from collections import defaultdict, deque
 
 from create_cell_master import create_new_cell_plugin
 from data_holder import (_global, GAME_MODE, GAME_ESM_NAME, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, FORM_ID_MAPS_FOLDER, 
@@ -323,7 +323,7 @@ class CFIDs():
         clear_and_leave_log_open()
         return self.original_files, self.winning_files_dict, self.master_byte_data, self.winning_file_history_dict, self.compacted_and_patched
 
-    #Create a copy of the mod plugin we're compacting/patching/etc.
+    #Create a copy of the file we're compacting/patching/etc.
     def copy_file_to_output(self, file: str) -> tuple[str, str]:
         end_path: str = _global.get_rel_path(file)
         end_path_lower = end_path.lower()
@@ -769,19 +769,21 @@ class CFIDs():
         if self.do_generate_cell_master:
             new_cell_form_ids = self.create_cell_master_class.add_cells(data_list, grup_struct, master_count, os.path.basename(file))
             data_list, self.updated_master_index = self.add_cell_master_to_masters(data_list)
-        if self.updated_master_index != -1:
-            updated_master_index_bytes = self.updated_master_index.to_bytes()
         self.master_byte_data[basename] = {'master_byte': self.master_byte.hex(), 'updated_master_index': self.updated_master_index}
 
-        form_id_list: list[bytes, bytes] = []
-        #Get all new form ids in plugin
+        form_id_list: list[list[bytes]] = []
+        #Get all new form ids in plugin (deduplicated, in file order)
+        seen_new_ids = set()
         for form in data_list:
-            if form[:4] not in (b'GRUP', b'TES4') and form[15] >= master_count and [form[12:16], form[:4]] not in form_id_list:
-                form_id_list.append([form[12:16], form[:4]])
+            if form[:4] not in (b'GRUP', b'TES4') and form[15] >= master_count:
+                key = (form[12:16], form[:4])
+                if key not in seen_new_ids:
+                    seen_new_ids.add(key)
+                    form_id_list.append([form[12:16], form[:4]])
 
         saved_forms = form_processor.save_all_form_data(data_list)
-
-        form_id_list.sort(key= lambda x: struct.unpack('<I', x[0])[0])
+        _U32 = struct.Struct('<I').unpack_from
+        form_id_list.sort(key= lambda x: _U32(x[0])[0])
 
         all_form_ids_list = set([form_id for form_id, record_type in form_id_list])
 
@@ -795,23 +797,31 @@ class CFIDs():
         new_id_len = len(new_id)
         counter = int.from_bytes(new_id, 'big')
 
-        new_form_ids = []
+        #Every available ESL slot, in ascending order, as (decimal object id, 4 byte form id).
+        new_slots: list[tuple[int, bytes]] = []
         for i in range(new_range):
             new_id = counter.to_bytes(new_id_len, 'little')
-            new_decimal = int.from_bytes(new_id[:3][::-1])
-            new_form_ids.append([new_decimal, new_id])
+            new_decimal = int.from_bytes(new_id[:3], 'little')
+            new_slots.append((new_decimal, new_id))
             counter += 1
+        slot_index = {slot_id: i for i, (_, slot_id) in enumerate(new_slots)}
+        slot_used = [False] * len(new_slots)
 
-        to_remove = []
-        for old_id, type in form_id_list:
-            for new_decimal, new_id in new_form_ids:
-                if old_id == new_id:
-                    to_remove.append([old_id, type, new_decimal, new_id])
-                    break
+        #Forms that already sit in the ESL range keep their Form ID and use up that slot
+        in_range_ids = set()
+        for old_id, _ in form_id_list:
+            i = slot_index.get(old_id)
+            if i is not None:
+                slot_used[i] = True
+                in_range_ids.add(old_id)
+        if in_range_ids:
+            form_id_list = [x for x in form_id_list if x[0] not in in_range_ids]
 
-        for old_id, type, new_decimal, new_id in to_remove:
-            form_id_list.remove([old_id, type])
-            new_form_ids.remove([new_decimal, new_id])
+        # Byte that points at the cell master in this plugin's master list
+        if self.updated_master_index == -1:
+            cell_master_byte = self.master_byte
+        else:
+            cell_master_byte = self.updated_master_index.to_bytes()
 
         matched_ids = set()
         form_id_replacements = []
@@ -832,67 +842,56 @@ class CFIDs():
                 if form_id_conversion[0] not in clean_conversion_data:
                     if form_id_conversion[1].strip()[:6] != '000000':
                         clean_conversion_data[form_id_conversion[0]] = form_id_conversion[1].strip()
-                    
-            clean_form_id_conversions = [[key, value] for key, value in clean_conversion_data.items()]
 
-            for form_id_conversion in clean_form_id_conversions:
+            for from_hex, to_hex in clean_conversion_data.items():
                 #initially was doing [:3] + master_byte, cannot remember why, anyways it broke form ids with HITME errors, so we're doing this instead.
-                from_id = bytes.fromhex(form_id_conversion[0])[:4]
+                from_id = bytes.fromhex(from_hex)[:4]
                 if from_id in old_ids_of_new_cells:
-                    if self.updated_master_index == -1:
-                        to_id = bytes.fromhex(form_id_conversion[1])[:3] + self.master_byte + b'\xFF'
-                    else:
-                        to_id = bytes.fromhex(form_id_conversion[1])[:3] + updated_master_index_bytes + b'\xFF'
+                    to_id = bytes.fromhex(to_hex)[:3] + cell_master_byte + b'\xFF'
                 else:
-                    to_id = bytes.fromhex(form_id_conversion[1])[:4]
-                if from_id in all_form_ids_list:
-                    form_id_replacements.append([from_id, to_id])
-                elif not free_non_existent:
+                    to_id = bytes.fromhex(to_hex)[:4]
+                if from_id in all_form_ids_list or not free_non_existent:
                     form_id_replacements.append([from_id, to_id])
         if len(form_id_replacements) > 0:
             matched_from_ids = set([from_id[:4] for from_id, to_id in form_id_replacements])
-            matched_to_ids = set([to_id[:4] for from_id, to_id in form_id_replacements])
+            for _, to_id in form_id_replacements:
+                i = slot_index.get(to_id[:4])
+                if i is not None:
+                    slot_used[i] = True
             form_id_list[:] = [[old_id, type] for old_id, type in form_id_list if old_id not in matched_from_ids]
-            new_form_ids[:] = [[new_decimal, new_id] for new_decimal, new_id in new_form_ids if new_id not in matched_to_ids]
 
-        #Make sure that if a cell form id follows the sub-block convention it keeps it
+        #Make sure that if a cell form id follows the sub-block convention it keeps it:
+        #bucket the free slots by their last two decimal digits, lowest slot first.
+        cell_buckets: dict[int, deque] = defaultdict(deque)
+        for i, (new_decimal, _) in enumerate(new_slots):
+            if not slot_used[i]:
+                cell_buckets[new_decimal % 100].append(i)
+
         for form_id, type in form_id_list:
             if type == b'CELL':
-                decimal_form_id = int.from_bytes(form_id[:3][::-1])
-                last_two_digits = decimal_form_id % 100
-                for new_decimal, new_id in new_form_ids:
-                    new_last_two_digits = new_decimal % 100
-                    if new_last_two_digits == last_two_digits:
-                        form_id_replacements.append([form_id, new_id])
-                        new_form_ids.remove([new_decimal, new_id])
-                        matched_ids.add(form_id)
-                        break
+                bucket = cell_buckets.get(int.from_bytes(form_id[:3], 'little') % 100)
+                if bucket:
+                    i = bucket.popleft()
+                    slot_used[i] = True
+                    form_id_replacements.append([form_id, new_slots[i][1]])
+                    matched_ids.add(form_id)
 
+        #Everything else takes the next free slot in order
+        free_slots = (slot_id for i, (_, slot_id) in enumerate(new_slots) if not slot_used[i])
         for form_id, _ in form_id_list:
             if form_id not in matched_ids:
-                #if len(new_cell_form_ids) <= 0:
-                #    break
-                _, new_id = new_form_ids.pop(0)
-                form_id_replacements.append([form_id, new_id])
-
+                try:
+                    form_id_replacements.append([form_id, next(free_slots)])
+                except StopIteration:
+                    raise RuntimeError(
+                        f"Ran out of free ESL Form IDs while compacting {basename} "
+                        f"({new_range} available). Stale entries in {form_id_file_name} may be reserving slots.") from None
+ 
         if self.do_generate_cell_master:
-            for old_id, new_id in new_cell_form_ids:
-                copy = form_id_replacements.copy()
-                added = False
-                for replacement in copy:
-                    if old_id == replacement[0]:
-                        form_id_replacements.remove(replacement)
-                        if self.updated_master_index == -1:
-                            form_id_replacements.append([old_id, new_id + self.master_byte + b'\xFF'])
-                        else:
-                            form_id_replacements.append([old_id, new_id + updated_master_index_bytes + b'\xFF'])
-                        added = True
-                        break
-                if not added:
-                    if self.updated_master_index == -1:
-                        form_id_replacements.append([old_id, new_id + self.master_byte + b'\xFF'])
-                    else:
-                        form_id_replacements.append([old_id, new_id + updated_master_index_bytes + b'\xFF'])
+            #New cells are moved into the cell master and replace any ESL replacement they had
+            cell_master_ids = {old_id: new_id + cell_master_byte + b'\xFF' for old_id, new_id in new_cell_form_ids}
+            form_id_replacements = [r for r in form_id_replacements if r[0] not in cell_master_ids]
+            form_id_replacements.extend([old_id, new_id] for old_id, new_id in cell_master_ids.items())
 
         form_id_replacements.sort(key= lambda x: struct.unpack('<I', x[0])[0])
         with open(form_id_file_name, 'w', encoding='utf-8') as fidf:
