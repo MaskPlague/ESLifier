@@ -221,7 +221,7 @@ class CFIDs():
         dependent_thread: threading.Thread = None
         if dependents:
             write_normal("-  "+QCoreApplication.translate("CFIDs", "Patching %1 Dependent Plugins...").replace("%1", str(len(dependents))))
-            dependent_thread = threading.Thread(target=self.patch_dependent_plugins, args=(file_to_compact, dependents, files_to_patch))
+            dependent_thread = threading.Thread(target=self.patch_dependent_plugins, args=(file_to_compact, dependents))
             dependent_thread.start()
 
         name = os.path.basename(file_to_compact).lower()
@@ -310,7 +310,7 @@ class CFIDs():
         self.compacted_and_patched[compacted_file] = set()
         if dependents != []:
             write_normal("-  " + QCoreApplication.translate("CFIDs", "Patching New Dependent Plugins..."))
-            self.patch_dependent_plugins(compacted_file, dependents, files_to_patch)
+            self.patch_dependent_plugins(compacted_file, dependents)
         if os.path.basename(compacted_file) in files_to_patch:
             to_patch, to_rename = self.sort_files_to_patch_or_rename(compacted_file, files_to_patch[os.path.basename(compacted_file)])
             self.get_form_id_map(compacted_file)
@@ -901,7 +901,7 @@ class CFIDs():
         self.compacted_and_patched[os.path.basename(new_file)] = set()
         
     #replaced the old form ids with the new ones in all files that have the comapacted file as a master
-    def patch_dependent_plugins(self, file: str, dependents: list, file_masters: dict):
+    def patch_dependent_plugins(self, file: str, dependents: list):
         form_id_file_name = FORM_ID_MAPS_FOLDER + os.path.basename(file).lower() + "_FormIdMap.txt"
         form_id_file_data = ''
         
