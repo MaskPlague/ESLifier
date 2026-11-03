@@ -189,7 +189,7 @@ class patchers(shared_patchers):
                         else:
                             lines[i] = form_id_1 + '~' + "ESLifier_Cell_Master.esm" + ('\n' if plugin_1.endswith('\n') else '')
 
-                    if replace_1 or replace_2 and print_replace:
+                    if (replace_1 or replace_2) and print_replace:
                         write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                         print_replace = False
             f.seek(0)
