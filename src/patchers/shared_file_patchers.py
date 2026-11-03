@@ -183,7 +183,7 @@ class shared_patchers():
                                     if print_replace:
                                         write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                         print_replace = False   
-                                    lines[i] = line[:plugin_index+1] + "ESLifier_Cell_Master.esm" + sep + "0x" + to_id_data["hex_no_0"] + end_of_line
+                                    lines[i] = line[:plugin_index] + " ESLifier_Cell_Master.esm" + sep + "0x" + to_id_data["hex_no_0"] + end_of_line
                             else:
                                 if not to_id_data["update_name"]:
                                     lines[i] = start_of_line + '00' + to_id_data["hex"] + end_of_line
@@ -191,7 +191,7 @@ class shared_patchers():
                                     if print_replace:
                                         write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                         print_replace = False
-                                    lines[i] = line[:plugin_index+1] + "ESLifier_Cell_Master.esm" + sep + "00" + to_id_data["hex"] + end_of_line
+                                    lines[i] = line[:plugin_index] + " ESLifier_Cell_Master.esm" + sep + "00" + to_id_data["hex"] + end_of_line
             f.seek(0)
             f.truncate(0)
             f.write(''.join(lines))
