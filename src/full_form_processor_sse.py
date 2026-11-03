@@ -1,6 +1,7 @@
 import struct
 from log_stream import write_error
-
+_U16 = struct.Struct('<H').unpack_from
+_U32 = struct.Struct('<I').unpack_from
 class form_processor():
     
     def get_offsets_from_array(offset, field_size, struct_size=4):
@@ -9,10 +10,10 @@ class form_processor():
 
     def get_alt_texture_offsets(offset, form):
         offsets = []
-        alternate_texture_count = struct.unpack("<I", form[offset+6:offset+10])[0]
+        alternate_texture_count = _U32(form[offset+6:offset+10])[0]
         offset += 10
         for _ in range(alternate_texture_count):
-            alt_tex_size = struct.unpack("<I", form[offset:offset+4])[0]
+            alt_tex_size = _U32(form[offset:offset+4])[0]
             offsets.append(offset+alt_tex_size+4)
             offset += 12 + alt_tex_size 
         return offsets
@@ -20,11 +21,11 @@ class form_processor():
     def get_field_and_size(offset, form):
         field = form[offset:offset+4]
         if field != b'XXXX':
-            field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
+            field_size = _U16(form[offset+4:offset+6])[0]
             return field, field_size, offset
         else:
             offset += 6
-            field_size = struct.unpack("<I", form[offset:offset+4])[0]
+            field_size = _U32(form[offset:offset+4])[0]
             offset += 4
             field = form[offset:offset+4]
             return field, field_size, offset
@@ -614,7 +615,7 @@ class form_processor():
                 if field == b'CNAM':
                     intv_offset = form.find(b'INTV', 24)
                     if intv_offset != -1:
-                        intv = struct.unpack("<I", form[intv_offset+6:intv_offset+10])[0]
+                        intv = _U32(form[intv_offset+6:intv_offset+10])[0]
                         in_field_offset = offset + 6
                         for _ in range(intv):
                             coll_offsets.append(in_field_offset)
@@ -989,7 +990,7 @@ class form_processor():
         return [i, bytearray(form), glob_offsets]
 
     def save_grup_data(i, form): 
-        grup_type = struct.unpack("<I", form[12:16])[0]
+        grup_type = _U32(form[12:16])[0]
         if grup_type in (1, 6, 7, 8, 9):
             grup_offsets = [8]
         else:
@@ -1510,16 +1511,16 @@ class form_processor():
                 if field == b'NVSI':
                     navi_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
                 elif field == b'NVPP':
-                    path_count = struct.unpack("<I", form[offset+6:offset+10])[0]
+                    path_count = _U32(form[offset+6:offset+10])[0]
                     in_field_offset = offset + 10
                     #Path Table
                     for _ in range(path_count):
-                        form_id_count = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
+                        form_id_count = _U32(form[in_field_offset:in_field_offset+4])[0]
                         in_field_offset += 4
                         for _ in range(form_id_count):
                             navi_offsets.append(in_field_offset)
                             in_field_offset += 4
-                    node_count = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
+                    node_count = _U32(form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4
                     #Node Table
                     for _ in range(node_count):
@@ -1529,17 +1530,17 @@ class form_processor():
                     in_field_offset = offset + 6
                     navi_offsets.append(in_field_offset)    # Navmesh
                     in_field_offset += 24                   # Merged to Count
-                    merged_to_count = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
+                    merged_to_count = _U32(form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4                    # start of Merged to
                     for _ in range(merged_to_count):
                         navi_offsets.append(in_field_offset)
                         in_field_offset += 4
-                    perferred_merges_count = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
+                    perferred_merges_count = _U32(form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4                    # start of Perferred Merges
                     for _ in range(perferred_merges_count):
                         navi_offsets.append(in_field_offset)
                         in_field_offset += 4
-                    door_refr_count = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
+                    door_refr_count = _U32(form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4                    # start of door structs
                     for _ in range(door_refr_count):
                         navi_offsets.append(in_field_offset+4)
@@ -1563,18 +1564,18 @@ class form_processor():
                     navm_offsets.append(in_field_offset)        # World Space
                     navm_offsets.append(in_field_offset + 4)    # Cell
                     in_field_offset += 8
-                    num_vertices = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
+                    num_vertices = _U32(form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4
                     in_field_offset += 12 * num_vertices
-                    num_tris = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
+                    num_tris = _U32(form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4
                     in_field_offset += 16 * num_tris
-                    ext_connections = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
+                    ext_connections = _U32(form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4
                     for _ in range(ext_connections):
                         navm_offsets.append(in_field_offset + 4)# Navmesh in Connections Struct
                         in_field_offset += 10
-                    num_door_tris = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
+                    num_door_tris = _U32(form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4
                     for _ in range(num_door_tris):
                         navm_offsets.append(in_field_offset + 6)# Door REFR
@@ -2274,7 +2275,7 @@ class form_processor():
             elif field in special_wrld_fields:
                 if field == b'RNAM':
                     in_field_offset = offset + 10
-                    pair_count = struct.unpack("<I", form[in_field_offset:in_field_offset+4])[0]
+                    pair_count = _U32(form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4
                     for _ in range(pair_count):
                         wrld_offsets.append(in_field_offset)
@@ -2316,7 +2317,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             #field = form[offset:offset+4]
-            #field_size = struct.unpack("<H", form[offset+4:offset+6])[0]
+            #field_size = _U16(form[offset+4:offset+6])[0]
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
             if field in FORM_fields and field_size >= 4:
                 FORM_offsets.append(offset + 6)
@@ -2340,7 +2341,7 @@ class form_processor():
         if use_global_flag: 
             offsets_list.append(offset)  # ComparisonValue
         offset += 4
-        function_index = struct.unpack("<H", form[offset:offset+2])[0]
+        function_index = _U16(form[offset:offset+2])[0]
         offset += 4
         # If a function has a param and we know it isn't a non-fid then it is either a form id or garbage data that doesn't matter
         if function_index not in functions_with_param1_but_not_fid and form[offset:offset+4] != b'\x00\x00\x00\x00':
@@ -2357,13 +2358,13 @@ class form_processor():
 
     def script_reader(form, offset, obj_format):
         offsets_list = []
-        script_name_size = struct.unpack("<H", form[offset:offset+2])[0]
+        script_name_size = _U16(form[offset:offset+2])[0]
         #script_name = form[offset+2:offset+script_name_size+2]
         offset += script_name_size + 2
-        property_count = struct.unpack("<H", form[offset+1:offset+3])[0]
+        property_count = _U16(form[offset+1:offset+3])[0]
         offset += 3
         for _ in range(property_count):
-            property_name_size = struct.unpack("<H", form[offset:offset+2])[0]
+            property_name_size = _U16(form[offset:offset+2])[0]
             #property_name = form[offset+2: offset +property_name_size + 2]
             offset += property_name_size + 2
             property_type = int.from_bytes(form[offset:offset+1][::-1])
@@ -2375,7 +2376,7 @@ class form_processor():
                     offsets_list.append(offset+4)
                 offset += 8
             elif property_type == 2:
-                string_size = struct.unpack("<H", form[offset:offset+2])[0]
+                string_size = _U16(form[offset:offset+2])[0]
                 offset += string_size + 2
             elif property_type == 3:
                 offset += 4
@@ -2384,7 +2385,7 @@ class form_processor():
             elif property_type == 5:
                 offset += 1
             elif property_type == 11:
-                item_count = struct.unpack("<I", form[offset:offset+4])[0]
+                item_count = _U32(form[offset:offset+4])[0]
                 offset += 4
                 if obj_format == 1:
                     for _ in range(item_count):
@@ -2395,31 +2396,31 @@ class form_processor():
                         offsets_list.append(offset+4)
                         offset += 8
             elif property_type == 12:
-                item_count = struct.unpack("<I", form[offset:offset+4])[0]
+                item_count = _U32(form[offset:offset+4])[0]
                 offset += 4
                 for _ in range(item_count):
-                    string_size = struct.unpack("<H", form[offset:offset+2])[0]
+                    string_size = _U16(form[offset:offset+2])[0]
                     offset += string_size + 2
             elif property_type == 13:
-                item_count = struct.unpack("<I", form[offset:offset+4])[0]
+                item_count = _U32(form[offset:offset+4])[0]
                 offset += 4
                 offset += 4 * item_count
             elif property_type == 14:
-                item_count = struct.unpack("<I", form[offset:offset+4])[0]
+                item_count = _U32(form[offset:offset+4])[0]
                 offset += 4
                 offset += 4 * item_count
             elif property_type == 15:
-                item_count = struct.unpack("<I", form[offset:offset+4])[0]
+                item_count = _U32(form[offset:offset+4])[0]
                 offset += 4
                 offset += item_count
         return offsets_list, offset
     
     def vmad_reader(form, offset):
         offsets_list = []
-        vmad_size = struct.unpack("<H", form[offset+4:offset+6])[0]
+        vmad_size = _U16(form[offset+4:offset+6])[0]
         vmad_end_offset = offset + 6 + vmad_size
-        obj_format = struct.unpack("<H", form[offset+8:offset+10])[0]
-        script_count = struct.unpack("<H", form[offset+10:offset+12])[0]
+        obj_format = _U16(form[offset+8:offset+10])[0]
+        script_count = _U16(form[offset+10:offset+12])[0]
         offset += 12
         for _ in range(script_count):
             script_offsets, offset = form_processor.script_reader(form, offset, obj_format)
@@ -2428,21 +2429,21 @@ class form_processor():
         if form[:4] in (b'INFO', b'PACK', b'PERK', b'QUST', b'SCEN') and offset < vmad_end_offset:
             if form[:4] == b'QUST':
                 offset += 1
-                fragment_count = struct.unpack("<H", form[offset:offset+2])[0]
+                fragment_count = _U16(form[offset:offset+2])[0]
                 offset += 2
-                script_file_name_size = struct.unpack("<H", form[offset:offset+2])[0]
+                script_file_name_size = _U16(form[offset:offset+2])[0]
                 #script_file_name = form[offset+2:offset+script_file_name_size+2]
                 offset += 2 + script_file_name_size
 
                 #Iterate through fragments
                 for _ in range(fragment_count):
                     offset += 9
-                    fragment_script_name_size = struct.unpack("<H", form[offset:offset+2])[0]
+                    fragment_script_name_size = _U16(form[offset:offset+2])[0]
                     offset += fragment_script_name_size  + 2
-                    fragment_function_name_size = struct.unpack("<H", form[offset:offset+2])[0]
+                    fragment_function_name_size = _U16(form[offset:offset+2])[0]
                     offset += fragment_function_name_size + 2
 
-                alias_count = struct.unpack("<H", form[offset:offset+2])[0]
+                alias_count = _U16(form[offset:offset+2])[0]
                 offset += 2
                 #Iterate through aliases
                 for _ in range(alias_count):
@@ -2451,7 +2452,7 @@ class form_processor():
                     elif obj_format == 2:
                         offsets_list.append(offset+4)
                     offset += 12
-                    alias_script_count = struct.unpack("<H", form[offset:offset+2])[0]
+                    alias_script_count = _U16(form[offset:offset+2])[0]
                     offset += 2
                     for _ in range(alias_script_count):
                         alias_script_offsets, offset = form_processor.script_reader(form, offset, obj_format)
