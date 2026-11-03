@@ -413,7 +413,8 @@ def pex_patcher_for_debug(basename: str, new_file: str, form_id_map: dict,
     if not debug and patched:
         with open(new_file, 'wb') as f:
             f.write(data)
-    print(f"done processing {new_file}")
+    if debug:
+        print(f"done processing {new_file}")
     return patched
 
 
