@@ -107,6 +107,7 @@ class log_stream(QMainWindow):
         self.percentage = 0
         self.progress_bar = QProgressBar()
         self.progress_bar.setTextVisible(False)
+        self.progress_bar_busy_mode = False
         self.hide()
         main_widget = QWidget()
         main_layout = QVBoxLayout()
@@ -406,32 +407,36 @@ class log_stream(QMainWindow):
     def process_queue(self):
         if not self.isHidden() and self.progress_bar.value() != self.percentage:
             if self.percentage == 0:
-                self.progress_bar.setRange(0,0)
-                self.progress_bar.setStyleSheet("""
-                    QProgressBar {
-                        background-color: #999999;
-                        border: 0px;
-                        padding: 0px;
-                        max-height: 10px;
-                    }
-                    QProgressBar::chunk {
-                        background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0.5, y2:0, stop:0 #999999, stop:1 #03f8fc);
-                    }""")
-                self.progress_bar.setValue(self.percentage)
-            else:
-                self.progress_bar.setRange(0,100)
-                self.progress_bar.setStyleSheet("""
-                    QProgressBar {
-                        background-color: #999999;
-                        border: 0px;
-                        padding: 0px;
-                        max-height: 10px;
-                    }
+                if not self.progress_bar_busy_mode:
+                    self.progress_bar_busy_mode = True
+                    self.progress_bar.setRange(0,0)
+                    self.progress_bar.setStyleSheet("""
+                        QProgressBar {
+                            background-color: #999999;
+                            border: 0px;
+                            padding: 0px;
+                            max-height: 10px;
+                        }
                         QProgressBar::chunk {
-                        background: #03f8fc;
-                        width:1px
-                    }
-                """)
+                            background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0.5, y2:0, stop:0 #999999, stop:1 #03f8fc);
+                        }""")
+                    self.progress_bar.setValue(self.percentage)
+            else:
+                if self.progress_bar_busy_mode:
+                    self.progress_bar_busy_mode = False
+                    self.progress_bar.setRange(0,100)
+                    self.progress_bar.setStyleSheet("""
+                        QProgressBar {
+                            background-color: #999999;
+                            border: 0px;
+                            padding: 0px;
+                            max-height: 10px;
+                        }
+                            QProgressBar::chunk {
+                            background: #03f8fc;
+                            width:1px
+                        }
+                    """)
                 if not self.progress_bar.paintingActive():
                     self.progress_bar.setValue(self.percentage)
         length = self.display_queue.qsize()
