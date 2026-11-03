@@ -12,7 +12,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
                                     '_desc.ini', '_llos.ini', '_ipm.ini', '_mus.ini')):     # Description Framework, LLOS, IPM, MTD
             patchers.ini_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif new_file_lower.endswith('_flm.ini'):                                           # Form List Manipulator
-            patchers.ini_form_list_manipulator_patcher(basename, new_file_lower, form_id_map, encoding_method=encoding)
+            patchers.ini_form_list_manipulator_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\seasons\\' in new_file_lower:                                                 # Po3's Seasons of Skyrim
             patchers.ini_seasons_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\payloadinterpreter\\' in new_file_lower:                                      # Payload Interpreter
