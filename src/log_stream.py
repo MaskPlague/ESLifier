@@ -196,8 +196,8 @@ class log_stream(QMainWindow):
         if write_to_file:
             self.write_to_file(text)
 
-    def write_remove(self, remove_num_lines:int, text:str, write_to_file:bool=False):
-        self.display_queue.put((text, 1, remove_num_lines)) # 1 remove
+    def write_remove(self, remove_num_lines:int, text:str, write_to_file:bool=False, prunable:bool=False):
+        self.display_queue.put((text, 1, remove_num_lines, prunable)) # 1 remove
         if write_to_file:
             self.write_to_file(text)
 
@@ -208,7 +208,7 @@ class log_stream(QMainWindow):
 
     def write_progress(self, percent: int, remove_num_lines:int, text:str):
         self.percentage = percent
-        self.write_remove(remove_num_lines, text)
+        self.write_remove(remove_num_lines, text, False, True)
 
     def write_patching(self, percent:int, text:str):
         self.display_queue.put((text, 0))    # 0 Normal
@@ -446,11 +446,22 @@ class log_stream(QMainWindow):
                 if not self.progress_bar.paintingActive():
                     self.progress_bar.setValue(self.percentage)
         length = self.display_queue.qsize()
-        for _ in range(length):
-            if self.display_queue.empty():
-                break
-            text, *args = self.display_queue.get()
-            self.update_text_widget(text, *args)
+        if length > 50:
+            keep_range = length - 50
+            for i in range(length):
+                if self.display_queue.empty():
+                    break
+                text, *args = self.display_queue.get()
+                if args[0] == 1 and args[2]:
+                    if i < keep_range:
+                        continue
+                self.update_text_widget(text, *args)
+        else:
+            for _ in range(length):
+                if self.display_queue.empty():
+                    break
+                text, *args = self.display_queue.get()
+                self.update_text_widget(text, *args)
         if self.running:
             self.timer.start(50)
 
