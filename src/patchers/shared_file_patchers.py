@@ -246,13 +246,16 @@ class shared_patchers():
         """Anything that uses this must have the plugin name (or some other specific identifier)
           or it will replace ALL instances of the key ANYWHERE."""
         if isinstance(data, dict):
-            if old_key in data:
-                data[new_key] = data.pop(old_key)
-            for key, value in data.items():
-                shared_patchers.change_json_key(value, old_key, new_key)
-        elif isinstance(data, list):
-            for item in data:
-                shared_patchers.change_json_key(item, old_key, new_key)
+            #if old_key in data:
+            #    data[new_key] = data.pop(old_key)
+            #for key, value in data.items():
+            #    shared_patchers.change_json_key(value, old_key, new_key)
+            return {(new_key if key == old_key else key): shared_patchers.change_json_key(value, old_key, new_key) 
+                    for key, value in data.items()}
+        if isinstance(data, list):
+            #for item in data:
+            #    shared_patchers.change_json_key(item, old_key, new_key)
+            return [shared_patchers.change_json_key(item, old_key, new_key) for item in data]
         return data
     
     def json_generic_plugin_sep_formid_patcher(basename: str, new_file: str, form_id_map: dict, sep: str = '|', encoding_method: str ='utf-8'):
