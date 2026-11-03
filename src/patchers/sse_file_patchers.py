@@ -27,7 +27,9 @@ class patchers(shared_patchers):
                     return form_id[:3] + updated_master_byte
                 
                 seq_form_id_list = [format_seq_form_id(data[i:i+4]) for i in range(0, len(data), 4) ]
-                form_id_dict = {old_id[:3].lower(): (new_id[:3] + updated_master_byte) for old_id, new_id in form_id_map.items() if isinstance(old_id, bytes)}
+                form_id_dict = {old_id[:3].lower(): (new_id[:3] + updated_master_byte)
+                                 for old_id, new_id in form_id_map.items() 
+                                 if isinstance(old_id, bytes) and len(old_id) == 4}
     
                 def update_form_id(form_id):
                     if form_id[3:4] >= master_byte:
