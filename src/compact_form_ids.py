@@ -62,6 +62,13 @@ class CFIDs():
         self.semaphore = threading.Semaphore(1000)
         self.additional_conditions = additional_file_patcher_conditions
         self.all_patcher_experimental: bool = _global.all_patcher_experimental
+        self.percentage_str = (("-    " + QCoreApplication.translate("CFIDs", "Percentage: %1%") + 
+                                "\n-    "+ QCoreApplication.translate("CFIDs", "Files: %2/%3"))
+                                .replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}"))
+        
+        self.processed_str = (('-    ' + QCoreApplication.translate("HashWorker", "Processed: %1%") + 
+                               '\n-    ' + QCoreApplication.translate("HashWorker", "Files: %2/%3"))
+                                 .replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}"))
 
     def save_data(self):
         self.dump_compacted_and_patched(COMPACTED_AND_PATCHED_JSON, self.compacted_and_patched)
@@ -142,9 +149,7 @@ class CFIDs():
             self.count = 0
             self.hash_progress = 0
             threads: list[threading.Thread] = [] 
-            processed_str = ('-    ' + QCoreApplication.translate("HashWorker", "Processed: %1%") + 
-                        '\n-    ' + QCoreApplication.translate("HashWorker", "Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
-            write_progress(0, 1, processed_str.format(0.0, 0, self.file_count))
+            write_progress(0, 1, self.processed_str.format(0.0, 0, self.file_count))
             for chunk in chunks:
                 thread = threading.Thread(target=self.hash_files, args=(chunk, files_to_not_hash, before_patching, new_file_hashes))
                 threads.append(thread)
@@ -153,12 +158,11 @@ class CFIDs():
             for thread in threads: 
                 thread.join()
         
-            write_progress(100, 1, processed_str.format(100.0, self.file_count, self.file_count))
+            write_progress(100, 1, self.processed_str.format(100.0, self.file_count, self.file_count))
             self.dump_dictionary(NEW_FILE_HASHES_JSON, new_file_hashes)
     
     def hash_files(self, to_hash, files_to_not_hash: set, before_patching, new_file_hashes: dict):
-        processed_str = ('-    ' + QCoreApplication.translate("HashWorker", "Processed: %1%") + 
-                       '\n-    ' + QCoreApplication.translate("HashWorker", "Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
+        processed_str = self.processed_str
         local_new_file_hashes = {}
         for lower_rel_path, file in to_hash.items():
             self.hash_progress += 1
@@ -384,7 +388,7 @@ class CFIDs():
         return files_to_patch, files_to_rename
 
     def rename_files_threader(self, master: str, files: list[str]):
-        threads = []
+        threads:list[threading.Thread] = []
         split = len(files)
         if split > MAX_THREADS:
             split = MAX_THREADS
@@ -416,8 +420,7 @@ class CFIDs():
         facegeom_meshes = []
         luma_json = []
         master_base_name = os.path.basename(master)
-        percentage_str = ("-    " + QCoreApplication.translate("CFIDs", "Percentage: %1%") + 
-                        "\n-    "+ QCoreApplication.translate("CFIDs", "Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
+        percentage_str = self.percentage_str
 
         get_rel_path = _global.get_rel_path
         is_fo4_mode = GAME_MODE == "FO4"
@@ -557,9 +560,8 @@ class CFIDs():
         
         for thread in threads:
             thread.join()
-        percentage_str = ("-  " + QCoreApplication.translate("CFIDs", "Percentage: %1%") + 
-                          "\n-  "+ QCoreApplication.translate("CFIDs", "Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
-        write_progress(100, 1, percentage_str.format(100, self.file_count, self.file_count))
+
+        write_progress(100, 1, self.percentage_str.format(100, self.file_count, self.file_count))
 
     def get_encodings(self, new_file):
         yield 'utf-8'
@@ -579,8 +581,7 @@ class CFIDs():
         basename_cased = os.path.basename(master)
         basename = basename_cased.lower()
         local_compacted_and_patched_set = set()
-        percentage_str = ("-  " + QCoreApplication.translate("CFIDs", "Percentage: %1%") + 
-                                "\n-  "+ QCoreApplication.translate("CFIDs", "Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
+        percentage_str = self.percentage_str
         for file in files:
             new_file, rel_path = self.copy_file_to_output(file)
             new_file_lower = new_file.lower()
