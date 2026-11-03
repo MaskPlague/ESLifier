@@ -1002,7 +1002,7 @@ class CFIDs():
 
             with self.lock:
                 self.compacted_and_patched[os.path.basename(file)].add(rel_path)
-                self.master_byte_data[os.path.basename(file)] = {'master_byte': master_byte.hex(), 'updated_master_index': updated_master_index}
+                self.master_byte_data[os.path.basename(new_file)] = {'master_byte': master_byte.hex(), 'updated_master_index': updated_master_index}
         except Exception as e:
             write_error(QCoreApplication.translate("Global", "Failed to patch dependent: ") + new_file)
             write_error(e, True)
