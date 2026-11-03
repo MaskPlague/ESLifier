@@ -5,7 +5,7 @@ import io
 try:
     from patchers.shared_file_patchers import shared_patchers
     from log_stream import write_to_file, write_ineligible
-except:
+except ImportError:
     from shared_file_patchers import shared_patchers
     def write_to_file(txt):
         print(str(f"write_to_file: {str(txt)}"))

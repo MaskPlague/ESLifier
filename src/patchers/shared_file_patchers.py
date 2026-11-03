@@ -4,7 +4,7 @@ import json5
 try:
     from log_stream import write_to_file, write_ineligible, write_error
     from patchers import pex_patcher
-except:
+except ImportError:
     import pex_patcher
     file = open("test.log", 'w', encoding='utf-8')
     def printer(txt):
