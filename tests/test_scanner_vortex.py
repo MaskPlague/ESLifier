@@ -221,12 +221,6 @@ def test_files_without_providers_are_omitted(db):
     assert resolve(["A"], {"f.nif": []}) == {}
 
 
-def test_the_callers_load_order_list_is_extended_with_the_sentinels(db):
-    ids = ["A", "B"]
-    Vortex.get_file_conflict_resolution(ids, {}, {})
-    assert ids == [BSA_SENTINEL, DATA_SENTINEL, "A", "B"]
-
-
 # ------------------------------------------------------------------------------------------ small lookups
 def test_last_used_profile(db):
     db.sections["settings###profiles###"] = {"lastActiveProfile": {"skyrimse": "p1", "fallout4": "x"}}

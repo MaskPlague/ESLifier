@@ -91,7 +91,7 @@ def test_collects_files_per_mod_keyed_by_lowercase_relative_path(mo2):
     touch(mods / "ModA" / "Meshes" / "A.nif")
     touch(mods / "ModB" / "meshes" / "a.nif")
     touch(mods / "ModB" / "textures" / "t.dds")
-    files, plugin_names, cases = gather(mods, overwrite, ["ModA", "ModB"], [BSA_MOD, "ModA", "ModB", OVERWRITE_MOD])
+    files, plugin_names, cases, _ = gather(mods, overwrite, ["ModA", "ModB"], [BSA_MOD, "ModA", "ModB", OVERWRITE_MOD])
     key = p("meshes", "a.nif")
     assert sorted(files[key]) == ["ModA", "ModB"]
     assert files[p("textures", "t.dds")] == ["ModB"]
@@ -104,7 +104,7 @@ def test_disabled_and_unknown_mod_folders_are_skipped(mo2):
     touch(mods / "Enabled" / "a.txt")
     touch(mods / "Disabled" / "b.txt")
     (mods / "loose_file.txt").write_text("not a mod")
-    files, _, _ = gather(mods, overwrite, ["Enabled"], [BSA_MOD, "Enabled", OVERWRITE_MOD])
+    files, _, _, _ = gather(mods, overwrite, ["Enabled"], [BSA_MOD, "Enabled", OVERWRITE_MOD])
     assert list(files) == ["a.txt"]
 
 
@@ -117,7 +117,7 @@ def test_ignored_files_meta_ini_and_mohidden_are_skipped(mo2):
     touch(mods / "ModA" / "meshes" / "hidden.nif.mohidden")
     touch(mods / "ModA" / "dir.mohidden" / "x.nif")
     touch(mods / "ModA" / "meshes" / "ok.nif")
-    files, _, _ = gather(mods, overwrite, ["ModA"], [BSA_MOD, "ModA", OVERWRITE_MOD])
+    files, _, _, _ = gather(mods, overwrite, ["ModA"], [BSA_MOD, "ModA", OVERWRITE_MOD])
     assert sorted(files) == sorted([p("sub", "meta.ini"), p("meshes", "ok.nif")])
 
 
@@ -128,7 +128,7 @@ def test_plugin_names_come_from_mod_and_overwrite_roots_only(mo2):
     touch(mods / "ModA" / "sub" / "Nested.esp")
     touch(overwrite / "FromOverwrite.esm")
     touch(overwrite / "sub" / "Nested2.esp")
-    files, plugin_names, _ = gather(mods, overwrite, ["ModA"], [BSA_MOD, "ModA", OVERWRITE_MOD])
+    files, plugin_names, _, _ = gather(mods, overwrite, ["ModA"], [BSA_MOD, "ModA", OVERWRITE_MOD])
     assert sorted(plugin_names) == ["FromOverwrite.esm", "Light.ESL", "ModA.esp"]
 
 
@@ -137,7 +137,7 @@ def test_overwrite_files_are_attributed_to_the_overwrite_sentinel(mo2):
     touch(mods / "ModA" / "meshes" / "a.nif")
     touch(overwrite / "meshes" / "a.nif")
     touch(overwrite / "meshes" / "hidden.nif.mohidden")
-    files, _, _ = gather(mods, overwrite, ["ModA"], [BSA_MOD, "ModA", OVERWRITE_MOD])
+    files, _, _, _ = gather(mods, overwrite, ["ModA"], [BSA_MOD, "ModA", OVERWRITE_MOD])
     assert sorted(files[p("meshes", "a.nif")]) == ["ModA", OVERWRITE_MOD]
     assert p("meshes", "hidden.nif.mohidden") not in files
 
@@ -177,7 +177,7 @@ def test_overwrite_bsa_beats_mod_bsa(mo2):
 def test_files_extracted_from_bsas_are_attributed_to_the_bsa_sentinel(mo2):
     fake, mods, overwrite, _ = mo2
     fake.files_to_extract = [p("scripts", "s.pex")]
-    files, _, cases = gather(mods, overwrite, [], [BSA_MOD, OVERWRITE_MOD])
+    files, _, cases, _ = gather(mods, overwrite, [], [BSA_MOD, OVERWRITE_MOD])
     assert files == {p("scripts", "s.pex"): [BSA_MOD]}
     assert cases[p("scripts", "s.pex")] == p("scripts", "s.pex")
 

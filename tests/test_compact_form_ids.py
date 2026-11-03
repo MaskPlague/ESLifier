@@ -4,6 +4,7 @@ range, remembers the mapping, and patches dependent plugins / SEQ files to match
 """
 import json
 import os
+import random
 import struct
 import zlib
 
@@ -12,7 +13,7 @@ import pytest
 from compact_form_ids import CFIDs
 from create_cell_master import create_new_cell_plugin
 from plugin_builder import (HEADER_VERSION_170, HEADER_VERSION_171, cell_record, fid, flatten, get_record,
-                            grup, plugin, record, sub, walk, write)
+                            grup, iter_records, plugin, record, sub, walk, write)
 
 SKYRIM = "Skyrim.esm"
 ESL_FLAG_BYTE = 0x02
@@ -328,6 +329,242 @@ class TestCompactFile:
         os.remove(env.out / "mod.esp")
         cf, src, out = self.compact(env)
         assert dict(l.split("|") for l in mp.read_text().split())[lines[0].split("|")[0]] == lines[0].split("|")[1]
+
+
+# ---------------------------------------------------------------------------- Form ID allocation
+def _map_dir(env):
+    return env.root / "ESLifier_Data" / "Form_ID_Maps"
+
+
+def _compact(env, data, name="mod.esp", all_dependents_ok=True):
+    """Compact ``data`` from a fresh copy of the source; the Form ID map file persists between calls."""
+    src = write(env.data / name, data)
+    out = env.out / name
+    if out.exists():
+        out.unlink()
+    make_cfids(env).compact_file(src, all_dependents_ok)
+    return out
+
+
+def _read_map(env, name="mod.esp") -> dict:
+    """{old object id: new object id} from the written map file."""
+    mapping = {}
+    for line in (_map_dir(env) / (name + "_FormIdMap.txt")).read_text().split():
+        old, new = line.split("|")
+        mapping[int.from_bytes(bytes.fromhex(old)[:3], "little")] = int.from_bytes(bytes.fromhex(new)[:3], "little")
+    return mapping
+
+
+def _map_line(old_obj: int, new_obj: int) -> str:
+    return fid(1, old_obj).hex() + "|" + fid(1, new_obj).hex()
+
+
+def _id_plugin(kywd_ids=(), cell_ids=(), refs=()):
+    """KYWD and (exterior) CELL records with the given object ids, plus REFRs as (refr id, NAME target id)."""
+    body = b""
+    if kywd_ids:
+        body += grup(b"KYWD", b"".join(record(b"KYWD", fid(1, i)) for i in kywd_ids))
+    if cell_ids:
+        body += grup(b"CELL", b"".join(cell_record(fid(1, i), interior=False) for i in cell_ids))
+    if refs:
+        body += grup(b"REFR", b"".join(record(b"REFR", fid(1, rid), sub(b"NAME", fid(1, target)))
+                                       for rid, target in refs))
+    return plugin((SKYRIM,), body)
+
+
+def _expected_cell_slots(old_ids, first, taken=()):
+    """Oracle for the sub-block convention: each CELL (in ascending old id order) takes the lowest free
+    slot whose decimal object id ends in the same two digits as the old id."""
+    used = set(taken)
+    expected = {}
+    for old in sorted(old_ids):
+        slot = next(s for s in range(first, 0x1000) if s % 100 == old % 100 and s not in used)
+        used.add(slot)
+        expected[old] = slot
+    return expected
+
+
+@pytest.fixture(params=[True, False], ids=["expanded_001_FFF", "classic_800_FFF"])
+def slot_range(env, request):
+    """(first slot, last slot) of the ESL range in use; both header-update modes."""
+    env.g._settings["update_header"] = request.param
+    env.g.update_from_settings()
+    return (1 if request.param else 0x800), 0xFFF
+
+
+class TestIdAllocation:
+    def test_every_record_maps_to_a_unique_in_range_slot_and_references_follow(self, env, slot_range):
+        first, last = slot_range
+        rng = random.Random(2024)
+        pool = rng.sample(range(0x1000, 0x8000), 80)
+        kywds, cells = pool[:40], pool[40:]
+        refs = [(0x9000 + k, rng.choice(pool)) for k in range(12)]
+        out = _compact(env, _id_plugin(kywds, cells, refs))
+        mapping = _read_map(env)
+
+        all_old = set(pool) | {r for r, _ in refs}
+        assert set(mapping) == all_old
+        assert len(set(mapping.values())) == len(mapping)                  # no two records share a new id
+        assert all(first <= new <= last for new in mapping.values())
+        assert new_ids(out.read_bytes()) == sorted(mapping.values())       # the plugin holds exactly the mapped ids
+
+        data = out.read_bytes()
+        refrs = [raw for _, sig, raw in iter_records(data) if sig == b"REFR"]
+        assert len(refrs) == len(refs)
+        for raw, (rid, target) in zip(refrs, refs):                        # records keep their file order
+            assert raw[12:16] == fid(1, mapping[rid])                      # the record's own id
+            assert raw[30:34] == fid(1, mapping[target])                   # NAME reference
+
+    def test_compaction_is_deterministic(self, env, slot_range):
+        env.g._settings["persistent_ids"] = False
+        env.g.update_from_settings()
+        data = _id_plugin([0x2000, 0x3000, 0x5000], [8203, 12345], [(0x9000, 0x3000)])
+        runs = []
+        for _ in range(2):
+            out = _compact(env, data)
+            runs.append((out.read_bytes(), (_map_dir(env) / "mod.esp_FormIdMap.txt").read_text()))
+        assert runs[0] == runs[1]
+
+    def test_recompacting_unchanged_plugin_with_persistent_ids_changes_nothing(self, env, slot_range):
+        data = _id_plugin([0x2000, 0x3000, 0x5000], [8203, 12345], [(0x9000, 0x3000)])
+        runs = []
+        for _ in range(3):
+            out = _compact(env, data)
+            runs.append((out.read_bytes(), (_map_dir(env) / "mod.esp_FormIdMap.txt").read_text()))
+        assert runs[0] == runs[1] == runs[2]
+
+    # ---- cell sub-block convention
+    def test_cells_keep_the_last_two_digits_of_their_old_id(self, env, slot_range):
+        first, _ = slot_range
+        cells = [0x2005, 0x2064, 0x4E20, 0x3000, 0x2A0C]          # residues 97, 92, 0, 88, 0 ... (decimal)
+        _compact(env, _id_plugin(cell_ids=cells))
+        mapping = _read_map(env)
+        for old in cells:
+            assert mapping[old] % 100 == old % 100
+        assert mapping == _expected_cell_slots(cells, first)
+
+    def test_cells_sharing_the_last_two_digits_get_distinct_slots_with_those_digits(self, env, slot_range):
+        first, _ = slot_range
+        cells = [8197, 8297, 8397, 8497]                          # all end in 97
+        _compact(env, _id_plugin(cell_ids=cells))
+        mapping = _read_map(env)
+        assert len(set(mapping.values())) == 4
+        assert all(new % 100 == 97 for new in mapping.values())
+        assert mapping == _expected_cell_slots(cells, first)
+
+    def test_cell_convention_wins_over_plain_ascending_order(self, env, slot_range):
+        first, _ = slot_range
+        residue = first % 100 + 2
+        cell = 8200 + residue                                      # sorts after the KYWDs below
+        kywds = [0x1000, 0x1001, 0x1002]
+        _compact(env, _id_plugin(kywds, [cell]))
+        mapping = _read_map(env)
+        cell_slot = first + 2                                      # lowest slot with that residue
+        assert mapping[cell] == cell_slot
+        # the KYWDs take the lowest remaining slots, in order, and skip the cell's slot
+        assert [mapping[k] for k in kywds] == [first, first + 1, first + 3]
+
+    def test_cell_falls_back_to_the_next_free_slot_when_its_digits_are_exhausted(self, env, slot_range):
+        first, last = slot_range
+        residue = 7
+        matching = [s for s in range(first, last + 1) if s % 100 == residue]
+        cells = [100000 + 100 * k + residue for k in range(len(matching) + 3)]
+        _compact(env, _id_plugin(cell_ids=cells))
+        mapping = _read_map(env)
+        assert len(set(mapping.values())) == len(cells)
+        assert all(first <= new <= last for new in mapping.values())
+        assert sorted(new for new in mapping.values() if new % 100 == residue) == matching   # all matching slots used
+        assert sum(1 for new in mapping.values() if new % 100 != residue) == 3               # the overflow
+
+    def test_cell_skips_a_matching_slot_kept_by_an_in_range_record(self, env, slot_range):
+        first, _ = slot_range
+        kept = first + 2                                           # already in range, keeps its id
+        residue = kept % 100
+        other = 8200 + residue
+        _compact(env, _id_plugin(cell_ids=[kept, other]))
+        mapping = _read_map(env)
+        assert kept not in mapping
+        assert mapping[other] == kept + 100                        # next slot ending in the same two digits
+
+    # ---- loading saved conversion data
+    @pytest.mark.parametrize("free_non_existent", [False, True])
+    def test_saved_assignments_survive_and_are_never_reused(self, env, slot_range, free_non_existent):
+        env.g._settings["free_non_existent"] = free_non_existent
+        env.g.update_from_settings()
+        first_run = _id_plugin([0x2000, 0x3000, 0x5000, 0x7000], [8203, 12345, 20001])
+        _compact(env, first_run)
+        before = _read_map(env)
+
+        removed = {0x3000, 12345}
+        kept_old = set(before) - removed
+        added_kywds, added_cells = [0x1500, 0xA000, 0xB000], [8303, 9903, 15003]     # 8303 clashes with 8203's slot digits
+        second_run = _id_plugin([0x2000, 0x5000, 0x7000] + added_kywds, [8203, 20001] + added_cells)
+        out = _compact(env, second_run)
+        after = _read_map(env)
+
+        assert all(after[old] == before[old] for old in kept_old)                    # survivors never move
+        added = set(added_kywds) | set(added_cells)
+        assert added <= set(after)
+        present = kept_old | added
+        assert len({after[o] for o in present}) == len(present)                      # unique among live records
+        assert new_ids(out.read_bytes()) == sorted(after[o] for o in present)
+        if free_non_existent:
+            assert set(after) == present                                             # stale entries dropped
+        else:
+            assert set(after) == present | removed                                   # stale entries kept ...
+            assert {after[o] for o in added}.isdisjoint(before[o] for o in removed)  # ... and still reserved
+
+    def test_saved_cell_assignment_is_kept_even_when_it_breaks_the_convention(self, env, slot_range):
+        first, _ = slot_range
+        persisted = first + 4                                      # does not end in the cell's digits
+        (_map_dir(env) / "mod.esp_FormIdMap.txt").write_text(_map_line(8203, persisted) + "\n")
+        _compact(env, _id_plugin([0x2000, 0x3000, 0x5000], [8203]))
+        mapping = _read_map(env)
+        assert mapping[8203] == persisted
+        assert mapping[0x2000] == first and mapping[0x3000] == first + 1 and mapping[0x5000] == first + 2
+
+    def test_first_of_duplicate_saved_conversions_wins(self, env, slot_range):
+        first, _ = slot_range
+        (_map_dir(env) / "mod.esp_FormIdMap.txt").write_text(
+            _map_line(0x2000, first + 9) + "\n" + _map_line(0x2000, first + 20) + "\n")
+        _compact(env, _id_plugin([0x2000, 0x3000, 0x5000]))
+        mapping = _read_map(env)
+        assert mapping[0x2000] == first + 9
+        assert first + 20 not in mapping.values()
+        assert len(set(mapping.values())) == len(mapping)
+
+    def test_saved_conversion_to_object_id_zero_is_ignored(self, env, slot_range):
+        first, last = slot_range
+        (_map_dir(env) / "mod.esp_FormIdMap.txt").write_text(_map_line(0x3000, 0) + "\n")
+        _compact(env, _id_plugin([0x2000, 0x3000, 0x5000]))
+        mapping = _read_map(env)
+        assert first <= mapping[0x3000] <= last
+        assert 0 not in mapping.values()
+
+    @pytest.mark.parametrize("free_non_existent", [False, True])
+    def test_stale_saved_slot_is_reserved_unless_freed(self, env, slot_range, free_non_existent):
+        first, _ = slot_range
+        env.g._settings["free_non_existent"] = free_non_existent
+        env.g.update_from_settings()
+        stale_slot = first + 8
+        (_map_dir(env) / "mod.esp_FormIdMap.txt").write_text(_map_line(0xDEAD, stale_slot) + "\n")
+        kywds = [0x2000 + 0x100 * k for k in range(10)]
+        _compact(env, _id_plugin(kywds))
+        mapping = _read_map(env)
+        live = sorted(mapping[k] for k in kywds)
+        if free_non_existent:
+            assert 0xDEAD not in mapping
+            assert live == list(range(first, first + 10))
+        else:
+            assert mapping[0xDEAD] == stale_slot
+            assert live == [s for s in range(first, first + 11) if s != stale_slot]
+
+    def test_running_out_of_slots_raises_a_descriptive_error(self, env, slot_range):
+        first, last = slot_range
+        lines = [_map_line(0x100000 + s, s) for s in range(first, last + 1)]      # every slot reserved by stale ids
+        (_map_dir(env) / "mod.esp_FormIdMap.txt").write_text("\n".join(lines) + "\n")
+        with pytest.raises(RuntimeError, match="Ran out of free ESL Form IDs"):
+            _compact(env, _id_plugin([0x2000, 0x3000]))
 
 
 # ---------------------------------------------------------------------------- get_form_id_map
