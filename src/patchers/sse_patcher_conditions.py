@@ -58,7 +58,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         elif 'beeingfemale\\enchantments\\' in new_file_lower or 'beeingfemale\\addon\\' in new_file_lower:
             patchers.ini_beeingfemale_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         else:                                    
-            patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
+            patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map, encoding_method=encoding)
             if not patched:                                           
                 write_warning(QCoreApplication.translate("patcher_conditions", "Possible missing patcher for: ") + new_file)
     elif new_file_lower.endswith('_conditions.txt'):                                        # Dynamic Animation Replacer
@@ -166,7 +166,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         elif 'plugins\\uniqueregionnames\\' in new_file_lower:                              # Unique Region Names
             patchers.json_generic_recursive_depth_patcher(basename, new_file, form_id_map, plugin_key="plugin", fid_key="form_id",fid_start="0x", encoding_method=encoding)
         else:
-            patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
+            patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map, encoding_method=encoding)
             if not patched:                                           
                 write_warning(QCoreApplication.translate("patcher_conditions", "Possible missing patcher for: ") + new_file)
     elif new_file_lower.endswith('.pex'):                                                   # Compiled script patching
@@ -185,7 +185,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         elif os.path.basename(new_file_lower).startswith('yastm_'):                         # YASTM - Yet Another Soul Trap Manager
             patchers.toml_yet_another_soul_trap_manager_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         else:
-            patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
+            patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map, encoding_method=encoding)
             if not patched:                                           
                 write_warning(QCoreApplication.translate("patcher_conditions", "Possible missing patcher for: ") + new_file)
     elif new_file_lower.endswith('.yml'):
@@ -194,7 +194,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         elif '\\plugins\\alchemyoftime\\' in new_file_lower:                                # Alchemy Of Time
             patchers.ini_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         else:
-            patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
+            patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map, encoding_method=encoding)
             if not patched:                                           
                 write_warning(QCoreApplication.translate("patcher_conditions", "Possible missing patcher for: ") + new_file)
     elif new_file_lower.endswith('.yaml'):
@@ -209,7 +209,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         elif "sexlab\\voices" in new_file_lower:
             patchers.ini_formid_sep_plugin_patcher(basename, new_file, form_id_map, sep='|', encoding_method=encoding)
         else:
-            patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
+            patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map, encoding_method=encoding)
             if not patched:                                           
                 write_warning(QCoreApplication.translate("patcher_conditions", "Possible missing patcher for: ") + new_file)
     elif 'facegeom' in new_file_lower and new_file_lower.endswith('.nif'):                  # FaceGeom mesh patching
@@ -221,6 +221,6 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
     elif new_file_lower.endswith('config.txt') and 'plugins\\customskill' in new_file_lower: # CSF's old txt format
         patchers.old_customskill_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     else:
-        patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map)
+        patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map, encoding_method=encoding)
         if not patched:                                           
             write_warning(QCoreApplication.translate("patcher_conditions", "Possible missing patcher for: ") + new_file)
