@@ -449,17 +449,21 @@ class log_stream(QMainWindow):
         if DEBUG:
             self.hijack_print.print_to_console(text)
         if args[0] == 1:
-            if args[1] == -1:
+            if args[1] == 1:
+                try:
+                    self.lines.pop()
+                except:
+                    pass
+            elif args[1] == -1:
                 self.lines.clear()
-                self.lines.append(text)
-                self.text_edit.setPlainText('\n'.join(self.lines))
             else:
-                remove_count = args[1]
-                for _ in range(remove_count):
-                    if self.lines:
+                for _ in range(args[1]):
+                    try:
                         self.lines.pop()
-                self.lines.append(text)
-                self.text_edit.setPlainText('\n'.join(self.lines))
+                    except:
+                        break
+            self.lines.append(text)
+            self.text_edit.setPlainText('\n'.join(self.lines))
         elif args[0] == 3: # clear and close
             self.percentage = 100
             self.log_file.flush()
