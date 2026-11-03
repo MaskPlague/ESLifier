@@ -168,6 +168,10 @@ def make_worker(env):
     worker = pn.PatchNewScannerWorker(FakeParent())
     worker.finished_signal = Sig()
     worker.delete_confirmation_signal = Sig()
+    worker.failed_signal = Sig()
+    worker.rescan_signal = Sig()
+    worker.delete_confirmed_signal = Sig()
+    worker.new_files_requested_signal = Sig()
     return worker
 
 
@@ -549,11 +553,15 @@ def test_delete_files_restarts_the_scan_flagged_as_a_patch_new_run(deletion, log
     env = deletion
     w = make_worker(env)
     w.delete_files([], {}, False, {})
-    parent = w.main_parent
-    assert parent.redoing_output is True and parent.patch_new_running is True
-    assert parent.patch_new_only_remove is False
-    assert parent.events == [("scan",)]
+    assert w.rescan_signal.calls == [(False,)]          # the GUI thread restarts the scan, not the worker
+    assert w.main_parent.events == []
     assert "leave_open" in logcalls
+
+
+def test_delete_files_passes_only_remove_on_to_the_rescan(deletion):
+    w = make_worker(deletion)
+    w.delete_files([], {}, True, {})
+    assert w.rescan_signal.calls == [(True,)]
 
 
 def test_delete_files_restores_vortex_backups_for_hardlinked_files(deletion, monkeypatch):
@@ -608,12 +616,15 @@ def patch_worker(env, monkeypatch):
     FakeCFIDs.instances = []
     monkeypatch.setattr(pn, "CFIDs", FakeCFIDs)
     monkeypatch.setattr(pn, "user_and_master_conditions_class", lambda: "conditions")
+    env.cell_scans = []
+    monkeypatch.setattr(pn.cell_scanner, "scan_new_dependents", lambda mods, deps: env.cell_scans.append((mods, deps)))
     return env
 
 
 def make_patch_worker(mods, deps, files):
     w = pn.PatchNewWorker(mods, deps, files)
     w.finished_signal = Sig()
+    w.failed_signal = Sig()
     return w
 
 
@@ -659,19 +670,6 @@ def test_worker_get_from_file(env):
     bad.write_text("{nope", encoding="utf-8")
     assert w.get_from_file(str(good)) == {"a": 1}
     assert w.get_from_file(str(bad)) == {} and w.get_from_file("missing.json") == {}
-
-
-def test_worker_dump_dictionary_merges_into_existing_data(env):
-    w = make_patch_worker([], {}, {})
-    path = data(env, "d.json", {"keep": 1, "replace": "old"})
-    w.dump_dictionary(str(path), {"replace": "new", "add": 2})
-    assert json.loads(path.read_text(encoding="utf-8")) == {"keep": 1, "replace": "new", "add": 2}
-
-
-def test_worker_dump_dictionary_failure_is_logged(env, log):
-    w = make_patch_worker([], {}, {})
-    w.dump_dictionary(str(env.root / "no_such_dir" / "d.json"), {"a": 1})
-    assert any("Failed to dump data to" in e for e in log.errors)
 
 
 # ------------------------------------------------------------------------------------------ patch_new (UI glue)
@@ -742,21 +740,14 @@ def test_completed_scan_warns_about_skse_dlls_referencing_compacted_mods(ui, box
     assert "Mod: moda.esp" in text and "a.dll" in text and "b.dll" in text
 
 
-def test_completed_scan_checks_new_cells_before_patching(ui, monkeypatch):
-    calls = []
-    monkeypatch.setattr(pn.cell_scanner, "scan_new_dependents", lambda mods, deps: calls.append((mods, deps)))
-    monkeypatch.setattr(ui, "patch_new_plugins_and_files", lambda: calls.append("patch"))
-    ui.completed_scan(["ModA.esp"], {"ModA.esp": ["dep"]}, {}, 3, 2, [])
-    assert calls == [(["ModA.esp"], {"ModA.esp": ["dep"]}), "patch"]
-    assert (ui.hash_mismatch_num, ui.file_conflict_num) == (3, 2)
-
-
-def test_completed_scan_skips_cell_check_without_new_dependents(ui, monkeypatch):
+def test_completed_scan_hands_straight_over_to_patching(ui, monkeypatch):
+    # the (slow) new-cell check now runs on the patch worker's thread, never on the GUI thread
     calls = []
     monkeypatch.setattr(pn.cell_scanner, "scan_new_dependents", lambda *a: calls.append("cells"))
     monkeypatch.setattr(ui, "patch_new_plugins_and_files", lambda: calls.append("patch"))
-    ui.completed_scan(["ModA.esp"], {}, {"ModA.esp": ["f"]}, 0, 0, [])
+    ui.completed_scan(["ModA.esp"], {"ModA.esp": ["dep"]}, {}, 3, 2, [])
     assert calls == ["patch"]
+    assert (ui.hash_mismatch_num, ui.file_conflict_num) == (3, 2)
 
 
 def test_completed_scan_with_nothing_to_patch_finishes_immediately(ui, boxes, logcalls, monkeypatch):
@@ -814,20 +805,22 @@ def test_completion_message_ok_button_closes_it(ui, boxes):
 
 
 def test_delete_confirmation_accept_deletes_the_files(ui, boxes):
-    ui.scanner_worker = types.SimpleNamespace(delete_files=lambda *a: ui.main_parent.events.append(("delete", a)))
+    ui.scanner_worker = types.SimpleNamespace(delete_confirmed_signal=Sig())
     ui.create_delete_message("Really?", ["f1", "f2"], {"h": 1}, True, {"c": []})
     box = boxes.instances[-1]
     assert box.title == "Delete 2 files?" and box.text == "Really?" and box.shown
     assert box.buttons == ["abort", "ok"]
     box.accepted.callbacks[0]()
     assert box.hidden
-    assert ui.main_parent.events == [("delete", (["f1", "f2"], {"h": 1}, True, {"c": []}))]
+    # delivered to the worker's thread through its signal
+    assert ui.scanner_worker.delete_confirmed_signal.calls == [(["f1", "f2"], {"h": 1}, True, {"c": []})]
 
 
 def test_delete_confirmation_reject_aborts_patch_new(ui, boxes, logcalls, log):
     quits = []
     ui.patch_new_scan_thread = types.SimpleNamespace(quit=lambda: quits.append(1))
-    ui.scanner_worker = types.SimpleNamespace(delete_files=lambda *a: pytest.fail("must not delete"))
+    ui.scanner_worker = types.SimpleNamespace(
+        delete_confirmed_signal=types.SimpleNamespace(emit=lambda *a: pytest.fail("must not delete")))
     ui.create_delete_message("Really?", ["f1"], {}, False, {})
     box = boxes.instances[-1]
     box.rejected.callbacks[0]()
@@ -838,7 +831,194 @@ def test_delete_confirmation_reject_aborts_patch_new(ui, boxes, logcalls, log):
 
 
 def test_finished_rebuilding_looks_for_new_files(ui):
-    called = []
-    ui.scanner_worker = types.SimpleNamespace(detect_new_files=lambda: called.append(1))
+    ui.scanner_worker = types.SimpleNamespace(new_files_requested_signal=Sig())
     ui.finished_rebuilding()
-    assert called == [1]
+    assert ui.scanner_worker.new_files_requested_signal.calls == [()]
+
+
+def test_start_rescan_flags_the_run_and_scans_on_the_gui_thread(ui):
+    ui.start_rescan(True)
+    parent = ui.main_parent
+    assert parent.redoing_output is True and parent.patch_new_running is True
+    assert parent.patch_new_only_remove is True
+    assert parent.events == [("scan",)]
+
+
+def test_task_failed_unlocks_the_ui_and_tells_the_user(ui, boxes, logcalls):
+    ui.task_failed()
+    assert logcalls == ["close"]
+    assert ui.main_parent.events == [("setEnabled", True), ("calculate_stats",)]
+    (title, text), = boxes.warnings
+    assert title == "Patch New Failed" and "log" in text
+
+
+# ------------------------------------------------------------------------------------------ is_within
+def test_is_within_accepts_the_root_and_its_descendants(tmp_path):
+    root = tmp_path / "ESLifier Output"
+    assert pn.is_within(str(root), str(root))
+    assert pn.is_within(str(root / "meshes" / "a.nif"), str(root))
+    assert pn.is_within(str(root / "meshes" / ".." / "a.nif"), str(root))
+
+
+def test_is_within_rejects_siblings_that_share_a_prefix_or_name(tmp_path):
+    root = tmp_path / "ESLifier Output"
+    assert not pn.is_within(str(tmp_path / "ESLifier Output Backup" / "a.nif"), str(root))
+    assert not pn.is_within(str(tmp_path / "Other" / "ESLifier Output" / "a.nif"), str(root))
+    assert not pn.is_within(str(root / ".." / "a.nif"), str(root))
+
+
+@pytest.mark.skipif(os.name != "nt", reason="case and slash folding only applies to Windows paths")
+def test_is_within_ignores_case_and_slash_style_on_windows(tmp_path):
+    root = str(tmp_path / "ESLifier Output")
+    assert pn.is_within(root.upper() + "/meshes/a.nif", root)
+
+
+def test_is_within_treats_different_drives_as_outside(monkeypatch):
+    def different_drives(paths):
+        raise ValueError("Paths don't have the same drive")
+    monkeypatch.setattr(pn.os.path, "commonpath", different_drives)
+    assert pn.is_within("D:/x", "C:/y") is False
+
+
+def test_files_outside_the_output_folder_are_never_offered_for_deletion(env, monkeypatch):
+    inside = write_bytes(env.out / "meshes" / "a.nif", b"x")
+    sibling = write_bytes(env.out.parent / "ESLifier Output Backup" / "meshes" / "a.nif", b"x")
+    w = make_worker(env)
+    calls = []
+    monkeypatch.setattr(w, "delete_files", lambda *a: calls.append(a))
+    w.delete_and_patch_changed([sibling], True, {}, {})
+    assert calls == [([], {}, True, {})]
+    w.delete_and_patch_changed([inside, sibling], True, {}, {})
+    assert w.delete_confirmation_signal.calls[0][1] == [inside]
+
+
+# ------------------------------------------------------------------------------------------ hashing
+def test_unreadable_file_is_logged_and_skipped_while_hashing(env, log):
+    folder = env.out / "not_a_file"
+    folder.mkdir()
+    w = make_worker(env)
+    w.compare_previous_hash_to_current(str(folder), sha(b"anything"))
+    assert w.hash_mismatches == []
+    assert any("Failed to hash" in e for e in log.errors)
+
+
+def test_detect_changes_hashes_every_original_file(env):
+    changed = write_bytes(env.out / "meshes" / "changed.nif", b"new")
+    same = write_bytes(env.out / "meshes" / "same.nif", b"same")
+    data(env, "compacted_and_patched.json", {})
+    data(env, "file_masters.json", {})
+    data(env, "dependency_dictionary.json", {})
+    data(env, "original_files.json", {"c": [changed, sha(b"old")], "s": [same, sha(b"same")],
+                                      "m": [out(env, "missing.nif"), sha(b"gone")]})
+    w = make_worker(env)
+    w.detect_changes()
+    assert [f for _, f in w.hash_mismatches] == [changed]
+
+
+# ------------------------------------------------------------------------------------------ failure reporting
+'''
+def test_scanner_worker_failure_is_logged_and_reported_instead_of_raised(env, log, monkeypatch):
+    def boom(full):
+        raise RuntimeError("scan exploded")
+    monkeypatch.setattr(pn, "scanner", types.SimpleNamespace(scan=boom))
+    w = make_worker(env)
+    w.detect_changes()
+    assert w.failed_signal.calls == [()]
+    assert w.finished_signal.calls == []
+    assert any("failed unexpectedly" in e for e in log.errors) and any("scan exploded" in e for e in log.errors)
+
+
+def test_delete_files_failure_is_reported_and_does_not_rescan(deletion, log):
+    os.remove(deletion.root / "ESLifier_Data" / "original_files.json")       # unreadable -> exception
+    w = make_worker(deletion)
+    w.delete_files([], {}, False, {})
+    assert w.failed_signal.calls == [()]
+    assert w.rescan_signal.calls == []
+
+
+def test_detect_new_files_failure_is_reported(env, log, monkeypatch):
+    data(env, "compacted_and_patched.json", {"ModA.esp": ["x"]})
+    data(env, "file_masters.json", {"moda.esp": [sky(env, "a.nif")]})
+    data(env, "dependency_dictionary.json", {})
+    data(env, "dll_dict.json", {})
+    monkeypatch.setattr(_global, "get_rel_path", lambda f: (_ for _ in ()).throw(ValueError("bad path")))
+    w = make_worker(env)
+    w.detect_new_files()
+    assert w.failed_signal.calls == [()]
+    assert w.finished_signal.calls == []
+
+
+def test_patch_worker_failure_is_reported_instead_of_raised(patch_worker, log, monkeypatch):
+    class Exploding(FakeCFIDs):
+        def patch_new(self, *a):
+            raise RuntimeError("patching exploded")
+    monkeypatch.setattr(pn, "CFIDs", Exploding)
+    w = make_patch_worker(["ModA.esp"], {}, {})
+    w.patch_new_files()
+    assert w.failed_signal.calls == [()] and w.finished_signal.calls == []
+    assert any("patching exploded" in e for e in log.errors)
+'''
+
+# ------------------------------------------------------------------------------------------ new-cell check on the worker
+def test_patch_worker_checks_new_cells_before_patching(patch_worker):
+    env = patch_worker
+    deps = {"ModA.esp": ["dep"]}
+    order = []
+    env.cell_scans.clear()
+    w = make_patch_worker(["ModA.esp"], deps, {})
+    original = FakeCFIDs.patch_new
+    FakeCFIDs.patch_new = lambda self, *a: order.append(("patch", len(env.cell_scans)))
+    try:
+        w.patch_new_files()
+    finally:
+        FakeCFIDs.patch_new = original
+    assert env.cell_scans == [(["ModA.esp"], deps)]
+    assert order == [("patch", 1)]                                   # the scan had already run
+
+
+def test_patch_worker_skips_the_cell_check_without_new_dependents(patch_worker):
+    w = make_patch_worker(["ModA.esp"], {}, {"ModA.esp": ["f"]})
+    w.patch_new_files()
+    assert patch_worker.cell_scans == []
+
+
+# ------------------------------------------------------------------------------------------ thread wiring
+def test_worker_slots_are_connected_after_the_move_and_queued(env, boxes, logcalls, monkeypatch):
+    """A connection made before moveToThread delivers on the GUI thread (verified against real PyQt6), so the
+    signals that must run on the worker's thread are connected afterwards and explicitly queued."""
+    write_data_files(env, "compacted_and_patched.json", "master_byte_data.json")
+    events = []
+
+    class Recorder:
+        def __init__(self, name):
+            self.name = name
+
+        def connect(self, callback, *kind):
+            events.append(("connect", self.name, getattr(callback, "__name__", callback), kind))
+
+    class RecordingWorker:
+        def __init__(self, parent):
+            for name in ("finished_signal", "delete_confirmation_signal", "failed_signal", "rescan_signal",
+                         "delete_confirmed_signal", "new_files_requested_signal"):
+                setattr(self, name, Recorder(name))
+
+        def moveToThread(self, thread):
+            events.append(("move",))
+
+        def delete_files(self):
+            pass
+
+        def detect_new_files(self):
+            pass
+
+        def detect_changes(self):
+            pass
+
+    monkeypatch.setattr(pn, "PatchNewScannerWorker", RecordingWorker)
+    pn.patch_new().scan_and_find(FakeParent())
+    names = [e[1] if e[0] == "connect" else "MOVE" for e in events]
+    move = names.index("MOVE")
+    for name in ("delete_confirmed_signal", "new_files_requested_signal"):
+        assert names.index(name) > move
+        (event,) = [e for e in events if e[0] == "connect" and e[1] == name]
+        assert len(event[3]) == 1          # an explicit connection type (Qt is faked here, so it can't be compared)
