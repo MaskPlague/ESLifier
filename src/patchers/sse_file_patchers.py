@@ -1972,6 +1972,7 @@ class patchers(shared_patchers):
             json.dump(data, f, ensure_ascii=False, indent=2)
 
 #if __name__ == '__main__':
+#    import os
 #    basename = "thing.esp".lower()
 #    form_id_map = {int('c008',16): {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'bytes': b'\x00\x0A\x0A', 'update_name': False}, 
 #                   int('c00c',16): {'hex_no_0': 'B0B', 'hex': '000B0B', "int": 10101, 'bytes': b'\x00\x0B\x0B', 'update_name': True}}
