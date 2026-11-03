@@ -83,8 +83,9 @@ class shared_patchers():
                         start_index = shared_patchers.find_prev_non_alphanumeric(line, middle_index-2, tokens=tkns)
                         if final_index is not None and start_index > final_index:
                             continue
-                        end_index = line.index('.es', middle_index) + 4
-                        plugin = line.lower()[middle_index+len(sep):end_index].strip()
+                        line_lower = line.lower()
+                        end_index = line_lower.index('.es', middle_index) + 4
+                        plugin = line_lower[middle_index+len(sep):end_index].strip()
                         start_of_line = line[:start_index+1]
                         end_of_line = line[middle_index:]
                         form_id = line[start_index+1:middle_index].strip()
