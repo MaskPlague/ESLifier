@@ -53,14 +53,14 @@ class shared_patchers():
             f.truncate(0)
             f.write(data)            
 
-    def find_prev_non_alphanumeric(text: str, start_index: int, tokens: set[str] = {}):
+    def find_prev_non_alphanumeric(text: str, start_index: int, tokens: set[str] = set()):
             """Use this with care, do not use this to find the start of a plugin name as plugins are files and can contain non-alphanumeric characters"""
             for i in range(start_index, -1, -1): #this was range(start_index, 0, -1) I have changed it to -1 as 0 was not 0 inclusive, I hope I didn't just break a bunch of stuff...
                 if (not text[i].isalnum() and text[i] != ' ') or text[i] in tokens:
                     return i
             return -1
     
-    def find_next_non_alphanumeric(text: str, start_index: int, tokens: set[str] = {}):
+    def find_next_non_alphanumeric(text: str, start_index: int, tokens: set[str] = set()):
         for i in range(start_index, len(text)):
             if not text[i].isalnum() or text[i] in tokens:
                 return i
