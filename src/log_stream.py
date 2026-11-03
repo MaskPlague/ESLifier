@@ -107,6 +107,12 @@ class log_stream(QMainWindow):
         self.percentage = 0
         self.progress_bar = QProgressBar()
         self.progress_bar.setTextVisible(False)
+        self.progress_bar.setStyleSheet("""QProgressBar {
+                                    background-color: #999999;
+                                    border: 0px;
+                                    padding: 0px;
+                                    max-height: 10px;
+                                }""")
         self.progress_bar_busy_mode = False
         self.hide()
         main_widget = QWidget()
@@ -471,9 +477,11 @@ class log_stream(QMainWindow):
             self.text_edit.setPlainText('\n'.join(self.lines))
         elif args[0] == 3: # clear and close
             self.percentage = 100
+            #write_to_file("clearing, screen log snapshot:\n" + '\n'.join(self.lines))
             self.log_file.flush()
             self.timer_clear.start(1500)
         elif args[0] == 4: # clear and leave open
+            #write_to_file("alt clearing, screen log snapshot:\n" + '\n'.join(self.lines))
             self.clear_alt()
         elif args[0] == 5:
             self.lines.insert(args[1], text)
