@@ -541,7 +541,7 @@ class CFIDs():
             self.form_id_map[from_id_hex_bytes_lower] = to_id_hex_bytes_upper
 
     def patch_files_threader(self, master: str, files: list[str]):
-        threads = []
+        threads:list[threading.Thread] = []
         split = len(files)
         if split > MAX_THREADS:
             split = MAX_THREADS
@@ -549,23 +549,17 @@ class CFIDs():
         chunks = _global.chunk_items(files, split)
         self.count = 0
         self.file_count = len(files)
-        percentage_str = ("-  " + QCoreApplication.translate("CFIDs", "Percentage: %1%") + 
-                        "\n-  "+ QCoreApplication.translate("CFIDs", "Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
+        
         for chunk in chunks:
-            if self.file_count > 20:
-                self.count += len(chunk)
-                factor = round(self.file_count * 0.001)
-                if factor == 0:
-                    factor = 1
-                if (self.count % factor) >= (factor-1) or self.count >= self.file_count:
-                    percent = round(self.count / self.file_count * 100, 1)
-                    write_progress(round(percent), 1, percentage_str.format(percent, self.count, self.file_count))
             thread = threading.Thread(target=self.patch_files, args=(master, chunk))
             threads.append(thread)
             thread.start()
         
         for thread in threads:
             thread.join()
+        percentage_str = ("-  " + QCoreApplication.translate("CFIDs", "Percentage: %1%") + 
+                          "\n-  "+ QCoreApplication.translate("CFIDs", "Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
+        write_progress(100, 1, percentage_str.format(100, self.file_count, self.file_count))
 
     def get_encodings(self, new_file):
         yield 'utf-8'
@@ -585,9 +579,19 @@ class CFIDs():
         basename_cased = os.path.basename(master)
         basename = basename_cased.lower()
         local_compacted_and_patched_set = set()
+        percentage_str = ("-  " + QCoreApplication.translate("CFIDs", "Percentage: %1%") + 
+                                "\n-  "+ QCoreApplication.translate("CFIDs", "Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
         for file in files:
             new_file, rel_path = self.copy_file_to_output(file)
             new_file_lower = new_file.lower()
+            if self.file_count > 20:
+                self.count += 1
+                factor = round(self.file_count * 0.001)
+                if factor == 0:
+                    factor = 1
+                if (self.count % factor) >= (factor-1) or self.count >= self.file_count:
+                    percent = round(self.count / self.file_count * 100, 1)
+                    write_progress(round(percent), 1, percentage_str.format(percent, self.count, self.file_count))
             with self.semaphore:
                 try:
                     for encoding in self.get_encodings(new_file):
