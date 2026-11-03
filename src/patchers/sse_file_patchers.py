@@ -348,7 +348,7 @@ class patchers(shared_patchers):
                                             print_replace = False
                                         lines[i] = start_of_line + "ESLifier_Cell_Master.esm|" + to_id_data["hex_no_0"] + end_of_line
                                         pos += len('ESLifier_Cell_Master.esm') - len(plugin)
-                        except:
+                        except ValueError:
                             pos = start_index+3
             f.seek(0)
             f.truncate(0)
