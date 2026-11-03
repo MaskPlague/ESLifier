@@ -1,10 +1,13 @@
+import functools
 import json
 import os
 import hashlib
 import threading
 import shutil
+import traceback
+from concurrent.futures import ThreadPoolExecutor
 
-from PyQt6.QtCore import pyqtSignal, QThread, QObject, QCoreApplication
+from PyQt6.QtCore import pyqtSignal, QThread, QObject, QCoreApplication, Qt
 from PyQt6.QtWidgets import QMessageBox
 from PyQt6.QtGui import QIcon
 
@@ -18,7 +21,30 @@ from data_holder import (_global, ESLIFIER_PNG_ICON_PATH, VORTEX_GAME_NAME, COMP
                          WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, DEPENDENCY_DICTIONARY_JSON, DLL_DICT_JSON, 
                          ESLIFIER_DATA_FOLDER)
 from scanners.vortex_database_reader import VortexDBParser
-from log_stream import clear_and_close_log, clear_and_leave_log_open, write_error, write_normal, write_patching
+from log_stream import (clear_and_close_log, clear_and_leave_log_open, write_error, write_normal, write_patching,
+                        write_to_file)
+
+HASH_WORKERS = 16
+
+def is_within(path: str, root: str) -> bool:
+    path = os.path.normcase(os.path.abspath(path))
+    root = os.path.normcase(os.path.abspath(root))
+    try:
+        return os.path.commonpath([path, root]) == root
+    except ValueError:
+        return False
+
+def report_failures(method):
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        try:
+            return method(self, *args, **kwargs)
+        except Exception as e:
+            write_error(QCoreApplication.translate("patch_new", "Patch New failed unexpectedly."))
+            write_error(e, True)
+            write_to_file(traceback.format_exc())
+            self.failed_signal.emit()
+    return wrapper
 
 class patch_new():
     def scan_and_find(self, main_parent):
@@ -62,10 +88,15 @@ class patch_new():
         self.patch_new_scan_thread = QThread()
         self.scanner_worker = PatchNewScannerWorker(self.main_parent)
         self.scanner_worker.moveToThread(self.patch_new_scan_thread)
+        self.scanner_worker.delete_confirmed_signal.connect(self.scanner_worker.delete_files, Qt.ConnectionType.QueuedConnection)
+        self.scanner_worker.new_files_requested_signal.connect(self.scanner_worker.detect_new_files, Qt.ConnectionType.QueuedConnection)
         self.patch_new_scan_thread.started.connect(self.scanner_worker.detect_changes)
         self.scanner_worker.finished_signal.connect(self.completed_scan)
         self.scanner_worker.finished_signal.connect(self.patch_new_scan_thread.quit)
         self.scanner_worker.delete_confirmation_signal.connect(self.create_delete_message)
+        self.scanner_worker.rescan_signal.connect(self.start_rescan)
+        #self.scanner_worker.failed_signal.connect(self.task_failed)
+        #self.scanner_worker.failed_signal.connect(self.patch_new_scan_thread.quit)
         self.patch_new_scan_thread.start()
 
     def create_delete_message(self, text, files_to_delete, winning_file_history_dict, only_remove, compacted_and_patched):
@@ -76,7 +107,7 @@ class patch_new():
         self.delete_message.addButton(QMessageBox.StandardButton.Ok)
         def accept():
             self.delete_message.hide()
-            self.scanner_worker.delete_files(files_to_delete, winning_file_history_dict, only_remove, compacted_and_patched)
+            self.scanner_worker.delete_confirmed_signal.emit(files_to_delete, winning_file_history_dict, only_remove, compacted_and_patched)
             return
         def reject():
             self.delete_message.hide()
@@ -109,10 +140,6 @@ class patch_new():
                     if i < len(dlls) - 1:
                         text += '\n\t'
             QMessageBox.warning(None, QCoreApplication.translate("patch_new", "Compacted mod referenced in SKSE dll."), text)
-        if len(self.mod_list) > 0 and len(self.new_dependencies) > 0 :
-            write_normal('')
-            write_normal(QCoreApplication.translate("patch_new", 'Checking if New CELLs are Changed...'))
-            cell_scanner.scan_new_dependents(self.mod_list, self.new_dependencies)
         if len(self.mod_list) == 0:
             clear_and_close_log()
             self.create_completion_message(0)
@@ -127,7 +154,23 @@ class patch_new():
         self.patch_new_thread.started.connect(self.patch_worker.patch_new_files)
         self.patch_worker.finished_signal.connect(self.finished_patching)
         self.patch_worker.finished_signal.connect(self.patch_new_thread.quit)
+        #self.patch_worker.failed_signal.connect(self.task_failed)
+        #self.patch_worker.failed_signal.connect(self.patch_new_thread.quit)
         self.patch_new_thread.start()
+
+    def task_failed(self):
+        clear_and_close_log()
+        self.main_parent.setEnabled(True)
+        self.main_parent.calculate_stats()
+        QMessageBox.warning(None, QCoreApplication.translate("patch_new", "Patch New Failed"),
+                            QCoreApplication.translate("patch_new", "Patch New hit an unexpected error and stopped. "\
+                                                                   "Please check the ESLifier log for details."))
+
+    def start_rescan(self, only_remove: bool):
+        self.main_parent.redoing_output = True
+        self.main_parent.patch_new_running = True
+        self.main_parent.patch_new_only_remove = only_remove
+        self.main_parent.scan()
 
     def finished_patching(self, new_file_num):
         write_normal(QCoreApplication.translate("patch_new", 'Finished Patching New or Changed Dependencies and Files'))
@@ -162,11 +205,15 @@ class patch_new():
         self.main_parent.calculate_stats()
 
     def finished_rebuilding(self):
-        self.scanner_worker.detect_new_files()
+        self.scanner_worker.new_files_requested_signal.emit()
 
 class PatchNewScannerWorker(QObject):
     finished_signal = pyqtSignal(list, dict, dict, int, int, list)
     delete_confirmation_signal = pyqtSignal(str, list, dict, bool, dict)
+    #failed_signal = pyqtSignal()
+    rescan_signal = pyqtSignal(bool)
+    delete_confirmed_signal = pyqtSignal(list, dict, bool, dict)
+    new_files_requested_signal = pyqtSignal()
     def __init__(self, main_parent):
         super().__init__()
         self.output_folder_name: str = _global.output_folder_name
@@ -175,9 +222,9 @@ class PatchNewScannerWorker(QObject):
         self.hash_mismatches = []
         self.conflict_changes = []
         self.lock = threading.Lock()
-        self.semaphore = threading.Semaphore(1000)
         self.main_parent = main_parent
 
+    #@report_failures
     def detect_changes(self):
         write_normal(self.tr('Scanning All Files:'))
         scanner.scan(False)
@@ -186,14 +233,14 @@ class PatchNewScannerWorker(QObject):
         try:
             if os.path.exists(COMPACTED_AND_PATCHED_JSON):
                 with open(COMPACTED_AND_PATCHED_JSON, 'r', encoding='utf-8') as f:
-                    compacted_and_patched: dict[str, list[str]] = {k: set(v) for k, v in json.load(f).items()}
+                    compacted_and_patched: dict[str, set[str]] = {k: set(v) for k, v in json.load(f).items()}
             else:
                 compacted_and_patched: dict[str, set[str]] = {}
             if os.path.exists(ESL_FLAGGED_JSON):
                 with open(ESL_FLAGGED_JSON, 'r', encoding='utf-8') as f:
-                    esl_flagged: list[str] = json.load(f)
+                    esl_flagged_lowered_set: set[str] = set(flagged.lower() for flagged in json.load(f))
             else:
-                esl_flagged: list[str] = {}
+                esl_flagged_lowered_set: set[str] = set()
             with open(FILE_MASTERS_JSON, 'r', encoding='utf-8') as f:
                 file_masters: dict[str, list[str]] = json.load(f)
             with open(DEPENDENCY_DICTIONARY_JSON, 'r', encoding='utf-8') as f: 
@@ -217,17 +264,11 @@ class PatchNewScannerWorker(QObject):
         self.hash_mismatches.clear()
         write_normal(self.tr('Detecting Hash Changes...'))
         if os.path.exists(ORIGINAL_FILES_JSON):
-            threads: list[threading.Thread] = []
             with open(ORIGINAL_FILES_JSON, 'r', encoding='utf-8') as f:
                 original_plugins_dict: dict = json.load(f)
                 original_plugins_hash_map = [values for key, values in original_plugins_dict.items()]
-            for file, original_hash in original_plugins_hash_map:
-                thread = threading.Thread(target=self.compare_previous_hash_to_current, args=(file, original_hash))
-                threads.append(thread)
-                thread.start()
-
-            for thread in threads:
-                thread.join()
+            with ThreadPoolExecutor(max_workers=HASH_WORKERS) as pool:
+                list(pool.map(lambda item: self.compare_previous_hash_to_current(*item), original_plugins_hash_map))
 
         write_normal(self.tr('Found %0 Hash changes.').replace("%0", str(len(self.hash_mismatches))))
 
@@ -265,10 +306,10 @@ class PatchNewScannerWorker(QObject):
         files_to_remove = set()
         temp_list: list[tuple[str, str, str]] = self.conflict_changes.copy()
         if len(self.hash_mismatches) > 0:
-            temp_rel_paths = [rel_path for rel_path, x, y in self.conflict_changes]
+            temp_rel_paths = set(rel_path for rel_path, x, y in self.conflict_changes)
             for rel_path, full_path in self.hash_mismatches:
                 if rel_path not in temp_rel_paths:
-                    temp_rel_paths.append(rel_path)
+                    temp_rel_paths.add(rel_path)
                     temp_list.append((rel_path.lower(), full_path, 'h'))
         only_remove = True
         if len(temp_list) > 0:
@@ -287,7 +328,7 @@ class PatchNewScannerWorker(QObject):
                                 if patched_output_cased != None and patched_output_cased not in files_to_remove:
                                     files_to_remove.add(patched_output_cased)
                                     only_remove = False
-                        elif output_cased == None and full_path not in files_to_remove and full_path.startswith(self.output_path):
+                        elif output_cased == None and full_path not in files_to_remove and is_within(full_path, self.output_path):
                             files_to_remove.add(full_path)
                             added_to_list = True
                             if source == 'h':
@@ -305,19 +346,18 @@ class PatchNewScannerWorker(QObject):
                             files_to_remove.add(output_cased)
                             only_remove = False
                             added_to_list = True
-                        elif output_cased == None and full_path not in files_to_remove and full_path.startswith(self.output_path):
+                        elif output_cased == None and full_path not in files_to_remove and is_within(full_path, self.output_path):
                             files_to_remove.add(full_path)
                             added_to_list = True
                         compacted_and_patched[compacted].remove(rel_path)
                 
-                for flagged in esl_flagged:
-                    if rel_path == flagged.lower():
-                        output_cased = actual_cases_output_files.get(rel_path, None)
-                        if output_cased != None and output_cased not in files_to_remove:
-                            files_to_remove.add(output_cased)
-                            added_to_list = True
+                if rel_path in esl_flagged_lowered_set:
+                    output_cased = actual_cases_output_files.get(rel_path, None)
+                    if output_cased != None and output_cased not in files_to_remove:
+                        files_to_remove.add(output_cased)
+                        added_to_list = True
                 
-                if not added_to_list and full_path.startswith(self.output_path):
+                if not added_to_list and is_within(full_path, self.output_path):
                     files_to_remove.add(full_path)
         if len(files_to_remove) > 0:
             clear_and_leave_log_open()
@@ -328,12 +368,11 @@ class PatchNewScannerWorker(QObject):
     def delete_and_patch_changed(self, files_to_remove: list[str], only_remove: bool,
                                   winning_file_history_dict: dict[str, list[str]], compacted_and_patched: dict[str,set[str]]):
         write_normal(self.tr("Confirming files that need deleting..."))
-        output_folder_name_lowered = self.output_folder_name.lower()
         counter = 0
         plugins_to_delete = []
         files_that_exist_to_delete = []
         for file in files_to_remove:
-            if os.path.exists(file) and output_folder_name_lowered in file.lower():
+            if os.path.exists(file) and is_within(file, self.output_path):
                 counter += 1
                 files_that_exist_to_delete.append(file)
                 if file.lower().endswith(('.esp','.esm','.esl')):
@@ -367,6 +406,7 @@ class PatchNewScannerWorker(QObject):
         else:
             self.delete_files(files_that_exist_to_delete, winning_file_history_dict, only_remove, compacted_and_patched)
 
+    #@report_failures
     def delete_files(self, files_to_remove: list[str], winning_file_history_dict: dict[str, list[str]], only_remove: bool, compacted_and_patched: dict[str,set[str]]):
         with open(COMPACTED_AND_PATCHED_JSON, 'w', encoding='utf-8') as f:
             dumpable_compacted_and_patched = {k:list(v) for k, v in compacted_and_patched.items()}
@@ -411,11 +451,9 @@ class PatchNewScannerWorker(QObject):
         with open(ORIGINAL_FILES_JSON, 'w', encoding='utf-8') as f:
             json.dump(original_files, f, ensure_ascii=False, indent=4)
         clear_and_leave_log_open()
-        self.main_parent.redoing_output = True
-        self.main_parent.patch_new_running = True
-        self.main_parent.patch_new_only_remove = only_remove
-        self.main_parent.scan()
+        self.rescan_signal.emit(only_remove)
 
+    #@report_failures
     def detect_new_files(self):
         if not os.path.exists(COMPACTED_AND_PATCHED_JSON):
             self.finished_signal.emit([],{},{},0,0,[])
@@ -447,6 +485,7 @@ class PatchNewScannerWorker(QObject):
             if master.lower() in dependencies: 
                 dependencies_list = dependencies[master.lower()]
             
+            patched_files = set(patched_files)
             for file in file_masters_list:
                 rel_path = _global.get_rel_path(file)
                 if rel_path.lower() not in patched_files: 
@@ -462,10 +501,11 @@ class PatchNewScannerWorker(QObject):
                     new_dependencies[master].append(file)
 
         mod_list = [master for master in new_dependencies]
-        mod_list.extend([file for file in new_files if file not in mod_list])
+        mod_list_set_copy = set(mod_list)
+        mod_list.extend([file for file in new_files if file not in mod_list_set_copy])
 
-        compacted_lowered = [key.lower() for key in compacted_and_patched]
-        mod_list_lowered = [mod.lower() for mod in mod_list]
+        compacted_lowered = set(key.lower() for key in compacted_and_patched)
+        mod_list_lowered = set(mod.lower() for mod in mod_list)
         skse_warnings = []
         for mod, dlls in dll_dict.items():
             if mod in compacted_lowered and mod not in mod_list_lowered:
@@ -475,24 +515,34 @@ class PatchNewScannerWorker(QObject):
 
     def compare_previous_hash_to_current(self, file, original_hash):
         if os.path.exists(file):
-            with self.semaphore:
+            try:
                 with open(file, 'rb') as f:
-                    data = f.read()
-            if hashlib.sha256(data).hexdigest() != original_hash:
+                    current_hash = hashlib.file_digest(f, 'sha256').hexdigest()
+            except OSError as e:
+                write_error(self.tr("Failed to hash %0").replace("%0", file))
+                write_error(e, True)
+                return
+            if current_hash != original_hash:
                 with self.lock:
                     self.hash_mismatches.append((_global.get_rel_path(file), file))
 
 class PatchNewWorker(QObject):
     finished_signal = pyqtSignal(int)
+    #failed_signal = pyqtSignal()
     def __init__(self, files: list, dependencies_dictionary: dict, file_dictionary: dict):
         super().__init__()
         self.files = files
         self.dependencies_dictionary = dependencies_dictionary
         self.file_dictionary = file_dictionary
 
+    #@report_failures
     def patch_new_files(self):
         total = len(self.files)
         count = 0
+        if len(self.files) > 0 and len(self.dependencies_dictionary) > 0:
+            write_normal('')
+            write_normal(QCoreApplication.translate("patch_new", 'Checking if New CELLs are Changed...'))
+            cell_scanner.scan_new_dependents(self.files, self.dependencies_dictionary)
         clear_and_leave_log_open()
         original_files: dict = self.get_from_file(ORIGINAL_FILES_JSON)
         winning_files_dict: dict = self.get_from_file(WINNING_FILES_DICT_JSON)
@@ -515,15 +565,11 @@ class PatchNewWorker(QObject):
             if file in self.dependencies_dictionary:
                 dependents = self.dependencies_dictionary[file]
             cfids.patch_new(file, dependents, self.file_dictionary)
-        all_patched = []
+        all_patched = set()
         for files in self.dependencies_dictionary.values():
-            for file in files:
-                if file not in all_patched:
-                    all_patched.append(file)
+            all_patched.update(files)
         for files in self.file_dictionary.values():
-            for file in files:
-                if file not in all_patched:
-                    all_patched.append(file)
+            all_patched.update(files)
         write_normal(self.tr('Saving Data...'))
         cfids.save_data()
         if _global.hash_output:
@@ -531,17 +577,6 @@ class PatchNewWorker(QObject):
             cfids.hash_output_files([], True)
         self.finished_signal.emit(len(all_patched))
         return
-    
-    def dump_dictionary(self, file, dictionary: dict):
-        data = self.get_from_file(file)
-        for key, values in dictionary.items():
-            data[key] = values
-        try:
-            with open(file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=4)
-        except Exception as e:
-            write_error(QCoreApplication.translate("Global", "Failed to dump data to ",) + file)
-            write_error(e, True)
 
     def get_from_file(self, file: str) -> dict:
         try:
@@ -550,12 +585,3 @@ class PatchNewWorker(QObject):
         except:
             data = {}
         return data
-
-    
-
-
-        
-
-        
-
-        
