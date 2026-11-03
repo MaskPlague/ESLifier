@@ -133,6 +133,7 @@ class user_and_master_conditions_class():
                     kwargs.update({"to_id_key": to_id_key})
 
                 patcher_method(*args, **kwargs)
+                return True
 
         return False
 
