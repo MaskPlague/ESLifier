@@ -403,7 +403,7 @@ class patchers(shared_patchers):
                     patch_following = True
                 elif line.startswith('['):
                     patch_following = False
-                if patch_following and line.startswith('00') or line.lower().startswith('0x'):
+                if patch_following and (line.startswith('00') or line.lower().startswith('0x')):
                     index = line.index('=')
                     form_id_int = int(line[:index], 16)
                     if line.lower().startswith('0x'):
@@ -413,12 +413,12 @@ class patchers(shared_patchers):
                     to_id_data = form_id_map.get(form_id_int)
                     if to_id_data is not None:
                         if not ox:
-                            lines[i] = '00' + to_id_data["hex"] + line[index-1:]
+                            lines[i] = '00' + to_id_data["hex"] + " " + line[index:]
                         else:
-                            lines[i] = '0x' + to_id_data["hex"] + line[index-1:]
+                            lines[i] = '0x' + to_id_data["hex"] + " " + line[index:]
             f.seek(0)
             f.truncate(0)
-            f.write(''.join(lines))            
+            f.write(''.join(lines)) 
     
     # No Cell Form IDs possible
     def ini_npcs_use_potions_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
