@@ -6,12 +6,8 @@ import struct
 import shutil
 import traceback
 from log_stream import write_error, write_to_file
-from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ESM_NAME, MO2_GAME_NAME, SHORT_GAME_NAME,
-                         CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
-                         EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
-                         MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
-                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, DEPENDENCY_DICTIONARY_JSON,
-                         MAXED_MASTERS_JSON, BLACKLIST_JSON, CELL_CHANGED_JSON, DLL_DICT_JSON, GAME_MODE)
+from data_holder import (_global, GAME_ESM_NAME, CELL_IDS_FOLDER, FLAG_DICTIONARY_JSON, MISSING_GAME_AS_MASTER_JSON,
+                         DEPENDENCY_DICTIONARY_JSON, MAXED_MASTERS_JSON, GAME_MODE)
 from PyQt6.QtCore import QCoreApplication
 
 #TODO: Maybe ignore form 43 plugins? IDK if necessary, need to check what happened on mod page, I thought I handled 43 v 44 somewhere
