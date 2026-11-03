@@ -497,8 +497,10 @@ class CFIDs():
 
             self.compacted_and_patched[master_base_name].add(rel_path.lower())
         if facegeom_meshes:
+            self.file_count += len(facegeom_meshes)
             self.patch_files(master, facegeom_meshes)
         if luma_json:
+            self.file_count += len(luma_json)
             self.patch_files(master, luma_json)
         return
 
