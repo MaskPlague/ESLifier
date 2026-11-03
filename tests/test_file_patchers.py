@@ -16,6 +16,7 @@ import struct
 
 import pytest
 
+from patchers.pex_patcher import PexParseError
 from patchers.sse_file_patchers import patchers
 from plugin_builder import fid, map_entry, write
 
@@ -456,7 +457,8 @@ class TestJsonSpecific:
 
 
 # --------------------------------------------------------------------------- PEX
-PEX_STRINGS = [b"Mod.esp", b"GetFormFromFile", b"Quest", b"other", b"dest", b"tmp"]
+PEX_STRINGS = [b"Mod.esp", b"GetFormFromFile", b"Quest", b"other", b"dest", b"tmp",
+               b"cond", b"helper", b"id", b"int"]
 
 
 def _pv(kind, value=0):
@@ -468,10 +470,9 @@ def _pv(kind, value=0):
     return bytes([kind]) + struct.pack(">H", value)
 
 
-def build_pex(form_id: int, plugin_index: int = 0, via_var: bool = False, store_null_first: bool = False):
-    """A structurally valid Skyrim SE script with one object/state/function calling
-    ``GetFormFromFile(<form_id>, "Mod.esp")`` (the integer is the call argument, or goes through a
-    temporary variable when ``via_var``)."""
+def _pex_file(functions):
+    """A structurally valid Skyrim SE script: one object `Quest`, one state, ``functions`` =
+    [(name string index, [(param name index, param type index)], instruction bytes, instruction count)]."""
     out = b"\xFA\x57\xC0\xDE" + bytes([3, 9]) + struct.pack(">H", 1) + b"\x00" * 8
     for text in (b"src.psc", b"user", b"machine"):
         out += struct.pack(">H", len(text)) + text
@@ -484,10 +485,22 @@ def build_pex(form_id: int, plugin_index: int = 0, via_var: bool = False, store_
     out += struct.pack(">H", 2) + struct.pack(">I", 0) + b"\x00" * 10          # name, size, parent/doc/flags/auto-state
     out += struct.pack(">H", 0) + struct.pack(">H", 0)                           # no variables, no properties
     out += struct.pack(">H", 1)                       # one state
-    out += struct.pack(">H", 0) + struct.pack(">H", 1)                           # state name, one function
-    out += struct.pack(">H", 5)                       # function name
-    out += b"\x00" * 9                                # return type, doc string, user flags, flags
-    out += struct.pack(">H", 0) + struct.pack(">H", 0)                           # no params, no locals
+    out += struct.pack(">H", 0) + struct.pack(">H", len(functions))              # state name, function count
+    for name, params, instructions, count in functions:
+        out += struct.pack(">H", name)                # function name
+        out += b"\x00" * 9                            # return type, doc string, user flags, flags
+        out += struct.pack(">H", len(params))
+        for pname, ptype in params:
+            out += struct.pack(">HH", pname, ptype)
+        out += struct.pack(">H", 0)                   # no locals
+        out += struct.pack(">H", count) + instructions
+    return out
+
+
+def build_pex(form_id: int, plugin_index: int = 0, via_var: bool = False, store_null_first: bool = False):
+    """A structurally valid Skyrim SE script with one object/state/function calling
+    ``GetFormFromFile(<form_id>, "Mod.esp")`` (the integer is the call argument, or goes through a
+    temporary variable when ``via_var``)."""
     instructions = b""
     count = 0
     if store_null_first:                              # dest = None
@@ -502,8 +515,39 @@ def build_pex(form_id: int, plugin_index: int = 0, via_var: bool = False, store_
     # CALLSTATIC Quest.GetFormFromFile(arg1, "Mod.esp") -> dest
     instructions += b"\x19" + _pv(1, 2) + _pv(1, 1) + _pv(1, 4) + _pv(3, 2) + arg1 + _pv(2, plugin_index)
     count += 1
-    out += struct.pack(">H", count) + instructions
-    return out
+    return _pex_file([(5, [], instructions, count)])
+
+
+# a tiny assembler for control-flow tests. Variables: ID = "id", COND = "cond", TMP = "tmp"
+ID, COND, TMP = 8, 6, 5
+
+
+def i_assign(var, value):                  # var = <integer literal>
+    return b"\x0D" + _pv(1, var) + _pv(3, value)
+
+
+def i_gfff(var):                           # GetFormFromFile(var, "Mod.esp")
+    return b"\x19" + _pv(1, 2) + _pv(1, 1) + _pv(1, 4) + _pv(3, 2) + _pv(1, var) + _pv(2, 0)
+
+
+def i_call_helper(value):                  # Quest.helper(<integer literal>)
+    return b"\x19" + _pv(1, 2) + _pv(1, 7) + _pv(1, 4) + _pv(3, 1) + _pv(3, value)
+
+
+def i_jmp(offset):                         # offsets are relative to the jump itself
+    return b"\x14" + _pv(3, offset & 0xFFFFFFFF)
+
+
+def i_jmpf(offset):
+    return b"\x16" + _pv(1, COND) + _pv(3, offset & 0xFFFFFFFF)
+
+
+def i_return():
+    return b"\x1A" + _pv(0)
+
+
+def pex_code(*instructions):
+    return _pex_file([(5, [], b"".join(instructions), len(instructions))])
 
 
 class TestPex:
@@ -535,6 +579,102 @@ class TestPex:
         out = patch(tmp_path, patchers.pex_patcher, build_pex(0x0A2C8E, store_null_first=True), binary=True)
         assert out == build_pex(0x000A0A, store_null_first=True)
 
+
+
+class TestPexControlFlow:
+    """A variable can hold different literals on different paths, and all of them reach the call."""
+    A, B = 0x0A2C8E, 0x0A2C8F            # patched to 0x000A0A / 0x000A0B
+
+    def run(self, tmp_path, build):
+        out = patch(tmp_path, patchers.pex_patcher, build(self.A, self.B), binary=True, name="s.pex")
+        return out == build(0x000A0A, 0x000A0B)
+
+    def test_if_else_patches_both_branches(self, tmp_path):
+        def build(a, b):
+            return pex_code(i_jmpf(3),              # 0: If cond ... else -> 3
+                            i_assign(ID, a),        # 1
+                            i_jmp(2),               # 2: -> 4
+                            i_assign(ID, b),        # 3
+                            i_gfff(ID))             # 4
+        assert self.run(tmp_path, build)
+
+    def test_if_without_else_patches_literal_before_and_inside(self, tmp_path):
+        def build(a, b):
+            return pex_code(i_assign(ID, a),        # 0
+                            i_jmpf(2),              # 1: -> 3
+                            i_assign(ID, b),        # 2
+                            i_gfff(ID))             # 3
+        assert self.run(tmp_path, build)
+
+    def test_loop_back_edge_carries_the_value_to_an_earlier_call(self, tmp_path):
+        def build(a, b):
+            return pex_code(i_assign(ID, a),        # 0
+                            i_gfff(ID),             # 1: loop head
+                            i_assign(ID, b),        # 2
+                            i_jmp(-2))              # 3: -> 1
+        assert self.run(tmp_path, build)
+
+    def test_nested_branches_in_a_loop(self, tmp_path):
+        def build(a, b):
+            return pex_code(i_assign(ID, a),        # 0
+                            i_gfff(ID),             # 1: loop head
+                            i_jmpf(3),              # 2: -> 5
+                            i_assign(ID, b),        # 3
+                            i_jmp(2),               # 4: -> 6
+                            i_assign(TMP, 0xFFFF),  # 5
+                            i_jmp(-5))              # 6: -> 1
+        assert self.run(tmp_path, build)
+
+    def test_reassignment_still_replaces_the_old_value(self, tmp_path):
+        # tmp = A ; tmp = B ; GetFormFromFile(tmp): only B reaches the call
+        data = pex_code(i_assign(TMP, self.A), i_assign(TMP, self.B), i_gfff(TMP))
+        out = patch(tmp_path, patchers.pex_patcher, data, binary=True)
+        assert out == pex_code(i_assign(TMP, self.A), i_assign(TMP, 0x000A0B), i_gfff(TMP))
+
+    def test_value_set_before_a_return_does_not_leak_past_it(self, tmp_path):
+        # If cond: id = A ; Return ; EndIf ; GetFormFromFile(id)  (id is never A here)
+        data = pex_code(i_jmpf(3),                  # 0: -> 3
+                        i_assign(ID, self.A),       # 1
+                        i_return(),                 # 2
+                        i_gfff(ID))                 # 3
+        assert patch(tmp_path, patchers.pex_patcher, data, binary=True) == data
+
+    def test_value_set_before_an_unconditional_jump_is_dropped_by_dead_code(self, tmp_path):
+        # id = A ; jmp end ; id = B (dead) ; end: -- dead code is only reachable by falling through
+        data = pex_code(i_assign(ID, self.A), i_jmp(2), i_assign(ID, self.B), i_gfff(ID))
+        out = patch(tmp_path, patchers.pex_patcher, data, binary=True)
+        assert out == pex_code(i_assign(ID, 0x000A0A), i_jmp(2), i_assign(ID, self.B), i_gfff(ID))
+
+    def test_parameter_reaching_the_call_on_one_path_taints_callers(self, tmp_path):
+        # Function(id: int): If cond: id = A ; GetFormFromFile(id)   and   caller: Function(B)
+        def build(a, b):
+            code = b"".join([i_jmpf(2), i_assign(ID, a), i_gfff(ID)])
+            return _pex_file([(7, [(ID, 9)], code, 3),
+                              (5, [], i_call_helper(b), 1)])
+        assert self.run(tmp_path, build)
+
+    def test_parameter_overwritten_on_every_path_is_not_tainted(self, tmp_path):
+        # Function(id: int): id = A ; GetFormFromFile(id)   and   caller: Function(B): B is not a FormID
+        def build(a, b):
+            code = b"".join([i_assign(ID, a), i_gfff(ID)])
+            return _pex_file([(7, [(ID, 9)], code, 2),
+                              (5, [], i_call_helper(b), 1)])
+        out = patch(tmp_path, patchers.pex_patcher, build(self.A, self.B), binary=True)
+        assert out == build(0x000A0A, self.B)
+
+    def test_jump_outside_the_function_is_an_error_and_nothing_is_written(self, tmp_path):
+        data = pex_code(i_assign(ID, self.A), i_jmp(50), i_gfff(ID))
+        path = tmp_path / "s.pex"
+        path.write_bytes(data)
+        with pytest.raises(PexParseError):
+            patchers.pex_patcher(BASENAME, str(path), FORM_ID_MAP)
+        assert path.read_bytes() == data
+
+    def test_patching_the_same_script_twice_changes_nothing_more(self, tmp_path):
+        def build(a, b):
+            return pex_code(i_jmpf(3), i_assign(ID, a), i_jmp(2), i_assign(ID, b), i_gfff(ID))
+        once = patch(tmp_path, patchers.pex_patcher, build(self.A, self.B), binary=True)
+        assert once == build(0x000A0A, 0x000A0B)
 
 # --------------------------------------------------------------------------- jslot
 class TestJslot:
