@@ -161,7 +161,7 @@ class CFIDs():
             write_progress(100, 1, self.processed_str.format(100.0, self.file_count, self.file_count))
             self.dump_dictionary(NEW_FILE_HASHES_JSON, new_file_hashes)
     
-    def hash_files(self, to_hash, files_to_not_hash: set, before_patching, new_file_hashes: dict):
+    def hash_files(self, to_hash:dict[str,str], files_to_not_hash: set, before_patching:bool, new_file_hashes: dict):
         processed_str = self.processed_str
         local_new_file_hashes = {}
         for lower_rel_path, file in to_hash.items():
@@ -180,7 +180,7 @@ class CFIDs():
                     old_hash, changed = new_file_hashes.get(lower_rel_path, (None, False))
                     if not before_patching:
                         local_new_file_hashes[lower_rel_path] = (sha256_hash, changed)
-                    elif before_patching:
+                    else: #before_patching
                         if old_hash != None and old_hash != sha256_hash:
                             local_new_file_hashes[lower_rel_path] = (sha256_hash, True)
                         else:
