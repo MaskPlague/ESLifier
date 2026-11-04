@@ -430,8 +430,7 @@ class settings(QWidget):
                           self.generate_cell_master_widget, self.persistent_ids_widget, self.free_non_existent_widget,
                           self.hash_output_widget, self.hash_plugins_warn_widget, self.enable_patch_new_widget, 
                           self.edit_blacklist_widget, self.open_eslifier_data_widget, self.colors_select_widget,
-                          self.colors_select_widget, self.reset_settings_widget, self.check_for_updates_widget,
-                          self.skip_confirmations_widget)
+                          self.reset_settings_widget, self.check_for_updates_widget, self.skip_confirmations_widget)
         
         inactive_wigets = self.get_and_hide_inactive_widgets()
 
@@ -445,12 +444,6 @@ class settings(QWidget):
         for widget in active_widgets[midpoint:]:
             column_2.addWidget(widget)
 
-        column_2.addWidget(self.edit_blacklist_widget)
-        column_2.addWidget(self.open_eslifier_data_widget)
-        column_2.addWidget(self.colors_select_widget)
-        column_2.addWidget(self.reset_settings_widget)
-        column_2.addWidget(self.check_for_updates_widget)
-        column_2.addWidget(self.skip_confirmations_widget)
         column_2.addWidget(self.hide_right_columns_widget)
 
         settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
