@@ -1734,7 +1734,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in placed_fields and field >= 4:
+            if field in placed_fields and field_size >= 4:
                 placed_offsets.append(offset + 6)
             elif field in special_placed_fields:
                 if field == b'VMAD':
