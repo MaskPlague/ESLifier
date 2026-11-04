@@ -488,9 +488,10 @@ class settings(QWidget):
         profiles = []
         if os.path.exists(file):
             ini = configparser.ConfigParser(interpolation=None)
-            
-            ini.read(file, encoding='utf-8')
-
+            try:
+                ini.read(file, encoding='utf-8')
+            except:
+                return profiles
             if ini.has_option('Settings', 'base_directory'):
                 mo2_base_dir = os.path.normpath(ini.get('Settings', 'base_directory'))
 
@@ -501,8 +502,11 @@ class settings(QWidget):
             else:
                 mo2_profiles_dir = os.path.normpath(os.path.join(mo2_base_dir, "profiles"))
             self.settings['mo2_profiles_dir'] = mo2_profiles_dir
-            for profile in os.listdir(mo2_profiles_dir):
-                profiles.append(profile)
+            if os.path.exists(mo2_profiles_dir):
+                for profile in os.listdir(mo2_profiles_dir):
+                    if os.path.isdir(os.path.join(mo2_profiles_dir, profile)):
+                        profiles.append(profile)
+            
         return profiles
 
     #def get_vortex_profiles(self):
