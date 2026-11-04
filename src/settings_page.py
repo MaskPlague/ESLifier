@@ -17,6 +17,7 @@ from data_holder import (GAME_MODE, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_ES
 from QToggle import QtToggle
 class settings(QWidget):
     settings_updated_signal = pyqtSignal()
+    settings_reset_signal = pyqtSignal()
     need_to_rebuild_lists_signal = pyqtSignal()
     COMBO_BOX_STYLE= ""
 
@@ -1020,6 +1021,7 @@ class settings(QWidget):
             self.outer_color = 'Gray'
             #self.update_settings_from_app_state()
             self.settings_updated_signal.emit()
+            self.settings_reset_signal.emit()
         confirm.accepted.connect(acccepted)
         confirm.show()
         

@@ -296,3 +296,7 @@ class list_parent_class(QTableWidget):
                                                         'lightcoral',
                                                         icon=QMessageBox.Icon.Warning)
                 self.message.show()
+
+    def reset_list(self):
+        self.flag_dict.clear()
+        self.create_list()

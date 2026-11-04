@@ -260,6 +260,10 @@ class main_window(QMainWindow):
         _global.init(self.settings_widget, Vortex, MO2)
         self.update_settings()
         self.tabs = QTabWidget()
+        def reset_lists():
+            self.main_widget.list_compact.reset_list()
+            self.main_widget.list_eslify.reset_list()
+        self.settings_widget.settings_reset_signal.connect(reset_lists)
         _global.setTabsDisabled = self.tabs.setDisabled
         if COLOR_MODE == 'Light':
             self.tabs.setStyleSheet("""
