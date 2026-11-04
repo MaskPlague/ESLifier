@@ -1071,9 +1071,9 @@ class main(QWidget):
                 if os.name == 'nt':
                     os.startfile(output_folder)
                 elif os.name == 'posix':
-                    subprocess.Popen(['xdg-open', os.path.dirname(output_folder)])
+                    subprocess.Popen(['xdg-open', output_folder])
                 else:
-                    subprocess.Popen(['open', os.path.dirname(output_folder)])
+                    subprocess.Popen(['open', output_folder])
             except Exception as e:
                 write_error(self.tr("Error opening folder: ") + str(e))
 
@@ -1215,7 +1215,7 @@ class main(QWidget):
             plugin_files = []
             other_files = []
             for file, rel_path in changed_hashes:
-                if rel_path.endswith(('.esp', '.es', '.esm')):
+                if rel_path.endswith(('.esp', '.esl', '.esm')):
                     plugin_files.append((file, rel_path))
                 else:
                     other_files.append((file, rel_path))
@@ -1386,25 +1386,31 @@ class main(QWidget):
         silent_remove(CELL_MASTER_INFO_JSON)
         silent_remove(WINNING_FILE_HISTORY_DICT_JSON)
         silent_remove(WINNING_FILES_DICT_JSON)
-        if os.path.exists(output_folder) and 'eslifier' in output_folder.lower():
-            #if vortex then we need to restore any .vortex_backup
-            if _global.mod_manager_mode == 1 and _global.vortex_restore_backups:
-                gamedata = VortexDBParser.get_section(f"settings###gameMode###discovered###{VORTEX_GAME_NAME}")
-                game_folder_path = os.path.normpath(os.path.join(gamedata.get('path'), "Data"))
+        try:
+            if os.path.exists(output_folder) and 'eslifier' in output_folder.lower():
+                #if vortex then we need to restore any .vortex_backup
+                if _global.mod_manager_mode == 1 and _global.vortex_restore_backups:
+                    gamedata = VortexDBParser.get_section(f"settings###gameMode###discovered###{VORTEX_GAME_NAME}")
+                    game_folder_path = os.path.normpath(os.path.join(gamedata.get('path'), "Data"))
 
-                for file in files_to_remove:
-                    rel_path = os.path.relpath(file, output_folder)
-                    data_folder_file_path = os.path.join(game_folder_path, rel_path)
-                    vortex_backup_path = data_folder_file_path + '.vortex_backup'
-                    if os.path.exists(vortex_backup_path) and os.path.samefile(file, data_folder_file_path):
-                        silent_remove(data_folder_file_path)
-                        shutil.copy(vortex_backup_path, data_folder_file_path)
-                    silent_remove(file)
-            else:
-                for file in files_to_remove:
-                    silent_remove(file)
-            self.prune_empty_dirs_recursive(output_folder, output_folder)
-        QApplication.restoreOverrideCursor()
+                    for file in files_to_remove:
+                        rel_path = os.path.relpath(file, output_folder)
+                        data_folder_file_path = os.path.join(game_folder_path, rel_path)
+                        vortex_backup_path = data_folder_file_path + '.vortex_backup'
+                        if os.path.exists(vortex_backup_path):
+                            try:
+                                if os.path.samefile(file, data_folder_file_path):
+                                    silent_remove(data_folder_file_path)
+                                    shutil.copy(vortex_backup_path, data_folder_file_path)
+                            except:
+                                pass
+                        silent_remove(file)
+                else:
+                    for file in files_to_remove:
+                        silent_remove(file)
+                self.prune_empty_dirs_recursive(output_folder, output_folder)
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def calculate_stats(self):
         self.output_folder_full = os.path.join(self.output_folder_path, self.output_folder_name)
@@ -1470,7 +1476,7 @@ class ScannerWorker(QObject):
     def scan_run(self):
         write_remove(-1, self.tr('Scanning All Files:'), True)
         flag_dict, dependency_dictionary = scanner.scan(True)
-        if _global.vortex_error != None:
+        if _global.vortex_error != None or _global.mo2_error != None:
             self.finished_signal.emit({}, {}, {})
             return
         flag_dict = {p: set(f) for p, f in flag_dict.items()}
@@ -1575,9 +1581,9 @@ class CompactorWorker(QObject):
 class FlagWorker(QObject):
     finished_signal = pyqtSignal()
     def __init__(self, files, files_to_not_hash):
+        super().__init__()
         self.files = files
         self.files_to_not_hash = files_to_not_hash
-        super().__init__()
     
     def flag_files(self):
         original_files = self.get_from_file(ORIGINAL_FILES_JSON)
@@ -1684,6 +1690,7 @@ class HashWorker(QObject):
         for file in files:
             if not warn and file.lower().endswith(('.esp', '.esl', '.esm')):
                 local_progress_batch += 1
+                local_files_to_remove.append(file)
                 continue
                 
             try:
