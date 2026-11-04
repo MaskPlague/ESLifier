@@ -163,6 +163,7 @@ class form_processor():
             b'ASPC': form_processor.save_aspc_data,
             b'BNDS': form_processor.save_bnds_data,
             b'BOOK': form_processor.save_book_data,
+            b'BPTD': form_processor.save_bptd_data,
             b'CAMS': form_processor.save_cams_data,
             b'CELL': form_processor.save_cell_data,
             b'CLAS': form_processor.save_clas_data,
@@ -522,6 +523,34 @@ class form_processor():
                     offsets_list.extend(form_processor.get_offsets_from_array(offset, field_size))
                     
             offset += field_size + 6
+        return [i, bytearray(form), offsets_list]
+
+    def save_bptd_data(i, form):
+        form_fields = {b'MODS', b'BNAM', b'INAM', b'JNAM', b'CNAM', b'NAM2'}
+        special_form_fields = {b'BPND'}
+
+        offsets_list = [12]
+        offset = 24
+        while offset < len(form):
+            field, field_size, offset = form_processor.get_field_and_size(offset, form)
+            if field in form_fields and field_size >= 4:
+                offsets_list.append(offset + 6)
+            elif field in special_form_fields:
+                if field == b'BPND':
+                    offsets_list.append(offset + 10)    # Explodable - Debris           6 + 4
+                    offsets_list.append(offset + 14)    # Explodable - Explosion        10 + 4
+                    offsets_list.append(offset + 22)    # Severable - Debris            14 + 4 + 4
+                    offsets_list.append(offset + 26)    # Severable - Explosion         22 + 4
+                    offsets_list.append(offset + 58)    # Severable - Impact DataSet    26 + 4*8
+                    offsets_list.append(offset + 62)    # Explodable - Impact DataSet   58 + 4
+                    offsets_list.append(offset + 73)    # Actor Value                   62 + 4*2 + 1*3
+                    offsets_list.append(offset + 85)    # On Cripple - Art Object       73 + 4 + 1*8
+                    offsets_list.append(offset + 89)    # On Cripple - Debris           85 + 4
+                    offsets_list.append(offset + 93)    # On Cripple - Explosion        89 + 4
+                    offsets_list.append(offset + 97)    # On Cripple - Impact DataSet   93 + 4
+                    
+            offset += field_size + 6
+        form_processor.printFIDs(offsets_list, form)
         return [i, bytearray(form), offsets_list]
     
     def save_cams_data(i, form):
