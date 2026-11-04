@@ -70,14 +70,7 @@ def verify_luhn_checksum(filename: str):
                                     )
 
 def luhn_checksum(data: bytes) -> int:
-    total = 0
-    for i, digit in enumerate(reversed(data)):
-        if i % 2 == 0:
-            digit *= 2
-            if digit > 255:
-                digit -= 256
-        total += digit
-    return (256 - (total % 256)) % 256
+    return (256 - ((sum(data) + sum(data[::-2])) % 256)) % 256
 
 def connection_result(is_latest: bool, latest_version: str, release_url_end: str, changelog: str):
     if not is_latest:
