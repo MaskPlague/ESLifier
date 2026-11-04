@@ -461,7 +461,7 @@ class scanner():
             if plugin_name_bytes in strings:
                 plugins_indexes[strings.index(plugin_name_bytes).to_bytes(2)] = plugin_name
         getmodbyname_index = strings.index(b'getmodbyname').to_bytes(2)
-
+        plugin_names_set = set()
         while True:
             idx = data.find(getmodbyname_index, offset)
             if idx == -1:
@@ -469,8 +469,11 @@ class scanner():
             if data[idx+10:idx+11] == b'\x02':
                 plugin_name = plugins_indexes.get(data[idx+11:idx+13])
                 if plugin_name:
-                    _global.pex_with_getmodbyname[plugin_name].add(file)
+                    plugin_names_set.add(plugin_name)
             offset = idx + 1
+        with scanner.lock:
+            for plugin in plugin_names_set:
+                _global.pex_with_getmodbyname[plugin_name].add(file)
 
     def file_reader(pattern, file: str, reader_type):
         try:
