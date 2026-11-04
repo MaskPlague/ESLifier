@@ -55,7 +55,7 @@ def verify_luhn_checksum(filename: str):
             except:
                 QMessageBox.warning(None, 
                                     QCoreApplication.translate("Global", 'File Access Error'), 
-                                    QCoreApplication.translate("Global", f'Cannot access {SETTINGS_JSON}')
+                                    QCoreApplication.translate("Global", 'Cannot access %0').replace("%0", SETTINGS_JSON)
                                     )
         else:
             os.makedirs(os.path.dirname(settings_path), exist_ok=True)
@@ -66,7 +66,7 @@ def verify_luhn_checksum(filename: str):
             except:
                 QMessageBox.warning(None, 
                                     QCoreApplication.translate("Global", 'File Access Error'), 
-                                    QCoreApplication.translate("Global", f'Cannot access/create {SETTINGS_JSON}')
+                                    QCoreApplication.translate("Global", 'Cannot access/create %0').replace("%0", SETTINGS_JSON)
                                     )
 
 def luhn_checksum(data: bytes) -> int:
@@ -245,7 +245,7 @@ class main_window(QMainWindow):
             else:
                 verify_luhn_checksum(sys.executable)
         
-        self.setWindowTitle(self.tr(f"%0 v%1").replace("%0", PROGRAM_NAME).replace("%1", CURRENT_VERSION))
+        self.setWindowTitle(self.tr("%0 v%1").replace("%0", PROGRAM_NAME).replace("%1", CURRENT_VERSION))
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.resize(1300, 500)
         self.move(100,50)
@@ -323,7 +323,7 @@ class main_window(QMainWindow):
         self.HELP_TAB = 2
 
         self.tabs.addTab(self.main_widget, self.tr("  Main  "))
-        self.tabs.setTabToolTip(self.MAIN_TAB, self.tr(f"This is the Main Page, scan your {SHORT_GAME_NAME} folder and select plugins to flag or compress."))
+        self.tabs.setTabToolTip(self.MAIN_TAB, self.tr("This is the Main Page, scan your %0 folder and select plugins to flag or compress.").replace("%0", SHORT_GAME_NAME))
         self.tabs.addTab(self.settings_widget, self.tr("  Settings  "))
         self.tabs.setTabToolTip(self.SETTINGS_TAB, self.tr("This is the settings page. Certain settings will effect what plugins will display after scanning."))
         self.tabs.addTab(QWidget(), self.tr("  Help?  "))
@@ -412,7 +412,7 @@ class main_window(QMainWindow):
             if not os.path.exists(plugins_txt):
                 error_message += self.tr("Invalid plugins.txt, the file does not exist.") + "\n"
             if not os.path.exists(data_path):
-                error_message += self.tr(f"Invalid {SHORT_GAME_NAME} Data Directory, it does not exist.") + "\n"
+                error_message += self.tr("Invalid %0 Data Directory, it does not exist.").replace("%0", SHORT_GAME_NAME) + "\n"
             else:
                 data_path_drive = os.path.splitdrive(data_path)[0].lower()
                 if output_path_exists and output_path_drive != data_path_drive:
@@ -425,7 +425,7 @@ class main_window(QMainWindow):
                 if not os.path.exists(os.path.join(vortex_data_path, "state.v2")):
                     error_message += self.tr("Invalid Vortex Data Directory, it exists but is invalid as the folder 'state.v2' does not exist in it.") + "\n"
                 if not os.path.exists(os.path.join(vortex_data_path, VORTEX_GAME_NAME)):
-                    error_message += self.tr(f"Invalid Vortex Data Directory, it exists but is invalid as the folder '{VORTEX_GAME_NAME}' does not exist in it.") + "\n"
+                    error_message += self.tr("Invalid Vortex Data Directory, it exists but is invalid as the folder '%0' does not exist in it.").replace("%0", VORTEX_GAME_NAME) + "\n"
                 
         if mod_manager_mode == 2:
             if not os.path.exists(mo2_base_path):
