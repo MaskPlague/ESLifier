@@ -644,6 +644,9 @@ class main(QWidget):
             else:
                 clear_and_close_log()
                 self.setEnabled(True)
+                self.calculate_stats()
+                self.redoing_output = False
+                return
         
         if not self.redoing_output:
             self.setEnabled(True)
