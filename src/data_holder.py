@@ -116,7 +116,9 @@ class _global():
     mod_staging_folder_len = 0
     output_folder_joined_path_lower = ''
     output_folder_joined_path_len = 0
+    archive_extracted_path_lower = ''
     archive_extracted_path_len = 0
+    archive_extracted_temp_path_lower = ''
     archive_extracted_temp_path_len = 0
 
     cwd = ''
@@ -162,33 +164,36 @@ class _global():
         _global.hash_plugins_warn =                 _global._settings.get('hash_plugins_warn', True)
         _global.all_patcher_experimental =          _global._settings.get('all_patcher_experimental', False)
         _global.output_folder_joined_path =         os.path.normpath(os.path.join(_global.output_folder_path, _global.output_folder_name))
-        _global.output_folder_joined_path_lower =   _global.output_folder_joined_path.lower()
-        _global.output_folder_joined_path_len =     len(_global.output_folder_joined_path)
+        _global.output_folder_joined_path_lower =   _global.output_folder_joined_path.lower() + os.sep
+        _global.output_folder_joined_path_len =     len(_global.output_folder_joined_path_lower)
 
-        _global.game_folder_path_lower =          _global.game_folder_path.lower()
-        _global.game_folder_path_len =            len(_global.game_folder_path)
+        _global.game_folder_path_lower =            _global.game_folder_path.lower() + os.sep
+        _global.game_folder_path_len =              len(_global.game_folder_path_lower)
 
-        _global.archive_extracted_path_len =            len(os.path.normpath(os.path.join(_global.cwd, ARCHIVE_EXTRACTED_FOLDER)))
-        _global.archive_extracted_temp_path_len =       len(os.path.normpath(os.path.join(_global.cwd, ARCHIVE_EXTRACTED_TEMP_FOLDER)))
+
+        _global.archive_extracted_path_lower =      os.path.normpath(os.path.join(_global.cwd, ARCHIVE_EXTRACTED_FOLDER)).lower() + os.sep
+        _global.archive_extracted_temp_path_lower = os.path.normpath(os.path.join(_global.cwd, ARCHIVE_EXTRACTED_TEMP_FOLDER)).lower() + os.sep
+        _global.archive_extracted_path_len =        len(_global.archive_extracted_path_lower)
+        _global.archive_extracted_temp_path_len =   len(_global.archive_extracted_temp_path_lower)
 
         _global.folders_grabbed = False
         if _global._settings.get('dump_global', False):
             _global.debug_dump_vars()
 
     def update_vortex_vars():
-        _global.mod_staging_folder_lower =          _global.mod_staging_folder.lower()
-        _global.mod_staging_folder_len =            len(_global.mod_staging_folder)
+        _global.mod_staging_folder_lower =          _global.mod_staging_folder.lower() + os.sep
+        _global.mod_staging_folder_len =            len(_global.mod_staging_folder_lower)
 
-        _global.game_folder_path_lower =          _global.game_folder_path.lower()
-        _global.game_folder_path_len =            len(_global.game_folder_path)
+        _global.game_folder_path_lower =          _global.game_folder_path.lower() + os.sep
+        _global.game_folder_path_len =            len(_global.game_folder_path_lower)
         _global.folders_grabbed = True
 
     def update_mo2_vars():
-        _global.mo2_mods_folder_lower =             _global.mo2_mods_folder.lower()
-        _global.mo2_mods_folder_len =               len(_global.mo2_mods_folder)
+        _global.mo2_mods_folder_lower =             _global.mo2_mods_folder.lower() + os.sep
+        _global.mo2_mods_folder_len =               len(_global.mo2_mods_folder_lower)
 
-        _global.mo2_overwrite_path_lower =          _global.mo2_overwrite_path.lower()
-        _global.mo2_overwrite_path_len =            len(_global.mo2_overwrite_path)
+        _global.mo2_overwrite_path_lower =          _global.mo2_overwrite_path.lower() + os.sep
+        _global.mo2_overwrite_path_len =            len(_global.mo2_overwrite_path_lower)
         _global.folders_grabbed = True
 
     def debug_dump_vars():
@@ -222,31 +227,31 @@ class _global():
             else:
                 _global.folders_grabbed = True
         return True
-
+    
     def get_rel_path(file: str) -> str:
         if not _global.folders_grabbed:
             if not _global.get_paths():
-                RuntimeError(QCoreApplication.translate("Global", "Failed to get necessary paths, see ESLifier.log"))
-        file_norm = file.replace('\\', os.sep).replace('/', os.sep)
-
+                raise RuntimeError(QCoreApplication.translate("Global", "Failed to get necessary paths, see ESLifier.log"))
+        os_sep = os.sep
+        file_norm = file.replace('\\', os_sep).replace('/', os_sep)
+        file_lower = file_norm.lower()
+        
         # ESLifier archive Extracted
         if ARCHIVE_EXTRACTED_FOLDER in file_norm:
-            if ARCHIVE_EXTRACTED_TEMP_FOLDER in file_norm:
-                return file_norm[_global.archive_extracted_temp_path_len:].lstrip(os.sep)
-            else:
-                return file_norm[_global.archive_extracted_path_len:].lstrip(os.sep)
-
-        file_lower = file_norm.lower()
+            if file_lower.startswith(_global.archive_extracted_temp_path_lower):
+                return file_norm[_global.archive_extracted_temp_path_len:].lstrip(os_sep)
+            elif file_lower.startswith(_global.archive_extracted_path_lower):
+                return file_norm[_global.archive_extracted_path_len:].lstrip(os_sep)
 
         # MO2 Mode
         if _global.mod_manager_mode == 2:
             # Overwrite
             if file_lower.startswith(_global.mo2_overwrite_path_lower):
-                return file_norm[_global.mo2_overwrite_path_len:].lstrip(os.sep)
+                return file_norm[_global.mo2_overwrite_path_len:]#.lstrip(os_sep)
             # Mods Folder
             elif file_lower.startswith(_global.mo2_mods_folder_lower):
-                remainder = file_norm[_global.mo2_mods_folder_len:].lstrip(os.sep)
-                idx = remainder.find(os.sep)
+                remainder = file_norm[_global.mo2_mods_folder_len:]#.lstrip(os_sep)
+                idx = remainder.find(os_sep)
                 if idx != -1:
                     return remainder[idx+1:]
                 return remainder
@@ -255,11 +260,11 @@ class _global():
         if _global.mod_manager_mode == 1:
             # SSE Data Folder Path
             if _global.game_folder_path and file_lower.startswith(_global.game_folder_path_lower):
-                return file_norm[_global.game_folder_path_len:].lstrip(os.sep)
+                return file_norm[_global.game_folder_path_len:]#.lstrip(os_sep)
             # Mod Staging Folder
             elif file_lower.startswith(_global.mod_staging_folder_lower):
-                remainder = file_norm[_global.mod_staging_folder_len:].lstrip(os.sep)
-                idx = remainder.find(os.sep)
+                remainder = file_norm[_global.mod_staging_folder_len:]#.lstrip(os_sep)
+                idx = remainder.find(os_sep)
                 if idx != -1:
                     return remainder[idx+1:]
                 return remainder
@@ -267,11 +272,11 @@ class _global():
         # Manual Mode
         if _global.mod_manager_mode == 0:
             if file_lower.startswith(_global.game_folder_path_lower):
-                return file_norm[_global.game_folder_path_len:].lstrip(os.sep)
+                return file_norm[_global.game_folder_path_len:]#.lstrip(os_sep)
 
         # Files In Output (renamed facegeom)
         if file_lower.startswith(_global.output_folder_joined_path_lower):
-            return file_norm[_global.output_folder_joined_path_len:].lstrip(os.sep)
+            return file_norm[_global.output_folder_joined_path_len:]#.lstrip(os_sep)
 
 
         raise RuntimeError(
@@ -281,12 +286,22 @@ class _global():
                 ).replace("%1", file)
             )
 
-    def chunk_items(items:list[str], split:int):
+    def chunk_items_old(items:list[str], split:int):
         chunk_size = len(items) // split
         chunks = [items[i * chunk_size:(i + 1) * chunk_size] for i in range(split)]
         end_chunk = items[(split) * chunk_size:]
         if end_chunk:
             chunks.append(end_chunk)
+        return chunks
+
+    def chunk_items(items:list[str], split:int):
+        q, r = divmod(len(items), split)
+        chunks, start = [], 0
+        for i in range(split):
+            end = start + q + (1 if i < r else 0)
+            if end > start:
+                chunks.append(items[start:end])
+            start = end
         return chunks
 
     def process_chunks(atarget:object, chunks:list[list[str]], threads_list:list[threading.Thread]):
