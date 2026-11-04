@@ -268,15 +268,11 @@ class CFIDs():
                             rel_paths.add(rel_path)
 
             to_patch, to_rename = self.sort_files_to_patch_or_rename(file_to_compact, patch_or_rename) #function to get files that need to be edited in some way to function correctly.
-            if len(to_patch) > 0:
+            if to_patch:
                 write_normal("-  " + QCoreApplication.translate("CFIDs", "Patching %1 Dependent Files...").replace("%1", str(len(to_patch))))
-                if len(to_patch) > 20:
-                    write_normal('',False)
                 self.patch_files_threader(file_to_compact, to_patch)
-            if len(to_rename) > 0:
+            if to_rename:
                 write_normal("-  " + QCoreApplication.translate("CFIDs", "Renaming/Patching %1 Dependent Files...").replace("%1", str(len(to_rename))))
-                if len(to_rename) > 20:
-                    write_normal('',False)
                 self.rename_files_threader(file_to_compact, to_rename)
         if os.path.exists(f'{ARCHIVE_EXTRACTED_TEMP_FOLDER}/'):
             write_normal("-  " + QCoreApplication.translate("CFIDs", "Deleting temporarily Extracted FaceGen/Voice Files..."))
@@ -314,15 +310,11 @@ class CFIDs():
         if os.path.basename(compacted_file) in files_to_patch:
             to_patch, to_rename = self.sort_files_to_patch_or_rename(compacted_file, files_to_patch[os.path.basename(compacted_file)])
             self.get_form_id_map(compacted_file)
-            if len(to_patch) > 0:
+            if to_patch:
                 write_normal("-  " + QCoreApplication.translate("CFIDs", "Patching %1 New Dependent Files...").replace("%1", str(len(to_patch))))
-                if len(to_patch) > 20:
-                    write_normal('',False)
                 self.patch_files_threader(compacted_file, to_patch)
-            if len(to_rename) > 0:
+            if to_rename:
                 write_normal("-  " + QCoreApplication.translate("CFIDs", "Renaming/Patching %1 New Dependent Files...").replace("%1", str(len(to_rename))))
-                if len(to_rename) > 20:
-                    write_normal('',False)
                 self.rename_files_threader(compacted_file, to_rename)
         clear_and_leave_log_open()
         return self.original_files, self.winning_files_dict, self.master_byte_data, self.winning_file_history_dict, self.compacted_and_patched
@@ -396,8 +388,11 @@ class CFIDs():
         chunks = _global.chunk_items(files, split)
         self.count = 0
         self.file_count = len(files)
+        print_progress = self.file_count > 20
+        if print_progress:
+            write_normal('',False)
         for chunk in chunks:
-            thread = threading.Thread(target=self.rename_files, args=(master, chunk))
+            thread = threading.Thread(target=self.rename_files, args=(master, chunk, print_progress))
             threads.append(thread)
             thread.start()
         
@@ -416,16 +411,15 @@ class CFIDs():
                 time.sleep(0.05) 
 
     #Rename each file in the list of files from the old Form IDs to the new Form IDs
-    def rename_files(self, master: str, files: list[str]) -> None:
+    def rename_files(self, master: str, files: list[str], print_progress:bool) -> None:
         facegeom_meshes = []
         luma_json = []
         master_base_name = os.path.basename(master)
         percentage_str = self.percentage_str
-
         get_rel_path = _global.get_rel_path
         is_fo4_mode = GAME_MODE == "FO4"
         for file in files:
-            if self.file_count > 20:
+            if print_progress:
                 self.count += 1
                 factor = round(self.file_count * 0.001)
                 if factor == 0:
@@ -498,12 +492,13 @@ class CFIDs():
             self.compacted_and_patched[master_base_name].add(rel_path.lower())
         if facegeom_meshes:
             self.file_count += len(facegeom_meshes)
-            self.patch_files(master, facegeom_meshes)
+            self.patch_files(master, facegeom_meshes, print_progress)
         if luma_json:
             self.file_count += len(luma_json)
-            self.patch_files(master, luma_json)
+            self.patch_files(master, luma_json, print_progress)
         return
 
+    #TODO: update this comment to correctly reflect the state of the form id map
     #Create the Form ID map which is a list of tuples that holds four Form Ids that are in \xMASTER\x00\x00\x00 order:
     #original Form ID w/o leading 0s, original Form ID w/ leading 0s, new Form ID w/o 0s, new Form ID w/ 0s, 
     #the orginal Form ID in \x00\x00\x00\xMASTER order, and the new Form ID in the same order.
@@ -554,16 +549,16 @@ class CFIDs():
         chunks = _global.chunk_items(files, split)
         self.count = 0
         self.file_count = len(files)
-        
+        print_progress = self.file_count > 20
+        if print_progress:
+            write_normal('',False)
         for chunk in chunks:
-            thread = threading.Thread(target=self.patch_files, args=(master, chunk))
+            thread = threading.Thread(target=self.patch_files, args=(master, chunk, print_progress))
             threads.append(thread)
             thread.start()
         
         for thread in threads:
             thread.join()
-
-        write_progress(100, 1, self.percentage_str.format(100, self.file_count, self.file_count))
 
     def get_encodings(self, new_file):
         yield 'utf-8'
@@ -579,7 +574,7 @@ class CFIDs():
             write_to_file(f"Failed to detect encoding for {new_file}")
 
     #Patches each file type in a different way as each has Form IDs present in a different format
-    def patch_files(self, master: str, files: list[str]):
+    def patch_files(self, master: str, files: list[str], print_progress:bool):
         basename_cased = os.path.basename(master)
         basename = basename_cased.lower()
         local_compacted_and_patched_set = set()
@@ -587,7 +582,7 @@ class CFIDs():
         for file in files:
             new_file, rel_path = self.copy_file_to_output(file)
             new_file_lower = new_file.lower()
-            if self.file_count > 20:
+            if print_progress:
                 self.count += 1
                 factor = round(self.file_count * 0.001)
                 if factor == 0:
