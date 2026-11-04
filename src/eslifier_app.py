@@ -14,7 +14,7 @@ from settings_page import settings
 from main_page import main
 from log_stream import log_stream, write_to_file
 from data_holder import (_global, GAME_MODE, NEXUS_FILES_TAB_URL, SHORT_GAME_NAME, VORTEX_GAME_NAME, GITHUB_MASTER_JSONS_URL, 
-                         EXE_NAME, PROGRAM_NAME, ESLIFIER_DATA_FOLDER, SETTINGS_JSON, ESLIFIER_LOG_FILE, ESLIFIER_PNG_ICON_PATH,
+                         PROGRAM_NAME, ESLIFIER_DATA_FOLDER, SETTINGS_JSON, ESLIFIER_LOG_FILE, ESLIFIER_PNG_ICON_PATH,
                          GITHUB_LATEST_VERSIONS_INFO_JSON_URL, IMAGES_PATH)
 
 from scanners.scanner_vortex import Vortex
@@ -241,7 +241,7 @@ class main_window(QMainWindow):
                 major, minor, patch = [int(x, 10) for x in version.split('.')] 
                 version_tuple = (major, minor, patch)
                 if VERSION_TUPLE > version_tuple:
-                    verify_luhn_checksum(EXE_NAME)
+                    verify_luhn_checksum(sys.executable)
             elif not curdirIsWritable():
                 QMessageBox.critical(None, 
                                      self.tr("EXE is in a Protected Folder!"), 
@@ -249,7 +249,7 @@ class main_window(QMainWindow):
                                      )
                 return 
             else:
-                verify_luhn_checksum(EXE_NAME)
+                verify_luhn_checksum(sys.executable)
         
         self.setWindowTitle(self.tr(f"%0 v%1").replace("%0", PROGRAM_NAME).replace("%1", CURRENT_VERSION))
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)

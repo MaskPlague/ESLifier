@@ -19,7 +19,7 @@ def resource_path(relative_path):
 GAME_MODE = "SSE"
 GITHUB_LATEST_VERSIONS_INFO_JSON_URL = "https://raw.githubusercontent.com/MaskPlague/ESLifier/refs/heads/main/latest_versions_info.json"
 def update_game_globals():
-    global VERBOSE_GAME_NAME, SHORT_GAME_NAME, VORTEX_GAME_NAME, MO2_GAME_NAME, GAME_ESM_NAME, PROGRAM_NAME, EXE_NAME
+    global VERBOSE_GAME_NAME, SHORT_GAME_NAME, VORTEX_GAME_NAME, MO2_GAME_NAME, GAME_ESM_NAME, PROGRAM_NAME
     global GAME_ARCHIVE_TYPE, GAME_ARCHIVE_EXTENSION, NEXUS_FILES_TAB_URL, GITHUB_MASTER_JSONS_URL, SCRIPT_EXTENDER
     global ARCHIVE_EXTRACTED_FOLDER, ARCHIVE_EXTRACTED_TEMP_FOLDER, IMAGES_PATH, ESLIFIER_PNG_ICON_PATH
     IMAGES_PATH = resource_path(f"images/{GAME_MODE}/").replace('\\','/') + '/' #QSS url() requires forward slashes
@@ -30,8 +30,7 @@ def update_game_globals():
     MO2_GAME_NAME = "Skyrim Special Edition"            if GAME_MODE == "SSE" else "Fallout 4"
     GAME_ESM_NAME = "Skyrim.esm"                        if GAME_MODE == "SSE" else "Fallout4.esm"
     SCRIPT_EXTENDER = "skse"                            if GAME_MODE == "SSE" else "f4se"
-    PROGRAM_NAME = f"ESLifier-{GAME_MODE}"              #if GAME_MODE == "SSE" else "ESLifier-FO4"
-    EXE_NAME = PROGRAM_NAME + ".exe"
+    PROGRAM_NAME = f"ESLifier-{GAME_MODE}"
     GAME_ARCHIVE_TYPE = "BSA"                           if GAME_MODE == "SSE" else "BA2"
     GAME_ARCHIVE_EXTENSION = "." + GAME_ARCHIVE_TYPE.lower()
     ARCHIVE_EXTRACTED_FOLDER = GAME_ARCHIVE_TYPE.lower() + "_extracted"
