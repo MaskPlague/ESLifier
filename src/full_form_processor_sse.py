@@ -613,13 +613,7 @@ class form_processor():
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
             if field in special_coll_fields:
                 if field == b'CNAM':
-                    intv_offset = form.find(b'INTV', 24)
-                    if intv_offset != -1:
-                        intv = _U32(form[intv_offset+6:intv_offset+10])[0]
-                        in_field_offset = offset + 6
-                        for _ in range(intv):
-                            coll_offsets.append(in_field_offset)
-                            in_field_offset += 4
+                    form_processor.get_offsets_from_array(offset, field_size)
             offset += field_size + 6
 
         return [i, bytearray(form), coll_offsets]
@@ -761,7 +755,7 @@ class form_processor():
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
             if field in special_dual_fields:
-                if b'DATA':
+                if field == b'DATA':
                     in_field_offset = offset + 6
                     dual_offsets.append(in_field_offset)    # PROJ
                     dual_offsets.append(in_field_offset+ 4) # EXPL
@@ -1545,8 +1539,12 @@ class form_processor():
                     for _ in range(door_refr_count):
                         navi_offsets.append(in_field_offset+4)
                         in_field_offset += 8
-                    navi_offsets.append(offset + 6 + field_size - 8) # World Space
-                    navi_offsets.append(offset + 6 + field_size - 4) # Cell
+                    if form[offset+6+field_size-8:offset+6+field_size-4] != b'\x00\x00\x00\x00':
+                        navi_offsets.append(offset + 6 + field_size - 8)     # Parent World
+                    else:
+                        navi_offsets.append(offset + 6 + field_size - 4)   # Parent Cell
+                    #navi_offsets.append(offset + 6 + field_size - 8) # World Space
+                    #navi_offsets.append(offset + 6 + field_size - 4) # Cell
             offset += field_size + 6
 
         return [i, bytearray(form), navi_offsets]
@@ -1561,8 +1559,10 @@ class form_processor():
             if field in special_navm_fields:
                 if field == b'NVNM':
                     in_field_offset = offset + 6 + 8
-                    navm_offsets.append(in_field_offset)        # World Space
-                    navm_offsets.append(in_field_offset + 4)    # Cell
+                    if form[offset:offset+4] != b'\x00\x00\x00\x00':
+                        navm_offsets.append(in_field_offset)     # Parent World
+                    else:
+                        navm_offsets.append(in_field_offset+4)   # Parent Cell
                     in_field_offset += 8
                     num_vertices = _U32(form[in_field_offset:in_field_offset+4])[0]
                     in_field_offset += 4
@@ -1597,7 +1597,7 @@ class form_processor():
             if field in note_fields and field_size >= 4:
                 note_offsets.append(offset + 6)
             elif field in special_note_fields:
-                if field == b'TNAM':
+                if field == b'TNAM' and field_size == 4:
                     data_offset = form.find(b'DATA') + 6
                     if form[data_offset:data_offset+1] == b'\x03':
                         note_offsets.append(offset + 6)
@@ -1672,8 +1672,18 @@ class form_processor():
                     pack_offsets.extend(form_processor.ctda_reader(form, offset))
                 elif field == b'IDLA':
                     pack_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
-                elif field in (b'PKCU', b'PDTO', b'PLDT', b'PTDA'):
+                elif field == b'PKCU':
                     pack_offsets.append(offset + 10)
+                elif field == b'PDTO':
+                    if form[offset+6:offset+7] == b'\x00':
+                        pack_offsets.append(offset + 10)
+                elif field == b'PLDT':
+                    #Maybe not \x09? USEP says FID, xEdit says integer for Refernce Alias
+                    if form[offset+6:offset+7] in (b'\x00', b'\x01', b'\x04', b'\x06', b'\x09'):
+                        pack_offsets.append(offset + 10)
+                elif field == b'PTDA':
+                    if form[offset+6:offset+7] in (b'\x00', b'\x01', b'\x03'):
+                        pack_offsets.append(offset + 10)
 
             offset += field_size + 6
 
@@ -1681,10 +1691,12 @@ class form_processor():
 
     def save_perk_data(i, form): 
         perk_fields = {b'NNAM'}
-        special_perk_fields = {b'VMAD', b'CTDA', b'DATA', b'EPFD'}
+        special_perk_fields = {b'VMAD', b'CTDA', b'DATA', b'EPFT', b'EPFD', b'PRKF'}
 
         perk_offsets = [12]
         offset = 24
+        epft_type = b''
+        epfd_offset = -1
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
             if field in perk_fields and field_size >= 4:
@@ -1697,11 +1709,18 @@ class form_processor():
                 elif field == b'DATA':
                     if field_size == 4 or field_size == 8:
                         perk_offsets.append(offset + 6)
+                elif field == b'EPFT':
+                    epft_type = form[offset+6:offset+7] #save type for end of perk section resolution
                 elif field == b'EPFD':
-                    current_epft_offset = form.rfind(b'EPFT', 24, offset)
-                    epft_type = form[current_epft_offset+6:current_epft_offset+7]
-                    if epft_type in (b'\x03', b'\x04', b'\x05'):
-                        perk_offsets.append(offset + 6)
+                    epfd_offset = offset #save offset for end of per setcion resolution
+                elif field == b'PRKF':
+                    # if we have a perk type and data offset then check if type is Form ID
+                    if epft_type != b'' and epfd_offset != -1:
+                        if epft_type in (b'\x03', b'\x04', b'\x05'):
+                            perk_offsets.append(epfd_offset + 6)
+                    # reset values for next perk section
+                    epft_type = b''
+                    epfd_offset = -1
 
             offset += field_size + 6
 
@@ -1715,7 +1734,7 @@ class form_processor():
         offset = 24
         while offset < len(form):
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
-            if field in placed_fields:
+            if field in placed_fields and field >= 4:
                 placed_offsets.append(offset + 6)
             elif field in special_placed_fields:
                 if field == b'VMAD':
