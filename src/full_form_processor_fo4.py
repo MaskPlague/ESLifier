@@ -185,6 +185,7 @@ class form_processor():
             b'EFSH': form_processor.save_efsh_data,
             b'ENCH': form_processor.save_ench_data,
             b'EQUP': form_processor.save_equp_data,
+            b'EXPL': form_processor.save_expl_data,
             b'FACT': form_processor.save_fact_data,
             b'FLOR': form_processor.save_flor_data,
             b'FLST': form_processor.save_flst_data,
