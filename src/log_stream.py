@@ -355,51 +355,30 @@ class log_stream(QMainWindow):
             except Exception as e:
                 write_error(self.tr("Error opening file:: ") + str(e))
 
-    def exception_hook(self, exc_type, exc_value, exc_traceback):
+    def report_crash(self, label:str, exc_value, exc_traceback):
         self.crash = True
-        self.running = False
-        self.show()
-        self.lines.clear()
+        parts = [
+            self.tr("An exception has occured, please report this bug to the github and include the ESLifier.log file found in %0.")
+            .replace("%0", self.ESLIFIER_DATA_FOLDER),
+            ''.join(traceback.format_tb(exc_traceback, 5)),
+            f"Unhandled exception: {exc_value}",
+            '',
+        ]
+        self.write_to_file(f'{label} -> Extended Traceback for debugging:\n' + ''.join(traceback.format_tb(exc_traceback, 10)))
+        self.write_to_file(f"Unhandled exception: {exc_value}")
         with self.display_queue.mutex:
             self.display_queue.queue.clear()
-        self.text_edit.setStyleSheet("background-color: red;")
-        self.write_normal(
-            self.tr("An exception has occured, please report this bug to the github and include the ESLifier.log file found in %0.")
-            .replace("%0", self.ESLIFIER_DATA_FOLDER))
-        trace = traceback.format_tb(exc_traceback, 5)
-        self.write_normal(''.join(trace), False)
-        self.write_normal(f"Unhandled exception: {exc_value}", False)
-        self.write_normal('',False)
-        trace_extended = traceback.format_tb(exc_traceback, 10)
-        self.write_to_file('exception_hook -> Extended Traceback for debugging:\n' + ''.join(trace_extended))
-        self.write_to_file(f"Unhandled exception: {exc_value}")
+        self.display_queue.put(("", 7, parts))    # 7 crash
         try:
             self.open_log()
         except:
             pass
 
+    def exception_hook(self, exc_type, exc_value, exc_traceback):
+        self.report_crash('exception_hook', exc_value, exc_traceback)
+
     def threading_exception_hook(self, args: threading.ExceptHookArgs):
-        self.crash = True
-        self.running = False
-        self.show()
-        self.lines.clear()
-        with self.display_queue.mutex:
-            self.display_queue.queue.clear()
-        self.text_edit.setStyleSheet("background-color: red;")
-        self.write_normal(
-            self.tr("An exception has occured, please report this bug to the github and include the ESLifier.log file found in %0.")
-            .replace("%0", self.ESLIFIER_DATA_FOLDER))
-        trace = traceback.format_tb(args.exc_traceback, 5)
-        self.write_normal(''.join(trace), False)
-        self.write_normal(f"Unhandled exception: {args.exc_value}", False)
-        self.write_normal('', False)
-        trace_extended = traceback.format_tb(args.exc_traceback, 10)
-        self.write_to_file('threading_exception_hook -> Extended Traceback for debugging:\n' + ''.join(trace_extended))
-        self.write_to_file(f"Unhandled exception: {args.exc_value}")
-        try:
-            self.open_log()
-        except:
-            pass
+        self.report_crash('threading_exception_hook', args.exc_value, args.exc_traceback)
 
     def closeEvent(self, a0):
         self.running = False
@@ -418,6 +397,13 @@ class log_stream(QMainWindow):
         super().close()
 
     def process_queue(self):
+        try:
+            self.process_queue_once()
+        finally:
+            if self.running:
+                self.timer.start(50)
+
+    def process_queue_once(self):
         if not self.isHidden() and self.progress_bar.value() != self.percentage:
             if self.percentage == 0:
                 if not self.progress_bar_busy_mode:
@@ -453,31 +439,22 @@ class log_stream(QMainWindow):
                 if not self.progress_bar.paintingActive():
                     self.progress_bar.setValue(self.percentage)
         length = self.display_queue.qsize()
-        if length > 50:
-            keep_range = length - 50
-            for i in range(length):
-                if self.display_queue.empty():
-                    break
-                text, *args = self.display_queue.get()
-                if args[0] == 1 and args[2]:
-                    if i < keep_range:
-                        continue
-                self.update_text_widget(text, *args)
-        else:
-            for _ in range(length):
-                if self.display_queue.empty():
-                    break
-                text, *args = self.display_queue.get()
-                self.update_text_widget(text, *args)
-        if self.running:
-            self.timer.start(50)
+        changed = False
+        keep_range = length - 50 if length > 50 else 0
+        for i in range(length):
+            if self.display_queue.empty():
+                break
+            text, *args = self.display_queue.get()
+            if args[0] == 1 and args[2] and i < keep_range:
+                continue
+            changed |= self.apply_item(text, *args)
+        if changed:
+            self.refresh_text_widget()
 
-    def update_text_widget(self, text:str, *args):
-        cursor = self.text_edit.textCursor()
-        cursor.movePosition(cursor.MoveOperation.End)
+    def apply_item(self, text:str, *args) -> bool:
+        arg_0 = args[0]
         if DEBUG:
             self.hijack_print.print_to_console(text)
-        arg_0 = args[0]
         if arg_0 == 1:
             if args[1] == 1:
                 try:
@@ -493,29 +470,42 @@ class log_stream(QMainWindow):
                     except:
                         break
             self.lines.append(text)
-            self.text_edit.setPlainText('\n'.join(self.lines))
+            return True
         elif arg_0 == 3: # clear and close
             self.percentage = 100
             #write_to_file("clearing, screen log snapshot:\n" + '\n'.join(self.lines))
             self.log_file.flush()
             self.timer_clear.start(1500)
+            return False
         elif arg_0 == 4: # clear and leave open
             #write_to_file("alt clearing, screen log snapshot:\n" + '\n'.join(self.lines))
             self.clear_alt()
+            return True
         elif arg_0 == 5:
             self.lines.insert(args[1], text)
-            self.text_edit.setPlainText('\n'.join(self.lines))
+            return True
         elif arg_0 == 6:
             if not 'red' in self.text_edit.styleSheet() and not 'lightblue' in self.text_edit.styleSheet():
                 self.text_edit.setStyleSheet("background-color: lightblue")
+            return False
+        elif arg_0 == 7: # crash, runs on the GUI thread
+            self.show()
+            self.lines.clear()
+            self.lines.extend(args[1])
+            self.text_edit.setStyleSheet("background-color: red;")
+            self.running = False
+            return True
         else:   #args[0] == 0 # Simply append new text
             self.lines.append(text)
-            self.text_edit.setPlainText('\n'.join(self.lines))
+            return True
 
-        # Ensure the cursor is at the end
+    def refresh_text_widget(self):
+        self.text_edit.setPlainText('\n'.join(self.lines))
+        cursor = self.text_edit.textCursor()
+        cursor.movePosition(cursor.MoveOperation.End)
         self.text_edit.setTextCursor(cursor)
         self.text_edit.verticalScrollBar().setValue(self.text_edit.verticalScrollBar().maximum())
-    
+
     def clean_up(self):
         if not self.crash:
             self.lines.clear()
@@ -533,6 +523,3 @@ class log_stream(QMainWindow):
             self.lines.clear()
             self.text_edit.setPlainText(None)
             self.log_file.flush()
-
-
-
