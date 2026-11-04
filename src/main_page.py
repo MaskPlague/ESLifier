@@ -525,7 +525,6 @@ class main(QWidget):
         try:
             with open(ESL_FLAGGED_JSON, 'w', encoding='utf-8') as f:
                 json.dump(list(esl_flagged_data), f, ensure_ascii=False, indent=4)
-                f.close()
         except Exception as e:
             write_error(self.tr('Failed to save esl_flagged.json'))
             write_error(e, True)
@@ -809,7 +808,6 @@ class main(QWidget):
                 f.seek(0)
                 f.truncate(0)
                 json.dump(new_file_hashes, f, ensure_ascii=False, indent=4)
-                f.close()
         except Exception as e:
             write_error(self.tr("Failed to open new_file_hashes.json"))
             write_error(e, True)
@@ -882,11 +880,9 @@ class main(QWidget):
                     compacted_and_patched_dict = {}
                     with open(COMPACTED_AND_PATCHED_JSON, 'r', encoding='utf-8') as f:
                         compacted_and_patched_dict = json.load(f)
-                        f.close()
                     previously_compacted = [key for key in compacted_and_patched_dict.keys()]
                     with open(PREVIOUSLY_COMPACTED_JSON, 'w', encoding='utf-8') as f:
                         json.dump(previously_compacted, f, ensure_ascii=False, indent=4)
-                        f.close()
                     os.remove(COMPACTED_AND_PATCHED_JSON)
                 except Exception as e:
                     write_error(self.tr("Failed in Compacted and Patched deletion process."))
@@ -985,11 +981,9 @@ class main(QWidget):
                 compacted_and_patched_dict = {}
                 with open(COMPACTED_AND_PATCHED_JSON, 'r', encoding='utf-8') as f:
                     compacted_and_patched_dict = json.load(f)
-                    f.close()
                 previously_compacted = [key for key in compacted_and_patched_dict.keys()]
                 with open(PREVIOUSLY_COMPACTED_JSON, 'w', encoding='utf-8') as f:
                     json.dump(previously_compacted, f, ensure_ascii=False, indent=4)
-                    f.close()
                 os.remove(COMPACTED_AND_PATCHED_JSON)
             elif os.path.exists(PREVIOUSLY_COMPACTED_JSON):
                 previously_compacted = self.get_from_file(PREVIOUSLY_COMPACTED_JSON)
@@ -1199,7 +1193,6 @@ class main(QWidget):
         if changed_hashes:
             with open(NEW_FILE_HASHES_JSON, 'w', encoding='utf-8') as f:
                 json.dump(self.new_file_hashes, f, ensure_ascii=False, indent=4)
-                f.close()
             dialog = QDialog()
             dialog.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
             dialog.setWindowTitle(self.tr("Select files to remove."))
