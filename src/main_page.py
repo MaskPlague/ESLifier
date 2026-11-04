@@ -97,9 +97,9 @@ class main(QWidget):
 
         self.button_scan = self.create_button(
             self.tr(" Scan Mod Files "),
-            self.tr(f"This will scan the entire {VERBOSE_GAME_NAME} folder.\n"\
+            self.tr("This will scan the entire %0 folder.\n"\
             "Depending on the cell and header settings, what is displayed\n"\
-            "in the below lists will change."),
+            "in the below lists will change.").replace("%0", VERBOSE_GAME_NAME),
             self.scan
         )
         self.button_scan.clicked.connect(self.set_false_redoing_output)
@@ -570,7 +570,7 @@ class main(QWidget):
             message = QMessageBox()
             message.setWindowTitle(self.tr("Finished"))
             message.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
-            if _global.mod_manager_mode == 0: #Manutal?
+            if _global.mod_manager_mode == 0: #Manual?
                 message.setText(self.tr("ESLifier has finished. The altered files are in your ESLifier Output."))
             elif _global.mod_manager_mode == 1: #Vortex
                 message.setText(self.tr("Make sure the ESLifier Output is installed as a mod and let it win any file conflicts by making the "\
@@ -649,23 +649,32 @@ class main(QWidget):
             self.setEnabled(True)
             self.calculate_stats()
 
+    def vortex_error_text(self, state:ReadState):
+        if state == ReadState.ERROR_DB_LOCKED_EXTENSION_MISSING:
+            return self.tr("Please close Vortex or install the Vortex extension from ESLifier's mod page. " \
+                                    "ESLifier cannot read Vortex's database unless Vortex is closed or the extension is installed.")
+        elif state == ReadState.ERROR_DB_LOCKED_EXTENSION_UNREACHABLE:
+            return self.tr("Vortex is open but the Vortex extension is unresponsive. Please close or restart Vortex.")
+        elif state == VortexErrors.HAS_CYCLES:
+            return self.tr("ESLifier detected that a cyclic rule is set in Vortex, please correct it first.")
+        elif state == VortexErrors.DIFFERENT_MSF_AND_OF_DRIVEs:
+            return self.tr("Vortex's Mod Staging Folder and ESLifier's Output Folder must be on the same drive.")
+        elif state == VortexErrors.INVALID_MSF:
+            return self.tr("Failed to get the Vortex Mod Staging Folder.")
+        elif state == VortexErrors.NO_LAST_SSE_PROFILE:
+            return self.tr("No last used %0 profile detected.").replace("%0", VERBOSE_GAME_NAME)
+        elif state == VortexErrors.NO_BASE_PATH:
+            return self.tr("Failed to get the %0 Game folder.").replace("%0", VORTEX_GAME_NAME)
+        elif isinstance(state, Exception):
+            return self.tr("ESLifier has come across an error while scanning Vortex data: %0").replace("%0", str(state))
+        return self.tr("ESLifier has run into an unknown error: %0").replace("%0", str(state))
+    
     def check_if_vortex_db_is_readable_and_warn_if_it_is_not(self):
         return_val = VortexDBParser.is_readable()
         if return_val not in (ReadState.SUCCESS_DB, ReadState.SUCCESS_STATE):
             confirm = self.create_confirmation('lightcoral')
             self.scanned = False
-            if return_val == ReadState.ERROR_DB_LOCKED_EXTENSION_MISSING:
-                confirm.setText(self.tr("Please close Vortex or install the Vortex extension from ESLifier's mod page. " \
-                                        "ESLifier cannot read Vortex's database unless Vortex is closed or the extension is installed."))
-            elif return_val == ReadState.ERROR_DB_LOCKED_EXTENSION_UNREACHABLE:
-                confirm.setText(self.tr("Vortex is open but the Vortex extension is unresponsive. Please close or restart Vortex."))
-            elif return_val == ReadState.ERROR_DB_LOCKED_DEPLOYING:
-                confirm.setText(self.tr("Vortex is in the process of deploying your modlist, please wait for it to complete and try again."))
-            elif return_val == ReadState.ERROR_DB_LOCKED_PURGING:
-                confirm.setText(self.tr("ESLifier has detected you are currently purging your modlist. You will need to redeploy before running ESLifier."))
-            elif isinstance(return_val, Exception):
-                confirm.setText(self.tr("ESLifier has come across an error while scanning Vortex data: %0").replace('%0', str(return_val)))
-            
+            confirm.setText(self.vortex_error_text(return_val))
             def accept():
                 confirm.hide()
             confirm.setStandardButtons(QMessageBox.StandardButton.Ok)
@@ -705,23 +714,7 @@ class main(QWidget):
     def vortex_error(self):
         clear_and_close_log()
         confirm = self.create_confirmation('lightcoral')
-        if _global.vortex_error == ReadState.ERROR_DB_LOCKED_EXTENSION_MISSING:
-            confirm.setText(self.tr("Please close Vortex or install the Vortex extension from ESLifier's mod page. " \
-                                    "ESLifier cannot read Vortex's database unless Vortex is closed or the extension is installed."))
-        elif _global.vortex_error == ReadState.ERROR_DB_LOCKED_EXTENSION_UNREACHABLE:
-            confirm.setText(self.tr("Vortex is open but the Vortex extension is unresponsive. Please close or restart Vortex."))
-        elif _global.vortex_error == VortexErrors.HAS_CYCLES:
-            confirm.setText(self.tr("ESLifier detected that a cyclic rule is set in Vortex, please correct it first."))
-        elif _global.vortex_error == VortexErrors.DIFFERENT_MSF_AND_OF_DRIVEs:
-            confirm.setText(self.tr("Vortex's Mod Staging Folder and ESLifier's Output Folder must be on the same drive."))
-        elif _global.vortex_error == VortexErrors.INVALID_MSF:
-            confirm.setText(self.tr("Failed to get the Vortex Mod Staging Folder."))
-        elif _global.vortex_error == VortexErrors.NO_LAST_SSE_PROFILE:
-            confirm.setText(self.tr(f"No last used {VERBOSE_GAME_NAME} profile detected."))
-        elif _global.vortex_error == VortexErrors.NO_BASE_PATH:
-            confirm.setText(self.tr(f"Failed to get the {VORTEX_GAME_NAME} Game folder."))
-        elif isinstance(_global.vortex_error, Exception):
-            confirm.setText(self.tr(f"ESLifier has come across an error while scanning Vortex data: %0").replace("%0", str(_global.vortex_error)))
+        confirm.setText(self.vortex_error_text(_global.vortex_error))
         _global.vortex_error = None
         self.scanned = False
         def accept():
@@ -739,7 +732,7 @@ class main(QWidget):
         elif _global.mo2_error == MO2Errors.DIFFERENT_OWF_AND_OF_DRIVES:
             confirm.setText(self.tr("The MO2 instance's Overwrite folder and the Output Folder Path must be on the same drive."))
         elif isinstance(_global.mo2_error, Exception):
-            confirm.setText(self.tr(f"ESLifier has come across an error while reading MO2's ini: %0").replace("%0", str(_global.mo2_error)))
+            confirm.setText(self.tr("ESLifier has come across an error while reading MO2's ini: %0").replace("%0", str(_global.mo2_error)))
         _global.mo2_error = None
         self.scanned = False
         def accept():
@@ -1032,8 +1025,8 @@ class main(QWidget):
     def reset_game_archive(self):
         confirm = self.create_confirmation('lightcoral')
         confirm_text = self.tr(
-                f"Are you sure you want to reset the Extracted %0 List?\n"\
-                f"This will cause the next scan to take significantly longer as the %0 files will\n"\
+                "Are you sure you want to reset the Extracted %0 List?\n"\
+                "This will cause the next scan to take significantly longer as the %0 files will\n"\
                 "need to be extracted again and irrelevant script files will need to be filtered.\n\n"\
                 "This can take a short bit and may freeze the UI\n"\
                 "or you can manually delete the \"%1/\" folder\n"\
