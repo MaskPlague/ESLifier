@@ -33,6 +33,7 @@ def verify_luhn_checksum(filename: str):
         original_data, stored_checksum = data[:-1], data[-1]
         computed_checksum = luhn_checksum(original_data)
     except:
+        stored_checksum = 0
         computed_checksum = stored_checksum
 
     if computed_checksum != stored_checksum:
@@ -57,7 +58,7 @@ def verify_luhn_checksum(filename: str):
                                     QCoreApplication.translate("Global", f'Cannot access {SETTINGS_JSON}')
                                     )
         else:
-            os.makedirs(os.path.dirname(settings_path))
+            os.makedirs(os.path.dirname(settings_path), exist_ok=True)
             settings_data = {"version": CURRENT_VERSION}
             try:
                 with open(settings_path, 'w', encoding='utf-8') as f:
