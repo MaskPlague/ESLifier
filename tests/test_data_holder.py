@@ -40,9 +40,10 @@ class TestUpdateFromSettings:
         out = str(tmp_path / "out")
         _settings(g, output_folder_path=out, output_folder_name="My Output")
         expected = os.path.normpath(os.path.join(out, "My Output"))
+        expected_lower = expected.lower()+os.sep
         assert g.output_folder_joined_path == expected
-        assert g.output_folder_joined_path_lower == expected.lower()
-        assert g.output_folder_joined_path_len == len(expected)
+        assert g.output_folder_joined_path_lower == expected_lower
+        assert g.output_folder_joined_path_len == len(expected_lower)
 
     def test_skyrim_path_only_taken_from_settings_in_manual_mode(self, g, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
@@ -62,17 +63,17 @@ class TestUpdateFromSettings:
         g.mod_staging_folder = "/Staging/Folder"
         g.game_folder_path = "/Skyrim/Data"
         g.update_vortex_vars()
-        assert g.mod_staging_folder_lower == "/staging/folder"
-        assert g.mod_staging_folder_len == len("/Staging/Folder")
-        assert g.game_folder_path_lower == "/skyrim/data"
+        assert g.mod_staging_folder_lower == "/staging/folder"+os.sep
+        assert g.mod_staging_folder_len == len("/Staging/Folder"+os.sep)
+        assert g.game_folder_path_lower == "/skyrim/data"+os.sep
         assert g.folders_grabbed is True
 
     def test_update_mo2_vars(self, g):
         g.mo2_mods_folder = "/MO2/mods"
         g.mo2_overwrite_path = "/MO2/overwrite"
         g.update_mo2_vars()
-        assert g.mo2_mods_folder_lower == "/mo2/mods"
-        assert g.mo2_overwrite_path_len == len("/MO2/overwrite")
+        assert g.mo2_mods_folder_lower == "/mo2/mods" +os.sep
+        assert g.mo2_overwrite_path_len == len("/MO2/overwrite"+os.sep)
         assert g.folders_grabbed is True
 
 
