@@ -139,11 +139,18 @@ class log_stream(QMainWindow):
         for i in range(max_logs, -1, -1):
             src = os.path.join(ESLIFIER_DATA_FOLDER, f"ESLifier_{i-1}.log") if i > 0 else ESLIFIER_LOG_FILE
             dst = os.path.join(ESLIFIER_DATA_FOLDER, f"ESLifier_{i}.log")
-            if os.path.exists(dst):
-                os.remove(dst)
-            if os.path.exists(src):
-                shutil.copy(src, dst)
-        self.log_file = open(ESLIFIER_LOG_FILE, 'w', encoding='utf-8')
+            try:
+                if os.path.exists(dst):
+                    os.remove(dst)
+                if os.path.exists(src):
+                    shutil.copy(src, dst)
+            except OSError:
+                pass 
+        try:
+            self.log_file = open(ESLIFIER_LOG_FILE, 'w', encoding='utf-8')
+        except OSError:
+            self.ESLIFIER_LOG_FILE = os.path.join(ESLIFIER_DATA_FOLDER, f"ESLifier_{os.getpid()}.log")
+            self.log_file = open(self.ESLIFIER_LOG_FILE, 'w', encoding='utf-8')
         write_to_file(f'{PROGRAM_NAME} Version v{version}')
         write_to_file('Working directory is ' + os.getcwd())
         if DEBUG:
