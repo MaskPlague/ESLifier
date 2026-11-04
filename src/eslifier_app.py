@@ -554,6 +554,12 @@ class main_window(QMainWindow):
         sys.excepthook = sys.__excepthook__
         for window in QApplication.topLevelWidgets():
             window.close()
+        if hasattr(self, "github_thread") and self.github_thread.isRunning():
+            self.github_thread.quit()
+            self.github_thread.wait()
+        if hasattr(self, "conditions_thread") and self.conditions_thread.isRunning():
+            self.conditions_thread.quit()
+            self.conditions_thread.wait()
         return super().closeEvent(a0)
 
     def resizeEvent(self, a0):
