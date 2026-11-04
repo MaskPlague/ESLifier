@@ -142,18 +142,18 @@ def conditions_connection_result(conditions_success: bool , ignored_success: boo
 class get_latest_patcher_conditions(QObject):
     finished_signal = pyqtSignal(bool, bool)
     def fetch_conditions(self):
-        conditions_success = self.download_conditions()
-        ignored_success = self.download_ignored_files()
+        conditions_success = self.download_conditions("master_patch_conditions.json")
+        ignored_success = self.download_conditions("master_ignored_files.json")
         self.finished_signal.emit(conditions_success, ignored_success)
             
-    def download_conditions(self) -> bool:
+    def download_conditions(self, conditions_file_name) -> bool:
         try:
-            url = GITHUB_MASTER_JSONS_URL + "master_patch_conditions.json"
+            url = GITHUB_MASTER_JSONS_URL + conditions_file_name
             response = requests.get(url, timeout=10)
             response.raise_for_status()
             conditions_data: dict[str] = json.loads(response.text)
             github_conditions_version = conditions_data.get("version", -1)
-            filename = os.path.normpath(ESLIFIER_DATA_FOLDER+"master_patch_conditions.json")
+            filename = os.path.normpath(ESLIFIER_DATA_FOLDER+conditions_file_name)
             if os.path.exists(filename):
                 try:
                     with open(filename, 'r', encoding='utf-8') as f:
@@ -166,45 +166,14 @@ class get_latest_patcher_conditions(QObject):
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 local_conditions_version = -1
             if github_conditions_version <= local_conditions_version:
-                write_to_file(f"Local master_patcher_conditions.json is version {local_conditions_version} which is up to date.")
+                write_to_file(f"Local {conditions_file_name} is version {local_conditions_version} which is up to date.")
                 return True
             with open(filename, "w", encoding="utf-8") as f:
                 json.dump(conditions_data, f, ensure_ascii=False, indent=4)
-            write_to_file(f"Updated to master_patcher_conditions.json version {github_conditions_version} from GitHub.")
+            write_to_file(f"Updated to {conditions_file_name} version {github_conditions_version} from GitHub.")
             return True
         except Exception as e:
-            write_to_file("Failed to update master_patcher_conditions.json; no connection?")
-            write_to_file(f"{e}")
-            return False
-        
-    def download_ignored_files(self) -> bool:
-        try:
-            url = GITHUB_MASTER_JSONS_URL + "master_ignored_files.json"
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
-            conditions_data: dict[str] = json.loads(response.text)
-            github_conditions_version = conditions_data.get("version", -1)
-            filename = os.path.normpath(ESLIFIER_DATA_FOLDER+"master_ignored_files.json")
-            if os.path.exists(filename):
-                try:
-                    with open(filename, 'r', encoding='utf-8') as f:
-                        local_conditions_data: dict[str] = json.load(f)
-                        f.close()
-                except:
-                    local_conditions_data = {}
-                local_conditions_version = local_conditions_data.get("version", -1)
-            else:
-                os.makedirs(os.path.dirname(filename), exist_ok=True)
-                local_conditions_version = -1
-            if github_conditions_version <= local_conditions_version:
-                write_to_file(f"Local master_ignored_files.json is version {local_conditions_version} which is up to date.")
-                return True
-            with open(filename, "w", encoding="utf-8") as f:
-                json.dump(conditions_data, f, ensure_ascii=False, indent=4)
-            write_to_file(f"Updated to master_ignored_files.json version {github_conditions_version} from GitHub.")
-            return True
-        except Exception as e:
-            write_to_file("Failed to update master_ignored_files.json; no connection?")
+            write_to_file(f"Failed to update {conditions_file_name}; no connection?")
             write_to_file(f"{e}")
             return False
         
