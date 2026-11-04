@@ -613,7 +613,7 @@ def start():
                 with open(crash_log_file, 'w+', encoding='utf-8') as f:
                     traceback.print_exc(file=f)
                     f.write(f'Failed to open crash log directory: \n')
-                    f.write(e1)
+                    f.write(str(e1))
                 QMessageBox.critical(None, 
                                     QCoreApplication.translate("Global", 'ESLifier Error'), 
                                     QCoreApplication.translate("Global", 'Failed to open crash log directory, creating crash log at: ') + crash_log_file
