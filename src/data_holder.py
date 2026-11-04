@@ -25,7 +25,7 @@ def update_game_globals():
     IMAGES_PATH = resource_path(f"images/{GAME_MODE}/").replace('\\','/') + '/' #QSS url() requires forward slashes
     ESLIFIER_PNG_ICON_PATH = IMAGES_PATH + "ESLifier.png"
     VERBOSE_GAME_NAME = "Skyrim Special Edition"        if GAME_MODE == "SSE" else "Fallout 4"
-    SHORT_GAME_NAME = "Skyirm"                          if GAME_MODE == "SSE" else "Fallout"
+    SHORT_GAME_NAME = "Skyrim"                          if GAME_MODE == "SSE" else "Fallout"
     VORTEX_GAME_NAME = "skyrimse"                       if GAME_MODE == "SSE" else "fallout4"
     MO2_GAME_NAME = "Skyrim Special Edition"            if GAME_MODE == "SSE" else "Fallout 4"
     GAME_ESM_NAME = "Skyrim.esm"                        if GAME_MODE == "SSE" else "Fallout4.esm"
