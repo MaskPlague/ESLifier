@@ -6,6 +6,7 @@ import threading
 import webbrowser
 import shutil
 import queue
+import subprocess
 from datetime import datetime
 
 from PyQt6.QtWidgets import QMainWindow, QTextEdit, QMessageBox, QProgressBar, QWidget, QVBoxLayout
@@ -98,9 +99,9 @@ class log_stream(QMainWindow):
         self.setWindowTitle('Log Stream')
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowCloseButtonHint & ~Qt.WindowType.Dialog)
         self.setFixedSize(400, 300)
-        self.missing_patchers = []
-        self.errors = []
-        self.ineligible = []
+        self.missing_patchers = set()
+        self.errors = set()
+        self.ineligible = set()
         self.text_edit = QTextEdit()
         self.text_edit.setReadOnly(True)
         self.text_edit.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
@@ -187,6 +188,8 @@ class log_stream(QMainWindow):
         self.display_queue.put(("", 4))  # 4 clear and leave open
     
     def write_to_file(self, text:str):
+        if self.log_file.closed:
+            return
         formatted_datetime = '[' + datetime.now().isoformat(timespec='milliseconds') + ']'
         self.log_file.write(f"{formatted_datetime} {text}\n")
         self.log_file.flush()
@@ -216,22 +219,19 @@ class log_stream(QMainWindow):
         self.write_to_file(text)
 
     def write_warning(self, text:str):
-        if text not in self.missing_patchers:
-            self.missing_patchers.append(text)
-        if not 'red' in self.text_edit.styleSheet() and not 'lightblue' in self.text_edit.styleSheet():
-            self.text_edit.setStyleSheet("background-color: lightblue")
+        self.missing_patchers.add(text)
         self.write_to_file(self.warning_start+text)
+        self.display_queue.put(("warning", 6))    # 6 warning color change
 
     def write_error(self, text:str, is_exception_msg:bool=False):
         text = str(text)
         self.display_queue.put((self.error_start+text, 0))    # 0 Normal
         if not is_exception_msg:
-            self.errors.append(text)
+            self.errors.add(text)
         self.write_to_file(self.error_start+text)
 
     def write_ineligible(self, text:str):
-        if text not in self.write_ineligible:
-            self.ineligible.append(text)
+        self.ineligible.add(text)
         self.write_to_file(text)
             
     def missing_patcher_warning(self):
@@ -470,7 +470,8 @@ class log_stream(QMainWindow):
         cursor.movePosition(cursor.MoveOperation.End)
         if DEBUG:
             self.hijack_print.print_to_console(text)
-        if args[0] == 1:
+        arg_0 = args[0]
+        if arg_0 == 1:
             if args[1] == 1:
                 try:
                     self.lines.pop()
@@ -486,17 +487,20 @@ class log_stream(QMainWindow):
                         break
             self.lines.append(text)
             self.text_edit.setPlainText('\n'.join(self.lines))
-        elif args[0] == 3: # clear and close
+        elif arg_0 == 3: # clear and close
             self.percentage = 100
             #write_to_file("clearing, screen log snapshot:\n" + '\n'.join(self.lines))
             self.log_file.flush()
             self.timer_clear.start(1500)
-        elif args[0] == 4: # clear and leave open
+        elif arg_0 == 4: # clear and leave open
             #write_to_file("alt clearing, screen log snapshot:\n" + '\n'.join(self.lines))
             self.clear_alt()
-        elif args[0] == 5:
+        elif arg_0 == 5:
             self.lines.insert(args[1], text)
             self.text_edit.setPlainText('\n'.join(self.lines))
+        elif arg_0 == 6:
+            if not 'red' in self.text_edit.styleSheet() and not 'lightblue' in self.text_edit.styleSheet():
+                self.text_edit.setStyleSheet("background-color: lightblue")
         else:   #args[0] == 0 # Simply append new text
             self.lines.append(text)
             self.text_edit.setPlainText('\n'.join(self.lines))
