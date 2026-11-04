@@ -148,7 +148,7 @@ class _global():
         _global.mod_manager_mode =                  _global._settings.get('mod_manager_mode', 0)
         _global.mo2_base_path =                     _global._settings.get('mo2_base_path', '')
         _global.mo2_profile =                       _global._settings.get('mo2_profile', 'Default')
-        _global.mo2_profiles_dir =                  _global._settings.get('mo2_profiles_dir')
+        _global.mo2_profiles_dir =                  _global._settings.get('mo2_profiles_dir', '')
         _global.vortex_data_path =                  _global._settings.get('vortex_data_path', '')
         _global.vortex_db_path =                    os.path.normpath(os.path.join(_global.vortex_data_path, "state.v2"))
         if _global.mod_manager_mode == 0:
@@ -156,7 +156,7 @@ class _global():
             _global.plugins_txt_path =              _global._settings.get('plugins_txt_path', '')
         _global.vortex_restore_backups =            _global._settings.get('vortex_restore_backups', True)
         _global.update_header =                     _global._settings.get('update_header', True)
-        _global.generate_cell_master =              _global._settings.get('generate_cell_master', True)
+        _global.generate_cell_master =              _global._settings.get('generate_cell_master', False)
         _global.persistent_ids =                    _global._settings.get('persistent_ids', True)
         _global.free_non_existent =                 _global._settings.get('free_non_existent', False)
         _global.hash_output =                       _global._settings.get('hash_output', True)
