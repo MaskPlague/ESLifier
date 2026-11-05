@@ -376,8 +376,10 @@ class settings(QWidget):
             self.tr("Skip Confirmations"),
             self.tr("Confirmations that can be automatically skipped\n"\
                     "Specify the confirmations to skip, comma separated.\n"\
-                    "Available: FLAG, COMPACT, RE-SCAN, OUTPUT-RESET, OUTPUT-REBUILD, %0-RESET, TIMERS\n"\
-                    "TIMERS skips the confirmation countdowns but doesn't skip the confirmation boxes.\n").replace("%0", GAME_ARCHIVE_TYPE),
+                    "Available: FLAG, COMPACT, RE-SCAN, OUTPUT-RESET, \n"\
+                    "OUTPUT-REBUILD, %0-RESET, TIMERS\n"\
+                    "TIMERS skips the confirmation countdowns but doesn't\n"\
+                    "skip the confirmation boxes.").replace("%0", GAME_ARCHIVE_TYPE),
             "FLAG,COMPACT,TIMERS",
             "skip_confirmations",
             ''
