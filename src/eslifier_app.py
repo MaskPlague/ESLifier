@@ -11,7 +11,7 @@ from PyQt6.QtGui import QPalette, QColor, QIcon
 from PyQt6.QtWidgets import QMainWindow, QApplication, QWidget, QMessageBox, QTabWidget, QVBoxLayout, QSizePolicy
 
 from settings_page import settings
-from main_page import main
+from main.main_page import main
 from log_stream import log_stream, write_to_file
 from data_holder import (_global, GAME_MODE, NEXUS_FILES_TAB_URL, SHORT_GAME_NAME, VORTEX_GAME_NAME, GITHUB_MASTER_JSONS_URL, 
                          PROGRAM_NAME, ESLIFIER_DATA_FOLDER, SETTINGS_JSON, ESLIFIER_LOG_FILE, ESLIFIER_PNG_ICON_PATH,

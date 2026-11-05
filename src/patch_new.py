@@ -14,6 +14,7 @@ from PyQt6.QtGui import QIcon
 from scanners.scanner import scanner
 from scanners.dependency_getter import dependecy_getter
 from compact_form_ids import CFIDs
+from main.flow_control import Flow
 from scanners.cell_changed_scanner import cell_scanner
 from patchers.file_defined_patcher_conditions import user_and_master_conditions_class
 from data_holder import (_global, ESLIFIER_PNG_ICON_PATH, VORTEX_GAME_NAME, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON,
@@ -167,9 +168,7 @@ class patch_new():
                                                                    "Please check the ESLifier log for details."))
 
     def start_rescan(self, only_remove: bool):
-        self.main_parent.redoing_output = True
-        self.main_parent.patch_new_running = True
-        self.main_parent.patch_new_only_remove = only_remove
+        self.main_parent.flow = Flow.PATCH_NEW_REMOVE_ONLY if only_remove else Flow.PATCH_NEW
         self.main_parent.scan()
 
     def finished_patching(self, new_file_num):

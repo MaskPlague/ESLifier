@@ -3,30 +3,28 @@ import json
 import shutil
 import threading
 import timeit
-import hashlib
 import subprocess
 
-from PyQt6.QtCore import Qt, QThread, QObject, pyqtSignal, QTimer, QThreadPool
+from PyQt6.QtCore import Qt, QThread, QObject, QTimer, pyqtBoundSignal
 from PyQt6.QtWidgets import (QHBoxLayout, QVBoxLayout, QLabel, QWidget, QPushButton, QLineEdit, QMessageBox, QApplication,
                              QSplitter, QFrame, QTextEdit, QListWidget, QListWidgetItem, QDialog, QSpacerItem, QSizePolicy)
 from PyQt6.QtGui import QIcon, QCursor
 
 from lists.list_eslify import list_eslable
 from lists.list_compact import list_compactable
-from scanners.scanner import scanner
-from compact_form_ids import CFIDs
-from scanners.cell_changed_scanner import cell_scanner
-from create_cell_master import create_new_cell_plugin
+from lists.list_parent import list_parent_class
 from patch_new import patch_new
+from main.flow_control import Flow
+from main.utils import size_in_units, ListObjBase
+import main.workers as Workers
 from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_MODE, ARCHIVE_EXTRACTED_FOLDER, ESLIFIER_PNG_ICON_PATH,
                          CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
-                         EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
-                         MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
-                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, GAME_ARCHIVE_TYPE)
+                         EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON, 
+                         NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON, WINNING_FILES_DICT_JSON,
+                         PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, GAME_ARCHIVE_TYPE)
 
 from scanners.vortex_database_reader import VortexDBParser
-from log_stream import log_stream, write_error, write_normal, write_patching, write_progress, write_remove, write_to_file, clear_and_close_log, clear_and_leave_log_open
-from patchers.file_defined_patcher_conditions import user_and_master_conditions_class
+from log_stream import log_stream, write_error, write_normal, write_to_file, clear_and_close_log, clear_and_leave_log_open
 from scanners.vortex_database_reader import ReadState
 from scanners.scanner_vortex import VortexErrors
 from scanners.scanner_mo2 import MO2Errors
@@ -55,9 +53,7 @@ class main(QWidget):
         self.scanned = False
         self.cell_master_warned = False
         self.dependency_dictionary: dict[str, list[str]] = {}
-        self.redoing_output = False
-        self.patch_new_running = False
-        self.patch_new_only_remove = False
+        self.flow = Flow.NONE
         self.generate_cell_master = False
         self.log_stream: log_stream = log_stream()
         self.COLOR_MODE = COLOR_MODE
@@ -66,6 +62,7 @@ class main(QWidget):
         self.compact_worker = None
         self.patch_and_flag_worker = None
         self.scanner_worker = None
+        self.running_workers:list[tuple[QThread,QObject]] = []
         self.files_to_not_hash = set()
         self.skip_confirmations = set()
         self.create_widget()
@@ -322,186 +319,142 @@ class main(QWidget):
         self.list_compact.filter_precombines =      _global._settings.get('filter_previs_precombine', True)
         self.list_eslify.filter_precombines =       _global._settings.get('filter_previs_precombine', True)
 
+    @property
+    def redoing_output(self) -> bool:
+        return self.flow.redoing
+
+    @property
+    def patch_new_running(self) -> bool:
+        return self.flow.patch_new
+
+    @property
+    def patch_new_only_remove(self) -> bool:
+        return self.flow.only_remove
+
     def set_false_redoing_output(self):
-        self.redoing_output = False
-        self.patch_new_only_remove = False
-        self.patch_new_running = False
+        self.flow = Flow.NONE
 
     def compact_selected_clicked(self):
-        self.setEnabled(False)
-        checked = []
-        self.list_compact.clearSelection()
-        for row in range(self.list_compact.rowCount()):
-            if self.list_compact.item(row, self.list_compact.MOD_COL).checkState() == Qt.CheckState.Checked and not self.list_compact.item(row, self.list_compact.HIDER_COL):
-                checked.append(self.list_compact.item(row, self.list_compact.MOD_COL).toolTip())
-        if checked != []:
-            file_masters = self.get_from_file(FILE_MASTERS_JSON)
-            game_archive_masters = {}
-            for key, items in _global.game_archive_dict.items():
-                for item in items:
-                    if item in game_archive_masters:
-                        game_archive_masters[item].append(key)
-                    else:
-                        game_archive_masters[item] = [key]
-            self.confirm = self.create_confirmation(icon=QMessageBox.Icon.Information)
-            self.confirm.setWindowTitle(self.tr("Getting estimated disk usage..."))
-            self.confirm.setText(self.tr('Getting estimated disk usage...'))
-            self.confirm.accepted.connect(lambda x = checked: self.compact_confirmed(x))
-            if self.redoing_output or "COMPACT" in self.skip_confirmations:
-                self.confirm.accept()
-                return
-            else:
-                self.confirm.show()
-            self.confirm.setEnabled(False)
-            
-            size = 0
-            counted = set()
+        self.selected_clicked('compact')
 
-            for mod in checked:
-                mod_lower = mod.lower()
-                if mod_lower not in counted and os.path.exists(mod):
-                    size += os.path.getsize(mod)
-                    counted.add(mod_lower)
-                mod_basename = os.path.basename(mod_lower)
-                if mod_basename in self.dependency_dictionary:
-                    for dependent_mod in self.dependency_dictionary[mod_basename]:
-                        dep_lower = dependent_mod.lower()
-                        if dep_lower not in counted and os.path.exists(dependent_mod):
-                            size += os.path.getsize(dependent_mod)
-                            counted.add(dep_lower)
-                if mod_basename in file_masters:
-                    for file in file_masters[mod_basename]:
-                        file_lower = file.lower()
-                        if file_lower not in counted and os.path.exists(file):
-                            size += os.path.getsize(file)
-                            counted.add(file_lower)
-                if mod_basename in game_archive_masters:
-                    for file in game_archive_masters[mod_basename]:
-                        file_lower = file.lower()
-                        if file_lower not in counted and os.path.exists(file):
-                            size += os.path.getsize(file)
-                            counted.add(file_lower)
-            total, used, free = shutil.disk_usage(self.output_folder_path)
-            free_space = round(free / (1024**3), 3)
-            free_space_continuation_message = self.tr(
-                    "This may generate up to %1 %2 of new files\n"\
-                    f"(this may be inaccurate due to unpacking compressed {GAME_ARCHIVE_TYPE})\n"\
-                    "and you have %3 GBs of space left.\n"\
-                    "Are you sure you want to continue?")
-            if size > 1024 ** 3:
-                calculated_size = round(size / (1024 ** 3), 3)
-                self.confirm.setText(free_space_continuation_message.replace("%1", str(calculated_size)).replace("%2", self.tr("GBs")).replace("%3", str(free_space)))
-            elif size > 1048576:
-                calculated_size = round(size / 1048576, 2)
-                self.confirm.setText(free_space_continuation_message.replace("%1", str(calculated_size)).replace("%2", self.tr("MBs")).replace("%3", str(free_space)))
-            else:
-                calculated_size = round(size / 1024, 2)
-                self.confirm.setText(free_space_continuation_message.replace("%1", str(calculated_size)).replace("%2", self.tr("KBs")).replace("%3", str(free_space)))
-            if size >= free:
-                self.confirm.setText(self.tr('Not enough space!\nNeeded space: %1\nSpace left: %2 GBs').replace("%1", str((round(size / 1024**3,3)))).replace("%2", str(free_space)))
-                self.confirm.removeButton(QMessageBox.StandardButton.Yes)
-            self.confirm.setWindowTitle(self.tr("Confirmation: Patching %1 Mod(s)").replace("%1", str(len(checked))))
-            self.confirm.rejected.connect(lambda:self.setEnabled(True))
-            self.confirm.setEnabled(True)
-        elif (self.redoing_output or self.patch_new_running) and checked == []:
-            self.finished_button_action('compact', checked)
+    def eslify_selected_clicked(self):
+        self.selected_clicked('eslify')
+
+    def make_list_obj(self, name) -> ListObjBase:
+        if name == 'compact':
+            return ListObjBase(name, self.list_compact, "COMPACT",
+                               self.tr("Confirmation: Patching %1 Mod(s)"),
+                               self.compact_confirm_text, self.compact_confirmed)
         else:
-            self.setEnabled(True)
+            return ListObjBase(name, self.list_eslify, "FLAG",
+                               self.tr("Confirmation: ESL Flagging %1 Mod(s)"),
+                               self.eslify_confirm_text, self.eslify_confirmed)
 
-    def compact_confirmed(self, checked):
+    def get_checked_mods(self, mod_list: list_parent_class):
+        checked = []
+        mod_list.clearSelection()
+        for row in range(mod_list.rowCount()):
+            item = mod_list.item(row, mod_list.MOD_COL)
+            if item.checkState() == Qt.CheckState.Checked and not mod_list.item(row, mod_list.HIDER_COL):
+                checked.append(item.toolTip())
+        return checked
+
+    def lock_checked_rows(self, mod_list:list_parent_class):
+        for row in range(mod_list.rowCount()):
+            item = mod_list.item(row, mod_list.MOD_COL)
+            if item.checkState() == Qt.CheckState.Checked:
+                item.setCheckState(Qt.CheckState.PartiallyChecked)
+                item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
+
+    def game_archive_masters_by_file(self):
+        game_archive_masters = {}
+        for archive, masters in _global.game_archive_dict.items():
+            for master in masters:
+                game_archive_masters.setdefault(master, []).append(archive)
+        return game_archive_masters
+
+    def selected_clicked(self, name):
+        list_obj = self.make_list_obj(name)
+        self.setEnabled(False)
+        checked = self.get_checked_mods(list_obj.mod_list)
+        if not checked:
+            if self.redoing_output or self.patch_new_running:
+                self.finished_button_action(name, checked)
+            else:
+                self.setEnabled(True)
+            return
+        self.confirm = self.create_confirmation(icon=QMessageBox.Icon.Information)
+        self.confirm.setWindowTitle(self.tr("Getting estimated disk usage..."))
+        self.confirm.setText(self.tr('Getting estimated disk usage...'))
+        self.confirm.accepted.connect(lambda: list_obj.confirmed(checked))
+        if self.redoing_output or list_obj.skip_key in self.skip_confirmations:
+            self.confirm.accept()
+            return
+        self.confirm.show()
+        self.confirm.setEnabled(False)
+        if name == 'compact':
+            has_others = None
+            game_archive_masters = self.game_archive_masters_by_file()
+        else: #a plugin's dependents only need patching for ESLifier_Cell_Master if it has a new interior cell
+            has_others = {mod for mod in checked if 'new_interior_cell' in list_obj.mod_list.flag_dict.get(mod, ())}
+            game_archive_masters = None
+        worker = Workers.SizeEstimateWorker(checked, has_others, self.dependency_dictionary, self.get_from_file(FILE_MASTERS_JSON),
+                                    game_archive_masters, self.output_folder_path)
+        self.start_worker(worker, worker.run, worker.finished_signal,
+                          lambda size, free: self.show_estimate(list_obj, checked, size, free))
+
+    def show_estimate(self, list_obj:ListObjBase, checked:list, size:int, free:int):
+        free_space = round(free / (1024**3), 3)
+        self.confirm.setText(list_obj.confirm_text(size, free_space))
+        if size >= free:
+            self.confirm.setText(self.tr('Not enough space!\nNeeded space: %1\nSpace left: %2 GBs').replace("%1", str((round(size / 1024**3,3)))).replace("%2", str(free_space)))
+            self.confirm.removeButton(QMessageBox.StandardButton.Yes)
+        self.confirm.setWindowTitle(list_obj.title.replace("%1", str(len(checked))))
+        self.confirm.rejected.connect(lambda:self.setEnabled(True))
+        self.confirm.setEnabled(True)
+
+    def compact_confirm_text(self, size, free_space):
+        value, unit = size_in_units(size)
+        return self.tr(
+                "This may generate up to %1 %2 of new files\n"\
+                "(this may be inaccurate due to unpacking compressed %0)\n"\
+                "and you have %3 GBs of space left.\n"\
+                "Are you sure you want to continue?").replace("%0", GAME_ARCHIVE_TYPE
+                ).replace("%1", str(value)).replace("%2", unit).replace("%3", str(free_space))
+
+    def eslify_confirm_text(self, size, free_space):
+        value, unit = size_in_units(size)
+        return self.tr(
+                "This may generate up to %0 %1 of new files\n"\
+                "and you have %2 GBs of space left.\n"\
+                "Are you sure you want to continue?").replace("%0", str(value)
+                ).replace("%1", unit).replace("%2", str(free_space))
+    
+    def start_worker(self, worker:QObject, start_func, finished_signal:pyqtBoundSignal, *on_finished):
+        thread = QThread()
+        self.running_workers.append((thread, worker))
+        worker.moveToThread(thread)
+        thread.started.connect(start_func)
+        thread.finished.connect(lambda t=thread, w=worker: self.running_workers.remove((t, w)))
+        for callback in on_finished:
+            finished_signal.connect(callback)
+        finished_signal.connect(thread.quit)
+        thread.start()
+
+    def compact_confirmed(self, checked:list):
         write_to_file(f'Compacting Plugins [Mod Manager Mode = {_global.mod_manager_mode}]')
         self.confirm.hide()
         self.start_time = timeit.default_timer()
-        for row in range(self.list_compact.rowCount()):
-            if self.list_compact.item(row,self.list_compact.MOD_COL).checkState() == Qt.CheckState.Checked:
-                self.list_compact.item(row,self.list_compact.MOD_COL).setCheckState(Qt.CheckState.PartiallyChecked)
-                self.list_compact.item(row,self.list_compact.MOD_COL).setFlags(self.list_compact.item(row,self.list_compact.MOD_COL).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
+        self.lock_checked_rows(self.list_compact)
         self.log_stream.show()
-        self.compact_thread = QThread()
-        self.compact_worker = CompactorWorker(checked, self.dependency_dictionary, self.files_to_not_hash)
-        self.compact_worker.moveToThread(self.compact_thread)
-        self.compact_thread.started.connect(self.compact_worker.run)
-        self.compact_worker.finished_signal.connect(
-            lambda sender = 'compact', 
-            checked_list = checked:
-            self.finished_button_action(sender, checked_list,))
-        self.compact_worker.finished_signal.connect(self.compact_thread.quit)
-        self.compact_thread.start()
-        
-    def eslify_selected_clicked(self):
-        self.setEnabled(False)
-        checked: list[str] = []
-        self.list_eslify.clearSelection()
-        for row in range(self.list_eslify.rowCount()):
-            if self.list_eslify.item(row, self.list_eslify.MOD_COL).checkState() == Qt.CheckState.Checked and not self.list_eslify.item(row, self.list_eslify.HIDER_COL):
-                checked.append(self.list_eslify.item(row, self.list_eslify.MOD_COL).toolTip())
-        if checked != []:
-            file_masters: dict[str, list[str]] = self.get_from_file(FILE_MASTERS_JSON)
-            self.confirm = self.create_confirmation(icon=QMessageBox.Icon.Information)
-            self.confirm.setWindowTitle(self.tr("Getting estimated disk usage..."))
-            self.confirm.setText(self.tr('Getting estimated disk usage...'))
-            self.confirm.accepted.connect(lambda x = checked: self.eslify_confirmed(x))
-            if self.redoing_output or "FLAG" in self.skip_confirmations:
-                self.confirm.accept()
-                return
-            else:
-                self.confirm.show()
-
-            self.confirm.setEnabled(False)
-
-            size = 0
-            counted = set()
-
-            for mod in checked:
-                mod_lower = mod.lower()
-                if mod_lower not in counted and os.path.exists(mod):
-                    size += os.path.getsize(mod)
-                    counted.add(mod_lower)
-                # if not new_interior_cell then the mod's dependents don't need patching for ESLifier_Cell_Master and thus shouldn't be counted
-                if not 'new_interior_cell' in self.list_eslify.flag_dict[mod]:
-                    continue
-                mod_basename = os.path.basename(mod_lower)
-                if mod_basename in self.dependency_dictionary:
-                    for dependent_mod in self.dependency_dictionary[mod_basename]:
-                        dep_lower = dependent_mod.lower()
-                        if dep_lower not in counted and os.path.exists(dependent_mod):
-                            size += os.path.getsize(dependent_mod)
-                            counted.add(dep_lower)
-                if mod_basename in file_masters:
-                    for file in file_masters[mod_basename]:
-                        file_lower = file.lower()
-                        if file_lower not in counted and os.path.exists(file):
-                            size += os.path.getsize(file)
-                            counted.add(file_lower)
-            total, used, free = shutil.disk_usage(self.output_folder_path)
-            free_space = round(free / (1024**3), 3)
-            if size > 1024 ** 3:
-                calculated_size = round(size / (1024 ** 3), 3)
-                self.confirm.setText(self.tr("This may generate up to %1 GBs of new files\nand you have %2 GBs of space left.\nAre you sure you want to continue?").replace("%1", str(calculated_size)).replace("%2", str(free_space)))
-            elif size > 1048576:
-                calculated_size = round(size / 1048576, 2)
-                self.confirm.setText(self.tr("This may generate up to %1 MBs of new files\nand you have %2 GBs of space left.\nAre you sure you want to continue?").replace("%1", str(calculated_size)).replace("%2", str(free_space)))
-            else:
-                calculated_size = round(size / 1024, 2)
-                self.confirm.setText(self.tr("This may generate up to %1 KBs of new files\nand you have %2 GBs of space left.\nAre you sure you want to continue?").replace("%1", str(calculated_size)).replace("%2", str(free_space)))
-            if size >= free:
-                self.confirm.setText(self.tr('Not enough space!\nNeeded space: %1\nSpace left: %2 GBs').replace("%1", str((round(size / 1024**3,3)))).replace("%2", str(free_space)))
-                self.confirm.removeButton(QMessageBox.StandardButton.Yes)
-            self.confirm.setWindowTitle(self.tr("Confirmation: ESL Flagging %1 Mod(s)").replace("%1", str(len(checked))))
-            self.confirm.rejected.connect(lambda:self.setEnabled(True))
-            self.confirm.setEnabled(True)
-        elif (self.redoing_output or self.patch_new_running) and checked == []:
-            self.finished_button_action('eslify', checked)
-        else:
-            self.setEnabled(True)
+        worker = Workers.CompactorWorker(checked, self.dependency_dictionary, self.files_to_not_hash)
+        self.start_worker(worker, worker.run, worker.finished_signal,
+                          lambda: self.finished_button_action('compact', checked))
 
     def eslify_confirmed(self, checked):
         write_to_file(f'ESL Flagging Plugins [Mod Manager Mode = {_global.mod_manager_mode}]')
         self.confirm.hide()
-        for row in range(self.list_eslify.rowCount()):
-            if self.list_eslify.item(row, self.list_eslify.MOD_COL).checkState() == Qt.CheckState.Checked:
-                self.list_eslify.item(row, self.list_eslify.MOD_COL).setCheckState(Qt.CheckState.PartiallyChecked)
-                self.list_eslify.item(row, self.list_eslify.MOD_COL).setFlags(self.list_eslify.item(row, self.list_eslify.MOD_COL).flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
+        self.lock_checked_rows(self.list_eslify)
         self.log_stream.show()
         if self.generate_cell_master:
             flag_only = []
@@ -529,20 +482,18 @@ class main(QWidget):
             write_error(self.tr('Failed to save esl_flagged.json'))
             write_error(e, True)
 
+    def create_flag_worker(self, files, patch_and_flag = []):
+        worker = Workers.FlagWorker(files, self.files_to_not_hash)
+        self.start_worker(worker, worker.flag_files, worker.finished_signal,
+                          lambda: self.create_patch_and_flag_worker(files, patch_and_flag))
+
     def create_patch_and_flag_worker(self, files: list[str], patch_and_flag: list[str]):
         if len(patch_and_flag) > 0:
             full_list = files.copy()
             full_list.extend(patch_and_flag)
-            self.flag_and_patch_thread = QThread()
-            self.patch_and_flag_worker = CompactorWorker(patch_and_flag, self.dependency_dictionary, self.files_to_not_hash)
-            self.patch_and_flag_worker.moveToThread(self.flag_and_patch_thread)
-            self.flag_and_patch_thread.started.connect(self.patch_and_flag_worker.run)
-            self.patch_and_flag_worker.finished_signal.connect(self.flag_and_patch_thread.quit)
-            self.patch_and_flag_worker.finished_signal.connect(
-                lambda sender = 'eslify', 
-                checked_list = full_list:
-                self.finished_button_action(sender, checked_list,))
-            self.flag_and_patch_thread.start()
+            worker = Workers.CompactorWorker(patch_and_flag, self.dependency_dictionary, self.files_to_not_hash)
+            self.start_worker(worker, worker.run, worker.finished_signal,
+                              lambda: self.finished_button_action('eslify', full_list))
         else:
             self.finished_button_action('eslify', files,)
             write_normal(self.tr("File(s) ESL Flagged"))
@@ -551,105 +502,90 @@ class main(QWidget):
             else:
                 clear_and_close_log()
 
-    def create_flag_worker(self, files, patch_and_flag = []):
-        self.flag_thread = QThread()
-        self.flag_worker = FlagWorker(files, self.files_to_not_hash)
-        self.flag_worker.moveToThread(self.flag_thread)
-        self.flag_thread.started.connect(self.flag_worker.flag_files)
-        self.flag_worker.finished_signal.connect(self.flag_thread.quit)
-        self.flag_worker.finished_signal.connect(
-            lambda files_copy = files,
-            patch_and_flag_copy = patch_and_flag:
-            self.create_patch_and_flag_worker(files_copy, patch_and_flag_copy)
-        )
-        self.flag_thread.start()
-
     def finished_button_action(self, sender, checked_list):
         if not self.redoing_output:
-            message = QMessageBox()
-            message.setWindowTitle(self.tr("Finished"))
-            message.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
-            if _global.mod_manager_mode == 0: #Manual?
-                message.setText(self.tr("ESLifier has finished. The altered files are in your ESLifier Output."))
-            elif _global.mod_manager_mode == 1: #Vortex
-                message.setText(self.tr("Make sure the ESLifier Output is installed as a mod and let it win any file conflicts by making the "\
-                                        "output go 'After All' conflicts. Make sure to re-deploy your mods. " \
-                                        "If you generate the output folder in your mod staging folder for the first time, then make sure "\
-                                        "to restart Vortex to install the output. Make sure that all of your plugins are still enabled."))
-            elif _global.mod_manager_mode == 2: #MO2
-                message.setText(self.tr("Make sure the ESLifier Output is installed as a mod and let it win any file conflicts. "\
-                                        "If you generate the output folder in your mods folder for the first time, then make sure to hit "\
-                                        "refresh in MO2."))
-            message.addButton(QMessageBox.StandardButton.Ok).setText(self.tr("Ok"))
-            def shown():
-                message.hide()
-                if self.generate_cell_master and not self.cell_master_warned:
-                    cell_master_message = QMessageBox()
-                    cell_master_message.setWindowTitle(self.tr("Activate ESLifier_Cell_Master.esm and Sort Your Plugins"))
-                    cell_master_message.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
-                    cell_master_message.setText(self.tr("Do not forget to activate ESLifier_Cell_Master.esm and re-sort\n"\
-                                                "your plugins to put the ESM above all of it's dependents. You\n"\
-                                                "likely can put it at the top of your plugins list."))
-                    cell_master_message.addButton(QMessageBox.StandardButton.Ok).setText(self.tr("Ok"))
-                    def hide_message():
-                        cell_master_message.hide()
-                    cell_master_message.accepted.connect(hide_message)
-                    cell_master_message.show()
-                    self.cell_master_warned = True
-            message.accepted.connect(shown)
-            message.show()
+            self.show_finished_message()
         if sender == 'compact':
-            if len(checked_list) > 0:
-                for mod in checked_list:
-                    self.list_compact.flag_dict.pop(mod)
-                self.list_compact.create_list()
-            if not self.patch_new_running:
-                write_normal(self.tr("Total Elapsed Time: %1 Seconds").replace("%1", f"{timeit.default_timer() - self.start_time:.2f}"))
-                clear_and_close_log()
-                self.redoing_output = False
-                self.setEnabled(True)
-                self.calculate_stats()
-                return
-            else:
-                self.patch_new_running = False
-                self.patch_new_only_remove = False
-                self.redoing_output = False
-                self.patch_new.finished_rebuilding()
+            self.remove_finished_mods(self.list_compact, checked_list)
+            self.compact_finished()
         elif sender == 'eslify':
-            if len(checked_list) > 0:
-                for mod in checked_list:
-                    self.list_eslify.flag_dict.pop(mod)
-                self.list_eslify.create_list()
-            if not self.redoing_output:
-                clear_and_close_log()
-            elif self.redoing_output and os.path.exists(PREVIOUSLY_COMPACTED_JSON):
-                clear_and_leave_log_open()
-                self.list_compact.check_previously_compacted()
-                checked = 0
-                for i in range(self.list_compact.rowCount()):
-                    if self.list_compact.item(i, self.list_compact.MOD_COL).checkState() == Qt.CheckState.Checked:
-                        checked += 1
-                if checked > 0:
-                    self.compact_selected_clicked()
-                elif checked == 0 and self.patch_new_running:
-                    self.patch_new_running = False
-                    self.patch_new_only_remove = False
-                    self.redoing_output = False
-                    self.patch_new.finished_rebuilding()
-                else:
-                    clear_and_close_log()
-                    self.redoing_output = False
-                    #self.setEnabled(True)
-            else:
-                clear_and_close_log()
-                self.setEnabled(True)
-                self.calculate_stats()
-                self.redoing_output = False
+            self.remove_finished_mods(self.list_eslify, checked_list)
+            self.eslify_finished()
+
+    def show_finished_message(self):
+        message = QMessageBox()
+        message.setWindowTitle(self.tr("Finished"))
+        message.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
+        if _global.mod_manager_mode == 0: #Manual?
+            message.setText(self.tr("ESLifier has finished. The altered files are in your ESLifier Output."))
+        elif _global.mod_manager_mode == 1: #Vortex
+            message.setText(self.tr("Make sure the ESLifier Output is installed as a mod and let it win any file conflicts by making the "\
+                                    "output go 'After All' conflicts. Make sure to re-deploy your mods. " \
+                                    "If you generate the output folder in your mod staging folder for the first time, then make sure "\
+                                    "to restart Vortex to install the output. Make sure that all of your plugins are still enabled."))
+        elif _global.mod_manager_mode == 2: #MO2
+            message.setText(self.tr("Make sure the ESLifier Output is installed as a mod and let it win any file conflicts. "\
+                                    "If you generate the output folder in your mods folder for the first time, then make sure to hit "\
+                                    "refresh in MO2."))
+        message.addButton(QMessageBox.StandardButton.Ok).setText(self.tr("Ok"))
+        def shown():
+            message.hide()
+            if self.generate_cell_master and not self.cell_master_warned:
+                cell_master_message = QMessageBox()
+                cell_master_message.setWindowTitle(self.tr("Activate ESLifier_Cell_Master.esm and Sort Your Plugins"))
+                cell_master_message.setWindowIcon(QIcon(ESLIFIER_PNG_ICON_PATH))
+                cell_master_message.setText(self.tr("Do not forget to activate ESLifier_Cell_Master.esm and re-sort\n"\
+                                            "your plugins to put the ESM above all of it's dependents. You\n"\
+                                            "likely can put it at the top of your plugins list."))
+                cell_master_message.addButton(QMessageBox.StandardButton.Ok).setText(self.tr("Ok"))
+                def hide_message():
+                    cell_master_message.hide()
+                cell_master_message.accepted.connect(hide_message)
+                cell_master_message.show()
+                self.cell_master_warned = True
+        message.accepted.connect(shown)
+        message.show()
+
+    def remove_finished_mods(self, mod_list:list_parent_class, checked_list:list[str]):
+        if len(checked_list) > 0:
+            for mod in checked_list:
+                mod_list.flag_dict.pop(mod, None)
+            mod_list.create_list()
+
+    def compact_finished(self):
+        if self.patch_new_running:
+            self.end_flow(hand_back_to_patch_new=True)
+            return
+        write_normal(self.tr("Total Elapsed Time: %1 Seconds").replace("%1", f"{timeit.default_timer() - self.start_time:.2f}"))
+        clear_and_close_log()
+        self.end_flow()
+
+    def eslify_finished(self):
+        if self.redoing_output and os.path.exists(PREVIOUSLY_COMPACTED_JSON):
+            #A rebuild or Patch New also compacts whatever was compacted before, once the ESL flagging is done.
+            clear_and_leave_log_open()
+            self.list_compact.check_previously_compacted()
+            if self.count_checked_rows(self.list_compact) > 0:
+                self.compact_selected_clicked()
                 return
-        
-        if not self.redoing_output:
-            self.setEnabled(True)
-            self.calculate_stats()
+            if not self.patch_new_running:
+                clear_and_close_log()
+        else:
+            clear_and_close_log()
+        self.end_flow(hand_back_to_patch_new=True)
+
+    def count_checked_rows(self, mod_list:list_parent_class):
+        return sum(1 for row in range(mod_list.rowCount())
+                   if mod_list.item(row, mod_list.MOD_COL).checkState() == Qt.CheckState.Checked)
+
+    def end_flow(self, hand_back_to_patch_new=False):
+        was_patch_new = self.patch_new_running
+        self.set_false_redoing_output()
+        if hand_back_to_patch_new and was_patch_new:
+            self.patch_new.finished_rebuilding()
+            return
+        self.setEnabled(True)
+        self.calculate_stats()
 
     def vortex_error_text(self, state:ReadState):
         if state == ReadState.ERROR_DB_LOCKED_EXTENSION_MISSING:
@@ -657,6 +593,10 @@ class main(QWidget):
                                     "ESLifier cannot read Vortex's database unless Vortex is closed or the extension is installed.")
         elif state == ReadState.ERROR_DB_LOCKED_EXTENSION_UNREACHABLE:
             return self.tr("Vortex is open but the Vortex extension is unresponsive. Please close or restart Vortex.")
+        elif state == ReadState.ERROR_DB_LOCKED_DEPLOYING:
+            return self.tr("Vortex is in the process of deploying your modlist, please wait for it to complete and try again.")
+        elif state == ReadState.ERROR_DB_LOCKED_PURGING:
+            return self.tr("ESLifier has detected you are currently purging your modlist. You will need to redeploy before running ESLifier.")
         elif state == VortexErrors.HAS_CYCLES:
             return self.tr("ESLifier detected that a cyclic rule is set in Vortex, please correct it first.")
         elif state == VortexErrors.DIFFERENT_MSF_AND_OF_DRIVEs:
@@ -694,7 +634,7 @@ class main(QWidget):
         def run_scan():
             write_to_file(f'Running Scan [Mod Manager Mode = {_global.mod_manager_mode}]')
             self.log_stream.show()
-            self.scanner_worker = ScannerWorker()
+            self.scanner_worker = Workers.ScannerWorker()
             self.scanner_worker.moveToThread(self.scan_thread)
             self.scan_thread.started.connect(self.scanner_worker.scan_run)
             self.scanner_worker.finished_signal.connect(self.completed_scan)
@@ -724,6 +664,7 @@ class main(QWidget):
         confirm.setStandardButtons(QMessageBox.StandardButton.Ok)
         confirm.accepted.connect(accept)
         confirm.show()
+        self.set_false_redoing_output()
         self.setEnabled(True)
 
     def mo2_error(self):
@@ -742,6 +683,7 @@ class main(QWidget):
         confirm.setStandardButtons(QMessageBox.StandardButton.Ok)
         confirm.accepted.connect(accept)
         confirm.show()
+        self.set_false_redoing_output()
         self.setEnabled(True)
     
     def completed_scan(self, eslifiy_flag_dict, compact_flag_dict, dependency_dictionary):
@@ -766,25 +708,57 @@ class main(QWidget):
             write_error(self.tr('Failed to create "Compact + ESLify" list'))
             write_error(e, True)
         write_normal(self.tr('Done Scanning'))
-        if self.redoing_output and not self.patch_new_only_remove:
-            if os.path.exists(PREVIOUSLY_ESL_FLAGGED_JSON):
-                clear_and_leave_log_open()
-                self.list_eslify.check_previously_esl_flagged()
-                #if not self.patch_new_running:
-                #    os.remove(ESL_FLAGGED_JSON)
-                self.eslify_selected_clicked()
-            elif os.path.exists(PREVIOUSLY_COMPACTED_JSON):
-                self.list_compact.check_previously_compacted()
-                self.compact_selected_clicked()
-        elif self.redoing_output and self.patch_new_only_remove:
-            self.redoing_output = False
-            self.patch_new_running = False
-            self.patch_new_only_remove = False
-            self.patch_new.finished_rebuilding()
+        if self.redoing_output:
+            self.continue_redo_after_scan()
         else:
             clear_and_close_log()
             self.calculate_stats()
             self.setEnabled(True)
+
+    def continue_redo_after_scan(self):
+        if self.patch_new_only_remove:
+            self.end_flow(hand_back_to_patch_new=True)
+        elif os.path.exists(PREVIOUSLY_ESL_FLAGGED_JSON):
+            clear_and_leave_log_open()
+            self.list_eslify.check_previously_esl_flagged()
+            self.eslify_selected_clicked()
+        elif os.path.exists(PREVIOUSLY_COMPACTED_JSON):
+            self.list_compact.check_previously_compacted()
+            self.compact_selected_clicked()
+        else:
+            clear_and_close_log()
+            self.end_flow(hand_back_to_patch_new=True)
+
+    def safe_remove(self, path):
+        """Remove a file, tolerating it being missing or locked (e.g. by anti-virus)."""
+        try:
+            os.remove(path)
+        except FileNotFoundError:
+            pass
+        except OSError as e:
+            write_to_file(f"Warn: Could not remove {path}: {e}")
+
+    def archive_compacted_and_patched(self):
+        if not os.path.exists(COMPACTED_AND_PATCHED_JSON):
+            return
+        try:
+            with open(COMPACTED_AND_PATCHED_JSON, 'r', encoding='utf-8') as f:
+                previously_compacted = list(json.load(f).keys())
+            with open(PREVIOUSLY_COMPACTED_JSON, 'w', encoding='utf-8') as f:
+                json.dump(previously_compacted, f, ensure_ascii=False, indent=4)
+            os.remove(COMPACTED_AND_PATCHED_JSON)
+        except Exception as e:
+            write_error(self.tr("Failed in Compacted and Patched deletion process."))
+            write_error(e, True)
+
+    def archive_esl_flagged(self):
+        if not os.path.exists(ESL_FLAGGED_JSON):
+            return
+        try:
+            os.replace(ESL_FLAGGED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON)
+        except OSError as e:
+            write_error(self.tr("Failed to archive the ESL flagged list."))
+            write_error(e, True)
 
     def get_from_file(self, file):
         try:
@@ -875,32 +849,13 @@ class main(QWidget):
         def accepted():
             write_to_file(f'Resetting Output [Mod Manager Mode = {_global.mod_manager_mode}]')
             confirm.hide()
-            if os.path.exists(COMPACTED_AND_PATCHED_JSON):
-                try:
-                    compacted_and_patched_dict = {}
-                    with open(COMPACTED_AND_PATCHED_JSON, 'r', encoding='utf-8') as f:
-                        compacted_and_patched_dict = json.load(f)
-                    previously_compacted = [key for key in compacted_and_patched_dict.keys()]
-                    with open(PREVIOUSLY_COMPACTED_JSON, 'w', encoding='utf-8') as f:
-                        json.dump(previously_compacted, f, ensure_ascii=False, indent=4)
-                    os.remove(COMPACTED_AND_PATCHED_JSON)
-                except Exception as e:
-                    write_error(self.tr("Failed in Compacted and Patched deletion process."))
-                    write_error(e, True)
-            if os.path.exists(ESL_FLAGGED_JSON):
-                if os.path.exists(PREVIOUSLY_ESL_FLAGGED_JSON):
-                    os.remove(PREVIOUSLY_ESL_FLAGGED_JSON)
-                shutil.copy(ESL_FLAGGED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON)
-                os.remove(ESL_FLAGGED_JSON)
-            if os.path.exists(ORIGINAL_FILES_JSON):
-                os.remove(ORIGINAL_FILES_JSON)
-            if os.path.exists(MASTER_BYTE_DATA_JSON):
-                os.remove(MASTER_BYTE_DATA_JSON)
+            self.archive_compacted_and_patched()
+            self.archive_esl_flagged()
+            self.safe_remove(ORIGINAL_FILES_JSON)
+            self.safe_remove(MASTER_BYTE_DATA_JSON)
             self.delete_output(self.output_folder_full, files_to_remove)
-            self.list_compact.flag_dict = {}
-            self.list_eslify.flag_dict = {}
-            self.list_compact.create_list()
-            self.list_eslify.create_list()
+            self.list_compact.reset_list()
+            self.list_eslify.reset_list()
             def previous_removal_confirmation():
                 def accepted3():
                     if os.path.exists(PREVIOUSLY_ESL_FLAGGED_JSON):
@@ -965,51 +920,37 @@ class main(QWidget):
         confirm.setText(
             self.tr(
                 "Are you sure you want to recreate the output folder %1?\n" \
-                "This action will delete %2 files and %3 MBs of data from the output and\n" \
-                "re-scan, flag, compact, and patch all previously output files that fit the current filters.\n" \
-                "If deletion of the output folder takes more than 5 seconds, blame your anti-virus\n"\
-                "and maybe move your output/game install to a non-protected folder."
+                "This action will delete %2 files and %3 MBs of data\n"\
+                "from the output and re-scan, flag, compact, and patch\n"\
+                "all previously output files that fit the current filters.\n"\
+                "Anti-Virus can cause output deletion to take 5+ seconds."
             ).replace("%1", self.output_folder_name).replace("%2", str(file_count)).replace("%3", str(calculated_size)))
         def accepted():
             write_to_file(f'Starting Output Rebuild [Mod Manager Mode = {_global.mod_manager_mode}]')
             confirm.hide()
-            previously_compacted = []
-            previously_esl_flagged = []
-            if os.path.exists(NEW_FILE_HASHES_JSON):
-                self.update_changed_rel_paths_in_new_files_hashes(changed_rel_paths_to_switch)
+            # Work out what there is to rebuild from BEFORE touching any state files,
+            # so that bailing out leaves everything exactly as it was.
             if os.path.exists(COMPACTED_AND_PATCHED_JSON):
-                compacted_and_patched_dict = {}
-                with open(COMPACTED_AND_PATCHED_JSON, 'r', encoding='utf-8') as f:
-                    compacted_and_patched_dict = json.load(f)
-                previously_compacted = [key for key in compacted_and_patched_dict.keys()]
-                with open(PREVIOUSLY_COMPACTED_JSON, 'w', encoding='utf-8') as f:
-                    json.dump(previously_compacted, f, ensure_ascii=False, indent=4)
-                os.remove(COMPACTED_AND_PATCHED_JSON)
-            elif os.path.exists(PREVIOUSLY_COMPACTED_JSON):
+                previously_compacted = list(self.get_from_file(COMPACTED_AND_PATCHED_JSON).keys())
+            else:
                 previously_compacted = self.get_from_file(PREVIOUSLY_COMPACTED_JSON)
             if os.path.exists(ESL_FLAGGED_JSON):
                 previously_esl_flagged = self.get_from_file(ESL_FLAGGED_JSON)
-                if os.path.exists(PREVIOUSLY_ESL_FLAGGED_JSON):
-                    os.remove(PREVIOUSLY_ESL_FLAGGED_JSON)
-                shutil.copy(ESL_FLAGGED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON)
-                os.remove(ESL_FLAGGED_JSON)
-            elif os.path.exists(PREVIOUSLY_ESL_FLAGGED_JSON):
+            else:
                 previously_esl_flagged = self.get_from_file(PREVIOUSLY_ESL_FLAGGED_JSON)
-            if os.path.exists(ORIGINAL_FILES_JSON):
-                os.remove(ORIGINAL_FILES_JSON)
-            if os.path.exists(WINNING_FILE_HISTORY_DICT_JSON):
-                os.remove(WINNING_FILE_HISTORY_DICT_JSON)
-            if os.path.exists(WINNING_FILES_DICT_JSON):
-                os.remove(WINNING_FILES_DICT_JSON)
-            if os.path.exists(MASTER_BYTE_DATA_JSON):
-                os.remove(MASTER_BYTE_DATA_JSON)
             if len(previously_compacted) == 0 and len(previously_esl_flagged) == 0:
                 QMessageBox.warning(None, self.tr("No Existing Output Data"), self.tr("There is no existing output data for ESLifier to use."))
                 clear_and_close_log()
                 return
+            if os.path.exists(NEW_FILE_HASHES_JSON):
+                self.update_changed_rel_paths_in_new_files_hashes(changed_rel_paths_to_switch)
+            self.archive_compacted_and_patched()
+            self.archive_esl_flagged()
+            for cache_file in (ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON, WINNING_FILES_DICT_JSON, MASTER_BYTE_DATA_JSON):
+                self.safe_remove(cache_file)
             self.delete_output(self.output_folder_full, files_to_remove, remove_maps=False)
             self.calculate_stats()
-            self.redoing_output = True
+            self.flow = Flow.REBUILD
             self.scan()
 
         confirm.accepted.connect(accepted)
@@ -1053,10 +994,8 @@ class main(QWidget):
                     for thread in threads:
                         thread.join()
                 delete_subdirectories_threaded(f'{ARCHIVE_EXTRACTED_FOLDER}/')
-            self.list_compact.flag_dict = {}
-            self.list_eslify.flag_dict = {}
-            self.list_compact.create_list()
-            self.list_eslify.create_list()
+            self.list_compact.reset_list()
+            self.list_eslify.reset_list()
         confirm.accepted.connect(accepted)
         if f"{GAME_ARCHIVE_TYPE}-RESET" in self.skip_confirmations:
             confirm.accept()
@@ -1118,28 +1057,43 @@ class main(QWidget):
         confirm.setEnabled = newSetEnabled
         return confirm
     
+    @staticmethod
+    def walk_output_files(folder):
+        """Yields (path, size) for every file under folder.
+        Uses scandir so that on Windows the size comes from the directory listing rather than one stat call per file.
+        Directory symlinks are not followed and files that vanish mid-walk are skipped."""
+        stack = [folder]
+        while stack:
+            current = stack.pop()
+            try:
+                with os.scandir(current) as entries:
+                    for entry in entries:
+                        try:
+                            if entry.is_dir():
+                                if not entry.is_symlink():
+                                    stack.append(entry.path)
+                                continue
+                            yield entry.path, entry.stat().st_size
+                        except OSError:
+                            continue
+            except OSError:
+                continue
+
     def calculate_existing_output(self):
         size = 0
-        file_count = 0
         files_to_remove = []
-        for root, _, files in os.walk(self.output_folder_full):
-            file_count += len(files)
-            for file in files:
-                full_path = os.path.join(root, file)
-                files_to_remove.append(full_path)
-                size += os.path.getsize(full_path)
-        return files_to_remove, size, file_count
-    
+        for path, file_size in self.walk_output_files(self.output_folder_full):
+            files_to_remove.append(path)
+            size += file_size
+        return files_to_remove, size, len(files_to_remove)
+
     def calculate_existing_output_threaded(self, requester):
         self.setEnabled(False)
-        self.pool = QThreadPool.globalInstance()
-        self.pool.setMaxThreadCount(os.cpu_count())
         self.calculate_requester = requester
         self.total_size = 0
         self.total_file_count = 0
         self.total_progress = 0
         self.files_to_remove = []
-        self.changed_hashes = []
         self.new_file_hashes = self.get_from_file(NEW_FILE_HASHES_JSON)
 
         files_to_hash = []
@@ -1151,7 +1105,7 @@ class main(QWidget):
         write_normal(self.tr("Hashing output for changes..."))
         write_normal("", False)
         self.hasher_thread = QThread()
-        self.hasher_worker = HashWorker(files_to_hash, self.new_file_hashes)
+        self.hasher_worker = Workers.HashWorker(files_to_hash, self.new_file_hashes)
         self.hasher_worker.moveToThread(self.hasher_thread)
         self.hasher_thread.started.connect(self.hasher_worker.run)
         self.hasher_worker.finished.connect(self.on_hashing_finished)
@@ -1179,12 +1133,18 @@ class main(QWidget):
 
         return listWidget
 
-    def on_hashing_finished(self, result):
+    def on_hashing_finished(self, result:dict):
         total_size: int = result["size"]
         total_file_count: int = result["file_count"]
         files_to_remove:list[str] = result["files_to_remove"]
         changed_hashes:list = result["changed_hashes"]
         self.setEnabled(True)
+        if result.get("error"):
+            write_error(self.tr("Hashing the output failed: %1").replace("%1", result["error"]))
+            QMessageBox.warning(None, self.tr("Hashing Failed"),
+                                self.tr("Hashing the output failed.\nSee the log for details."))
+            return
+        self.files_to_not_hash.clear()
 
         write_normal(self.tr("Hashing for changes complete."))
         write_normal(self.tr("Found %1 changed files.").replace("%1", str(len(changed_hashes))))
@@ -1319,7 +1279,6 @@ class main(QWidget):
             QTimer.singleShot(3000, rename_and_enable)
             keep_all_button.setFocus()
             dialog.exec()
-            self.files_to_not_hash.clear()
 
             def get_files_to_remove(listWidget: QListWidget):
                 nonlocal total_size
@@ -1349,7 +1308,7 @@ class main(QWidget):
                     get_files_to_remove(other_listWidget)
 
             elif self.hash_changed_option == 'keep_all':
-                for file, rel_path in self.changed_hashes:
+                for file, rel_path in changed_hashes:
                     self.files_to_not_hash.add(os.path.normpath(file).lower())
         if self.calculate_requester == 'reset_output':
             self.reset_output_next(files_to_remove, total_size, total_file_count, changed_rel_paths_to_switch)
@@ -1376,16 +1335,9 @@ class main(QWidget):
         if remove_maps:
             shutil.rmtree(FORM_ID_MAPS_FOLDER, ignore_errors=True)
         shutil.rmtree(CELL_IDS_FOLDER, ignore_errors=True)
-        def silent_remove(file_path):
-            try:
-                os.remove(file_path)
-            except FileNotFoundError:
-                pass
-            except OSError as e:
-                write_to_file(f"Warn: Could not remove {file_path}: {e}")
-        silent_remove(CELL_MASTER_INFO_JSON)
-        silent_remove(WINNING_FILE_HISTORY_DICT_JSON)
-        silent_remove(WINNING_FILES_DICT_JSON)
+        self.safe_remove(CELL_MASTER_INFO_JSON)
+        self.safe_remove(WINNING_FILE_HISTORY_DICT_JSON)
+        self.safe_remove(WINNING_FILES_DICT_JSON)
         try:
             if os.path.exists(output_folder) and 'eslifier' in output_folder.lower():
                 #if vortex then we need to restore any .vortex_backup
@@ -1400,21 +1352,25 @@ class main(QWidget):
                         if os.path.exists(vortex_backup_path):
                             try:
                                 if os.path.samefile(file, data_folder_file_path):
-                                    silent_remove(data_folder_file_path)
+                                    self.safe_remove(data_folder_file_path)
                                     shutil.copy(vortex_backup_path, data_folder_file_path)
                             except:
                                 pass
-                        silent_remove(file)
+                        self.safe_remove(file)
                 else:
                     for file in files_to_remove:
-                        silent_remove(file)
+                        self.safe_remove(file)
                 self.prune_empty_dirs_recursive(output_folder, output_folder)
         finally:
             QApplication.restoreOverrideCursor()
 
     def calculate_stats(self):
         self.output_folder_full = os.path.join(self.output_folder_path, self.output_folder_name)
-        _1, size, file_count =  self.calculate_existing_output()
+        size = 0
+        file_count = 0
+        for _path, file_size in self.walk_output_files(self.output_folder_full):
+            size += file_size
+            file_count += 1
         if size > 1024 ** 3:
             calculated_size = str(round(size / (1024 ** 3), 3)) + ' GBs'
         elif size > 1048576:
@@ -1467,266 +1423,3 @@ class main(QWidget):
             confirm.accept()
         else:
             confirm.show()
-
-class ScannerWorker(QObject):
-    finished_signal = pyqtSignal(dict, dict, dict)
-    def __init__(self):
-        super().__init__()
-
-    def scan_run(self):
-        write_remove(-1, self.tr('Scanning All Files:'), True)
-        flag_dict, dependency_dictionary = scanner.scan(True)
-        if _global.vortex_error != None or _global.mo2_error != None:
-            self.finished_signal.emit({}, {}, {})
-            return
-        flag_dict = {p: set(f) for p, f in flag_dict.items()}
-        if GAME_MODE == "SSE":
-            write_normal(self.tr('Checking if New CELLs are Changed'))
-        elif GAME_MODE == "FO4":
-            write_normal(self.tr('Checking if New CELLs have PreVis/PreCombined'))
-        plugins_with_cells = [plugin for plugin, flags in flag_dict.items() if 'new_cell' in flags]
-        cell_scanner.scan(plugins_with_cells)
-        eslify_flag_dict = {p: f for p, f in flag_dict.items() if 'esl_flaggable' in f}
-        compact_flag_dict = {p: f for p, f in flag_dict.items() if 'need_compacting' in f}
-        self.finished_signal.emit(eslify_flag_dict, compact_flag_dict, dependency_dictionary)
-        return
-
-class CompactorWorker(QObject):
-    finished_signal = pyqtSignal()
-    def __init__(self, checked, dependency_dictionary, files_to_not_hash: set):
-        super().__init__()
-        self.checked = checked
-        self.dependency_dictionary = dependency_dictionary
-        self.update_header: bool = _global.update_header
-        self.create_new_cell_plugin = create_new_cell_plugin()
-        self.generate_cell_master = _global.generate_cell_master
-        self.files_to_not_hash: set = files_to_not_hash
-        
-    def run(self):
-        total = len(self.checked)
-        count = 0
-        if self.update_header:
-            try:
-                with open(MISSING_GAME_AS_MASTER_JSON, 'r', encoding='utf-8') as f:
-                    missing_game_esm = json.load(f)
-            except:
-                missing_game_esm = {}
-        with open(FLAG_DICTIONARY_JSON, 'r', encoding='utf-8') as f:
-            flag_dict = json.load(f)
-        if self.generate_cell_master:
-            self.create_new_cell_plugin.generate(_global.output_folder_joined_path)
-        finalize = False
-        original_files: dict = self.get_from_file(ORIGINAL_FILES_JSON)
-        winning_files_dict: dict = self.get_from_file(WINNING_FILES_DICT_JSON)
-        master_byte_data: dict = self.get_from_file(MASTER_BYTE_DATA_JSON)
-        files_to_patch: dict = self.get_from_file(FILE_MASTERS_JSON)
-        game_archive_masters = []
-        for value in _global.game_archive_dict.values():
-            game_archive_masters.extend(value)
-
-        additional_file_patcher_conditions = user_and_master_conditions_class()
-        cfids = CFIDs(self.create_new_cell_plugin, original_files, winning_files_dict, {}, {}, master_byte_data, game_archive_masters,
-                       additional_file_patcher_conditions)
-        if _global.hash_output:
-            write_normal(self.tr("Hashing any existing files for changes..."))
-            cfids.hash_output_files(set(), True)
-        clear_and_leave_log_open()
-        patching_str = self.tr("%0% Patching: %1/%2").replace("%0", "{0}").replace("%1", "{1}").replace("%2", "{2}")
-        for file in self.checked:
-            count +=1
-            percent = round((count/total)*100,1)
-            write_patching(round(percent), patching_str.format(percent, count, total))
-            dependents = self.dependency_dictionary[os.path.basename(file).lower()]
-            all_dependents_have_game_esm_as_master = True
-            if self.update_header:
-                for plugin_without_game_esm_as_master, master_0 in missing_game_esm.items():
-                    if plugin_without_game_esm_as_master in dependents and os.path.basename(file) == master_0:
-                        all_dependents_have_game_esm_as_master = False
-                        break
-            else:
-                all_dependents_have_game_esm_as_master = True
-            if self.generate_cell_master:
-                flags = flag_dict[file]
-                generate_cell_master = False
-                if 'new_cell' in flags and not 'maxed_masters' in flags:
-                    generate_cell_master = True
-                    finalize = True
-            else:
-                generate_cell_master = False
-            cfids.compact_and_patch(
-                            file, dependents, all_dependents_have_game_esm_as_master, 
-                            generate_cell_master, files_to_patch)
-
-        if finalize:
-            write_normal(self.tr('Creating/Updating ESLifier_Cell_Master.esm...'))
-            self.create_new_cell_plugin.finalize_plugin()
-        write_normal(self.tr('Saving Data...'))
-        cfids.save_data()
-        if _global.hash_output:
-            write_normal(self.tr('Hashing output files for checking later changes...'))
-            cfids.hash_output_files(self.files_to_not_hash)
-        write_normal(self.tr("Patching Complete"))
-        self.finished_signal.emit()
-        return
-    
-    def get_from_file(self, file: str) -> dict:
-        try:
-            with open(file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-        except:
-            data = {}
-        return data
-
-    
-class FlagWorker(QObject):
-    finished_signal = pyqtSignal()
-    def __init__(self, files, files_to_not_hash):
-        super().__init__()
-        self.files = files
-        self.files_to_not_hash = files_to_not_hash
-    
-    def flag_files(self):
-        original_files = self.get_from_file(ORIGINAL_FILES_JSON)
-        winning_files_dict = self.get_from_file(WINNING_FILES_DICT_JSON)
-        winning_file_history_dict = {}
-        additional_file_patcher_conditions = user_and_master_conditions_class()
-        cfids = CFIDs(None, original_files, winning_files_dict, winning_file_history_dict, {}, {}, [], additional_file_patcher_conditions)
-        if _global.hash_output:
-            write_normal(self.tr("Hashing any existing files for changes..."))
-            cfids.hash_output_files(set(), True)
-        for file in self.files:
-            original_files, winning_file_history_dict = cfids.set_flag(file)
-        if _global.hash_output:
-            write_normal(self.tr('Hashing output files for checking later changes...'))
-            cfids.hash_output_files(self.files_to_not_hash)
-        self.dump_dictionary(ORIGINAL_FILES_JSON, original_files)
-        self.dump_dictionary(WINNING_FILE_HISTORY_DICT_JSON, winning_file_history_dict)
-        self.finished_signal.emit()
-
-    def dump_dictionary(self, file, dictionary: dict):
-        data = self.get_from_file(file)
-        for key, values in dictionary.items():
-            data[key] = values
-        try:
-            with open(file, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=4)
-        except Exception as e:
-            write_error(self.tr("Failed to dump data to ") + file)
-            write_error(e, True)
-    
-    def get_from_file(self, file: str) -> dict:
-        try:
-            with open(file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-        except:
-            data = {}
-        return data
-    
-
-class HashWorker(QObject):
-    finished = pyqtSignal(dict)
-    def __init__(self, files, new_file_hashes):
-        super().__init__()
-        self.files = files
-        self.new_file_hashes:dict = new_file_hashes
-        self.lock = threading.Lock()
-
-    def run(self):
-        self.to_hash_len = len(self.files)
-        
-        thread_count = min(16, (os.cpu_count() or 4))
-        chunk_size = max(1, self.to_hash_len // thread_count)
-
-        chunks = [self.files[i:i + chunk_size] for i in range(0, self.to_hash_len, chunk_size)]
-        
-        self.results = []
-        self.hash_progress = 0
-        
-        threads: list[threading.Thread] = []
-        for chunk in chunks:
-            thread = threading.Thread(target=self.hash_files, args=(chunk,))
-            threads.append(thread)
-            thread.start()
-            
-        for thread in threads: thread.join()
-            
-        size = 0
-        file_count = 0
-        files_to_remove = []
-        changed_hashes = []
-        
-        for local_size, local_count, local_remove, local_changed, local_new in self.results:
-            size += local_size
-            file_count += local_count
-            files_to_remove.extend(local_remove)
-            changed_hashes.extend(local_changed)
-            self.new_file_hashes.update(local_new)
-            
-        processed_str = ('-    ' + self.tr("Processed: %1%") + 
-                       '\n-    ' + self.tr("Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
-        
-        write_progress(100, 1, processed_str.format(100.0, self.to_hash_len, self.to_hash_len))
-        self.finished.emit({
-            "size": size,
-            "file_count": file_count,
-            "files_to_remove": files_to_remove,
-            "changed_hashes": changed_hashes
-        })
-
-    def hash_files(self, files):
-        local_size = 0
-        local_file_count = 0
-        local_files_to_remove = []
-        local_changed_hashes = []
-        local_new_file_hashes = {}
-        processed_str = ('-    ' + self.tr("Processed: %1%") + 
-                       '\n-    ' + self.tr("Files: %2/%3")).replace("%1", "{0}").replace("%2", "{1}").replace("%3", "{2}")
-        update_factor = max(1, round(self.to_hash_len * 0.001))
-        local_progress_batch = 0
-
-        get_rel_path = _global.get_rel_path
-        warn = _global.hash_plugins_warn
-
-        for file in files:
-            if not warn and file.lower().endswith(('.esp', '.esl', '.esm')):
-                local_progress_batch += 1
-                local_files_to_remove.append(file)
-                continue
-                
-            try:
-                with open(file, 'rb') as f:
-                    sha256_hash = hashlib.sha256(f.read()).hexdigest()
-            except Exception:
-                local_progress_batch += 1
-                continue
-                
-            rel_path = get_rel_path(file).lower()
-            old_hash, changed = self.new_file_hashes.get(rel_path, (None, False))
-            
-            if old_hash is None or (old_hash == sha256_hash and not changed):
-                local_files_to_remove.append(file)
-                try:
-                    local_size += os.path.getsize(file)
-                except OSError: pass
-                local_file_count += 1
-            else:
-                local_new_file_hashes[rel_path] = (old_hash, True)
-                local_changed_hashes.append((file, rel_path))
-                
-            local_progress_batch += 1
-            if local_progress_batch >= update_factor:
-                with self.lock:
-                    self.hash_progress += local_progress_batch
-                    current_prog = self.hash_progress
-                local_progress_batch = 0
-                
-                percentage = round((current_prog / self.to_hash_len) * 100, 1)
-                write_progress(round(percentage), 1, processed_str.format(percentage, current_prog, self.to_hash_len))
-                
-        # Add any remaining progress for this batch
-        if local_progress_batch > 0:
-            with self.lock:
-                self.hash_progress += local_progress_batch
-
-        with self.lock:
-            self.results.append((local_size, local_file_count, local_files_to_remove, local_changed_hashes, local_new_file_hashes))
