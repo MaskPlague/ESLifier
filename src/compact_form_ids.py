@@ -354,9 +354,7 @@ class CFIDs():
         master_basename = os.path.basename(master)
         master_basename_lower = master_basename.lower()
         split_name = os.path.splitext(master_basename)[0].lower()
-        #matchers = set(['.pex', '.ini', '_conditions.txt', '.json', '.jslot', '.yaml', '.yml',
-        #            split_name + '.seq', '.toml', 'netscriptframework\\plugins\\customskill'])
-        extensions = ('.pex', '.ini', '.json', '.toml', '_conditions.txt', '.jslot', '.yaml', '.yml', split_name+'.seq')
+        extensions = ('.pex', '.ini', '.json', '.toml', '_conditions.txt', '.jslot', '.yaml', '.yml', split_name+'.seq', '.xml')
         for file in files:
             file_lower = file.lower()
             valid_ext = file_lower.endswith(extensions)
