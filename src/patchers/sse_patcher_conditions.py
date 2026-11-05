@@ -7,7 +7,9 @@ from PyQt6.QtCore import QCoreApplication
 def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, form_id_map: dict,
                         master_byte: bytes, updated_master_index: int, update_byte: bool, additional_conditions: user_and_master_conditions_class,
                         encoding: str):
-    if new_file_lower.endswith('.ini'):
+    if 'facegeom' in new_file_lower and new_file_lower.endswith('.nif'):                    # FaceGeom mesh patching
+        patchers.facegeom_mesh_patcher(basename, new_file, form_id_map)
+    elif new_file_lower.endswith('.ini'):
         if new_file_lower.endswith(('_distr.ini', '_kid.ini', '_swap.ini', '_enbl.ini',     # PO3's SPID, KID, BOS, ENBL
                                     '_desc.ini', '_llos.ini', '_ipm.ini', '_mus.ini')):     # Description Framework, LLOS, IPM, MTD
             patchers.ini_formid_sep_plugin_patcher(basename, new_file, form_id_map, encoding_method=encoding)
@@ -212,8 +214,6 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
             patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map, encoding_method=encoding)
             if not patched:                                           
                 write_warning(QCoreApplication.translate("patcher_conditions", "Possible missing patcher for: ") + new_file)
-    elif 'facegeom' in new_file_lower and new_file_lower.endswith('.nif'):                  # FaceGeom mesh patching
-        patchers.facegeom_mesh_patcher(basename, new_file, form_id_map)
     elif new_file_lower.endswith('.seq'):                                                   # SEQ file patching
         patchers.seq_patcher(new_file, form_id_map, updated_master_index=updated_master_index, master_byte=master_byte, update_byte=update_byte)
     elif new_file_lower.endswith('.jslot'):                                                 # Racemenu Presets
