@@ -197,8 +197,56 @@ class shared_patchers():
             f.truncate(0)
             f.write(''.join(lines))
 
+    def ini_skypatcher_and_robcopatcher_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
+        with open(new_file, 'r+', encoding=encoding_method) as f:
+            lines = f.readlines()
+            print_replace = True
+            for i, line in enumerate(lines):
+                if basename in line.lower() and '|' in line and not line.startswith(';'):
+                    count = line.lower().count('|')
+                    pos = 0
+                    for _ in range(count):
+                        line = lines[i]
+                        start_index = line.lower().find('.es', pos)
+                        if start_index == -1:
+                            break
+                        middle_index = line.index('|', start_index)
+                        plugin_start_index = -1
+                        for j in range(start_index-1, 0, -1):
+                            if line[j] in ('=', ','):
+                                plugin_start_index = j + 1
+                                break
+                        end_index = shared_patchers.find_next_non_alphanumeric(line, middle_index+1)
+                        plugin = line[plugin_start_index:middle_index]
+                        start_of_line = line[:plugin_start_index]
+                        end_of_line = line[end_index:]
+                        form_id = line[middle_index+1:end_index]
+                        if len(form_id) > 6:
+                            if form_id[:2] == 'FE':
+                                form_id = form_id [-3:]
+                            else:
+                                form_id = form_id[-6:]
+                        try:
+                            form_id_int = int(form_id, 16)
+                            pos = start_index+3
+                            if plugin.lower().strip() == basename:
+                                to_id_data = form_id_map.get(form_id_int)
+                                if to_id_data is not None:
+                                    if not to_id_data["update_name"]:
+                                        lines[i] = start_of_line + plugin + '|' + to_id_data["hex_no_0"] + end_of_line
+                                    else:
+                                        if print_replace:
+                                            write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
+                                            print_replace = False
+                                        lines[i] = start_of_line + "ESLifier_Cell_Master.esm|" + to_id_data["hex_no_0"] + end_of_line
+                                        pos += len('ESLifier_Cell_Master.esm') - len(plugin)
+                        except ValueError:
+                            pos = start_index+3
+            f.seek(0)
+            f.truncate(0)
+            f.write(''.join(lines))            
 
-        #IDK why I read it into a string for json5, probably was part of debugging way back when I first started, not going to touch it though.
+    #IDK why I read it into a string for json5, probably was part of debugging way back when I first started, not going to touch it though.
     def safe_load_json(file_handle) -> dict:
         try:
             data = json.load(file_handle)

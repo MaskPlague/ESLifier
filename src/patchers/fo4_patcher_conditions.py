@@ -24,7 +24,7 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         elif '\\poisebreaker_' in new_file_lower:                                           # Poise Breaker
             patchers.ini_eq_plugin_sep_formid_patcher(basename, new_file, form_id_map, sep=':', encoding_method=encoding)
         elif '\\skypatcher\\' in new_file_lower:                                              # Sky Patcher
-            patchers.ini_skypatcher_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+            patchers.ini_skypatcher_and_robcopatcher_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\valhallacombat\\' in new_file_lower:                                          # Valhalla Combat
             patchers.ini_eq_plugin_sep_formid_patcher(basename, new_file, form_id_map, sep='|', encoding_method=encoding)
         elif '\\autobody\\' in new_file_lower:                                              # AutoBody
