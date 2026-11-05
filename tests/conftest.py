@@ -65,6 +65,7 @@ def _install_fake_pyqt():
     qtcore.QItemSelection = _Anything
     qtcore.QVariantAnimation = _Anything
     qtcore.pyqtSignal = lambda *a, **k: _Anything()
+    qtcore.pyqtBoundSignal = _Anything
     pyqt6.QtCore = qtcore
     sys.modules["PyQt6"] = pyqt6
     sys.modules["PyQt6.QtCore"] = qtcore
@@ -131,6 +132,7 @@ def _install_fake_log_stream():
                clear_and_close_log, clear_and_leave_log_open):
         setattr(mod, fn.__name__, fn)
     mod.DEBUG = False
+    mod.log_stream = _Anything()  # the log window singleton, imported by main_page
     sys.modules["log_stream"] = mod
 
 
