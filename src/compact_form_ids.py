@@ -577,6 +577,7 @@ class CFIDs():
         basename = basename_cased.lower()
         local_compacted_and_patched_set = set()
         percentage_str = self.percentage_str
+        is_sse_mode = GAME_MODE == "SSE"
         for file in files:
             new_file, rel_path = self.copy_file_to_output(file)
             new_file_lower = new_file.lower()
@@ -592,9 +593,13 @@ class CFIDs():
                 try:
                     for encoding in self.get_encodings(new_file):
                         try:
-                            patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, self.form_id_map, 
-                                                                    self.master_byte, self.updated_master_index, self.do_generate_cell_master,
-                                                                    self.additional_conditions, encoding)
+                            if is_sse_mode:
+                                patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, self.form_id_map, 
+                                                                        self.master_byte, self.updated_master_index, self.do_generate_cell_master,
+                                                                        self.additional_conditions, encoding)
+                            else:
+                                patcher_conditions.patch_file_conditions(new_file_lower, new_file, basename, self.form_id_map, 
+                                                                        self.additional_conditions, encoding)
                             break
                         except UnicodeDecodeError:
                             write_to_file(f"Unicode Decode Error using {encoding.upper()}, for {new_file}")
