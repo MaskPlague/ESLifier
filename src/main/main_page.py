@@ -14,7 +14,7 @@ from lists.list_eslify import list_eslable
 from lists.list_compact import list_compactable
 from lists.list_parent import list_parent_class
 from patch_new import patch_new
-from main.flow_control import Flow
+from main.flow import Flow
 from main.utils import size_in_units, ListObjBase
 import main.workers as Workers
 from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_MODE, ARCHIVE_EXTRACTED_FOLDER, ESLIFIER_PNG_ICON_PATH,

@@ -14,7 +14,7 @@ from PyQt6.QtGui import QIcon
 from scanners.scanner import scanner
 from scanners.dependency_getter import dependecy_getter
 from compact_form_ids import CFIDs
-from main.flow_control import Flow
+from main.flow import Flow
 from scanners.cell_changed_scanner import cell_scanner
 from patchers.file_defined_patcher_conditions import user_and_master_conditions_class
 from data_holder import (_global, ESLIFIER_PNG_ICON_PATH, VORTEX_GAME_NAME, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON,
