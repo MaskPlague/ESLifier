@@ -27,6 +27,10 @@ class list_compactable(list_parent_class):
             self.SEQ_COL = next(c)
             self.PEX_COL = next(c)
         self.ESM_COL = next(c)
+        if self.is_sse_mode:
+            self.SHIFTING_COLUMNS = [self.CELL_COL, self.WRLD_COL, self.WTHR_COL, self.DLL_COL, self.SEQ_COL, self.ESM_COL]
+        elif self.is_fo4_mode:
+            self.SHIFTING_COLUMNS = [self.CELL_COL, self.PRECOM_COL, self.DLL_COL, self.ESM_COL]
         self.DEP_COL = next(c)
         self.DEP_DISP_COL = next(c)
         self.HIDER_COL = next(c)
@@ -168,10 +172,9 @@ class list_compactable(list_parent_class):
             index = self.currentRow()
             if self.cellWidget(index, self.DEP_DISP_COL):
                 self.item(index, self.MOD_COL).setTextAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
-                if self.item(index, self.CELL_COL):
-                    self.item(index, self.CELL_COL).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignVCenter)
-                if self.item(index, self.WRLD_COL):
-                    self.item(index, self.WRLD_COL).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignVCenter)
+                for col in self.SHIFTING_COLUMNS:
+                    if self.item(index, col):
+                        self.item(index, col).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignVCenter)
                 self.sender().setText(self.tr('Show'))
                 self.sender().setStyleSheet("""
                     QPushButton{
@@ -182,10 +185,9 @@ class list_compactable(list_parent_class):
                 self.removeCellWidget(index, self.DEP_DISP_COL)
             else:
                 self.item(index, self.MOD_COL).setTextAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignTop)
-                if self.item(index, self.CELL_COL):
-                    self.item(index, self.CELL_COL).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignTop)
-                if self.item(index, self.WRLD_COL):
-                    self.item(index, self.WRLD_COL).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignTop)
+                for col in self.SHIFTING_COLUMNS:
+                    if self.item(index, col):
+                        self.item(index, col).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignTop)
                 self.sender().setText(self.tr('Hide'))
                 self.sender().setStyleSheet("""
                     QPushButton{
