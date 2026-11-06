@@ -1559,7 +1559,7 @@ class form_processor():
             if field in special_navm_fields:
                 if field == b'NVNM':
                     in_field_offset = offset + 6 + 8
-                    if form[offset:offset+4] != b'\x00\x00\x00\x00':
+                    if form[in_field_offset:in_field_offset+4] != b'\x00\x00\x00\x00':
                         navm_offsets.append(in_field_offset)     # Parent World
                     else:
                         navm_offsets.append(in_field_offset+4)   # Parent Cell
