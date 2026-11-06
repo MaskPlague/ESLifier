@@ -1,19 +1,6 @@
 {
     "version": 0,
-    "ignored_files": [
-        "NPCSpellVariance.ini",
-        "SmartTalk_QuestCache.json",
-        "MLO.ini",
-        "DynamicStringDistributor.dll",
-        "taglist.yaml",
-        "QuestTagging.PluginQuestCache.json"
-    ],
-    "ignored_endswith": [
-        "PGPatcher/cfg/ignored_messages.json"
-    ],
-    "ignored_contains": [
-        "interface/Console_Cheatsheet/",
-        "interface/PartySheet/Spells/",
-        "Plugins/LoadTimeProfiler/LTP_summary_"
-    ]
+    "ignored_files": [],
+    "ignored_endswith": [],
+    "ignored_contains": []
 }
