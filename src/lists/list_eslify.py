@@ -314,7 +314,7 @@ class list_eslable(list_parent_class):
                                 missing_text += "- " + mod + "\n"
                                 for dep in missing:
                                     missing_text += "   | " + dep + "\n"
-                            elif mod.lower() not in compacted_and_patched:
+                            elif mod not in compacted_and_patched:
                                 any_not_valid = True
                                 not_valid_text += "- " + mod + "\n"
                         else:
