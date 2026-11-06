@@ -1,5 +1,5 @@
 {
-    "version": 26,
+    "version": 27,
     "conditions": [
         {
             "extension": "json",
@@ -174,6 +174,16 @@
         {
             "extension": "json",
             "contains": "Plugins/Fuz-Ro-Yay/",
+            "patcher": "json_generic_plugin_sep_formid"
+        },
+        {
+            "extension": "json",
+            "contains": "Plugins/DiseaseWidget/",
+            "patcher": "json_generic_plugin_sep_formid"
+        },
+        {
+            "endswith": "json",
+            "contains": "Plugins/SpellLearning/",
             "patcher": "json_generic_plugin_sep_formid"
         }
     ]
