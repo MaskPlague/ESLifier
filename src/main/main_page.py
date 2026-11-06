@@ -302,7 +302,7 @@ class main(QWidget):
         self.list_compact.filter_pex =              _global._settings.get('filter_pex', False)
         self.list_compact.filter_worldspaces =      _global._settings.get('filter_worldspaces', True)
         self.list_compact.filter_weather =          _global._settings.get('filter_weathers', False)
-        self.list_compact.cell_master =             _global._settings.get('generate_cell_master', True)
+        self.list_compact.cell_master =             _global.generate_cell_master
         self.list_compact.hidden_columns =          _global._settings.get('right_hidden_columns', '')
 
         self.list_eslify.filter_seq =               _global._settings.get('filter_seq', False)
