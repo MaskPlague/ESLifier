@@ -16,6 +16,7 @@ class list_compactable(list_parent_class):
         c = itertools.count()
         # Items that need to be set in list_parent
         self.MOD_COL = next(c)
+
         if self.is_sse_mode:
             self.CELL_COL = next(c)
             self.WRLD_COL = next(c)
@@ -168,15 +169,14 @@ class list_compactable(list_parent_class):
 
         self.setRowCount(len(local_dict))
 
-        def display_dependencies(mod_key):
-            index = self.currentRow()
+        def display_dependencies(mod_key:str, index:int, button:QPushButton):
             if self.cellWidget(index, self.DEP_DISP_COL):
                 self.item(index, self.MOD_COL).setTextAlignment(Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
                 for col in self.SHIFTING_COLUMNS:
                     if self.item(index, col):
                         self.item(index, col).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignVCenter)
-                self.sender().setText(self.tr('Show'))
-                self.sender().setStyleSheet("""
+                button.setText(self.tr('Show'))
+                button.setStyleSheet("""
                     QPushButton{
                         padding: 0px, 0px, 20px, 0px;
                         background-color: transparent;
@@ -188,8 +188,8 @@ class list_compactable(list_parent_class):
                 for col in self.SHIFTING_COLUMNS:
                     if self.item(index, col):
                         self.item(index, col).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignTop)
-                self.sender().setText(self.tr('Hide'))
-                self.sender().setStyleSheet("""
+                button.setText(self.tr('Hide'))
+                button.setStyleSheet("""
                     QPushButton{
                         padding: 0px, 0px, 20px, 0px;
                         background-color: transparent;
@@ -324,8 +324,9 @@ class list_compactable(list_parent_class):
                     hide_row = True
                 self.setItem(i, self.ESM_COL, item_esm_flag)
             if self.dependency_list[basename_lower] != []:
-                dL.clicked.connect(lambda _, mod_key=basename_lower: display_dependencies(mod_key))
                 dL = QPushButton(self.tr("Show"))
+                item_hidden = QTableWidgetItem('')
+                dL.clicked.connect(lambda _, mod_key=basename_lower, itm=item_hidden, btn=dL: display_dependencies(mod_key, self.row(itm), btn))
                 dL.setMaximumSize(90,22)
                 dL.setMinimumSize(90,22)
                 dL.setStyleSheet("""
@@ -334,9 +335,8 @@ class list_compactable(list_parent_class):
                     background-color: transparent;
                     border: none;
                     }""")
-                item_hidden = QTableWidgetItem('')
                 self.setCellWidget(i, self.DEP_COL, dL)
-                self.setItem(i, self.DEP_COL,item_hidden)
+                self.setItem(i, self.DEP_COL, item_hidden)
             if hide_row:
                 self.setItem(i, self.HIDER_COL, QTableWidgetItem('hide me'))
 
