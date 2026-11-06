@@ -13,6 +13,7 @@ except ImportError:
         print(str(f"write_ineligible: {str(txt)}"))
 
 class patchers(shared_patchers):        
+    @staticmethod
     def seq_patcher(new_file: str, form_id_map: dict, updated_master_index:int, master_byte: bytes, update_byte: bool):
             with open(new_file, 'rb+') as f:
                 data = f.read()
@@ -43,6 +44,7 @@ class patchers(shared_patchers):
                 f.truncate(0)
                 f.write(b''.join(new_seq_form_id_list))
     
+    @staticmethod
     def dependent_seq_patcher(new_file: str, form_id_map: dict, updated_master_index:int, master_byte: bytes, master_index_byte:bytes, update_byte: bool):
         with open(new_file, 'rb+') as f:
             data = f.read()
@@ -65,6 +67,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             f.write(b''.join(new_seq_form_id_list))
 
+    @staticmethod
     def old_pex_patcher(basename: str, new_file: str, form_id_map: dict):
         with open(new_file,'rb+') as f:
             data = f.read()
@@ -143,6 +146,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             f.write(data)            
 
+    @staticmethod
     def ini_seasons_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -198,6 +202,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             f.write(''.join(lines))            
 
+    @staticmethod
     def ini_payload_interpreter_and_dtrys_key_utils_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -232,6 +237,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             f.write(''.join(lines))                        
 
+    @staticmethod
     def ini_form_list_manipulator_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -274,6 +280,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             f.write(''.join(lines))            
        
+    @staticmethod
     def ini_mu_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -308,6 +315,7 @@ class patchers(shared_patchers):
             f.write(''.join(lines))            
 
     # No Cell Form IDs possible
+    @staticmethod
     def ini_auto_body_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -326,6 +334,7 @@ class patchers(shared_patchers):
             f.write(''.join(lines))            
             
     # No Cell Form IDs possible
+    @staticmethod
     def ini_remember_lockpick_angle_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -347,6 +356,7 @@ class patchers(shared_patchers):
             f.write(''.join(lines))            
 
     # No Cell Form IDs possible
+    @staticmethod
     def ini_experience_and_knotwork_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -374,6 +384,7 @@ class patchers(shared_patchers):
             f.write(''.join(lines)) 
     
     # No Cell Form IDs possible
+    @staticmethod
     def ini_npcs_use_potions_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -397,6 +408,7 @@ class patchers(shared_patchers):
             f.write(''.join(lines))            
 
     #Told an AI to update the old patcher based on the template ini, fingers crossed...
+    @staticmethod
     def ini_completionist_patcher(basename, new_file, form_id_map, encoding_method='utf-8'):
         comp_print_replace = True
 
@@ -658,6 +670,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             f.write(''.join(lines))            
     
+    @staticmethod
     def old_ini_completionist_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         comp_print_replace = True
         def _comp_form_id_replacer(form_id: str, form_id_map: dict):
@@ -809,6 +822,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             f.write(''.join(lines))            
 
+    @staticmethod
     def ini_kreate_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         ini = configparser.ConfigParser()
         ini.optionxform = str
@@ -844,6 +858,7 @@ class patchers(shared_patchers):
             f.write(data)            
         
     # No Cell Form IDs possible (I think?)
+    @staticmethod
     def ini_dyndolod_rules_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -861,6 +876,7 @@ class patchers(shared_patchers):
             f.write(''.join(lines))            
 
     # No Cell Form IDs possible
+    @staticmethod
     def ini_knockback_skse_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -879,6 +895,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             f.write(''.join(lines))   
 
+    @staticmethod
     def ini_beeingfemale_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -927,6 +944,7 @@ class patchers(shared_patchers):
             f.write(''.join(lines))
 
     # No Cell Form IDs possible
+    @staticmethod
     def toml_dynamic_animation_casting_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str = 'utf-8'):
         def _get_target_keys(espname_key):
             espname_key = espname_key.lower()
@@ -1034,6 +1052,7 @@ class patchers(shared_patchers):
             f.write(''.join(lines))            
 
     # No Cell Form IDs possible
+    @staticmethod
     def toml_precision_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -1061,6 +1080,7 @@ class patchers(shared_patchers):
             f.write(''.join(lines))            
 
     # No Cell Form IDs possible
+    @staticmethod
     def toml_loki_and_tdm_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -1081,6 +1101,7 @@ class patchers(shared_patchers):
             f.write(''.join(lines))            
 
     # No Cell Form IDs possible
+    @staticmethod
     def toml_actor_value_generator_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -1104,6 +1125,7 @@ class patchers(shared_patchers):
             f.write(''.join(lines))            
 
     # No Cell Form IDs possible
+    @staticmethod
     def toml_yet_another_soul_trap_manager_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -1123,6 +1145,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             f.write(''.join(lines)) 
     
+    @staticmethod
     def json_open_animation_replacer_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = patchers.safe_load_json(f)
@@ -1155,6 +1178,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
 
+    @staticmethod
     def json_storage_util_data_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = patchers.safe_load_json(f)
@@ -1192,6 +1216,7 @@ class patchers(shared_patchers):
             json.dump(data, f, ensure_ascii=False, indent=3)
 
     # No Cell Form IDs possible
+    @staticmethod
     def json_obody_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = patchers.safe_load_json(f)
@@ -1219,6 +1244,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
 
+    @staticmethod
     def json_skyrim_utility_mod_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = patchers.safe_load_json(f)
@@ -1256,6 +1282,7 @@ class patchers(shared_patchers):
             json.dump(data, f, ensure_ascii=False, indent=3)
 
     # No CELL Form IDs possible
+    @staticmethod
     def json_undaunted_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = patchers.safe_load_json(f)
@@ -1274,6 +1301,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=4)
 
+    @staticmethod
     def json_achievement_injector_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = patchers.safe_load_json(f)
@@ -1304,6 +1332,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
 
+    @staticmethod
     def json_rim_combat_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str = 'utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = patchers.safe_load_json(f)
@@ -1341,6 +1370,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
 
+    @staticmethod
     def dynamic_animation_replacer_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -1365,6 +1395,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             f.write(''.join(lines))            
 
+    @staticmethod
     def sound_record_distributor_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -1399,6 +1430,7 @@ class patchers(shared_patchers):
             f.write(''.join(lines))            
 
     # No Cell Form IDs possible
+    @staticmethod
     def yaml_slpp_sos_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -1429,6 +1461,7 @@ class patchers(shared_patchers):
             f.write(''.join(lines))            
 
     # No Cell Form IDs possible
+    @staticmethod
     def yaml_slpp_stripping_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -1448,6 +1481,7 @@ class patchers(shared_patchers):
             f.write(''.join(lines))            
 
     # No Cell Form IDs possible
+    @staticmethod
     def jslot_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             read_string = f.read()
@@ -1479,6 +1513,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3, separators=(',', ' : '))
 
+    @staticmethod
     def json_smart_harvest_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = patchers.safe_load_json(f)
@@ -1507,6 +1542,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
 
+    @staticmethod
     def json_dynamic_string_distributor_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = patchers.safe_load_json(f)
@@ -1537,6 +1573,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
 
+    @staticmethod
     def json_dynamic_key_activation_framework_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = patchers.safe_load_json(f)
@@ -1561,6 +1598,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
 
+    @staticmethod
     def json_dynamic_armor_variants_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = patchers.safe_load_json(f)
@@ -1603,6 +1641,7 @@ class patchers(shared_patchers):
             json.dump(data, f, ensure_ascii=False, indent=3)
 
     # No Cell Form IDs possible
+    @staticmethod
     def json_jcontainer_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = patchers.safe_load_json(f)
@@ -1637,6 +1676,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
 
+    @staticmethod
     def json_immersive_equipment_displays_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = patchers.safe_load_json(f)
@@ -1661,6 +1701,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False)
 
+    @staticmethod
     def json_ostim_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = patchers.safe_load_json(f)
@@ -1690,6 +1731,7 @@ class patchers(shared_patchers):
             json.dump(data, f, ensure_ascii=False, indent=3)
 
     # No Cell Form IDs possible
+    @staticmethod
     def json_dressuplovers_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = patchers.safe_load_json(f)
@@ -1708,6 +1750,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
 
+    @staticmethod
     def json_dismembering_framework_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = patchers.safe_load_json(f)
@@ -1733,6 +1776,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
 
+    @staticmethod
     def json_alternate_perspective(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             json_data = patchers.safe_load_json(f)
@@ -1797,6 +1841,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             json.dump(json_data, f, ensure_ascii=False, indent=2)
 
+    @staticmethod
     def json_fire_hurts_re_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = patchers.safe_load_json(f)
@@ -1811,6 +1856,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
     
+    @staticmethod
     def old_customskill_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -1838,6 +1884,7 @@ class patchers(shared_patchers):
             f.truncate(0)
             f.write(''.join(lines))            
 
+    @staticmethod
     def dbd_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -1878,6 +1925,7 @@ class patchers(shared_patchers):
             f.write(''.join(lines))            
 
     #Cell Form IDs not present besides in the cell int but the master byte shouldn't be updated anyways
+    @staticmethod
     def json_dyndolod_ligh_patcher(basename: str, new_file: str, form_id_map: dict, master_byte: bytes, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = patchers.safe_load_json(f)

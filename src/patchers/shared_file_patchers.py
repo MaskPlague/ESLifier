@@ -19,13 +19,16 @@ except ImportError:
 
 
 class shared_patchers():
+    @staticmethod
     def pex_patcher_for_debug(basename: str, new_file: str, form_id_map: dict, endian = 'big'):
         pex_patcher.pex_patcher_for_debug(basename, new_file, form_id_map, endian = endian,
                                            log=write_to_file, print=print, ineligible=write_ineligible)
 
+    @staticmethod
     def pex_patcher(basename: str, new_file: str, form_id_map: dict, endian = 'big'):
         pex_patcher.pex_patcher(basename, new_file, form_id_map, endian = endian, ineligible=write_ineligible)
 
+    @staticmethod
     def facegeom_mesh_patcher(basename: str, new_file: str, form_id_map: dict):
         bytes_basename = bytes(basename, 'utf-8')
         basename_len = len(bytes_basename)
@@ -53,6 +56,7 @@ class shared_patchers():
             f.truncate(0)
             f.write(data)            
 
+    @staticmethod
     def find_prev_non_alphanumeric(text: str, start_index: int, tokens: set[str] = set()):
             """Use this with care, do not use this to find the start of a plugin name as plugins are files and can contain non-alphanumeric characters"""
             for i in range(start_index, -1, -1): #this was range(start_index, 0, -1) I have changed it to -1 as 0 was not 0 inclusive, I hope I didn't just break a bunch of stuff...
@@ -60,12 +64,14 @@ class shared_patchers():
                     return i
             return -1
     
+    @staticmethod
     def find_next_non_alphanumeric(text: str, start_index: int, tokens: set[str] = set()):
         for i in range(start_index, len(text)):
             if not text[i].isalnum() or text[i] in tokens:
                 return i
         return len(text)
 
+    @staticmethod
     def ini_formid_sep_plugin_patcher(basename: str, new_file: str, form_id_map: dict, 
                                       sep: str = '~', tkns: set[str] = {" "}, fid_start: str = '0x', to_id_key: str = "hex_no_0",
                                       encoding_method: str ='utf-8'):
@@ -112,6 +118,7 @@ class shared_patchers():
             f.truncate(0)
             f.write(''.join(lines))            
 
+    @staticmethod
     def ini_plugin_sep_formid_patcher(basename: str, new_file: str, form_id_map: dict,
                                         sep: str = '~', tkns: set[str] = {" "}, fid_start: str = '0x', to_id_key: str = "hex_no_0",
                                         encoding_method: str ='utf-8'):
@@ -157,6 +164,7 @@ class shared_patchers():
             f.truncate(0)
             f.write(''.join(lines))
 
+    @staticmethod
     def ini_eq_plugin_sep_formid_patcher(basename: str, new_file: str, form_id_map: dict, sep: str ='|', encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -197,6 +205,7 @@ class shared_patchers():
             f.truncate(0)
             f.write(''.join(lines))
 
+    @staticmethod
     def ini_skypatcher_and_robcopatcher_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             lines = f.readlines()
@@ -247,6 +256,7 @@ class shared_patchers():
             f.write(''.join(lines))            
 
     #IDK why I read it into a string for json5, probably was part of debugging way back when I first started, not going to touch it though.
+    @staticmethod
     def safe_load_json(file_handle) -> dict:
         try:
             data = json.load(file_handle)
@@ -256,6 +266,7 @@ class shared_patchers():
             data = json5.loads(string)
         return data 
 
+    @staticmethod
     def extract_values_and_keys(json_data, path=[]):
         results = []
         if isinstance(json_data, dict):
@@ -279,6 +290,7 @@ class shared_patchers():
 
         return results
 
+    @staticmethod
     def change_json_element(data, path, new_value):
         if not path:
             return new_value
@@ -291,6 +303,7 @@ class shared_patchers():
             data[index] = shared_patchers.change_json_element(data[index], path[1:], new_value)
         return data
 
+    @staticmethod
     def change_json_key(data, old_key, new_key):
         """Anything that uses this must have the plugin name (or some other specific identifier)
           or it will replace ALL instances of the key ANYWHERE."""
@@ -307,6 +320,7 @@ class shared_patchers():
             return [shared_patchers.change_json_key(item, old_key, new_key) for item in data]
         return data
     
+    @staticmethod
     def json_generic_plugin_sep_formid_patcher(basename: str, new_file: str, form_id_map: dict, sep: str = '|', encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = shared_patchers.safe_load_json(f)
@@ -342,6 +356,7 @@ class shared_patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             
 
+    @staticmethod
     def json_generic_formid_sep_plugin_patcher(basename: str, new_file: str, form_id_map: dict, int_type: bool = False, sep: str = '|', encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = shared_patchers.safe_load_json(f)
@@ -389,6 +404,7 @@ class shared_patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
             
     
+    @staticmethod
     def json_generic_key_fid_sep_plugin_patcher(basename: str, new_file: str, form_id_map: dict, int_type: bool = False, sep: str = ":", encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = shared_patchers.safe_load_json(f)
@@ -408,6 +424,7 @@ class shared_patchers():
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
 
+    @staticmethod
     def json_generic_key_plugin_sep_fid_patcher(basename: str, new_file: str, form_id_map: dict, int_type: bool = False, sep: str = ":", encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = shared_patchers.safe_load_json(f)
@@ -428,6 +445,7 @@ class shared_patchers():
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
 
+    @staticmethod
     def json_generic_recursive_depth_patcher(basename: str, new_file: str, form_id_map: dict, plugin_key="plugin", fid_key='form_id', 
                                              fid_start='0x', int_type=False, encoding_method: str = 'utf-8'):
         """Patches: {plugin_key: basename, fid_key: FormID, other_key: other data allowed but not patched}"""
