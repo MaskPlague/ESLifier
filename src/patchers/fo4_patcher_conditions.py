@@ -20,6 +20,8 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
     elif new_file_lower.endswith('.json'):
         if new_file_lower.endswith(('config.json', 'keybinds.json')) and 'mcm\\config' in new_file_lower: # MCM?
             patchers.json_generic_plugin_sep_formid_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+        elif '\\plugins\\transfersettlements\\' in new_file_lower:                          # Transfer Settlements
+            patchers.json_transfer_settlements_patcher(basename, new_file, form_id_map, encoding_method=encoding)
         elif '\\gsp\\' in new_file_lower:                                                   # Generic Synthesis Patcher
             patchers.json_generic_formid_sep_plugin_patcher(basename, new_file, form_id_map, sep= ':', encoding_method=encoding) 
         else:
