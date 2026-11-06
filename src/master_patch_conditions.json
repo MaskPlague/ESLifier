@@ -1,5 +1,5 @@
 {
-    "version": 27,
+    "version": 28,
     "conditions": [
         {
             "extension": "json",
@@ -182,7 +182,7 @@
             "patcher": "json_generic_plugin_sep_formid"
         },
         {
-            "endswith": "json",
+            "extension": "json",
             "contains": "Plugins/SpellLearning/",
             "patcher": "json_generic_plugin_sep_formid"
         }
