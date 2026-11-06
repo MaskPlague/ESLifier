@@ -8,6 +8,7 @@ stand-ins, so dialogs, buttons and list widgets can be inspected and "clicked" f
 import types
 
 import main.main_page as main_page
+from main.flow import Flow
 
 
 class Calls(list):
@@ -46,9 +47,19 @@ class FakeConfirm:
         self.color, self.icon = color, icon
         self.accepted, self.rejected = Signal(), Signal()
         self.text, self.shown = None, False
+        self.title, self.enabled, self.removed_buttons = None, None, []
 
     def setText(self, text):
         self.text = text
+
+    def setWindowTitle(self, title):
+        self.title = title
+
+    def removeButton(self, button):
+        self.removed_buttons.append(button)
+
+    def setEnabled(self, enabled):
+        self.enabled = enabled
 
     def show(self):
         self.shown = True
@@ -78,9 +89,32 @@ class FakeRemovalConfirm(FakeConfirm):
             self.rejected.connect(next_function)
 
 
+class FakeRow:
+    """A ticked / unticked row of a mod list."""
+
+    def __init__(self, tip="", state=None):
+        self.tip, self.state, self.flag_value = tip, state, 0b1111
+
+    def checkState(self):
+        return self.state
+
+    def setCheckState(self, state):
+        self.state = state
+
+    def toolTip(self):
+        return self.tip
+
+    def flags(self):
+        return self.flag_value
+
+    def setFlags(self, flags):
+        self.flag_value = flags
+
+
 class FakeList:
     """list_compact / list_eslify: only what main_page touches."""
     MOD_COL = 0
+    HIDER_COL = 1
 
     def __init__(self, check_state_enum):
         self.flag_dict = {}
@@ -90,6 +124,10 @@ class FakeList:
         self.hidden = set()
         self.check_previous_calls = 0
         self._cs = check_state_enum
+
+    def reset_list(self):
+        self.flag_dict.clear()
+        self.create_list()
 
     def create_list(self):
         if self.fail_create:
@@ -106,8 +144,15 @@ class FakeList:
         return len(self.rows)
 
     def item(self, row, col):
-        state = self.rows[row]
-        return types.SimpleNamespace(checkState=lambda: state)
+        if col == self.HIDER_COL:
+            return True if row in self.hidden else None   # a row only has a hider item while a filter hides it
+        entry = self.rows[row]
+        if isinstance(entry, FakeRow):
+            return entry
+        return types.SimpleNamespace(checkState=lambda: entry)
+
+    def clearSelection(self):
+        pass
 
     def isRowHidden(self, row):
         return row in self.hidden
@@ -128,7 +173,10 @@ class _Enumish:
     def __or__(self, other):
         return self
 
-    __ror__ = __or__
+    __ror__ = __and__ = __rand__ = __or__
+
+    def __invert__(self):
+        return self
 
 
 class _Dummy:
@@ -293,9 +341,7 @@ def make_page(workdir, monkeypatch):
     page.list_compact = FakeList(cs)
     page.list_eslify = FakeList(cs)
     page.skip_confirmations = {"TIMERS"}
-    page.redoing_output = False
-    page.patch_new_running = False
-    page.patch_new_only_remove = False
+    page.flow = Flow.NONE
     page.generate_cell_master = False
     page.cell_master_warned = True
     page.scanned = False

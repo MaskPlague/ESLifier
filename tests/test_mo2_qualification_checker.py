@@ -1,4 +1,5 @@
 """MO2 plugin's light qualification checker: must agree with the exe's plugin_qualification_checker."""
+import threading
 import importlib
 import sys
 import types
@@ -29,7 +30,7 @@ def make(tmp_path, name, masters=(SKYRIM,), body=b"", **kw):
 @pytest.fixture
 def sse(tmp_path):
     mo2.configure("SSE", [])
-    exe_qc.max_record_id = 4096
+    exe_qc.max_record_id = 0xFFF                      # what qualification_checker.scan sets; 0xFFF is the highest ESL-range id
     exe_qc.dependent_dict, exe_qc.missing_game_esm_as_master, exe_qc.maxed_masters = {"p.esp": []}, {}, []   # exe indexes dependent_dict directly
     return tmp_path
 
@@ -235,6 +236,7 @@ def test_dependency_data_matches_the_exe_dependency_getter(tmp_path):
     _global.plugins[:] = plugins
     try:
         dg.dependency_dictionary, dg.missing_game_esm_as_master, dg.maxed_masters = {}, {}, []
+        dg.lock = threading.Lock()                       # dependecy_getter.scan() creates this before the threaded pass
         dg.create_dependency_dictionary()
     finally:
         _global.plugins[:] = old

@@ -279,12 +279,12 @@ class TestRenameFiles:
         cf.compacted_and_patched = {"mod.esp": set()}
         cf.master_byte, cf.updated_master_index = b"\x01", 0
         cf.patched = []
-        cf.patch_files = lambda master, files: cf.patched.append((master, list(files)))
+        cf.patch_files = lambda master, files, print_progress: cf.patched.append((master, list(files)))
         return cf
 
     def run(self, cf, files):
         cf.file_count, cf.count = len(files), 0
-        cf.rename_files("mod.esp", files)
+        cf.rename_files("mod.esp", files, len(files) > 20)       # the threader only asks for progress on long lists
 
     def test_facegeom_mesh_is_renamed_to_the_new_id_and_then_patched(self, env, cf):
         src = put(env.data / "meshes/actors/character/facegendata/facegeom/mod.esp/00012345.nif", b"mesh")
@@ -338,6 +338,11 @@ class TestRenameFiles:
         self.run(cf, files)
         assert cf.count == 25
 
+    def test_no_progress_is_counted_for_short_lists(self, env, cf):
+        files = [put(env.data / f"meshes/facegendata/facegeom/mod.esp/00ff{i:04x}.nif") for i in range(3)]
+        self.run(cf, files)
+        assert cf.count == 0
+
 
 # ------------------------------------------------------------------------------------------ threaders
 class TestThreaders:
@@ -350,7 +355,7 @@ class TestThreaders:
 
     @pytest.mark.parametrize("n", [1, 2, 3, 4, 7, 10])
     def test_patch_files_threader_hands_every_file_to_a_worker_exactly_once(self, cf, n):
-        cf.patch_files = lambda master, chunk: cf.calls.append(list(chunk))
+        cf.patch_files = lambda master, chunk, print_progress: cf.calls.append(list(chunk))
         files = [f"f{i}" for i in range(n)]
         cf.patch_files_threader("mod.esp", files)
         assert sorted(f for chunk in cf.calls for f in chunk) == sorted(files)
@@ -358,14 +363,14 @@ class TestThreaders:
 
     @pytest.mark.parametrize("n", [1, 2, 3, 4, 7, 10])
     def test_rename_files_threader_hands_every_file_to_a_worker_exactly_once(self, cf, n):
-        cf.rename_files = lambda master, chunk: cf.calls.append(list(chunk))
+        cf.rename_files = lambda master, chunk, print_progress: cf.calls.append(list(chunk))
         files = [f"f{i}" for i in range(n)]
         cf.rename_files_threader("mod.esp", files)
         assert sorted(f for chunk in cf.calls for f in chunk) == sorted(files)
         assert cf.file_count == n
 
     def test_worker_count_is_capped(self, cf):
-        cf.patch_files = lambda master, chunk: cf.calls.append(list(chunk))
+        cf.patch_files = lambda master, chunk, print_progress: cf.calls.append(list(chunk))
         cf.patch_files_threader("mod.esp", [f"f{i}" for i in range(30)])
         assert len([c for c in cf.calls if c]) <= 3 + 1
 
@@ -393,7 +398,7 @@ class TestPatchFiles:
     def test_each_file_is_copied_to_the_output_and_patched_there(self, env, cf, monkeypatch):
         self.patcher(monkeypatch, cf)
         src = put(env.data / "Scripts" / "Thing.pex", b"pex")
-        cf.patch_files("Mod.esp", [src])
+        cf.patch_files("Mod.esp", [src], False)
         new_file = str(env.out / "Scripts" / "Thing.pex")
         assert cf.calls == [(new_file.lower(), new_file, "mod.esp", "utf-8")]
         assert (env.out / "Scripts" / "Thing.pex").read_bytes() == b"pex"
@@ -402,20 +407,20 @@ class TestPatchFiles:
     def test_undecodable_files_are_retried_as_ansi(self, env, cf, monkeypatch):
         self.patcher(monkeypatch, cf, fail={"utf-8": UnicodeDecodeError("utf-8", b"\xff", 0, 1, "bad")})
         src = put(env.data / "a.ini", b"\xff")
-        cf.patch_files("Mod.esp", [src])
+        cf.patch_files("Mod.esp", [src], False)
         assert [c[3] for c in cf.calls] == ["utf-8", "cp1252"]
         assert "a.ini" in cf.compacted_and_patched["Mod.esp"]
 
     def test_failures_are_logged_and_the_file_is_still_registered(self, env, cf, monkeypatch, log):
         self.patcher(monkeypatch, cf, fail={"utf-8": ValueError("boom")})
         src = put(env.data / "a.ini")
-        cf.patch_files("Mod.esp", [src])
+        cf.patch_files("Mod.esp", [src], False)
         assert any("Failed to patch file" in e for e in log.errors)
         assert "a.ini" in cf.compacted_and_patched["Mod.esp"]
 
     def test_all_files_in_the_chunk_are_handled_even_after_a_failure(self, env, cf, monkeypatch):
         self.patcher(monkeypatch, cf, fail={"utf-8": ValueError("boom")})
-        cf.patch_files("Mod.esp", [put(env.data / "a.ini"), put(env.data / "b.ini")])
+        cf.patch_files("Mod.esp", [put(env.data / "a.ini"), put(env.data / "b.ini")], False)
         assert len(cf.calls) == 2
         assert cf.compacted_and_patched["Mod.esp"] == {"a.ini", "b.ini"}
 
@@ -431,7 +436,7 @@ class TestPatchSeveralDependents:
         for name in ("dep1.esp", "dep2.esp", "dep3.esp"):
             refr = record(b"REFR", fid(2, 0x800), sub(b"NAME", fid(1, 0x3000)))
             deps.append(write(env.data / name, plugin((SKYRIM, "master.esp"), grup(b"REFR", refr))))
-        cf.patch_dependent_plugins(master_src, deps, {})
+        cf.patch_dependent_plugins(master_src, deps)
         for name in ("dep1.esp", "dep2.esp", "dep3.esp"):
             assert (env.out / name).exists()
             assert name in cf.compacted_and_patched["master.esp"]
@@ -440,7 +445,7 @@ class TestPatchSeveralDependents:
         cf = make_cfids(env)
         master_src = write(env.data / "master.esp", build_source_plugin())
         cf.compact_file(master_src, True)
-        cf.patch_dependent_plugins(master_src, [], {})
+        cf.patch_dependent_plugins(master_src, [])
         assert not (env.out / "dep1.esp").exists()
 
 

@@ -17,7 +17,7 @@ class TestUpdateFromSettings:
         assert g.output_folder_name == "ESLifier Output"
         assert g.mod_manager_mode == 0
         assert g.update_header is True
-        assert g.generate_cell_master is True
+        assert g.generate_cell_master is False          # default changed in 7a21c0f
         assert g.persistent_ids is True
         assert g.free_non_existent is False
         assert g.hash_output is True

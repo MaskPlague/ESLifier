@@ -249,15 +249,15 @@ class TestIniMu:
 
 class TestIniSkyPatcher:
     def test_replaces(self, tmp_path):
-        out = patch(tmp_path, patchers.ini_skypatcher_patcher, "filterByNpcs=Mod.esp|0A2C8E\n")
+        out = patch(tmp_path, patchers.ini_skypatcher_and_robcopatcher_patcher, "filterByNpcs=Mod.esp|0A2C8E\n")
         assert out == "filterByNpcs=Mod.esp|A0A\n"
 
     def test_renames_plugin(self, tmp_path):
-        out = patch(tmp_path, patchers.ini_skypatcher_patcher, "filterByNpcs=Mod.esp|0A2C90\n")
+        out = patch(tmp_path, patchers.ini_skypatcher_and_robcopatcher_patcher, "filterByNpcs=Mod.esp|0A2C90\n")
         assert out == f"filterByNpcs={CELL_MASTER}|A0C\n"
 
     def test_list_of_plugins_only_ours_changes(self, tmp_path):
-        out = patch(tmp_path, patchers.ini_skypatcher_patcher, "filterByNpcs=Skyrim.esm|13,Mod.esp|0A2C8E\n")
+        out = patch(tmp_path, patchers.ini_skypatcher_and_robcopatcher_patcher, "filterByNpcs=Skyrim.esm|13,Mod.esp|0A2C8E\n")
         assert out == "filterByNpcs=Skyrim.esm|13,Mod.esp|A0A\n"
 
 

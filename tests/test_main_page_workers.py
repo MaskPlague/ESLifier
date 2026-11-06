@@ -11,7 +11,7 @@ import os
 
 import pytest
 
-import main.main_page as main_page
+import main.workers as workers
 from data_holder import (_global, FLAG_DICTIONARY_JSON, MISSING_GAME_AS_MASTER_JSON, FILE_MASTERS_JSON,
                          ORIGINAL_FILES_JSON, WINNING_FILES_DICT_JSON, WINNING_FILE_HISTORY_DICT_JSON)
 from main_page_fakes import Recorder
@@ -35,15 +35,15 @@ def get(path):
 class TestScannerWorker:
     @pytest.fixture
     def worker(self, g, monkeypatch):
-        w = main_page.ScannerWorker()
+        w = workers.ScannerWorker()
         w.tr = lambda text, *a: text
         w.finished_signal = Recorder()
         w.cell_scans = []
-        monkeypatch.setattr(main_page.cell_scanner, "scan", lambda plugins: w.cell_scans.append(list(plugins)), raising=False)
+        monkeypatch.setattr(workers.cell_scanner, "scan", lambda plugins: w.cell_scans.append(list(plugins)), raising=False)
         return w
 
     def scan_returns(self, monkeypatch, flags, deps=None):
-        monkeypatch.setattr(main_page.scanner, "scan", lambda *a: (flags, deps or {}), raising=False)
+        monkeypatch.setattr(workers.scanner, "scan", lambda *a: (flags, deps or {}), raising=False)
 
     def test_flags_are_split_into_the_two_lists(self, worker, monkeypatch):
         self.scan_returns(monkeypatch, {
@@ -65,7 +65,7 @@ class TestScannerWorker:
             g.vortex_error = "boom"
             return {"a.esp": ["new_cell"]}, {}
 
-        monkeypatch.setattr(main_page.scanner, "scan", failing_scan, raising=False)
+        monkeypatch.setattr(workers.scanner, "scan", failing_scan, raising=False)
         worker.scan_run()
         assert worker.finished_signal.emitted == [({}, {}, {})]
         assert worker.cell_scans == []
@@ -75,7 +75,7 @@ class TestScannerWorker:
             g.mo2_error = "boom"
             return {"a.esp": ["new_cell"]}, {}
 
-        monkeypatch.setattr(main_page.scanner, "scan", failing_scan, raising=False)
+        monkeypatch.setattr(workers.scanner, "scan", failing_scan, raising=False)
         worker.scan_run()
         assert worker.finished_signal.emitted == [({}, {}, {})]
         assert worker.cell_scans == []
@@ -120,9 +120,9 @@ class FakeCellPlugin:
 def fakes(workdir, g, monkeypatch):
     FakeCFIDs.instances = []
     plugin = FakeCellPlugin()
-    monkeypatch.setattr(main_page, "CFIDs", FakeCFIDs)
-    monkeypatch.setattr(main_page, "create_new_cell_plugin", lambda: plugin)
-    monkeypatch.setattr(main_page, "user_and_master_conditions_class", lambda: "conditions")
+    monkeypatch.setattr(workers, "CFIDs", FakeCFIDs)
+    monkeypatch.setattr(workers, "create_new_cell_plugin", lambda: plugin)
+    monkeypatch.setattr(workers, "user_and_master_conditions_class", lambda: "conditions")
     g.update_header = False
     g.generate_cell_master = False
     g.hash_output = False
@@ -132,7 +132,7 @@ def fakes(workdir, g, monkeypatch):
 
 
 def compactor(checked, deps, not_hash=()):
-    w = main_page.CompactorWorker(checked, deps, set(not_hash))
+    w = workers.CompactorWorker(checked, deps, set(not_hash))
     w.tr = lambda text, *a: text
     w.finished_signal = Recorder()
     return w
@@ -228,7 +228,7 @@ class TestCompactorWorker:
 # ------------------------------------------------------------------------------------------ FlagWorker
 class TestFlagWorker:
     def make(self, files, not_hash=()):
-        w = main_page.FlagWorker(files, set(not_hash))
+        w = workers.FlagWorker(files, set(not_hash))
         w.tr = lambda text, *a: text
         w.finished_signal = Recorder()
         return w
@@ -285,7 +285,7 @@ class TestHashWorker:
         return paths
 
     def run(self, paths, hashes):
-        w = main_page.HashWorker(paths, hashes)
+        w = workers.HashWorker(paths, hashes)
         w.tr = lambda text, *a: text
         w.finished = Recorder()
         w.run()
@@ -342,15 +342,15 @@ class TestHashWorker:
 
     def test_never_more_threads_than_the_limit(self, out, monkeypatch):
         started = []
-        real = main_page.threading.Thread
+        real = workers.threading.Thread
 
         class CountingThread(real):
             def start(self):
                 started.append(self)
                 super().start()
 
-        monkeypatch.setattr(main_page.threading, "Thread", CountingThread)
-        monkeypatch.setattr(main_page.os, "cpu_count", lambda: 16)
+        monkeypatch.setattr(workers.threading, "Thread", CountingThread)
+        monkeypatch.setattr(workers.os, "cpu_count", lambda: 16)
         paths = self.make_files(out, {f"f{i}.nif": b"x" for i in range(31)})
         self.run(paths, {})
         assert 1 <= len(started) <= 16

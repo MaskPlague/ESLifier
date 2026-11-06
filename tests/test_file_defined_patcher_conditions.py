@@ -153,9 +153,9 @@ def test_init_creates_missing_files(workdir):
 
 
 # ------------------------------------------------------------------------------ check_conditions
-def check(cond, file, conditions_by_ext):
+def check(cond, file, conditions_by_ext, **kwargs):
     cond.user_and_master_conditions = conditions_by_ext
-    return cond.check_conditions("mod.esp", file, file.lower(), FMAP)
+    return cond.check_conditions("mod.esp", file, file.lower(), FMAP, **kwargs)
 
 
 def test_no_conditions_returns_false(blank):
@@ -228,25 +228,32 @@ def test_user_defined_tokens_reach_the_patcher(blank, recorder):
     assert recorder[0][1].get("tkns") == {"a", "b"}
 
 
-def test_unicode_decode_error_retries_with_ansi_encoding(blank):
+def test_the_callers_encoding_is_handed_to_the_patcher(blank):
     seen = []
 
-    def flaky(*args, **kwargs):
+    def patcher(*args, **kwargs):
         seen.append(kwargs["encoding_method"])
-        if kwargs["encoding_method"] == "utf-8":
-            raise UnicodeDecodeError("utf-8", b"\xff", 0, 1, "bad byte")
 
-    assert check(blank, "c:\\d\\a.ini", {"ini": [condition_set(flaky)]}) is True
+    conds = {"ini": [condition_set(patcher)]}
+    assert check(blank, "c:\\d\\a.ini", conds) is True                          # default
+    assert check(blank, "c:\\d\\a.ini", conds, encoding_method="ansi") is True
     assert seen == ["utf-8", "ansi"]
 
 
-def test_other_patcher_errors_are_logged_and_file_still_counts_as_handled(blank, log):
+def test_patcher_errors_propagate_so_the_caller_can_retry_and_log(blank, log):
+    """Since f84e9ab the ANSI retry and the "Failed to patch file" log live in the caller (which knows the encoding),
+    not in check_conditions. A UnicodeDecodeError must therefore reach the caller untouched, and nothing is logged here."""
+    def bad_encoding(*args, **kwargs):
+        raise UnicodeDecodeError("utf-8", b"\xff", 0, 1, "bad byte")
+
     def boom(*args, **kwargs):
         raise RuntimeError("kaboom")
 
-    assert check(blank, "c:\\d\\a.ini", {"ini": [condition_set(boom)]}) is True
-    assert any("Failed to patch file" in e and "a.ini" in e for e in log.errors)
-    assert any("kaboom" in e for e in log.errors)
+    with pytest.raises(UnicodeDecodeError):
+        check(blank, "c:\\d\\a.ini", {"ini": [condition_set(bad_encoding)]})
+    with pytest.raises(RuntimeError, match="kaboom"):
+        check(blank, "c:\\d\\a.ini", {"ini": [condition_set(boom)]})
+    assert log.errors == []
 
 
 def test_init_user_conditions_work_when_master_file_has_none(workdir, cond_file):

@@ -68,7 +68,7 @@ class TestFo4:
 # ------------------------------------------------------------ notifier flags
 def run_scan(tmp_path, game_mode, plugins, scan_esms=True):
     notifier = notifier_module.check_files()
-    return notifier.scan_files(scan_esms, str(tmp_path), True, False, False, False, plugins, None, game_mode)
+    return notifier.scan_files(scan_esms, str(tmp_path), True, False, False, False, plugins, None, game_mode, plugins)
 
 
 def test_sse_changed_new_cell_of_an_esm_is_flagged(tmp_path):

@@ -289,7 +289,7 @@ def test_default_instance_uses_mods_and_overwrite_under_base(instance):
     assert _global.mo2_overwrite_path == str(base / "overwrite")
     assert _global.mo2_modlist_txt_path == str(base / "profiles" / "Default" / "modlist.txt")
     assert _global.plugins_txt_path == str(base / "profiles" / "Default" / "plugins.txt")
-    assert _global.mo2_mods_folder_lower == _global.mo2_mods_folder.lower()      # update_mo2_vars ran
+    assert _global.mo2_mods_folder_lower == _global.mo2_mods_folder.lower() + os.sep      # update_mo2_vars ran
 
 
 def test_ini_overrides_with_base_dir_placeholder(instance, workdir):

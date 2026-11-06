@@ -262,7 +262,7 @@ def test_get_folders_success_sets_global_paths(folders):
     assert Vortex.get_folders() is True
     assert _global.mod_staging_folder == str(staging)
     assert _global.game_folder_path == str(skyrim / "Data")
-    assert _global.game_folder_path_lower == str(skyrim / "Data").lower()      # update_vortex_vars ran
+    assert _global.game_folder_path_lower == str(skyrim / "Data").lower() + os.sep      # update_vortex_vars ran
     assert _global.folders_grabbed is True
 
 

@@ -20,6 +20,7 @@ import pytest
 
 import patch_new as pn
 from data_holder import _global
+from main.flow import Flow
 from plugin_builder import write as write_bytes
 
 
@@ -41,9 +42,7 @@ class Sig:
 class FakeParent:
     def __init__(self):
         self.events = []
-        self.redoing_output = None
-        self.patch_new_running = None
-        self.patch_new_only_remove = None
+        self.flow = None
 
     def setEnabled(self, value):
         self.events.append(("setEnabled", value))
@@ -839,8 +838,7 @@ def test_finished_rebuilding_looks_for_new_files(ui):
 def test_start_rescan_flags_the_run_and_scans_on_the_gui_thread(ui):
     ui.start_rescan(True)
     parent = ui.main_parent
-    assert parent.redoing_output is True and parent.patch_new_running is True
-    assert parent.patch_new_only_remove is True
+    assert parent.flow is Flow.PATCH_NEW_REMOVE_ONLY
     assert parent.events == [("scan",)]
 
 

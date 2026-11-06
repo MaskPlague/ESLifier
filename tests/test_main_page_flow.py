@@ -14,6 +14,7 @@ import pytest
 import main.main_page as main_page
 from data_holder import _global, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON
 from scanners.vortex_database_reader import ReadState
+from main.flow import Flow
 from main_page_fakes import make_page, UI, FakeMessageBox
 
 
@@ -33,6 +34,12 @@ def ended(page):
             and page.setEnabled and page.setEnabled[-1] == ((True,), {}))
 
 
+def handed_back(page):
+    """The flow is over and Patch New has the run again: it unlocks the window itself when it is done."""
+    return (page.flow is Flow.NONE and len(page.patch_new.finished_rebuilding) == 1
+            and page.setEnabled == [] and page.calculate_stats == [])
+
+
 # ------------------------------------------------------------------------------------ finished: compact
 class TestCompactFinished:
     def test_normal_run_reenables_ui_and_shows_finished_dialog(self, page, log):
@@ -49,20 +56,15 @@ class TestCompactFinished:
         assert page.list_compact.created == 1
 
     def test_redo_suppresses_the_finished_dialog(self, page):
-        page.redoing_output = True
-        page.patch_new_running = True
+        page.flow = Flow.PATCH_NEW
         page.finished_button_action("compact", [])
         assert FakeMessageBox.instances == []
 
     def test_patch_new_run_hands_control_back_to_patch_new(self, page):
-        page.redoing_output = True
-        page.patch_new_running = True
-        page.patch_new_only_remove = True
+        page.flow = Flow.PATCH_NEW_REMOVE_ONLY
         page.finished_button_action("compact", [])
-        assert len(page.patch_new.finished_rebuilding) == 1
-        assert ended(page)
+        assert handed_back(page)
 
-    @pytest.mark.xfail(strict=True, reason="pop(mod) raises KeyError if the mod is no longer in flag_dict")
     def test_mod_missing_from_flag_dict_is_tolerated(self, page):
         page.list_compact.flag_dict = {}
         page.finished_button_action("compact", ["gone.esp"])
@@ -108,7 +110,7 @@ class TestEslifyFinished:
 
     def test_redo_continues_into_compacting_when_previous_compacts_are_checked(self, page, workdir):
         touch_json(PREVIOUSLY_COMPACTED_JSON)
-        page.redoing_output = True
+        page.flow = Flow.REBUILD
         page.list_compact.rows = [UI.Qt.CheckState.Checked, UI.Qt.CheckState.Unchecked]
         page.finished_button_action("eslify", [])
         assert len(page.compact_selected_clicked) == 1
@@ -118,7 +120,7 @@ class TestEslifyFinished:
 
     def test_redo_with_nothing_to_compact_ends_the_flow(self, page, workdir):
         touch_json(PREVIOUSLY_COMPACTED_JSON)
-        page.redoing_output = True
+        page.flow = Flow.REBUILD
         page.list_compact.rows = [UI.Qt.CheckState.Unchecked]
         page.finished_button_action("eslify", [])
         assert page.compact_selected_clicked == []
@@ -126,27 +128,22 @@ class TestEslifyFinished:
 
     def test_redo_with_nothing_to_compact_finishes_patch_new(self, page, workdir):
         touch_json(PREVIOUSLY_COMPACTED_JSON)
-        page.redoing_output = True
-        page.patch_new_running = True
+        page.flow = Flow.PATCH_NEW
         page.list_compact.rows = []
         page.finished_button_action("eslify", [])
         assert len(page.patch_new.finished_rebuilding) == 1
         assert not page.patch_new_running and not page.redoing_output
 
     def test_redo_without_previous_compacts_ends_the_flow(self, page):
-        page.redoing_output = True
+        page.flow = Flow.REBUILD
         page.finished_button_action("eslify", [])
         assert ended(page)
         assert len(page.calculate_stats) == 1
 
-    @pytest.mark.xfail(strict=True, reason="no PREVIOUSLY_COMPACTED_JSON + patch_new_running: finished_rebuilding is never "
-                                           "called, so Patch New hangs and patch_new_running stays True")
     def test_redo_without_previous_compacts_finishes_patch_new(self, page):
-        page.redoing_output = True
-        page.patch_new_running = True
+        page.flow = Flow.PATCH_NEW
         page.finished_button_action("eslify", [])
-        assert len(page.patch_new.finished_rebuilding) == 1
-        assert ended(page)
+        assert handed_back(page)
 
 
 # ------------------------------------------------------------------------------------ scan completed
@@ -175,7 +172,7 @@ class TestCompletedScan:
     def test_redo_with_previous_eslify_selection_eslifies_first(self, page, workdir):
         touch_json(PREVIOUSLY_ESL_FLAGGED_JSON)
         touch_json(PREVIOUSLY_COMPACTED_JSON)
-        page.redoing_output = True
+        page.flow = Flow.REBUILD
         page.completed_scan(FLAGS_E, FLAGS_C, DEPS)
         assert page.list_eslify.check_previous_calls == 1
         assert len(page.eslify_selected_clicked) == 1
@@ -184,7 +181,7 @@ class TestCompletedScan:
 
     def test_redo_with_only_previous_compacts_compacts(self, page, workdir):
         touch_json(PREVIOUSLY_COMPACTED_JSON)
-        page.redoing_output = True
+        page.flow = Flow.REBUILD
         page.completed_scan(FLAGS_E, FLAGS_C, DEPS)
         assert page.list_compact.check_previous_calls == 1
         assert len(page.compact_selected_clicked) == 1
@@ -192,17 +189,14 @@ class TestCompletedScan:
 
     def test_patch_new_only_remove_hands_back_without_patching(self, page, workdir):
         touch_json(PREVIOUSLY_COMPACTED_JSON)
-        page.redoing_output = True
-        page.patch_new_running = True
-        page.patch_new_only_remove = True
+        page.flow = Flow.PATCH_NEW_REMOVE_ONLY
         page.completed_scan(FLAGS_E, FLAGS_C, DEPS)
         assert len(page.patch_new.finished_rebuilding) == 1
         assert page.compact_selected_clicked == [] and page.eslify_selected_clicked == []
         assert not page.redoing_output and not page.patch_new_running and not page.patch_new_only_remove
 
-    @pytest.mark.xfail(strict=True, reason="redo with neither PREVIOUSLY_* file: nothing ends the flow, the UI stays disabled")
     def test_redo_with_no_previous_data_ends_the_flow(self, page):
-        page.redoing_output = True
+        page.flow = Flow.REBUILD
         page.completed_scan(FLAGS_E, FLAGS_C, DEPS)
         assert ended(page)
 
@@ -228,13 +222,43 @@ class TestScanErrors:
     def test_unknown_vortex_state_still_gets_a_message(self, page):
         assert "weird" in page.vortex_error_text("weird")
 
-    @pytest.mark.xfail(strict=True, reason="an error during a redo/Patch New leaves redoing_output/patch_new_running set")
     def test_error_during_redo_ends_the_flow(self, page, g):
         g.vortex_error = ReadState.ERROR_DB_LOCKED_EXTENSION_MISSING
-        page.redoing_output = True
-        page.patch_new_running = True
+        page.flow = Flow.PATCH_NEW
         page.completed_scan(FLAGS_E, FLAGS_C, DEPS)
         assert ended(page)
+
+
+class TestEndFlow:
+    """end_flow is the single exit for every compact / ESLify / scan / rebuild / Patch New run."""
+
+    def test_clears_the_flow_and_unlocks(self, page):
+        page.flow = Flow.REBUILD
+        page.end_flow()
+        assert ended(page) and len(page.calculate_stats) == 1
+        assert page.patch_new.finished_rebuilding == []
+
+    def test_a_rebuild_is_never_handed_to_patch_new(self, page):
+        page.flow = Flow.REBUILD
+        page.end_flow(hand_back_to_patch_new=True)
+        assert ended(page) and page.patch_new.finished_rebuilding == []
+
+    def test_patch_new_run_is_handed_back_and_the_window_stays_locked(self, page):
+        page.flow = Flow.PATCH_NEW
+        page.end_flow(hand_back_to_patch_new=True)
+        assert handed_back(page)
+
+    def test_patch_new_run_is_not_handed_back_unless_asked(self, page):
+        page.flow = Flow.PATCH_NEW
+        page.end_flow()
+        assert ended(page) and page.patch_new.finished_rebuilding == []
+
+    def test_flow_properties(self, page):
+        for flow, redoing, patch_new, only_remove in [
+                (Flow.NONE, False, False, False), (Flow.REBUILD, True, False, False),
+                (Flow.PATCH_NEW, True, True, False), (Flow.PATCH_NEW_REMOVE_ONLY, True, True, True)]:
+            page.flow = flow
+            assert (page.redoing_output, page.patch_new_running, page.patch_new_only_remove) == (redoing, patch_new, only_remove)
 
 
 # ------------------------------------------------------------------------------------ scan()
@@ -258,8 +282,6 @@ class TestScan:
         assert page.scanned is False
         assert "unresponsive" in page.confirms[0].text and page.confirms[0].shown
 
-    @pytest.mark.xfail(strict=True, reason="vortex_error_text lost the DEPLOYING and PURGING messages when the Vortex error "
-                                           "text was centralised, so they fall through to 'unknown error'")
     @pytest.mark.parametrize("state, word", [(ReadState.ERROR_DB_LOCKED_DEPLOYING, "deploy"),
                                              (ReadState.ERROR_DB_LOCKED_PURGING, "purging")])
     def test_deploying_and_purging_have_their_own_messages(self, page, state, word):
@@ -292,7 +314,7 @@ class TestScan:
     def test_redo_accepts_the_rescan_prompt_itself(self, page):
         page.scan = main_page.main.scan.__get__(page)
         page.scanned = True
-        page.redoing_output = True
+        page.flow = Flow.REBUILD
         page.scan()
         assert not page.confirms[0].shown
         assert len(page.log_stream.show) == 1

@@ -613,7 +613,7 @@ class TestPatchDependent:
 
     def test_patches_references_to_the_compacted_master(self, env):
         cf, master_src, dep_src = self.setup_pair(env)
-        cf.patch_dependent_plugins(master_src, [dep_src], {})
+        cf.patch_dependent_plugins(master_src, [dep_src])
         out = (env.out / "dep.esp").read_bytes()
         refr = get_record(out, b"REFR")
         assert refr[30:34] == fid(1, 2)                     # NAME: 0x3000 -> 0x002
@@ -623,12 +623,12 @@ class TestPatchDependent:
 
     def test_updates_header_version(self, env):
         cf, master_src, dep_src = self.setup_pair(env)
-        cf.patch_dependent_plugins(master_src, [dep_src], {})
+        cf.patch_dependent_plugins(master_src, [dep_src])
         assert (env.out / "dep.esp").read_bytes()[30:34] == HEADER_VERSION_171
 
     def test_registers_patched_file(self, env):
         cf, master_src, dep_src = self.setup_pair(env)
-        cf.patch_dependent_plugins(master_src, [dep_src], {})
+        cf.patch_dependent_plugins(master_src, [dep_src])
         assert "dep.esp" in cf.compacted_and_patched["master.esp"]
 
     def test_patches_seq_file_for_dependent(self, env):
@@ -637,14 +637,14 @@ class TestPatchDependent:
         # (master byte 2) and one reference into the compacted master (master byte 1)
         seq = write(env.data / "Seq" / "dep.seq", fid(2, 0x800) + fid(1, 0x3000))
         env.g.mods_with_seq = {"dep.esp": str(seq)}
-        cf.patch_dependent_plugins(master_src, [dep_src], {})
+        cf.patch_dependent_plugins(master_src, [dep_src])
         assert (env.out / "Seq" / "dep.seq").read_bytes() == fid(2, 0x800) + fid(1, 2)
         assert os.path.join("Seq", "dep.seq") in cf.compacted_and_patched["master.esp"]
 
     def test_bad_dependent_is_reported_not_raised(self, env, log):
         cf, master_src, dep_src = self.setup_pair(env)
         bad = write(env.data / "bad.esp", b"TES4" + b"\x10\x00\x00\x00" + b"\x00" * 20)
-        cf.patch_dependent_plugins(master_src, [bad], {})
+        cf.patch_dependent_plugins(master_src, [bad])
         assert any("Failed to patch dependent" in e for e in log.errors)
 
     def test_patching_new_dependent_uses_saved_master_data(self, env):
@@ -653,7 +653,7 @@ class TestPatchDependent:
         cf2.master_byte_data = cf.master_byte_data
         cf2.compacted_and_patched = {"master.esp": set()}
         cf2.get_form_id_map(master_src)
-        cf2.patch_dependent_plugins(master_src, [dep_src], {})
+        cf2.patch_dependent_plugins(master_src, [dep_src])
         assert "dep.esp" in cf2.compacted_and_patched["master.esp"]
 
 

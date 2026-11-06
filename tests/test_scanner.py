@@ -459,8 +459,16 @@ def test_dll_reader_does_not_duplicate_files(sc, tmp_path):
 
 
 def _fake_pe(monkeypatch, file_version_ms):
+    # the scanner now uses ``with pefile.PE(path) as pe`` so the file handle is closed
     pe = types.SimpleNamespace(VS_FIXEDFILEINFO=[types.SimpleNamespace(FileVersionMS=file_version_ms)])
-    monkeypatch.setattr(scanner_module.pefile, "PE", lambda path: pe)
+    class FakePE:
+        def __init__(self, path):
+            pass
+        def __enter__(self):
+            return pe
+        def __exit__(self, *exc):
+            return False
+    monkeypatch.setattr(scanner_module.pefile, "PE", FakePE)
 
 
 def test_engine_fixes_dll_version_7_is_detected(sc, tmp_path, monkeypatch):

@@ -2,6 +2,7 @@
 full_form_processor.save_*_data: handlers whose Form ID locations depend on sizes, counts, flags or other
 sub-records. Each test builds a real sub-record layout with unique marker ids and asserts which markers are reported.
 """
+import pytest
 import struct
 
 from full_form_processor_sse import form_processor as fp
@@ -48,13 +49,9 @@ def test_dobj_dnam_has_a_form_id_in_the_second_half_of_each_8_byte_entry():
     check(b"DOBJ", sub(b"DNAM", b"ACTI" + a + b"ALCH" + b), [a, b])
 
 
-def test_coll_cnam_has_as_many_ids_as_the_intv_count_says():
+def test_coll_cnam_is_an_array_of_form_ids():
     a, b, c = m(), m(), m()
-    check(b"COLL", sub(b"INTV", u32(2) + Z) + sub(b"CNAM", a + b + c), [a, b])
-
-
-def test_coll_cnam_without_intv_reports_nothing():
-    check(b"COLL", sub(b"CNAM", m()), [])
+    check(b"COLL", sub(b"INTV", u32(2) + Z) + sub(b"CNAM", a + b + c), [a, b, c])
 
 
 def test_regn_rdwt_has_ids_at_the_start_and_end_of_each_12_byte_entry():
@@ -93,7 +90,7 @@ def test_perk_data_is_a_form_id_only_when_it_is_4_or_8_bytes():
 def test_perk_epfd_is_a_form_id_for_function_types_3_4_and_5():
     for epft, expect in ((1, False), (2, False), (3, True), (4, True), (5, True), (6, False)):
         x = m()
-        subs = sub(b"EPFT", bytes([epft])) + sub(b"EPFD", x)
+        subs = sub(b"EPFT", bytes([epft])) + sub(b"EPFD", x) + sub(b"PRKF", b"")   # a perk section is only resolved at its PRKF
         check(b"PERK", subs, [x] if expect else [])
 
 
@@ -147,14 +144,21 @@ def test_navi_nvpp_path_table_then_node_table():
     check(b"NAVI", sub(b"NVPP", payload), [p1, p2, p3, n1, n2])
 
 
-def test_navi_nvmi_walks_all_the_counted_lists_and_ends_with_world_and_cell():
+def test_navi_nvmi_walks_all_the_counted_lists_and_ends_with_the_parent_world_when_it_has_one():
     navmesh, mg1, mg2, pref, d1, d2, world, cell = (m() for _ in range(8))
     payload = (navmesh + b"\x00" * 20
                + u32(2) + mg1 + mg2
                + u32(1) + pref
                + u32(2) + Z + d1 + Z + d2
                + world + cell)
-    check(b"NAVI", sub(b"NVMI", payload), [navmesh, mg1, mg2, pref, d1, d2, world, cell])
+    # (5fcf1e1) exterior: the trailing "cell" is grid coordinates, so only the world is a form ID
+    check(b"NAVI", sub(b"NVMI", payload), [navmesh, mg1, mg2, pref, d1, d2, world])
+
+
+def test_navi_nvmi_ends_with_the_parent_cell_when_there_is_no_world():
+    navmesh, mg1, pref, d1, cell = (m() for _ in range(5))
+    payload = (navmesh + b"\x00" * 20 + u32(1) + mg1 + u32(1) + pref + u32(1) + Z + d1 + Z + cell)
+    check(b"NAVI", sub(b"NVMI", payload), [navmesh, mg1, pref, d1, cell])
 
 
 def test_navi_nvsi_is_a_plain_array():
@@ -162,11 +166,20 @@ def test_navi_nvsi_is_a_plain_array():
     check(b"NAVI", sub(b"NVSI", a + b), [a, b])
 
 
-def test_navm_nvnm_skips_vertices_and_triangles_to_find_connections_and_door_triangles():
-    world, cell, c1, c2, door = (m() for _ in range(5))
-    payload = (b"\x00" * 8 + world + cell
+def nvnm(world, cell, c1, c2, door):
+    return (b"\x00" * 8 + world + cell
                + u32(2) + b"\x00" * 24                              # 2 vertices x 12 bytes
                + u32(1) + b"\x00" * 16                              # 1 triangle x 16 bytes
                + u32(2) + Z + c1 + b"\x00" * 2 + Z + c2 + b"\x00" * 2   # connections: 10 bytes, navmesh at +4
                + u32(1) + b"\x00" * 6 + door)                        # door triangle: 10 bytes, REFR at +6
-    check(b"NAVM", sub(b"NVNM", payload), [world, cell, c1, c2, door])
+
+
+def test_navm_nvnm_skips_vertices_and_triangles_to_find_connections_and_door_triangles():
+    world, cell, c1, c2, door = (m() for _ in range(5))
+    # exterior navmesh: only the parent world is a form ID (the cell slot holds grid coordinates)
+    check(b"NAVM", sub(b"NVNM", nvnm(world, cell, c1, c2, door)), [world, c1, c2, door])
+
+
+def test_navm_nvnm_of_an_interior_cell_reports_the_cell():
+    cell, c1, c2, door = (m() for _ in range(4))
+    check(b"NAVM", sub(b"NVNM", nvnm(Z, cell, c1, c2, door)), [cell, c1, c2, door])

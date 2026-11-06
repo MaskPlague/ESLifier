@@ -105,7 +105,8 @@ class FakeResponse:
 def serve_state(monkeypatch, payload=None, error=None):
     seen = []
 
-    def urlopen(req):
+    def urlopen(req, timeout=None):
+        assert timeout, "the request to the extension must have a timeout so a hung Vortex cannot freeze ESLifier"
         seen.append(req.full_url)
         if error:
             raise error
