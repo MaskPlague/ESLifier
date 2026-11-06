@@ -22,6 +22,7 @@ class list_eslable(list_parent_class):
         if self.is_fo4_mode:
             self.PRECOM_COL = next(c)
         if self.is_sse_mode:
+            self.SEQ_COL = next(c)
             self.PEX_COL = next(c)
         self.ESM_COL = next(c)
         self.SPACER_COL = next(c)
@@ -77,12 +78,6 @@ class list_eslable(list_parent_class):
                     'for FO4 can circumvent this issue. For now it will be disabled.'))
             
         self.horizontalHeaderItem(self.MOD_COL).setToolTip(self.tr('This is the plugin name. Select which plugins you wish to flag as light.'))
-
-        self.horizontalHeaderItem(self.SEQ_COL).setToolTip(self.tr(
-                'Mods with SEQ files can be subject to the quest bug that prevents dialogue from\n'\
-                'working, all that needs to be done in game is save and reload and the bug will\n'\
-                'be fixed. This flag exists so users who don\'t want to deal with this bug can\n'\
-                'avoid ESLifiying mods with SEQ files.'))
         
         self.horizontalHeaderItem(self.ESM_COL).setToolTip(self.tr('This is the ESM flag.'))
 
