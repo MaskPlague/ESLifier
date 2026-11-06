@@ -338,22 +338,8 @@ class list_compactable(list_parent_class):
             if hide_row:
                 self.setItem(i, self.HIDER_COL, QTableWidgetItem('hide me'))
 
-        def somethingChanged(item_changed):
-            self.blockSignals(True)
-            if item_changed in self.selectedItems():
-                if item_changed.checkState() == Qt.CheckState.Checked:
-                    for x in self.selectedItems():
-                        if x.column() == self.MOD_COL and x.checkState() != Qt.CheckState.PartiallyChecked:
-                            x.setCheckState(Qt.CheckState.Checked)
-                else:
-                    for x in self.selectedItems():
-                        if x.column() == self.MOD_COL and x.checkState() != Qt.CheckState.PartiallyChecked:
-                            x.setCheckState(Qt.CheckState.Unchecked)
-            self.blockSignals(False)
-
         self.hide_rows()
         self.resizeColumnsToContents()
-        self.itemChanged.connect(somethingChanged)
         self.resizeRowsToContents()
         self.setSortingEnabled(True)
         self.list_created_signal.emit()

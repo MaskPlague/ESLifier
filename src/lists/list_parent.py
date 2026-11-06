@@ -116,9 +116,23 @@ class list_parent_class(QTableWidget):
         self.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.horizontalHeader().setStretchLastSection(True)
         self.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.itemChanged.connect(self.somethingChanged)
 
     def create_list():
         pass
+
+    def somethingChanged(self, item_changed):
+        self.blockSignals(True)
+        if item_changed in self.selectedItems():
+            if item_changed.checkState() == Qt.CheckState.Checked:
+                for x in self.selectedItems():
+                    if x.column() == self.MOD_COL and x.checkState() != Qt.CheckState.PartiallyChecked:
+                        x.setCheckState(Qt.CheckState.Checked)
+            else:
+                for x in self.selectedItems():
+                    if x.column() == self.MOD_COL and x.checkState() != Qt.CheckState.PartiallyChecked:
+                        x.setCheckState(Qt.CheckState.Unchecked)
+        self.blockSignals(False)
 
     def hide_rows(self):
         for row in range(self.rowCount()):
