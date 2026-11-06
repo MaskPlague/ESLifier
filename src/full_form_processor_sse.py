@@ -613,7 +613,7 @@ class form_processor():
             field, field_size, offset = form_processor.get_field_and_size(offset, form)
             if field in special_coll_fields:
                 if field == b'CNAM':
-                    form_processor.get_offsets_from_array(offset, field_size)
+                    coll_offsets.extend(form_processor.get_offsets_from_array(offset, field_size))
             offset += field_size + 6
 
         return [i, bytearray(form), coll_offsets]
