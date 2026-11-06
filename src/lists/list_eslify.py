@@ -332,7 +332,7 @@ class list_eslable(list_parent_class):
                         text += not_found_text
 
                     text += "\n"
-                    text += self.tr("Plugins that cannot be re-compacted can have adverse effects on ongoing saves. Please be careful.")
+                    text += self.tr("Plugins that cannot be re-ESL flagged can have adverse effects on ongoing saves. Please be careful.")
                     write_to_file(text)
                     QMessageBox.warning(None, self.tr("Warning"), text, QMessageBox.StandardButton.Ok)
                 elif diff:
