@@ -23,8 +23,8 @@ class list_compactable(list_parent_class):
         if self.is_fo4_mode:
             self.PRECOM_COL = next(c)
         self.DLL_COL = next(c)
-        self.SEQ_COL = next(c)
         if self.is_sse_mode:
+            self.SEQ_COL = next(c)
             self.PEX_COL = next(c)
         self.ESM_COL = next(c)
         self.DEP_COL = next(c)

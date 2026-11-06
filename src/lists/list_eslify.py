@@ -21,7 +21,6 @@ class list_eslable(list_parent_class):
             self.WRLD_COL = next(c)
         if self.is_fo4_mode:
             self.PRECOM_COL = next(c)
-        self.SEQ_COL = next(c)
         if self.is_sse_mode:
             self.PEX_COL = next(c)
         self.ESM_COL = next(c)
@@ -62,6 +61,11 @@ class list_eslable(list_parent_class):
                     'determine if a plugin is installed may partially break if the plugin is flagged ESL\n'\
                     'as said function only works for non-ESL plugins. This flag indicates that the plugin\n'\
                     'has one or more PEX files that call the function on the relevant plugin (see flag tooltip).'))
+            self.horizontalHeaderItem(self.SEQ_COL).setToolTip(self.tr(
+                'Mods with SEQ files can be subject to the quest bug that prevents dialogue from\n'\
+                'working, all that needs to be done in game is save and reload and the bug will\n'\
+                'be fixed. This flag exists so users who don\'t want to deal with this bug can\n'\
+                'avoid ESLifiying mods with SEQ files.'))
         elif self.is_fo4_mode:
             self.setHorizontalHeaderLabels([self.tr('*   Mod'), self.tr('PreVis/PreCombine'), 'SEQ', 'ESM', '', 'Hider'])
             self.horizontalHeaderItem(self.PRECOM_COL).setToolTip(self.tr(
