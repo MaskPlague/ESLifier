@@ -172,7 +172,7 @@ class list_compactable(list_parent_class):
                     self.item(index, self.CELL_COL).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignVCenter)
                 if self.item(index, self.WRLD_COL):
                     self.item(index, self.WRLD_COL).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignVCenter)
-                self.sender().setText('Show')
+                self.sender().setText(self.tr('Show'))
                 self.sender().setStyleSheet("""
                     QPushButton{
                         padding: 0px, 0px, 20px, 0px;
@@ -186,7 +186,7 @@ class list_compactable(list_parent_class):
                     self.item(index, self.CELL_COL).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignTop)
                 if self.item(index, self.WRLD_COL):
                     self.item(index, self.WRLD_COL).setTextAlignment(Qt.AlignmentFlag.AlignHCenter|Qt.AlignmentFlag.AlignTop)
-                self.sender().setText('Hide')
+                self.sender().setText(self.tr('Hide'))
                 self.sender().setStyleSheet("""
                     QPushButton{
                         padding: 0px, 0px, 20px, 0px;
@@ -322,8 +322,8 @@ class list_compactable(list_parent_class):
                     hide_row = True
                 self.setItem(i, self.ESM_COL, item_esm_flag)
             if self.dependency_list[basename_lower] != []:
-                dL = QPushButton("Show")
                 dL.clicked.connect(lambda _, mod_key=basename_lower: display_dependencies(mod_key))
+                dL = QPushButton(self.tr("Show"))
                 dL.setMaximumSize(90,22)
                 dL.setMinimumSize(90,22)
                 dL.setStyleSheet("""
@@ -362,7 +362,7 @@ class list_compactable(list_parent_class):
         row = self.rowAt(position.y())
         col = self.columnAt(position.x())
 
-        if col == self.DEP_DISP_COL and self.cellWidget(row, self.DEP_COL) and self.cellWidget(row, self.DEP_COL).text() == 'Hide':
+        if col == self.DEP_DISP_COL and self.cellWidget(row, self.DEP_COL) and self.cellWidget(row, self.DEP_DISP_COL):
             list_widget = self.cellWidget(row, self.DEP_DISP_COL)
             selected_item = list_widget.itemAt(list_widget.mapFromGlobal(self.viewport().mapToGlobal(position)))
             if not selected_item:
