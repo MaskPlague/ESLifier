@@ -32,11 +32,13 @@ from log_stream import write_error, write_normal, write_progress, write_remove, 
 
 class scanner():    
     def scan(full_scan: bool) -> tuple[dict, dict] | None:
-        if GAME_MODE == "SSE":
+        is_sse_mode = GAME_MODE == "SSE"
+        is_fo4_mode = GAME_MODE == "FO4"
+        if is_sse_mode:
             scanner.game_archive_blacklist = set(['skyrim - misc.bsa', 'skyrim - shaders.bsa', 'skyrim - interface.bsa', 'skyrim - animations.bsa', 'skyrim - meshes0.bsa', 'skyrim - meshes1.bsa',
                                                   'skyrim - sounds.bsa', 'skyrim - voices_en0.bsa', 'skyrim - textures0.bsa', 'skyrim - textures1.bsa', 'skyrim - textures2.bsa', 'skyrim - textures3.bsa',
                                                   'skyrim - textures4.bsa', 'skyrim - textures5.bsa', 'skyrim - textures6.bsa', 'skyrim - textures7.bsa', 'skyrim - textures8.bsa', 'skyrim - patch.bsa'])
-        elif GAME_MODE == "FO4":
+        elif is_fo4_mode:
             scanner.game_archive_blacklist = set(['fallout4 - animations.ba2', 'fallout4 - interface.ba2', 'fallout4 - materials.ba2', 'fallout4 - meshes.ba2', 'fallout4 - meshesextra.ba2', 
                                                   'fallout4 - misc.ba2', 'fallout4 - shaders.ba2', 'fallout4 - sounds.ba2', 'fallout4 - startup.ba2', 'fallout4 - textures1.ba2', 
                                                   'fallout4 - textures2.ba2', 'fallout4 - textures3.ba2', 'fallout4 - textures4.ba2', 'fallout4 - textures5.ba2', 'fallout4 - textures6.ba2', 
@@ -66,7 +68,7 @@ class scanner():
         if not os.path.exists(IGNORED_FILES_JSON):
             with open(IGNORED_FILES_JSON, "w+", encoding="utf-8") as f:
                 json.dump([], f, ensure_ascii=False, indent=3)
-        master_ignored_file_data = scanner.get_from_file(ESLIFIER_DATA_FOLDER + "master_ignored_files.json", dict)
+        master_ignored_file_data:dict[str,list[str]] = scanner.get_from_file(ESLIFIER_DATA_FOLDER + "master_ignored_files.json", dict)
         master_ignored_files = [item.lower() for item in master_ignored_file_data.get("ignored_files", [])]
         user_ignored_files = [item.lower() for item in scanner.get_from_file(IGNORED_FILES_JSON, list)]
         master_ignored_files.extend(user_ignored_files)
@@ -74,29 +76,36 @@ class scanner():
         scanner.ignored_files = set(master_ignored_files)
         scanner.file_extensions = tuple([item.lower() for item in ('.ini', '.json', '.jslot', '.toml', '_conditions.txt', '.yaml', '.yml', '.xml')])
 
-        exclude_contains = [item.lower() for item in (
-            'modex\\user\\kits',
-            'nemesis_engine',
-            'quickarmorrebalance\\config\\',
-            'equipmenttoggle\\slotdata\\',
-            '\\headpartwhitelist\\',
-            '\\interface\\quests\\'
-            )]
+        if is_sse_mode:
+            exclude_contains = [item.lower() for item in (
+                'modex\\user\\kits',
+                'nemesis_engine',
+                'quickarmorrebalance\\config\\',
+                'equipmenttoggle\\slotdata\\',
+                '\\headpartwhitelist\\',
+                '\\interface\\quests\\'
+                )]
+        elif is_fo4_mode:
+            exclude_contains = []
         exclude_contains.extend([os.path.normpath(item).lower() for item in master_ignored_file_data.get("ignored_contains", [])])
         scanner.exclude_contains = tuple(exclude_contains)
 
-        exclude_endswith = [item.lower() for item in (
-            '\\revealingarmo_tng.ini',
-            '\\enginefixes_snct.toml', 
-            '\\enginefixes_snct.ini',
-            '\\vortex.deployment.json', 
-            '\\aiprocessfixmodpatch.ini', 
-            '\\grasscontrol.ini',
-            '\\gearspreader.ini',
-            '\\merge.json', '\\map.json', '\\fidcache.json', #zMerge
-            '\\parallaxgen_diff.json',
-            '\\console_cheatsheet.json'
-            )]
+        if is_sse_mode:
+            exclude_endswith = [item.lower() for item in (
+                '\\revealingarmo_tng.ini',
+                '\\enginefixes_snct.toml', 
+                '\\enginefixes_snct.ini',
+                '\\vortex.deployment.json', 
+                '\\aiprocessfixmodpatch.ini', 
+                '\\grasscontrol.ini',
+                '\\gearspreader.ini',
+                '\\merge.json', '\\map.json', '\\fidcache.json', #zMerge
+                '\\parallaxgen_diff.json',
+                '\\console_cheatsheet.json'
+                )]
+        elif is_fo4_mode:
+            exclude_endswith = []
+            
         exclude_endswith.extend([os.path.normpath(item).lower() for item in master_ignored_file_data.get("ignored_endswith", [])])
         scanner.exclude_endswith = tuple(exclude_endswith)
 
