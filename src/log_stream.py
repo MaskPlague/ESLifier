@@ -80,7 +80,8 @@ if DEBUG:
             for line in args:
                 sys.__stdout__.write(f"{line}\n")
             sys.__stdout__.flush()
-
+LOG_REFRESH_RATE = 17
+QUEUE_PROCESS_RATE = 10
 class log_stream(QMainWindow):
     _instance = None
     _init = False
@@ -181,10 +182,16 @@ class log_stream(QMainWindow):
         sys.excepthook = self.exception_hook
         threading.excepthook = self.threading_exception_hook
 
-        self.timer = QTimer(self)
-        self.timer.setSingleShot(True)
-        self.timer.timeout.connect(self.process_queue)
-        self.timer.start(50)
+        self.queue_timer = QTimer(self)
+        self.queue_timer.setSingleShot(True)
+        self.queue_timer.timeout.connect(self.process_queue)
+        self.queue_timer.start(QUEUE_PROCESS_RATE)
+
+        self.refresh_log_timer = QTimer(self)
+        self.refresh_log_timer.timeout.connect(self.refresh_log)
+        self.refresh_log_timer.setInterval(LOG_REFRESH_RATE)
+        self.refresh_log_timer.setSingleShot(False)
+        self.refresh_log_timer.start()
 
         self.timer_clear = QTimer(self)
         self.timer_clear.setSingleShot(True)
@@ -408,7 +415,7 @@ class log_stream(QMainWindow):
 
     def closeEvent(self, a0):
         self.running = False
-        self.timer.stop()
+        self.queue_timer.stop()
         if not self.log_file.closed:
             self.log_file.flush()
             self.log_file.close()
@@ -416,7 +423,7 @@ class log_stream(QMainWindow):
 
     def close(self):
         self.running = False
-        self.timer.stop()
+        self.queue_timer.stop()
         if not self.log_file.closed:
             self.log_file.flush()
             self.log_file.close()
@@ -427,7 +434,7 @@ class log_stream(QMainWindow):
             self.process_queue_once()
         finally:
             if self.running:
-                self.timer.start(50)
+                self.queue_timer.start(QUEUE_PROCESS_RATE)
 
     def process_queue_once(self):
         length = self.display_queue.qsize()
