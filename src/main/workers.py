@@ -12,11 +12,8 @@ from compact_form_ids import CFIDs
 from scanners.cell_changed_scanner import cell_scanner
 from create_cell_master import create_new_cell_plugin
 from main.utils import estimate_output_size
-from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_MODE, ARCHIVE_EXTRACTED_FOLDER, ESLIFIER_PNG_ICON_PATH,
-                         CELL_IDS_FOLDER, COMPACTED_AND_PATCHED_JSON, ESL_FLAGGED_JSON, ESLIFIER_LOG_FILE, CELL_MASTER_INFO_JSON, 
-                         EXTRACTED_GAME_ARCHIVE_JSON, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, FORM_ID_MAPS_FOLDER, MASTER_BYTE_DATA_JSON,
-                         MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
-                         WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, GAME_ARCHIVE_TYPE)
+from data_holder import (_global, GAME_MODE, FILE_MASTERS_JSON, FLAG_DICTIONARY_JSON, MASTER_BYTE_DATA_JSON, MISSING_GAME_AS_MASTER_JSON,
+                         ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON, WINNING_FILES_DICT_JSON)
 
 from log_stream import write_error, write_normal, write_patching, write_progress, clear_and_leave_log_open, write_main_progress
 from patchers.file_defined_patcher_conditions import user_and_master_conditions_class
