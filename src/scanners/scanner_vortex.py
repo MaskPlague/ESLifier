@@ -335,7 +335,7 @@ class Vortex():
         plugin_extensions = ('.esp', '.esl', '.esm')
         os_sep = os.sep
         loop = 0
-        plugin_names = set()
+        plugin_names:set[str] = set()
         bsa_list = []
         game_archive_dict_temp:dict[str, list[str]] = {}
         game_archive_file_name_dict:dict[str, str] = {}
@@ -455,7 +455,7 @@ class Vortex():
             mod_files,
             installed_mods
         )
-        winning_files = []
+        winning_files:list[list[str]] = []
         file_count = 0
         winning_files_processed_str = QCoreApplication.translate("scanner", "Winning Files Processed: ")
         write_main_progress(30, 2, winning_files_processed_str, False)
@@ -495,8 +495,9 @@ class Vortex():
                     Vortex.scanner.winning_files_dict[cases[relative_path].lower()] = (providing_mods[-1], file_path)
                 else:
                     Vortex.scanner.winning_files_dict[cases[relative_path].lower()] = (providing_mods[-2], 
-                                                                                       os.path.join(mod_staging_folder, providing_mods[-2], cases[relative_path]))
-
+                                                                                       os.path.join(mod_staging_folder, 
+                                                                                                    providing_mods[-2], 
+                                                                                                    cases[relative_path]))
         plugins = []
         plugin_names = list(plugin_names)
         plugin_names_lowered = [plugin.lower() for plugin in plugin_names]
