@@ -59,18 +59,19 @@ class MO2():
         mod_files, plugin_names, cases, load_order_indexes = MO2.get_files_from_mods(mods_folder, enabled_mods, plugins_list, overwrite_path, load_order)
         winning_files: list[list[str, str]] = []
         file_count = 0
-        loop = 0
         cwd = os.getcwd()
         winning_files_processed_str = QCoreApplication.translate("scanner", "Winning Files Processed: ")
         write_main_progress(30, 2, winning_files_processed_str, False)
         output_file_name = MO2.scanner.output_file_name
+        total_files = len(mod_files)
+        factor = round(total_files * 0.001)
+        if factor == 0:
+            factor = 1
         for file, mods in mod_files.items():
             file_count += 1
-            if loop == 500:
-                loop = 0
-                write_remove(1, winning_files_processed_str + str(file_count))
-            else:
-                loop += 1
+            if (file_count % factor) >= (factor-1) or file_count >= total_files:
+                percent = round((file_count / total_files) * 100)
+                write_progress(percent, 1, winning_files_processed_str + str(file_count))
             if len(mods) == 1:
                 overwrite = False
                 mod = mods[0]

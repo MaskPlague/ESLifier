@@ -457,16 +457,17 @@ class Vortex():
         )
         winning_files = []
         file_count = 0
-        loop = 0
         winning_files_processed_str = QCoreApplication.translate("scanner", "Winning Files Processed: ")
         write_main_progress(30, 2, winning_files_processed_str, False)
+        total_files = len(conflict_map)
+        factor = round(total_files * 0.001)
+        if factor == 0:
+            factor = 1
         for relative_path, providing_mods in conflict_map.items():
             file_count += 1
-            if loop == 500:
-                loop = 0
-                write_remove(1, winning_files_processed_str + str(file_count))
-            else:
-                loop += 1
+            if (file_count % factor) >= (factor-1) or file_count >= total_files:
+                percent = round((file_count / total_files) * 100)
+                write_progress(percent, 1, winning_files_processed_str + str(file_count))
             if len(providing_mods) == 1:
                 data_folder_file = False
                 mod = providing_mods[0]
