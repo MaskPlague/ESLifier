@@ -119,10 +119,6 @@ class log_stream(QMainWindow):
                                     border: 0px;
                                     padding: 0px;
                                     max-height: 10px;
-                                }
-                                QProgressBar::chunk {
-                                    background: #03f8fc;
-                                    width:1px
                                 }""")
         self.percentage = 0
         self.progress_bar = QProgressBar()
