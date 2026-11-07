@@ -114,7 +114,7 @@ class log_stream(QMainWindow):
         self.main_progress_bar = QProgressBar()
         self.main_progress_bar.setTextVisible(False)
         self.main_progress_bar.setStyleSheet("""
-        q                       QProgressBar {
+                                QProgressBar {
                                     background-color: #999999;
                                     border: 0px;
                                     padding: 0px;
