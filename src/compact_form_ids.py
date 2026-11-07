@@ -164,11 +164,11 @@ class CFIDs():
     def hash_files(self, to_hash:dict[str,str], files_to_not_hash: set, before_patching:bool, new_file_hashes: dict):
         processed_str = self.processed_str
         local_new_file_hashes = {}
+        factor = round(self.file_count * 0.01)
+        if factor == 0:
+            factor = 1
         for lower_rel_path, file in to_hash.items():
             self.hash_progress += 1
-            factor = round(self.file_count * 0.01)
-            if factor == 0:
-                factor = 1
             if (self.hash_progress % factor) >= (factor-1):
                 percentage = round((self.hash_progress / self.file_count) * 100, 1)
                 write_progress(round(percentage), 1, processed_str.format(percentage, self.hash_progress, self.file_count))
@@ -416,12 +416,12 @@ class CFIDs():
         percentage_str = self.percentage_str
         get_rel_path = _global.get_rel_path
         is_fo4_mode = GAME_MODE == "FO4"
+        factor = round(self.file_count * 0.001)
+        if factor == 0:
+            factor = 1
         for file in files:
             if print_progress:
                 self.count += 1
-                factor = round(self.file_count * 0.001)
-                if factor == 0:
-                    factor = 1
                 if (self.count % factor) >= (factor-1) or self.count >= self.file_count:
                     percent = round((self.count / self.file_count) * 100, 1)
                     write_progress(round(percent), 1, percentage_str.format(percent, self.count, self.file_count))
@@ -578,14 +578,14 @@ class CFIDs():
         local_compacted_and_patched_set = set()
         percentage_str = self.percentage_str
         is_sse_mode = GAME_MODE == "SSE"
+        factor = round(self.file_count * 0.001)
+        if factor == 0:
+            factor = 1
         for file in files:
             new_file, rel_path = self.copy_file_to_output(file)
             new_file_lower = new_file.lower()
             if print_progress:
                 self.count += 1
-                factor = round(self.file_count * 0.001)
-                if factor == 0:
-                    factor = 1
                 if (self.count % factor) >= (factor-1) or self.count >= self.file_count:
                     percent = round(self.count / self.file_count * 100, 1)
                     write_progress(round(percent), 1, percentage_str.format(percent, self.count, self.file_count))
