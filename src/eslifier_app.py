@@ -20,7 +20,7 @@ from data_holder import (_global, GAME_MODE, NEXUS_FILES_TAB_URL, SHORT_GAME_NAM
 from scanners.scanner_vortex import Vortex
 from scanners.scanner_mo2 import MO2
 if GAME_MODE == "SSE":
-    CURRENT_VERSION = '0.16.17'
+    CURRENT_VERSION = '1.0.0'
 elif GAME_MODE == "FO4":
     CURRENT_VERSION = '0.0.1'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
@@ -91,7 +91,6 @@ def connection_result(is_latest: bool, latest_version: str, release_url_end: str
             webbrowser.open(f"{NEXUS_FILES_TAB_URL}")
             message.show()
         def open_github():
-            #webbrowser.open("https://github.com/MaskPlague/ESLifier/releases/latest")
             webbrowser.open("https://github.com/MaskPlague/ESLifier/releases/" + release_url_end)
             message.show()
         message.addButton(QCoreApplication.translate("Global", "Open Nexus"), 
