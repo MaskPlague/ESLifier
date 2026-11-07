@@ -18,18 +18,20 @@
             "- Various minor UI bugs.",
             "- Way too many minor bugs I cannot remember.",
             "Change:",
-            "- Add PEX path to GetModByName() tooltip",
+            "- Add PEX path to GetModByName() tooltip.",
             "- More Optimizations (including a major optimization of the logging system).",
-            "- Rewrote PEX patcher",
+            "- Rewrote PEX patcher.",
             "- Errors that are not handled will automatically open the Log file.",
-            "- Updated to the latest version of BSArch.exe",
-            "- Moved filtering logic into BSArch.exe",
-            "- Refactor Settings",
-            "- Refactor Lists, Scanners, and Patchers",
-            "- Refactor hardcoded paths to globals",
+            "- Updated to the latest version of BSArch.exe.",
+            "- Moved filtering logic into BSArch.exe.",
+            "- Refactored Settings.",
+            "- Refactored Lists, Scanners, and Patchers.",
+            "- Refactored hardcoded paths to globals.",
+            "- Refactored Main page.",
             "Add:",
             "- Warning during scan if a path is too long and Windows Long Path Support is not enabled.",
             "- Changelog for the update warning/popup.",
+            "- Separate overall progress bar in log window.",
             "- Recursive JSON patcher, for various mods that have a mod and Form ID keys at the same level (such as Unique Region Names).",
             "- Mod Manager Mode (No Manager/Vortex/MO2) in Window Title + Instance and Profile if in MO2 mode."
         ]
@@ -38,12 +40,17 @@
         "version": "0.0.1",
         "url": "tag/v0.0.1",
         "changelog": [
-            "Intial Conversion from SSE to FO4",
-            "- BA2 scanning/Extraction",
-            "- Refactor Settings",
-            "- Refactor Lists, Scanners, and Patchers",
-            "- Refactor hardcoded paths to globals",
-            "- Lots of other stuff"
+            "Initial Conversion from SSE to FO4.",
+            "- BA2 scanning/Extraction.",
+            "- PreVis/Precombine detection, list column and filter.",
+            "- FaceCustomization scanning/renaming.",
+            "- Initial FO4 patchers are Transfer Settlements and RobCo Patcher.",
+            "- Cell Master Generation disabled for Beta, I may add it back later to attempt to circumvent PreVis/PreCombine ESL bug.",
+            "- Refactored Settings.",
+            "- Refactored Lists, Scanners, and Patchers.",
+            "- Refactored hardcoded paths to globals.",
+            "- Refactored Main page.",
+            "- Lots of other stuff."
         ]
     }
 }
