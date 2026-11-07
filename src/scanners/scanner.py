@@ -28,7 +28,7 @@ else:
 
 from scanners.plugin_qualification_checker import qualification_checker
 from scanners.dependency_getter import dependecy_getter
-from log_stream import write_error, write_normal, write_progress, write_remove, write_to_file, write_warning
+from log_stream import write_error, write_normal, write_progress, write_remove, write_to_file, write_warning, write_main_progress
 
 class scanner():    
     def scan(full_scan: bool) -> tuple[dict, dict] | None:
@@ -151,12 +151,13 @@ class scanner():
 
         scanner.dump_to_file(file=EXTRACTED_GAME_ARCHIVE_JSON, data=scanner.extracted)
         scanner.dump_to_file(file=WINNING_FILES_DICT_JSON, data=scanner.winning_files_dict)
-
-        write_remove(1, "-  " + QCoreApplication.translate("scanner", "Gathered %0 total files.").replace("%0", str(len(scanner.all_files))), True)
+        write_progress(0, 0, '')
+        write_main_progress(40, 2, "-  " + QCoreApplication.translate("scanner", "Gathered %0 total files."
+                                                                      ).replace("%0", str(len(scanner.all_files))), True)
         if full_scan:
-            write_normal(QCoreApplication.translate("scanner", 'Getting Dependencies'))
+            write_main_progress(45, 0, QCoreApplication.translate("scanner", 'Getting Dependencies'))
             dependency_dictionary = dependecy_getter.scan()
-            write_normal(QCoreApplication.translate("scanner", 'Scanning Plugins'))
+            write_main_progress(50, 0, QCoreApplication.translate("scanner", 'Scanning Plugins'))
             flag_dict = qualification_checker.scan()
 
         scanner.get_file_masters()
@@ -222,11 +223,12 @@ class scanner():
         extracting_str = (QCoreApplication.translate("scanner", "Extracting %0/%1 %2 files (%3)")
                           .replace("%0", "{0}").replace("%1", "{1}").replace("%2", GAME_ARCHIVE_TYPE).replace("%3", "{2}"))
         #Extract Files from archive
+        archive_count = len(filtered_archive_list)
         for i, tup in enumerate(filtered_archive_list):
             file = tup[1]
             if file not in scanner.extracted:
                 write_remove(1, extracting_str.format(i+1, archive_length, os.path.basename(file)), True)
-                write_normal("",False)
+                write_progress(round((i/archive_count)*100), 0, "")
                 try:
                     scanner.extract_archive(file, startupinfo, update_time, f"scan{GAME_MODE}")
                     scanner.extracted.add(file)
@@ -234,6 +236,7 @@ class scanner():
                     write_error(QCoreApplication.translate("scanner", "Error Reading archive: ") + file)
                     write_error(e, True)
                 write_remove(2, "")
+        write_progress(0, 0, '')
     
     def get_plugins_list(path: str) -> list:
         lines = []
@@ -292,12 +295,12 @@ class scanner():
         else:
             split = 5
 
-        write_normal(QCoreApplication.translate("scanner", 'Getting masters of loose files...'))
+        write_main_progress(55, 0, QCoreApplication.translate("scanner", 'Getting masters of loose files...'))
         write_normal("", False)
 
         _global.process_items_in_chunks_and_join(scanner.file_processor, scanner.all_files, split)
 
-        write_remove(1, "-  " + QCoreApplication.translate("scanner", "Scanning .pex files"), True)
+        write_main_progress(70, 1, "-  " + QCoreApplication.translate("scanner", "Scanning .pex files"), True)
         write_normal("", False)
         scanner.file_count = len(scanner.pex_files)
         scanner.count = 0
@@ -312,7 +315,7 @@ class scanner():
 
         _global.process_items_in_chunks_and_join(scanner.pex_processor, scanner.pex_files, split)
 
-        write_remove(1, "-  " + QCoreApplication.translate("scanner", "Scanning .dll %0 plugins").replace('%0', SCRIPT_EXTENDER.upper()), True)
+        write_main_progress(80, 1, "-  " + QCoreApplication.translate("scanner", "Scanning .dll %0 plugins").replace('%0', SCRIPT_EXTENDER.upper()), True)
         for file in scanner.dll_files:
             thread = threading.Thread(target=scanner.file_reader,args=(dll_byte_pattern, file, 'dll'))
             scanner.threads.append(thread)
@@ -321,10 +324,10 @@ class scanner():
         for thread in scanner.threads: thread.join()
         scanner.threads.clear()
 
-        write_normal("-  " + QCoreApplication.translate("scanner", "Sorting .seq files"))
+        write_main_progress(85, 0, "-  " + QCoreApplication.translate("scanner", "Sorting .seq files"))
         scanner.seq_plugin_extension_processor(scanner.seq_files)
 
-        write_normal("-  " + QCoreApplication.translate("scanner", "Scanning %0 files").replace("%0", GAME_ARCHIVE_EXTENSION))
+        write_main_progress(90, 0, "-  " + QCoreApplication.translate("scanner", "Scanning %0 files").replace("%0", GAME_ARCHIVE_EXTENSION))
 
         if len(scanner.archive_files) > 100:
             split = scanner.archive_threads_by_ram

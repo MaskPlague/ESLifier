@@ -1,4 +1,4 @@
-from log_stream import write_error, write_normal, write_progress, write_remove, write_to_file, write_warning
+from log_stream import write_error, write_normal, write_progress, write_remove, write_to_file, write_main_progress
 from PyQt6.QtCore import QCoreApplication
 from data_holder import _global, GAME_ARCHIVE_EXTENSION, ARCHIVE_EXTRACTED_FOLDER
 import os
@@ -62,7 +62,7 @@ class MO2():
         loop = 0
         cwd = os.getcwd()
         winning_files_processed_str = QCoreApplication.translate("scanner", "Winning Files Processed: ")
-        write_remove(1, winning_files_processed_str)
+        write_main_progress(30, 2, winning_files_processed_str, False)
         output_file_name = MO2.scanner.output_file_name
         for file, mods in mod_files.items():
             file_count += 1
@@ -131,7 +131,7 @@ class MO2():
         loop = 0
         file_count = 0
         gathered_str = '-  ' + QCoreApplication.translate("scanner", "Gathered: ")
-        write_normal(gathered_str, False)
+        write_main_progress(20, gathered_str, False)
 
         def root_level_file_processing(files: list[str], mod_folder, rel_root):
             for file in files:

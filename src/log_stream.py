@@ -31,6 +31,9 @@ def write_insert(insert_location:int, text:str, write_to_file:bool=False):
 def write_progress(percent: int, remove_num_lines:int, text:str):
     _ls.write_progress(percent, remove_num_lines, text)
 
+def write_main_progress(percent: int, remove_num_lines:int, text:str, write_to_file:bool=True):
+    _ls.write_main_progress(percent, remove_num_lines, text, write_to_file)
+
 def write_patching(percent:int, text:str):
     _ls.write_patching(percent, text)
 
@@ -105,6 +108,21 @@ class log_stream(QMainWindow):
         self.text_edit = QTextEdit()
         self.text_edit.setReadOnly(True)
         self.text_edit.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+        self.text_edit.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.main_percentage = 0
+        self.main_progress_bar = QProgressBar()
+        self.main_progress_bar.setTextVisible(False)
+        self.main_progress_bar.setStyleSheet("""
+        q                       QProgressBar {
+                                    background-color: #999999;
+                                    border: 0px;
+                                    padding: 0px;
+                                    max-height: 10px;
+                                }
+                                QProgressBar::chunk {
+                                    background: #03f8fc;
+                                    width:1px
+                                }""")
         self.percentage = 0
         self.progress_bar = QProgressBar()
         self.progress_bar.setTextVisible(False)
@@ -112,15 +130,17 @@ class log_stream(QMainWindow):
                                     background-color: #999999;
                                     border: 0px;
                                     padding: 0px;
-                                    max-height: 10px;
+                                    max-height: 5px;
                                 }""")
         self.progress_bar_busy_mode = False
+        self.main_progress_bar_busy_mode = False
         self.hide()
         main_widget = QWidget()
         main_layout = QVBoxLayout()
         main_widget.setLayout(main_layout)
+        main_layout.addWidget(self.main_progress_bar)
         main_layout.addWidget(self.progress_bar)
-        main_layout.addSpacing(10)
+        main_layout.addSpacing(5)
         main_layout.addWidget(self.text_edit)
         self.setCentralWidget(main_widget)
         self.display_queue = queue.Queue()
@@ -181,11 +201,13 @@ class log_stream(QMainWindow):
         self.raise_()
         #self.hide()
         self.percentage = 0
+        self.main_percentage = 0
         self.timer_clear.stop()
         return super().show()
     
     def hide(self):
         self.progress_bar.reset()
+        self.main_progress_bar.reset()
         return super().hide()
     
     def clear_and_close_log(self):
@@ -220,9 +242,13 @@ class log_stream(QMainWindow):
         self.percentage = percent
         self.write_remove(remove_num_lines, text, False, True)
 
+    def write_main_progress(self, percent: int, remove_num_lines:int, text:str, write_to_file:bool=True):
+        self.main_percentage = percent
+        self.write_remove(remove_num_lines, text, write_to_file, False)
+
     def write_patching(self, percent:int, text:str):
         self.display_queue.put((text, 0))    # 0 Normal
-        self.percentage = percent
+        self.main_percentage = percent
         self.write_to_file(text)
 
     def write_warning(self, text:str):
@@ -404,42 +430,8 @@ class log_stream(QMainWindow):
                 self.timer.start(50)
 
     def process_queue_once(self):
-        if not self.isHidden() and self.progress_bar.value() != self.percentage:
-            if self.percentage == 0:
-                if not self.progress_bar_busy_mode:
-                    self.progress_bar_busy_mode = True
-                    self.progress_bar.setRange(0,0)
-                    self.progress_bar.setStyleSheet("""
-                        QProgressBar {
-                            background-color: #999999;
-                            border: 0px;
-                            padding: 0px;
-                            max-height: 10px;
-                        }
-                        QProgressBar::chunk {
-                            background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0.5, y2:0, stop:0 #999999, stop:1 #03f8fc);
-                        }""")
-                    self.progress_bar.setValue(self.percentage)
-            else:
-                if self.progress_bar_busy_mode:
-                    self.progress_bar_busy_mode = False
-                    self.progress_bar.setRange(0,100)
-                    self.progress_bar.setStyleSheet("""
-                        QProgressBar {
-                            background-color: #999999;
-                            border: 0px;
-                            padding: 0px;
-                            max-height: 10px;
-                        }
-                            QProgressBar::chunk {
-                            background: #03f8fc;
-                            width:1px
-                        }
-                    """)
-                if not self.progress_bar.paintingActive():
-                    self.progress_bar.setValue(self.percentage)
         length = self.display_queue.qsize()
-        changed = False
+        #changed = False
         keep_range = length - 50 if length > 50 else 0
         for i in range(length):
             if self.display_queue.empty():
@@ -447,9 +439,10 @@ class log_stream(QMainWindow):
             text, *args = self.display_queue.get()
             if args[0] == 1 and args[2] and i < keep_range:
                 continue
-            changed |= self.apply_item(text, *args)
-        if changed:
-            self.refresh_text_widget()
+            #changed |= self.apply_item(text, *args)
+            self.apply_item(text, *args)
+        #if changed:
+        #    self.refresh_text_widget()
 
     def apply_item(self, text:str, *args) -> bool:
         arg_0 = args[0]
@@ -499,8 +492,86 @@ class log_stream(QMainWindow):
             self.lines.append(text)
             return True
 
+    def refresh_progress_bar(self):
+        if not self.isHidden() and self.progress_bar.value() != self.percentage:
+            if self.percentage == 0:
+                if not self.progress_bar_busy_mode:
+                    self.progress_bar_busy_mode = True
+                    self.progress_bar.setRange(0,0)
+                    self.progress_bar.setStyleSheet("""
+                        QProgressBar {
+                            background-color: #999999;
+                            border: 0px;
+                            padding: 0px;
+                            max-height: 5px;
+                        }
+                        QProgressBar::chunk {
+                            background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0.5, y2:0, stop:0 #999999, stop:1 #03f8fc);
+                        }""")
+                    self.progress_bar.setValue(self.percentage)
+            else:
+                if self.progress_bar_busy_mode:
+                    self.progress_bar_busy_mode = False
+                    self.progress_bar.setRange(0,100)
+                    self.progress_bar.setStyleSheet("""
+                        QProgressBar {
+                            background-color: #999999;
+                            border: 0px;
+                            padding: 0px;
+                            max-height: 5px;
+                        }
+                        QProgressBar::chunk {
+                            background: #03f8fc;
+                            width:1px
+                        }
+                    """)
+                if not self.progress_bar.paintingActive():
+                    self.progress_bar.setValue(self.percentage)
+
+    def refresh_main_progress_bar(self):
+        if not self.isHidden() and self.main_progress_bar.value() != self.main_percentage:
+            if self.main_percentage == 0:
+                if not self.main_progress_bar_busy_mode:
+                    self.main_progress_bar_busy_mode = True
+                    self.main_progress_bar.setRange(0,0)
+                    self.main_progress_bar.setStyleSheet("""
+                        QProgressBar {
+                            background-color: #999999;
+                            border: 0px;
+                            padding: 0px;
+                            max-height: 10px;
+                        }
+                        QProgressBar::chunk {
+                            background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0.5, y2:0, stop:0 #999999, stop:1 #03f8fc);
+                        }""")
+                    self.main_progress_bar.setValue(self.main_percentage)
+            else:
+                if self.main_progress_bar_busy_mode:
+                    self.main_progress_bar_busy_mode = False
+                    self.main_progress_bar.setRange(0,100)
+                    self.main_progress_bar.setStyleSheet("""
+                        QProgressBar {
+                            background-color: #999999;
+                            border: 0px;
+                            padding: 0px;
+                            max-height: 10px;
+                        }
+                        QProgressBar::chunk {
+                            background: #03f8fc;
+                            width:1px
+                        }
+                    """)
+                if not self.main_progress_bar.paintingActive():
+                    self.main_progress_bar.setValue(self.main_percentage)
+
+    def refresh_log(self):
+        self.refresh_progress_bar()
+        self.refresh_main_progress_bar()
+        self.refresh_text_widget()
+
     def refresh_text_widget(self):
-        self.text_edit.setPlainText('\n'.join(self.lines))
+        lines_copy = self.lines.copy()
+        self.text_edit.setPlainText('\n'.join(lines_copy))
         cursor = self.text_edit.textCursor()
         cursor.movePosition(cursor.MoveOperation.End)
         self.text_edit.setTextCursor(cursor)

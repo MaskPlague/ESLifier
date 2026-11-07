@@ -18,7 +18,7 @@ from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_MODE
                          MISSING_GAME_AS_MASTER_JSON, NEW_FILE_HASHES_JSON, ORIGINAL_FILES_JSON, WINNING_FILE_HISTORY_DICT_JSON,
                          WINNING_FILES_DICT_JSON, PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, GAME_ARCHIVE_TYPE)
 
-from log_stream import write_error, write_normal, write_patching, write_progress, write_remove, clear_and_leave_log_open
+from log_stream import write_error, write_normal, write_patching, write_progress, clear_and_leave_log_open, write_main_progress
 from patchers.file_defined_patcher_conditions import user_and_master_conditions_class
 
 class SizeEstimateWorker(QObject):
@@ -44,16 +44,16 @@ class ScannerWorker(QObject):
         super().__init__()
 
     def scan_run(self):
-        write_remove(-1, self.tr('Scanning All Files:'), True)
+        write_main_progress(5, -1, self.tr('Scanning All Files:'))
         flag_dict, dependency_dictionary = scanner.scan(True)
         if _global.vortex_error != None or _global.mo2_error != None:
             self.finished_signal.emit({}, {}, {})
             return
         flag_dict = {p: set(f) for p, f in flag_dict.items()}
         if GAME_MODE == "SSE":
-            write_normal(self.tr('Checking if New CELLs are Changed'))
+            write_main_progress(95, 0, self.tr('Checking if New CELLs are Changed'))
         elif GAME_MODE == "FO4":
-            write_normal(self.tr('Checking if New CELLs have PreVis/PreCombined'))
+            write_main_progress(95, 0, self.tr('Checking if New CELLs have PreVis/PreCombined'))
         plugins_with_cells = [plugin for plugin, flags in flag_dict.items() if 'new_cell' in flags]
         cell_scanner.scan(plugins_with_cells)
         eslify_flag_dict = {p: f for p, f in flag_dict.items() if 'esl_flaggable' in f}
@@ -162,12 +162,12 @@ class FlagWorker(QObject):
         additional_file_patcher_conditions = user_and_master_conditions_class()
         cfids = CFIDs(None, original_files, winning_files_dict, winning_file_history_dict, {}, {}, [], additional_file_patcher_conditions)
         if _global.hash_output:
-            write_normal(self.tr("Hashing any existing files for changes..."))
+            write_main_progress(5, 0, self.tr("Hashing any existing files for changes..."))
             cfids.hash_output_files(set(), True)
         for file in self.files:
             original_files, winning_file_history_dict = cfids.set_flag(file)
         if _global.hash_output:
-            write_normal(self.tr('Hashing output files for checking later changes...'))
+            write_main_progress(85, 0, self.tr('Hashing output files for checking later changes...'))
             cfids.hash_output_files(self.files_to_not_hash)
         self.dump_dictionary(ORIGINAL_FILES_JSON, original_files)
         self.dump_dictionary(WINNING_FILE_HISTORY_DICT_JSON, winning_file_history_dict)

@@ -1,4 +1,4 @@
-from log_stream import write_error, write_normal, write_progress, write_remove, write_to_file, write_warning
+from log_stream import write_error, write_normal, write_progress, write_remove, write_to_file, write_main_progress
 from PyQt6.QtCore import QCoreApplication
 import os
 import re
@@ -344,7 +344,7 @@ class Vortex():
         game_archive_blacklist: set[str] = Vortex.scanner.game_archive_blacklist
         file_count = 0
         gathered_str = '-  ' + QCoreApplication.translate("scanner", "Gathered: ")
-        write_normal(gathered_str, False)
+        write_main_progress(20, 0, gathered_str, False)
         mod_folder_level = len(mod_staging_folder.split(os.sep)) + 1
         game_data_level = len(game_folder_path.split(os.sep))
         ordered_mod_ids_set = set(ordered_mod_ids)
@@ -459,7 +459,7 @@ class Vortex():
         file_count = 0
         loop = 0
         winning_files_processed_str = QCoreApplication.translate("scanner", "Winning Files Processed: ")
-        write_remove(1, winning_files_processed_str)
+        write_main_progress(30, 2, winning_files_processed_str, False)
         for relative_path, providing_mods in conflict_map.items():
             file_count += 1
             if loop == 500:
@@ -478,7 +478,6 @@ class Vortex():
                 else:
                     file_path = os.path.join(mod_staging_folder, mod, cases[relative_path])
                 winning_files.append([file_path, data_folder_file])
-                #winning_files.append(file_path)
                 if mod != Vortex.scanner.output_file_name:
                     Vortex.scanner.winning_files_dict[cases[relative_path].lower()] = (mod, file_path)
             else:
@@ -491,7 +490,6 @@ class Vortex():
                 else:
                     file_path = os.path.join(mod_staging_folder, providing_mods[-1], cases[relative_path])
                 winning_files.append([file_path, data_folder_file])
-                #winning_files.append(file_path)
                 if providing_mods[-1] != Vortex.scanner.output_file_name:
                     Vortex.scanner.winning_files_dict[cases[relative_path].lower()] = (providing_mods[-1], file_path)
                 else:

@@ -24,7 +24,7 @@ from data_holder import (_global, VERBOSE_GAME_NAME, VORTEX_GAME_NAME, GAME_MODE
                          PREVIOUSLY_COMPACTED_JSON, PREVIOUSLY_ESL_FLAGGED_JSON, GAME_ARCHIVE_TYPE)
 
 from scanners.vortex_database_reader import VortexDBParser
-from log_stream import log_stream, write_error, write_normal, write_to_file, clear_and_close_log, clear_and_leave_log_open
+from log_stream import log_stream, write_error, write_normal, write_to_file, clear_and_close_log, clear_and_leave_log_open, write_main_progress
 from scanners.vortex_database_reader import ReadState
 from scanners.scanner_vortex import VortexErrors
 from scanners.scanner_mo2 import MO2Errors
@@ -496,7 +496,7 @@ class main(QWidget):
                               lambda: self.finished_button_action('eslify', full_list))
         else:
             self.finished_button_action('eslify', files,)
-            write_normal(self.tr("File(s) ESL Flagged"))
+            write_main_progress(100, 0, self.tr("File(s) ESL Flagged"))
             if self.redoing_output:
                 clear_and_leave_log_open()
             else:
@@ -707,7 +707,7 @@ class main(QWidget):
         except Exception as e:
             write_error(self.tr('Failed to create "Compact + ESLify" list'))
             write_error(e, True)
-        write_normal(self.tr('Done Scanning'))
+        write_main_progress(100, 0, self.tr('Done Scanning'))
         if self.redoing_output:
             self.continue_redo_after_scan()
         else:
@@ -730,7 +730,6 @@ class main(QWidget):
             self.end_flow(hand_back_to_patch_new=True)
 
     def safe_remove(self, path):
-        """Remove a file, tolerating it being missing or locked (e.g. by anti-virus)."""
         try:
             os.remove(path)
         except FileNotFoundError:
@@ -1002,7 +1001,6 @@ class main(QWidget):
         else:
             confirm.show()
         
-
     def open_output(self):
         output_folder = os.path.join(self.output_folder_path, self.output_folder_name)
         if os.path.exists(output_folder):
