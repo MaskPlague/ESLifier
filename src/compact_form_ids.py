@@ -215,7 +215,7 @@ class CFIDs():
         self.do_generate_cell_master = add_cell_to_master
         self.form_id_map = {}
         get_rel_path = _global.get_rel_path
-        write_normal(QCoreApplication.translate("CFIDs", "Editing Plugin: %1...").replace("%1", os.path.basename(file_to_compact)))
+        write_progress(0, 0, QCoreApplication.translate("CFIDs", "Editing Plugin: %1...").replace("%1", os.path.basename(file_to_compact)))
         self.compact_file(file_to_compact, all_dependents_have_game_esm_as_master)
         self.get_form_id_map(file_to_compact)
         dependent_thread: threading.Thread = None
