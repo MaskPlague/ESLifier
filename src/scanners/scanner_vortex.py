@@ -403,7 +403,7 @@ class Vortex():
                 file_count += len(files)
                 if loop == 50: #prevent spamming logger and slowing down the program
                     loop = 0
-                    write_remove(1, gathered_str + str(file_count))
+                    write_remove(1, gathered_str + str(file_count), False, True)
                 else:
                     loop += 1
                 if root == mod_path: #is root level

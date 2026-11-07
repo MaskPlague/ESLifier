@@ -22,8 +22,8 @@ def write_to_file(text:str):
 def write_normal(text:str, to_file:bool=True):
     _ls.write_normal(text, to_file)
 
-def write_remove(remove_num_lines:int, text:str, write_to_file:bool=False):
-    _ls.write_remove(remove_num_lines, text, write_to_file)
+def write_remove(remove_num_lines:int, text:str, write_to_file:bool=False, prunable:bool=False):
+    _ls.write_remove(remove_num_lines, text, write_to_file, prunable)
 
 def write_insert(insert_location:int, text:str, write_to_file:bool=False):
     _ls.write_insert(insert_location, text, write_to_file)
@@ -438,22 +438,18 @@ class log_stream(QMainWindow):
 
     def process_queue_once(self):
         length = self.display_queue.qsize()
-        #changed = False
-        keep_range = length - 50 if length > 50 else 0
+        #keep_range = length - 50 if length > 50 else 0
         for i in range(length):
             if self.display_queue.empty():
                 break
             text, *args = self.display_queue.get()
-            if args[0] == 1 and args[2] and i < keep_range:
-                continue
-            #changed |= self.apply_item(text, *args)
+            #if args[0] == 1 and args[2] and i < keep_range:
+            #    continue
             self.apply_item(text, *args)
-        #if changed:
-        #    self.refresh_text_widget()
 
     def apply_item(self, text:str, *args) -> bool:
         arg_0 = args[0]
-        if DEBUG:
+        if DEBUG and not (arg_0 == 1 and args[2]):
             self.hijack_print.print_to_console(text)
         if arg_0 == 1:
             if args[1] == 1:
