@@ -350,11 +350,11 @@ class scanner():
         processed_string = ('-  ' + QCoreApplication.translate("scanner", "Processed: %0 %") +
                             '\n-  ' + QCoreApplication.translate("scanner", "Files: %1/%2")).replace("%0", "{0}").replace("%1", "{1}").replace("%2", "{2}")
         r_type = f"pex-{GAME_MODE}"
+        factor = round(scanner.file_count * 0.001)
+        if factor == 0:
+            factor = 1
         for file in files:
             scanner.count += 1
-            factor = round(scanner.file_count * 0.01)
-            if factor == 0:
-                factor = 1
             if (scanner.count % factor) >= (factor-1):
                 scanner.percentage = round((scanner.count / scanner.file_count) * 100, 1)
                 write_progress(round(scanner.percentage), 1, processed_string.format(scanner.percentage, scanner.count, scanner.file_count))
@@ -369,12 +369,12 @@ class scanner():
         script_extender_path_segment = f'{SCRIPT_EXTENDER}\\plugins'
         processed_string = ('-  ' + QCoreApplication.translate("scanner", "Processed: %0 %") +
                             '\n-  ' + QCoreApplication.translate("scanner", "Files: %1/%2")).replace("%0", "{0}").replace("%1", "{1}").replace("%2", "{2}")
+        factor = round(scanner.file_count * 0.001)
+        if factor == 0:
+            factor = 1
         for file in files:
             scanner.count += 1
             file_lower = file.lower()
-            factor = round(scanner.file_count * 0.01)
-            if factor == 0:
-                factor = 1
             if (scanner.count % factor) >= (factor-1):
                 scanner.percentage = round((scanner.count / scanner.file_count) * 100, 1)
                 write_progress(round(scanner.percentage), 1, processed_string.format(scanner.percentage, scanner.count, scanner.file_count))
