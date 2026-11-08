@@ -1,7 +1,7 @@
 {
     "SSE": {
-        "version": "1.0.0",
-        "url": "tag/v1.0.0",
+        "version": "1.0.1-SSE",
+        "url": "tag/v1.0.1-SSE",
         "changelog": [
             "",
             "Breaking Change: Start Form ID count from 1 instead of 0.",
@@ -17,6 +17,7 @@
             "- Assumption that archives with suffix '- Textures' were always texture only.",
             "- Various minor UI bugs.",
             "- Way too many minor bugs I cannot remember.",
+            "- Dumb mistake in two places in v1.0.0.",
             "Change:",
             "- Add PEX path to GetModByName() tooltip.",
             "- More Optimizations (including a major optimization of the logging system).",
@@ -38,8 +39,8 @@
         ]
     },
     "FO4": {
-        "version": "0.0.1",
-        "url": "tag/v0.0.1-FO4",
+        "version": "0.0.2",
+        "url": "tag/v0.0.2-FO4",
         "changelog": [
             "Initial Conversion from SSE to FO4.",
             "- BA2 scanning/Extraction.",
@@ -51,7 +52,8 @@
             "- Refactored Lists, Scanners, and Patchers.",
             "- Refactored hardcoded paths to globals.",
             "- Refactored Main page.",
-            "- Lots of other stuff."
+            "- Lots of other stuff.",
+            "- Dumb mistake in two places in v0.0.1."
         ]
     }
 }
