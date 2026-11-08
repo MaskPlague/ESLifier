@@ -51,3 +51,10 @@ class patchers(shared_patchers):
             f.truncate(0)
             json.dump(data, f, indent="\t")
 
+#if __name__ == '__main__':
+#    import os
+#    basename = "thing.esl".lower()
+#    form_id_map = {int('8D8',16): {'hex_no_0': 'A0A', 'hex': '000A0A', 'int': 10, 'bytes': b'\x00\x0A\x0A', 'update_name': False}, 
+#                   int('c00c',16): {'hex_no_0': 'B0B', 'hex': '000B0B', "int": 10101, 'bytes': b'\x00\x0B\x0B', 'update_name': True}}
+#    new_file = os.path.normpath(r)
+#    patchers.json_transfer_settlements_patcher(basename, new_file, form_id_map, encoding_method='utf-8')
