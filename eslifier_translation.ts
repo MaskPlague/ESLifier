@@ -2141,34 +2141,34 @@ This button needs an output made from v0.12.0+.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="636" />
+        <location filename="src\scanners\scanner.py" line="654" />
         <source>Missing file scan type for </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="650" />
-        <location filename="src\scanners\scanner.py" line="639" />
+        <location filename="src\scanners\scanner.py" line="668" />
+        <location filename="src\scanners\scanner.py" line="657" />
         <source>Error reading file </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="640" />
+        <location filename="src\scanners\scanner.py" line="658" />
         <source>!pex file is likely corrupt.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="644" />
+        <location filename="src\scanners\scanner.py" line="662" />
         <source>Path is %0 characters long which requires "Long Path Support" to be enabled in Windows (see Google for more info).
 File: %1</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="734" />
+        <location filename="src\scanners\scanner.py" line="752" />
         <source>Error Reading BSA: </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="817" />
+        <location filename="src\scanners\scanner.py" line="835" />
         <source>Error Reading BA2: </source>
         <translation type="unfinished" />
     </message>
