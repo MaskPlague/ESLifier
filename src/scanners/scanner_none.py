@@ -25,7 +25,7 @@ class NoManager():
         all_files: list[str] = NoManager.scanner.all_files
         plugins: list[str] = _global.plugins
         gathered_str = '-  ' + QCoreApplication.translate("scanner", "Gathered: ")
-        write_main_progress(30, gathered_str, False)
+        write_main_progress(30, 0, gathered_str, False)
         for root, _, files in os.walk(path):
             #string manipulation for relative paths instead of os.path.relpath per file
             rel_root_lower = root[path_len:].lstrip(os_sep).lower()
