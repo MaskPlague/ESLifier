@@ -412,6 +412,7 @@ class log_stream(QMainWindow):
     def closeEvent(self, a0):
         self.running = False
         self.queue_timer.stop()
+        self.refresh_log_timer.stop()
         if not self.log_file.closed:
             self.log_file.flush()
             self.log_file.close()
@@ -420,6 +421,7 @@ class log_stream(QMainWindow):
     def close(self):
         self.running = False
         self.queue_timer.stop()
+        self.refresh_log_timer.stop()
         if not self.log_file.closed:
             self.log_file.flush()
             self.log_file.close()
