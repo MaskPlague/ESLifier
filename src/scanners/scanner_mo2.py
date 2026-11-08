@@ -132,7 +132,7 @@ class MO2():
         loop = 0
         file_count = 0
         gathered_str = '-  ' + QCoreApplication.translate("scanner", "Gathered: ")
-        write_main_progress(20, gathered_str, False)
+        write_main_progress(20, 0, gathered_str, False)
 
         def root_level_file_processing(files: list[str], mod_folder, rel_root):
             for file in files:
