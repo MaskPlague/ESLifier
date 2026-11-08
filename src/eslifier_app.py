@@ -545,13 +545,18 @@ class main_window(QMainWindow):
     def closeEvent(self, a0):
         try:
             self.log_stream.running = False
+            self.log_stream.refresh_log_timer.stop()
+            self.log_stream.queue_timer.stop()
             if not self.log_stream.log_file.closed:
                 self.log_stream.log_file.flush()
                 self.log_stream.log_file.close()
         except:
             pass
-        sys.stdout.flush()
-        sys.stderr.flush()
+        try:
+            sys.stdout.flush()
+            sys.stderr.flush()
+        except:
+            pass
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
         sys.excepthook = sys.__excepthook__
