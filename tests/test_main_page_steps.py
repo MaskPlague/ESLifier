@@ -273,7 +273,7 @@ class TestConfirmed:
         page.create_patch_and_flag_worker(["a.esp"], [])
         assert page.start_worker == []
         assert page.finished_button_action == [(("eslify", ["a.esp"]), {})]
-        assert "File(s) ESL Flagged" in log.normal
+        assert (100, "File(s) ESL Flagged") in log.main_progress          # reported on the overall progress bar
 
 
 class FakeThread:

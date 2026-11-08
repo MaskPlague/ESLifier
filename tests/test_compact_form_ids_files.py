@@ -384,6 +384,7 @@ class TestPatchFiles:
         cf.form_id_map = {}
         cf.compacted_and_patched = {"Mod.esp": set()}
         cf.calls = []
+        cf.file_count = 1          # patch_files_threader always sets this before starting the workers (progress interval is computed once)
         return cf
 
     def patcher(self, monkeypatch, cf, fail=None):

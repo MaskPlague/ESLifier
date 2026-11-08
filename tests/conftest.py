@@ -83,6 +83,7 @@ class LogRecorder:
         self.warnings = []
         self.errors = []
         self.ineligible = []
+        self.main_progress = []
 
     def _text(self, text):
         return str(text)
@@ -109,6 +110,9 @@ def _install_fake_log_stream():
     def write_progress(*a, **k):
         pass
 
+    def write_main_progress(percent, remove_num_lines, text, write_to_file=True):
+        LOG.main_progress.append((percent, text))
+
     def write_patching(*a, **k):
         pass
 
@@ -127,7 +131,7 @@ def _install_fake_log_stream():
     def clear_and_leave_log_open():
         pass
 
-    for fn in (write_to_file, write_normal, write_remove, write_insert, write_progress,
+    for fn in (write_to_file, write_normal, write_remove, write_insert, write_progress, write_main_progress,
                write_patching, write_warning, write_error, write_ineligible,
                clear_and_close_log, clear_and_leave_log_open):
         setattr(mod, fn.__name__, fn)
