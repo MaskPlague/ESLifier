@@ -28,7 +28,7 @@
             "- Refactored Lists, Scanners, and Patchers.",
             "- Refactored hardcoded paths to globals.",
             "- Refactored Main page.",
-            "- Way too many minor changes I cannot remeber.",
+            "- Way too many minor changes I cannot remember.",
             "Add:",
             "- Warning during scan if a path is too long and Windows Long Path Support is not enabled.",
             "- Changelog for the update warning/popup.",
@@ -39,7 +39,7 @@
     },
     "FO4": {
         "version": "0.0.1",
-        "url": "tag/v0.0.1",
+        "url": "tag/v0.0.1-FO4",
         "changelog": [
             "Initial Conversion from SSE to FO4.",
             "- BA2 scanning/Extraction.",
