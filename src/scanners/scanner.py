@@ -395,41 +395,59 @@ class scanner():
                 if '\\facegeom\\' in file_lower: # SSE/FO4 facegen meshes
                     marker_index = file_lower.find('\\facegeom\\')
                     start_pos = marker_index + 10 #10 is len('\\facegeom\\'), len('\\') is 1
-                    #index is safe in these because we only are scanning files and never folders
-                    plugin = file_lower[start_pos:file_lower.index(os_sep, start_pos)]
-                    if plugin.endswith(('.esp', '.esm', '.esl')):
-                        local_dict[plugin].add(file)
+                    #index should have been safe in these because we only are scanning files and never folders
+                    try:
+                        plugin = file_lower[start_pos:file_lower.index(os_sep, start_pos)]
+                        if plugin.endswith(('.esp', '.esm', '.esl')):
+                            local_dict[plugin].add(file)
+                    except:
+                        pass
                 elif '\\precombined\\' in file_lower: # FO4 precombined meshes.
                     marker_index = file_lower.find('\\precombined\\')
                     start_pos = marker_index + 13 #13 is len('\\precombined\\'), len('\\') is 1
-                    plugin = file_lower[start_pos:file_lower.index(os_sep, start_pos)]
-                    if plugin.endswith(('.esp', '.esm', '.esl')):
-                        local_dict[plugin].add(file)
+                    try:
+                        plugin = file_lower[start_pos:file_lower.index(os_sep, start_pos)]
+                        if plugin.endswith(('.esp', '.esm', '.esl')):
+                            local_dict[plugin].add(file)
+                    except:
+                        pass
             elif file_lower.endswith('.dds') and '.es' in file_lower:
                 if  '\\facetint\\' in file_lower:
                     marker_index = file_lower.find('\\facetint\\')
                     start_pos = marker_index + 10 #10 is len('\\facetint\\'), len('\\') is 1
-                    plugin = file_lower[start_pos:file_lower.index(os_sep, start_pos)]
-                    if plugin.endswith(('.esp', '.esm', '.esl')):
-                        local_dict[plugin].add(file)
+                    try:
+                        plugin = file_lower[start_pos:file_lower.index(os_sep, start_pos)]
+                        if plugin.endswith(('.esp', '.esm', '.esl')):
+                            local_dict[plugin].add(file)
+                    except:
+                        pass
                 elif '\\facecustomization\\' in file_lower:
                     marker_index = file_lower.find('\\facecustomization\\')
                     start_pos = marker_index + 19 #19 is len('\\facecustomization\\'), len('\\') is 1
-                    plugin = file_lower[start_pos:file_lower.index(os_sep, start_pos)]
-                    if plugin.endswith(('.esp', '.esm', '.esl')):
-                        local_dict[plugin].add(file)
+                    try:
+                        plugin = file_lower[start_pos:file_lower.index(os_sep, start_pos)]
+                        if plugin.endswith(('.esp', '.esm', '.esl')):
+                            local_dict[plugin].add(file)
+                    except:
+                        pass
             elif '\\sound\\voice\\' in file_lower and '.es' in file_lower:
                 marker_index = file_lower.find('\\sound\\voice\\')
                 start_pos = marker_index + 13 #13 is len('\\sound\\voice\\'), len('\\') is 1
-                plugin = file_lower[start_pos:file_lower.index(os_sep, start_pos)]
-                if plugin.endswith(('.esp', '.esm', '.esl')):
-                    local_dict[plugin].add(file)
+                try:
+                    plugin = file_lower[start_pos:file_lower.index(os_sep, start_pos)]
+                    if plugin.endswith(('.esp', '.esm', '.esl')):
+                        local_dict[plugin].add(file)
+                except:
+                    pass
             elif file_lower.endswith('.uvd') and '\\vis\\' in file_lower and '.es' in file_lower:
                 marker_index = file_lower.find('\\vis\\')
                 start_pos = marker_index + 5 #5 is len('\\vis\\'), len('\\') is 1
-                plugin = file_lower[start_pos:file_lower.index(os_sep, start_pos)]
-                if plugin.endswith(('.esp', '.esm', '.esl')):
-                    local_dict[plugin].add(file)
+                try:
+                    plugin = file_lower[start_pos:file_lower.index(os_sep, start_pos)]
+                    if plugin.endswith(('.esp', '.esm', '.esl')):
+                        local_dict[plugin].add(file)
+                except:
+                    pass
             elif (scanner.all_patcher_experimental 
                   and not file_lower.endswith(
                       ('.psc', '.tri', '.nif', '.dds', '.osd', '.osp', '.hkx', '.pdb', '.dll', '.esp', '.esl', '.esm',
