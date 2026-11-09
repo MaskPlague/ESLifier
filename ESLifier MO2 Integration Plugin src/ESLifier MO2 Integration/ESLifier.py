@@ -44,6 +44,7 @@ class QueueScan():
 class ESLifier(mobase.IPluginTool):
     def __init__(self):
         super(ESLifier, self).__init__()
+        self.eslifier_icon = QIcon()
     
     def name(self) -> str:
         return "ESLifier"
@@ -58,7 +59,7 @@ class ESLifier(mobase.IPluginTool):
         return self.tr("ESLifier's MO2 Plugin Integration")
     
     def version(self) -> mobase.VersionInfo:
-        return mobase.VersionInfo(2, 0, 0, mobase.ReleaseType.FINAL)
+        return mobase.VersionInfo(2, 0, 1, mobase.ReleaseType.FINAL)
     
     def requirements(self):
         return [mobase.PluginRequirementFactory.gameDependency(SUPPORTED_GAMES)]
@@ -160,6 +161,8 @@ class ESLifier(mobase.IPluginTool):
         self._organizer.modList().onModRemoved(self._stop_worker_if_running)
 
     def _init_other_windows(self, *args):
+        if not self.validGame:
+            return
         self.notifcation_display = notification_display_dialog(self.icon_path, self.GAME_MODE)
         self.blacklist_add = blacklist_window(False, self.scan_files, self.icon_path)
         self.blacklist_remove = blacklist_window(True, self.scan_files, self.icon_path)
@@ -179,6 +182,8 @@ class ESLifier(mobase.IPluginTool):
                 break
 
     def _stop_worker_if_running(self, *args):
+        if not self.validGame:
+            return
         if hasattr(self, 'worker') and self.worker and self.worker.running:
             self.worker.stop()
         for thread in self.threads:
@@ -286,6 +291,8 @@ class ESLifier(mobase.IPluginTool):
         return check_box
     
     def _create_settings_dialog(self, *args):
+        if not self.validGame:
+            return
         self.settings_dialog = QDialog()
         layout = QGridLayout()
         self.settings_dialog.setLayout(layout)
