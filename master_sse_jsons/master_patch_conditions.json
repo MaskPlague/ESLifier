@@ -1,5 +1,5 @@
 {
-    "version": 28,
+    "version": 29,
     "conditions": [
         {
             "extension": "json",
@@ -185,6 +185,11 @@
             "extension": "json",
             "contains": "Plugins/SpellLearning/",
             "patcher": "json_generic_plugin_sep_formid"
+        },
+        {
+            "extension": "ini",
+            "endswith": "SKSE/Plugins/CraftingPullFromContainers.ini",
+            "patcher": "ini_formid_sep_plugin"
         }
     ]
 }
