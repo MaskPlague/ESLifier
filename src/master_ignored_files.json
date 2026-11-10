@@ -1,5 +1,5 @@
 {
-    "version": 22,
+    "version": 23,
     "ignored_files": [
         "BFCO_FX_CheckPreAttackIsOK.pex",
         "BFCO_FX_PlayIdleListKeyE.pex",
@@ -22,6 +22,8 @@
         "Modex\\user\\blacklist.json",
         "PGPatcher/cfg/ignored_messages.json",
         "SKSE/Plugins/DynamicNPCs.ini",
+        "Plugins/DynamicNPCs.json",
+        "Plugins/PrismaUISettingsMenu/DynamicNPCs.json",
         "FollowerLevelingSystemRedone/PerksAndSpells.json",
         "interface/modex/user/userdata.json",
         "Viny Mods/NPC Visual/FaceGenCache.json",
