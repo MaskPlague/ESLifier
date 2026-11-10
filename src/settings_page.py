@@ -385,6 +385,13 @@ class settings(QWidget):
             ''
         )
 
+        self.debug_mode_widget, self.debug_mode_toggle = self.create_toggle_widget(
+            self.tr("Enable Debug Prints"),
+            self.tr("Enables certain debug prints to the log file."),
+            "debug",
+            default=False,
+        )
+
         self.set_init_widget_values()
         
         self.update_settings_from_app_state()
@@ -432,7 +439,8 @@ class settings(QWidget):
                           self.generate_cell_master_widget, self.persistent_ids_widget, self.free_non_existent_widget,
                           self.hash_output_widget, self.hash_plugins_warn_widget, self.enable_patch_new_widget, 
                           self.edit_blacklist_widget, self.open_eslifier_data_widget, self.colors_select_widget,
-                          self.reset_settings_widget, self.check_for_updates_widget, self.skip_confirmations_widget)
+                          self.reset_settings_widget, self.check_for_updates_widget, self.skip_confirmations_widget, 
+                          self.debug_mode_widget)
         
         inactive_wigets = self.get_and_hide_inactive_widgets()
 

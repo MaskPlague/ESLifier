@@ -48,12 +48,15 @@ class qualification_checker():
             json.dump(qualification_checker.flag_dict, f, ensure_ascii=False, indent=4)
         return qualification_checker.flag_dict
 
-    def plugin_scanner(plugins: list, update_header: bool):
+    def plugin_scanner(plugins: list[str], update_header: bool):
         flag_dict: dict[str, list[str]] = {}
+        debug = _global.debug
         if GAME_MODE == "SSE":
             for plugin in plugins:
                 alread_esl, is_esm = qualification_checker.already_esl(plugin)
                 if alread_esl:
+                    if debug:
+                        write_to_file(f"{os.path.basename(plugin)} is already ESL.")
                     continue
                 ret_val: tuple = qualification_checker.file_reader(plugin, update_header, is_esm)
                 esl_allowed = ret_val[0]
@@ -90,6 +93,8 @@ class qualification_checker():
             for plugin in plugins:
                 alread_esl, is_esm = qualification_checker.already_esl(plugin)
                 if alread_esl:
+                    if debug:
+                        write_to_file(f"{os.path.basename(plugin)} is already ESL.")
                     continue
                 ret_val: tuple = qualification_checker.file_reader(plugin, update_header, is_esm)
                 esl_allowed = ret_val[0]
@@ -209,7 +214,7 @@ class qualification_checker():
             limit_reason = '2048 limit because ' + '; '.join(limiters)
             num_max_records = 2048
         else:
-            num_max_records = possible_max #qualification_checker.num_max_records
+            num_max_records = possible_max
             limit_reason = f'{possible_max} limit: {possible_max_reason}'
         count = 0
         new_cell = False

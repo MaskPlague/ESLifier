@@ -127,9 +127,12 @@ class list_eslable(list_parent_class):
                                         "cceejsse005-cave.esm"]))
         
         local_dict = self.flag_dict.copy()
+        debug = _global.debug
         for mod in self.flag_dict:
             if os.path.basename(mod) in self.blacklist_list:
                 local_dict.pop(mod)
+                if debug:
+                    write_to_file(f'ESLable List: "{os.path.basename(mod)}" hidden because: blacklist.')
 
         self.setRowCount(len(local_dict))
 
@@ -147,6 +150,7 @@ class list_eslable(list_parent_class):
             self.setItem(i, self.MOD_COL, item)
             self.setRowHidden(i, False)
             hide_row = False
+            hidden_reasons = []
             if self.is_sse_mode:
                 if 'new_cell' in flags and not _global.engine_fixes_v7_or_newer:
                     item_cell_flag = QTableWidgetItem(self.tr('New CELL'))
@@ -158,6 +162,7 @@ class list_eslable(list_parent_class):
                         item_cell_flag.setToolTip(self.tr('This mod has a new CELL record. It is currently safe to ESL flag it'))
                     if not self.show_cells:
                         hide_row = True
+                        hidden_reasons.append("Show Cells disabled")
                     if basename in self.cell_changed and not self.cell_master:
                         item_cell_flag.setText(self.tr('!!New CELL Changed!!'))
                         item_cell_flag.setToolTip(self.tr(
@@ -166,6 +171,7 @@ class list_eslable(list_parent_class):
                                                     'will break temporary references in the new CELL.'))
                         if self.filter_changed_cells:
                             hide_row = True
+                            hidden_reasons.append("Changed Cells filtered")
                     elif self.cell_master and 'maxed_masters' in flags and basename in self.cell_changed:
                         item_cell_flag.setText(self.tr('!!Maxed Masters!!'))
                         item_cell_flag.setToolTip(self.tr(
@@ -184,6 +190,7 @@ class list_eslable(list_parent_class):
                                                     'on a save game load unless the game itself has restarted.'))
                         if self.filter_interior_cells:
                             hide_row = True
+                            hidden_reasons.append("Interior Cells filtered")
                     item_cell_flag.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                     self.setItem(i, self.CELL_COL, item_cell_flag)
                 if 'new_wrld' in flags and not self.cell_master:
@@ -191,6 +198,7 @@ class list_eslable(list_parent_class):
                     item_wrld_flag.setToolTip(self.tr('This mod has a new WRLD (worldspace) record which may lose landscape (the ground) when ESL flagged.'))
                     if self.filter_worldspaces:
                         hide_row = True
+                        hidden_reasons.append("Worldspaces filtered")
                     self.setItem(i, self.WRLD_COL, item_wrld_flag)
                 if basename_lower in _global.pex_with_getmodbyname:
                     item_pex_flag = QTableWidgetItem('PEX')
@@ -203,6 +211,7 @@ class list_eslable(list_parent_class):
                     item_pex_flag.setToolTip(pex_tooltip)
                     if self.filter_pex:
                         hide_row = True
+                        hidden_reasons.append("Pex filtered")
                     self.setItem(i, self.PEX_COL, item_pex_flag)
             if self.is_fo4_mode and ('has_previs_precombines' in flags or basename in self.cell_changed):
                 item_precombine_flag = QTableWidgetItem(self.tr("PreVis/PreCombine"))
@@ -210,21 +219,26 @@ class list_eslable(list_parent_class):
                                                         'precombine system with it, which will break if this mod is ESL flagged.'))
                 if self.filter_precombines:
                     hide_row = True
+                    hidden_reasons.append("PreCombines filtered")
                 self.setItem(i, self.PRECOM_COL, item_precombine_flag)
             if basename_lower in _global.mods_with_seq:
                 item_seq_flag = QTableWidgetItem('SEQ')
                 item_seq_flag.setToolTip(self.tr('This mod has an SEQ file which may cause dialogue for it to not work until you save and reload in game.'))
                 if self.filter_seq:
                     hide_row = True
+                    hidden_reasons.append("SEQ filtered")
                 self.setItem(i, self.SEQ_COL, item_seq_flag)
             if 'is_esm' in flags:
                 item_esm_flag = QTableWidgetItem('ESM')
                 item_esm_flag.setToolTip(self.tr('This mod is an ESM.'))
                 if not self.show_esms:
                     hide_row = True
+                    hidden_reasons.append("Show ESM disabled")
                 self.setItem(i, self.ESM_COL, item_esm_flag)
             if hide_row:
                 self.setItem(i, self.HIDER_COL, QTableWidgetItem('hide me'))
+                if debug:
+                    write_to_file(f'ESLable List: "{basename}" hidden because: {", ".join(hidden_reasons)}.')
 
         self.hide_rows()
         self.resizeColumnsToContents()

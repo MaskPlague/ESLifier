@@ -133,6 +133,8 @@ class _global():
     game_archive_dict = {}   #{archive_file: list[mod]} archive and the mods they contain
     pex_with_getmodbyname: defaultdict[str, set[str]] = defaultdict(set) #{mod: set(pex)} mods with pex with getmodbyname
 
+    debug = False
+
     def init(settings_widget, vortex, mo2):
         _global._settings = settings_widget.settings
         _global.Vortex = vortex
@@ -176,7 +178,8 @@ class _global():
         _global.archive_extracted_temp_path_len =   len(_global.archive_extracted_temp_path_lower)
 
         _global.folders_grabbed = False
-        if _global._settings.get('dump_global', False):
+        _global.debug =                             _global._settings.get("debug", False)
+        if _global.debug:
             _global.debug_dump_vars()
 
     def update_vortex_vars():
