@@ -55,6 +55,7 @@ class scanner():
         scanner.all_files: list[str] = []
         _global.plugins.clear()
         _global.mods_with_seq.clear()
+        _global.engine_fixes_v7_or_newer = False
         scanner.file_dict: defaultdict[str, set] = defaultdict(set)
         scanner.archive_dict: defaultdict[str, list[str]] = defaultdict(list)
         scanner.dll_dict: defaultdict[str, set[str]] = defaultdict(set)
