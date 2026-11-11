@@ -603,7 +603,7 @@ class main(QWidget):
             return self.tr("Vortex's Mod Staging Folder and ESLifier's Output Folder must be on the same drive.")
         elif state == VortexErrors.INVALID_MSF:
             return self.tr("Failed to get the Vortex Mod Staging Folder.")
-        elif state == VortexErrors.NO_LAST_SSE_PROFILE:
+        elif state == VortexErrors.NO_LAST_GAME_PROFILE:
             return self.tr("No last used %0 profile detected.").replace("%0", VERBOSE_GAME_NAME)
         elif state == VortexErrors.NO_BASE_PATH:
             return self.tr("Failed to get the %0 Game folder.").replace("%0", VORTEX_GAME_NAME)

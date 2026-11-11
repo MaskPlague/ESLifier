@@ -344,7 +344,7 @@ def test_no_last_profile_aborts_with_an_error(vortex, log):
     fake, staging, data, db = vortex
     db.sections["settings###profiles###"] = {}
     assert Vortex.get_winning_file_conflicts() == ([], [], [])
-    assert _global.vortex_error == VortexErrors.NO_LAST_SSE_PROFILE
+    assert _global.vortex_error == VortexErrors.NO_LAST_GAME_PROFILE
     assert any("No last used skyrimse profile" in line for line in log.file_lines)
 
 

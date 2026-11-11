@@ -17,7 +17,7 @@ class VortexErrors(Enum):
     HAS_CYCLES = 0
     INVALID_MSF = 1
     DIFFERENT_MSF_AND_OF_DRIVEs = 2
-    NO_LAST_SSE_PROFILE = 3
+    NO_LAST_GAME_PROFILE = 3
     NO_BASE_PATH = 4
 
 class Vortex():
@@ -319,7 +319,7 @@ class Vortex():
         profile_id = Vortex.get_last_used_game_profile()
         if profile_id == None:
             write_to_file(f"No last used {VORTEX_GAME_NAME} profile. Aborting.")
-            _global.vortex_error = VortexErrors.NO_LAST_SSE_PROFILE
+            _global.vortex_error = VortexErrors.NO_LAST_GAME_PROFILE
             return [], [], []
 
         plugins_list: list[str] = Vortex.get_plugins_list(profile_id)
