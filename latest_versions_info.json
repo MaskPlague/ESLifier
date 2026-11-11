@@ -3,7 +3,7 @@
         "version": "1.0.3",
         "url": "tag/v1.0.3-SSE",
         "changelog": [
-            "Fix: Mods having the GetModByName PEX flag when they shouldn't or missing it when they should.",
+            "Fix: Mods missing the GetModByName PEX flag when they should have it.",
             "Add: Debug mode setting. If enabled, it prints certain additional information to the log file."
         ]
     },
