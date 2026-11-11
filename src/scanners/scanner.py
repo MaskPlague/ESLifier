@@ -55,6 +55,7 @@ class scanner():
         scanner.all_files: list[str] = []
         _global.plugins.clear()
         _global.mods_with_seq.clear()
+        _global.pex_with_getmodbyname.clear()
         _global.engine_fixes_v7_or_newer = False
         scanner.file_dict: defaultdict[str, set] = defaultdict(set)
         scanner.archive_dict: defaultdict[str, list[str]] = defaultdict(list)
@@ -504,7 +505,7 @@ class scanner():
             offset = idx + 1
         with scanner.lock:
             for plugin in plugin_names_set:
-                _global.pex_with_getmodbyname[plugin_name].add(file)
+                _global.pex_with_getmodbyname[plugin].add(file)
 
     def file_reader(pattern, file: str, reader_type):
         try:

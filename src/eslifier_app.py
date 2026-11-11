@@ -19,8 +19,13 @@ from data_holder import (_global, GAME_MODE, NEXUS_FILES_TAB_URL, SHORT_GAME_NAM
 
 from scanners.scanner_vortex import Vortex
 from scanners.scanner_mo2 import MO2
+#TODO: maybe do a check to see if long path support is enabled in Windows
+# if I do this I should then make a notification box asking the user to enable it if it isn't.
+# this notification box should have a check box to ignore the notification.
+# maybe unignore if long path error is hit and long path support is off.
+# maybe unignore if updated? that might be too annoying.
 if GAME_MODE == "SSE":
-    CURRENT_VERSION = '1.0.2'
+    CURRENT_VERSION = '1.0.3'
 elif GAME_MODE == "FO4":
     CURRENT_VERSION = '0.0.3'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
