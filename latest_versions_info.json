@@ -1,9 +1,9 @@
 {
     "SSE": {
-        "version": "1.0.2",
-        "url": "tag/v1.0.2-SSE%2Bv0.0.3-FO4",
+        "version": "1.0.3",
+        "url": "tag/v1.0.3-SSE",
         "changelog": [
-            "Fix: Error during scanning if a valid file type is directly in the Sound/Voice/ folder."
+            "Fix: Mods having the GetModByName PEX flag when they shouldn't or missing it when they should."
         ]
     },
     "FO4": {
