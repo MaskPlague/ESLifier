@@ -321,7 +321,7 @@ class shared_patchers():
         return data
     
     @staticmethod
-    def json_generic_plugin_sep_formid_patcher(basename: str, new_file: str, form_id_map: dict, sep: str = '|', encoding_method: str ='utf-8'):
+    def json_generic_plugin_sep_formid_patcher(basename: str, new_file: str, form_id_map: dict, sep: str = '|', to_id_key:str = "hex_no_0", encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = shared_patchers.safe_load_json(f)
             json_dict = shared_patchers.extract_values_and_keys(data)
@@ -340,24 +340,24 @@ class shared_patchers():
                         if to_id_data is not None:
                             if not to_id_data["update_name"]:
                                 if not ox:
-                                    data = shared_patchers.change_json_element(data, path, plugin + sep + to_id_data["hex_no_0"])
+                                    data = shared_patchers.change_json_element(data, path, plugin + sep + to_id_data[to_id_key])
                                 else:
-                                    data = shared_patchers.change_json_element(data, path, plugin + sep + '0x' + to_id_data["hex_no_0"])
+                                    data = shared_patchers.change_json_element(data, path, plugin + sep + '0x' + to_id_data[to_id_key])
                             else:
                                 if print_replace:
                                     write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                     print_replace = False  
                                 if not ox:
-                                    data = shared_patchers.change_json_element(data, path, "ESLifier_Cell_Master.esm" + sep + to_id_data["hex_no_0"])
+                                    data = shared_patchers.change_json_element(data, path, "ESLifier_Cell_Master.esm" + sep + to_id_data[to_id_key])
                                 else:
-                                    data = shared_patchers.change_json_element(data, path, "ESLifier_Cell_Master.esm" + sep + '0x' + to_id_data["hex_no_0"])
+                                    data = shared_patchers.change_json_element(data, path, "ESLifier_Cell_Master.esm" + sep + '0x' + to_id_data[to_id_key])
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=3)
             
 
     @staticmethod
-    def json_generic_formid_sep_plugin_patcher(basename: str, new_file: str, form_id_map: dict, int_type: bool = False, sep: str = '|', encoding_method: str ='utf-8'):
+    def json_generic_formid_sep_plugin_patcher(basename: str, new_file: str, form_id_map: dict, int_type: bool = False, sep: str = '|', to_id_key:str = "hex_no_0", encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = shared_patchers.safe_load_json(f)
             json_dict = shared_patchers.extract_values_and_keys(data)
@@ -384,9 +384,9 @@ class shared_patchers():
                         if to_id_data is not None:
                             if not to_id_data["update_name"]:
                                 if not ox and not int_type_actual:
-                                    data = shared_patchers.change_json_element(data, path, to_id_data["hex_no_0"] + sep + plugin)
+                                    data = shared_patchers.change_json_element(data, path, to_id_data[to_id_key] + sep + plugin)
                                 elif ox:
-                                    data = shared_patchers.change_json_element(data, path, '0x' + to_id_data["hex_no_0"] + sep + plugin)
+                                    data = shared_patchers.change_json_element(data, path, '0x' + to_id_data[to_id_key] + sep + plugin)
                                 else: # not ox and int_type
                                     data = shared_patchers.change_json_element(data, path, str(to_id_data["int"]) + sep + plugin)
                             else:
@@ -394,9 +394,9 @@ class shared_patchers():
                                     write_to_file(f'Plugin Name Replaced: {basename} | {new_file}')
                                     print_replace = False  
                                 if not ox and not int_type_actual:
-                                    data = shared_patchers.change_json_element(data, path, to_id_data["hex_no_0"] + sep + "ESLifier_Cell_Master.esm")
+                                    data = shared_patchers.change_json_element(data, path, to_id_data[to_id_key] + sep + "ESLifier_Cell_Master.esm")
                                 elif ox:
-                                    data = shared_patchers.change_json_element(data, path, '0x' + to_id_data["hex_no_0"] + sep + "ESLifier_Cell_Master.esm")
+                                    data = shared_patchers.change_json_element(data, path, '0x' + to_id_data[to_id_key] + sep + "ESLifier_Cell_Master.esm")
                                 else: # not ox and int_type
                                     data = shared_patchers.change_json_element(data, path, str(to_id_data["int"]) + sep + "ESLifier_Cell_Master.esm")
             f.seek(0)
@@ -405,7 +405,7 @@ class shared_patchers():
             
     
     @staticmethod
-    def json_generic_key_fid_sep_plugin_patcher(basename: str, new_file: str, form_id_map: dict, int_type: bool = False, sep: str = ":", encoding_method: str ='utf-8'):
+    def json_generic_key_fid_sep_plugin_patcher(basename: str, new_file: str, form_id_map: dict, int_type: bool = False, sep: str = ":", to_id_key:str = "hex", encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = shared_patchers.safe_load_json(f)
             json_dict = shared_patchers.extract_values_and_keys(data)
@@ -416,7 +416,7 @@ class shared_patchers():
                         index = part.find(sep)
                         to_id_data = form_id_map.get(int(part[:index])) if int_type else form_id_map.get(int(part[:index],16))
                         if to_id_data is not None:
-                            new_id = '0x' + to_id_data['hex'] if part.startswith('0x') else str(to_id_data['int']) if int_type else to_id_data['hex']
+                            new_id = '0x' + to_id_data[to_id_key] if part.startswith('0x') else str(to_id_data['int']) if int_type else to_id_data[to_id_key]
                             plugin = sep + 'ESLifier_Cell_Master.esm' if to_id_data['update_name'] else part[index:]
                             data = shared_patchers.change_json_key(data, part, new_id + plugin)
                             patched_keys.append(path[:i+1])
@@ -425,7 +425,7 @@ class shared_patchers():
             json.dump(data, f, ensure_ascii=False, indent=3)
 
     @staticmethod
-    def json_generic_key_plugin_sep_fid_patcher(basename: str, new_file: str, form_id_map: dict, int_type: bool = False, sep: str = ":", encoding_method: str ='utf-8'):
+    def json_generic_key_plugin_sep_fid_patcher(basename: str, new_file: str, form_id_map: dict, int_type: bool = False, sep: str = ":", to_id_key:str = "hex", encoding_method: str ='utf-8'):
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = shared_patchers.safe_load_json(f)
             json_dict = shared_patchers.extract_values_and_keys(data)
@@ -437,7 +437,7 @@ class shared_patchers():
                         id_part = part[index+len(sep):]
                         to_id_data = form_id_map.get(int(id_part)) if int_type else form_id_map.get(int(id_part ,16))
                         if to_id_data is not None:
-                            new_id = '0x' + to_id_data['hex'] if id_part.startswith('0x') else str(to_id_data['int']) if int_type else to_id_data['hex']
+                            new_id = '0x' + to_id_data[to_id_key] if id_part.startswith('0x') else str(to_id_data['int']) if int_type else to_id_data[to_id_key]
                             plugin = 'ESLifier_Cell_Master.esm' + sep if to_id_data['update_name'] else part[:index+len(sep)]
                             data = shared_patchers.change_json_key(data, part, plugin + new_id)
                             patched_keys.append(path[:i+1])
@@ -447,7 +447,7 @@ class shared_patchers():
 
     @staticmethod
     def json_generic_recursive_depth_patcher(basename: str, new_file: str, form_id_map: dict, plugin_key="plugin", fid_key='form_id', 
-                                             fid_start='0x', int_type=False, encoding_method: str = 'utf-8'):
+                                             fid_start='0x', int_type=False, to_id_key:str = "hex_no_0", encoding_method: str = 'utf-8'):
         """Patches: {plugin_key: basename, fid_key: FormID, other_key: other data allowed but not patched}"""
         with open(new_file, 'r+', encoding=encoding_method) as f:
             data = shared_patchers.safe_load_json(f)
@@ -466,7 +466,7 @@ class shared_patchers():
                         if int_type:
                             item[fid_key] = to_id_data['int']
                         else:
-                            item[fid_key] = fid_start + to_id_data['hex_no_0']
+                            item[fid_key] = fid_start + to_id_data[to_id_key]
 
             def recursive_depth_parser(obj):
                 if isinstance(obj, list):
