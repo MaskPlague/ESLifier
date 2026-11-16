@@ -1,5 +1,5 @@
 {
-    "version": 29,
+    "version": 30,
     "conditions": [
         {
             "extension": "json",
@@ -190,6 +190,18 @@
             "extension": "ini",
             "endswith": "SKSE/Plugins/CraftingPullFromContainers.ini",
             "patcher": "ini_formid_sep_plugin"
+        },
+        {
+            "extension": "json",
+            "contains": "Plugins/LocationTitles/",
+            "patcher": "json_generic_formid_sep_plugin",
+            "separator": ":"
+        },
+        {
+            "extension": "json",
+            "contains": "/Effigy/",
+            "patcher": "json_generic_formid_sep_plugin",
+            "separator": ":"
         }
     ]
 }
