@@ -28,8 +28,8 @@ def write_remove(remove_num_lines:int, text:str, write_to_file:bool=False, pruna
 def write_insert(insert_location:int, text:str, write_to_file:bool=False):
     _ls.write_insert(insert_location, text, write_to_file)
 
-def write_progress(percent: int, remove_num_lines:int, text:str):
-    _ls.write_progress(percent, remove_num_lines, text)
+def write_progress(percent: int, remove_num_lines:int, text:str, write_to_file:bool=False):
+    _ls.write_progress(percent, remove_num_lines, text, write_to_file)
 
 def write_main_progress(percent: int, remove_num_lines:int, text:str, write_to_file:bool=True):
     _ls.write_main_progress(percent, remove_num_lines, text, write_to_file)
@@ -245,9 +245,9 @@ class log_stream(QMainWindow):
         if write_to_file:
             self.write_to_file(text)
 
-    def write_progress(self, percent: int, remove_num_lines:int, text:str):
+    def write_progress(self, percent: int, remove_num_lines:int, text:str, write_to_file:bool=False):
         self.percentage = percent
-        self.write_remove(remove_num_lines, text, False, True)
+        self.write_remove(remove_num_lines, text, write_to_file, True)
 
     def write_main_progress(self, percent: int, remove_num_lines:int, text:str, write_to_file:bool=True):
         self.main_percentage = percent
