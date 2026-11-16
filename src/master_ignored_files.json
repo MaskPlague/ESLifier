@@ -1,5 +1,5 @@
 {
-    "version": 23,
+    "version": 24,
     "ignored_files": [
         "BFCO_FX_CheckPreAttackIsOK.pex",
         "BFCO_FX_PlayIdleListKeyE.pex",
@@ -14,7 +14,9 @@
         "AddItemMenuSE.ini",
         "QuestTagging.PluginQuestCache.json",
         "DynamicLeveledLists.json",
-        "ScrollScribeNG.ini"
+        "ScrollScribeNG.ini",
+        "pach_tts_settings.json",
+        "perk_adapters_report.json"
     ],
     "ignored_endswith": [
         "_SkyrimDiagReport.txt",
@@ -28,7 +30,8 @@
         "interface/modex/user/userdata.json",
         "Viny Mods/NPC Visual/FaceGenCache.json",
         "Plugins/DTAC-PluginNames.txt",
-        "Plugins/DialogueTagsAndColors.json"
+        "Plugins/DialogueTagsAndColors.json",
+        "interface/MetaSkillsMenu/MSMData.json"
     ],
     "ignored_contains": [
         "SkyrimDiag_Incident_",
