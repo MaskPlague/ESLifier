@@ -59,7 +59,7 @@ class ESLifier(mobase.IPluginTool):
         return self.tr("ESLifier's MO2 Plugin Integration")
     
     def version(self) -> mobase.VersionInfo:
-        return mobase.VersionInfo(2, 0, 1, mobase.ReleaseType.FINAL)
+        return mobase.VersionInfo(2, 0, 2, mobase.ReleaseType.FINAL)
     
     def requirements(self):
         return [mobase.PluginRequirementFactory.gameDependency(SUPPORTED_GAMES)]
@@ -396,7 +396,7 @@ class ESLifier(mobase.IPluginTool):
             self.validGame = False
             return
         self.validGame = True
-        self.GAME_MODE = "SSE" if game.gameName() == "Skyrim Special Edition" else "FO4"
+        self.GAME_MODE = "SSE" if game.gameName() in ("Skyrim Special Edition", "Skyrim VR") else "FO4"
         self.icon_path = os.path.join(os.path.dirname(self._organizer.getPluginDataPath()), 'ESLifier MO2 Integration', 'icons', self.GAME_MODE)
         self._create_icons()
         self._create_throbber()
