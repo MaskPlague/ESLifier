@@ -169,12 +169,12 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\data_holder.py" line="235" />
+        <location filename="src\data_holder.py" line="238" />
         <source>Failed to get necessary paths, see ESLifier.log</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\data_holder.py" line="284" />
+        <location filename="src\data_holder.py" line="287" />
         <source>No relative file path method for file: %1, aborting program execution for safety. Report this to the GitHub with your settings.json.</source>
         <translation type="unfinished" />
     </message>
@@ -294,12 +294,12 @@ crash cause: %2</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\plugin_qualification_checker.py" line="163" />
+        <location filename="src\scanners\plugin_qualification_checker.py" line="168" />
         <source>Failed to read plugin: </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="271" />
+        <location filename="src\scanners\scanner.py" line="273" />
         <source>Failed to dump data to: </source>
         <translation type="unfinished" />
     </message>
@@ -572,56 +572,56 @@ patched to reflect the Master plugin's changes.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="327" />
-        <location filename="src\lists\list_compact.py" line="178" />
+        <location filename="src\lists\list_compact.py" line="341" />
+        <location filename="src\lists\list_compact.py" line="181" />
         <source>Show</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="191" />
+        <location filename="src\lists\list_compact.py" line="194" />
         <source>Hide</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="212" />
+        <location filename="src\lists\list_compact.py" line="215" />
         <source>more...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="236" />
+        <location filename="src\lists\list_compact.py" line="240" />
         <source>New CELL</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="238" />
+        <location filename="src\lists\list_compact.py" line="242" />
         <source>This mod has a new CELL record and no mods currently modify it.
 It is currently safe to ESL flag it.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="241" />
+        <location filename="src\lists\list_compact.py" line="245" />
         <source>This mod has a new CELL record. It is currently safe to ESL flag it</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="245" />
+        <location filename="src\lists\list_compact.py" line="250" />
         <source>!!New CELL Changed!!</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="246" />
+        <location filename="src\lists\list_compact.py" line="251" />
         <source>This mod is an ESM with a new CELL record that is modified by
 a dependent plugin. It is NOT recommended to ESL flag it as doing so
 will break temporary references in the new CELL.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="253" />
+        <location filename="src\lists\list_compact.py" line="259" />
         <source>!!Maxed Masters!!</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="254" />
+        <location filename="src\lists\list_compact.py" line="260" />
         <source>This mod is an ESM with a new CELL record that is modified by
 a dependent plugin. It or one of its dependents has the max of
 254 masters and cannot have the ESLifier_Cell_Master.esm plugin
@@ -631,153 +631,153 @@ break temporary references in its new CELL(s).</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="263" />
+        <location filename="src\lists\list_compact.py" line="269" />
         <source>!New Interior CELL!</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="264" />
+        <location filename="src\lists\list_compact.py" line="270" />
         <source>This mod has at least one new CELL record that is an interior cell.
 ESL interior cells do not reload gameplay changed references properly
 on a save game load unless the game itself has restarted.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="273" />
+        <location filename="src\lists\list_compact.py" line="280" />
         <source>!!New WRLD!!</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="274" />
+        <location filename="src\lists\list_compact.py" line="281" />
         <source>This mod has a new WRLD (worldspace) record which may lose landscape (the ground) when ESL flagged.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="279" />
+        <location filename="src\lists\list_compact.py" line="287" />
         <source>!New WTHR!</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="280" />
+        <location filename="src\lists\list_compact.py" line="288" />
         <source>This mod has a new WTHR (weather) record which can be referenced in
 ENB presets which are not patched.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="287" />
+        <location filename="src\lists\list_compact.py" line="296" />
         <source>This plugin has one or more PEX files that call 'GetModByName' on this plugin: </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="298" />
+        <location filename="src\lists\list_compact.py" line="308" />
         <source>PreVis/PreCombine</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="299" />
+        <location filename="src\lists\list_compact.py" line="309" />
         <source>This mod has a new cell and either itself or another mod uses the
 precombine system with it, which will break if this mod is ESL flagged.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="305" />
+        <location filename="src\lists\list_compact.py" line="316" />
         <source>!!%0 DLL!!</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="306" />
+        <location filename="src\lists\list_compact.py" line="317" />
         <source>This mod's plugin name is present in the following %0 dlls and
 may break their FormLookup() function calls if a hard-coded form id is present:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="316" />
+        <location filename="src\lists\list_compact.py" line="328" />
         <source>This mod has an SEQ file which may cause dialogue for it to not work until you save and reload in game.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="322" />
+        <location filename="src\lists\list_compact.py" line="335" />
         <source>This mod is an ESM.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="364" />
+        <location filename="src\lists\list_compact.py" line="380" />
         <source>Select All</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="365" />
+        <location filename="src\lists\list_compact.py" line="381" />
         <source>Check All</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="366" />
+        <location filename="src\lists\list_compact.py" line="382" />
         <source>Uncheck All</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="367" />
+        <location filename="src\lists\list_compact.py" line="383" />
         <source>Invert Selection Checks</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="369" />
+        <location filename="src\lists\list_compact.py" line="385" />
         <source>Check Previously Compacted</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="370" />
+        <location filename="src\lists\list_compact.py" line="386" />
         <source>Import Check State From File</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="371" />
+        <location filename="src\lists\list_compact.py" line="387" />
         <source>Export Check State To File</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="372" />
+        <location filename="src\lists\list_compact.py" line="388" />
         <source>Open in File Explorer</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="373" />
+        <location filename="src\lists\list_compact.py" line="389" />
         <source>Add Highlighted Mod(s) to Blacklist</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="422" />
+        <location filename="src\lists\list_compact.py" line="438" />
         <source>The following plugins cannot be re-compacted because they have dependents that are missing Skyrim.esm as a master and the dependent references records from the master (this limits the master to record space 0x800-0xFFF or 2048 records since the dependent cannot be record header 1.71 without Skyrim.esm as a master):</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="426" />
+        <location filename="src\lists\list_compact.py" line="442" />
         <source>The following plugins cannot be re-compacted because they no longer meet the conditions (maybe new records exceed max count or it is now filtered out from settings or it is already ESL):</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="428" />
+        <location filename="src\lists\list_compact.py" line="444" />
         <source>The following plugins cannot be re-compacted because they no-longer exist or have been blacklisted (this should be okay assuming you deleted these on purpose):</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="459" />
+        <location filename="src\lists\list_compact.py" line="475" />
         <source>Plugins that cannot be re-compacted can have adverse effects on ongoing saves. Please be careful.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="467" />
-        <location filename="src\lists\list_compact.py" line="461" />
+        <location filename="src\lists\list_compact.py" line="483" />
+        <location filename="src\lists\list_compact.py" line="477" />
         <source>Warning</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="463" />
+        <location filename="src\lists\list_compact.py" line="479" />
         <source>Could not select the following files either due to filters, the files not existing, or the file is already compacted:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_compact.py" line="469" />
+        <location filename="src\lists\list_compact.py" line="485" />
         <source>Failed to get previously_compacted.json</source>
         <translation type="unfinished" />
     </message>
@@ -846,7 +846,7 @@ avoid ESLifiying mods with SEQ files.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="208" />
+        <location filename="src\lists\list_eslify.py" line="217" />
         <location filename="src\lists\list_eslify.py" line="71" />
         <source>PreVis/PreCombine</source>
         <translation type="unfinished" />
@@ -872,40 +872,40 @@ for FO4 can circumvent this issue. For now it will be disabled.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="152" />
+        <location filename="src\lists\list_eslify.py" line="156" />
         <source>New CELL</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="154" />
+        <location filename="src\lists\list_eslify.py" line="158" />
         <source>This mod has a new CELL record and no mods currently modify it.
 It is currently safe to ESL flag it.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="158" />
+        <location filename="src\lists\list_eslify.py" line="162" />
         <source>This mod has a new CELL record. It is currently safe to ESL flag it</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="162" />
+        <location filename="src\lists\list_eslify.py" line="167" />
         <source>!!New CELL Changed!!</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="163" />
+        <location filename="src\lists\list_eslify.py" line="168" />
         <source>This mod is an ESM with a new CELL record that is modified by
 a dependent plugin. It is NOT recommended to ESL flag it as doing so
 will break temporary references in the new CELL.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="170" />
+        <location filename="src\lists\list_eslify.py" line="176" />
         <source>!!Maxed Masters!!</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="171" />
+        <location filename="src\lists\list_eslify.py" line="177" />
         <source>This mod is an ESM with a new CELL record that is modified by
 a dependent plugin. It or one of its dependents has the max of
 254 masters and cannot have the ESLifier_Cell_Master.esm plugin
@@ -915,126 +915,126 @@ break temporary references in its new CELL(s).</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="180" />
+        <location filename="src\lists\list_eslify.py" line="186" />
         <source>!New Interior CELL!</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="181" />
+        <location filename="src\lists\list_eslify.py" line="187" />
         <source>This mod has at least one new CELL record that is an interior cell.
 ESL interior cells do not reload gameplay changed references properly
 on a save game load unless the game itself has restarted.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="190" />
+        <location filename="src\lists\list_eslify.py" line="197" />
         <source>!!New WRLD!!</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="191" />
+        <location filename="src\lists\list_eslify.py" line="198" />
         <source>This mod has a new WRLD (worldspace) record which may lose landscape (the ground) when ESL flagged.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="197" />
+        <location filename="src\lists\list_eslify.py" line="205" />
         <source>This plugin has one or more PEX files that call 'GetModByName' on this plugin: </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="209" />
+        <location filename="src\lists\list_eslify.py" line="218" />
         <source>This mod has a new cell and either itself or another mod uses the
 precombine system with it, which will break if this mod is ESL flagged.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="216" />
+        <location filename="src\lists\list_eslify.py" line="226" />
         <source>This mod has an SEQ file which may cause dialogue for it to not work until you save and reload in game.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="222" />
+        <location filename="src\lists\list_eslify.py" line="233" />
         <source>This mod is an ESM.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="240" />
+        <location filename="src\lists\list_eslify.py" line="254" />
         <source>Select All</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="241" />
+        <location filename="src\lists\list_eslify.py" line="255" />
         <source>Check All</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="242" />
+        <location filename="src\lists\list_eslify.py" line="256" />
         <source>Uncheck All</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="243" />
+        <location filename="src\lists\list_eslify.py" line="257" />
         <source>Invert Selection Checks</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="245" />
+        <location filename="src\lists\list_eslify.py" line="259" />
         <source>Check Previously ESL Flagged</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="246" />
+        <location filename="src\lists\list_eslify.py" line="260" />
         <source>Import Check State From File</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="247" />
+        <location filename="src\lists\list_eslify.py" line="261" />
         <source>Export Check State To File</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="248" />
+        <location filename="src\lists\list_eslify.py" line="262" />
         <source>Open in File Explorer</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="249" />
+        <location filename="src\lists\list_eslify.py" line="263" />
         <source>Add Highlighted Mod(s) to Blacklist</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="298" />
+        <location filename="src\lists\list_eslify.py" line="312" />
         <source>The following plugins cannot be re-ESL flagged because they have dependents that are missing Skyrim.esm as a master and the dependent references records from the master (this limits the master to record space 0x800-0xFFF or 2048 records since the dependent cannot be record header 1.71 without Skyrim.esm as a master):</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="302" />
+        <location filename="src\lists\list_eslify.py" line="316" />
         <source>The following plugins cannot be re-ESL flagged because they no longer meet the conditions (maybe new records exceed max count or it is now filtered out from settings or it is already ESL):</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="304" />
+        <location filename="src\lists\list_eslify.py" line="318" />
         <source>The following plugins cannot be re-ESL flagged because they no-longer exist (this should be okay assuming you deleted these on purpose):</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="335" />
+        <location filename="src\lists\list_eslify.py" line="349" />
         <source>Plugins that cannot be re-ESL flagged can have adverse effects on ongoing saves. Please be careful.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="343" />
-        <location filename="src\lists\list_eslify.py" line="337" />
+        <location filename="src\lists\list_eslify.py" line="357" />
+        <location filename="src\lists\list_eslify.py" line="351" />
         <source>Warning</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="339" />
+        <location filename="src\lists\list_eslify.py" line="353" />
         <source>Could not select the following files either due to filters, the files not existing, or the file is already flagged ESL:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\lists\list_eslify.py" line="346" />
+        <location filename="src\lists\list_eslify.py" line="360" />
         <source>Failed to get previously_esl_flagged.json</source>
         <translation type="unfinished" />
     </message>
@@ -2049,7 +2049,7 @@ This button needs an output made from v0.12.0+.</source>
 </context><context>
     <name>patcher_conditions</name>
     <message>
-        <location filename="src\patchers\sse_patcher_conditions.py" line="226" />
+        <location filename="src\patchers\sse_patcher_conditions.py" line="229" />
         <location filename="src\patchers\sse_patcher_conditions.py" line="216" />
         <location filename="src\patchers\sse_patcher_conditions.py" line="201" />
         <location filename="src\patchers\sse_patcher_conditions.py" line="192" />
@@ -2064,111 +2064,111 @@ This button needs an output made from v0.12.0+.</source>
 </context><context>
     <name>scanner</name>
     <message>
-        <location filename="src\scanners\scanner.py" line="155" />
+        <location filename="src\scanners\scanner.py" line="157" />
         <source>Gathered %0 total files.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="158" />
+        <location filename="src\scanners\scanner.py" line="160" />
         <source>Getting Dependencies</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="160" />
+        <location filename="src\scanners\scanner.py" line="162" />
         <source>Scanning Plugins</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="172" />
+        <location filename="src\scanners\scanner.py" line="174" />
         <source>Time taken: %1 seconds</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="191" />
+        <location filename="src\scanners\scanner.py" line="193" />
         <source>Extracting: </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="223" />
+        <location filename="src\scanners\scanner.py" line="225" />
         <source>Extracting %0/%1 %2 files (%3)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="236" />
+        <location filename="src\scanners\scanner.py" line="238" />
         <source>Error Reading archive: </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="252" />
+        <location filename="src\scanners\scanner.py" line="254" />
         <source>Failed to get plugins list at: </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="298" />
+        <location filename="src\scanners\scanner.py" line="300" />
         <source>Getting masters of loose files...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="303" />
+        <location filename="src\scanners\scanner.py" line="305" />
         <source>Scanning .pex files</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="318" />
+        <location filename="src\scanners\scanner.py" line="320" />
         <source>Scanning .dll %0 plugins</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="327" />
+        <location filename="src\scanners\scanner.py" line="329" />
         <source>Sorting .seq files</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="330" />
+        <location filename="src\scanners\scanner.py" line="332" />
         <source>Scanning %0 files</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="370" />
-        <location filename="src\scanners\scanner.py" line="350" />
+        <location filename="src\scanners\scanner.py" line="372" />
+        <location filename="src\scanners\scanner.py" line="352" />
         <source>Processed: %0 %</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="371" />
-        <location filename="src\scanners\scanner.py" line="351" />
+        <location filename="src\scanners\scanner.py" line="373" />
+        <location filename="src\scanners\scanner.py" line="353" />
         <source>Files: %1/%2</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="654" />
+        <location filename="src\scanners\scanner.py" line="656" />
         <source>Missing file scan type for </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="668" />
-        <location filename="src\scanners\scanner.py" line="657" />
+        <location filename="src\scanners\scanner.py" line="670" />
+        <location filename="src\scanners\scanner.py" line="659" />
         <source>Error reading file </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="658" />
+        <location filename="src\scanners\scanner.py" line="660" />
         <source>!pex file is likely corrupt.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="662" />
+        <location filename="src\scanners\scanner.py" line="664" />
         <source>Path is %0 characters long which requires "Long Path Support" to be enabled in Windows (see Google for more info).
 File: %1</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="752" />
+        <location filename="src\scanners\scanner.py" line="754" />
         <source>Error Reading BSA: </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\scanners\scanner.py" line="835" />
+        <location filename="src\scanners\scanner.py" line="837" />
         <source>Error Reading BA2: </source>
         <translation type="unfinished" />
     </message>
@@ -2193,7 +2193,7 @@ File: %1</source>
 </context><context>
     <name>settings</name>
     <message>
-        <location filename="src\settings_page.py" line="832" />
+        <location filename="src\settings_page.py" line="840" />
         <location filename="src\settings_page.py" line="79" />
         <source>Mod Manager: None</source>
         <translation type="unfinished" />
@@ -2225,7 +2225,7 @@ meant to be used with manual modding but should still work at least once.</sourc
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="833" />
+        <location filename="src\settings_page.py" line="841" />
         <location filename="src\settings_page.py" line="98" />
         <source>Set where you want the Output Folder to be generated.</source>
         <translation type="unfinished" />
@@ -2391,7 +2391,7 @@ a save without restarting the game.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="864" />
+        <location filename="src\settings_page.py" line="872" />
         <location filename="src\settings_page.py" line="207" />
         <source>Hide plugins with new worldspaces records as they can have the landscape disappear
 (no ground) when flagged as ESL.</source>
@@ -2435,7 +2435,7 @@ a save without restarting the game.</source>
     <message>
         <location filename="src\settings_page.py" line="235" />
         <source>Hide plugins that have PEX files that call the papyrus function 'GetModByName' on
-'                    'them as that function only works properly on non-ESL plugins.</source>
+'                    'them as logic in the PEX using the returned index may not work properlly for ESL indicies.</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -2652,159 +2652,169 @@ skip the confirmation boxes.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="454" />
+        <location filename="src\settings_page.py" line="389" />
+        <source>Enable Debug Prints</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="src\settings_page.py" line="390" />
+        <source>Enables certain debug prints to the log file.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="src\settings_page.py" line="462" />
         <source>Select Inner Color</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="457" />
+        <location filename="src\settings_page.py" line="465" />
         <source>Select Outer Color</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="480" />
+        <location filename="src\settings_page.py" line="488" />
         <source>Select the %0 Data folder</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="482" />
+        <location filename="src\settings_page.py" line="490" />
         <source>Select your MO2 mods folder</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="485" />
+        <location filename="src\settings_page.py" line="493" />
         <source>Select where you want the output folder</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="618" />
+        <location filename="src\settings_page.py" line="626" />
         <source>Select your MO2 instance folder</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="622" />
+        <location filename="src\settings_page.py" line="630" />
         <source>Select your vortex data folder</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="625" />
+        <location filename="src\settings_page.py" line="633" />
         <source>Select your plugins.txt</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="625" />
+        <location filename="src\settings_page.py" line="633" />
         <source>Load Order</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="725" />
-        <location filename="src\settings_page.py" line="653" />
+        <location filename="src\settings_page.py" line="733" />
+        <location filename="src\settings_page.py" line="661" />
         <source>Explore...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="791" />
+        <location filename="src\settings_page.py" line="799" />
         <source>Mod Manager: MO2</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="792" />
+        <location filename="src\settings_page.py" line="800" />
         <source>Set where you want the Output Folder to be generated. For example: MO2's 'mods' folder.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="793" />
+        <location filename="src\settings_page.py" line="801" />
         <source>'C:/Path/To/The/Output/Folder/' Suggestion: 'C:/MO2/mods/'</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="795" />
+        <location filename="src\settings_page.py" line="803" />
         <source>MO2 users should not launch this executible through MO2,
 Launching this program through MO2 drastically slows it down and may
 break certain functions.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="812" />
+        <location filename="src\settings_page.py" line="820" />
         <source>Mod Manager: Vortex</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="813" />
+        <location filename="src\settings_page.py" line="821" />
         <source>Set where you want the Output Folder to be generated. For example: Vortex's 'Mod Staging Folder'.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="814" />
+        <location filename="src\settings_page.py" line="822" />
         <source>'C:/Path/To/The/Output/Folder/' Suggestion: 'C:/Path/To/Mod Staging Folder/'</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="816" />
+        <location filename="src\settings_page.py" line="824" />
         <source>Vortex users can also set this to None to scan the way ESLiifer originally
 dealth with Vortex if you prefer/need that.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="834" />
+        <location filename="src\settings_page.py" line="842" />
         <source>'C:/Path/To/The/Output/Folder/'</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="836" />
+        <location filename="src\settings_page.py" line="844" />
         <source>Users without a mod manager should get a mod manager. ESLifier is not
 meant to be used with manual modding but should still work at least once.
 You can also use this mode for the original way Vortex was dealt with.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="857" />
-        <location filename="src\settings_page.py" line="854" />
+        <location filename="src\settings_page.py" line="865" />
+        <location filename="src\settings_page.py" line="862" />
         <source>Disabled by Generate Cell Master setting.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="861" />
+        <location filename="src\settings_page.py" line="869" />
         <source>Hide ESM plugins with new CELL records that have been changed by a dependent plugin.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="913" />
+        <location filename="src\settings_page.py" line="921" />
         <source>Invalid Output Name</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="913" />
+        <location filename="src\settings_page.py" line="921" />
         <source>'%1' is not a valid folder name.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="915" />
+        <location filename="src\settings_page.py" line="923" />
         <source>Output Name missing 'ESLifier'</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="915" />
+        <location filename="src\settings_page.py" line="923" />
         <source>The output name must have 'ESLifier' (case insenstive) in it for safety purposes.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="970" />
+        <location filename="src\settings_page.py" line="978" />
         <source>Error opening file explorer: </source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="991" />
+        <location filename="src\settings_page.py" line="999" />
         <source>Are you sure you want to reset all settings?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="992" />
+        <location filename="src\settings_page.py" line="1000" />
         <source>Confirmation</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="src\settings_page.py" line="1045" />
+        <location filename="src\settings_page.py" line="1053" />
         <source>Failed to save settings.</source>
         <translation type="unfinished" />
     </message>
