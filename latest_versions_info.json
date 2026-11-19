@@ -1,10 +1,11 @@
 {
     "SSE": {
-        "version": "1.0.3",
-        "url": "tag/v1.0.3-SSE",
+        "version": "1.0.4",
+        "url": "tag/v1.0.4-SSE",
         "changelog": [
-            "Fix: Mods missing the GetModByName PEX flag when they should have it.",
-            "Add: Debug mode setting. If enabled, it prints certain additional information to the log file."
+            "",
+            "Add: Patcher for Idrinth's Dream and Patchless Integration Frameworks.",
+            "Also: I changed the tooltip for the PEX setting to be more correct."
         ]
     },
     "FO4": {
