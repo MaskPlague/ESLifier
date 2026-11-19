@@ -233,7 +233,7 @@ class settings(QWidget):
         self.enable_pex_filter_widget, self.enable_pex_filter_toggle = self.create_toggle_widget(
             self.tr("Hide plugins that have PEX files with GetModByName"),
             self.tr("Hide plugins that have PEX files that call the papyrus function 'GetModByName' on\n'\
-                    'them as that function only works properly on non-ESL plugins."),
+                    'them as logic in the PEX using the returned index may not work properlly for ESL indicies."),
             "filter_pex",
             default=True,
             game_modes=("SSE") #GetModByName doesn't exist for FO4
