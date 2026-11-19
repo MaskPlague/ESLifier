@@ -220,6 +220,9 @@ def patch_file_conditions(new_file_lower: str, new_file: str, basename: str, for
         patchers.jslot_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     elif new_file_lower.endswith('config.txt') and 'plugins\\customskill' in new_file_lower: # CSF's old txt format
         patchers.old_customskill_patcher(basename, new_file, form_id_map, encoding_method=encoding)
+    elif new_file_lower.endswith('.xml'):
+        if '\\fiss\\idrinth_' in new_file_lower:                                            # Idrinth's Dreams/Patchless Integration Framework
+            patchers.xml_idrinth_patcher(basename, new_file, form_id_map, encoding_method=encoding)
     else:
         patched = additional_conditions.check_conditions(basename, new_file, new_file_lower, form_id_map, encoding_method=encoding)
         if not patched:                                           

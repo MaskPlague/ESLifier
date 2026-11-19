@@ -1,7 +1,8 @@
 import json
-
 import configparser
+import xml.etree.ElementTree as xmlTree
 import io
+
 try:
     from patchers.shared_file_patchers import shared_patchers
     from log_stream import write_to_file, write_ineligible
@@ -1969,6 +1970,65 @@ class patchers(shared_patchers):
             f.seek(0)
             f.truncate(0)
             json.dump(data, f, ensure_ascii=False, indent=2)
+
+    @staticmethod
+    def xml_idrinth_patcher(basename: str, new_file: str, form_id_map: dict, encoding_method:str = 'utf-8'):
+        with open(new_file, "r", encoding=encoding_method) as f:
+            # Idrinth has many malformed xml files with missing / in the closing Data tags. 
+            # These malformed xml files are included in the main file fomod's default/required english section (version 1.0.0) 
+            # so it is more that likely that a user will have them installed. This fixes that.
+            xml_string = f.read().replace('<Data></fiss>', '</Data></fiss>')
+            root = xmlTree.fromstring(xml_string)
+
+        key_dict = {
+            "globals_file": {"id_keys": ["favor_id", "close_id", "global_id"], "block": ["favor_id", "close_id", "global_id"]}, 
+            "from_file": {"id_keys": ["from_id", "favor_id", "close_id"]},
+            "npc_file": {"id_keys": ["npc_id", "global_id"]},
+        }
+        paired =  ["to", "location", "cell", "race", "perk", "effect", "faction", "follower", "quest", "sound", "item", "required_effect"]
+        section = root.find('.//Data')
+        if section is None:
+            return
+        
+        def patch_for_key(key:str):
+            from_id = section.find(key)
+            if from_id is None:
+                return
+            to_id = form_id_map.get(int(from_id.text, 16))
+            if not to_id:
+                return
+            section.find(key).text = '0x' + to_id['hex_no_0']
+
+        blocked_out_keys = set()
+        for plugin_key, key_data in key_dict.items():
+            plugin = section.find(plugin_key)
+            if plugin is None:
+                continue
+            if plugin.text.lower() != basename:
+                block_keys = key_data.get("block")
+                if block_keys:
+                    blocked_out_keys.update(block_keys)
+                continue
+            
+            for from_id_key in key_data.get("id_keys"):
+                if from_id_key in blocked_out_keys:
+                    continue
+                patch_for_key(from_id_key)
+
+            block_keys = key_data.get("block")
+            if block_keys:
+                blocked_out_keys.update(block_keys)
+
+        for prefix in paired:
+            plugin = section.find(f"{prefix}_file")
+            if plugin is None or plugin.text.lower() != basename:
+                continue
+            patch_for_key(f"{prefix}_id")
+
+        tree = xmlTree.ElementTree(root)
+        tree.write(new_file, encoding=encoding_method)
+        #xmlTree.indent(root, space="  ", level=0)
+        #print(xmlTree.tostring(root, encoding="unicode"))
 
 #if __name__ == '__main__':
 #    import os
