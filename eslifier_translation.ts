@@ -2435,7 +2435,7 @@ a save without restarting the game.</source>
     <message>
         <location filename="src\settings_page.py" line="235" />
         <source>Hide plugins that have PEX files that call the papyrus function 'GetModByName' on
-'                    'them as logic in the PEX using the returned index may not work properlly for ESL indicies.</source>
+them as logic in the PEX using the returned index may not work properlly for ESL indicies.</source>
         <translation type="unfinished" />
     </message>
     <message>
