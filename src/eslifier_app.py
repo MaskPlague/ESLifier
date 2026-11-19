@@ -25,7 +25,7 @@ from scanners.scanner_mo2 import MO2
 # maybe unignore if long path error is hit and long path support is off.
 # maybe unignore if updated? that might be too annoying.
 if GAME_MODE == "SSE":
-    CURRENT_VERSION = '1.0.3'
+    CURRENT_VERSION = '1.0.4'
 elif GAME_MODE == "FO4":
     CURRENT_VERSION = '0.0.3'
 MAJOR, MINOR, PATCH = [int(x, 10) for x in CURRENT_VERSION.split('.')] 
